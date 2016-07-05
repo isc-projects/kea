@@ -2443,11 +2443,11 @@ It is merely echoed by the server
     element. Each element in that array is a structure, that holds information
     about reservations for a single host. In particular, such a structure has
     to have an identifier that uniquely identifies a host.  In DHCPv4 context, such an
-    identifier is a hardware or MAC address.  In most cases, also an address
-    will be specified. It is possible to specify a hostname. Additional
-    capabilities are planned.</para>
+    identifier is a hardware or MAC address.  In most cases an address
+    will be specified. It is also possible to specify a hostname or host
+    specific options. Additional capabilities are planned.</para>
 
-    <para>In Kea 1.1.0 it was only possible to create host reservations
+    <para>In Kea 1.0.0 it was only possible to create host reservations
     using client's hardware address. Host reservations by client
     identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
@@ -2475,7 +2475,7 @@ It is merely echoed by the server
                 "ip-address": "192.0.2.203"
             },
             {
-                "client-id": "01:11:22:33:44:55:66\","
+                "client-id": "01:11:22:33:44:55:66",
                 "ip-address": "192.0.2.204"
             }
         ]</userinput>
@@ -2483,14 +2483,14 @@ It is merely echoed by the server
 ]
 </screen>
     The first entry reserves the 192.0.2.202 address for the client that uses
-    MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
-    192.0.2.100 and the hostname of alice-laptop for client using DUID
+    a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
+    192.0.2.100 and the hostname of alice-laptop for the client using a DUID
     0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique. The third
     example reserves address 192.0.3.203 to a client whose request
-    would be relayed by a relay agent that inserts circuid-it option
-    with value 'charter950'. The fourth entry reserves address
-    192.0.2.204 for a client that uses client identifier with value
+    would be relayed by a relay agent that inserts a circuid-it option
+    with the value 'charter950'. The fourth entry reserves address
+    192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
 
     <para>Note that the above example is used for ilustrational purposes only
@@ -2700,7 +2700,7 @@ It is merely echoed by the server
     } ]</userinput>
 } ]</screen>
 
-    <para>Vendor specific options can be reserved in similar manner:</para>
+    <para>Vendor specific options can be reserved in a similar manner:</para>
 
     <screen>
 "reservations": [
@@ -2708,21 +2708,20 @@ It is merely echoed by the server
     "hw-address": "aa:bb:cc:dd:ee:ff",
     "ip-address": "10.0.0.7",
     <userinput>"option-data": [
-        {
-            "name": "vivso-suboptions","
-            "data": "4491"
-        },
-        {
-            "name": "tftp-servers",
-                "space": "vendor-4491",
-                "data": "10.1.1.202,10.1.1.203"
-        }
-    ]</userinput>
+    {
+        "name": "vivso-suboptions",
+        "data": "4491"
+    },
+    {
+        "name": "tftp-servers",
+        "space": "vendor-4491",
+        "data": "10.1.1.202,10.1.1.203"
+    } ]</userinput>
 } ]</screen>
 
 <para>
-  Options defined on host level have the highest priority. In other words,
- if there are option defined with the same type on global, subnet, class and
+ Options defined on host level have the highest priority. In other words,
+ if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
 
@@ -2733,7 +2732,7 @@ It is merely echoed by the server
 
       <para>
         It is possible to store host reservations in MySQL. See <xref
-        linkend="hosts6-storage" /> for information how to configure Kea to use
+        linkend="hosts4-storage" /> for information on how to configure Kea to use
         reservations stored in MySQL. Kea does not provide any dedicated tools
         for managing MySQL reservations. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
@@ -2761,7 +2760,7 @@ It is merely echoed by the server
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to be not used by another DHCP client. It
+      sufficient for a candidate lease to not be used by another DHCP client. It
       also must not be reserved for another client. Second, when renewing a lease,
       additional check must be performed whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address, the server
@@ -2822,25 +2821,25 @@ It is merely echoed by the server
       <para>Another aspect of the host reservations are different types of
       identifiers. Currently (June 2016) Kea supports four types of identifiers
       (hw-address, duid, client-id and circuit-id), but more identifier types
-      are likely to be added in the future. This is beneficial from the
+      are likely to be added in the future. This is beneficial from a
       usability perspective. However, there is a drawback. For each incoming
       packet Kea has to to extract each identifier type and then query the
       database to see if there's a reservation done by this particular
-      identifier. If there is not, the next identifier is extracted and next
+      identifier. If there is not, the next identifier is extracted and the next
       query is issued. This process continues until either a reservation is
-      found or all identifier types were checked. Over time with increasing
+      found or all identifier types have been checked. Over time with an increasing
       number of supported identifier types, Kea would become slower and
       slower.</para>
 
       <para>To address this problem, a parameter called
       <command>host-reservation-identifiers</command> has been introduced. It
       takes a list of identifier types as a parameter. Kea will check only those
-      identifier types enumerated in host-reservation-identifiers. From the
-      performance perspective the number of identifier types should be kept to
+      identifier types enumerated in host-reservation-identifiers. From a
+      performance perspective the number of identifier types should be kept to a
       minimum, ideally limited to one. If your deployment uses several
       reservation types, please enumerate them from most to least frequently
-      used as this increases the chances of Kea finding the reservation using
-      fewer number of queries. An example of host reservation identifiers looks
+      used as this increases the chances of Kea finding the reservation using the
+      fewest number of queries. An example of host reservation identifiers looks
       as follows:
 
 <screen>
@@ -2853,7 +2852,7 @@ It is merely echoed by the server
 ]</screen>
 </para>
 
-<para>If not specified, the default value is <command>hw-address, duid,
+<para>If not specified, the default value is: <command>hw-address, duid,
 circuit-id</command>.</para> <!-- see CfgHostOperations::createConfig4() in
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 

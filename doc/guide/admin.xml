@@ -148,9 +148,9 @@
   <section>
     <title>Supported Databases</title>
 
-    <para>The following table presents capabilities of available
-    backends. Please refer to specific sections dedicated to each backend to
-    better understand the capabilities and limitations. Choosing the right
+    <para>The following table presents the capabilities of available
+    backends. Please refer to the specific sections dedicated to each backend to
+    better understand their capabilities and limitations. Choosing the right
     backend may be essential for success or failure of your deployment.</para>
 
     <para>
@@ -172,6 +172,7 @@
             </row>
           </thead>
           <tbody>
+
             <row>
               <entry>Status</entry>
               <entry>Stable</entry>
@@ -221,7 +222,7 @@
       <title>memfile</title>
 
       <para>
-        Memfile backend is able to store leases information, but is not able to
+        Memfile backend is able to store lease information, but is not able to
         store host reservation details. There are no plans to add the
         reservations storage capability to memfile. Host reservations can be
         defined in the configuration file.
@@ -585,7 +586,7 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
 
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
-        added to Kea. Since it was added recently and have not undergone as much
+        added to Kea. Since it was added recently and has not undergone as much
         testing as other backends, it is considered experimental. Please use
         with caution. CQL backend is currently able to store leases only. The
         ability to store host reservations will likely be added some time in the
