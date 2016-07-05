@@ -11,10 +11,10 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-      It is recommended that the Kea DHCPv6 server be started and stopped
-      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-      However, it is also possible to run the server directly: it accepts
-      the following command-line switches:
+        It is recommended that the Kea DHCPv6 server be started and stopped
+        using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
+        However, it is also possible to run the server directly: it accepts
+        the following command-line switches:
       </para>
 
       <itemizedlist>
@@ -62,25 +62,25 @@
       </itemizedlist>
 
       <para>
-            The <command>-V</command> command returns the versions of the
-            external libraries dynamically linked.
+        The <command>-V</command> command returns the versions of the
+        external libraries dynamically linked.
       </para>
 
       <para>
-            The <command>-W</command> command describes the environment used
-            to build Kea.  This command displays a copy of the
-            <filename>config.report</filename> file produced by
-            <userinput>./configure</userinput> that is embedded in the
-            executable binary.
+        The <command>-W</command> command describes the environment used
+        to build Kea.  This command displays a copy of the
+        <filename>config.report</filename> file produced by
+        <userinput>./configure</userinput> that is embedded in the
+        executable binary.
       </para>
 
       <para>
-            The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
-            in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
-            <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
+        The <filename>config.report</filename> may also be accessed more
+        directly.  The following command may be used to extract this
+        information.  The binary <userinput>path</userinput> may be found
+        in the install directory or in the <filename>.libs</filename>
+        subdirectory in the source tree. For example
+        <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
 
 <screen>
 strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
@@ -88,9 +88,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-            When running in a console, the server can be shut down by
-            pressing ctrl-c. It detects the key combination and shuts
-            down gracefully.
+        When running in a console, the server can be shut down by
+        pressing ctrl-c. It detects the key combination and shuts
+        down gracefully.
       </para>
 
       <para>
@@ -2404,7 +2404,7 @@ should include options from the isc option space:
 </section>
 
     <section id="reservation6-options">
-      <title>Reserving specific options</title>
+      <title>Including specific DHCPv6 options in reservations</title>
 
       <para>Kea 1.1.0 introduced the ability to specify options on a
       per host basis. The options follow the same rules as any other
@@ -2583,7 +2583,11 @@ should include options from the isc option space:
 </para>
 
 <para>
-  If not specified, the default value is: <command>hw-address,duid</command>.
+  If not specified, the default value is:
+<screen>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid" ]</userinput>
+</screen>
+
 </para>
 <!-- see CfgHostOperations::createConfig6() in
      src/lib/dhcpsrv/cfg_host_operations.cc -->

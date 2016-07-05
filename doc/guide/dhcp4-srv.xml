@@ -10,13 +10,11 @@
     <section id="dhcp4-start-stop">
       <title>Starting and Stopping the DHCPv4 Server</title>
 
-      <!-- @todo Rewrite this section once #3422 is done -->
-
       <para>
-      It is recommended that the Kea DHCPv4 server be started and stopped
-      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-      However, it is also possible to run the server directly: it accepts
-      the following command-line switches:
+        It is recommended that the Kea DHCPv4 server be started and stopped
+        using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
+        However, it is also possible to run the server directly: it accepts
+        the following command-line switches:
       </para>
 
       <itemizedlist>
@@ -64,25 +62,25 @@
       </itemizedlist>
 
       <para>
-            The <command>-V</command> command returns the versions of the
-            external libraries dynamically linked.
+        The <command>-V</command> command returns the versions of the
+        external libraries dynamically linked.
       </para>
 
       <para>
-            The <command>-W</command> command describes the environment used
-            to build Kea.  This command displays a copy of the
-            <filename>config.report</filename> file produced by
-            <userinput>./configure</userinput> that is embedded in the
-            executable binary.
+        The <command>-W</command> command describes the environment used
+        to build Kea.  This command displays a copy of the
+        <filename>config.report</filename> file produced by
+        <userinput>./configure</userinput> that is embedded in the
+        executable binary.
       </para>
 
       <para>
-            The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
-            in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
-            <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
+        The <filename>config.report</filename> may also be accessed more
+        directly.  The following command may be used to extract this
+        information.  The binary <userinput>path</userinput> may be found
+        in the install directory or in the <filename>.libs</filename>
+        subdirectory in the source tree. For example
+        <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
 
 <screen>
 strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
@@ -90,9 +88,9 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-            When running in a console, the server can be shut down by
-            pressing ctrl-c. It detects the key combination and shuts
-            down gracefully.
+        When running in a console, the server can be shut down by
+        pressing ctrl-c. It detects the key combination and shuts
+        down gracefully.
       </para>
 
       <para>
@@ -2493,7 +2491,7 @@ It is merely echoed by the server
     192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
 
-    <para>Note that the above example is used for ilustrational purposes only
+    <para>The above example is used for ilustrational purposes only
     and in actual deployments it is recommended to use as few types as possible
     (preferably just one). See <xref linkend="reservations4-tuning"/> for detailed
     discussion.</para>
@@ -2675,7 +2673,7 @@ It is merely echoed by the server
     </section>
 
     <section id="reservation4-options">
-      <title>Reserving specific options</title>
+      <title>Including specific DHCPv4 options in reservations</title>
       <para>Kea 1.1.0 introduced the ability to specify options on a
       per host basis. The options follow the same rules as any other
       options. These can be standard options (see <xref
@@ -2685,20 +2683,24 @@ It is merely echoed by the server
       example showcases how standard options can be defined.</para>
 
       <screen>
-"reservations": [
 {
-    "hw-address": "aa:bb:cc:dd:ee:ff",
-    "ip-address": "192.0.2.1",
-    <userinput>"option-data": [
-    {
-        "name": "cookie-servers",
-        "data": "10.1.1.202,10.1.1.203"
-    },
-    {
-        "name": "log-servers",
-        "data": "10.1.1.200,10.1.1.201"
-    } ]</userinput>
-} ]</screen>
+    "subnet4": [ {
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            "ip-address": "192.0.2.1",
+            <userinput>"option-data": [
+            {
+                "name": "cookie-servers",
+                "data": "10.1.1.202,10.1.1.203"
+            },
+            {
+                "name": "log-servers",
+                "data": "10.1.1.200,10.1.1.201"
+            } ]</userinput>
+        } ]
+    } ]
+}</screen>
 
     <para>Vendor specific options can be reserved in a similar manner:</para>
 
@@ -2852,9 +2854,16 @@ It is merely echoed by the server
 ]</screen>
 </para>
 
-<para>If not specified, the default value is: <command>hw-address, duid,
-circuit-id</command>.</para> <!-- see CfgHostOperations::createConfig4() in
+<para>If not specified, the default value is:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id" ]</userinput>
+</screen>
+<!-- see CfgHostOperations::createConfig4() in
 src/lib/dhcpsrv/cfg_host_operations.cc -->
+
+</para>
+
 
 
    </section>

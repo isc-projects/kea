@@ -84,11 +84,25 @@
           },
 # This is a bit more advanced reservation. The client with the specified
 # DUID will get a reserved address, a reserved prefix and a hostname.
+# This reservation is for an address that it not within the dynamic pool.
+# Finally, this reservation features vendor specific options for CableLabs,
+# which happen to use enterprise-id 4491. Those particular values will
+# be returned only to the client that has a DUID matching this reservation.
           {
               "duid": "01:02:03:04:05:06:07:08:09:0A",
-              "ip-addresses": [ "2001:db8:1::102" ],
+              "ip-addresses": [ "2001:db8:1:cafe::1" ],
               "prefixes": [ "2001:db8:2:abcd::/64" ],
-              "hostname": "foo.example.com"
+              "hostname": "foo.example.com",
+              "option-data": [ {
+                  "name": "vendor-opts",
+                  "data": "4491"
+              },
+              {
+                  "name": "tftp-servers",
+                  "space": "vendor-4491",
+                  "data": "3000:1::234"
+              } ]
+
           }
       ]
     }
