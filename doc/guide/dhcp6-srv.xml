@@ -2417,12 +2417,10 @@ should include options from the isc option space:
       <screen>
 "reservations": [
 {
-    "hw-address": "aa:bb:cc:dd:ee:ff",
-    "ip-address": "192.0.2.1",
+   "duid": "01:02:03:05:06:07:08",
+   "ip-addresses": [ "2001:db8:1::2" ],
     <userinput>"option-data": [
     {
-        "duid": "01:02:03:05:06:07:08",
-        "ip-addresses": [ "2001:db8:1::2" ],
         "option-data": [ {
             "name": "dns-servers",
             "data": "3000:1::234"
@@ -2434,7 +2432,7 @@ should include options from the isc option space:
     } ]</userinput>
 } ]</screen>
 
-    <para>Vendor specific options can be reserved in similar manner:</para>
+    <para>Vendor specific options can be reserved in a similar manner:</para>
 
     <screen>
 "reservations": [
@@ -2454,8 +2452,8 @@ should include options from the isc option space:
 } ]</screen>
 
 <para>
-  Options defined on host level have the highest priority. In other words,
- if there are option defined with the same type on global, subnet, class and
+ Options defined on host level have the highest priority. In other words,
+ if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
 
@@ -2493,7 +2491,7 @@ should include options from the isc option space:
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to be not used by another DHCP client. It
+      sufficient for a candidate lease to not be used by another DHCP client. It
       also must not be reserved for another client. Second, when renewing a lease,
       additional check must be performed whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address or a
@@ -2553,13 +2551,13 @@ should include options from the isc option space:
       <para>Another aspect of the host reservations are different types of
       identifiers. Currently (June 2016) Kea supports two types of identifiers
       in DHCPv6: hw-address and duid, but more identifier types
-      are likely to be added in the future. This is beneficial from the
+      are likely to be added in the future. This is beneficial from a
       usability perspective. However, there is a drawback. For each incoming
       packet Kea has to to extract each identifier type and then query the
       database to see if there's a reservation done by this particular
       identifier. If there is not, the next identifier is extracted and next
       query is issued. This process continues until either a reservation is
-      found or all identifier types were checked. Over time with increasing
+      found or all identifier types have been checked. Over time with an increasing
       number of supported identifier types, Kea would become slower and
       slower.</para>
 
@@ -2570,22 +2568,22 @@ should include options from the isc option space:
       performance perspective the number of identifier types should be kept to
       minimum, ideally limited to one. If your deployment uses several
       reservation types, please enumerate them from most to least frequently
-      used as this increases the chances of Kea finding the reservation using
-      fewer number of queries. An example of host reservation identifiers looks
+      used as this increases the chances of Kea finding the reservation using the
+      fewest number of queries. An example of host reservation identifiers looks
       as follows:
 
 <screen>
 <userinput>"host-reservation-identifiers": [ "duid", "hw-address" ],</userinput>
-"subnet4": [
+"subnet6": [
     {
-        "subnet": "192.0.2.0/24",
+        "subnet": "2001:db8:1::/64",
         ...
     }
 ]</screen>
 </para>
 
 <para>
-  If not specified, the default value is <command>hw-address,duid</command>.
+  If not specified, the default value is: <command>hw-address,duid</command>.
 </para>
 <!-- see CfgHostOperations::createConfig6() in
      src/lib/dhcpsrv/cfg_host_operations.cc -->

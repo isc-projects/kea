@@ -17,7 +17,7 @@ CfgHostOperations::CfgHostOperations()
 
 CfgHostOperationsPtr
 CfgHostOperations::createConfig4() {
-    // If this list modified, please update reservations4-tuning section in
+    // If this list is modified, please update reservations4-tuning section in
     // doc/guide/dhcp4-srv.xml
     CfgHostOperationsPtr cfg(new CfgHostOperations());
     cfg->addIdentifierType("hw-address");
@@ -28,7 +28,7 @@ CfgHostOperations::createConfig4() {
 
 CfgHostOperationsPtr
 CfgHostOperations::createConfig6() {
-    // If this list modified, please update reservations6-tuning section in
+    // If this list is modified, please update reservations6-tuning section in
     // doc/guide/dhcp6-srv.xml
     CfgHostOperationsPtr cfg(new CfgHostOperations());
     cfg->addIdentifierType("hw-address");
