@@ -1427,7 +1427,7 @@ It is merely echoed by the server
             "type": "ipv4-address",
             "record-types": "",
             "array": false,
-            "encapsulate ""
+            "encapsulate": ""
         },
         {
             "name": "subopt2",
