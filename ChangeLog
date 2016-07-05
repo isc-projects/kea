@@ -1,3 +1,9 @@
+1138.	[build]		fdupont
+	Compilation problem on FreeBSD caused by unused parameter in
+	certain version of boost headers is now resolved. Also, INSTALL
+	file has been updated and now lists dependencies.
+	(Trac #4283, git xxx)
+
 1137.	[doc]		fdupont
 	Developer's Guide has been updated with DHCPv4-over-DHCPv6 support
 	details.
