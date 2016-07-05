@@ -4,12 +4,6 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 # GCC 4.4 emits warning about breaking strict aliasing rule.
 # This warning is a result of a GCC bug:
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41874
