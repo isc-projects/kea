@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,7 @@ SubnetConfigParser::getParam(const std::string& name) {
 @endcode
 
 Note that if the value is neither present in the local storage nor in the global
-context, an error is signalled.
+context, an error is signaled.
 
 Parameter inheritance is done once, during the reconfiguration phase.
 Reconfigurations are rare, so extra logic here is not a problem. On the other
@@ -276,7 +276,7 @@ isc::dhcp::Dhcpv6Srv::buildCfgOptionList.
 
 @section dhcpv6ConfigBackend Configuration backend for DHCPv6
 
-Earlier Kea vesions had a concept of backends, which were implementations of
+Earlier Kea versions had a concept of backends, which were implementations of
 different ways how configuration could be delivered to Kea. It seems that the
 concept of backends didn't get much enthusiasm from users and having multiple
 backends was cumbersome to maintain, so it was removed in 1.0.
@@ -311,5 +311,7 @@ specified at server startup. The location of this file is held in the
 @section dhcpv6Other Other DHCPv6 topics
 
 For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
+
+@subpage dhcpv4o6Dhcp6
 
  */
