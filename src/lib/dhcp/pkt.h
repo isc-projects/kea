@@ -14,10 +14,66 @@
 #include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <utility>
 
 namespace isc {
 
 namespace dhcp {
+
+/// @brief RAII object enabling copying options retrieved from the
+/// packet.
+///
+/// This object enables copying retrieved options from a packet within
+/// a scope in which this object exists. When the object goes out of scope
+/// copying options is disabled. This is applicable in cases when the
+/// server is going to invoke a callout (hook library) where copying options
+/// must be enabled by default. When the callouts return copying options
+/// should be disabled. The use of RAII object eliminates the need for
+/// explicitly re-renabling options copying and is safer in case of
+/// exceptions thrown by callouts and a presence of multiple exit points.
+template<typename PktType>
+class ScopedEnableOptionsCopy {
+public:
+
+    /// @brief Pointer to an encapsulated packet.
+    typedef boost::shared_ptr<PktType> PktTypePtr;
+
+    /// @brief Constructor.
+    ///
+    /// Enables options copying on a packet(s).
+    ///
+    /// @param pkt1 Pointer to first packet.
+    /// @param pkt2 Optional pointer to the second packet.
+    ScopedEnableOptionsCopy(const PktTypePtr& pkt1,
+                            const PktTypePtr& pkt2 = PktTypePtr())
+        : pkts_(pkt1, pkt2) {
+        if (pkt1) {
+            pkt1->setCopyRetrievedOptions(true);
+        }
+        if (pkt2) {
+            pkt2->setCopyRetrievedOptions(true);
+        }
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Disables options copying on a packets.
+    ~ScopedEnableOptionsCopy() {
+        if (pkts_.first) {
+            pkts_.first->setCopyRetrievedOptions(false);
+        }
+        if (pkts_.second) {
+            pkts_.second->setCopyRetrievedOptions(false);
+        }
+    }
+
+private:
+
+    /// @brief Holds a pointers to the packets.
+    std::pair<PktTypePtr, PktTypePtr> pkts_;
+};
 
 /// @brief Base class for classes representing DHCP messages.
 ///

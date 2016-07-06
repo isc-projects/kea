@@ -200,6 +200,10 @@ public:
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
         return (0);
     }
 
@@ -245,6 +249,11 @@ public:
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -312,6 +321,15 @@ public:
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        if (callback_resp_pkt4_) {
+            callback_resp_options_copy_ = callback_resp_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -375,6 +393,11 @@ public:
         callout_handle.getArgument("response4", callback_resp_pkt4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_resp_pkt4_) {
+            callback_resp_options_copy_ = callback_resp_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -417,6 +440,11 @@ public:
         callout_handle.getArgument("subnet4collection", callback_subnet4collection_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -454,6 +482,11 @@ public:
         callout_handle.getArgument("lease4", callback_lease4_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -471,6 +504,11 @@ public:
         callout_handle.getArgument("clientid", callback_clientid_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -483,6 +521,10 @@ public:
         callback_name_ = string("lease4_decline");
         callout_handle.getArgument("query4", callback_qry_pkt4_);
         callout_handle.getArgument("lease4", callback_lease4_);
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
 
         return (0);
     }
@@ -509,6 +551,8 @@ public:
         callback_subnet4_.reset();
         callback_subnet4collection_ = NULL;
         callback_argument_names_.clear();
+        callback_qry_options_copy_ = false;
+        callback_resp_options_copy_ = false;
     }
 
     /// pointer to Dhcpv4Srv that is used in tests
@@ -542,6 +586,15 @@ public:
 
     /// A list of all received arguments
     static vector<string> callback_argument_names_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a query during callout execution.
+    static bool callback_qry_options_copy_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a response during callout execution.
+    static bool callback_resp_options_copy_;
+
 };
 
 // The following fields are used in testing pkt4_receive_callout.
@@ -555,6 +608,8 @@ ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
+bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
+bool HooksDhcpv4SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv4SrvTest : public ::testing::Test {
@@ -623,6 +678,9 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
     expected_argument_names.push_back(string("query4"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on buffer4_receive is able to change
@@ -728,6 +786,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
     expected_argument_names.push_back(string("query4"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on pkt4_received is able to change
@@ -865,6 +926,10 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     sort(callback_argument_names_.begin(), callback_argument_names_.end());
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+    EXPECT_TRUE(callback_resp_options_copy_);
 }
 
 // Checks if callouts installed on pkt4_send is able to change
@@ -1006,6 +1071,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
     vector<string> expected_argument_names;
     expected_argument_names.push_back(string("response4"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_resp_options_copy_);
 }
 
 // Checks if callouts installed on buffer4_send are indeed called and that
@@ -1139,6 +1207,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet4collection_)[0].get());
     EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet4collection_)[1].get());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if callout installed on subnet4_select hook point can pick
@@ -1300,6 +1371,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that a callout installed on lease4_renew can trigger
@@ -1456,6 +1530,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     sort(callback_argument_names_.begin(), callback_argument_names_.end());
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that skip flag returned by a callout installed on the
@@ -1564,6 +1641,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     // the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks that decline4 hook is able to drop the packet.

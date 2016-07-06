@@ -467,6 +467,9 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
         // We're reusing callout_handle from previous calls
         callout_handle->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
         // Set new arguments
         callout_handle->setArgument("query4", query);
         callout_handle->setArgument("subnet4", subnet);
@@ -735,6 +738,9 @@ Dhcpv4Srv::run_one() {
             // Delete previously set arguments
             callout_handle->deleteAllArguments();
 
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
+
             // Pass incoming packet as argument
             callout_handle->setArgument("response4", rsp);
 
@@ -803,6 +809,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query4", query);
@@ -894,6 +903,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
         // Pass incoming packet as argument
         callout_handle->setArgument("query4", query);
 
@@ -982,6 +994,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
         // Clear skip flag if it was set in previous callouts
         callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        // Enable copying options from the query and response packet within
+        // hook library.
+        ScopedEnableOptionsCopy<Pkt4> query_resp_options_copy(query, rsp);
 
         // Set our response
         callout_handle->setArgument("response4", rsp);
@@ -2064,6 +2080,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // Delete all previous arguments
             callout_handle->deleteAllArguments();
 
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> query4_options_copy(release);
+
             // Pass the original packet
             callout_handle->setArgument("query4", release);
 
@@ -2206,6 +2225,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
 
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(decline);
 
         // Pass incoming Decline and the lease to be declined.
         callout_handle->setArgument("lease4", lease);
