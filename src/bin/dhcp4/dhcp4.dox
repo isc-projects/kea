@@ -115,14 +115,14 @@ be stored in libdhcp++. Such option formats are stored in the
 of options which may be encapsulated by other options up to any level of
 encapsulation, but these functions are unaware of the option formats defined
 in the @ref isc::dhcp::CfgMgr because they belong to a different library.
-Therefore, the generic functions @ref isc::dhcp::LibDHCP::unpackOptions4 and
-@ref isc::dhcp::LibDHCP::unpackOptions6 are only useful to parse standard
+Therefore, the generic function @ref isc::dhcp::LibDHCP::unpackOptions is only
+useful to parse standard
 options whose definitions are provided in the libdhcp++. In order to overcome
 this problem a callback mechanism has been implemented in @c Option and @c Pkt4
 classes. By installing a callback function on an instance of @c Pkt4, the
 server may provide a custom implementation of the options parsing algorithm.
-This callback function will take precedence over the @c LibDHCP::unpackOptions4
-and @c LibDHCP::unpackOptions6 functions. With this approach, the callback is
+This callback function will take precedence over the @c LibDHCP::unpackOptions
+function. With this approach, the callback is
 implemented within the context of the server and it has access to all objects
 which define its configuration (including dynamically created option
 definitions).

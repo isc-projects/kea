@@ -18,7 +18,6 @@
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
 #include <dhcp/option_definition.h>
 
 #include <boost/lexical_cast.hpp>
@@ -133,7 +132,7 @@ LibDHCP::getVendorOptionDefs(const Option::Universe u, const uint32_t vendor_id)
             return getOptionDefs( Option::V6, ISC_V6_OPTION_SPACE );
         }
     }
-    return OptionDefContainerPtr();
+    isc_throw(isc::BadValue, "invalid universe " << u );
 }
 
 OptionDefinitionPtr
@@ -314,20 +313,21 @@ LibDHCP::optionFactory(Option::Universe u,
     return (it->second(u, type, buf));
 }
 
-
-size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
-                               const std::string& option_space,
-                               isc::dhcp::OptionCollection& options,
-                               size_t* relay_msg_offset /* = 0 */,
-                               size_t* relay_msg_len /* = 0 */) {
-    size_t offset = 0;
-    size_t length = buf.size();
-    size_t last_offset = 0;
+size_t LibDHCP::unpackOptions(const Option::Universe& universe,
+                              const OptionBuffer& buf,
+                              const std::string& option_space,
+                              isc::dhcp::OptionCollection& options,
+                              size_t* relay_msg_offset /* = NULL */,
+                              size_t* relay_msg_len /* = NULL */) {
+    // Sanity check
+    if (universe != Option::V4 || universe != Option::V6) {
+        return 0U; // no options parsed
+    }
 
     // Get the list of standard option definitions.
     OptionDefContainer option_defs;
     const OptionDefContainerPtr option_defs_ptr
-        = LibDHCP::getOptionDefs(Option::V6, option_space);
+        = LibDHCP::getOptionDefs(universe, option_space);
     OptionDefContainer runtime_option_defs;
     const OptionDefContainerPtr runtime_option_defs_ptr
         = LibDHCP::getRuntimeOptionDefs(option_space);
@@ -344,61 +344,81 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     const OptionDefContainerTypeIndex& runtime_idx = runtime_option_defs.get<1>();
 
     // The buffer being read comprises a set of options, each starting with
-    // a two-byte type code and a two-byte length field.
-    while (offset < length) {
-        // Save the current offset for backtracking
-        last_offset = offset;
-
-        // Check if there is room for another option
-        if (offset + 4 > length) {
-            // Still something but smaller than an option
-            return (last_offset);
-        }
-
+    // a type code and a length field, each having one byte (DHCPv4) or two
+    // bytes (DHCPv6).
+    size_t offset = 0U;
+    size_t element_size = universe == Option::V4 ? sizeof(uint8_t) : sizeof(uint16_t);
+    size_t step = 2U * element_size;
+    size_t length = buf.size();
+    uint16_t opt_type = 0U;
+    uint16_t opt_len = 0U;
+    for (offset = 0U; offset < length; offset += step + opt_len) {
         // Parse the option header
-        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
-        offset += 2;
-
-        if (offset + opt_len > length) {
-            // We peeked at the option header of the next option, but
-            // discovered that it would end up beyond buffer end, so
-            // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back by those bytes (as if
-            // we never parsed them).
-            //
-            // @note it is the responsibility of the caller to throw
-            // an exception on partial parsing
-            return (last_offset);
-        }
-
-        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
-            // remember offset of the beginning of the relay-msg option
-            *relay_msg_offset = offset;
-            *relay_msg_len = opt_len;
-
-            // do not create that relay-msg option
-            offset += opt_len;
-            continue;
-        }
-
-        if (opt_type == D6O_VENDOR_OPTS) {
-            if (offset + 4 > length) {
-                // Truncated vendor-option. We expect at least
-                // 4 bytes for the enterprise-id field. Let's roll back
-                // option code + option length (4 bytes) and return.
-                return (last_offset);
+        if (universe == Option::V4) {
+            opt_type = buf[offset];
+            if (opt_type == DHO_PAD) {
+                // DHO_PAD is just a padding after DHO_END. Let's continue
+                // parsing in case we receive a message without DHO_END.
+                continue;
+            } else if (opt_type == DHO_END) {
+                // Just return. Don't need to add DHO_END option.
+                break;
+            } else if (offset + element_size > length) {
+                // We peeked at the option header of the next option, but
+                // discovered that it would end up beyond buffer end, so
+                // the option is truncated. Hence we can't parse
+                // it. Therefore we revert back (as if we never parsed it).
+                //
+                // @note it is the responsibility of the caller to throw
+                // an exception on partial parsing
+                return offset;
             }
+            opt_len = buf[offset + element_size];
+        } else if (universe == Option::V6) {
+            if (offset + 2 * element_size > length) {
+                // We peeked at the option header of the next option, but
+                // discovered that it would end up beyond buffer end, so
+                // the option is truncated. Hence we can't parse
+                // it. Therefore we revert back (as if we never parsed it).
+                //
+                // @note it is the responsibility of the caller to throw
+                // an exception on partial parsing
+                return offset;
+            }
+            opt_type = isc::util::readUint16(&buf[offset], element_size);
+            opt_len = isc::util::readUint16(&buf[offset + element_size], element_size);
+            if (offset + 2 * element_size + opt_len > length) {
+                // We peeked at the option header of the next option, but
+                // discovered that it would end up beyond buffer end, so
+                // the option is truncated. Hence we can't parse
+                // it. Therefore we revert back (as if we never parsed it).
+                //
+                // @note it is the responsibility of the caller to throw
+                // an exception on partial parsing
+                return offset;
+            }
+            if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
+                // remember offset of the beginning of the relay-msg option
+                *relay_msg_offset = offset + 2 * element_size;
+                *relay_msg_len = opt_len;
 
-            // Parse this as vendor option
-            OptionPtr vendor_opt(new OptionVendor(Option::V6, buf.begin() + offset,
-                                                  buf.begin() + offset + opt_len));
-            options.insert(std::make_pair(opt_type, vendor_opt));
+                // do not create that relay-msg option
+                continue;
+            }
+            if (opt_type == D6O_VENDOR_OPTS) {
+                if (offset + 2 * element_size + 4 > length) {
+                    // Truncated vendor-option. We expect at least
+                    // 4 bytes for the enterprise-id field. Let's roll back
+                    // option code + option length (4 bytes) and return.
+                    return offset;
+                }
 
-            offset += opt_len;
-            continue;
+                // Parse this as vendor option
+                OptionBufferConstIter begin = buf.begin() + offset;
+                OptionPtr vendor_opt(new OptionVendor(Option::V6, begin, begin + opt_len));
+                options.insert(std::make_pair(opt_type, vendor_opt));
+                continue;
+            }
         }
 
         // Get all definitions with the particular option code. Note
@@ -408,8 +428,9 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         // we report an error.
         OptionDefContainerTypeRange range;
         // Number of option definitions returned.
-        size_t num_defs = 0;
-        if (option_space == DHCP6_OPTION_SPACE) {
+        size_t num_defs = 0U;
+        if (option_space == DHCP4_OPTION_SPACE ||
+                option_space == DHCP6_OPTION_SPACE) {
             range = idx.equal_range(opt_type);
             num_defs = distance(range.first, range.second);
         }
@@ -417,13 +438,14 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
-        if (num_defs == 0) {
+        if (num_defs == 0U) {
             range = runtime_idx.equal_range(opt_type);
             num_defs = distance(range.first, range.second);
         }
 
         OptionPtr opt;
-        if (num_defs > 1) {
+        OptionBufferConstIter begin = buf.begin() + offset;
+        if (num_defs > 1U) {
             // Multiple options of the same code are not supported right now!
             isc_throw(isc::Unexpected, "Internal error: multiple option"
                       " definitions for option type " << opt_type <<
@@ -431,151 +453,25 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                       " multiple option definitions for the same option code."
                       " This will be supported once support for option spaces"
                       " is implemented");
-        } else if (num_defs == 0) {
+        } else if (num_defs == 0U) {
             // @todo Don't crash if definition does not exist because
             // only a few option definitions are initialized right
             // now. In the future we will initialize definitions for
             // all options and we will remove this elseif. For now,
             // return generic option.
-            opt = OptionPtr(new Option(Option::V6, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
+            opt = OptionPtr(new Option(universe, opt_type, begin, begin + opt_len));
+            // opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
         } else {
             // The option definition has been found. Use it to create
             // the option instance from the provided buffer chunk.
             const OptionDefinitionPtr& def = *(range.first);
             assert(def);
-            opt = def->optionFactory(Option::V6, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len);
-        }
-        // add option to options
-        options.insert(std::make_pair(opt_type, opt));
-        offset += opt_len;
-    }
-
-    last_offset = offset;
-    return (last_offset);
-}
-
-size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
-                               const std::string& option_space,
-                               isc::dhcp::OptionCollection& options) {
-    size_t offset = 0;
-    size_t last_offset = 0;
-
-    // Get the list of standard option definitions.
-    OptionDefContainer option_defs;
-    const OptionDefContainerPtr option_defs_ptr
-        = LibDHCP::getOptionDefs(Option::V4, option_space);
-    OptionDefContainer runtime_option_defs;
-    const OptionDefContainerPtr runtime_option_defs_ptr
-        = LibDHCP::getRuntimeOptionDefs(option_space);
-    if (option_defs_ptr) {
-        option_defs = *option_defs_ptr;
-    }
-    if (runtime_option_defs_ptr) {
-        runtime_option_defs = *runtime_option_defs_ptr;
-    }
-
-    // Get the search indexes #1. It allows to search for option definitions
-    // using option code.
-    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
-    const OptionDefContainerTypeIndex& runtime_idx = runtime_option_defs.get<1>();
-
-    // The buffer being read comprises a set of options, each starting with
-    // a one-byte type code and a one-byte length field.
-    while (offset < buf.size()) {
-        // Save the current offset for backtracking
-        last_offset = offset;
-
-        // Get the option type
-        uint8_t opt_type = buf[offset++];
-
-        // DHO_END is a special, one octet long option
-        if (opt_type == DHO_END) {
-            // just return. Don't need to add DHO_END option
-            // Don't return offset because it makes this condition
-            // and partial parsing impossible to recognize.
-            return (last_offset);
-        }
-
-        // DHO_PAD is just a padding after DHO_END. Let's continue parsing
-        // in case we receive a message without DHO_END.
-        if (opt_type == DHO_PAD)
-            continue;
-
-        if (offset + 1 > buf.size()) {
-            // We peeked at the option header of the next option, but
-            // discovered that it would end up beyond buffer end, so
-            // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back (as if we never parsed it).
-            //
-            // @note it is the responsibility of the caller to throw
-            // an exception on partial parsing
-            return (last_offset);
-        }
-
-        uint8_t opt_len =  buf[offset++];
-        if (offset + opt_len > buf.size()) {
-            // We peeked at the option header of the next option, but
-            // discovered that it would end up beyond buffer end, so
-            // the option is truncated. Hence we can't parse
-            // it. Therefore we revert back (as if we never parsed it).
-            return (last_offset);
-        }
-
-        // Get all definitions with the particular option code. Note
-        // that option code is non-unique within this container
-        // however at this point we expect to get one option
-        // definition with the particular code. If more are returned
-        // we report an error.
-        OptionDefContainerTypeRange range;
-        // Number of option definitions returned.
-        size_t num_defs = 0;
-        if (option_space == DHCP4_OPTION_SPACE) {
-            range = idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
-        }
-
-        // Standard option definitions do not include the definition for
-        // our option or we're searching for non-standard option. Try to
-        // find the definition among runtime option definitions.
-        if (num_defs == 0) {
-            range = runtime_idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
-        }
-
-        OptionPtr opt;
-        if (num_defs > 1) {
-            // Multiple options of the same code are not supported right now!
-            isc_throw(isc::Unexpected, "Internal error: multiple option"
-                      " definitions for option type " <<
-                      static_cast<int>(opt_type) <<
-                      " returned. Currently it is not supported to initialize"
-                      " multiple option definitions for the same option code."
-                      " This will be supported once support for option spaces"
-                      " is implemented");
-        } else if (num_defs == 0) {
-            opt = OptionPtr(new Option(Option::V4, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
-            opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
-        } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V4, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len);
+            opt = def->optionFactory(universe, opt_type, begin, begin + opt_len);
         }
 
         options.insert(std::make_pair(opt_type, opt));
-        offset += opt_len;
     }
-    last_offset = offset;
-    return (last_offset);
+    return offset;
 }
 
 size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
@@ -611,13 +507,14 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
         offset += 2;
 
         if (offset + opt_len > length) {
-            isc_throw(OutOfRange, "Vendor option parse failed. Tried to parse "
-                          << offset + opt_len << " bytes from " << length
-                          << "-byte long buffer.");
+            isc_throw(OutOfRange, "Vendor option parse failed. Tried to parse " <<
+                          offset + opt_len << " bytes from " << length <<
+                          "-byte long buffer.");
         }
 
         OptionPtr opt;
         opt.reset();
+        OptionBufferConstIter begin = buf.begin() + offset;
 
         // If there is a definition for such a vendor option...
         if (idx) {
@@ -646,9 +543,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
                 assert(def);
-                opt = def->optionFactory(Option::V6, opt_type,
-                                         buf.begin() + offset,
-                                         buf.begin() + offset + opt_len);
+                opt = def->optionFactory(Option::V6, opt_type, begin, begin + opt_len);
             }
         }
 
@@ -658,9 +553,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
         //    not defined
 
         if (!opt) {
-            opt = OptionPtr(new Option(Option::V6, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
+            opt = OptionPtr(new Option(Option::V6, opt_type, begin, begin + opt_len));
         }
 
         // add option to options
@@ -676,6 +569,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
 size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                                      isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
+    size_t length = buf.size();
 
     // Get the list of stdandard option definitions.
     const OptionDefContainerPtr option_defs_ptr =
@@ -689,13 +583,13 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
-    while (offset < buf.size()) {
+    while (offset < length) {
         // Note that Vendor-Specific info option (RFC3925) has a
         // different option format than Vendor-Spec info for
         // DHCPv6. (there's additional layer of data-length)
         uint8_t data_len = buf[offset++];
 
-        if (offset + data_len > buf.size()) {
+        if (offset + data_len > length) {
             // The option is truncated.
             isc_throw(OutOfRange, "Attempt to parse truncated vendor option");
         }
@@ -719,13 +613,14 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
             uint8_t opt_len =  buf[offset++];
             if (offset + opt_len > offset_end) {
-                isc_throw(OutOfRange, "Option parse failed. Tried to parse "
-                          << offset + opt_len << " bytes from " << buf.size()
-                          << "-byte long buffer.");
+                isc_throw(OutOfRange, "Option parse failed. Tried to parse " <<
+                          offset + opt_len << " bytes from " << length <<
+                          "-byte long buffer.");
             }
 
             OptionPtr opt;
             opt.reset();
+            OptionBufferConstIter begin = buf.begin() + offset;
 
             if (idx) {
                 // Get all definitions with the particular option
@@ -754,16 +649,12 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                     // the option instance from the provided buffer chunk.
                     const OptionDefinitionPtr& def = *(range.first);
                     assert(def);
-                    opt = def->optionFactory(Option::V4, opt_type,
-                                             buf.begin() + offset,
-                                             buf.begin() + offset + opt_len);
+                    opt = def->optionFactory(Option::V4, opt_type, begin, begin + opt_len);
                 }
             }
 
             if (!opt) {
-                opt = OptionPtr(new Option(Option::V4, opt_type,
-                                           buf.begin() + offset,
-                                           buf.begin() + offset + opt_len));
+                opt = OptionPtr(new Option(Option::V4, opt_type, begin, begin + opt_len));
             }
 
             options.insert(std::make_pair(opt_type, opt));

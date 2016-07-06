@@ -200,7 +200,7 @@ public:
     static void packOptions6(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options);
 
-    /// @brief Parses provided buffer as DHCPv6 options and creates
+    /// @brief Parses provided buffer as DHCPV4 or DHCPv6 options and creates
     /// Option objects.
     ///
     /// Parses provided buffer and stores created Option objects in
@@ -229,30 +229,12 @@ public:
     /// than once, and it calls option building routines which can throw.
     /// Partial parsing does not throw: it is the responsibility of the
     /// caller to handle this condition.
-    static size_t unpackOptions6(const OptionBuffer& buf,
-                                 const std::string& option_space,
-                                 isc::dhcp::OptionCollection& options,
-                                 size_t* relay_msg_offset = 0,
-                                 size_t* relay_msg_len = 0);
-
-    /// @brief Parses provided buffer as DHCPv4 options and creates
-    /// Option objects.
-    ///
-    /// Parses provided buffer and stores created Option objects
-    /// in options container.
-    ///
-    /// @param buf Buffer to be parsed.
-    /// @param option_space A name of the option space which holds definitions
-    ///        to be used to parse options in the packets.
-    /// @param options Reference to option container. Options will be
-    ///        put here.
-    /// @return offset to the first byte after the last successfully
-    /// parsed option or the offset of the DHO_END option type.
-    ///
-    /// The unpackOptions6 note applies too.
-    static size_t unpackOptions4(const OptionBuffer& buf,
-                                 const std::string& option_space,
-                                 isc::dhcp::OptionCollection& options);
+    static size_t unpackOptions(const Option::Universe& universe,
+                                const OptionBuffer& buf,
+                                const std::string& option_space,
+                                isc::dhcp::OptionCollection& options,
+                                size_t* relay_msg_offset = NULL,
+                                size_t* relay_msg_len = NULL);
 
     /// Registers factory method that produces options of specific option types.
     ///

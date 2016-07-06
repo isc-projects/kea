@@ -419,8 +419,9 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     memcpy(&buf[0], v6packed, sizeof(v6packed));
 
     EXPECT_NO_THROW ({
-            LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
-                                    DHCP6_OPTION_SPACE, options);
+        OptionBufferIter begin = buf.begin();
+        LibDHCP::unpackOptions(Option::V6, OptionBuffer(begin,
+            begin + sizeof(v6packed)), DHCP6_OPTION_SPACE, options);
     });
 
     EXPECT_EQ(options.size(), 6); // there should be 5 options
@@ -543,8 +544,8 @@ TEST_F(LibDhcpTest, unpackEmptyOption6) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
-                                            options));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions(Option::V6, buf, DHCP6_OPTION_SPACE,
+                                           options));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -600,7 +601,8 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, "space-foobar", options, 0, 0));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions(Option::V6, buf, "space-foobar",
+                                           options, 0, 0));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
@@ -766,7 +768,8 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     isc::dhcp::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options);
+        LibDHCP::unpackOptions(Option::V4, v4packed, DHCP4_OPTION_SPACE,
+                               options);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -857,9 +860,9 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     ASSERT_TRUE(rai);
     // RAI should have 3 sub-options: Circuit ID, Agent Remote ID, Vendor
     // Specific Information option. Note that by parsing these suboptions we
-    // are checking that unpackOptions4 differentiates between standard option
-    // space called "dhcp4" and other option spaces. These sub-options do not
-    // belong to standard option space and should be parsed using different
+    // are checking that unpackOptions differentiates between standard option
+    // space called "dhcp4" or "dhcp6" and other option spaces. These sub-options
+    // do not belong to standard option space and should be parsed using different
     // option definitions.
     // @todo Currently, definitions for option space "dhcp-agent-options-space"
     // are not defined. Therefore all suboptions will be represented here by
@@ -926,8 +929,8 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions(Option::V4, buf, DHCP4_OPTION_SPACE,
+                                           options));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -986,7 +989,8 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar", options));
+    ASSERT_NO_THROW(LibDHCP::unpackOptions(Option::V4, buf, "space-foobar",
+                                           options));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
@@ -1698,8 +1702,8 @@ TEST_F(LibDhcpTest, vendorClass6) {
     isc::util::encode::decodeHex(vendor_class_hex, bin);
 
     ASSERT_NO_THROW ({
-            LibDHCP::unpackOptions6(bin, DHCP6_OPTION_SPACE, options);
-        });
+        LibDHCP::unpackOptions(Option::V4, bin, DHCP6_OPTION_SPACE, options);
+    });
 
     EXPECT_EQ(options.size(), 1); // There should be 1 option.
 
