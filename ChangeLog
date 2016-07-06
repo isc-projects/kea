@@ -1,3 +1,8 @@
+1140.	[func]		marcin
+	DHCPv6 server supports assigning multiple reserved addresses
+	and/or prefixes to a single client.
+	(Trac #4321, git 0bfb2a9093174e4424051c01beeee7637ac95be0)
+
 1139.	[doc]		tomek
 	New features of host reservations have been documented: ability
 	to reserve standard and vendor options in host reservations. Separate
