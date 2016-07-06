@@ -480,6 +480,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
+
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
 
@@ -574,6 +577,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query6", query);
@@ -716,6 +722,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // Execute all callouts registered for packet6_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Enable copying options from the packets within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query_resp_options_copy(query, rsp);
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
@@ -1013,6 +1022,9 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 
         // We're reusing callout_handle from previous calls
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(question);
 
         // Set new arguments
         callout_handle->setArgument("query6", question);
@@ -2023,6 +2035,9 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_release_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
+
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
 
@@ -2705,6 +2720,9 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
 
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(decline);
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query6", decline);

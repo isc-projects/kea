@@ -147,6 +147,11 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -210,6 +215,11 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -284,6 +294,15 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        if (callback_resp_pkt6_) {
+            callback_resp_options_copy_ = callback_resp_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -349,6 +368,11 @@ public:
         callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -387,6 +411,11 @@ public:
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -454,6 +483,11 @@ public:
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -523,6 +557,11 @@ public:
         callout_handle.getArgument("lease6", callback_lease6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -549,6 +588,10 @@ public:
         callback_name_ = string("lease6_decline");
         callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
 
         return (0);
     }
@@ -585,6 +628,8 @@ public:
         callback_ia_na_.reset();
         callback_subnet6collection_ = NULL;
         callback_argument_names_.clear();
+        callback_qry_options_copy_ = false;
+        callback_resp_options_copy_ = false;
     }
 
     /// Pointer to Dhcpv6Srv that is used in tests
@@ -615,6 +660,14 @@ public:
 
     /// A list of all received arguments
     static vector<string> callback_argument_names_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a query during callout execution.
+    static bool callback_qry_options_copy_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a response during callout execution.
+    static bool callback_resp_options_copy_;
 };
 
 // The following parameters are used by callouts to override
@@ -635,6 +688,8 @@ const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
 boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
+bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
+bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
@@ -702,6 +757,8 @@ TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Receive) {
     expected_argument_names.push_back(string("query6"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on buffer6_receive is able to change
@@ -823,6 +880,8 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Receive) {
     expected_argument_names.push_back(string("query6"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on pkt6_received is able to change
@@ -947,6 +1006,9 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Send) {
     expected_argument_names.push_back(string("query6"));
     expected_argument_names.push_back(string("response6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
+    EXPECT_TRUE(callback_resp_options_copy_);
 }
 
 // Checks if callouts installed on pkt6_send is able to change
@@ -1192,6 +1254,8 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
     EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1291,6 +1355,8 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     // Check that the returned lease6 in callout is the same as the one in the
     // database
     EXPECT_TRUE(*callback_lease6_ == *l);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1537,6 +1603,8 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_FALSE(l);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly,
@@ -1907,6 +1975,8 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     // And that the parameters passed to callout are consistent with the database
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease6_->addr_);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Test that the lease6_decline hook point can handle SKIP status.
