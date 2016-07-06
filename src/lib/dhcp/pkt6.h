@@ -229,11 +229,11 @@ protected:
 
     /// @brief Returns pointer to an option inserted by relay agent.
     ///
-    /// This is a variant of the @ref Pk6::getRelayOption function which
+    /// This is a variant of the @ref Pkt6::getRelayOption function which
     /// never copies an option returned. This method should be only used by
     /// the @ref Pkt6 class and derived classes. Any external callers should
     /// use @ref getRelayOption which copies the option before returning it
-    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
     ///
     /// @param opt_type Code of the requested option.
     /// @param relay_level Nesting level as described for
@@ -291,7 +291,7 @@ protected:
     /// an option returned. This method should be only used by
     /// the @ref Pkt6 class and derived classes. Any external callers should
     /// use @ref getAnyRelayOption which copies the option before returning it
-    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
     ///
     /// @param option_code Searched option.
     /// @param order Option search order (see @ref RelaySearchOrder).
@@ -356,9 +356,9 @@ protected:
     /// of options without copying them. This method should be only used by
     /// the @ref Pkt6 class and derived classes. Any external callers should
     /// use @ref getOptions which copies option instances before returning them
-    /// when the @ref Pkt::copy_retrieved_option_ flag is set to true.
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
     ///
-    /// @param option_code Option code.
+    /// @param opt_type Option code.
     ///
     /// @return Collection of options found.
     OptionCollection getNonCopiedOptions(const uint16_t opt_type) const;

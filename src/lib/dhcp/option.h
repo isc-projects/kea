@@ -165,7 +165,7 @@ public:
     ///
     /// This function must be overriden in the derived classes to make
     /// a copy of the derived type. The simplest way to do it is by
-    /// calling @ref copyInternal function with an appropriate template
+    /// calling @ref cloneInternal function with an appropriate template
     /// parmater.
     ///
     /// @return Pointer to the copy of the option.
