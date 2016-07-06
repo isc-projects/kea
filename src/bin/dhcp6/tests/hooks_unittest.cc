@@ -758,6 +758,7 @@ TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Receive) {
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
@@ -881,6 +882,7 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Receive) {
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
@@ -1007,6 +1009,7 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Send) {
     expected_argument_names.push_back(string("response6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
     EXPECT_TRUE(callback_resp_options_copy_);
 }
@@ -1181,6 +1184,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet6collection_)[0].get());
     EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet6collection_)[1].get());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if callout installed on subnet6_select hook point can pick
@@ -1254,8 +1260,6 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
     EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
-
-    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1356,6 +1360,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     // database
     EXPECT_TRUE(*callback_lease6_ == *l);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
@@ -1604,6 +1609,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
                                               subnet_->getID());
     ASSERT_FALSE(l);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
@@ -1976,6 +1982,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease6_->addr_);
 
+    // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
