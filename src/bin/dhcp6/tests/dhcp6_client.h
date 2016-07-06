@@ -369,7 +369,7 @@ public:
     ///
     /// @return Vector containing leases for the specified address.
     std::vector<Lease6>
-        getLeasesByAddress(const asiolink::IOAddress& address) const;
+    getLeasesByAddress(const asiolink::IOAddress& address) const;
 
     /// @brief Returns leases belonging to specified address range.
     ///
@@ -378,8 +378,8 @@ public:
     ///
     /// @return Vector containing leases belonging to specified address range.
     std::vector<Lease6>
-        getLeasesByAddressRange(const asiolink::IOAddress& first,
-                                const asiolink::IOAddress& second) const;
+    getLeasesByAddressRange(const asiolink::IOAddress& first,
+                            const asiolink::IOAddress& second) const;
 
     /// @brief Returns leases belonging to prefix pool.
     ///
@@ -389,9 +389,9 @@ public:
     ///
     /// @return Vector containing leases belonging to specified prefix pool.
     std::vector<Lease6>
-        getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
-                              const uint8_t prefix_len,
-                              const uint8_t delegated_len) const;
+    getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
+                          const uint8_t prefix_len,
+                          const uint8_t delegated_len) const;
 
     /// @brief Checks if client has lease for the specified address.
     ///
@@ -458,6 +458,12 @@ public:
                                const uint8_t prefix_len,
                                const uint8_t delegated_len) const;
 
+    /// @brief Checks if client has a lease with zero lifetimes for a prefix.
+    ///
+    /// @param prefix Prefix.
+    /// @param prefix_len Prefix length.
+    ///
+    /// @return true if client has a lease with zero lifetimes for a prefix.
     bool hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix,
                                            const uint8_t prefix_len) const;
 
