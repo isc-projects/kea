@@ -30,7 +30,7 @@ Option6IA::Option6IA(uint16_t type, uint32_t iaid)
                   "a different layout");
     }
 
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
 }
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
@@ -43,7 +43,7 @@ Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
                   "a different layout");
     }
 
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
 
     unpack(begin, end);
 }

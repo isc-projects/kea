@@ -20,6 +20,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -864,7 +865,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // Iterate on the configured option list
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get("dhcp6", opt);
+            OptionDescriptor desc = (*copts)->get(DHCP6_OPTION_SPACE, opt);
             // Got it: add it and jump to the outer loop
             if (desc.option_) {
                 answer->addOption(desc.option_);
@@ -1516,6 +1517,36 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                          (*l)->prefixlen_, (*l)->preferred_lft_,
                                          (*l)->valid_lft_));
             ia_rsp->addOption(addr);
+
+            // Client requests some options using ORO option. Try to
+            // get this option from client's message.
+            boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
+                boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
+                (query->getOption(D6O_ORO));
+
+            if (option_oro) {
+
+                // Get the list of options that client requested.
+                const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+
+                bool pdExcludeFound = false;
+
+                BOOST_FOREACH(uint16_t opt, requested_opts) {
+                    if (opt == D6O_PD_EXCLUDE) {
+                        pdExcludeFound = true;
+                        break;
+                    }
+                }
+
+                Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>
+                        (ctx.subnet_->getPool(ctx.currentIA().type_, (*l)->addr_, false));
+
+                if (pdExcludeFound && pool && pool->getPrefixExcludedLength() > 0) {
+                    OptionPtr opt(new Option6PDExclude((*l)->addr_, (*l)->prefixlen_,
+                                    pool->getPrefixExcluded(), pool->getPrefixExcludedLength()));
+                    addr->addOption(opt);
+                }
+            }
         }
 
         // It would be possible to insert status code=0(success) as well,
@@ -1790,6 +1821,37 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->addr_, (*l)->prefixlen_,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
+
+        // Client requests some options using ORO option. Try to
+        // get this option from client's message.
+        boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
+            boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
+            (query->getOption(D6O_ORO));
+
+        if (option_oro) {
+
+            // Get the list of options that client requested.
+            const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+
+            bool pdExcludeFound = false;
+
+            BOOST_FOREACH(uint16_t opt, requested_opts) {
+                if (opt == D6O_PD_EXCLUDE) {
+                    pdExcludeFound = true;
+                    break;
+                }
+            }
+
+            Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>
+                    (ctx.subnet_->getPool(ctx.currentIA().type_, (*l)->addr_, false));
+
+            if (pdExcludeFound && pool && pool->getPrefixExcludedLength() > 0) {
+                OptionPtr opt(new Option6PDExclude((*l)->addr_, (*l)->prefixlen_,
+                                pool->getPrefixExcluded(), pool->getPrefixExcludedLength()));
+                prf->addOption(opt);
+            }
+        }
+
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
             .arg(query->getLabel())
             .arg((*l)->addr_.toText())

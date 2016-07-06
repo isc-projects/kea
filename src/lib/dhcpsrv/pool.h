@@ -199,7 +199,9 @@ public:
     /// @param prefix_len specifies prefix length of the pool
     /// @param delegated_len specifies lenght of the delegated prefixes
     Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
-          uint8_t prefix_len, uint8_t delegated_len = 128);
+          uint8_t prefix_len, uint8_t delegated_len = 128,
+          const isc::asiolink::IOAddress& prefix_excluded = isc::asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
+          uint8_t prefix_excluded_len = 0);
 
     /// @brief returns pool type
     ///
@@ -217,6 +219,22 @@ public:
         return (prefix_len_);
     }
 
+    /// @brief returns excluded prefix
+    ///
+    /// This is useful for prefix definitions exclude pools.
+    /// @return excluded prefix
+    const isc::asiolink::IOAddress& getPrefixExcluded() const{
+        return (prefix_excluded_);
+    }
+
+    /// @brief returns excluded prefix length
+    ///
+    /// This is useful for prefix definitions exclude pools.
+    /// @return excluded prefix length (2-128)
+    uint8_t getPrefixExcludedLength() const{
+        return (prefix_excluded_len_);
+    }
+
     /// @brief returns textual representation of the pool
     ///
     /// @return textual representation
@@ -225,6 +243,12 @@ public:
 private:
     /// @brief Defines prefix length (for TYPE_PD only)
     uint8_t prefix_len_;
+
+    /// @brief The excluded prefix (for TYPE_PD only)
+    isc::asiolink::IOAddress prefix_excluded_;
+
+    /// @brief The excluded prefix length (for TYPE_PD only)
+    uint8_t prefix_excluded_len_;
 };
 
 /// @brief a pointer an IPv6 Pool

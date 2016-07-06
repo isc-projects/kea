@@ -25,6 +25,7 @@ libkea_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libkea_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libkea_dhcp___la_SOURCES += option6_iaprefix.cc option6_iaprefix.h
+libkea_dhcp___la_SOURCES += option6_pdexclude.cc option6_pdexclude.h
 libkea_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libkea_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_status_code.cc option6_status_code.h

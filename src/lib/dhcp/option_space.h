@@ -13,8 +13,16 @@
 #include <stdint.h>
 #include <string>
 
-#define DHCP4_OPTION_SPACE "dhcp4"
-#define DHCP6_OPTION_SPACE "dhcp6"
+#define DHCP4_OPTION_SPACE      "dhcp4"
+#define DHCP6_OPTION_SPACE      "dhcp6"
+#define DOCSIS3_V4_OPTION_SPACE "docsis3_v4"
+#define DOCSIS3_V6_OPTION_SPACE "docsis3_v6"
+#define ISC_V6_OPTION_SPACE     "4o6"
+#define MAPE_V6_OPTION_SPACE    "4over6-mape"
+#define MAPT_V6_OPTION_SPACE    "4over6-mapt"
+#define LW_V6_OPTION_SPACE      "4over6-lw"
+#define V4V6_RULE_OPTION_SPACE  "v4v6rule"
+#define V4V6_BIND_OPTION_SPACE  "v4v6bind"
 
 namespace isc {
 namespace dhcp {
@@ -174,7 +182,7 @@ public:
     void setVendorSpace(const uint32_t enterprise_number);
 
 private:
-    
+
     uint32_t enterprise_number_; ///< IANA assigned enterprise number.
 };
 

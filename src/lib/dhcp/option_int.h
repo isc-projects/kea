@@ -62,7 +62,7 @@ public:
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
+        setEncapsulatedSpace(u == Option::V4 ? DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
     }
 
     /// @brief Constructor.
@@ -86,7 +86,7 @@ public:
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
+        setEncapsulatedSpace(u == Option::V4 ? DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
         unpack(begin, end);
     }
 

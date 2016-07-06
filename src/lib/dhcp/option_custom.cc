@@ -194,6 +194,15 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // that the validate() function in OptionDefinition object
                     // should have checked wheter it is a case for this option.
                     data_size = std::distance(data, data_buf.end());
+                } else if ( *field == OPT_IPV6_PREFIX_TYPE ) {
+                    // The size of the IPV6 prefix type is determined as
+                    // one byte (which is the size of the prefix in bits)
+                    // followed by the prefix bits (right-padded with
+                    // zeros to the nearest octet boundary)
+
+                    uint8_t lenBits = *data;
+                    uint8_t lenBytes = (lenBits + 7) / 8;
+                    data_size = lenBytes + sizeof(lenBits);
                 } else {
                     // If we reached the end of buffer we assume that this option is
                     // truncated because there is no remaining data to initialize
