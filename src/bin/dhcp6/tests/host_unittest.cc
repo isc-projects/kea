@@ -13,6 +13,12 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
+#include <list>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -70,7 +76,7 @@ const char* CONFIGS[] = {
         "        \"ip-addresses\": [ \"2001:db8:1:1::babf\" ]"
         "    } ]"
         " } ]"
-    "}",
+   "}",
 
     // Configuration 1:
     "{ "
@@ -248,15 +254,169 @@ const char* CONFIGS[] = {
 
 };
 
+/// @brief Base class representing leases and hints conveyed within IAs.
+///
+/// This is a base class for @ref Reservation and @ref Hint classes.
+class IAResource {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates a resource instance from a string. The string is provided in
+    /// one of the following formats:
+    /// - "2001:db8:1::1" for addresses.
+    /// - "2001:db8::/64" for prefixes.
+    /// - "::/0" to mark lease or hint as unspecified (empty).
+    IAResource(const std::string& resource);
+
+    /// @brief Checks if resource is unspecified.
+    ///
+    /// @return true if resource is unspecified.
+    bool isEmpty() const;
+
+    /// @brief Checks if resource is a prefix.
+    ///
+    /// @return true if resource is a prefix.
+    bool isPrefix() const;
+
+    /// @brief Returns prefix or address (depending on resource type).
+    const IOAddress& getPrefix() const;
+
+    /// @brief Returns prefix length.
+    uint8_t getPrefixLen() const;
+
+    /// @brief Returns textual representation of the resource.
+    std::string toText() const;
+
+    /// @brief Operator converting resource to string.
+    operator std::string() const;
+
+private:
+
+    /// @brief Holds prefix or address (depending on resource type).
+    IOAddress prefix_;
+
+    /// @brief Holds prefix length (for prefixes).
+    uint8_t prefix_len_;
+
+};
+
+IAResource::IAResource(const std::string& resource)
+    : prefix_(IOAddress::IPV6_ZERO_ADDRESS()), prefix_len_(0) {
+    // Check if resource is a prefix, i.e. search for slash.
+    size_t slash_pos = resource.find("/");
+    if ((slash_pos != std::string::npos) && (slash_pos < resource.size() - 1)) {
+        prefix_len_ = boost::lexical_cast<unsigned int>(resource.substr(slash_pos + 1));
+    }
+    prefix_ = IOAddress(resource.substr(0, slash_pos));
+}
+
+bool
+IAResource::isEmpty() const {
+    return (prefix_.isV6Zero() && (prefix_len_ == 0));
+}
+
+bool
+IAResource::isPrefix() const {
+    return (!isEmpty() && (prefix_len_ > 0));
+}
+
+const IOAddress&
+IAResource::getPrefix() const {
+    return (prefix_);
+}
+
+uint8_t
+IAResource::getPrefixLen() const {
+    return (prefix_len_);
+}
+
+std::string
+IAResource::toText() const {
+    std::ostringstream s;
+    s << "\"" << prefix_;
+    if (prefix_len_ > 0) {
+        s << "/" << static_cast<int>(prefix_len_);
+    }
+    s << "\"";
+    return (s.str());
+}
+
+IAResource::operator std::string() const {
+    return (toText());
+}
+
+/// @brief Address or prefix reservation.
+class Reservation : public IAResource {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param resource Resource string as for @ref IAResource constructor.
+    Reservation(const std::string& resource)
+        : IAResource(resource) {
+    }
+
+    /// @brief Convenience function returning unspecified resource.
+    static const Reservation& UNSPEC();
+
+};
+
+const Reservation& Reservation::UNSPEC() {
+    static Reservation unspec("::/0");
+    return (unspec);
+}
+
+/// @brief Address or prefix hint.
+class Hint : public IAResource {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Includes IAID of an IA in which hint should be placed.
+    ///
+    /// @param iaid IAID of IA in which hint should be placed.
+    /// @param resource Resource string as for @ref IAResource constructor.
+    Hint(const IAID& iaid, const std::string& resource)
+        : IAResource(resource), iaid_(iaid) {
+    }
+
+    /// @brief Returns IAID.
+    const IAID& getIAID() const;
+
+    /// @brief Convenience function returning unspecified hint.
+    static const Hint& UNSPEC();
+
+private:
+
+    /// @brief Holds IAID as 32-bit unsigned integer.
+    IAID iaid_;
+};
+
+const IAID&
+Hint::getIAID() const {
+    return (iaid_);
+}
+
+const Hint& Hint::UNSPEC() {
+    static Hint unspec(IAID(0), "::/0");
+    return (unspec);
+}
+
 /// @brief Test fixture class for testing host reservations
 class HostTest : public Dhcpv6SrvTest {
 public:
+
+
     /// @brief Constructor.
     ///
     /// Sets up fake interfaces.
     HostTest()
         : Dhcpv6SrvTest(),
-          iface_mgr_test_config_(true) {
+          iface_mgr_test_config_(true),
+          client_(),
+          do_solicit_(boost::bind(&Dhcp6Client::doSolicit, &client_, true)),
+          do_solicit_request_(boost::bind(&Dhcp6Client::doSARR, &client_)) {
     }
 
     /// @brief Checks that specified option contains a desired address.
@@ -302,8 +462,7 @@ public:
 
         // Configure client to request IA_NA and append IA_NA option
         //  to the client's message.
-        client.useNA();
-        ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+        client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
         // Perform 4-way exchange.
         ASSERT_NO_THROW(client.doSARR());
@@ -356,8 +515,146 @@ public:
     /// is also performed.
     void testOverrideVendorOptions(const uint16_t msg_type);
 
+    /// @brief Checks if the client obtained lease for specified reservation.
+    ///
+    /// @param r Reservation.
+    /// @param [out] address_count This value is incremented if the client
+    /// obtained the address lease.
+    /// @param [out] prefix_count This value is incremented if the client
+    /// obtained the prefix lease.
+    void testLeaseForIA(const Reservation& r, size_t& address_count,
+                        size_t& prefix_count);
+
+    /// @brief Checks if the client obtined lease for specified hint.
+    ///
+    /// The hint belongs to a specific IA (identified by IAID) and is expected
+    /// to be returned in this IA by the server.
+    ///
+    /// @param h Hint.
+    void testLeaseForIA(const Hint& h);
+
+    /// @brief A generic test for assigning multiple reservations to a single
+    /// client sending multiple IAs.
+    ///
+    /// This test creates a server configuration which includes one subnet,
+    /// address pool of "2001:db8:1::1 - 2001:db8:1::10" and the prefix pool
+    /// of 3001::/32, with delegated prefix length of 64. The configuration
+    /// may include between 0 and 6 reservations for a client with DUID of
+    /// "01:02:03:04".
+    ///
+    /// The test performs an exchange with a server, typically 4-way exchange
+    /// or Solicit-Advertise. The client's message includes 3 IA_NAs (with
+    /// IAIDs in range of 1..3) and 3 IA_PDs (with IAIDs in range of 4..6).
+    ///
+    /// It is possible to specify hints for selected IAs. The IA is in such
+    /// case identified by the IAID.
+    ///
+    /// The test expects that the server returns 6 leases. It checks if those
+    /// leases contain all reserved addresses and prefixes specified as
+    /// arguments of the test. If the number of IAs is greater than the
+    /// number of reservations it checks that for the remaining IAs the
+    /// leases from dynamic pools are assigned.
+    ///
+    /// The strict_iaid_check flag controls whether the test should verify
+    /// that the address or prefix specified as a hint is assigned by the
+    /// server to the IA in which the hint was placed by the client.
+    ///
+    /// @param client_operation Dhcp6Client function to be executed to
+    /// perform an exchange with the server.
+    /// @param r1 Reservation 1. Default value is "unspecified", in which
+    /// case the reservation will not be created.
+    /// @param r2 Reservation 2.
+    /// @param r3 Reservation 3.
+    /// @param r4 Reservation 4.
+    /// @param r5 Reservation 5.
+    /// @param r6 Reservation 6.
+    /// @param strict_iaid_check Indicates if the test should check if the
+    /// hints sent by the client have been allocated by the server to the
+    /// particular IAs. Default value is NO (no checks).
+    /// @param h1 Hint 1. Default value is "unspecified", in which case the
+    /// hint will not be included.
+    /// @param h2 Hint 2.
+    /// @param h3 Hint 3.
+    /// @param h4 Hint 4.
+    /// @param h5 Hint 5.
+    /// @param h6 Hint 6.
+    void testMultipleIAs(const boost::function<void ()>& client_operation,
+                         const Reservation& r1 = Reservation::UNSPEC(),
+                         const Reservation& r2 = Reservation::UNSPEC(),
+                         const Reservation& r3 = Reservation::UNSPEC(),
+                         const Reservation& r4 = Reservation::UNSPEC(),
+                         const Reservation& r5 = Reservation::UNSPEC(),
+                         const Reservation& r6 = Reservation::UNSPEC(),
+                         const StrictIAIDChecking& strict_iaid_check =
+                         StrictIAIDChecking::NO(),
+                         const Hint& h1 = Hint::UNSPEC(),
+                         const Hint& h2 = Hint::UNSPEC(),
+                         const Hint& h3 = Hint::UNSPEC(),
+                         const Hint& h4 = Hint::UNSPEC(),
+                         const Hint& h5 = Hint::UNSPEC(),
+                         const Hint& h6 = Hint::UNSPEC());
+
+    /// @brief Checks if specified reservation is for address or prefix and
+    /// stores reservation in the textual format on one of the lists.
+    ///
+    /// @param [out] address_list Reference to a list containing address
+    /// reservations.
+    /// @param [out] prefix_list Reference to a list containing prefix
+    /// reservations.
+    static void storeReservation(const Reservation& r,
+                                 std::list<std::string>& address_list,
+                                 std::list<std::string>& prefix_list);
+
+    /// @brief Creates configuration for testing processing multiple IAs.
+    ///
+    /// This method creates a server configuration which includes one subnet,
+    /// address pool of "2001:db8:1::1 - 2001:db8:1::10" and the prefix pool
+    /// of 3001::/32, with delegated prefix length of 64. The configuration
+    /// may include between 0 and 6 reservations for a client with DUID of
+    /// "01:02:03:04".
+    ///
+    /// @param r1 Reservation 1. Default value is "unspecified" in which case
+    /// the reservation will not be included in the configuration.
+    /// @param r2 Reservation 2.
+    /// @param r3 Reservation 3.
+    /// @param r4 Reservation 4.
+    /// @param r5 Reservation 5.
+    /// @param r6 Reservation 6.
+    ///
+    /// @return Text containing server configuration in JSON format.
+    std::string configString(const DUID& duid,
+                             const Reservation& r1 = Reservation::UNSPEC(),
+                             const Reservation& r2 = Reservation::UNSPEC(),
+                             const Reservation& r3 = Reservation::UNSPEC(),
+                             const Reservation& r4 = Reservation::UNSPEC(),
+                             const Reservation& r5 = Reservation::UNSPEC(),
+                             const Reservation& r6 = Reservation::UNSPEC()) const;
+
+    /// @brief Configures client to include hint.
+    ///
+    /// @param client Reference to a client.
+    /// @param hint Const reference to an object holding the hint.
+    static void requestIA(Dhcp6Client& client, const Hint& hint);
+
+    /// @brief Configures client to include 6 IAs without hints.
+    ///
+    /// This method configures the client to include 3 IA_NAs and
+    /// 3 IA_PDs.
+    ///
+    /// @param client Reference to a client.
+    static void requestEmptyIAs(Dhcp6Client& client);
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
+
+    /// @brief Instance of the common DHCPv6 client.
+    Dhcp6Client client_;
+
+    /// @brief Pointer to the Dhcp6Client::doSolicit method.
+    boost::function<void() > do_solicit_;
+
+    /// @brief Pointer to the Dhcp6Client::doSARR method.
+    boost::function<void() > do_solicit_request_;
 };
 
 void
@@ -435,6 +732,196 @@ HostTest::testOverrideRequestedOptions(const uint16_t msg_type) {
 }
 
 void
+HostTest::testLeaseForIA(const Reservation& r, size_t& address_count,
+                         size_t& prefix_count) {
+    if (r.isPrefix()) {
+        ++prefix_count;
+        EXPECT_TRUE(client_.hasLeaseForPrefix(r.getPrefix(),
+                                              r.getPrefixLen(),
+                                              IAID(3 + prefix_count)));
+
+    } else if (!r.isEmpty()) {
+        ++address_count;
+        EXPECT_TRUE(client_.hasLeaseForAddress(r.getPrefix(),
+                                               IAID(address_count)));
+    }
+}
+
+void
+HostTest::testLeaseForIA(const Hint& h) {
+    if (h.isPrefix()) {
+        EXPECT_TRUE(client_.hasLeaseForPrefix(h.getPrefix(), h.getPrefixLen(),
+                                              h.getIAID()))
+            << "there is no lease for prefix " << h.toText()
+            << " and IAID = " << h.getIAID();
+
+    } else if (!h.isEmpty()) {
+        EXPECT_TRUE(client_.hasLeaseForAddress(h.getPrefix(), h.getIAID()))
+            << "there is no lease for address " << h.toText()
+            << " and IAID = " << h.getIAID();
+    }
+}
+
+void
+HostTest::testMultipleIAs(const boost::function<void ()>& client_operation,
+                          const Reservation& r1, const Reservation& r2,
+                          const Reservation& r3, const Reservation& r4,
+                          const Reservation& r5, const Reservation& r6,
+                          const StrictIAIDChecking& strict_iaid_check,
+                          const Hint& h1, const Hint& h2 ,
+                          const Hint& h3, const Hint& h4,
+                          const Hint& h5, const Hint& h6) {
+    client_.setDUID("01:02:03:04");
+
+    /// Create configuration with 0 to 6 reservations.
+    const std::string c = configString(*client_.getDuid(), r1, r2, r3,
+                                       r4, r5, r6);
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // First includes all IAs. They are initially empty.
+    requestEmptyIAs(client_);
+
+    // For each specified hint, include it in the respective IA. Hints
+    // which are "unspecified" will not be included.
+    requestIA(client_, h1);
+    requestIA(client_, h2);
+    requestIA(client_, h3);
+    requestIA(client_, h4);
+    requestIA(client_, h5);
+    requestIA(client_, h6);
+
+
+    // Send Solicit and require that the client saves received configuration
+    // so as we can test that advertised configuration is correct.
+    ASSERT_NO_THROW(client_operation());
+
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    // Count reserved addresses and prefixes assigned from reservations.
+    size_t address_count = 0;
+    size_t prefix_count = 0;
+
+    testLeaseForIA(r1, address_count, prefix_count);
+    testLeaseForIA(r2, address_count, prefix_count);
+    testLeaseForIA(r3, address_count, prefix_count);
+    testLeaseForIA(r4, address_count, prefix_count);
+    testLeaseForIA(r5, address_count, prefix_count);
+    testLeaseForIA(r6, address_count, prefix_count);
+
+    // Get all addresses assigned from the dynamic pool (not reserved).
+    std::vector<Lease6> leases =
+        client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
+                                        IOAddress("2001:db8:1::10"));
+    // There are 3 IA_NAs and for a few we have assigned reserved addresses.
+    // The remaining ones should be assigned from the dynamic pool.
+    ASSERT_EQ(3 - address_count, leases.size());
+
+    // Get all prefixes assigned from the dynamic pool (not reserved).
+    leases =  client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
+    ASSERT_EQ(3 - prefix_count, leases.size());
+
+    // Check that the hints have been allocated to respective IAs.
+    if (strict_iaid_check) {
+        testLeaseForIA(h1);
+        testLeaseForIA(h2);
+        testLeaseForIA(h3);
+        testLeaseForIA(h4);
+        testLeaseForIA(h5);
+        testLeaseForIA(h6);
+    }
+}
+
+
+void
+HostTest::storeReservation(const Reservation& r,
+                           std::list<std::string>& address_list,
+                           std::list<std::string>& prefix_list) {
+    if (!r.isEmpty()) {
+        if (r.isPrefix()) {
+            prefix_list.push_back(r);
+        } else {
+            address_list.push_back(r);
+        }
+    }
+}
+
+std::string
+HostTest::configString(const DUID& duid,
+                       const Reservation& r1, const Reservation& r2,
+                       const Reservation& r3, const Reservation& r4,
+                       const Reservation& r5, const Reservation& r6) const {
+    std::list<std::string> address_list;
+    std::list<std::string> prefix_list;
+    storeReservation(r1, address_list, prefix_list);
+    storeReservation(r2, address_list, prefix_list);
+    storeReservation(r3, address_list, prefix_list);
+    storeReservation(r4, address_list, prefix_list);
+    storeReservation(r5, address_list, prefix_list);
+    storeReservation(r6, address_list, prefix_list);
+
+    std::ostringstream s;
+    s << "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"pd-pools\": [ { \"prefix\": \"3001::\", \"prefix-len\": 32,"
+        "                      \"delegated-len\": 64 } ],"
+        "    \"interface\" : \"eth0\"";
+
+    // Create reservations.
+    if (!address_list.empty() || !prefix_list.empty()) {
+        s << ","
+            "    \"reservations\": ["
+            "    {"
+            "        \"duid\": ";
+        s << "\"" << duid.toText() << "\",";
+
+        if (!address_list.empty()) {
+            s << "        \"ip-addresses\": [ "
+              << boost::algorithm::join(address_list, ", ")
+              << "]";
+        }
+
+        if (!prefix_list.empty()) {
+            if (!address_list.empty()) {
+                s << ", ";
+            }
+            s << "        \"prefixes\": [ "
+              << boost::algorithm::join(prefix_list, ", ")
+              << "]";
+        }
+
+        s <<  "    } ]";
+    }
+
+    s << " } ]"
+         "}";
+
+    return (s.str());
+}
+
+void
+HostTest::requestIA(Dhcp6Client& client, const Hint& hint) {
+    if ((hint.getIAID() != 0) && !hint.isEmpty()) {
+        if (hint.isPrefix()) {
+            client.requestPrefix(hint.getIAID(), hint.getPrefixLen(),
+                                 hint.getPrefix());
+        } else {
+            client.requestAddress(hint.getIAID(), hint.getPrefix());
+        }
+    }
+}
+
+void
 HostTest::testHostOnlyOptions(const uint16_t msg_type) {
     Dhcp6Client client;
     client.setDUID("01:02:03:05");
@@ -494,6 +981,17 @@ HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
     EXPECT_EQ("3000:1::234", addrs[0].toText());
 }
 
+void
+HostTest::requestEmptyIAs(Dhcp6Client& client) {
+    // Create IAs with IAIDs between 1 and 6.
+    client.requestAddress(1);
+    client.requestAddress(2);
+    client.requestAddress(3);
+    client.requestPrefix(4);
+    client.requestPrefix(5);
+    client.requestPrefix(6);
+}
+
 // Test basic SARR scenarios against a server configured with one subnet
 // containing two reservations.  One reservation with a hostname, one
 // without a hostname. Scenarios:
@@ -518,8 +1016,7 @@ TEST_F(HostTest, basicSarrs) {
     // Configure client to request IA_NA and append IA_NA option
     // to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -538,8 +1035,6 @@ TEST_F(HostTest, basicSarrs) {
     // Now redo the client, adding one to the DUID
     client.clearConfig();
     client.modifyDUID();
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -559,8 +1054,8 @@ TEST_F(HostTest, basicSarrs) {
     // we get a dynamic address.
     client.clearConfig();
     client.modifyDUID();
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.clearRequestedIAs();
+    client.requestAddress(1234);
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -585,7 +1080,7 @@ TEST_F(HostTest, sarrAndRenew) {
     configure(CONFIGS[0], *client.getServer());
 
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
@@ -594,8 +1089,7 @@ TEST_F(HostTest, sarrAndRenew) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -607,6 +1101,9 @@ TEST_F(HostTest, sarrAndRenew) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
+
+    // Do not send the hint while renewing.
+    client.clearRequestedIAs();
 
     // Send Renew message to the server.
     ASSERT_NO_THROW(client.doRenew());
@@ -635,7 +1132,7 @@ TEST_F(HostTest, sarrAndRebind) {
     configure(CONFIGS[0], *client.getServer());
 
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
@@ -644,8 +1141,7 @@ TEST_F(HostTest, sarrAndRebind) {
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
     client.setDUID("01:02:03:04");
-    client.useNA();
-    ASSERT_NO_THROW(client.useHint(100, 200, 64, "2001:db8:1:1::dead:beef"));
+    client.requestAddress(1234, IOAddress("2001:db8:1:1::dead:beef"));
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -657,6 +1153,9 @@ TEST_F(HostTest, sarrAndRebind) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
+
+    // Do not send the hint while renewing.
+    client.clearRequestedIAs();
 
     // Send Rebind message to the server.
     ASSERT_NO_THROW(client.doRebind());
@@ -677,7 +1176,7 @@ TEST_F(HostTest, sarrAndRebind) {
     EXPECT_EQ("alice", lease_server2->hostname_);
 }
 
-// This test verfies that the host reservation by DUID is found by the
+// This test verifies that the host reservation by DUID is found by the
 // server.
 TEST_F(HostTest, reservationByDUID) {
     Dhcp6Client client;
@@ -687,7 +1186,7 @@ TEST_F(HostTest, reservationByDUID) {
     testReservationByIdentifier(client, 1, "2001:db8:1::2");
 }
 
-// This test verfies that the host reservation by HW address is found
+// This test verifies that the host reservation by HW address is found
 // by the server.
 TEST_F(HostTest, reservationByHWAddress) {
     Dhcp6Client client;
@@ -784,6 +1283,501 @@ TEST_F(HostTest, overrideVendorOptionsRenew) {
 // options defined in the global scope (Rebind case).
 TEST_F(HostTest, overrideVendorOptionsRebind) {
     testOverrideVendorOptions(DHCPV6_REBIND);
+}
+
+// In this test the client sends Solicit with 3 IA_NAs and 3 IA_PDs
+// without hints and the server should return those IAs with 3 reserved
+// addresses and 3 reserved prefixes.
+TEST_F(HostTest, multipleIAsSolicit) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"));
+}
+
+// In this test the client performs 4-way exchange, sending 3 IA_NAs
+// and 3 IA_PDs without hints. The server should return those IAs
+// with 3 reserved addresses and 3 reserved prefixes.
+TEST_F(HostTest, multipleIAsRequest) {
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"));
+}
+
+// In this test the client sends Solicit with 3 IA_NAs and 3 IA_PDs
+// without hints. The server has 2 reservations for addresses and
+// 2 reservations for prefixes for this client. The server should
+// assign reserved addresses and prefixes to the client, and return
+// them in 2 IA_NAs and 2 IA_PDs. For the remaining IA_NA and IA_PD
+// the server should allocate address and prefix from a dynamic pools.
+TEST_F(HostTest, staticAndDynamicIAs) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:3::/64"));
+}
+
+// In this test the client sends Solicit with 3 IA_NAs and 3 IA_PDs.
+// The client includes an address hint for IAID = 1, a prefix length
+// hint for the IAID = 5, and the prefix hint for IAID = 6. The hints
+// match the reserved resources and should be allocated for the client.
+TEST_F(HostTest, multipleIAsHintsForReservations) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"),
+                    StrictIAIDChecking::NO(),
+                    Hint(IAID(1), "2001:db8:1:1::2"),
+                    Hint(IAID(5), "::/64"),
+                    Hint(IAID(6), "3000:1:1::/64"));
+}
+
+// In this test the client sends Solicit with 3 IA_NAs and 3 IA_PDs.
+// The client includes one address hint for IAID = 1 and one
+// prefix hint for IAID = 6. The hints point to an address and prefix
+// from the dynamic pools, but because the server has reservations
+// for other addresses and prefixes outside the pool, the address
+// and prefix specified as hint should not be allocated. Instead
+// the server should allocate reserved leases.
+TEST_F(HostTest, multipleIAsHintsInPool) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"),
+                    StrictIAIDChecking::NO(),
+                    Hint(IAID(1), "2001:db8:1::2"),
+                    Hint(IAID(6), "3001::/64"));
+}
+
+// In this test, the client sends Solicit with 3 IA_NAs and 3 IA_PDs.
+// The client includes one address hint for which the client has
+// reservation, one prefix hint for which the client has reservation,
+// one hint for an address from the dynamic pool and one hint for a
+// prefix from a dynamic pool. The server has reservations for 2
+// addresses and 2 prefixes. The server should allocate reserved
+// leases and address and prefix from a dynamic pool, which client
+// included as hints.
+TEST_F(HostTest, staticAndDynamicIAsHints) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation::UNSPEC(),
+                    Reservation::UNSPEC(),
+                    StrictIAIDChecking::NO(),
+                    Hint(IAID(1), "2001:db8:1::2"),
+                    Hint(IAID(3), "2001:db8:1:1::1"),
+                    Hint(IAID(5), "3001::/64"),
+                    Hint(IAID(6), "3000::/64"));
+}
+
+// In this test, the client sends Solicit with 3 IA_NAs and 3 IA_PDs.
+// The server has reservation for two addresses and two prefixes for
+// this client. The client includes address hint in the third IA_NA
+// and in the third IA_PD. The server should offer 2 addresses in the
+// first two IA_NAs and 2 prefixes in the two IA_PDs. The server should
+// respect hints provided within the 3rd IA_NA and 3rd IA_PD. The server
+// wouldn't respect hints if they were provided within 1st or 2nd IA of
+// a given type, because the server always tries to allocate the
+// reserved leases in the first place.
+TEST_F(HostTest, staticAndDynamicIAsHintsStrictIAIDCheck) {
+    testMultipleIAs(do_solicit_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation::UNSPEC(),
+                    Reservation::UNSPEC(),
+                    StrictIAIDChecking::YES(),
+                    Hint(IAID(3), "2001:db8:1::5"),
+                    Hint(IAID(6), "3001:0:0:10::/64"));
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs
+// and 3 IA_PDs. The client provides no hints. The server has 3 address
+// reservations and 3 prefix reservations for this client and allocates them
+// as a result of 4-way exchange. The client then sends a Renew and the server
+// should renew all leases allocated for the client during the 4-way exchange.
+TEST_F(HostTest, multipleIAsRenew) {
+    // 4-way exchange
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"));
+
+    // Renew
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // Make sure that the client still has the same leases.
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs
+// and IA_PDs. The server has 3 address and 3 prefix reservations for the
+// client and allocates them all. Once the 4-way exchange is complete,
+// the client sends Solicit in which it specifies hints for all IAs. The
+// hints are for the reserved addresses but some of them are included in
+// different IAs than they are assigned to. The server should ignore hints
+// and respond with currently assigned leases.
+TEST_F(HostTest, multipleIAsSolicitAfterAcquisition) {
+    // 4-way exchange
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("2001:db8:1:1::3"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"),
+                    Reservation("3000:1:3::/64"));
+
+    client_.clearRequestedIAs();
+
+    // Specify hints.
+
+    // "2001:db8:1:1::1" is allocated for IAID = 1 but we specify it as
+    // a hint for IAID = 3 and so on.
+    requestIA(client_, Hint(IAID(3), "2001:db8:1:1::1"));
+    requestIA(client_, Hint(IAID(2), "2001:db8:1:1::2"));
+    requestIA(client_, Hint(IAID(1), "2001:db8:1:1::3"));
+    requestIA(client_, Hint(IAID(6), "3000:1:1::/64"));
+    requestIA(client_, Hint(IAID(5), "3000:1:2::/64"));
+    requestIA(client_, Hint(IAID(4), "3000:1:3::/64"));
+
+    // Send Solicit with hints as specified above.
+    ASSERT_NO_THROW(do_solicit_());
+
+    // Make sure that the client still has the same leases and the leases
+    // should be assigned to the same IAs.
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2"),
+                                           IAID(2)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3"),
+                                           IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64,
+                                          IAID(4)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64,
+                                          IAID(5)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64,
+                                          IAID(6)));
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs and
+// 3 IA_PDs and includes no hints. The server has reservations for 2 addresses
+// and 2 prefixes for this client. The server allocates reserved leases and
+// an additional address and prefix from the dynamic pools. The server is
+// reconfigured to add 3rd address and 3rd prefix reservation for the client.
+// The client sends a Renew and the server should renew existing leases and
+// allocate newly reserved address and prefix, replacing the previously
+// allocated dynamic leases. For both dynamically allocated leases, the
+// server should return IAs with zero lifetimes.
+TEST_F(HostTest, appendReservationDuringRenew) {
+    // 4-way exchange to acquire 4 reserved leases and 2 dynamic leases.
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"));
+
+    // The server must have not lease for the address and prefix for which
+    // we will later make reservations, because these are outside of the
+    // dynamic pool.
+    ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    ASSERT_FALSE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+
+    // Retrieve leases from the dynamic pools and store them so as we can
+    // later check that they were returned with zero lifetimes when the
+    // reservations are added.
+    std::vector<Lease6> leases =
+        client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
+                                        IOAddress("2001:db8:1::10"));
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_address_lease = leases[0].addr_;
+
+    leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_prefix_lease = leases[0].addr_;
+
+    // Add two additional reservations.
+    std::string c = configString(*client_.getDuid(),
+                                 Reservation("2001:db8:1:1::1"),
+                                 Reservation("2001:db8:1:1::2"),
+                                 Reservation("2001:db8:1:1::3"),
+                                 Reservation("3000:1:1::/64"),
+                                 Reservation("3000:1:2::/64"),
+                                 Reservation("3000:1:3::/64"));
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // Client renews and includes all leases it currently has in the IAs.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // The expectation is that the server allocated two new reserved leases to
+    // the client and removed leases allocated from the dynamic pools. The
+    // number if leases in the server configuration should include those that
+    // are returned with zero lifetimes. Hence, the total number of leases
+    // should be equal to 6 + 2 = 8.
+    ASSERT_EQ(8, client_.getLeaseNum());
+
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+
+    // Make sure that the replaced leases have been returned with zero liftimes.
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(dynamic_address_lease));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
+
+    // Now let's test the scenario when all reservations are removed for this
+    // client.
+    c = configString(*client_.getDuid());
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // An attempt to renew should result in removing all allocated leases,
+    // because these leases are no longer reserved and they don't belong to the
+    // dynamic pools.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // The total number of leases should include removed leases and newly
+    // allocated once, i.e. 6 + 6 = 12.
+    ASSERT_EQ(12, client_.getLeaseNum());
+
+    // All removed leases should be returned with zero liftimes.
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::1")));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::2")));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::3")));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000:1:1::"), 64));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000:1:2::"), 64));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000:1:3::"), 64));
+
+    // Make sure that all address leases are within the dynamic pool range.
+    leases = client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
+                                            IOAddress("2001:db8:1::10"));
+    EXPECT_EQ(3, leases.size());
+
+    // Make sure that all prefix leases are also within the dynamic pool range.
+    leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
+    EXPECT_EQ(3, leases.size());
+}
+
+// In this test, the client performs 4-way exchange and includes 3 IA_NAs
+// and 3 IA_PDs. Initially, the server has 2 address reservations and
+// 2 prefix reservations for this client. The server allocates the 2
+// reserved addresses to the first 2 IA_NAs and 2 reserved prefixes to the
+// first two IA_PDs. The server is reconfigured and 2 new reservations are
+// inserted: new address reservation before existing address reservations
+// and prefix reservation before existing prefix reservations.
+// The server should detect that leases already exist for reserved addresses
+// and prefixes and it should not remove existing leases. Instead, it should
+// replace dynamically allocated leases with newly added reservations
+TEST_F(HostTest, insertReservationDuringRenew) {
+    // 4-way exchange to acquire 4 reserved leases and 2 dynamic leases.
+    testMultipleIAs(do_solicit_request_,
+                    Reservation("2001:db8:1:1::1"),
+                    Reservation("2001:db8:1:1::2"),
+                    Reservation("3000:1:1::/64"),
+                    Reservation("3000:1:2::/64"));
+
+    // The server must have not lease for the address and prefix for which
+    // we will later make reservations, because these are outside of the
+    // dynamic pool.
+    ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3")));
+    ASSERT_FALSE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
+
+    // Retrieve leases from the dynamic pools and store them so as we can
+    // later check that they were returned with zero lifetimes when the
+    // reservations are added.
+    std::vector<Lease6> leases =
+        client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
+                                        IOAddress("2001:db8:1::10"));
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_address_lease = leases[0].addr_;
+
+    leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
+    ASSERT_EQ(1, leases.size());
+    IOAddress dynamic_prefix_lease = leases[0].addr_;
+
+    // Add two additional reservations.
+    std::string c = configString(*client_.getDuid(),
+                                 Reservation("2001:db8:1:1::3"),
+                                 Reservation("2001:db8:1:1::1"),
+                                 Reservation("2001:db8:1:1::2"),
+                                 Reservation("3000:1:3::/64"),
+                                 Reservation("3000:1:1::/64"),
+                                 Reservation("3000:1:2::/64"));
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // Client renews and includes all leases it currently has in the IAs.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // The expectation is that the server allocated two new reserved leases to
+    // the client and removed leases allocated from the dynamic pools. The
+    // number if leases in the server configuration should include those that
+    // are returned with zero lifetimes. Hence, the total number of leases
+    // should be equal to 6 + 2 = 8.
+    ASSERT_EQ(8, client_.getLeaseNum());
+
+    // Even though the new reservations have been added before existing
+    // reservations, the server should assign them to the IAs with
+    // IAID = 3 (for address) and IAID = 6 (for prefix).
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2"),
+                                           IAID(2)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::3"),
+                                           IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:1::"), 64,
+                                          IAID(4)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64,
+                                          IAID(5)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64,
+                                          IAID(6)));
+
+    // Make sure that the replaced leases have been returned with zero liftimes.
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(dynamic_address_lease));
+    EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
+}
+
+// In this test there are two clients. One client obtains two leases: one
+// for a prefix, another one for an address. The server is reconfigured
+// to make 4 reservations to a different client. Two of those reservations
+// are for the prefix and the address assigned to the first client. The
+// second client performs 4-way exchange and the server detects that two
+// reserved leases are not available because they are in use by another
+// client. The server assigns available address and prefix and an address
+// and prefix from dynamic pool. The first client renews and the server
+// detects that the renewed leases are reserved for another client. As
+// a result, the client obtains an address and prefix from the dynamic
+// pools. The second client renews and it obtains all reserved
+// addresses and prefixes.
+TEST_F(HostTest, multipleIAsConflict) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+
+    // Create configuration without any reservations.
+    std::string c = configString(*client_.getDuid());
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // First client performs 4-way exchange and obtains an address and
+    // prefix indicated in hints.
+    requestIA(client, Hint(IAID(1), "2001:db8:1::1"));
+    requestIA(client, Hint(IAID(2), "3001:0:0:10::/64"));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure the client has obtained requested leases.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::1"), IAID(1)));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64,
+                                         IAID(2)));
+
+    // Reconfigure the server to make reservations for the second client.
+    // The reservations include a prefix and address acquired by the
+    // first client in the previous transaction.
+    c = configString(*client_.getDuid(),
+                     Reservation("2001:db8:1::1"),
+                     Reservation("2001:db8:1::2"),
+                     Reservation("3001:0:0:9::/64"),
+                     Reservation("3001:0:0:10::/64"));
+
+    ASSERT_NO_THROW(configure(c, *client_.getServer()));
+
+    // Configure the second client to send two IA_NAs and two IA_PDs with
+    // IAIDs from 1 to 4.
+    client_.requestAddress(1);
+    client_.requestAddress(2);
+    client_.requestPrefix(3);
+    client_.requestPrefix(4);
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(do_solicit_request_());
+
+    // The client should have obtained 4 leases: two prefixes and two addresses.
+    ASSERT_EQ(4, client_.getLeaseNum());
+
+    // The address "2001:db8:1::2" is reserved and available so the
+    // server should have assigned it.
+    ASSERT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
+                                           IAID(1)));
+    // The address "2001:db8:1::1" was hijacked by another client so it
+    // must not be assigned to thsi client.
+    ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::1")));
+    // This client should have got an address from the dynamic pool excluding
+    // two addresses already assigned, i.e. excluding "2001:db8:1::1" and
+    // "2001:db8:1::2".
+    ASSERT_TRUE(client_.hasLeaseForAddressRange(IOAddress("2001:db8:1::3"),
+                                                IOAddress("2001:db8:1::10")));
+
+    // Same story with prefixes.
+    ASSERT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:9::"), 64,
+                                          IAID(3)));
+    ASSERT_FALSE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64));
+
+
+    // Now that the reservations have been made, the first client should get
+    // non-reserved leases upon renewal. The server detects that the leases
+    // are reserved for someone else.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // For those leases, the first client should get 0 lifetimes.
+    ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::1")));
+    ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3001:0:0:10::"), 64));
+
+    // The total number of leases should be 4 - two leases with zero lifetimes
+    // and two leases with address and prefix from the dynamic pools, which
+    // replace previously assigned leases. We don't care too much what those
+    // leases are, though.
+    EXPECT_EQ(4, client.getLeaseNum());
+
+    // The second client renews and the server should be now able to assign
+    // all reserved leases to this client.
+    ASSERT_NO_THROW(client_.doRenew());
+
+    // Client requests 4 leases, but there are additional two with zero
+    // lifetimes to indicate that the client should not use the address
+    // and prefix from the dynamic pools anymore.
+    ASSERT_EQ(6, client_.getLeaseNum());
+
+    // Check that the client has all reserved leases.
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
+                                           IAID(1)));
+    EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::1"),
+                                           IAID(2)));
+
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:9::"), 64,
+                                          IAID(3)));
+    EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64,
+                                          IAID(4)));
 }
 
 

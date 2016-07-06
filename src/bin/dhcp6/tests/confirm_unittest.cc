@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -115,7 +115,7 @@ TEST_F(ConfirmTest, sanityCheck) {
 TEST_F(ConfirmTest, directClientSameIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -157,7 +157,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
 TEST_F(ConfirmTest, directClientDifferentIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -205,7 +205,7 @@ TEST_F(ConfirmTest, relayedClient) {
     // Client to send relayed message.
     client.useRelay();
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Keep the client's lease for future reference.
@@ -265,7 +265,7 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
     // Client to send relayed message.
     client.useRelay();
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Now that the client has a lease, let's remove any subnets to check
@@ -305,7 +305,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // Client to send relayed message.
     client.useRelay();
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Make sure we have got the lease.
@@ -329,7 +329,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
 TEST_F(ConfirmTest, unicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Make sure the client has got the lease.
