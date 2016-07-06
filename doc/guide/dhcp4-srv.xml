@@ -2705,21 +2705,25 @@ It is merely echoed by the server
     <para>Vendor specific options can be reserved in a similar manner:</para>
 
     <screen>
-"reservations": [
 {
-    "hw-address": "aa:bb:cc:dd:ee:ff",
-    "ip-address": "10.0.0.7",
-    <userinput>"option-data": [
-    {
-        "name": "vivso-suboptions",
-        "data": "4491"
-    },
-    {
-        "name": "tftp-servers",
-        "space": "vendor-4491",
-        "data": "10.1.1.202,10.1.1.203"
-    } ]</userinput>
-} ]</screen>
+    "subnet4": [ {
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            "ip-address": "10.0.0.7",
+            <userinput>"option-data": [
+            {
+                "name": "vivso-suboptions",
+                "data": "4491"
+            },
+            {
+                "name": "tftp-servers",
+                "space": "vendor-4491",
+                "data": "10.1.1.202,10.1.1.203"
+            } ]</userinput>
+        } ]
+    } ]
+}</screen>
 
 <para>
  Options defined on host level have the highest priority. In other words,
