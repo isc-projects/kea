@@ -479,12 +479,12 @@ struct Lease6 : public Lease {
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr hardware address (MAC), may be NULL
-    /// @param prefixlen An address prefix length.
+    /// @param prefixlen An address prefix length (optional, defaults to 128)
     Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
            uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,
-           const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 0);
+           const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 128);
 
     /// @brief Constructor
     ///
