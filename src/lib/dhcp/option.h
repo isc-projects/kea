@@ -163,10 +163,10 @@ public:
 
     /// @brief Copies this option and returns a pointer to the copy.
     ///
-    /// This function must be overriden in the derived classes to make
+    /// This function must be overridden in the derived classes to make
     /// a copy of the derived type. The simplest way to do it is by
     /// calling @ref cloneInternal function with an appropriate template
-    /// parmater.
+    /// parameter.
     ///
     /// @return Pointer to the copy of the option.
     virtual OptionPtr clone() const;
@@ -203,7 +203,7 @@ public:
 
     /// @brief Returns string representation of the value
     ///
-    /// This is terse repesentation used in cases where client classification
+    /// This is terse representation used in cases where client classification
     /// refers to a specific option.
     ///
     /// @return string that represents the value of the option.
@@ -272,7 +272,7 @@ public:
     ///
     /// @param type type of requested suboption
     ///
-    /// @return shared_ptr to requested suoption
+    /// @return shared_ptr to requested suboption
     OptionPtr getOption(uint16_t type) const;
 
     /// @brief Returns all encapsulated options.
@@ -375,8 +375,8 @@ public:
     /// @brief Checks if options are equal.
     ///
     /// This method calls a virtual @c equals function to compare objects.
-    /// This method is not meant to be overriden in the derived classes.
-    /// Instead, the other @c equals function must be overriden.
+    /// This method is not meant to be overridden in the derived classes.
+    /// Instead, the other @c equals function must be overridden.
     ///
     /// @param other Pointer to the option to compare this option to.
     /// @return true if both options are equal, false otherwise.

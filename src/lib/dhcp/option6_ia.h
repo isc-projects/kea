@@ -61,7 +61,7 @@ public:
     ///
     /// @param indent number of leading space characters
     ///
-    /// @return string with text represenation
+    /// @return string with text representation
     virtual std::string toText(int indent = 0) const;
 
     /// Sets T1 timer.
