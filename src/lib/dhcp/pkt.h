@@ -31,7 +31,7 @@ namespace dhcp {
 /// server is going to invoke a callout (hook library) where copying options
 /// must be enabled by default. When the callouts return copying options
 /// should be disabled. The use of RAII object eliminates the need for
-/// explicitly re-renabling options copying and is safer in case of
+/// explicitly re-disabling options copying and is safer in case of
 /// exceptions thrown by callouts and a presence of multiple exit points.
 template<typename PktType>
 class ScopedEnableOptionsCopy {

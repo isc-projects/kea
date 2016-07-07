@@ -995,7 +995,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Clear skip flag if it was set in previous callouts
         callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
-        // Enable copying options from the query and response packet within
+        // Enable copying options from the query and response packets within
         // hook library.
         ScopedEnableOptionsCopy<Pkt4> query_resp_options_copy(query, rsp);
 
