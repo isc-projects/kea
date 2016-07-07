@@ -106,6 +106,7 @@ AC_LANG([C++])
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
+# USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 dnl Determine if we are using GNU sed
@@ -136,9 +137,9 @@ AC_DEFUN([KEA_CXX_TRY_FLAG], [
   AC_MSG_CHECKING([whether $CXX supports $1])
 
   kea_save_CXXFLAGS="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS $1"
+  CXXFLAGS="$CXXFLAGS -Werror $1"
 
-  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(){ return 0;}])],
                  [kea_cxx_flag=yes], [kea_cxx_flag=no])
   CXXFLAGS="$kea_save_CXXFLAGS"
 
@@ -169,16 +170,12 @@ fi
 # happen if clang++ is used via ccache.  So, although probably suboptimal,
 # we suppress this particular warning.  Note that it doesn't weaken checks
 # on the source code.
-if test "$CLANGPP" = "yes"; then
+if test "X$CLANGPP" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 KEA_CXXFLAGS="$KEA_CXXFLAGS -Qunused-arguments"
 fi
 
-KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
-	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
-AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
-# gcc specific settings:
+# gcc/clang specific settings:
 if test "X$GXX" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
@@ -206,13 +203,15 @@ esac
 KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
 # Don't use -Werror if configured not to
+werror_extras=
 AC_ARG_WITH(werror,
     AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
     [
      case "${withval}" in
          yes) with_werror=1 ;;
          no)  with_werror=0 ;;
-         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+         -*)  with_werror=1; werror_extras=${withval} ;;
+	 *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
      esac],
      [with_werror=1])
 
@@ -235,6 +234,30 @@ if test $with_werror = 1; then
 	[AC_MSG_RESULT(yes)])
    CXXFLAGS="$CXXFLAGS_SAVED"
 fi
+
+# Added flags after -Werror
+
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+# But older GCC compilers don't have the flag.
+KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
+	[KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-field-initializers"])
+
+if test "X$CLANGPP" = "Xyes"; then
+	# This is to workaround unused variables tcout and tcerr in
+	# log4cplus's streams.h and unused parameters from some of the
+	# Boost headers.
+	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-unused-variable -Wno-unused-parameter"
+fi
+
+# Add the extras at the very last
+# Note it can be used to re-enable a (fatal) warning
+for extra in $werror_extras; do
+	KEA_CXX_TRY_FLAG([$extra],
+		[KEA_CXXFLAGS="$KEA_CXXFLAGS $extra"],
+		[AC_MSG_ERROR([$CXX does not support $extra"])])
+done
 
 fi				dnl GXX = yes
 
@@ -1114,7 +1137,7 @@ LIBS=$LIBS_SAVED
 AX_BOOST_FOR_KEA
 # Boost offset_ptr is required in one library and not optional right now, so
 # we unconditionally fail here if it doesn't work.
-if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes" -a "$werror_ok" = 1; then
+if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes" -a X"$werror_ok" = X1; then
     AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])
 fi
 

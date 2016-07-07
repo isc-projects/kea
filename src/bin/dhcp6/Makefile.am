@@ -15,10 +15,6 @@ AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static

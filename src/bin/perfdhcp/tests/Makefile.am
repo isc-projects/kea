@@ -35,12 +35,6 @@ run_unittests_SOURCES += command_options_helper.h
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-run_unittests_CXXFLAGS = -Wno-unused-parameter
-endif
-
 run_unittests_LDADD  = $(top_builddir)/src/bin/perfdhcp/libperfdhcp.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
