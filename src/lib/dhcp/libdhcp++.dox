@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,9 +22,10 @@ The following classes for packet manipulation are implemented:
 
 - isc::dhcp::Pkt4 - represents a DHCPv4 packet.
 - isc::dhcp::Pkt6 - represents a DHCPv6 packet.
+- isc::dhcp::Pkt4o6 - represents a DHCPv4-over-DHCPv6 packet.
 
-The following pointer types are defined: \c Pkt4Ptr and \c Pkt6Ptr. They are
-smart pointers using the \c boost::shared_ptr type. There are no const
+The following pointer types are defined: \c Pkt4Ptr, \c Pkt6Ptr and Pkt4o6Ptr.
+They are smart pointers using the \c boost::shared_ptr type. There are no const
 versions of packet types defined, as we assume that hooks can modify any
 aspect of the packet at almost any stage of processing.
 
@@ -62,6 +63,19 @@ option rather than in a message directly). This functionality is commonly used i
 DHCPv6, but is rarely used in DHCPv4. \ref isc::dhcp::Option::addOption(),
 \ref isc::dhcp::Option::delOption(), \ref isc::dhcp::Option::getOption() can
 be used to add, remove and retrieve sub-options from within an option.
+
+@section libdhcpDhcp4o6 DHCPv4-over-DHCPv6 support
+
+The DHCPv4-over-DHCPv6 packet class (\c Pkt4o6) is derived from
+the DHCPv4 packet class (\c Pkt4) with:
+
+- un extra member pointing to the encapsulating DHCPv6 packet, accessible
+ by \ref isc::dhcp::Pkt4o6::getPkt6()
+- a specialized isc::dhcp::Pkt::pack() method which builds the wire-format
+ data of the whole DHCPv6-over-DHCPv4 packet.
+
+To avoid the extra overhead of dynamic casts the isc::dhcp::Pkt4::isDhcp4o6()
+virtual method returns true for \c Pkt4o6 instances and false for others.
 
 @section libdhcpRelay Relay v6 support in Pkt6
 
@@ -113,7 +127,7 @@ server's response object. See @ref isc::dhcp::Pkt6::RelayInfo for details.
 @section libdhcpIfaceMgr Interface Manager
 
 Interface Manager (or IfaceMgr) is an abstraction layer for low-level
-network operations. In particlar, it provides information about existing
+network operations. In particular, it provides information about existing
 network interfaces See @ref isc::dhcp::Iface class and
 @ref isc::dhcp::IfaceMgr::detectIfaces() and @ref isc::dhcp::IfaceMgr::getIface().
 

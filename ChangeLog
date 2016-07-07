@@ -1,3 +1,25 @@
+1140.	[func]		marcin
+	DHCPv6 server supports assigning multiple reserved addresses
+	and/or prefixes to a single client.
+	(Trac #4321, git 0bfb2a9093174e4424051c01beeee7637ac95be0)
+
+1139.	[doc]		tomek
+	New features of host reservations have been documented: ability
+	to reserve standard and vendor options in host reservations. Separate
+	sections for each backend added.
+	(Trac #4518, git 99a40fead28f4324dfb55f1962a8bf3e85ab70e2)
+
+1138.	[build]		fdupont
+	Compilation problem on FreeBSD caused by unused parameter in
+	certain version of boost headers is now resolved. Also, INSTALL
+	file has been updated and now lists dependencies.
+	(Trac #4283, git 7dbd95651c308527f2e42c533fdc0a12aeec5308)
+
+1137.	[doc]		fdupont
+	Developer's Guide has been updated with DHCPv4-over-DHCPv6 support
+	details.
+	(Trac #4274, git b3eda594e055f03a9a601bacf0c72c3db0ef8e3c)
+
 1136.	[doc]		tomek
 	Included full text of MPL 2.0 and Apache licenses.
 	(Trac #4529, git baefb4b3e2078a0a0f794b42ef52d6b7d53c9dab)

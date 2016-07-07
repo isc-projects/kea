@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,8 @@ This library contains several crucial elements for the operation of the DHCP ser
 - isc::dhcp::HostMgr - manager for static reservations (a.k.a. host reservations).
 - isc::dhcp::D2ClientMgr - DHCP-DDNS (D2) client manager which is responsible for
   the communication between the DHCP server and the D2 component.
+- isc::dhcp::Dhcp4o6IpcBase - common part (base class) of DHCPv4-over-DHCPv6
+  inter server communication (aka IPC).
 
 @section leasemgr Lease Manager
 
@@ -67,7 +69,7 @@ the \ref isc::dhcp::CfgMgr::getStagingCfg is called again a fresh/default
 
 The Configuration Manager stores previous configurations, i.e. configurations
 which occurred prior to the most current configuration. This is currently
-unused (except for unit tests) by the deamons, but in the future this
+unused (except for unit tests) by the daemons, but in the future this
 mechanism can be used to trigger a rollover of the server configuration
 to a last good configuration that the administrator prefers.
 
@@ -92,7 +94,7 @@ database. This object must implement the \ref isc::dhcp::BaseHostDataSource
 interface and its implementation is specific to the type of storage
 holding the reservations. For example, the host data source managing
 host reservations in the MySQL database is required to establish
-connection to the MySQL databse and issue specific queries. Once
+connection to the MySQL database and issue specific queries. Once
 implemented, the \ref isc::dhcp::HostMgr::create method must be updated
 to create an instance of this datasource. Note, that this instance is
 created as "alternate host data source" as opposed to the primary data
@@ -113,7 +115,7 @@ documentation.
 @section optionsConfig Options Configuration Information
 
 The \ref isc::dhcp::CfgOption object holds a collection of options being
-sent to the client. Since each subnet comes with a distnict set of
+sent to the client. Since each subnet comes with a distinct set of
 options, every \ref isc::dhcp::Subnet object holds its own copy of the
 \ref isc::dhcp::CfgOption object with specific options.
 
@@ -137,7 +139,7 @@ that there may be cases when the server administrator doesn't specify
 any subnet configuration and only wants global options to be used.
 This is the case, when the DHCP server is used for stateless
 configuration, i.e. client's are not allocated an address or prefix,
-and only stateless configruation is handed out.
+and only stateless configuration is handed out.
 
 @section allocengine Allocation Engine
 
@@ -242,7 +244,7 @@ reserved until the client using this address releases or the server
 assigns a different address for it.
 
 In order to resolve this conflict the Allocation Engine will refuse to
-renew the lease for the client using the addres not reserved for it.
+renew the lease for the client using the address not reserved for it.
 This client should fall back to the 4-way exchange and the Allocation
 Engine will assign a different address. As a result, the reserved
 address will be freed for the use of the client for which the reservation
@@ -269,7 +271,7 @@ leases.
 
 The @c isc::dhcp::TimerMgr has been created to address the issue of
 processing expired leases according to the the dedicated timer.
-Nevertheless, this concept is univeral and should be used for
+Nevertheless, this concept is universal and should be used for
 all timers which need to be triggered asynchronously, i.e. independently
 from processing the DHCP messages.
 
@@ -365,5 +367,104 @@ to remove those leases for which the specified amount of time
 since expiration elapsed. These methods are executed periodically
 by the DHCP servers using the dedicated timers registered in the
 @c isc::dhcp::TimerMgr.
+
+@section subnetSelect Subnet Selection
+
+An important service offered by this library is the subnet selection
+from a query packet.
+
+@subsection dhcp4SubnetSelect DHCPv4 Subnet Selection
+
+Selectors (i.e., members of @c SubnetSelector class) are:
+- incoming interface name
+- gateway address - giaddr field
+- client address - ciaddr field
+- local address
+- remote address
+- option select - from the first Relay Agent Link Selection suboption or
+  from a Subnet Selection option
+- client classes - used to reject a matching rule and try next rules
+
+First use the option select, next if the message was relayed (not undefined
+gateway address) use the gateway address as a subnet relay address.
+
+If a subnet was not already selected choose an address between:
+
+- if the gateway address is not undefined the gateway address
+- if the client address is not undefined and the local address not the
+  broadcast address (i.e., renew or rebind) the client address
+- if the remote address is not undefined and the local address not the
+  broadcast address (i.e., renew or rebind) the remote address
+- at this point try the interface name as a subnet interface
+- if the interface name does not select a subnet choose the interface address
+  (last resort)
+
+Match the chosen address in a subnet address range.
+
+@subsection dhcp4o6SubnetSelect DHCPv4-over-DHCPv6 Subnet Selection
+
+Selectors (i.e., members of @c SubnetSelector class) are:
+- incoming interface name
+- gateway address - giaddr field (should be always undefined)
+- client address - ciaddr field
+- local address - set to the interface IPv4 address
+- remote address - IPv6 address
+- option select - from a Subnet Selection option
+- first relay link address - (IPv6) undefined or the first relay link
+  address which is not undefined or link local (i.e., usable)
+- interface ID - (IPv6) when a relay message includes an interface ID
+  relay option
+- client classes - used to reject a matching rule and try next rules
+
+Check if DHCPv4-over-DHCPv6 is enabled for this particular subnet and
+continue with the next subnet is if it is not.
+
+First the remote address is matched in a subnet IPv6 range, second
+the interface ID if it is set is matched, third the interface name.
+
+These rules are applied for each subnet configuration so if two
+subnets match the first one is returned (vs. the first matching rule).
+
+@todo better DHCPv4-over-DHCPv6 selection, e.g., handle relayed
+messages and return best (vs first) match.
+
+@subsection dhcp6SubnetSelection DHCPv6 Subnet Selection
+
+Selectors (i.e., members of @c SubnetSelector class) are:
+- incoming interface name
+- remote address
+- first relay link address - undefined or the first relay link address which
+  is not undefined or link local (i.e., usable)
+- interface ID - when a relay message includes an interface ID relay option
+- client classes - used to reject a matching rule and try next rules
+
+If the first relay link address is undefined the client is directly connected:
+the interface name is matched and if it does not select a subnet the remote
+address is matched in a subnet address range.
+
+If the first relay link address is not undefined the query was relayed:
+the interface ID is tried and if it does not select a subnet the first
+relay address is matched as a subnet relay address.
+
+@section dhcp4o6Ipc DHCPv4-over-DHCPv6 Inter Process Communication
+
+DHCPv4-over-DHCPv6 support is implemented using cooperating
+DHCPv6 and DHCPv6 servers. Servers communicate over a pair of
+local UDP sockets using consecutive ports. The common part of
+the Inter Process Communication (IPC) is provided by the base class
+@c isc::dhcp::Dhcp4o6IpcBase.
+
+The receiving interface name and remote IPv6 address meta information
+are conveyed within a Vendor Specific Information option with the ISC
+enterprise ID carrying interface and remote address suboptions.
+\ref isc::dhcp::Dhcp4o6IpcBase::send adds them,
+\ref isc::dhcp::Dhcp4o6IpcBase::receive decodes and removes them.
+
+Also see \ref dhcpv4o6Dhcp4 and \ref dhcpv4o6Dhcp6 for details on how IPC
+is used by DHCPv4 and DHCPv6 components.
+
+@todo
+
+DHCPv4-over-DHCPv6 which are relayed by a DHCPv6 relay are not yet supported.
 
 */

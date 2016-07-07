@@ -194,6 +194,18 @@ host    all             all             127.0.0.1/32            password
 host    all             all             ::1/128                 password
 @endverbatim
 
+  Another possible problem is to get no password prompt, in general because
+  you have no <tt>pg_hba.conf</tt> config file and everybody is by default
+  trusted. As it has a very bad effect on the security you should have
+  been warned it is a highly unsafe config. The solution is the same,
+  i.e., require password or md5 authentication method. If you lose
+  the postgres user access you can add first:
+@verbatim
+local   all             postgres                                trust
+@endverbatim
+  to trust only the local postgres user. Note the postgres user can
+  be pgsql on some systems.
+
   Please consult your PostgreSQL user manual before applying those changes as
   those changes may expose your other databases that you run on the same system.
   In general case, it is a poor idea to run anything of value on a system

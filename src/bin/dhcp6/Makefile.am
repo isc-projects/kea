@@ -15,10 +15,6 @@ AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -29,7 +25,7 @@ CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
-EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox
+EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 
 if GENERATE_DOCS
 
