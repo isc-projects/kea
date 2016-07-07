@@ -587,9 +587,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         Pool6>(ctx.subnet_->getPool(ctx.currentIA().type_, hint, false));
 
     if (pool) {
+
         /// @todo: We support only one hint for now
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                                hint);
+        Lease6Ptr lease =
+            LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
         if (!lease) {
 
             // In-pool reservations: Check if this address is reserved for someone
@@ -758,33 +759,45 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     IPv6Resrv::Type type = ctx.currentIA().type_ == Lease::TYPE_NA ?
         IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD;
 
-    // Get the IPv6 reservations of specified type.
-    const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
-    for (IPv6ResrvIterator resv = reservs.first; resv != reservs.second; ++resv) {
-        // We do have a reservation for addr.
-        IOAddress addr = resv->second.getPrefix();
-        uint8_t prefix_len = resv->second.getPrefixLen();
-
-        // Check if already have this lease on the existing_leases list.
-        for (Lease6Collection::iterator l = existing_leases.begin();
-             l != existing_leases.end(); ++l) {
-
-            // Ok, we already have a lease for this reservation and it's usable
-            if (((*l)->addr_ == addr) && (*l)->valid_lft_ != 0) {
+    // We want to avoid allocating new lease for an IA if there is already
+    // a valid lease for which client has reservation. So, we first check if
+    // we already have a lease for a reserved address or prefix.
+    BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
+        if ((lease->valid_lft_ != 0)) {
+            if (ctx.host_->hasReservation(IPv6Resrv(type, lease->addr_,
+                                                    lease->prefixlen_))) {
+                // We found existing lease for a reserved address or prefix.
+                // We'll simply extend the lifetime of the lease.
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                           ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS)
                     .arg(ctx.query_->getLabel())
-                    .arg((*l)->typeToText((*l)->type_))
-                    .arg((*l)->addr_.toText());
+                    .arg(lease->typeToText(lease->type_))
+                    .arg(lease->addr_.toText());
 
                 // If this is a real allocation, we may need to extend the lease
                 // lifetime.
-                if (!ctx.fake_allocation_ && conditionalExtendLifetime(**l)) {
-                    LeaseMgrFactory::instance().updateLease6(*l);
+                if (!ctx.fake_allocation_ && conditionalExtendLifetime(*lease)) {
+                    LeaseMgrFactory::instance().updateLease6(lease);
                 }
-
                 return;
             }
+        }
+    }
+
+    // There is no lease for a reservation in this IA. So, let's now iterate
+    // over reservations specified and try to allocate one of them for the IA.
+
+    // Get the IPv6 reservations of specified type.
+    const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
+    BOOST_FOREACH(IPv6ResrvTuple type_lease_tuple, reservs) {
+        // We do have a reservation for address or prefix.
+        const IOAddress& addr = type_lease_tuple.second.getPrefix();
+        uint8_t prefix_len = type_lease_tuple.second.getPrefixLen();
+
+        // We have allocated this address/prefix while processing one of the
+        // previous IAs, so let's try another reservation.
+        if (ctx.isAllocated(addr, prefix_len)) {
+            continue;
         }
 
         // If there's a lease for this address, let's not create it.
@@ -838,37 +851,60 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     // so the operation shouldn't be that expensive.
     Lease6Collection copy = existing_leases;
 
-    for (Lease6Collection::const_iterator candidate = copy.begin();
-         candidate != copy.end(); ++candidate) {
+    BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
+        // If we have reservation we should check if the reservation is for
+        // the candidate lease. If so, we simply accept the lease.
+        if (ctx.host_) {
+            if (candidate->type_ == Lease6::TYPE_NA) {
+                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                                        candidate->addr_))) {
+                    continue;
+                }
+            } else {
+                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                                        candidate->addr_,
+                                                        candidate->prefixlen_))) {
+                    continue;
+                }
+            }
+        }
 
+        // The candidate address doesn't appear to be reserved for us.
+        // We have to make a bit more expensive operation here to retrieve
+        // the reservation for the candidate lease and see if it is
+        // reserved for someone else.
         ConstHostPtr host = HostMgr::instance().get6(ctx.subnet_->getID(),
-                                                     (*candidate)->addr_);
-
-        if (!host || (host == ctx.host_)) {
-            // Not reserved or reserved for us. That's ok, let's check
-            // the next lease.
+                                                     candidate->addr_);
+        // If lease is not reserved to someone else, it means that it can
+        // be allocated to us from a dynamic pool, but we must check if
+        // this lease belongs to any pool. If it does, we can proceed to
+        // checking the next lease.
+        if (!host && ctx.subnet_->inPool(candidate->type_, candidate->addr_)) {
             continue;
         }
 
-        // Ok, we have a problem. This host has a lease that is reserved
-        // for someone else. We need to recover from this.
-        if (ctx.currentIA().type_ == Lease::TYPE_NA) {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
-                .arg((*candidate)->addr_.toText()).arg(ctx.duid_->toText())
-                .arg(host->getIdentifierAsText());
-        } else {
-            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
-                .arg((*candidate)->addr_.toText())
-                .arg(static_cast<int>((*candidate)->prefixlen_))
-                .arg(ctx.duid_->toText())
-                .arg(host->getIdentifierAsText());
+        if (host) {
+            // Ok, we have a problem. This host has a lease that is reserved
+            // for someone else. We need to recover from this.
+            if (ctx.currentIA().type_ == Lease::TYPE_NA) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
+                    .arg(candidate->addr_.toText()).arg(ctx.duid_->toText())
+                    .arg(host->getIdentifierAsText());
+            } else {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
+                    .arg(candidate->addr_.toText())
+                    .arg(static_cast<int>(candidate->prefixlen_))
+                    .arg(ctx.duid_->toText())
+                    .arg(host->getIdentifierAsText());
+            }
         }
 
-        // Remove this lease from LeaseMgr
-        LeaseMgrFactory::instance().deleteLease((*candidate)->addr_);
+        // Remove this lease from LeaseMgr as it is reserved to someone
+        // else or doesn't belong to a pool.
+        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
 
         // Update DNS if needed.
-        queueNCR(CHG_REMOVE, *candidate);
+        queueNCR(CHG_REMOVE, candidate);
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
@@ -883,10 +919,10 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // should not interfere with it.
 
         // Add this to the list of removed leases.
-        ctx.currentIA().old_leases_.push_back(*candidate);
+        ctx.currentIA().old_leases_.push_back(candidate);
 
         // Let's remove this candidate from existing leases
-        removeLeases(existing_leases, (*candidate)->addr_);
+        removeLeases(existing_leases, candidate->addr_);
     }
 }
 

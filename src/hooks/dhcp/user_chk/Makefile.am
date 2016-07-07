@@ -4,12 +4,6 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 # Define rule to build logging source files from message file
 user_chk_messages.h user_chk_messages.cc: s-messages
 s-messages: user_chk_messages.mes
@@ -48,11 +42,6 @@ nodist_libduc_la_SOURCES = user_chk_messages.cc user_chk_messages.h
 
 libduc_la_CXXFLAGS = $(AM_CXXFLAGS)
 libduc_la_CPPFLAGS = $(AM_CPPFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libduc_la_CXXFLAGS += -Wno-unused-parameter
-endif
 
 noinst_LTLIBRARIES += libdhcp_user_chk.la
 
