@@ -667,7 +667,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "option-data": [
         {
             "name": "unicast",
-            "data": "2001:db8:2::45"
+            "data": "2001:db8::1"
         } ],
     ...
 }
@@ -679,6 +679,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Usually unicast support is associated with a server unicast option
         which allows clients to send unicast messages to the server.
+        The example above contains a server unicast option specification
+        which causes the client to send messages to the specified
+        unicast address.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
