@@ -113,12 +113,11 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     CqlVersionExchange() {
         // Set the column names
-        const size_t MAX_COLUMNS = 2U;
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("version",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("minor",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
-        BOOST_ASSERT(parameters_.size() == MAX_COLUMNS);
+        BOOST_ASSERT(parameters_.size() == 2U);
     }
 };
 

@@ -407,7 +407,6 @@ public:
     /// all variables are initialized/set in the methods before they are used.
     CqlLease4Exchange() : addr4_(0) {
         // Set the column names
-        const size_t MAX_COLUMNS = 12U;
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("address",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("hwaddr",
@@ -432,7 +431,7 @@ public:
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("[applied]",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL)));
-        BOOST_ASSERT(parameters_.size() == MAX_COLUMNS);
+        BOOST_ASSERT(parameters_.size() == 12U);
     }
 
     /// @brief Create CQL_BIND objects for Lease4 Pointer
@@ -640,7 +639,6 @@ public:
     CqlLease6Exchange() : pref_lifetime_(0), lease_type_(0), iaid_(0),
                           prefixlen_(0), hwtype_(0), hwaddr_source_(0) {
         // Set the column names
-        const size_t MAX_COLUMNS = 18U;
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("address",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_STRING)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("duid",
@@ -677,7 +675,7 @@ public:
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("[applied]",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_OUT, EXCHANGE_DATA_TYPE_BOOL)));
-        BOOST_ASSERT(parameters_.size() == MAX_COLUMNS);
+        BOOST_ASSERT(parameters_.size() == 18U);
     }
 
     /// @brief Create CQL_BIND objects for Lease6 Pointer
