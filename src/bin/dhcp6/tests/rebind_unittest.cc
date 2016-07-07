@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -232,24 +232,18 @@ const char* REBIND_CONFIGS[] = {
         " } ],"
         "\"valid-lifetime\": 4000 }",
 
-// Configuration 0
+// Configuration 7
     "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "    \"option-def\": [ {"
-        "        \"name\": \"config-file\","
-        "        \"code\": 33,"
-        "        \"type\": \"string\","
-        "        \"space\": \"vendor-4491\""
-        "     } ],"
-        "    \"option-data\": [ {"
-        "          \"name\": \"config-file\","
-        "          \"space\": \"vendor-4491\","
-        "          \"data\": \"normal_erouter_v6.cm\""
-        "        }],"
+        "\"option-data\": [ {"
+        "    \"name\": \"config-file\","
+        "    \"space\": \"vendor-4491\","
+        "    \"data\": \"normal_erouter_v6.cm\""
+        "}],"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
@@ -992,7 +986,7 @@ TEST_F(RebindTest, docsisORO) {
     // Verify whether there is a vendor option.
     opt = client.config_.findOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(opt);
-    // The vendor option must be a OptionVentor object.
+    // The vendor option must be a OptionVendor object.
     boost::shared_ptr<OptionVendor> vendor =
         boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
