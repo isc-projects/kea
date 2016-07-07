@@ -106,17 +106,11 @@ const char* RENEW_CONFIGS[] = {
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "    \"option-def\": [ {"
-        "        \"name\": \"config-file\","
-        "        \"code\": 33,"
-        "        \"type\": \"string\","
-        "        \"space\": \"vendor-4491\""
-        "     } ],"
-        "    \"option-data\": [ {"
-        "          \"name\": \"config-file\","
-        "          \"space\": \"vendor-4491\","
-        "          \"data\": \"normal_erouter_v6.cm\""
-        "        }],"
+        "\"option-data\": [ {"
+        "    \"name\": \"config-file\","
+        "    \"space\": \"vendor-4491\","
+        "    \"data\": \"normal_erouter_v6.cm\""
+        "}],"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
@@ -407,7 +401,7 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
 }
 
 // This test verifies that the client can request the DOCSIS sub-options.
-TEST_F(RenewTest, requestDocsisORORenew) {
+TEST_F(RenewTest, docsisORO) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA.
@@ -463,7 +457,7 @@ TEST_F(RenewTest, requestDocsisORORenew) {
     opt = client.config_.findOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(opt);
 
-    // The vendor option must be a OptionVentor object.
+    // The vendor option must be a OptionVendor object.
     boost::shared_ptr<OptionVendor> vendor =
         boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
