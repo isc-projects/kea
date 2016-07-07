@@ -58,7 +58,7 @@ public:
     /// @brief defines relay search pattern
     ///
     /// Defines order in which options are searched in a message that
-    /// passed through mulitple relays. RELAY_SEACH_FROM_CLIENT will
+    /// passed through multiple relays. RELAY_SEACH_FROM_CLIENT will
     /// start search from the relay that was the closest to the client
     /// (i.e. innermost in the encapsulated message, which also means
     /// this was the first relay that forwarded packet received by the
@@ -275,7 +275,7 @@ private:
     ///
     /// @param order Option search order (see @ref RelaySearchOrder).
     /// @param [out] start Index of the relay information structure from
-    /// which the serch should be started.
+    /// which the search should be started.
     /// @param [out] end Index of the relay information structure on which
     /// the option searches should stop.
     /// @param [out] direction Equals to -1 for backwards searches, and
@@ -401,7 +401,7 @@ public:
     /// requires one parameter (type).
     ///
     /// @return Pointer to "const" string containing the message name. If
-    /// the message type is unknnown the "UNKNOWN" is returned. The caller
+    /// the message type is unknown the "UNKNOWN" is returned. The caller
     /// must not release the returned pointer.
     const char* getName() const;
 

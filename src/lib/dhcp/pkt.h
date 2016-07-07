@@ -130,7 +130,7 @@ public:
     /// prior to calling this method.
     ///
     /// Output buffer will be stored in buffer_out_.
-    /// The buffer_out_ should be cleared before writting to the buffer
+    /// The buffer_out_ should be cleared before writing to the buffer
     /// in the derived classes.
     ///
     /// @note This is a pure virtual method and must be implemented in
@@ -246,7 +246,7 @@ public:
     /// For all unsupported messages the derived classes must return
     /// "UNKNOWN".
     ///
-    /// @return Ponter to "const" string containing DHCP message name.
+    /// @return Pointer to "const" string containing DHCP message name.
     /// The implementations in the derived classes should statically
     /// allocate returned strings and the caller must not release the
     /// returned pointer.
@@ -276,7 +276,7 @@ public:
     ///
     /// @note It is a matter of naming convention. Conceptually, the server
     /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specifed
+    /// classes. From that perspective, this method adds a packet to specified
     /// class. Implementation wise, it looks the opposite - the class name
     /// is added to the packet. Perhaps the most appropriate name for this
     /// method would be associateWithClass()? But that seems overly long,
@@ -295,7 +295,7 @@ public:
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
@@ -553,7 +553,7 @@ public:
     /// @param hw_addr_src a bitmask that specifies hardware address source
     HWAddrPtr getMAC(uint32_t hw_addr_src);
 
-    /// @brief Virtual desctructor.
+    /// @brief Virtual destructor.
     ///
     /// There is nothing to clean up here, but since there are virtual methods,
     /// we define virtual destructor to ensure that derived classes will have
@@ -573,7 +573,7 @@ public:
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
@@ -723,7 +723,7 @@ protected:
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
@@ -753,7 +753,7 @@ private:
     /// @param hw_addr pointer to actual hardware address.
     /// @param [out] storage pointer to a class member to be modified.
     ///
-    /// @trow isc::OutOfRange if invalid HW address specified.
+    /// @throw isc::OutOfRange if invalid HW address specified.
     virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
                                  const std::vector<uint8_t>& hw_addr,
                                  HWAddrPtr& storage);

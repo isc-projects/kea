@@ -59,8 +59,8 @@ size_t Pkt6::len() {
 }
 
 void
-Pkt6:: prepareGetAnyRelayOption(const RelaySearchOrder& order,
-                                  int& start, int& end, int& direction) const {
+Pkt6::prepareGetAnyRelayOption(const RelaySearchOrder& order,
+                               int& start, int& end, int& direction) const {
     switch (order) {
     case RELAY_SEARCH_FROM_CLIENT:
         // Search backwards

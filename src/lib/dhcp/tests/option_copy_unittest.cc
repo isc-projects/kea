@@ -77,7 +77,7 @@ enum OpType {
 /// the pointer will be reset, so there is no sense to initialize this
 /// object to a non-null value. However, for the assignment testing it is
 /// recommended to initialize the option_copy to point to an option having
-/// different parameters to verify that all parameters have been overriden
+/// different parameters to verify that all parameters have been overridden
 /// by the assignment operation.
 template<typename OptionType>
 void testCopyAssign(const OpType& op_type,
@@ -151,7 +151,7 @@ void testCopyAssign(const OpType& op_type,
 
 // **************************** Option ***************************
 
-/// @brief Test deep copy of option encapsualated by Option type.
+/// @brief Test deep copy of option encapsulated by Option type.
 ///
 /// @param op_type Copy operation type.
 void testOption(const OpType& op_type) {
@@ -193,7 +193,7 @@ TEST(OptionCopyTest, optionAssignment) {
 
 // **************************** OptionInt ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionInt type.
+/// @brief Test deep copy of option encapsulated by OptionInt type.
 ///
 /// @param op_type Copy operation type.
 void testOptionInt(const OpType& op_type) {
@@ -223,7 +223,7 @@ TEST(OptionCopyTest, optionIntAssignment) {
 
 // ************************* OptionIntArray ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionIntArray type.
+/// @brief Test deep copy of option encapsulated by OptionIntArray type.
 ///
 /// @param op_type Copy operation type.
 void testOptionIntArray(const OpType& op_type) {
@@ -260,7 +260,7 @@ TEST(OptionCopyTest, optionIntArrayAssignment) {
 
 // ************************* Option4AddrLst ***************************
 
-/// @brief Test deep copy of option encapsualated by Option4AddrLst or
+/// @brief Test deep copy of option encapsulated by Option4AddrLst or
 /// Option6AddrLst type.
 ///
 /// @param op_type Copy operation type.
@@ -290,7 +290,7 @@ void testOptionAddrLst(const OpType& op_type,
     EXPECT_EQ(option_address.toText(), addrs_copy[0].toText());
 }
 
-/// @brief Test deep copy of option encapsualated by Option4AddrLst type.
+/// @brief Test deep copy of option encapsulated by Option4AddrLst type.
 ///
 /// @param op_type Copy operation type.
 void testOption4AddrLst(const OpType& op_type) {
@@ -314,7 +314,7 @@ TEST(OptionCopyTest, option4AddrLstAssignment) {
 
 // ************************* Option6AddrLst ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6AddrLst type.
+/// @brief Test deep copy of option encapsulated by Option6AddrLst type.
 ///
 /// @param op_type Copy operation type.
 void testOption6AddrLst(const OpType& op_type) {
@@ -338,7 +338,7 @@ TEST(OptionCopyTest, option6AddrLstAssignment) {
 
 // *************************** Option6IA ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6IA type.
+/// @brief Test deep copy of option encapsulated by Option6IA type.
 ///
 /// @param op_type Copy operation type.
 void testOption6IA(const OpType& op_type) {
@@ -374,7 +374,7 @@ TEST(OptionCopyTest, option6IAAssignment) {
 
 // *************************** Option6IAAddr ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6IAAddr type.
+/// @brief Test deep copy of option encapsulated by Option6IAAddr type.
 ///
 /// @param op_type Copy operation type.
 void testOption6IAAddr(const OpType& op_type) {
@@ -412,7 +412,7 @@ TEST(OptionCopyTest, option6IAAddrAssignment) {
 
 // *************************** Option6IAPrefix ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6IAPrefix type.
+/// @brief Test deep copy of option encapsulated by Option6IAPrefix type.
 ///
 /// @param op_type Copy operation type.
 void testOption6IAPrefix(const OpType& op_type) {
@@ -451,7 +451,7 @@ TEST(OptionCopyTest, option6IAPrefixAssignment) {
 
 // *************************** Option6StatusCode ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6StatusCode type.
+/// @brief Test deep copy of option encapsulated by Option6StatusCode type.
 ///
 /// @param op_type Copy operation type.
 void testOption6StatusCode(const OpType& op_type) {
@@ -485,7 +485,7 @@ TEST(OptionCopyTest, option6StatusCodeAssignment) {
 
 // *************************** OptionString ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionString type.
+/// @brief Test deep copy of option encapsulated by OptionString type.
 ///
 /// @param op_type Copy operation type.
 void testOptionString(const OpType& op_type) {
@@ -516,7 +516,7 @@ TEST(OptionCopyTest, optionStringAssignment) {
 
 // *************************** OptionVendor ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionVendor type.
+/// @brief Test deep copy of option encapsulated by OptionVendor type.
 ///
 /// @param op_type Copy operation type.
 void testOptionVendor(const OpType& op_type) {
@@ -546,7 +546,7 @@ TEST(OptionCopyTest, optionVendorAssignment) {
 
 // *********************** OptionVendorClass ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionVendorClass type.
+/// @brief Test deep copy of option encapsulated by OptionVendorClass type.
 ///
 /// @param op_type Copy operation type.
 void testOptionVendorClass(const OpType& op_type) {
@@ -571,7 +571,7 @@ void testOptionVendorClass(const OpType& op_type) {
     tuple = "another-modified-vendor-class-value";
     option->addTuple(tuple);
 
-    // That change shouldn't affect the orginal option. It should still
+    // That change shouldn't affect the original option. It should still
     // contain a single tuple with the original value.
     ASSERT_EQ(1, option_copy->getTuplesNum());
     tuple = option_copy->getTuple(0);
@@ -592,7 +592,7 @@ TEST(OptionCopyTest, optionVendorClassAssignment) {
 
 // ************************** Option4ClientFqdn ***************************
 
-/// @brief Test deep copy of option encapsualated by Option4ClientFqdn or
+/// @brief Test deep copy of option encapsulated by Option4ClientFqdn or
 /// Option6ClientFqdn type.
 ///
 /// @param op_type Copy operation type.
@@ -602,7 +602,7 @@ TEST(OptionCopyTest, optionVendorClassAssignment) {
 /// the pointer will be reset, so there is no sense to initialize this
 /// object to a non-null value. However, for the assignment testing it is
 /// recommended to initialize the option_copy to point to an option having
-/// different parameters to verify that all parameters have been overriden
+/// different parameters to verify that all parameters have been overridden
 /// by the assignment operation.
 ///
 /// @tparam OptionType Option4ClientFqdn or Option6ClientFqdn.
@@ -644,7 +644,7 @@ void testOptionClientFqdn(const OpType& op_type,
     }
 }
 
-/// @brief Test deep copy of option encapsualated by Option4ClientFqdn type.
+/// @brief Test deep copy of option encapsulated by Option4ClientFqdn type.
 ///
 /// @param op_type Copy operation type.
 void testOption4ClientFqdn(const OpType& op_type) {
@@ -675,7 +675,7 @@ TEST(OptionCopyTest, option4ClientFqdnAssignment) {
 
 // ************************** Option6ClientFqdn ***************************
 
-/// @brief Test deep copy of option encapsualated by Option6ClientFqdn type.
+/// @brief Test deep copy of option encapsulated by Option6ClientFqdn type.
 ///
 /// @param op_type Copy operation type.
 void testOption6ClientFqdn(const OpType& op_type) {
@@ -704,7 +704,7 @@ TEST(OptionCopyTest, option6ClientFqdnAssignment) {
 
 // **************************** OptionCustom ***************************
 
-/// @brief Test deep copy of option encapsualated by OptionCustom type.
+/// @brief Test deep copy of option encapsulated by OptionCustom type.
 ///
 /// @param op_type Copy operation type.
 void testOptionCustom(const OpType& op_type) {
@@ -746,7 +746,7 @@ TEST(OptionCopyTest, optionCustomAssignment) {
 
 // ************************ OptionOpaqueDataTuples ***********************
 
-/// @brief Test deep copy of option encapsualated by OptionOpaqueDataTuples type.
+/// @brief Test deep copy of option encapsulated by OptionOpaqueDataTuples type.
 ///
 /// @param op_type Copy operation type.
 void testOptionOpaqueDataTuples(const OpType& op_type) {
