@@ -45,6 +45,7 @@ public:
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt6_.reset();
+        callback_qry_options_copy_ = false;
     }
 
     /// callback that stores received callout name and received values
@@ -61,6 +62,12 @@ public:
         callback_addr_original_ = callback_lease6_->addr_;
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ =
+                callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -102,6 +109,7 @@ public:
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
     static Pkt6Ptr callback_qry_pkt6_;
+    static bool callback_qry_options_copy_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -122,6 +130,7 @@ Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
 Pkt6Ptr HookAllocEngine6Test::callback_qry_pkt6_;
+bool HookAllocEngine6Test::callback_qry_options_copy_;
 
 // This test checks if the lease6_select callout is executed and expected
 // parameters as passed.
@@ -195,6 +204,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
 
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if lease6_select callout is able to override the values
@@ -282,6 +293,7 @@ public:
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt4_.reset();
+        callback_qry_options_copy_ = false;
     }
 
     /// callback that stores received callout name and received values
@@ -298,6 +310,12 @@ public:
         callback_addr_original_ = callback_lease4_->addr_;
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ =
+                callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -337,6 +355,7 @@ public:
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
     static Pkt4Ptr callback_qry_pkt4_;
+    static bool callback_qry_options_copy_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -356,6 +375,7 @@ Lease4Ptr HookAllocEngine4Test::callback_lease4_;
 bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;
 Pkt4Ptr HookAllocEngine4Test::callback_qry_pkt4_;
+bool HookAllocEngine4Test::callback_qry_options_copy_;
 
 // This test checks if the lease4_select callout is executed and expected
 // parameters as passed.
@@ -428,6 +448,8 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if lease4_select callout is able to override the values

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,11 +39,14 @@ public:
     Option6IA(uint16_t type, OptionBuffer::const_iterator begin,
               OptionBuffer::const_iterator end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
+
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
     /// @param buf buffer (option will be stored here)
-    void pack(isc::util::OutputBuffer& buf);
+    void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer
     ///
@@ -58,9 +61,8 @@ public:
     ///
     /// @param indent number of leading space characters
     ///
-    /// @return string with text represenation
-    virtual std::string
-    toText(int indent = 0);
+    /// @return string with text representation
+    virtual std::string toText(int indent = 0) const;
 
     /// Sets T1 timer.
     ///
@@ -98,7 +100,7 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
 protected:
 

@@ -121,6 +121,9 @@ void Dhcp4to6Ipc::handler() {
             // Delete previously set arguments
             callout_handle->deleteAllArguments();
 
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> response4_options_copy(rsp);
+
             // Pass incoming packet as argument
             callout_handle->setArgument("response4", rsp);
 

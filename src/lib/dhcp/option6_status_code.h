@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,13 +37,16 @@ public:
     /// @param end Iterator to end of option data (first byte after option end).
     Option6StatusCode(OptionBufferConstIter begin, OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
     /// @param [out] buf Pointer to the output buffer.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -54,12 +57,12 @@ public:
     /// @brief Returns total length of the option.
     ///
     /// The returned length is a sum of the option header and data fields.
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns textual representation of the option.
     ///
     /// @param indent Number of spaces before printing text.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns textual representation of the option data.
     ///

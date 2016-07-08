@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,13 +46,16 @@ public:
     Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
                   OptionBuffer::const_iterator end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
     /// @param buf pointer to a buffer
-    void pack(isc::util::OutputBuffer& buf);
+    void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -67,7 +70,7 @@ public:
     ///
     /// @return string with text representation.
     virtual std::string
-    toText(int indent = 0);
+    toText(int indent = 0) const;
 
 
     /// sets address in this option.
@@ -106,7 +109,7 @@ public:
     getValid() const { return valid_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
 protected:
     /// contains an IPv6 address

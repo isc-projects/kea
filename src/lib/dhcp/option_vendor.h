@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,11 +50,14 @@ public:
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    OptionPtr clone() const;
+
     /// @brief Writes option in wire-format to buf, returns pointer to first
     /// unused byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer
     ///
@@ -82,14 +85,14 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns the option in the textual format.
     ///
     /// @param indent Number of spaces to be inserted before the text.
     ///
     /// @return Vendor option in the textual format.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
 private:
 
@@ -101,7 +104,7 @@ private:
     /// this value.
     ///
     /// @return Returns calculated data-len value.
-    uint8_t dataLen();
+    uint8_t dataLen() const;
 
     uint32_t vendor_id_;  ///< Enterprise-id
 };

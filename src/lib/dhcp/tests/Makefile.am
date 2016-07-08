@@ -59,6 +59,7 @@ libdhcp___unittests_SOURCES += option_int_unittest.cc
 libdhcp___unittests_SOURCES += option_int_array_unittest.cc
 libdhcp___unittests_SOURCES += option_data_types_unittest.cc
 libdhcp___unittests_SOURCES += option_definition_unittest.cc
+libdhcp___unittests_SOURCES += option_copy_unittest.cc
 libdhcp___unittests_SOURCES += option_custom_unittest.cc
 libdhcp___unittests_SOURCES += option_opaque_data_tuples_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc

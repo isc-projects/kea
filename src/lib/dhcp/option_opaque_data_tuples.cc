@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,8 +25,13 @@ OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
     unpack(begin, end);
 }
 
+OptionPtr
+OptionOpaqueDataTuples::clone() const {
+    return (cloneInternal<OptionOpaqueDataTuples>());
+}
+
 void
-OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) {
+OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
 
     for (TuplesCollection::const_iterator it = tuples_.begin();
@@ -107,7 +112,7 @@ OptionOpaqueDataTuples::hasTuple(const std::string& tuple_str) const {
 }
 
 uint16_t
-OptionOpaqueDataTuples::len() {
+OptionOpaqueDataTuples::len() const {
     // The option starts with the header.
     uint16_t length = getHeaderLen();
     // Now iterate over existing tuples and add their size.
@@ -120,7 +125,7 @@ OptionOpaqueDataTuples::len() {
 }
 
 std::string
-OptionOpaqueDataTuples::toText(int indent) {
+OptionOpaqueDataTuples::toText(int indent) const {
     std::ostringstream s;
 
     // Apply indentation

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -346,11 +346,17 @@ Option4ClientFqdn::Option4ClientFqdn(const Option4ClientFqdn& source)
       impl_(new Option4ClientFqdnImpl(*source.impl_)) {
 }
 
+OptionPtr
+Option4ClientFqdn::clone() const {
+    return (cloneInternal<Option4ClientFqdn>());
+}
+
 Option4ClientFqdn&
 // This assignment operator handles assignment to self, it uses copy
 // constructor of Option4ClientFqdnImpl to copy all required values.
 // cppcheck-suppress operatorEqToSelf
 Option4ClientFqdn::operator=(const Option4ClientFqdn& source) {
+    Option::operator=(source);
     Option4ClientFqdnImpl* old_impl = impl_;
     impl_ = new Option4ClientFqdnImpl(*source.impl_);
     delete(old_impl);
@@ -394,6 +400,11 @@ Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // bits are not set.
     Option4ClientFqdnImpl::checkFlags(new_flag, true);
     impl_->flags_ = new_flag;
+}
+
+std::pair<Option4ClientFqdn::Rcode, Option4ClientFqdn::Rcode>
+Option4ClientFqdn::getRcode() const {
+    return (std::make_pair(impl_->rcode1_, impl_->rcode2_));
 }
 
 void
@@ -463,7 +474,7 @@ Option4ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option4ClientFqdn::pack(isc::util::OutputBuffer& buf) {
+Option4ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
     // Flags field.
@@ -487,7 +498,7 @@ Option4ClientFqdn::unpack(OptionBufferConstIter first,
 }
 
 std::string
-Option4ClientFqdn::toText(int indent) {
+Option4ClientFqdn::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
     stream << in  << "type=" << type_ << " (CLIENT_FQDN), "
@@ -504,7 +515,7 @@ Option4ClientFqdn::toText(int indent) {
 }
 
 uint16_t
-Option4ClientFqdn::len() {
+Option4ClientFqdn::len() const {
     uint16_t domain_name_length = 0;
     // Try to calculate the length of the domain name only if there is
     // any domain name specified.
