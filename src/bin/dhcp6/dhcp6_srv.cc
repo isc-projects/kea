@@ -438,6 +438,9 @@ void Dhcpv6Srv::run_one() {
             // Delete previously set arguments
             callout_handle->deleteAllArguments();
 
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt6> response6_options_copy(rsp);
+
             // Pass incoming packet as argument
             callout_handle->setArgument("response6", rsp);
 
@@ -2198,6 +2201,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
 
         // Pass the original packet
         callout_handle->setArgument("query6", query);
