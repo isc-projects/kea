@@ -800,17 +800,21 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
       </para>
-      <section>
-	<title>Prefix Exclude Option</title>
-	<para>
-	For each delegated prefix configured as above, the delegating router may
-	choose to exclude a subprefix (i.e. with greater prefix length) as proposed in
-	<ulink url="http://tools.ietf.org/html/rfc6603"> RFC 6603</ulink>.
-        The IA PD option responsible for specifying IPv^ address prefixes limits the
-	amount of PD Exclude options that it can encapsulate to one at most, thus it
-	can only exclude one prefix from a given delegated prefix.
-  	</para>
-  	</section>
+    
+    </section>
+        
+    <section id="pd-exclude-option">
+        <title>Prefix Exclude Option</title>
+        <para>
+            For each delegated prefix configured as above, the delegating router
+            may choose to exclude a subprefix (i.e. with greater prefix length)
+            as proposed in
+            <ulink url="http://tools.ietf.org/html/rfc6603"> RFC 6603</ulink>.
+            The IA PD option responsible for specifying IPv6 address prefixes
+            limits the amount of PD Exclude options that it can encapsulate to
+            at most one, thus it can only exclude one prefix from a given
+            delegated prefix.
+        </para>
     </section>
 
     <section id="dhcp6-std-options">
@@ -1080,6 +1084,56 @@ temporarily override a list of interface names and listen on all interfaces.
         </tgroup>
       </table>
     </para>
+    </section>
+
+    <section id="s46-options">
+        <title>Common Softwire46 Options</title>
+        <para>TODO: S46 Rule</para>
+<screen>
+{
+    "code": 92, 
+    "csv-format": true, 
+    "data": "2001:db8::cafe::/48", 
+    "name": "s46-v4v6bind", 
+    "space": "4over6-lw"
+}
+</screen>
+        <para>TODO: S46 BR</para>
+<screen>
+{
+    "code": 90, 
+    "csv-format": true, 
+    "data": "2001:db8::cafe::/48", 
+    "name": "s46-br", 
+    "space": "4over6-lw"
+}
+</screen>
+        <para>TODO: S46 DMR. No config required. Config example?</para>
+        <para>TODO: S46 IPv4/IPv6 Address Binding. Config example?</para>
+        <para>TODO: S46 Port Parameters</para>
+<screen>
+{
+    "code": 93, 
+    "csv-format": true, 
+    "data": "0,2,12288", 
+    "name": "s46-portparams", 
+    "space": "v4v6bind"
+}
+</screen>
+    </section>
+    <section id="s46-containers">
+        <title>Softwire46 Containers</title>
+        <para>TODO: S46 MAP-E container. Config example?</para>
+        <para>TODO: S46 MAP-T container. Config example?</para>
+        <para>TODO: S46 Lightweight 4over6 container</para>
+<screen>
+{
+    "code": 96, 
+    "name": "s46-cont-lw", 
+    "space": "dhcp6"
+}
+
+</screen>
     </section>
 
     <section id="dhcp6-custom-options">

@@ -26,8 +26,10 @@ const IOAddress beef01("2001:db8:dead:beef::01"); // /56 prefix length
 
 // Description
 TEST(Option6PDExcludeTest, testName) {
-    /*
     Option6PDExclude option = Option6PDExclude(beef, 56, beef01, 60);
+
+    EXPECT_EQ(option.getExcludedPrefixLength(), 60);
+    /*
 
     OptionBuffer data(option.getData());
 

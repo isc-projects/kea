@@ -376,9 +376,12 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
-    { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, MAPE_V6_OPTION_SPACE },
-    { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, MAPT_V6_OPTION_SPACE },
-    { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, LW_V6_OPTION_SPACE }
+    { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPE_V6_OPTION_SPACE },
+    { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPT_V6_OPTION_SPACE },
+    { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        LW_V6_OPTION_SPACE }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
@@ -387,7 +390,16 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
 
 /// Number of option definitions defined.
 const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
-    sizeof(STANDARD_V6_OPTION_DEFINITIONS) / sizeof(STANDARD_V6_OPTION_DEFINITIONS[0]);
+    sizeof(STANDARD_V6_OPTION_DEFINITIONS) /
+    sizeof(STANDARD_V6_OPTION_DEFINITIONS[0]);
+
+// Option definitions that belong to two or more option spaces are defined here.
+const OptionDefParams OPTION_DEF_PARAMS_S46_BR = { "s46-br", D6O_S46_BR,
+    OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" };
+const OptionDefParams OPTION_DEF_PARAMS_S46_RULE = { "s46-rule", D6O_S46_RULE,
+    OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE };
+const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
+    D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" };
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
@@ -396,60 +408,69 @@ const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h
 const OptionDefParams ISC_V6_OPTION_DEFINITIONS[] = {
-    { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" }
+    { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false,
+        NO_RECORD_DEF, "" },
+    { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE,
+        false, NO_RECORD_DEF, "" }
 };
 
 const int ISC_V6_OPTION_DEFINITIONS_SIZE =
-    sizeof(ISC_V6_OPTION_DEFINITIONS) / sizeof(ISC_V6_OPTION_DEFINITIONS[0]);
+    sizeof(ISC_V6_OPTION_DEFINITIONS) /
+    sizeof(ISC_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief MAPE option definitions
 /// @todo: Maybe move this to a separate file, e.g. mape_option_defs.h
 const OptionDefParams MAPE_V6_OPTION_DEFINITIONS[] = {
-    { "s46-br", D6O_S46_BR, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    { "s46-rule", D6O_S46_RULE, OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE }
+    OPTION_DEF_PARAMS_S46_BR,
+    OPTION_DEF_PARAMS_S46_RULE
 };
 
 const int MAPE_V6_OPTION_DEFINITIONS_SIZE =
-    sizeof(MAPE_V6_OPTION_DEFINITIONS) / sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
+    sizeof(MAPE_V6_OPTION_DEFINITIONS) /
+    sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief MAPT option definitions
 /// @todo: Maybe move this to a separate file, e.g. mapt_option_defs.h
 const OptionDefParams MAPT_V6_OPTION_DEFINITIONS[] = {
-    { "s46-rule", D6O_S46_RULE, OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE },
-    { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
+    OPTION_DEF_PARAMS_S46_RULE,
+    { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" }
 };
 
 const int MAPT_V6_OPTION_DEFINITIONS_SIZE =
-    sizeof(MAPT_V6_OPTION_DEFINITIONS) / sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
+    sizeof(MAPT_V6_OPTION_DEFINITIONS) /
+    sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief LW option definitions
 /// @todo: Maybe move this to a separate file, e.g. lw_option_defs.h
 const OptionDefParams LW_V6_OPTION_DEFINITIONS[] = {
-    { "s46-br", D6O_S46_BR, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false, RECORD_DEF(S46_V4V6BIND), V4V6_BIND_OPTION_SPACE },
+    OPTION_DEF_PARAMS_S46_BR,
+    { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false,
+        RECORD_DEF(S46_V4V6BIND), V4V6_BIND_OPTION_SPACE }
 };
 
 const int LW_V6_OPTION_DEFINITIONS_SIZE =
-    sizeof(LW_V6_OPTION_DEFINITIONS) / sizeof(LW_V6_OPTION_DEFINITIONS[0]);
+    sizeof(LW_V6_OPTION_DEFINITIONS) /
+    sizeof(LW_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief Rule option definitions
 /// @todo: Maybe move this to a separate file, e.g. rule_option_defs.h
 const OptionDefParams V4V6_RULE_OPTION_DEFINITIONS[] = {
-    { "s46-portparams", D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" },
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_RULE_OPTION_DEFINITIONS_SIZE =
-    sizeof(V4V6_RULE_OPTION_DEFINITIONS) / sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
+    sizeof(V4V6_RULE_OPTION_DEFINITIONS) /
+    sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
 
 /// @brief Bind option definitions
 /// @todo: Maybe move this to a separate file, e.g. bind_option_defs.h
 const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
-    { "s46-portparams", D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" }
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
-    sizeof(V4V6_BIND_OPTION_DEFINITIONS) / sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
+    sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
+    sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
 
 } // unnamed namespace
 
