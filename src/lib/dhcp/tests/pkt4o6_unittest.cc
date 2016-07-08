@@ -97,7 +97,7 @@ TEST_F(Pkt4o6Test, pack) {
 // should be copied is transferred between the DHCPv4 packet and the
 // DHCPv6 packet being a member of Pkt4o6 class.
 TEST_F(Pkt4o6Test, setCopyRetrievedOptions) {
-    // Create Pkt4o6 and initially expect taht the flag is set to false.
+    // Create Pkt4o6 and initially expect that the flag is set to false.
     Pkt4o6 pkt4o6(pkt4_, pkt6_);
     ASSERT_FALSE(pkt4o6.isCopyRetrievedOptions());
     Pkt6Ptr pkt6 = pkt4o6.getPkt6();
