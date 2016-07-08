@@ -356,7 +356,7 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
-    /// @brief Test callback that stores reponse packet.
+    /// @brief Test callback that stores response packet.
     /// @param callout_handle handle passed by the hooks framework.
     /// @return always 0
     static int
