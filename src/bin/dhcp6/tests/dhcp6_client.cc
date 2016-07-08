@@ -6,11 +6,13 @@
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
@@ -100,6 +102,7 @@ Dhcp6Client::Dhcp6Client() :
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
@@ -116,6 +119,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     srv_(srv),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
@@ -395,6 +399,15 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
 
         msg->addOption(oro);
     };
+
+    if (use_docsis_oro_) {
+        OptionUint16ArrayPtr vendor_oro(new OptionUint16Array(Option::V6,
+                                                              DOCSIS3_V6_ORO));
+        vendor_oro->setValues(docsis_oro_);
+        OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+        vendor->addOption(vendor_oro);
+        msg->addOption(vendor);
+    }
 
     // If there are any custom options specified, add them all to the message.
     if (!extra_options_.empty()) {

@@ -72,7 +72,7 @@ struct IAID : public SpecializedTypeWrapper<uint32_t> {
     ///
     /// @param iaid IAID.
     explicit IAID(const uint32_t iaid)
-        : SpecializedTypeWrapper(iaid) { }
+        : SpecializedTypeWrapper<uint32_t>(iaid) { }
 };
 
 /// @brief Class representing strongly typed value for strict IAID checks.
@@ -86,7 +86,7 @@ struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
     /// @param strict_check Boolean value indicating if strict checking should
     /// be performed.
     explicit StrictIAIDChecking(const bool strict_check)
-        : SpecializedTypeWrapper(strict_check) { }
+        : SpecializedTypeWrapper<bool>(strict_check) { }
 
     /// @brief Convenience function returning an object indicating that strict
     /// checks should be performed.
