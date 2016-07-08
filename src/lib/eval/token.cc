@@ -18,7 +18,7 @@ using namespace isc::dhcp;
 using namespace std;
 
 void
-TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -56,7 +56,7 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
 }
 
 void
-TokenHexString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -82,7 +82,7 @@ TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
 }
 
 void
-TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
@@ -93,12 +93,12 @@ TokenIpAddress::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 OptionPtr
-TokenOption::getOption(const Pkt& pkt) {
+TokenOption::getOption(Pkt& pkt) {
     return (pkt.getOption(option_code_));
 }
 
 void
-TokenOption::evaluate(const Pkt& pkt, ValueStack& values) {
+TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr opt = getOption(pkt);
     std::string opt_str;
     if (opt) {
@@ -141,7 +141,7 @@ TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
     :TokenOption(option_code, rep_type) {
 }
 
-OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
+OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
 
     // Check if there is Relay Agent Option.
     OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
@@ -154,7 +154,7 @@ OptionPtr TokenRelay4Option::getOption(const Pkt& pkt) {
 }
 
 void
-TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
+TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
     string type_str;
@@ -239,7 +239,7 @@ TokenPkt4::evaluate(const Pkt& pkt, ValueStack& values) {
 }
 
 void
-TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -266,7 +266,7 @@ TokenEqual::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -365,7 +365,7 @@ TokenSubstring::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -391,7 +391,7 @@ TokenConcat::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -414,7 +414,7 @@ TokenNot::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -442,7 +442,7 @@ TokenAnd::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
-TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
+TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -469,12 +469,12 @@ TokenOr::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
         .arg('\'' + values.top() + '\'');
 }
 
-OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
+OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
 
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
-        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+        Pkt6& pkt6 = dynamic_cast<Pkt6&>(pkt);
 
         try {
             // Now that we have the right type of packet we can
@@ -496,7 +496,7 @@ OptionPtr TokenRelay6Option::getOption(const Pkt& pkt) {
 }
 
 void
-TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
+TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
     string type_str;
@@ -549,7 +549,7 @@ TokenRelay6Field::evaluate(const Pkt& pkt, ValueStack& values) {
 }
 
 void
-TokenPkt6::evaluate(const Pkt& pkt, ValueStack& values) {
+TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
     string type_str;

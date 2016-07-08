@@ -1050,6 +1050,9 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         // Delete all previous arguments
         ctx.callout_handle_->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
+
         // Pass necessary arguments
 
         // Pass the original packet
@@ -1119,6 +1122,9 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
         // Delete all previous arguments
         ctx.callout_handle_->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
 
         // Pass necessary arguments
 
@@ -1337,6 +1343,9 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
 
         // Pass the original packet
         callout_handle->setArgument("query6", ctx.query_);
@@ -2524,6 +2533,9 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         // Delete all previous arguments
         ctx.callout_handle_->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
+
         // Pass necessary arguments
         // Pass the original client query
         ctx.callout_handle_->setArgument("query4", ctx.query_);
@@ -2629,6 +2641,9 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // Delete all previous arguments
         ctx.callout_handle_->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
+
         // Subnet from which we do the allocation. Convert the general subnet
         // pointer to a pointer to a Subnet4.  Note that because we are using
         // boost smart pointers here, we need to do the cast using the boost
@@ -2702,6 +2717,9 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&  HooksManager::getHooksManager()
         .calloutsPresent(hook_index_lease4_select_)) {
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
 
         // Delete all previous arguments
         ctx.callout_handle_->deleteAllArguments();

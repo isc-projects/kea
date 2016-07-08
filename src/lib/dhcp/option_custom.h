@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,6 +78,9 @@ public:
     /// @todo list all exceptions thrown by ctor.
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
+
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
 
     /// @brief Create new buffer and set its value as an IP address.
     ///
@@ -243,7 +246,7 @@ public:
     /// @brief Writes DHCP option in a wire format to a buffer.
     ///
     /// @param buf output buffer (option will be stored there).
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -257,13 +260,13 @@ public:
     /// @param indent number of spaces before printed text.
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns length of the complete option (data length +
     ///        DHCPv4/DHCPv6 option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Sets content of this option from buffer.
     ///

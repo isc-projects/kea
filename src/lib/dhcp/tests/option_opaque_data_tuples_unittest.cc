@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,12 @@ TEST(OptionOpaqueDataTuples, addTuple) {
     // for DHCPv6 option.
     OpaqueDataTuple tuple2(OpaqueDataTuple::LENGTH_1_BYTE);
     EXPECT_THROW(data_tuple.addTuple(tuple2), isc::BadValue);
+
+    // Similarly, adding a tuple with 2 bytes long length field should
+    // fail for DHCPv4 option.
+    OptionOpaqueDataTuples data_tuple2(Option::V4, 65);
+    OpaqueDataTuple tuple3(OpaqueDataTuple::LENGTH_2_BYTES);
+    EXPECT_THROW(data_tuple2.addTuple(tuple3), isc::BadValue);
 }
 
 // This test checks that it is possible to replace existing tuple.
