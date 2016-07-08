@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,14 @@ void Pkt4o6::pack() {
     pkt6_->addOption(dhcp4_msg);
     pkt6_->pack();
 }
+
+void
+Pkt4o6::setCopyRetrievedOptions(const bool copy) {
+    Pkt4::setCopyRetrievedOptions(copy);
+    // Copy the new setting to the encapsulated instance of Pkt6.
+    pkt6_->setCopyRetrievedOptions(isCopyRetrievedOptions());
+}
+
 
 } // end of namespace isc::dhcp
 

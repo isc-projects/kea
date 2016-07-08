@@ -93,6 +93,31 @@ TEST_F(Pkt4o6Test, pack) {
     EXPECT_EQ(0, memcmp(&cp[8], &buffer4_[0], buffer4_.size()));
 }
 
+// This test verifies that the flag indicating that the retrieved options
+// should be copied is transferred between the DHCPv4 packet and the
+// DHCPv6 packet being a member of Pkt4o6 class.
+TEST_F(Pkt4o6Test, setCopyRetrievedOptions) {
+    // Create Pkt4o6 and initially expect taht the flag is set to false.
+    Pkt4o6 pkt4o6(pkt4_, pkt6_);
+    ASSERT_FALSE(pkt4o6.isCopyRetrievedOptions());
+    Pkt6Ptr pkt6 = pkt4o6.getPkt6();
+    ASSERT_TRUE(pkt6);
+    ASSERT_FALSE(pkt6->isCopyRetrievedOptions());
+
+    // Set the flag to true for Pkt4o6.
+    pkt4o6.setCopyRetrievedOptions(true);
+    pkt6 = pkt4o6.getPkt6();
+    ASSERT_TRUE(pkt6);
+    EXPECT_TRUE(pkt6->isCopyRetrievedOptions());
+
+    // Repeat the same test but set the flag to false.
+    pkt4o6.setCopyRetrievedOptions(false);
+    EXPECT_FALSE(pkt4o6.isCopyRetrievedOptions());
+    pkt6 = pkt4o6.getPkt6();
+    ASSERT_TRUE(pkt6);
+    EXPECT_FALSE(pkt6->isCopyRetrievedOptions());
+}
+
 /// @todo: Add a test that handles actual DHCP4o6 traffic capture
 ///        once we get it. We should add the capture to pkt_captures{4,6}.cc
 }

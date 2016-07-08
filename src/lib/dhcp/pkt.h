@@ -33,6 +33,8 @@ namespace dhcp {
 /// should be disabled. The use of RAII object eliminates the need for
 /// explicitly re-disabling options copying and is safer in case of
 /// exceptions thrown by callouts and a presence of multiple exit points.
+///
+/// @tparam PktType Type of the packet, e.g. Pkt4, Pkt6, Pkt4o6.
 template<typename PktType>
 class ScopedEnableOptionsCopy {
 public:
@@ -331,10 +333,6 @@ public:
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(const uint16_t type);
 
-    OptionPtr getOption(const uint16_t type) const {
-        return (getNonCopiedOption(type));
-    }
-
     /// @brief Controls whether the option retrieved by the @ref Pkt::getOption
     /// should be copied before being returned.
     ///
@@ -359,7 +357,7 @@ public:
     ///
     /// @param copy Indicates if the options should be copied when
     /// retrieved (if true), or not copied (if false).
-    void setCopyRetrievedOptions(const bool copy) {
+    virtual void setCopyRetrievedOptions(const bool copy) {
         copy_retrieved_options_ = copy;
     }
 
