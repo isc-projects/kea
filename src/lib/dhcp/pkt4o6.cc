@@ -51,7 +51,7 @@ void
 Pkt4o6::setCopyRetrievedOptions(const bool copy) {
     Pkt4::setCopyRetrievedOptions(copy);
     // Copy the new setting to the encapsulated instance of Pkt6.
-    pkt6_->setCopyRetrievedOptions(isCopyRetrievedOptions());
+    pkt6_->setCopyRetrievedOptions(copy);
 }
 
 
