@@ -154,7 +154,6 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
     "valid-lifetime": 4000,
     "renew-timer": 1000,
     "rebind-timer": 2000,
-    "dhcp4o6-port": 6767,
 
 # Next we setup the interfaces to be used by the server.
     "interfaces-config": {
@@ -228,10 +227,7 @@ define T1 and T2 timers that govern when the client will begin the renewal and
 rebind procedures. Note that <command>renew-timer</command> and
 <command>rebind-timer</command> are optional. If they are not specified the
 client will select values for T1 and T2 timers according to the
-<ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.
-<command>dhcp4o6-port</command> is used by the DHCPv4-over-DHCPv6 support
-(more in <xref linkend="dhcp4-dhcp4o6-config"/>).
-</para>
+<ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.</para>
 
 <para>The <command>interfaces-config</command> map specifies the server
 configuration concerning the network interfaces, on which the server should
@@ -2441,29 +2437,30 @@ It is merely echoed by the server
       The <command>dhcp4o6-port</command> global parameter specifies
       the first of the two consecutive ports of the UDP sockets used
       for the communication between the DHCPv6 and DHCPv4 servers
-      (DHCPv4-QUERY requests from the DHCPv6 side are received on the
-      first socket, DHCPv4-RESPONSE replies are sent back on the
-      second socket to the DHCPv6 side which forwards them to
-      clients).
+      (the DHCPv4 server is bound to ::1 on the port 1 and connected
+      to ::1 on port).
       </para>
       <para>
-      The subnet selection uses 3 specific configuration entries,
-      the presence of any of these enables the subnet for
-      DHCPv4-over-DHCPv6. These entries are:
+      With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
+      to several of the identifiers it would normally use to select a
+      subnet.  In order to address this issue three new configuration
+      entires have been added.  The presence of any of these allows the
+      subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
       <itemizedlist>
         <listitem>
-        <simpara><command>4o6-interface</command>: Takes an interface name
-        which is matched against the incoming interface name.
-        </simpara>
-        </listitem>
-        <listitem>
-        <simpara><command>4o6-subnet</command>: Takes a prefix (i.e, an
-        IPv6 address followed by a slash and a prefix length).
+        <simpara><command>4o6-subnet</command>: Takes a prefix (i.e., an
+        IPv6 address followed by a slash and a prefix length) which is
+        matched against the source address.
         </simpara>
         </listitem>
         <listitem>
         <simpara><command>4o6-interface-id</command>: Takes a relay interface
         ID option value.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface</command>: Takes an interface name
+        which is matched against the incoming interface name.
         </simpara>
         </listitem>
       </itemizedlist>
@@ -2489,12 +2486,12 @@ It is merely echoed by the server
 
   "subnet4": [
    {    "subnet": "10.10.10.0/24",
-        "4o6-interface": "eno33554984",
-        "4o6-subnet": "2001:db8:1:1::/64",
+        <userinput>"4o6-interface": "eno33554984",</userinput>
+        <userinput>"4o6-subnet": "2001:db8:1:1::/64",</userinput>
         "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ] }
   ],
 
-  "dhcp4o6-port": 6767
+  <userinput>"dhcp4o6-port": 6767</userinput>
 
 },
 

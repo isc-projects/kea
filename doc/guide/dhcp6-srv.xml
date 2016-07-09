@@ -154,7 +154,6 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
     "rebind-timer": 2000,
     "preferred-lifetime": 3000,
     "valid-lifetime": 4000,
-    "dhcp4o6-port": 6767,
 
 # Next we setup the interfaces to be used by the server.
     "interfaces-config": {
@@ -228,10 +227,7 @@ around them.) The address will become deprecated in 3000 seconds (clients are
 allowed to keep old connections, but can't use this address for creating new
 connections). <command>renew-timer</command> and <command>
 rebind-timer</command> are values that define T1 and T2 timers that govern when
-the client will begin the renewal and rebind procedures.
-<command>dhcp4o6-port</command> is used by the DHCPv4-over-DHCPv6 support
-(more in <xref linkend="dhcp6-dhcp4o6-config"/>).
-</para>
+the client will begin the renewal and rebind procedures.</para>
 
 <para>The <command>interfaces-config</command> map specifies the server
 configuration concerning the network interfaces, on which the server should
@@ -2203,9 +2199,8 @@ should include options from the isc option space:
       There is only one specific parameter for the DHCPv6 side:
       <command>dhcp4o6-port</command> which specifies the first of the
       two consecutive ports of the UDP sockets used for the communication
-      between the DHCPv6 and DHCPv4 servers (received DHCPv4-QUERY requests
-      are forwarded to the DHCPv4 side on the first socket, DHCPv4-RESPONSE
-      replies on the second socket are forwarded to clients).
+      between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
+      to ::1 on the port and connected to ::1 on port + 1).
       </para>
       <para>
       Two other configuration entries are in general required: unicast traffic
@@ -2240,7 +2235,7 @@ should include options from the isc option space:
        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
    ],
 
-  "dhcp4o6-port": 6767,
+  <userinput>"dhcp4o6-port": 6767,
 
   "option-data": [
    {  "name": "dhcp4o6-server-addr",
@@ -2249,6 +2244,7 @@ should include options from the isc option space:
       "csv-format": true,
       "data": "2001:db8:1:1::1" }
    ]
+</userinput>
 },
 
 "Logging":
