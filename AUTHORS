@@ -100,7 +100,7 @@ We have received the following contributions:
  - Razvan Becheriu, Qualitance
    2016-05: Added support for Cassandra
 
- - Patrick Lundin
+ - Patrik Lundin
    2016-08: Replace test by expr for < in configure.ac
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
