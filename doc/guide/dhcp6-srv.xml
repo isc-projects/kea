@@ -2200,7 +2200,7 @@ should include options from the isc option space:
       <command>dhcp4o6-port</command> which specifies the first of the
       two consecutive ports of the UDP sockets used for the communication
       between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
-      to ::1 on the port and connected to ::1 on port + 1).
+      to ::1 on port and connected to ::1 on port + 1).
       </para>
       <para>
       Two other configuration entries are in general required: unicast traffic

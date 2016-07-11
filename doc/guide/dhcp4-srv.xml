@@ -2437,7 +2437,7 @@ It is merely echoed by the server
       The <command>dhcp4o6-port</command> global parameter specifies
       the first of the two consecutive ports of the UDP sockets used
       for the communication between the DHCPv6 and DHCPv4 servers
-      (the DHCPv4 server is bound to ::1 on the port 1 and connected
+      (the DHCPv4 server is bound to ::1 on port + 1 and connected
       to ::1 on port).
       </para>
       <para>
