@@ -235,6 +235,14 @@ public:
                                 isc::dhcp::OptionCollection& options,
                                 size_t* relay_msg_offset = NULL,
                                 size_t* relay_msg_len = NULL);
+    static size_t unpackOptions4(const OptionBuffer& buf,
+                                 const std::string& option_space,
+                                 isc::dhcp::OptionCollection& options);
+    static size_t unpackOptions6(const OptionBuffer& buf,
+                                 const std::string& option_space,
+                                 isc::dhcp::OptionCollection& options,
+                                 size_t* relay_msg_offset = NULL,
+                                 size_t* relay_msg_len = NULL);
 
     /// Registers factory method that produces options of specific option types.
     ///

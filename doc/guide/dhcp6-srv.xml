@@ -800,9 +800,9 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
       </para>
-    
+
     </section>
-        
+
     <section id="pd-exclude-option">
         <title>Prefix Exclude Option</title>
         <para>
@@ -1088,52 +1088,98 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <section id="s46-options">
         <title>Common Softwire46 Options</title>
-        <para>TODO: S46 Rule</para>
+        <para>Softwire46 options are involved in IPv4 over IPv6 provisioning by
+            means of tunneling or tanslation. More is described in
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 7598</ulink>.
+        </para>
+        <section>
+            <title>S46 Rule</title>
+            The following option configuration specifies under data, the IPv6
+            prefix that it can use to map addresses from. Mapping is done using
+            Best Mapping Rule (BMR) and Forwarding Mapping Rule (FMR).
 <screen>
 {
-    "code": 92, 
-    "csv-format": true, 
-    "data": "2001:db8::cafe::/48", 
-    "name": "s46-v4v6bind", 
+    "code": 92,
+    "csv-format": true,
+    "data": "2001:db8::cafe::/96",
+    "name": "s46-v4v6bind",
     "space": "4over6-lw"
 }
 </screen>
-        <para>TODO: S46 BR</para>
+        </section>
+        <section>
+            <title>S46 BR</title>
 <screen>
 {
-    "code": 90, 
-    "csv-format": true, 
-    "data": "2001:db8::cafe::/48", 
-    "name": "s46-br", 
+    "code": 90,
+    "csv-format": true,
+    "data": "2001:db8::cafe::/48",
+    "name": "s46-br",
     "space": "4over6-lw"
 }
 </screen>
-        <para>TODO: S46 DMR. No config required. Config example?</para>
-        <para>TODO: S46 IPv4/IPv6 Address Binding. Config example?</para>
-        <para>TODO: S46 Port Parameters</para>
+        </section>
+        <section>
+            <title>S46 DMR. No config required. Config example? TODO</title>
+        </section>
+        <section>
+            <title>S46 IPv4/IPv6 Address Binding. Config example? TODO</title>
+        </section>
+        <section>
+            <title>S46 Port Parameters</title>
+            <para>
+                This option specifies a range of optional ports that may be used
+                in the form of <command>offset,psid-len,psid</command> which
+                means that ports that fill the area offseted by
+                <command>offset</command> and shortened to
+                <command>psid-len</command> length can be used.
+            </para>
 <screen>
 {
-    "code": 93, 
-    "csv-format": true, 
-    "data": "0,2,12288", 
-    "name": "s46-portparams", 
+    "code": 93,
+    "csv-format": true,
+    "data": "2,4,12288",
+    "name": "s46-portparams",
     "space": "v4v6bind"
 }
 </screen>
+<screen>
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             PSID              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|&#x3c;-&#x3e;|&#x3c;-----&#x3e;|
+  |     └--- Identified PSID value of 4b
+  └--- Offset of 2b
+|&#x3c;-----------------------------&#x3e;|
+                └--- 16b
+</screen>
+        </section>
     </section>
     <section id="s46-containers">
         <title>Softwire46 Containers</title>
-        <para>TODO: S46 MAP-E container. Config example?</para>
-        <para>TODO: S46 MAP-T container. Config example?</para>
-        <para>TODO: S46 Lightweight 4over6 container</para>
+            <para>
+                S46 containers group rules and optional ports for a specified
+                domain.
+            </para>
+        <section>
+            <title>S46 MAP-E container. Config example? TODO</title>
+        </section>
+        <section>
+            <title>S46 MAP-T container. Config example? TODO</title>
+            <para>
+                MAP-T groups rules and optional ports.
+            </para>
+        </section>
+        <section>
+            <title>S46 Lightweight 4over6 container</title>
 <screen>
 {
-    "code": 96, 
-    "name": "s46-cont-lw", 
+    "code": 96,
+    "name": "s46-cont-lw",
     "space": "dhcp6"
 }
-
 </screen>
+        </section>
     </section>
 
     <section id="dhcp6-custom-options">
