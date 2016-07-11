@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,15 +20,20 @@ OptionVendorClass::OptionVendorClass(Option::Universe u,
     }
 }
 
-    OptionVendorClass::OptionVendorClass(Option::Universe u,
-                                         OptionBufferConstIter begin,
-                                         OptionBufferConstIter end)
+OptionVendorClass::OptionVendorClass(Option::Universe u,
+                                     OptionBufferConstIter begin,
+                                     OptionBufferConstIter end)
     : Option(u, getOptionCode(u)) {
     unpack(begin, end);
 }
 
+OptionPtr
+OptionVendorClass::clone() const {
+    return (cloneInternal<OptionVendorClass>());
+}
+
 void
-OptionVendorClass::pack(isc::util::OutputBuffer& buf) {
+OptionVendorClass::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
 
     buf.writeUint32(getVendorId());
@@ -138,7 +143,7 @@ OptionVendorClass::hasTuple(const std::string& tuple_str) const {
 
 
 uint16_t
-OptionVendorClass::len() {
+OptionVendorClass::len() const {
     // The option starts with the header and enterprise id.
     uint16_t length = getHeaderLen() + sizeof(uint32_t);
     // Now iterate over existing tuples and add their size.
@@ -157,7 +162,7 @@ OptionVendorClass::len() {
 }
 
 std::string
-OptionVendorClass::toText(int indent) {
+OptionVendorClass::toText(int indent) const {
     std::ostringstream s;
 
     // Apply indentation

@@ -9,7 +9,7 @@
 namespace isc {
 namespace dhcp {
 
-bool evaluate(const Expression& expr, const Pkt& pkt) {
+bool evaluate(const Expression& expr, Pkt& pkt) {
     ValueStack values;
     for (Expression::const_iterator it = expr.begin();
          it != expr.end(); ++it) {

@@ -1,3 +1,9 @@
+1141.	[func]		marcin
+	Pkt4, Pkt6 and Pkt4o6 objects passed to hooks libraries
+	return copies of DHCP options to avoid unintended modification
+	of the options stored in the server configuration.
+	(Trac #4497, git e50d2ebe998ec3faad8ade22b6971d6584c81044)
+
 1140.	[func]		marcin
 	DHCPv6 server supports assigning multiple reserved addresses
 	and/or prefixes to a single client.

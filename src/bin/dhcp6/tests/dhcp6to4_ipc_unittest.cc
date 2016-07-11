@@ -55,6 +55,9 @@ public:
                         registerCallout("buffer6_send", buffer6_send_callout));
         // Let's wipe all existing statistics.
         StatsMgr::instance().removeAll();
+
+        // Reset the flag which we expect to be set in the callout.
+        callback_pkt_options_copy_ = false;
     }
 
     /// @brief Configure DHCP4o6 port.
@@ -77,11 +80,18 @@ public:
     static int
     buffer6_send_callout(CalloutHandle& callout_handle) {
         callout_handle.getArgument("response6", callback_pkt_);
+        if (callback_pkt_) {
+            callback_pkt_options_copy_ = callback_pkt_->isCopyRetrievedOptions();
+        }
         return (0);
     }
 
     /// @brief Response Pkt6 shared pointer returned in the callout
     static Pkt6Ptr callback_pkt_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a received packet during callout execution.
+    static bool callback_pkt_options_copy_;
 
 private:
 
@@ -90,6 +100,7 @@ private:
 };
 
 Pkt6Ptr Dhcp6to4IpcTest::callback_pkt_;
+bool Dhcp6to4IpcTest::callback_pkt_options_copy_;
 
 void
 Dhcp6to4IpcTest::configurePort(const uint16_t port) {
@@ -152,6 +163,10 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     // Send and wait up to 1 second to receive it.
     ASSERT_NO_THROW(src_ipc.send(pkt));
     ASSERT_NO_THROW(IfaceMgr::instance().receive6(1, 0));
+
+    // Make sure that the received packet was configured to return copy of
+    // retrieved options within a callout.
+    EXPECT_TRUE(callback_pkt_options_copy_);
 
     // Get the forwarded packet from the callout
     Pkt6Ptr forwarded = Dhcp6to4IpcTest::callback_pkt_;

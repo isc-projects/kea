@@ -650,11 +650,24 @@ temporarily override a list of interface names and listen on all interfaces.
         "interfaces": [ <userinput>"eth1/2001:db8::1"</userinput> ]
     },
     ...
+    "option-data": [
+        {
+            "name": "unicast",
+            "data": "2001:db8::1"
+        } ],
+    ...
 }
  </screen>
 
         This configuration will cause the server to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        Usually unicast support is associated with a server unicast option
+        which allows clients to send unicast messages to the server.
+        The example above contains a server unicast option specification
+        which causes the client to send messages to the specified
+        unicast address.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
@@ -1000,7 +1013,9 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
 <row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+-->
 <row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<!--
 <row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
