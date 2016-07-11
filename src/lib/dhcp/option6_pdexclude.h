@@ -39,7 +39,7 @@ public:
     /// @param buf pointer to a buffer
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -51,7 +51,7 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns the address of the delegated address space.
     ///
@@ -85,7 +85,7 @@ protected:
     /// @brief Returns the prefix length of the excluded prefix.
     ///
     /// @return prefix length of excluded prefix
-    uint8_t getSubtractedPrefixesOctetLength();
+    uint8_t getSubtractedPrefixesOctetLength() const;
 
     /// @brief The address and prefix length identifying the delegated IPV6
     /// prefix.

@@ -40,7 +40,7 @@ Option6PDExclude::Option6PDExclude(
     excluded_prefix_length_(excluded_prefix_length) {
 }
 
-void Option6PDExclude::pack(isc::util::OutputBuffer& buf) {
+void Option6PDExclude::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
 
@@ -50,9 +50,9 @@ void Option6PDExclude::pack(isc::util::OutputBuffer& buf) {
     boost::dynamic_bitset<uint8_t> bits(excluded_address_bytes.rbegin(), excluded_address_bytes.rend());
     bits = bits << delegated_prefix_length_;
 
-    uint8_t subtractedPrefixesOctetLength = getSubtractedPrefixesOctetLength();
+    const uint8_t subtractedPrefixesOctetLength = getSubtractedPrefixesOctetLength();
     for (uint8_t i = 0U; i < subtractedPrefixesOctetLength; i++) {
-        boost::dynamic_bitset<uint8_t> tmp = bits >> 120;
+        const boost::dynamic_bitset<uint8_t> tmp = bits >> 120;
 
         uint8_t val = static_cast<uint8_t>(tmp.to_ulong());
 
@@ -78,12 +78,12 @@ void Option6PDExclude::unpack(OptionBufferConstIter begin,
     begin = end;
 }
 
-uint16_t Option6PDExclude::len() {
+uint16_t Option6PDExclude::len() const {
     return getHeaderLen() + sizeof(excluded_prefix_length_)
             + getSubtractedPrefixesOctetLength();
 }
 
-uint8_t Option6PDExclude::getSubtractedPrefixesOctetLength() {
+uint8_t Option6PDExclude::getSubtractedPrefixesOctetLength() const {
     // Promote what is less than 8 bits to 1 octet.
     uint8_t subtractedPrefixesBitLength = excluded_prefix_length_
             - delegated_prefix_length_ - 1;
