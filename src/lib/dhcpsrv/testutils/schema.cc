@@ -31,9 +31,11 @@ const char* INVALID_PASSWORD = "password=invalid";
 const char* VALID_TIMEOUT = "connect-timeout=10";
 const char* INVALID_TIMEOUT_1 = "connect-timeout=foo";
 const char* INVALID_TIMEOUT_2 = "connect-timeout=-17";
+const char* VALID_READONLY_DB = "readonly=true";
 
 string connectionString(const char* type, const char* name, const char* host,
-                        const char* user, const char* password, const char* timeout) {
+                        const char* user, const char* password, const char* timeout,
+                        const char* readonly_db = NULL) {
     const string space = " ";
     string result = "";
 
@@ -73,6 +75,13 @@ string connectionString(const char* type, const char* name, const char* host,
             result += space;
         }
         result += string(timeout);
+    }
+
+    if (readonly_db != NULL) {
+        if (! result.empty()) {
+            result += space;
+        }
+        result += string(readonly_db);
     }
 
     return (result);

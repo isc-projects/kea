@@ -12,8 +12,10 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/schema.h>
 #include <dhcpsrv/database_connection.h>
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
@@ -503,6 +505,47 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
     // host data source to convert option data into the appropriate option
     // classes when the options are retrieved.
     LibDHCP::setRuntimeOptionDefs(defs);
+}
+
+void
+GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
+    ASSERT_TRUE(hdsptr_);
+
+    // The database is initially opened in "read-write" mode. We can
+    // insert some data to the databse.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in queries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Make sure that the host has been inserted and that the data can be
+    // retrieved.
+    ConstHostPtr host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+
+    // Close the database connection and reopen in "read-only" mode as
+    // specified by the "VALID_READONLY_DB" parameter.
+    HostDataSourceFactory::destroy();
+    HostDataSourceFactory::create(connectionString(valid_db_type,
+                                                   VALID_NAME,
+                                                   VALID_HOST,
+                                                   VALID_USER,
+                                                   VALID_PASSWORD,
+                                                   VALID_READONLY_DB));
+
+    // Check that an attempt to insert new host would result in
+    // exception.
+    host = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    ASSERT_THROW(hdsptr_->add(host), ReadOnlyDb);
+
+    // Reading from the database should still be possible, though.
+    host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
 }
 
 void GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {

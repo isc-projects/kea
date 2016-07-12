@@ -167,6 +167,8 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
 }
 
+
+
 /// @brief Check conversion functions
 ///
 /// The server works using cltt and valid_filetime.  In the database, the
@@ -206,6 +208,10 @@ TEST(MySqlConnection, checkTimeConversion) {
     time_t converted_cltt = 0;
     MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
+}
+
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
+    testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
