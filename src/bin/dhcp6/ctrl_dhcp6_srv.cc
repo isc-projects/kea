@@ -97,6 +97,46 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
     return (answer);
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
+                                             ConstElementPtr args) {
+    const int status_code = 1; // 1 indicates an error
+    string message;
+
+    ConstElementPtr result;
+    ConstElementPtr dhcp6;
+
+    // args must be { "Dhcp6": { ... }, "Logging": { ... } }
+    // the Logging component is technically optional, but very recommended.
+    if (!args) {
+        message = "Missing mandatory 'Dhcp6' parameter.";
+    } else {
+        ConstElementPtr dhcp6 = args->get("Dhcp6");
+        if (!dhcp6) {
+            message = "Missing mandatory 'Dhcp6' parameter.";
+        } else if (dhcp6->getType() != Element::map) {
+            message = "'Dhcp6' parameter expected to be a map.";
+        }
+    }
+
+    if (!dhcp6) {
+        // Something went wrong, we can't find the Dhcp6 element.
+        result = isc::config::createAnswer(status_code, message);
+        return (result);
+    }
+
+    // Let's configure logging. We should call configureLogger, even
+    // if there's no logging specified. It means to return to the
+    // default logging.
+    ConstElementPtr logging = args->get("Logging");
+    Daemon::configureLogger(args->get("Logging"), CfgMgr::instance().getStagingCfg());
+
+    // Ok, logging set. Now let's configure the server.
+    result = ControlledDhcpv6Srv::processCommand("config-reload", dhcp6);
+
+    return (result);
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -284,6 +324,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("set-config",
+        boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
