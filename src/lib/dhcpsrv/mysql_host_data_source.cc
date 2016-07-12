@@ -1787,8 +1787,6 @@ public:
 
     /// @brief Indicates if the database is opened in read only mode.
     bool is_readonly_;
-namespace {
-
 };
 
 
@@ -1947,8 +1945,6 @@ TaggedStatementArray tagged_statements = { {
             "persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"}}
 };
-
-}; // end anonymouse namespace
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
