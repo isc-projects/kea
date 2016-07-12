@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dns/name.h>
 
 #include <string>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
@@ -215,8 +216,11 @@ public:
     explicit Option4ClientFqdn(OptionBufferConstIter first,
                                OptionBufferConstIter last);
 
-   /// @brief Copy constructor
+    /// @brief Copy constructor
     Option4ClientFqdn(const Option4ClientFqdn& source);
+
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
 
     /// @brief Destructor
     virtual ~Option4ClientFqdn();
@@ -250,6 +254,12 @@ public:
 
     /// @brief Sets the flag field value to 0.
     void resetFlags();
+
+    /// @brief Returns @c Rcode objects representing value of RCODE1 and RCODE2.
+    ///
+    /// @return Pair of Rcode objects of which first is the RCODE1 and the
+    /// second is RCODE2.
+    std::pair<Rcode, Rcode> getRcode() const;
 
     /// @brief Set Rcode value.
     ///
@@ -299,7 +309,7 @@ public:
    /// @brief Writes option in the wire format into a buffer.
     ///
     /// @param [out] buf output buffer where option data will be stored.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses option from the received buffer.
     ///
@@ -322,13 +332,13 @@ public:
     /// @param indent number of spaces before printed text.
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns length of the complete option (data length +
     /// DHCPv4 option header).
     ///
     /// @return length of the option.
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     ///
     /// @name Well known Rcode declarations for DHCPv4 Client FQDN %Option

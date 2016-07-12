@@ -182,7 +182,7 @@ KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Wo
 # gcc 4.4 would emit warnings about breaking strict aliasing rules.
 # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41874
 CXX_DUMP_VERSION=`$CXX -dumpversion | cut -f1-2 -d.`
-if test "$CXX_DUMP_VERSION" \< "4.5"; then
+if expr "$CXX_DUMP_VERSION" \< "4.5" > /dev/null; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)

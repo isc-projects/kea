@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,8 +55,13 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const IOAddress& addr)
     setAddress(addr);
 }
 
+OptionPtr
+Option4AddrLst::clone() const {
+    return (cloneInternal<Option4AddrLst>());
+}
+
 void
-Option4AddrLst::pack(isc::util::OutputBuffer& buf) {
+Option4AddrLst::pack(isc::util::OutputBuffer& buf) const {
 
     if (addrs_.size() * V4ADDRESS_LEN > 255) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_ << " is too big."
@@ -106,13 +111,13 @@ void Option4AddrLst::addAddress(const isc::asiolink::IOAddress& addr) {
     addrs_.push_back(addr);
 }
 
-uint16_t Option4AddrLst::len() {
+uint16_t Option4AddrLst::len() const {
 
     // Returns length of the complete option (option header + data length)
     return (getHeaderLen() + addrs_.size() * V4ADDRESS_LEN);
 }
 
-std::string Option4AddrLst::toText(int indent) {
+std::string Option4AddrLst::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent) << ":";
 

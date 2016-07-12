@@ -35,6 +35,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <typeinfo>
 
 #include <arpa/inet.h>
 

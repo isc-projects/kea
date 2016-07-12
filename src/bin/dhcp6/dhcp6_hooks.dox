@@ -333,4 +333,55 @@ packet processing. Hook points that are not specific to packet processing
   expired leases will remain in the database and their recovery will
   be attempted during the next reclaim cycle.
 
+@section dhcpv6HooksOptionsAccess Accessing DHCPv6 Options within a Packet
+When the server constructs a response message to a client it includes
+DHCP options configured for this client in a response message. Apart
+from the dynamically created options, such as IA_NA or ClientFQDN, it
+typically includes many options specified in the server configuration
+and held within the configuration structures by @c CfgMgr. Option
+instances are created once, during server configuration, and the
+@c CfgMgr holds pointers to those instances until the next server
+reconfiguration.
+
+When the server includes an option in a response message it copies
+a pointer to the instance of this option, rather than entire option.
+This ensures the good performance of response message creation. However,
+it also implies that any modification to the option carried in the
+DHCP response will affect an instance of this option in the server
+configuration structures. This is obviously not desired as it would
+affect all subsequent DHCP transactions involving this option. The
+DHCP server code avoids modifying the options included in the messages
+so it is possible to ensure good performance without a risk of
+accidentally modifying server configuration. The situation is
+different with hooks libraries which purpose is, in many cases,
+to modify values of options inserted by the server.
+
+Thus, @c Pkt class provides a mechanism to return a copy of an
+option to a caller (e.g. a callout), rather than an instance
+shared with the @c CfgMgr. This mechanism is enabled for all instances
+of @c Pkt6 passed to the callouts, i.e. "query6" and "response6"
+arguments. It is also automatically disabled when the callout
+returns the control back to the server.
+
+At every hook point, where the server passes an instance of a packet
+to the callouts, the server calls
+@c isc::dhcp::Pkt6::setCopyRetrievedOptions (true)
+to force copying options retrieved by @c isc::dhcp::Pkt6::getOption,
+@c isc::dhcp::Pkt6::getOptions, @c isc::dhcp::Pkt6::getRelayOption
+and @c isc::dhcp::Pkt6::getAnyRelayOption within callouts. The copied
+option replaces an original option within the packet and any
+modification to the option content by the callout would only affect
+the option instance associated with the packet.
+
+On the other hand, copying each retrieved option may be expensive.
+If performance of a hook library is a concern, it is possible for the
+hook library to disable copying retrieved options by calling
+@c isc::dhcp::Pkt6::setCopyRetrievedOptions (false) within a callout.
+In this case however, the hook library implementer must be aware that
+any modification of the option instance would affect the server
+configuration and may disrupt server's operation. Thus, disabling
+copying of retrieved options is not recommended unless the hook
+library is not intended to modify configured options carried
+within a packet.
+
 */

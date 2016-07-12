@@ -18,6 +18,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 
+#include <iterator>
 #include <iostream>
 #include <sstream>
 
@@ -57,17 +58,9 @@ size_t Pkt6::len() {
     }
 }
 
-OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
-
-    if (relay_info_.empty()) {
-        // There's no relay info, this is a direct message
-        return (OptionPtr());
-    }
-
-    int start = 0; // First relay to check
-    int end = 0;   // Last relay to check
-    int direction = 0; // How we going to iterate: forward or backward?
-
+void
+Pkt6::prepareGetAnyRelayOption(const RelaySearchOrder& order,
+                               int& start, int& end, int& direction) const {
     switch (order) {
     case RELAY_SEARCH_FROM_CLIENT:
         // Search backwards
@@ -93,6 +86,22 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
         end = 0;
         direction = 1;
     }
+}
+
+
+OptionPtr
+Pkt6::getNonCopiedAnyRelayOption(const uint16_t option_code,
+                                 const RelaySearchOrder& order) const {
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionPtr());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
 
     // This is a tricky loop. It must go from start to end, but it must work in
     // both directions (start > end; or start < end). We can't use regular
@@ -101,7 +110,7 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     // list (end + direction). It is similar to STL concept of end pointing
     // to a place after the last element
     for (int i = start; i != end + direction; i += direction) {
-        OptionPtr opt = getRelayOption(opt_type, i);
+        OptionPtr opt = getNonCopiedRelayOption(option_code, i);
         if (opt) {
             return (opt);
         }
@@ -112,16 +121,74 @@ OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
     return (OptionPtr());
 }
 
-OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) const {
+OptionPtr
+Pkt6::getAnyRelayOption(const uint16_t option_code,
+                        const RelaySearchOrder& order) {
+
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionPtr());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    for (int i = start; i != end + direction; i += direction) {
+        OptionPtr opt = getRelayOption(option_code, i);
+        if (opt) {
+            return (opt);
+        }
+    }
+
+    // We iterated over specified relays and haven't found what we were
+    // looking for
+    return (OptionPtr());
+}
+
+OptionPtr
+Pkt6::getNonCopiedRelayOption(const uint16_t opt_type,
+                              const uint8_t relay_level) const {
     if (relay_level >= relay_info_.size()) {
-        isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
-                  << " There is no info about " << relay_level + 1 << " relay.");
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
     }
 
     OptionCollection::const_iterator x = relay_info_[relay_level].options_.find(opt_type);
     if (x != relay_info_[relay_level].options_.end()) {
-	return (*x).second;
-      }
+        return (x->second);
+    }
+
+    return (OptionPtr());
+}
+
+OptionPtr
+Pkt6::getRelayOption(const uint16_t opt_type, const uint8_t relay_level) {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
+    }
+
+    OptionCollection::iterator x = relay_info_[relay_level].options_.find(opt_type);
+    if (x != relay_info_[relay_level].options_.end()) {
+        if (copy_retrieved_options_) {
+            OptionPtr relay_option_copy = x->second->clone();
+            x->second = relay_option_copy;
+        }
+        return (x->second);
+    }
 
     return (OptionPtr());
 }
@@ -451,7 +518,7 @@ Pkt6::unpackTCP() {
 HWAddrPtr
 Pkt6::getMACFromDUID() {
     HWAddrPtr mac;
-    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    OptionPtr opt_duid = getNonCopiedOption(D6O_CLIENTID);
     if (!opt_duid) {
         return (mac);
     }
@@ -554,7 +621,7 @@ Pkt6::toText() const {
 
 DuidPtr
 Pkt6::getClientId() const {
-    OptionPtr opt_duid = getOption(D6O_CLIENTID);
+    OptionPtr opt_duid = getNonCopiedOption(D6O_CLIENTID);
     try {
         // This will throw if the DUID length is larger than 128 bytes
         // or is too short.
@@ -570,16 +637,30 @@ Pkt6::getClientId() const {
 }
 
 isc::dhcp::OptionCollection
-Pkt6::getOptions(uint16_t opt_type) {
-    isc::dhcp::OptionCollection found;
+Pkt6::getNonCopiedOptions(const uint16_t opt_type) const {
+    std::pair<OptionCollection::const_iterator,
+              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
+    return (OptionCollection(range.first, range.second));
+}
 
-    for (OptionCollection::const_iterator x = options_.begin();
-         x != options_.end(); ++x) {
-        if (x->first == opt_type) {
-            found.insert(make_pair(opt_type, x->second));
+isc::dhcp::OptionCollection
+Pkt6::getOptions(const uint16_t opt_type) {
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range = options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        for (OptionCollection::iterator opt_it = range.first;
+             opt_it != range.second; ++opt_it) {
+            OptionPtr option_copy = opt_it->second->clone();
+            opt_it->second = option_copy;
         }
     }
-    return (found);
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
 }
 
 const char*
@@ -668,7 +749,7 @@ const char* Pkt6::getName() const {
 void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
 
     // We use index rather than iterator, because we need that as a parameter
-    // passed to getRelayOption()
+    // passed to getNonCopiedRelayOption()
     for (size_t i = 0; i < question->relay_info_.size(); ++i) {
         RelayInfo info;
         info.msg_type_ = DHCPV6_RELAY_REPL;
@@ -678,7 +759,7 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
 
         // Is there an interface-id option in this nesting level?
         // If there is, we need to echo it back
-        OptionPtr opt = question->getRelayOption(D6O_INTERFACE_ID, i);
+        OptionPtr opt = question->getNonCopiedRelayOption(D6O_INTERFACE_ID, i);
         // taken from question->RelayInfo_[i].options_
         if (opt) {
             info.options_.insert(make_pair(opt->getType(), opt));
@@ -735,7 +816,7 @@ HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
     HWAddrPtr mac;
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-        OptionVendor>(getOption(D6O_VENDOR_OPTS));
+        OptionVendor>(getNonCopiedOption(D6O_VENDOR_OPTS));
 
     // Check if this is indeed DOCSIS3 environment
     if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {

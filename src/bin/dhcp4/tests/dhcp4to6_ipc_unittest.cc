@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 #include <stdint.h>
+#include <utility>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -64,6 +65,10 @@ public:
         EXPECT_TRUE(srv);
         // Let's wipe all existing statistics.
         StatsMgr::instance().removeAll();
+
+        // Set the flags to false as we expect them to be set in callouts.
+        callback_recv_pkt_options_copy_ = std::make_pair(false, false);
+        callback_sent_pkt_options_copy_ = std::make_pair(false, false);
     }
 
     /// @brief Configure DHCP4o6 port.
@@ -85,9 +90,17 @@ public:
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
-    static int
-        buffer4_receive_callout(CalloutHandle& callout_handle) {
+    static int buffer4_receive_callout(CalloutHandle& callout_handle) {
         callout_handle.getArgument("query4", callback_recv_pkt_);
+        Pkt4o6Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4o6>(callback_recv_pkt_);
+        if (pkt4) {
+            callback_recv_pkt_options_copy_.first = pkt4->isCopyRetrievedOptions();
+            Pkt6Ptr pkt6 = pkt4->getPkt6();
+            if (pkt6) {
+                callback_recv_pkt_options_copy_.second =
+                    pkt6->isCopyRetrievedOptions();
+            }
+        }
         return (0);
     }
 
@@ -97,9 +110,17 @@ public:
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
-    static int
-        buffer4_send_callout(CalloutHandle& callout_handle) {
+    static int buffer4_send_callout(CalloutHandle& callout_handle) {
         callout_handle.getArgument("response4", callback_sent_pkt_);
+        Pkt4o6Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4o6>(callback_sent_pkt_);
+        if (pkt4) {
+            callback_sent_pkt_options_copy_.first = pkt4->isCopyRetrievedOptions();
+            Pkt6Ptr pkt6 = pkt4->getPkt6();
+            if (pkt6) {
+                callback_sent_pkt_options_copy_.second =
+                    pkt6->isCopyRetrievedOptions();
+            }
+        }
         return (0);
     }
 
@@ -108,6 +129,14 @@ public:
 
     /// @brief Response Pkt4 shared pointer returned in the send callout
     static Pkt4Ptr callback_sent_pkt_;
+
+    /// Flags indicating if copying retrieved options was enabled for
+    /// a received packet during callout execution.
+    static std::pair<bool, bool> callback_recv_pkt_options_copy_;
+
+    /// Flags indicating if copying retrieved options was enabled for
+    /// a sent packet during callout execution.
+    static std::pair<bool, bool> callback_sent_pkt_options_copy_;
 
     /// @brief reference to a controlled server
     ///
@@ -124,6 +153,8 @@ private:
 
 Pkt4Ptr Dhcp4to6IpcTest::callback_recv_pkt_;
 Pkt4Ptr Dhcp4to6IpcTest::callback_sent_pkt_;
+std::pair<bool, bool> Dhcp4to6IpcTest::callback_recv_pkt_options_copy_;
+std::pair<bool, bool> Dhcp4to6IpcTest::callback_sent_pkt_options_copy_;
 
 void
 Dhcp4to6IpcTest::configurePort(uint16_t port) {
@@ -192,6 +223,11 @@ TEST_F(Dhcp4to6IpcTest, receive) {
     ASSERT_TRUE(pkt6_received);
     EXPECT_EQ("eth0", pkt6_received->getIface());
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
+
+    // Both DHCP4o6 and encapsulated DHCPv6 packet should have the
+    // flag enabled.
+    EXPECT_TRUE(callback_recv_pkt_options_copy_.first);
+    EXPECT_TRUE(callback_recv_pkt_options_copy_.second);
 }
 
 // This test verifies that message with multiple DHCPv4 query options
@@ -325,6 +361,11 @@ TEST_F(Dhcp4to6IpcTest, process) {
     EXPECT_EQ(DHCPV6_DHCPV4_RESPONSE, pkt6_sent->getType());
     EXPECT_EQ("eth0", pkt6_sent->getIface());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
+
+    // Both DHCP4o6 and encapsulated DHCPv6 packet should have the
+    // flag enabled.
+    EXPECT_TRUE(callback_sent_pkt_options_copy_.first);
+    EXPECT_TRUE(callback_sent_pkt_options_copy_.second);
 
     // Verify the 4o6 part
     OptionCollection sent_msgs = pkt6_sent->getOptions(D6O_DHCPV4_MSG);

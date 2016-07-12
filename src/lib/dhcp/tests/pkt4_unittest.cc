@@ -593,6 +593,61 @@ TEST_F(Pkt4Test, options) {
     EXPECT_NO_THROW(pkt.reset());
 }
 
+// This test verifies that it is possible to control whether a pointer
+// to an option or a pointer to a copy of an option is returned by the
+// packet object.
+TEST_F(Pkt4Test, setCopyRetrievedOptions) {
+    // Create option 1 with two sub options.
+    OptionPtr option1(new Option(Option::V4, 1));
+    OptionPtr sub1(new Option(Option::V4, 1));
+    OptionPtr sub2(new Option(Option::V4, 2));
+
+    option1->addOption(sub1);
+    option1->addOption(sub2);
+
+    // Create option 2 with two sub options.
+    OptionPtr option2(new Option(Option::V4, 2));
+    OptionPtr sub3(new Option(Option::V4, 1));
+    OptionPtr sub4(new Option(Option::V4, 2));
+
+    option2->addOption(sub3);
+    option2->addOption(sub4);
+
+    // Add both options to a packet.
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->addOption(option1);
+    pkt->addOption(option2);
+
+    // Retrieve options and make sure that the pointers to the original
+    // option instances are returned.
+    ASSERT_TRUE(option1 == pkt->getOption(1));
+    ASSERT_TRUE(option2 == pkt->getOption(2));
+
+    // Now force copying the options when they are retrieved.
+    pkt->setCopyRetrievedOptions(true);
+    EXPECT_TRUE(pkt->isCopyRetrievedOptions());
+
+    // Option pointer returned must point to a new instance of option 2.
+    OptionPtr option2_copy = pkt->getOption(2);
+    EXPECT_FALSE(option2 == option2_copy);
+
+    // Disable copying.
+    pkt->setCopyRetrievedOptions(false);
+    EXPECT_FALSE(pkt->isCopyRetrievedOptions());
+
+    // Expect that the original pointer is returned. This guarantees that
+    // option1 wasn't affected by copying option 2.
+    OptionPtr option1_copy = pkt->getOption(1);
+    EXPECT_TRUE(option1 == option1_copy);
+
+    // Again, enable copying options.
+    pkt->setCopyRetrievedOptions(true);
+
+    // This time a pointer to new option instance should be returned.
+    option1_copy = pkt->getOption(1);
+    EXPECT_FALSE(option1 == option1_copy);
+}
+
 // This test verifies that the options are unpacked from the packet correctly.
 TEST_F(Pkt4Test, unpackOptions) {
 

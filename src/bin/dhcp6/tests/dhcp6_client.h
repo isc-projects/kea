@@ -27,7 +27,7 @@ namespace test {
 /// @brief DHCPv6 client used for unit testing.
 ///
 /// This class implements a DHCPv6 "client" which interoperates with the
-/// @c NakedDhcpv6Srv class. It calls @c NakedDhcpv6Srv::fakeRecive to
+/// @c NakedDhcpv6Srv class. It calls @c NakedDhcpv6Srv::fakeReceive to
 /// deliver client messages to the server for processing. The server places
 /// the response in the @c NakedDhcpv6Srv::fake_sent_ container. The client
 /// pops messages from this container which simulates reception of the
@@ -684,6 +684,25 @@ public:
         oro_.push_back(option_code);
     }
 
+    /// @brief Controls whether the client will send DOCSIS vendor ORO
+    ///
+    /// The actual content of the ORO is specified in docsis_oro_.
+    /// It is useful to split the actual content and the ORO sending
+    /// decision, so we could test cases of sending empty ORO.
+    /// @param send controls whether ORO will be sent or not.
+    void useDocsisORO(bool send) {
+        use_docsis_oro_ = send;
+    }
+
+    /// @brief Instructs client to request specified option in DOCSIS
+    /// vendor ORO
+    ///
+    /// @param option_code client will request this option code
+    void requestDocsisOption(uint16_t option_code) {
+        use_docsis_oro_ = true;
+        docsis_oro_.push_back(option_code);
+    }
+
     /// @brief returns client-id
     /// @return client-id
     DuidPtr getDuid() const {
@@ -840,6 +859,7 @@ private:
     bool use_relay_; ///< Enable relaying messages to the server.
 
     bool use_oro_;  ///< Conth
+    bool use_docsis_oro_;
     bool use_client_id_;
     bool use_rapid_commit_;
 
@@ -851,6 +871,12 @@ private:
     /// Content of this vector will be sent as ORO if use_oro_ is set
     /// to true. See @ref sendORO for details.
     std::vector<uint16_t> oro_;
+
+    /// @brief List of DOCSIS vendor options to be requested
+    ///
+    /// Content of this vector will be sent as DOCSIS vendor ORO if
+    /// use_docsis_oro_ is set to true. See @ref sendDocsisORO for details.
+    std::vector<uint16_t> docsis_oro_;
 
     /// @brief forced (Overridden) value of the server-id option (may be NULL)
     OptionPtr forced_server_id_;
