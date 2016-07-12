@@ -24,7 +24,7 @@ using namespace std;
 /// @brief Pointer to the registry instance.
 extern RotatingFilePtr legal_file;
 
-/// @brief Creates legal file entry for a DHCPv4 Lease
+/// @brief Creates legal file entry for a DHCPv4 Lease.
 ///
 /// Creates an entry based on the given DHCPREQUEST and corresponding
 /// DHCPv4 lease.  The entry is returned as a single string with no embedded
@@ -116,7 +116,7 @@ std::string genLease4Entry(const Pkt4Ptr& query, const Lease4Ptr& lease, const b
     return (stream.str());
 }
 
-/// @brief Produces an DHCPv4 legal log entry from a callout handle
+/// @brief Produces an DHCPv4 legal log entry from a callout handle.
 ///
 /// Extracts the inbound packet and lease from the Callout, generates the
 /// log entry text and writes it to the legal file.  If the the legal file

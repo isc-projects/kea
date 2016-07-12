@@ -57,7 +57,7 @@ public:
 /// The class implements virtual methods in facilitate unit testing.
 class RotatingFile {
 public:
-    /// @brief Constructor
+    /// @brief Constructor.
     ///
     /// Create a RotatingFile for the given file name without opening the file.
     /// @param path Directory in which file(s) will be created
@@ -67,7 +67,7 @@ public:
     RotatingFile(const std::string& path, const std::string& base_name);
 
     /// @brief Destructor.
-    ////
+    ///
     /// The destructor does call the close method.
     virtual ~RotatingFile();
 
@@ -91,7 +91,7 @@ public:
     /// Method is exception safe.
     virtual void close();
 
-    /// @brief Rotates the file if necessary
+    /// @brief Rotates the file if necessary.
     ///
     /// The system date (no time component) is latter than the current file date
     /// (i.e. day boundary has been crossed), the the current physical file is
@@ -103,7 +103,7 @@ public:
     /// @return True if the physical file is open, false otherwise.
     virtual bool isOpen() const;
 
-    /// @brief Appends a string to the current file
+    /// @brief Appends a string to the current file.
     ///
     /// Invokes rotate() and then attempts to add the new line
     /// followed by EOL to the end of the file. The content of
@@ -112,7 +112,7 @@ public:
     ///     "<timestamp>SP<text><EOL>"
     ///
     /// where:
-    /// - @b timestamp> - current local date and time as given by the
+    /// - @b timestamp - current local date and time as given by the
     /// strftime format "%Y-%m-%d %H:%M:%S %Z"
     ///
     /// - @b text - text supplied by the parameter
@@ -125,16 +125,16 @@ public:
     virtual void writeln(const std::string& text);
 
 protected:
-    /// @brief Returns the current local date
+    /// @brief Returns the current local date.
     /// This is exposed primarily to simplify testing.
     virtual boost::gregorian::date today() const;
 
-    /// @brief Returns the current system time
+    /// @brief Returns the current system time.
     /// This is exposed primarily to simplify testing.
     virtual time_t now() const;
 
 public:
-    /// @brief Returns the current date and time as string
+    /// @brief Returns the current date and time as string.
     ///
     /// Returns the current local date and time as a string based on the
     /// given format.  Maximum length of the result is 128 bytes.
@@ -147,18 +147,18 @@ public:
     virtual std::string getNowString(const std::string&
                                      format="%Y-%m-%d %H:%M:%S %Z") const;
 
-    /// @brief Returns the current file name
+    /// @brief Returns the current file name.
     std::string getFileName() const {
         return (file_name_);
     }
 
-    /// @brief Returns the date of the current file
+    /// @brief Returns the date of the current file.
     boost::gregorian::date getFileDay() const {
         return (file_day_);
     }
 
-    /// @brief Creates seconds into a text string of days, hours, minutes
-    /// and seconds
+    /// @brief Translates seconds into a text string of days, hours, minutes
+    /// and seconds.
     ///
     /// The output string will have the following format:
     ///
@@ -174,7 +174,7 @@ public:
     /// @return String containing the duration text
     static std::string genDurationString(const uint32_t secs);
 
-    /// @brief Creates a string of hex digit pairs from a vector of bytes
+    /// @brief Creates a string of hex digit pairs from a vector of bytes.
     ///
     /// @param bytes Vector of bytes to convert
     /// @param delimiter String to use a delimiter, defaults to ":"
@@ -183,16 +183,16 @@ public:
     static std::string vectorHexDump(const std::vector<uint8_t>& bytes,
                                      const std::string& delimiter = ":");
 private:
-    /// @brief Directory in which the file(s) will be created
+    /// @brief Directory in which the file(s) will be created.
     std::string path_;
 
-    /// @brief Base name of the file
+    /// @brief Base name of the file.
     std::string base_name_;
 
-    /// @brief Date of current file
+    /// @brief Date of current file.
     boost::gregorian::date file_day_;
 
-    /// @brief Full name of the current file
+    /// @brief Full name of the current file.
     std::string file_name_;
 
     /// @brief Output file stream.

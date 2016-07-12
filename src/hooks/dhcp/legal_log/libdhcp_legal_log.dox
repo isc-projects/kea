@@ -12,7 +12,7 @@ Welcome to Kea Legal Log Hooks Library. This documentation is
 addressed at Kea developers, and provides information needed to write,
 extend and maintain Kea hooks.
 
-This documentation is stand-alone: you are supposes to have read and
+This documentation is stand-alone: you should have read and
 understood <a href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
 Developer's Guide</a> and in particular its section about hooks: <a
 href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
@@ -22,8 +22,8 @@ Hooks Developer's Guide</a>.
 ## Introduction
 libdhcp_legal_log is an example hooks library which customizes the
 DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
-and kea-dhcp6).  Specifically it implements a detailed log of lease
-assignments and renewals as it could be required for legal purpose.
+and kea-dhcp6).  Specifically it implements recording a detailed log of lease
+assignments and renewals as might be required for legal purposes.
 
 ## Log Files
 Legal logs are appended into a text file implemented by the class
@@ -40,14 +40,14 @@ and corresponding DHCPv4 leases intercepted by the lease4_select
 (for new leases) and lease4_renew (for renewed leases) hooks.
 
 An entry is a single string with no embedded end-of-line markers
-has the following sections:
+and has the following sections:
 @code
 <address><duration><device-id>{client-info}{relay-info}
 @endcode
 Where:
  - @b address - the leased IPv4 address given out and whether it was
    assigned or renewed.
- - @b duration - the lease lifetime expressed as in days (if present),
+ - @b duration - the lease lifetime expressed in days (if present),
    hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
    denoted with the text "infinite duration".
  - @b device-id - the client's hardware address shown as numerical type
@@ -55,7 +55,7 @@ Where:
  - @b client-info - the DHCP client id option (61) if present, shown as
    hex digit string.
  - @b relay-info - for relayed packets the giaddr and the RAI circuit id
-   and remote id options (x and xx) if present.
+   and remote id options (option 82 sub options 1 and 2) if present.
 
 For instance:
 @verbatim
@@ -68,14 +68,14 @@ actions intercepted by the lease6_select (for new leases), lease6_renew
 (for renewed leases) and lease6_rebind (for rebound leases).
 
 An entry is a single string with no embedded end-of-line markers
-has the following sections:
+and has the following sections:
 @code
 <address><duration><device-id>{relay-info}*
 @endcode
 Where:
  - @b address - the leased IPv6 address or prefix given out and whether
    it was assigned or renewed.
- - @b duration - the lease lifetime expressed as in days (if present),
+ - @b duration - the lease lifetime expressed in days (if present),
    hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
    denoted with the text "infinite duration".
  - @b device-id - the client's DUID and hardware address (if present).
@@ -127,33 +127,35 @@ Two string Hook Library Parameters are supported:
  - @b path - Directory in which the legal file(s) will be written.  The
  default value is "<prefix>/kea/var".  The directory must exist.
  - @b base-name - An arbitrary value which is used in conjunction with
- current system date to form the current legal file name.  It defaults
+ the current system date to form the current legal file name.  It defaults
  to "kea-legal".
 
 
 @section libdhcp_legal_logDesign Libdhcp_legal_log: An Example Hooks Library, Commented Design
 ## Introduction
-Some countries requires ISP to log the connection meta-data for legal purpose,
-so the idea of a legal log hook library as an example explaining how
-to program such a thing.
+Some countries require ISPs to log the connection meta-data for legal purposes.
+A legal log hook library demonstrating how to log this information is then
+useful as both an example explaining how to program with hooks and for direct
+use.
 
 As explained in the tutorial of the Hook Developer's Guide <a
 href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html#hooksdgTutorial">
 Tutorial</a> a hook library is a Dynamic Shared Object with known
 entry points for the framework functions and hooks. The DSO is (when
-not static linked) dynamically loaded by a Kea server module, some
+not static linked) dynamically loaded by a Kea server module. Some
 parameters can be passed to configure it and DSO entry points with
 a well known hook names are auto-magically registered.
 
-The Kea server module invokes the registered callouts during processing,
-passes some context arguments and uses the returned status to eventually
-cancel the current action, e.g., by dropping a message.
+The Kea server module invokes the registered callouts during processing
+and passes some context arguments.  The returned status is used to
+control further prosessing, e.g., by dropping a message to cancel
+the current action.
 
 ## Framework
 The file version.cc defines the required framework version() function
 which protects against Hooks API changes. The file load_unload.cc
-defines a load() function which decodes the configuration parameters,
-creates and opens the legal log file (implemented by class @c
+defines a load() function which processes the configuration parameters
+and creates and opens the legal log file (implemented by class @c
 isc::legal_log::RotatingFile in rotating_file.h and
 rotating_file.cc). The unload() function destroys the object which by
 side effect closes the legal log file. Note the load() function does
@@ -171,16 +173,15 @@ of DHCPDISCOVER or DHCPV6_SOLICIT messages. legalLog4Handler() or
 legalLog6Handler() is called with the callout handle (to get the
 parsed query message and the lease) and a boolean renewal flag.
 
-When something goes wrong callouts returns 1 (next step skip)
-which tells the server to skip the processing. So any legal log
-error is converted in the server as an internal error and denial
-of service for the client (the choice comes from the meaning of
-the "legal" word).
+When something goes wrong callouts return 1 (next step skip)
+which tells the server to skip processing the next step. So
+in the server any legal log error is converted to an internal
+error and the client is denied service.
 
 ## Log Generation
-For DHCPv4 the only not trivial point is to get for relayed queries
-the relay agent information option ans its two interesting (i.e., to log)
-circuit ID and remote ID sub-options.
+For DHCPv4 the only difficulty is to get the relay agent information
+option and its two interesting (i.e., to log) circuit ID and remote
+ID sub-options for any queries that were relayed.
 
 For DHCPv6 the hardware address is not built-in but can be recovered and
 recorded by kea-dhcp6 in many cases. A DHCPv6 query can be relayed

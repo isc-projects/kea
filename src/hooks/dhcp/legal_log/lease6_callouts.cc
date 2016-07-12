@@ -26,7 +26,7 @@ using namespace std;
 /// @brief Pointer to the registry instance.
 extern RotatingFilePtr legal_file;
 
-/// @brief Function which converts hardware address source to a string
+/// @brief Function which converts hardware address source to a string.
 ///
 /// @param source integer value to convert
 /// @return string label for the value or "UNKNOWN" if not recognized.
@@ -60,7 +60,7 @@ std::string hwaddrSourceToString(uint32_t source) {
 }
 
 
-/// @brief Creates legal file entry for a DHCPv6 Lease
+/// @brief Creates legal file entry for a DHCPv6 Lease.
 ///
 /// Creates an entry based on the given DHCPv6 queries and corresponding
 /// DHCPv6 lease.  The entry is returned as a single string with no embedded
@@ -156,7 +156,7 @@ std::string genLease6Entry(const Pkt6Ptr& query, const Lease6Ptr& lease, const b
     return (stream.str());
 }
 
-/// @brief Produces an DHCPv6 legal log entry from a callout handle
+/// @brief Produces an DHCPv6 legal log entry from a callout handle.
 ///
 /// Extracts the inbound packet and lease from the Callout, generates the
 /// log entry text and writes it to the legal file.  If the the legal file

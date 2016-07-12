@@ -17,13 +17,13 @@ using namespace isc;
 using namespace hooks;
 using namespace legal_log;
 
-/// @brief Pointer to the legal output file instance
+/// @brief Pointer to the legal output file instance.
 RotatingFilePtr legal_file;
 
-/// @brief Default path name
+/// @brief Default path name.
 const char* default_legal_path = LEGAL_LOG_DIR;
 
-/// @brief Default base name
+/// @brief Default base name.
 const char* default_legal_base = "kea-legal";
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
