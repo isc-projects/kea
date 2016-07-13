@@ -217,21 +217,21 @@
             <row>
               <entry>DHCPv6 Relay Options</entry>
               <entry>relay6[nest].option[code].hex</entry>
-              <!--  <entry>Value of the option</entry> -->
+              <entry>Value of the option</entry>
               <entry>The value of the option with code "code" from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Peer Address</entry>
               <entry>relay6[nest].peeraddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the peer address field from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Link Address</entry>
               <entry>relay6[nest].linkaddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the link address field from the
               relay encapsulation "nest"</entry>
             </row>
@@ -280,14 +280,14 @@
             <row>
               <entry>Message Type in DHCPv6 packet</entry>
               <entry>pkt6.msgtype</entry>
-              <!--  <entry>1</entry> -->
+              <entry>1</entry>
               <entry>The value of the message type field in the DHCPv6
               packet.</entry>
             </row>
             <row>
               <entry>Transaction ID in DHCPv6 packet</entry>
               <entry>pkt6.transid</entry>
-              <!--  <entry>12345</entry> -->
+              <entry>12345</entry>
               <entry>The value of the transaction id in the DHCPv6
               packet.</entry>
             </row>
