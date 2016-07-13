@@ -1988,11 +1988,11 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
         // the default value of "false".
     }
 
-    if (readonly_value == "true" || readonly_value == "1") {
+    if (readonly_value == "true") {
         is_readonly_ = true;
 
-    } else if ((readonly_value != "false") && (readonly_value != "0")) {
-        isc_throw(BadValue, "invalid value '" << readonly_value
+    } else if (readonly_value != "false") {
+        isc_throw(DbInvalidReadOnly, "invalid value '" << readonly_value
                   << "' specified for boolean parameter 'readonly'");
     }
 

@@ -54,6 +54,15 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid 'readonly' value specification.
+///
+/// Thrown when the value of the 'readonly' boolean parameter is invalid.
+class DbInvalidReadOnly : public Exception {
+public:
+    DbInvalidReadOnly(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 /// @brief Common database connection class.
 ///

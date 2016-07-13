@@ -32,6 +32,7 @@ const char* VALID_TIMEOUT = "connect-timeout=10";
 const char* INVALID_TIMEOUT_1 = "connect-timeout=foo";
 const char* INVALID_TIMEOUT_2 = "connect-timeout=-17";
 const char* VALID_READONLY_DB = "readonly=true";
+const char* INVALID_READONLY_DB = "readonly=5";
 
 string connectionString(const char* type, const char* name, const char* host,
                         const char* user, const char* password, const char* timeout,

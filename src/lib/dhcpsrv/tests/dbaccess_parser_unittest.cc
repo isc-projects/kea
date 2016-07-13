@@ -88,7 +88,7 @@ public:
             }
 
             // Add the keyword and value - make sure that they are quoted.
-            // The parameters which are not quoted are persist and
+            // The parameters which are not quoted are persist, readonly and
             // lfc-interval as they are boolean and integer respectively.
             result += quote + keyval[i] + quote + colon + space;
             if (!quoteValue(std::string(keyval[i]))) {
@@ -176,7 +176,8 @@ private:
     /// @return true if the value of the parameter should be quoted.
      bool quoteValue(const std::string& parameter) const {
          return ((parameter != "persist") && (parameter != "lfc-interval") &&
-                 (parameter != "connect-timeout"));
+                 (parameter != "connect-timeout") &&
+                 (parameter != "readonly"));
     }
 
 };
@@ -559,5 +560,46 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     // output.
     EXPECT_EQ(dbaccess, "name=keatest type=mysql");
 }
+
+// Check that the configuration is accepted for the valid value
+// of "readonly".
+TEST_F(DbAccessParserTest, validReadOnly) {
+    const char* config[] = {"type", "mysql",
+                            "user", "keatest",
+                            "password", "keatest",
+                            "name", "keatest",
+                            "readonly", "true",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    checkAccessString("Valid readonly parameter",
+                      parser.getDbAccessParameters(),
+                      config);
+}
+
+// Check that for the invalid value of the "readonly" parameter
+// an exception is thrown.
+TEST_F(DbAccessParserTest, invalidReadOnly) {
+    const char* config[] = {"type", "mysql",
+                            "user", "keatest",
+                            "password", "keatest",
+                            "name", "keatest",
+                            "readonly", "1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", DbAccessParser::LEASE_DB);
+    EXPECT_THROW(parser.build(json_elements), BadValue);
+}
+
 
 };  // Anonymous namespace

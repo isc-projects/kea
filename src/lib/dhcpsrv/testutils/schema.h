@@ -28,6 +28,7 @@ extern const char* VALID_TIMEOUT;
 extern const char* INVALID_TIMEOUT_1;
 extern const char* INVALID_TIMEOUT_2;
 extern const char* VALID_READONLY_DB;
+extern const char* INVALID_READONLY_DB;
 
 /// @brief Given a combination of strings above, produce a connection string.
 ///
