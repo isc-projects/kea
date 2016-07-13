@@ -25,12 +25,22 @@ const IOAddress cafe("2001:db8:dead:cafe::"); // /48 prefix length
 const IOAddress beef01("2001:db8:dead:beef::01"); // /56 prefix length
 
 // Description
-TEST(Option6PDExcludeTest, testName) {
+TEST(Option6PDExcludeTest, constructor) {
     Option6PDExclude option = Option6PDExclude(beef, 56, beef01, 60);
 
+    EXPECT_EQ(option.getDelegatedAddress(), beef);
+    EXPECT_EQ(option.getDelegatedPrefixLength(), 56);
+    EXPECT_EQ(option.getExcludedAddress(), beef01);
     EXPECT_EQ(option.getExcludedPrefixLength(), 60);
-    /*
+    EXPECT_EQ(option.len(), Option::OPTION6_HDR_LEN +
+        /* excluded_prefix_length_ AKA prefix-len is 1B */ 1 +
+        /* [delegated_prefix_length_ - excluded_prefix_length_](bytes) */ 1);
+}
 
+TEST(Option6PDExcludeTest, packing_and_unpacking) {
+    EXPECT_NO_THROW(isc_throw(Exception, "Not implemented yet."));
+
+    /*
     OptionBuffer data(option.getData());
 
     util::OutputBuffer buf(128);
@@ -47,19 +57,21 @@ TEST(Option6PDExcludeTest, testName) {
     EXPECT_EQ(option.getExcludedAddress(), unpackedOption.getExcludedAddress());
     EXPECT_EQ(option.getExcludedPrefixLength(),
             unpackedOption.getExcludedPrefixLength());
-            */
+    //*/
 }
 
 TEST(Option6PDExcludeTest, pool) {
-    //Pool6Ptr pool6Ptr = Pool6Ptr(new Pool6(Lease::TYPE_PD, beef, cafe));
-    //ASSERT_TRUE(pool6Ptr);
-    //ASSERT_GT(pool6Ptr->getPrefixExcludedLength(), 0);
+    EXPECT_NO_THROW(isc_throw(Exception, "Not implemented yet."));
+
     /*
+    Pool6Ptr pool6Ptr = Pool6Ptr(new Pool6(Lease::TYPE_PD, beef, cafe));
+    ASSERT_TRUE(pool6Ptr);
+    ASSERT_GT(pool6Ptr->getPrefixExcludedLength(), 0);
      OptionPtr opt(
      new Option6PDExclude((*l)->addr_, (*l)->prefixlen_,
      pool->getPrefixExcluded(),
      pool->getPrefixExcludedLength()));
-     */
+    //*/
 }
 
 } // anonymous namespace
