@@ -1,7 +1,7 @@
 1142.	[doc]		sar
 	Uncomment the example columns in some rows in the table
 	listing the classificaiton examples.
-	(None, git TBD)
+	(None, git dee442a64f57c8d9dd87636f9e39084ed1b11e03)
 
 1141.	[func]		marcin
 	Pkt4, Pkt6 and Pkt4o6 objects passed to hooks libraries
