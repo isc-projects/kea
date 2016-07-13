@@ -1,27 +1,17 @@
-// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // Author: Cristian Secareanu <cristian.secareanu@qualitance.com>
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//           http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
-#include <dhcp/libdhcp++.h>
 #include <dhcp/option6_pdexclude.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -39,44 +29,39 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& addr,
-                                   uint8_t prefix_len,
-                                   const isc::asiolink::IOAddress& prefix_excluded,
-                                   uint8_t prefix_excluded_len
-                                   )
-    :Option(V6, D6O_PD_EXCLUDE)
-    ,addr_(addr), prefix_len_(prefix_len)
-    ,prefix_excluded_(prefix_excluded)
-    ,prefix_excluded_len_(prefix_excluded_len) {
-
+Option6PDExclude::Option6PDExclude(
+        const isc::asiolink::IOAddress& delegated_address,
+        uint8_t delegated_prefix_length,
+        const isc::asiolink::IOAddress& excluded_address,
+        uint8_t excluded_prefix_length) :
+    Option(V6, D6O_PD_EXCLUDE), delegated_address_(delegated_address),
+    delegated_prefix_length_(delegated_prefix_length),
+    excluded_address_(excluded_address),
+    excluded_prefix_length_(excluded_prefix_length) {
 }
 
-void
-Option6PDExclude::pack(isc::util::OutputBuffer& buf) {
+void Option6PDExclude::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
 
-    uint8_t excludedPrefLenBytes = excludedPrefixLenBytes();
+    buf.writeData(&excluded_prefix_length_, sizeof(excluded_prefix_length_));
 
-    buf.writeData(&prefix_excluded_len_, sizeof(prefix_excluded_len_));
+    std::vector<uint8_t> excluded_address_bytes = excluded_address_.toBytes();
+    boost::dynamic_bitset<uint8_t> bits(excluded_address_bytes.rbegin(), excluded_address_bytes.rend());
+    bits = bits << delegated_prefix_length_;
 
-    std::vector<uint8_t> addrV6 = prefix_excluded_.toBytes();
-    boost::dynamic_bitset<uint8_t> bits(addrV6.rbegin(), addrV6.rend());
-    bits = bits << prefix_len_;
-
-    for (int i = 0; i < excludedPrefLenBytes; i++) {
-        boost::dynamic_bitset<uint8_t> tmp = bits >> 120;
+    const uint8_t subtractedPrefixesOctetLength = getSubtractedPrefixesOctetLength();
+    for (uint8_t i = 0U; i < subtractedPrefixesOctetLength; i++) {
+        const boost::dynamic_bitset<uint8_t> tmp = bits >> 120;
 
         uint8_t val = static_cast<uint8_t>(tmp.to_ulong());
 
-        //Zero padded bits follow when prefix_excluded_len_ is not divided exactly by 8
-        if (i == excludedPrefLenBytes - 1) {
-            uint8_t excluded_prefix_bits_no = prefix_excluded_len_ - prefix_len_;
-
-            uint8_t unusedBits = 0xFF;
-            unusedBits <<= (8 - (excluded_prefix_bits_no % 8)) % 8;
-
-            val = val & unusedBits;
+        //Zero padded bits follow when excluded_prefix_length_ is not divided exactly by 8
+        if (i == subtractedPrefixesOctetLength - 1U) {
+            uint8_t subtractedPrefixesBitLength = excluded_prefix_length_ -
+                    delegated_prefix_length_;
+            uint8_t zeroPaddingBitLength = (8 - (subtractedPrefixesBitLength % 8)) % 8;
+            val <<= zeroPaddingBitLength;
         }
         bits = bits << 8;
         buf.writeData(&val, sizeof(val));
@@ -84,28 +69,26 @@ Option6PDExclude::pack(isc::util::OutputBuffer& buf) {
 }
 
 void Option6PDExclude::unpack(OptionBufferConstIter begin,
-                              OptionBufferConstIter end) {
-    prefix_len_ = 0;
-    prefix_excluded_len_ = *begin;
+        OptionBufferConstIter end) {
+    delegated_prefix_length_ = 0;
+    excluded_prefix_length_ = *begin;
     begin += sizeof(uint8_t);
-    addr_ = IOAddress::IPV6_ZERO_ADDRESS();
-    prefix_excluded_ = IOAddress::IPV6_ZERO_ADDRESS();
+    delegated_address_ = IOAddress::IPV6_ZERO_ADDRESS();
+    excluded_address_ = IOAddress::IPV6_ZERO_ADDRESS();
     begin = end;
 }
 
-uint16_t
-Option6PDExclude::len()
-{
-    return getHeaderLen() + sizeof (prefix_excluded_len_) +
-            excludedPrefixLenBytes();
+uint16_t Option6PDExclude::len() const {
+    return getHeaderLen() + sizeof(excluded_prefix_length_)
+            + getSubtractedPrefixesOctetLength();
 }
 
-uint8_t
-Option6PDExclude::excludedPrefixLenBytes()
-{
-    uint8_t excludedPrefLenBits = prefix_excluded_len_ - prefix_len_ - 1;
-    uint8_t excludedPrefLenBytes = (excludedPrefLenBits / 8) + 1;
-    return excludedPrefLenBytes;
+uint8_t Option6PDExclude::getSubtractedPrefixesOctetLength() const {
+    // Promote what is less than 8 bits to 1 octet.
+    uint8_t subtractedPrefixesBitLength = excluded_prefix_length_
+            - delegated_prefix_length_ - 1;
+    uint8_t subtractedPrefixesOctetLength = (subtractedPrefixesBitLength / 8) + 1;
+    return subtractedPrefixesOctetLength;
 }
 
 } // end of namespace isc::dhcp

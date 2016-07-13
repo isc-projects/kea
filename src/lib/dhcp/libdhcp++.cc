@@ -18,7 +18,6 @@
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
 #include <dhcp/option_definition.h>
 
 #include <boost/lexical_cast.hpp>
@@ -313,7 +312,6 @@ LibDHCP::optionFactory(Option::Universe u,
     }
     return (it->second(u, type, buf));
 }
-
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                const std::string& option_space,
@@ -611,9 +609,9 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
         offset += 2;
 
         if (offset + opt_len > length) {
-            isc_throw(OutOfRange, "Vendor option parse failed. Tried to parse "
-                          << offset + opt_len << " bytes from " << length
-                          << "-byte long buffer.");
+            isc_throw(OutOfRange, "Vendor option parse failed. "
+                      "Tried to parse " << offset + opt_len << " bytes from " <<
+                      length << "-byte long buffer.");
         }
 
         OptionPtr opt;
@@ -646,9 +644,9 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
                 assert(def);
-                opt = def->optionFactory(Option::V6, opt_type,
-                                         buf.begin() + offset,
-                                         buf.begin() + offset + opt_len);
+                OptionBufferConstIter begin = buf.begin() + offset;
+                opt = def->optionFactory(Option::V6, opt_type, begin,
+                                         begin + opt_len);
             }
         }
 
@@ -658,9 +656,9 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
         //    not defined
 
         if (!opt) {
-            opt = OptionPtr(new Option(Option::V6, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
+            OptionBufferConstIter begin = buf.begin() + offset;
+            opt = OptionPtr(new Option(Option::V6, opt_type, begin,
+                                       begin + opt_len));
         }
 
         // add option to options
@@ -676,6 +674,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
 size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                                      isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
+    size_t length = buf.size();
 
     // Get the list of stdandard option definitions.
     const OptionDefContainerPtr option_defs_ptr =
@@ -689,13 +688,13 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
-    while (offset < buf.size()) {
+    while (offset < length) {
         // Note that Vendor-Specific info option (RFC3925) has a
         // different option format than Vendor-Spec info for
         // DHCPv6. (there's additional layer of data-length)
         uint8_t data_len = buf[offset++];
 
-        if (offset + data_len > buf.size()) {
+        if (offset + data_len > length) {
             // The option is truncated.
             isc_throw(OutOfRange, "Attempt to parse truncated vendor option");
         }
@@ -713,15 +712,15 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                 // treated as unsigned char value (a number is
                 // presented in error message).
                 isc_throw(OutOfRange,
-                          "Attempt to parse truncated vendor option "
-                          << static_cast<int>(opt_type));
+                          "Attempt to parse truncated vendor option " <<
+                          static_cast<int>(opt_type));
             }
 
             uint8_t opt_len =  buf[offset++];
             if (offset + opt_len > offset_end) {
-                isc_throw(OutOfRange, "Option parse failed. Tried to parse "
-                          << offset + opt_len << " bytes from " << buf.size()
-                          << "-byte long buffer.");
+                isc_throw(OutOfRange, "Option parse failed. Tried to parse " <<
+                          offset + opt_len << " bytes from " << length <<
+                          "-byte long buffer.");
             }
 
             OptionPtr opt;
@@ -743,8 +742,8 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                     // Multiple options of the same code are not
                     // supported right now!
                     isc_throw(isc::Unexpected, "Internal error: multiple"
-                              " option definitions for option type "
-                              << opt_type << " returned. Currently it is"
+                              " option definitions for option type " <<
+                              opt_type << " returned. Currently it is"
                               " not supported to initialize multiple option"
                               " definitions for the same option code."
                               " This will be supported once support for"
@@ -754,16 +753,16 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                     // the option instance from the provided buffer chunk.
                     const OptionDefinitionPtr& def = *(range.first);
                     assert(def);
-                    opt = def->optionFactory(Option::V4, opt_type,
-                                             buf.begin() + offset,
-                                             buf.begin() + offset + opt_len);
+                    OptionBufferConstIter begin = buf.begin() + offset;
+                    opt = def->optionFactory(Option::V4, opt_type, begin,
+                                             begin + opt_len);
                 }
             }
 
             if (!opt) {
-                opt = OptionPtr(new Option(Option::V4, opt_type,
-                                           buf.begin() + offset,
-                                           buf.begin() + offset + opt_len));
+                OptionBufferConstIter begin = buf.begin() + offset;
+                opt = OptionPtr(new Option(Option::V4, opt_type, begin,
+                                           begin + opt_len));
             }
 
             options.insert(std::make_pair(opt_type, opt));
@@ -825,7 +824,7 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
     case Option::V6: {
         if (v6factories_.find(opt_type) != v6factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv6 factory registered "
-                     << "for option type "  << opt_type);
+                      "for option type " << opt_type);
         }
         v6factories_[opt_type]=factory;
         return;
@@ -845,7 +844,7 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
         }
         if (v4factories_.find(opt_type)!=v4factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv4 factory registered "
-                     << "for option type "  << opt_type);
+                      "for option type " << opt_type);
         }
         v4factories_[opt_type]=factory;
         return;
@@ -912,11 +911,11 @@ void initOptionSpace(OptionDefContainerPtr& defs,
         std::string encapsulates(params[i].encapsulates);
         if (!encapsulates.empty() && params[i].array) {
             isc_throw(isc::BadValue, "invalid standard option definition: "
-                      << "option with code '" << params[i].code
-                      << "' may not encapsulate option space '"
-                      << encapsulates << "' because the definition"
-                      << " indicates that this option comprises an array"
-                      << " of values");
+                      "option with code '" << params[i].code <<
+                      "' may not encapsulate option space '" <<
+                      encapsulates << "' because the definition"
+                      " indicates that this option comprises an array"
+                      " of values");
         }
 
         // Depending whether an option encapsulates an option space or not
