@@ -162,6 +162,9 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(

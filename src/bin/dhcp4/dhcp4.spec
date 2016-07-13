@@ -275,6 +275,12 @@
                 "item_type": "integer",
                 "item_optional": true,
                 "item_default": 0
+            },
+            {
+                "item_name": "readonly",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false
             }
         ]
       },
