@@ -1,3 +1,8 @@
+1142.	[doc]		sar
+	Uncomment the example columns in some rows in the table
+	listing the classificaiton examples.
+	(None, git TBD)
+
 1141.	[func]		marcin
 	Pkt4, Pkt6 and Pkt4o6 objects passed to hooks libraries
 	return copies of DHCP options to avoid unintended modification
