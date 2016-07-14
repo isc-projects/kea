@@ -1779,6 +1779,7 @@ public:
 
 };
 
+namespace {
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
 TaggedStatement tagged_statements[] = {
@@ -1933,6 +1934,8 @@ TaggedStatement tagged_statements[] = {
     // Marks the end of the statements table.
     {MySqlHostDataSourceImpl::NUM_STATEMENTS, NULL}
 };
+
+}; // end anonymouse namespace
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)

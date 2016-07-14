@@ -1260,8 +1260,10 @@ public:
 
 };
 
-/// @brief Prepared MySQL statements used by the backend to insert and
-/// retrieve hosts from the database.
+namespace {
+
+/// @brief Prepared PosgreSQL statements used by the backend to insert and
+/// retrieve reservation data from the database.
 PgSqlTaggedStatement tagged_statements[] = {
     // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
@@ -1446,6 +1448,8 @@ PgSqlTaggedStatement tagged_statements[] = {
     // Marks the end of the statements table.
     {0, { 0 }, NULL, NULL}
 };
+
+}; // end anonymous namespace
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
