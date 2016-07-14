@@ -109,18 +109,24 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     // args must be { "Dhcp6": { ... }, "Logging": { ... } }
     // the Logging component is technically optional, but very recommended.
     if (!args) {
-        message = "Missing mandatory 'Dhcp6' parameter.";
+        message = "Arguments for the set-config command are missing.";
     } else {
-        ConstElementPtr dhcp6 = args->get("Dhcp6");
-        if (!dhcp6) {
-            message = "Missing mandatory 'Dhcp6' parameter.";
-        } else if (dhcp6->getType() != Element::map) {
-            message = "'Dhcp6' parameter expected to be a map.";
+
+        if (args->getType() != Element::map) {
+            message = "Arguments are supposed to be a map.";
+        } else {
+            dhcp6 = args->get("Dhcp6");
+            if (!dhcp6) {
+                message = "Missing mandatory 'Dhcp6' parameter.";
+            } else if (dhcp6->getType() != Element::map) {
+                message = "'Dhcp6' parameter expected to be a map.";
+            }
         }
     }
 
     if (!dhcp6) {
         // Something went wrong, we can't find the Dhcp6 element.
+        message = "Mandatory 'Dhcp6' map is not specified.";
         result = isc::config::createAnswer(status_code, message);
         return (result);
     }
