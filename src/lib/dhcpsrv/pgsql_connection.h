@@ -28,7 +28,6 @@ const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
 struct PgSqlTaggedStatement {
-
     /// Number of parameters for a given query
     int nbparams;
 
@@ -48,16 +47,16 @@ struct PgSqlTaggedStatement {
 
 /// @brief Constants for PostgreSQL data types
 /// This are defined by PostreSQL in <catalog/pg_type.h>, but including
-/// this file is extrordinarily convoluted, so we'll use these to fill-in.
+/// this file is extraordinarily convoluted, so we'll use these to fill-in.
 const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
 const size_t OID_INT8 = 20;  // 8 byte int
-const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_INT2 = 21;  // 2 byte int
+const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_TEXT = 25;
-const size_t OID_TIMESTAMP = 1114;
 const size_t OID_VARCHAR = 1043;
+const size_t OID_TIMESTAMP = 1114;
 
 //@}
 
@@ -85,23 +84,12 @@ public:
     /// Store the pointer to the result set to being fetched.  Set row
     /// and column counts for convenience.
     ///
-    PgSqlResult(PGresult *result) : result_(result), rows_(0), cols_(0) {
-        if (!result) {
-            isc_throw (BadValue, "PgSqlResult result pointer cannot be null");
-        }
-
-        rows_ = PQntuples(result);
-        cols_ = PQnfields(result);
-    }
+    PgSqlResult(PGresult *result);
 
     /// @brief Destructor
     ///
     /// Frees the result set
-    ~PgSqlResult() {
-        if (result_)  {
-            PQclear(result_);
-        }
-    }
+    ~PgSqlResult();
 
     /// @brief Returns the number of rows in the result set.
     int getRows() const {
@@ -117,35 +105,34 @@ public:
     ///
     /// @param row index to range check
     ///
-    /// @throw throws DbOperationError if the row index is out of range
-    void rowCheck(int row) const {
-        if (row >= rows_) {
-            isc_throw (DbOperationError, "row: " << row << ", out of range: 0.." << rows_);
-        }
-    }
+    /// @throw DbOperationError if the row index is out of range
+    void rowCheck(int row) const;
 
     /// @brief Determines if a column index is valid
     ///
     /// @param col index to range check
     ///
-    /// @throw throws DbOperationError if the column index is out of range
-    void colCheck(int col) const {
-        if (col >= cols_) {
-            isc_throw (DbOperationError, "col: " << col << ", out of range: 0.." << cols_);
-        }
-    }
+    /// @throw DbOperationError if the column index is out of range
+    void colCheck(int col) const;
 
     /// @brief Determines if both a row and column index are valid
     ///
     /// @param row index to range check
     /// @param col index to range check
     ///
-    /// @throw throws DbOperationError if either the row or column index
+    /// @throw DbOperationError if either the row or column index
     /// is out of range
-    void rowColCheck(int row, int col) const {
-        rowCheck(row);
-        colCheck(col);
-    }
+    void rowColCheck(int row, int col) const;
+
+    /// @brief Fetches the name of the column in a result set
+    ///
+    /// Returns the column name of the column from the result set.
+    /// If the column index is out of range it will return the
+    /// string "Unknown column:<index>"
+    ///
+    /// @param col index of the column name to fetch
+    /// @return string containing the name of the column
+    std::string getColumnLabel(const int col) const;
 
     /// @brief Conversion Operator
     ///
@@ -275,7 +262,7 @@ public:
     /// @brief Commits transaction.
     ///
     /// Commits all changes made during the transaction by executing the
-    /// SQL statement: "COMMIT">
+    /// SQL statement: "COMMIT"
     ///
     /// @throw DbOperationError if statement execution fails
     void commit();
@@ -409,8 +396,6 @@ public:
     }
 
 };
-
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

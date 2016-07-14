@@ -22,6 +22,16 @@ class PgSqlHostDataSourceImpl;
 /// This class implements the @ref isc::dhcp::BaseHostDataSource interface to
 /// the PostgreSQL database. Use of this backend presupposes that a PostgreSQL
 /// database is available and that the Kea schema has been created within it.
+///
+/// Reservations are uniquely identified by identifier type and value. Currently
+/// The currently supported values are defined in @ref Host::IdentifierType
+/// as well as in host_identifier_table:
+///
+/// - IDENT_HWADDR
+/// - IDENT_DUID
+/// - IDENT_CIRCUIT_ID
+/// - IDENT_CLIENT_ID
+///
 class PgSqlHostDataSource: public BaseHostDataSource {
 public:
 
@@ -50,6 +60,8 @@ public:
     PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
+    /// Frees database resources and closes the database connection through
+    /// the destruction of member impl_.
     virtual ~PgSqlHostDataSource();
 
     /// @brief Return all hosts for the specified HW address or DUID.
@@ -145,13 +157,11 @@ public:
     /// if this address is not reserved for some other host and do not allocate
     /// this address if reservation is present.
     ///
-    /// Implementations of this method should guard against invalid addresses,
-    /// such as IPv6 address.
-    ///
     /// @param subnet_id Subnet identifier.
     /// @param address reserved IPv4 address.
     ///
     /// @return Const @c Host object using a specified IPv4 address.
+    /// @throw BadValue is given an IPv6 address
     virtual ConstHostPtr
     get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
@@ -198,30 +208,51 @@ public:
 
     /// @brief Adds a new host to the collection.
     ///
-    /// The implementations of this method should guard against duplicate
-    /// reservations for the same host, where possible. For example, when the
-    /// reservation for the same HW address and subnet id is added twice, the
-    /// addHost method should throw an DuplicateEntry exception. Note, that
-    /// usually it is impossible to guard against adding duplicated host, where
-    /// one instance is identified by HW address, another one by DUID.
+    /// The method will insert the given host and all of its children (v4
+    /// options, v6 options, and v6 reservations) into the database.  It
+    /// relies on constraints defined as part of the PostgreSQL schema to
+    /// defend against duplicate entries and to ensure referential 
+    /// integrity.
+    ///
+    /// Violation of any of these constraints for a host will result in a
+    /// DuplicateEntry exception:
+    ///
+    /// -# IPV4_ADDRESS and DHCP4_SUBNET_ID combination must be unique
+    /// -# DHCP ID, DHCP ID TYPE, and DHCP4_SUBNET_ID combination must be unique
+    /// -# DHCP ID, DHCP ID TYPE, and DHCP6_SUBNET_ID combination must be unique
+    ///
+    /// In addition, violating the following referential contraints will
+    /// a DbOperationError exception:
+    ///
+    /// -# DHCP ID TYPE must be defined in the HOST_IDENTIFIER_TYPE table
+    /// -# For DHCP4 Options:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
+    /// -# For DHCP6 Options:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
+    /// -# For IPV6 Reservations:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# Address and Prefix Length must be unique (DuplicateEntry)
     ///
     /// @param host Pointer to the new @c Host object being added.
+    /// @throw DuplicateEntry or DbOperationError dependent on the constraint
+    /// violation
     virtual void add(const HostPtr& host);
 
     /// @brief Return backend type
     ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    /// Returns the type of database as the string "postgresql".  This is
+    /// same value as used for configuration purposes.
     ///
     /// @return Type of the backend.
     virtual std::string getType() const {
         return (std::string("postgresql"));
     }
 
-    /// @brief Returns backend name.
+    /// @brief Returns the name of the open database
     ///
-    /// Each backend have specific name.
-    ///
-    /// @return "mysql".
+    /// @return String containing the name of the database
     virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
@@ -244,7 +275,7 @@ public:
 private:
 
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
-    PgSqlHostDataSourceImpl* impl_; 
+    PgSqlHostDataSourceImpl* impl_;
 };
 
 }

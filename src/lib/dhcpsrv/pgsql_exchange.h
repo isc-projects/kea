@@ -82,6 +82,7 @@ struct PsqlBindArray {
     /// remains in scope until the bind array has been discarded.
     ///
     /// @param value char array containing the null-terminated text to add.
+    /// @throw DbOperationError if value is NULL.
     void add(const char* value);
 
     /// @brief Adds an string value to the bind array
@@ -113,6 +114,7 @@ struct PsqlBindArray {
     ///
     /// @param data buffer of binary data.
     /// @param len  number of bytes of data in buffer
+    /// @throw DbOperationError if data is NULL.
     void add(const uint8_t* data, const size_t len);
 
     /// @brief Adds a boolean value to the bind array.
@@ -159,7 +161,7 @@ struct PsqlBindArray {
     /// @brief Binds a the given string to the bind array.
     ///
     /// Prior to added the The given string the vector of exchange values,
-    /// it duplicated as a ConstStringPtr and saved internally.  This garauntees
+    /// it duplicated as a ConstStringPtr and saved internally.  This guarantees
     /// the string remains in scope until the PsqlBindArray is destroyed,
     /// without the caller maintaining the string values.
     ///
@@ -262,7 +264,15 @@ public:
     static const char* getRawColumnValue(const PgSqlResult& r, const int row,
                                          const size_t col);
 
-    /// @todo
+    /// @brief Fetches the name of the column in a result set
+    ///
+    /// Returns the column name of the column from the result set.
+    /// If the column index is out of range it will return the
+    /// string "Unknown column:<index>".  Note this is NOT from the
+    /// list of columns defined in the exchange.
+    ///
+    /// @param col index of the column name to fetch
+    /// @return string containing the name of the column
     static std::string getColumnLabel(const PgSqlResult& r, const size_t col);
 
     /// @brief Fetches text column value as a string
@@ -319,6 +329,8 @@ public:
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
     /// @param col the column number within the row
+    ///
+    /// @return True if the column values in the row is NULL, false otherwise.
     static bool isColumnNull(const PgSqlResult& r, const int row,
                              const size_t col);
 
@@ -372,6 +384,8 @@ public:
     ///
     /// @param r the result set containing the query results
     /// @param row the row number within the result set
+    ///
+    /// @return A string depiction of the row contents.
     static std::string dumpRow(const PgSqlResult& r, int row);
 
 protected:
