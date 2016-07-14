@@ -34,6 +34,8 @@ using namespace std;
 namespace {
 
 /// @brief Maximum length of option value.
+/// The maximum size of the raw option data that may be read from the
+/// database. 
 const size_t OPTION_VALUE_MAX_LEN = 4096;
 
 /// @brief Numeric value representing last supported identifier.
@@ -106,7 +108,7 @@ public:
     /// @brief Reinitializes state information
     ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should inovke this method as well as be reset
+    /// Deriving classes should invoke this method as well as be reset
     /// all of their own stateful values.
     virtual void clear() {
         host_.reset();
@@ -375,12 +377,29 @@ private:
         /// @brief Creates instance of the currently processed option.
         ///
         /// This method detects if the currently processed option is a new
-        /// instance. It makes it determination by comparing the identifier
+        /// instance. It makes its determination by comparing the identifier
         /// of the currently processed option, with the most recently processed
         /// option. If the current value is greater than the id of the recently
         /// processed option it is assumed that the processed row holds new
         /// option information. In such case the option instance is created and
         /// inserted into the configuration passed as argument.
+        ///
+        /// This logic is necessary to deal with result sets made from multiple
+        /// left joins which contain duplicated data.  For instance queries
+        /// returning both v4 and v6 options for a host would generate result
+        /// sets similar to this:
+        /// @code
+        ///
+        /// row 0: host-1  v4-opt-1  v6-opt-1
+        /// row 1: host-1  v4-opt-1  v6-opt-2
+        /// row 2: host-1  v4-opt-1  v6-opt-3
+        /// row 4: host-1  v4-opt-2  v6-opt-1
+        /// row 5: host-1  v4-opt-2  v6-opt-2
+        /// row 6: host-1  v4-opt-2  v6-opt-3
+        /// row 7: host-2  v4-opt-1  v6-opt-1
+        /// row 8: host-2  v4-opt-2  v6-opt-1
+        ///  :
+        /// @endcode
         ///
         /// @param cfg Pointer to the configuration object into which new
         /// option instances should be inserted.
@@ -421,8 +440,6 @@ private:
                                             sizeof(value), value_len);
 
             // formatted_value: TEXT
-            // @todo Should we attempt to enforce max value of 8K?
-            // If so, we should declare this VARCHAR[8K] in the table
             std::string formatted_value;
             PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
                                           formatted_value);
@@ -596,7 +613,7 @@ public:
     /// @brief Clears state information
     ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should inovke this method as well as be reset
+    /// Deriving classes should invoke this method as well as be reset
     /// all of their own stateful values.
     virtual void clear() {
         PgSqlHostExchange::clear();
@@ -611,10 +628,11 @@ public:
 
     /// @brief Processes the current row.
     ///
-    /// The processed row includes both host information and DHCP option
-    /// information. Because used SELECT query use LEFT JOIN clause, the
-    /// some rows contain duplicated host or options entries. This method
-    /// detects duplicated information and discards such entries.
+    /// The fetched row includes both host information and DHCP option
+    /// information. Because the SELECT queries use one or more LEFT JOIN
+    /// clauses, the result set may contain duplicated host or options 
+    /// entries. This method detects duplicated information and discards such 
+    /// entries.
     ///
     /// @param [out] hosts Container holding parsed hosts and options.
     virtual void processRowData(ConstHostCollection& hosts,
@@ -685,7 +703,7 @@ private:
 /// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
 /// This class extends the @ref PgSqlHostWithOptionsExchange class with the
-/// mechanisms to retrieve IPv6 reservations. This class is used in sitations
+/// mechanisms to retrieve IPv6 reservations. This class is used in situations
 /// when it is desired to retrieve DHCPv6 specific information about the host
 /// (DHCPv6 options and reservations), or entire information about the host
 /// (DHCPv4 options, DHCPv6 options and reservations). The following are the
@@ -727,7 +745,7 @@ public:
     /// @brief Reinitializes state information
     ///
     /// This function should be called in between statement executions.
-    /// Deriving classes should inovke this method as well as be reset
+    /// Deriving classes should invoke this method as well as be reset
     /// all of their own stateful values.
     void clear() {
         PgSqlHostWithOptionsExchange::clear();
@@ -921,7 +939,7 @@ public:
             bind_array->add(resv.getPrefixLen());
 
             // type: SMALLINT NOT NULL
-            // See lease6_types for values (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
+            // See lease6_types table for values (0 = IA_NA, 2 = IA_PD)
             uint16_t type = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
             bind_array->add(type);
 
@@ -1089,8 +1107,8 @@ public:
     enum StatementIndex {
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_HOST_OPTION,       // Insert DHCPv4 option
-        INSERT_V6_HOST_OPTION,       // Insert DHCPv6 option
+        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
@@ -1122,7 +1140,7 @@ public:
     /// of a single row with one column, the value of the primary key.
     /// Defaults to false.
     ///
-    /// @returns 0 if return_last_id is false, otherwise it returns the
+    /// @return 0 if return_last_id is false, otherwise it returns the
     /// the value in the result set in the first col of the first row.
     ///
     /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
@@ -1245,8 +1263,9 @@ public:
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
 PgSqlTaggedStatement tagged_statements[] = {
+    // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {8, // PgSqlHostDataSourceImpl::INSERT_HOST,
+    {8, 
      { OID_BYTEA, OID_INT2,
        OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR },
@@ -1257,8 +1276,9 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING host_id"
     },
 
+    //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
     // Inserts a single IPv6 reservation into 'reservations' table.
-    {5, //PgSqlHostDataSourceImpl::INSERT_V6_RESRV,
+    {5, 
      { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
      "insert_v6_resrv",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
@@ -1266,9 +1286,10 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5)"
     },
 
+    // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {6, // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION,
+    {6, 
      { OID_INT2, OID_BYTEA, OID_TEXT,
        OID_VARCHAR, OID_BOOL, OID_INT8},
      "insert_v4_host_option",
@@ -1277,9 +1298,10 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5, $6, 3)"
     },
 
+    // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {6, // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION,
+    {6,
      { OID_INT2, OID_BYTEA, OID_TEXT,
        OID_VARCHAR, OID_BOOL, OID_INT8},
      "insert_v6_host_option",
@@ -1288,11 +1310,12 @@ PgSqlTaggedStatement tagged_statements[] = {
      "VALUES ($1, $2, $3, $4, $5, $6, 3)"
     },
 
+    // PgSqlHostDataSourceImpl::GET_HOST_DHCPID
     // Retrieves host information, IPv6 reservations and both DHCPv4 and
     // DHCPv6 options associated with the host. The LEFT JOIN clause is used
     // to retrieve information from 4 different tables using a single query.
     // Hence, this query returns multiple rows for a single host.
-    {2, // PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
+    {2, 
      { OID_BYTEA, OID_INT2 },
      "get_host_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
@@ -1311,10 +1334,11 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o4.option_id, o6.option_id, r.reservation_id"
     },
 
+    // PgSqlHostDataSourceImpl::GET_HOST_ADDR
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
     // returned for the same host. The host is retrieved by IPv4 address.
-    { 1, // PgSqlHostDataSourceImpl::GET_HOST_ADDR,
+    {1,
      { OID_INT8 }, "get_host_addr",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -1326,10 +1350,11 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id"
     },
 
+    //PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID
     // Retrieves host information and DHCPv4 options using subnet identifier
     // and client's identifier. Left joining the dhcp4_options table results in
     // multiple rows being returned for the same host.
-    { 3, //PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
+    {3,
      { OID_INT4, OID_INT2, OID_BYTEA },
      "get_host_subid4_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
@@ -1343,10 +1368,11 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id"
     },
 
+    //PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host. The number of rows returned is a multiplication
     // of number of IPv6 reservations and DHCPv6 options.
-    {3, //PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
+    {3,
      { OID_INT4, OID_INT2, OID_BYTEA },
      "get_host_subid6_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, "
@@ -1364,11 +1390,12 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
+    //PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR
     // Retrieves host information and DHCPv4 options for the host using subnet
     // identifier and IPv4 reservation. Left joining the dhcp4_options table
     // results in multiple rows being returned for the host. The number of
     // rows depends on the number of options defined for the host.
-    { 2,  //PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
+    {2,
      { OID_INT4, OID_INT8 },
      "get_host_subid_addr",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
@@ -1381,13 +1408,14 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id"
     },
 
+    // PgSqlHostDataSourceImpl::GET_HOST_PREFIX
     // Retrieves host information, IPv6 reservations and DHCPv6 options
     // associated with a host using prefix and prefix length. This query
     // returns host information for a single host. However, multiple rows
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
     // IPv6 reservations and DHCPv6 options.
-    {2, // PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
+    {2, 
      { OID_VARCHAR, OID_INT2 },
      "get_host_prefix",
      "SELECT h.host_id, h.dhcp_identifier, "
@@ -1407,8 +1435,9 @@ PgSqlTaggedStatement tagged_statements[] = {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
+    //PgSqlHostDataSourceImpl::GET_VERSION
     // Retrieves MySQL schema version.
-    { 0, //PgSqlHostDataSourceImpl::GET_VERSION,
+    {0, 
      { OID_NONE },
      "get_version",
      "SELECT version, minor FROM schema_version"
@@ -1460,13 +1489,13 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
     int s = PQresultStatus(r);
 
     if (s != PGRES_COMMAND_OK) {
-        // Failure: check for the special case of duplicate entry.  If this is
-        // the case, we return false to indicate that the row was not added.
-        // Otherwise we throw an exception.
+        // Failure: check for the special case of duplicate entry.
         if (conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
             isc_throw(DuplicateEntry, "Database duplicate entry error");
         }
 
+        // Connection determines if the error is fatal or not, and
+        // throws the appropriate exception
         conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
@@ -1748,6 +1777,11 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 ConstHostPtr
 PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
+    if (!address.isV4()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address) - "
+                  " wrong address type, address supplied is an IPv6 address");
+    }
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 

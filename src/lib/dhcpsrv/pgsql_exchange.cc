@@ -21,6 +21,10 @@ const char* PsqlBindArray::TRUE_STR = "TRUE";
 const char* PsqlBindArray::FALSE_STR = "FALSE";
 
 void PsqlBindArray::add(const char* value) {
+    if (!value) {
+        isc_throw(BadValue, "PsqlBindArray::add - char* value cannot be NULL");
+    }
+
     values_.push_back(value);
     lengths_.push_back(strlen(value));
     formats_.push_back(TEXT_FMT);
@@ -39,6 +43,10 @@ void PsqlBindArray::add(const std::vector<uint8_t>& data) {
 }
 
 void PsqlBindArray::add(const uint8_t* data, const size_t len) {
+    if (!data) {
+        isc_throw(BadValue, "PsqlBindArray::add - uint8_t data cannot be NULL");
+    }
+
     values_.push_back(reinterpret_cast<const char*>(&(data[0])));
     lengths_.push_back(len);
     formats_.push_back(BINARY_FMT);
@@ -70,7 +78,11 @@ void PsqlBindArray::addNull(const int format) {
     formats_.push_back(format);
 }
 
-// Eventually this could replace add(std::string&) ?
+/// @todo Eventually this could replace add(std::string&)? This would mean
+/// all bound strings would be internally copies rather than perhaps belonging
+/// to the originating object such as Host::hostname_.  One the one hand it
+/// would make all strings handled one-way only, on the other hand it would
+/// mean duplicating strings where it isn't strictly necessary.
 void PsqlBindArray::addTempString(const std::string& str) {
     bound_strs_.push_back(ConstStringPtr(new std::string(str)));
     PsqlBindArray::add((bound_strs_.back())->c_str());
@@ -246,15 +258,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
 
 std::string
 PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
-    r.colCheck(column);
-    const char* label = PQfname(r, column);
-    if (!label) {
-        std::ostringstream os;
-        os << "Unknown column:" << column;
-        return (os.str());
-    }
-
-    return (label);
+    return (r.getColumnLabel(column));
 }
 
 std::string 
@@ -264,7 +268,7 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     int columns = r.getCols();
     for (int col = 0; col < columns; ++col) {
         const char* val = getRawColumnValue(r, row, col);
-        std::string name = getColumnLabel(r, col);
+        std::string name = r.getColumnLabel(col);
         int format = PQfformat(r, col); 
 
         stream << col << "   " << name << " : " ;
