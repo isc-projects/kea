@@ -110,6 +110,15 @@ data source (if present) and concatenate results.
 For more information about the \ref isc::dhcp::HostMgr please refer to its
 documentation.
 
+@subsection postgreSQLHostMgr PostgreSQL Host Reservation Management
+
+Storing and retrieving host reservations within a PostgreSQL schema is
+provided by the class, \ref isc::dhcp::PgSqlHostDataSource, a derivation of
+\ref isc::dhcp::BaseHostDataSource and is depicted in the following
+class diagram:
+
+@image html pgsql_host_data_source.svg  "PgSqlHostDataSource Class Diagram"
+
 @section optionsConfig Options Configuration Information
 
 The \ref isc::dhcp::CfgOption object holds a collection of options being

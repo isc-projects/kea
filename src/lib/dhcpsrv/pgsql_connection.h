@@ -132,6 +132,7 @@ public:
     ///
     /// @param col index of the column name to fetch
     /// @return string containing the name of the column
+    /// This method is exception safe.
     std::string getColumnLabel(const int col) const;
 
     /// @brief Conversion Operator

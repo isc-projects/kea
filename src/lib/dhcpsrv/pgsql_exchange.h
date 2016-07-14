@@ -271,7 +271,9 @@ public:
     /// string "Unknown column:<index>".  Note this is NOT from the
     /// list of columns defined in the exchange.
     ///
+    /// @param r the result set containing the query results
     /// @param col index of the column name to fetch
+    ///
     /// @return string containing the name of the column
     static std::string getColumnLabel(const PgSqlResult& r, const size_t col);
 
