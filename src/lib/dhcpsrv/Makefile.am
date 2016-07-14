@@ -41,6 +41,9 @@ EXTRA_DIST += parsers/host_reservations_list_parser.h
 EXTRA_DIST += parsers/ifaces_config_parser.cc
 EXTRA_DIST += parsers/ifaces_config_parser.h
 
+# Devel guide diagrams
+EXTRA_DIST += images/pgsql_host_data_source.svg
+
 # Define rule to build logging source files from message file
 alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
 dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
