@@ -2437,8 +2437,8 @@ It is merely echoed by the server
       The <command>dhcp4o6-port</command> global parameter specifies
       the first of the two consecutive ports of the UDP sockets used
       for the communication between the DHCPv6 and DHCPv4 servers
-      (the DHCPv4 server is bound to ::1 on port + 1 and connected
-      to ::1 on port).
+      (the DHCPv4 server is bound to ::1 on <command>port</command> + 1
+      and connected to ::1 on <command>port</command>).
       </para>
       <para>
       With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
@@ -2471,44 +2471,38 @@ It is merely echoed by the server
 {
 
 # DHCPv4 conf
-"Dhcp4":
-{
-  "interfaces-config": {
-    "interfaces": [ "eno33554984" ]
-  },
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eno33554984" ]
+    },
 
-  "lease-database": {
-    "type": "memfile",
-    "name": "leases4"
-  },
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases4"
+    },
 
-  "valid-lifetime": 4000,
+    "valid-lifetime": 4000,
 
-  "subnet4": [
-   {    "subnet": "10.10.10.0/24",
+    "subnet4": [ {
+        "subnet": "10.10.10.0/24",
         <userinput>"4o6-interface": "eno33554984",</userinput>
         <userinput>"4o6-subnet": "2001:db8:1:1::/64",</userinput>
-        "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ] }
-  ],
+        "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
+    } ],
 
-  <userinput>"dhcp4o6-port": 6767</userinput>
+    <userinput>"dhcp4o6-port": 6767</userinput>
 
 },
 
-"Logging":
-{
-  "loggers": [
-    {
-      "name": "kea-dhcp4",
-      "output_options": [
-          {
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp4",
+        "output_options": [ {
             "output": "/tmp/kea-dhcp4.log"
-          }
-      ],
-      "severity": "DEBUG",
-      "debuglevel": 0
-    }
-  ]
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
 }
 
 }
