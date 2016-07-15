@@ -290,7 +290,7 @@ syntax would be used:
     }
 ]
 </screen>
-Note that indentation is optional and is used for aesthetic purposes only.
+Note that indentation is optional and is used for esthetic purposes only.
 In some cases in may be preferable to use more compact notation.
 </para>
 
@@ -2180,6 +2180,92 @@ should include options from the isc option space:
       <para>
         myhost-3001-1--70E.example.com.
       </para>
+    </section>
+
+    <section id="dhcp6-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv6 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv6 side
+      (the DHCPv4 side is described in <xref linkend="dhcp4-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      There is only one specific parameter for the DHCPv6 side:
+      <command>dhcp4o6-port</command> which specifies the first of the
+      two consecutive ports of the UDP sockets used for the communication
+      between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
+      to ::1 on <command>port</command> and connected to ::1 on
+      <command>port</command> + 1).
+      </para>
+      <para>
+      Two other configuration entries are in general required: unicast traffic
+      support (see <xref linkend="dhcp6-unicast"/>) and DHCP 4o6 server
+      address option (name "dhcp4o6-server-addr", code  88).
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv6 conf
+"Dhcp6": {
+
+    "interfaces-config": {
+        "interfaces": [ "eno33554984/2001:db8:1:1::1" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases6"
+    },
+
+    "preferred-lifetime": 3000,
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+
+    "subnet6": [ {
+        "subnet": "2001:db8:1:1::/64",
+        "interface": "eno33554984",
+        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767,
+
+    "option-data": [ {
+        "name": "dhcp4o6-server-addr",
+        "code": 88,
+        "space": "dhcp6",
+        "csv-format": true,
+        "data": "2001:db8:1:1::1"
+    } ]
+</userinput>
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp6",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp6.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+      </para>
+      <note>
+      Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
+      </note>
     </section>
 
    </section>

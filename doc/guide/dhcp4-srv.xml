@@ -2230,7 +2230,7 @@ It is merely echoed by the server
       which updated
       <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.
       That update now states that the server must
-      send client-id if the client sent it. That is the default behaviour
+      send client-id if the client sent it. That is the default behavior
       that Kea offers. However, in some cases older devices that do
       not support
       <ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>.
@@ -2411,7 +2411,98 @@ It is merely echoed by the server
 
     </section>
 
-  </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
+"    <section id="dhcp4-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv4 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv4 side
+      (the DHCPv6 side is described in <xref linkend="dhcp6-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      The <command>dhcp4o6-port</command> global parameter specifies
+      the first of the two consecutive ports of the UDP sockets used
+      for the communication between the DHCPv6 and DHCPv4 servers
+      (the DHCPv4 server is bound to ::1 on <command>port</command> + 1
+      and connected to ::1 on <command>port</command>).
+      </para>
+      <para>
+      With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
+      to several of the identifiers it would normally use to select a
+      subnet.  In order to address this issue three new configuration
+      entires have been added.  The presence of any of these allows the
+      subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
+      <itemizedlist>
+        <listitem>
+        <simpara><command>4o6-subnet</command>: Takes a prefix (i.e., an
+        IPv6 address followed by a slash and a prefix length) which is
+        matched against the source address.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface-id</command>: Takes a relay interface
+        ID option value.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface</command>: Takes an interface name
+        which is matched against the incoming interface name.
+        </simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv4 conf
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eno33554984" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases4"
+    },
+
+    "valid-lifetime": 4000,
+
+    "subnet4": [ {
+        "subnet": "10.10.10.0/24",
+        <userinput>"4o6-interface": "eno33554984",</userinput>
+        <userinput>"4o6-subnet": "2001:db8:1:1::/64",</userinput>
+        "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767</userinput>
+
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp4",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp4.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+    </para>
+    </section>
+
+  </section> <!-- end of configuring kea-dhcp4 server section -->
 
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
@@ -3266,10 +3357,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             <entry>pkt4-nak-sent</entry>
             <entry>integer</entry>
             <entry>
-            Number of DHCPNAK packets sent. This statistic is expected to
-            grow when the server choses to not honor the address requested by a
-            client. In general, the sum of pkt4-ack-sent and pkt4-nak-sent
-            should be close to pkt4-request-received.
+            Number of DHCPNAK packets sent. This statistic is expected
+            to grow when the server chooses to not honor the address
+            requested by a client. In general, the sum of
+            pkt4-ack-sent and pkt4-nak-sent should be close to
+            pkt4-request-received.
             </entry>
             </row>
 
