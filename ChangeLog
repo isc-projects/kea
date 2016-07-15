@@ -1,3 +1,8 @@
+1143.	[doc]		fdupont
+	User's Guide has been updated with DHCPv4-over-DHCPv6 support
+	details.
+	(Trac #4273, git xxx)
+
 1142.	[doc]		sar
 	Uncomment the example columns in some rows in the table
 	listing the classificaiton examples.
