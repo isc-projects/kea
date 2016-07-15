@@ -36,11 +36,12 @@ extern "C" {
 /// Instantiates the RotatingFile and then opens it.  It supports the following
 /// parameters via the Hook Library Parameter mechanism::
 ///
-/// "path" - Directory in which the legal file(s) will be written.  The default
-/// value is "<prefix>/kea/var".  The directory must exist.
+/// @b path - Directory in which the legal file(s) will be written.
+/// The default value is "<prefix>/kea/var".  The directory must exist.
 ///
-/// "base-name" - An arbitrary value which is used in conjunction with current
-/// system date to form the current legal file name.  It defaults to "kea-legal".
+/// @b base-name - An arbitrary value which is used in conjunction
+/// with current system date to form the current legal file name.
+/// It defaults to "kea-legal".
 ///
 /// Legal file names will have the form:
 ///
