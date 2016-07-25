@@ -268,6 +268,8 @@ TEST_F(InformTest, directClientNoCiaddr) {
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
