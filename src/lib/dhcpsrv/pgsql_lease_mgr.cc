@@ -1275,7 +1275,7 @@ PgSqlLeaseMgr::getVersion() const {
     tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
 
-    return make_pair<uint32_t, uint32_t>(version, minor);
+    return std::pair<uint32_t, uint32_t>(version, minor);
 }
 
 void
