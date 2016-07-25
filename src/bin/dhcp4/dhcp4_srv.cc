@@ -1776,15 +1776,25 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     Pkt4Ptr query = ex.getQuery();
     Pkt4Ptr response = ex.getResponse();
 
-    // For the non-relayed message, the destination port is the client's port.
-    // For the relayed message, the server/relay port is a destination unless
-    // the message is DHCPINFORM.
+    // The DHCPINFORM is generally unicast to the client. The only situation
+    // when the server is unable to unicast to the client is when the client
+    // doesn't include ciaddr and the message is relayed. In this case the
+    // server has to reply via relay agent. For other messages we send back
+    // through relay if message is relayed, and unicast to the client if the
+    // message is not relayed.
     // Note that the call to this function may throw if invalid combination
     // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
     // giaddr != 0). The exception will propagate down and eventually cause the
     // packet to be discarded.
-    const bool server_port = query->isRelayed() && ((query->getType() == DHCPINFORM) ? query->getCiaddr().isV4Zero() : true);
-    response->setRemotePort(server_port ? DHCP4_SERVER_PORT : DHCP4_CLIENT_PORT);
+    if (((query->getType() == DHCPINFORM) &&
+         ((!query->getCiaddr().isV4Zero()) ||
+          (!query->isRelayed() && !query->getRemoteAddr().isV4Zero()))) ||
+        ((query->getType() != DHCPINFORM) && !query->isRelayed())) {
+        response->setRemotePort(DHCP4_CLIENT_PORT);
+
+    } else {
+        response->setRemotePort(DHCP4_SERVER_PORT);
+    }
 
     IOAddress local_addr = query->getLocalAddr();
 

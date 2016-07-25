@@ -467,6 +467,8 @@ Dhcp4Client::receiveOneMsg() {
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(msg->getRemoteAddr());
+    msg_copy->setRemotePort(msg->getLocalPort());
+    msg_copy->setLocalPort(msg->getRemotePort());
     msg_copy->setIface(msg->getIface());
 
     msg_copy->unpack();
