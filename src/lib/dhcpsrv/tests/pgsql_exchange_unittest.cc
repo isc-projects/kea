@@ -489,15 +489,13 @@ TEST_F(PgSqlBasicsTest, byteaTest) {
     ASSERT_THROW(PgSqlExchange::convertFromBytea(*r, row, BYTEA_COL,
                                                  fetched_bytes,
                                                  sizeof(fetched_bytes),
-                                                 byte_count),
-                 DbOperationError);
+                                                 byte_count), DbOperationError);
 
     // Verify that too small of a buffer throws
     ASSERT_THROW(PgSqlExchange::convertFromBytea(*r, 0, BYTEA_COL,
                                                  fetched_bytes,
                                                  sizeof(fetched_bytes) - 1,
-                                                 byte_count),
-                  DbOperationError);
+                                                 byte_count), DbOperationError);
 
     // Clean out the table
     WIPE_ROWS(r);
@@ -567,8 +565,7 @@ TEST_F(PgSqlBasicsTest, bigIntTest) {
 
     // While we here, verify that bad row throws
     ASSERT_THROW(PgSqlExchange::getColumnValue(*r, row, BIGINT_COL,
-                                               fetched_int),
-                 DbOperationError);
+                                               fetched_int), DbOperationError);
 
     // Clean out the table
     WIPE_ROWS(r);
@@ -817,8 +814,7 @@ TEST_F(PgSqlBasicsTest, varcharTest) {
 
     // While we here, verify that bad row throws
     ASSERT_THROW(PgSqlExchange::getColumnValue(*r, row, VARCHAR_COL,
-                                               fetched_str),
-                 DbOperationError);
+                                               fetched_str), DbOperationError);
 
     // Clean out the table
     WIPE_ROWS(r);
@@ -902,8 +898,7 @@ TEST_F(PgSqlBasicsTest, timeStampTest) {
 
     // While we here, verify that bad row throws
     ASSERT_THROW(PgSqlExchange::getColumnValue(*r, row, TIMESTAMP_COL,
-                                               fetched_str),
-                 DbOperationError);
+                                               fetched_str), DbOperationError);
 
     // Clean out the table
     WIPE_ROWS(r);
@@ -922,8 +917,7 @@ TEST_F(PgSqlBasicsTest, timeStampTest) {
     // Verify exceeding max time throws
     ASSERT_THROW(PgSqlExchange::convertToDatabaseTime(times[0],
                                                       DatabaseConnection::
-                                                      MAX_DB_TIME),
-                 BadValue);
+                                                      MAX_DB_TIME), BadValue);
 }
 
 }; // namespace

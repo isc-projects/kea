@@ -23,7 +23,7 @@ class PgSqlHostDataSourceImpl;
 /// the PostgreSQL database. Use of this backend presupposes that a PostgreSQL
 /// database is available and that the Kea schema has been created within it.
 ///
-/// Reservations are uniquely identified by identifier type and value. Currently
+/// Reservations are uniquely identified by identifier type and value.
 /// The currently supported values are defined in @ref Host::IdentifierType
 /// as well as in host_identifier_table:
 ///

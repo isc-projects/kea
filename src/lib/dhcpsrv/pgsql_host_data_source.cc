@@ -1848,6 +1848,8 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 ConstHostPtr
 PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                           const uint8_t prefix_len) const {
+    /// @todo: Check that prefix is v6 address, not v4.
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
