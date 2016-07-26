@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 

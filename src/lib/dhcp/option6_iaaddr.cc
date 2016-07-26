@@ -10,6 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 

@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_space.h>
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
