@@ -674,7 +674,7 @@ public:
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("limit",
             parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_INT32)));
         parameters_.push_back(ExchangeColumnInfoPtr(new ExchangeColumnInfo("[applied]",
-            parameters_.size(), EXCHANGE_DATA_TYPE_IO_OUT, EXCHANGE_DATA_TYPE_BOOL)));
+            parameters_.size(), EXCHANGE_DATA_TYPE_IO_IN_OUT, EXCHANGE_DATA_TYPE_BOOL)));
         BOOST_ASSERT(parameters_.size() == 18U);
     }
 
