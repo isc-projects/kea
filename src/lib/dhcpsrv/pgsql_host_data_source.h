@@ -218,6 +218,7 @@ public:
     /// DuplicateEntry exception:
     ///
     /// -# IPV4_ADDRESS and DHCP4_SUBNET_ID combination must be unique
+    /// -# IPV6 ADDRESS and PREFIX_LEN combination must be unique
     /// -# DHCP ID, DHCP ID TYPE, and DHCP4_SUBNET_ID combination must be unique
     /// -# DHCP ID, DHCP ID TYPE, and DHCP6_SUBNET_ID combination must be unique
     ///
