@@ -1,3 +1,8 @@
+1144.	[bug]		mihu
+	Response to DHCPINFORM is generally sent to port 68, rather
+	than port 67. Thanks to Michal Humpula for providing a patch.
+	(github #23, git 4216a4bedf8a884df087c68d48c88ee9ffa444dc)
+
 1143.	[doc]		fdupont
 	User's Guide has been updated with DHCPv4-over-DHCPv6 support
 	details.
