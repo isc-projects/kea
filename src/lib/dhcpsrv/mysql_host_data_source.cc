@@ -1779,6 +1779,7 @@ public:
 
 };
 
+namespace {
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
 TaggedStatement tagged_statements[] = {
@@ -1933,6 +1934,8 @@ TaggedStatement tagged_statements[] = {
     // Marks the end of the statements table.
     {MySqlHostDataSourceImpl::NUM_STATEMENTS, NULL}
 };
+
+}; // end anonymouse namespace
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
@@ -2318,6 +2321,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
+    /// @todo: check that address is really v4, not v6.
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -2384,6 +2388,7 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 ConstHostPtr
 MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                           const uint8_t prefix_len) const {
+    /// @todo: Check that prefix is v6 address, not v4.
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
