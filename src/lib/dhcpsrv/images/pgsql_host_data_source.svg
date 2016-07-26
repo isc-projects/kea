@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="1211" height="918" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="144" y="237" width="2" height="212" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="16" y="447" width="130" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="13" y="234" width="131" height="213" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="79" y="246">PgSqlHostDataSource</text>
+	<line stroke="black" stroke-opacity="1" x1="13" y1="247" x2="144" y2="247" />
+	<line stroke="black" stroke-opacity="1" x1="13" y1="253" x2="144" y2="253" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="265">PgSqlHostDataSource()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="277">~PgSqlHostDataSource()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="289">getAll()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="301">getAll()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="313">getAll4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="325">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="337">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="349">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="361">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="373">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="385">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="397">add()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="409">getType()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="421">getName()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="433">getDescription()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="16" y="445">getVersion()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="704" y="24" width="2" height="208" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="560" y="230" width="146" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="557" y="21" width="147" height="209" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="631" y="33">PgSqlExchange</text>
+	<line stroke="black" stroke-opacity="1" x1="557" y1="34" x2="704" y2="34" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="560" y="46">columns_</text>
+	<line stroke="black" stroke-opacity="1" x1="557" y1="47" x2="704" y2="47" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="560" y="59">PgSqlExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="560" y="71">~PgSqlExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="83">convertToDatabaseTime()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="95">convertToDatabaseTime()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="107">convertFromDatabaseTime()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="119">getRawColumnValue()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="131">getColumnLabel()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="143">getColumnValue()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="155">getColumnValue()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="167">getColumnValue()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="179">getIPv6Value()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="191">isColumnNull()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="203">getColumnValue()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="215">convertFromBytea()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="560" y="227">dumpRow()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="698" y="643" width="2" height="172" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="578" y="813" width="122" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="575" y="640" width="123" height="173" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="637" y="652">OptionProcessor</text>
+	<line stroke="black" stroke-opacity="1" x1="575" y1="653" x2="698" y2="653" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="665">universe_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="677">start_column_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="689">option_id_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="701">code_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="713">value_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="725">formatted_value_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="737">space_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="749">persistent_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="761">most_recent_option_id_</text>
+	<line stroke="black" stroke-opacity="1" x1="575" y1="762" x2="698" y2="762" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="774">OptionProcessor()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="786">clear()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="798">retrieveOption()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="578" y="810">setColumnNames()</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="90" y="475">impl_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="87" y="638">conn_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="76" y="831">conn_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="230" y="581">host_exchange_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="215" y="714">host_ipv6_exchange_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="210" y="755">host_ipv46_exchange_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="282" y="155">host_ipv6_reservation_exchange_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="391" y="425">host_option_exchange_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="513" y="563">opt_proc4_</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="513" y="601">opt_proc6_</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="155" y="486" width="2" height="128" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="7" y="612" width="150" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="4" y="483" width="151" height="129" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="80" y="495">PgSqlHostDataSourceImpl</text>
+	<line stroke="black" stroke-opacity="1" x1="4" y1="496" x2="155" y2="496" />
+	<line stroke="black" stroke-opacity="1" x1="4" y1="502" x2="155" y2="502" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="514">PgSqlHostDataSourceImpl()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="526">~PgSqlHostDataSourceImpl()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="538">addStatement()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="550">addResv()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="562">addOption()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="574">addOptions()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="586">getHostCollection()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="598">getHost()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="7" y="610">getVersion()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="80" y1="482" x2="86" y2="476" />
+	<line stroke="black" stroke-opacity="1" x1="80" y1="482" x2="74" y2="476" />
+	<line stroke="black" stroke-opacity="1" x1="80" y1="450" x2="80" y2="482" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="126" y="650" width="2" height="160" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="12" y="808" width="116" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="9" y="647" width="117" height="161" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="68" y="659">PgSqlConnection</text>
+	<line stroke="black" stroke-opacity="1" x1="9" y1="660" x2="126" y2="660" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="12" y="672">DUPLICATE_KEY</text>
+	<line stroke="black" stroke-opacity="1" x1="9" y1="673" x2="126" y2="673" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="685">PgSqlConnection()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="697">~PgSqlConnection()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="709">prepareStatement()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="721">openDatabase()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="733">startTransaction()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="745">commit()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="757">rollback()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="769">compareError()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="781">checkStatementError()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="793">operator PGconn*()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="12" y="805">operator bool()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="497" y="548" width="2" height="76" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="321" y="622" width="178" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="318" y="545" width="179" height="77" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="408" y="557">PgSqlHostWithOptionsExchange</text>
+	<line stroke="black" stroke-opacity="1" x1="318" y1="558" x2="497" y2="558" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="321" y="570">OPTION_COLUMNS</text>
+	<line stroke="black" stroke-opacity="1" x1="318" y1="571" x2="497" y2="571" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="321" y="583">PgSqlHostWithOptionsExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="321" y="595">clear()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="321" y="607">processRowData()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="321" y="619">getRequiredColumnsNum()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="78" y1="646" x2="83" y2="639" />
+	<line stroke="black" stroke-opacity="1" x1="78" y1="646" x2="71" y2="640" />
+	<line stroke="black" stroke-opacity="1" x1="77" y1="615" x2="78" y2="646" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="77,615 83,620 77,626 71,621" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="317" y1="583" x2="311" y2="576" />
+	<line stroke="black" stroke-opacity="1" x1="317" y1="583" x2="310" y2="588" />
+	<line stroke="black" stroke-opacity="1" x1="158" y1="582" x2="317" y2="583" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="158,582 164,576 169,582 163,588" />
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="198" y="596">&lt;&lt;:shared_ptr&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="118" y="841" width="2" height="64" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="14" y="903" width="106" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="11" y="838" width="107" height="65" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="65" y="850">PgSqlTransaction</text>
+	<line stroke="black" stroke-opacity="1" x1="11" y1="851" x2="118" y2="851" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="14" y="863">committed_</text>
+	<line stroke="black" stroke-opacity="1" x1="11" y1="864" x2="118" y2="864" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="14" y="876">PgSqlTransaction()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="14" y="888">~PgSqlTransaction()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="14" y="900">commit()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="478" y="679" width="2" height="160" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="332" y="837" width="148" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="329" y="676" width="149" height="161" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="404" y="688">PgSqlHostIPv6Exchange</text>
+	<line stroke="black" stroke-opacity="1" x1="329" y1="689" x2="478" y2="689" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="332" y="701">RESERVATION_COLUMNS</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="713">reservation_id_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="725">address_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="737">prefix_len_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="749">type_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="761">iaid_index_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="773">most_recent_reservation_id_</text>
+	<line stroke="black" stroke-opacity="1" x1="329" y1="774" x2="478" y2="774" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="786">PgSqlHostIPv6Exchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="798">clear()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="810">getReservationId()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="822">retrieveReservation()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="332" y="834">processRowData()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="724" y="272" width="2" height="232" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="552" y="502" width="174" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="549" y="269" width="175" height="233" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="637" y="281">PgSqlHostExchange</text>
+	<line stroke="black" stroke-opacity="1" x1="549" y1="282" x2="724" y2="282" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="294">HOST_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="306">DHCP_IDENTIFIER_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="318">DHCP_IDENTIFIER_TYPE_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="330">DHCP4_SUBNET_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="342">DHCP6_SUBNET_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="354">IPV4_ADDRESS_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="366">HOSTNAME_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="378">DHCP4_CLIENT_CLASSES_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="390">DHCP6_CLIENT_CLASSES_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="552" y="402">HOST_COLUMNS</text>
+	<line stroke="black" stroke-opacity="1" x1="549" y1="403" x2="724" y2="403" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="415">PgSqlHostExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="427">~PgSqlHostExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="439">clear()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="451">findAvailColumn()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="463">getHostId()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="475">createBindForSend()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="487">processRowData()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="552" y="499">retrieveHost()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="66" y1="811" x2="60" y2="817" />
+	<line stroke="black" stroke-opacity="1" x1="66" y1="811" x2="72" y2="817" />
+	<line stroke="black" stroke-opacity="1" x1="66" y1="837" x2="66" y2="811" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="406" y1="675" x2="406" y2="630" />
+	<line stroke="black" stroke-opacity="1" x1="407" y1="625" x2="400" y2="630" />
+	<line stroke="black" stroke-opacity="1" x1="407" y1="625" x2="412" y2="631" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="630" x2="412" y2="631" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="148" y1="615" x2="148" y2="720" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="148,615 154,621 148,627 142,621" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="328" y1="720" x2="322" y2="714" />
+	<line stroke="black" stroke-opacity="1" x1="328" y1="720" x2="322" y2="726" />
+	<line stroke="black" stroke-opacity="1" x1="148" y1="720" x2="328" y2="720" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="136" y1="615" x2="136" y2="758" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="136,615 142,621 136,627 130,621" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="328" y1="758" x2="322" y2="752" />
+	<line stroke="black" stroke-opacity="1" x1="328" y1="758" x2="322" y2="764" />
+	<line stroke="black" stroke-opacity="1" x1="136" y1="758" x2="328" y2="758" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="631" y1="268" x2="631" y2="239" />
+	<line stroke="black" stroke-opacity="1" x1="631" y1="233" x2="625" y2="239" />
+	<line stroke="black" stroke-opacity="1" x1="631" y1="233" x2="637" y2="239" />
+	<line stroke="black" stroke-opacity="1" x1="625" y1="239" x2="637" y2="239" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="409" y1="544" x2="409" y2="487" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="409" y1="487" x2="542" y2="487" />
+	<line stroke="black" stroke-opacity="1" x1="548" y1="487" x2="542" y2="481" />
+	<line stroke="black" stroke-opacity="1" x1="548" y1="487" x2="542" y2="493" />
+	<line stroke="black" stroke-opacity="1" x1="542" y1="481" x2="542" y2="493" />
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="155" y="731">&lt;&lt;:shared_ptr&gt;&gt;</text>
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="145" y="774">&lt;&lt;:shared_ptr&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="689" y="562" width="2" height="49" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="580" y="609" width="111" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="577" y="559" width="112" height="50" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="633" y="571">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="633" y="584">OptionProcessorPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="577" y1="585" x2="689" y2="585" />
+	<line stroke="black" stroke-opacity="1" x1="577" y1="591" x2="689" y2="591" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="359" y="83" width="2" height="52" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="187" y="133" width="174" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="184" y="80" width="175" height="53" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="272" y="92">PgSqlIPv6ReservationExchange</text>
+	<line stroke="black" stroke-opacity="1" x1="184" y1="93" x2="359" y2="93" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="187" y="105">RESRV_COLUMNS</text>
+	<line stroke="black" stroke-opacity="1" x1="184" y1="106" x2="359" y2="106" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="187" y="118">PgSqlIPv6ReservationExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="187" y="130">createBindForSend()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="634" y1="639" x2="640" y2="633" />
+	<line stroke="black" stroke-opacity="1" x1="634" y1="639" x2="628" y2="633" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="634" y1="612" x2="634" y2="639" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="576" y1="582" x2="512" y2="582" />
+<ellipse fill="none" stroke="black" stroke-width="1" stroke-opacity="1" cx="506" cy="582" rx="5" ry="5" />
+	<line stroke="black" stroke-opacity="1" x1="501" y1="582" x2="511" y2="582" />
+	<line stroke="black" stroke-opacity="1" x1="506" y1="577" x2="506" y2="587" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="576" y1="567" x2="569" y2="561" />
+	<line stroke="black" stroke-opacity="1" x1="576" y1="567" x2="570" y2="573" />
+	<line stroke="black" stroke-opacity="1" x1="500" y1="568" x2="576" y2="567" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="500,568 505,561 511,567 506,573" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="576" y1="605" x2="570" y2="598" />
+	<line stroke="black" stroke-opacity="1" x1="576" y1="605" x2="569" y2="610" />
+	<line stroke="black" stroke-opacity="1" x1="500" y1="603" x2="576" y2="605" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="500,603 506,597 511,603 505,609" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="273" y1="79" x2="273" y2="55" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="273" y1="55" x2="550" y2="55" />
+	<line stroke="black" stroke-opacity="1" x1="556" y1="55" x2="550" y2="49" />
+	<line stroke="black" stroke-opacity="1" x1="556" y1="55" x2="550" y2="61" />
+	<line stroke="black" stroke-opacity="1" x1="550" y1="49" x2="550" y2="61" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="158" y1="493" x2="273" y2="493" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="158,493 164,487 170,493 164,499" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="273" y1="136" x2="267" y2="142" />
+	<line stroke="black" stroke-opacity="1" x1="273" y1="136" x2="279" y2="142" />
+	<line stroke="black" stroke-opacity="1" x1="273" y1="493" x2="273" y2="136" />
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="181" y="489">&lt;&lt;:shared_ptr&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="461" y="194" width="2" height="208" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="311" y="400" width="152" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="308" y="191" width="153" height="209" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="385" y="203">PgSqlOptionExchange</text>
+	<line stroke="black" stroke-opacity="1" x1="308" y1="204" x2="461" y2="204" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="216">OPTION_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="228">CODE_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="240">VALUE_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="252">FORMATTED_VALUE_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="264">SPACE_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="276">PERSISTENT_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="288">DHCP_CLIENT_CLASS_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="300">DHCP_SUBNET_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="312">HOST_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="324">SCOPE_ID_COL</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="311" y="336">OPTION_COLUMNS</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="311" y="348">value_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="311" y="360">value_len_</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="311" y="372">option_</text>
+	<line stroke="black" stroke-opacity="1" x1="308" y1="373" x2="461" y2="373" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="311" y="385">PgSqlOptionExchange()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="311" y="397">createBindForSend()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="386" y1="190" x2="386" y2="168" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="386" y1="168" x2="550" y2="168" />
+	<line stroke="black" stroke-opacity="1" x1="556" y1="168" x2="550" y2="162" />
+	<line stroke="black" stroke-opacity="1" x1="556" y1="168" x2="550" y2="174" />
+	<line stroke="black" stroke-opacity="1" x1="550" y1="162" x2="550" y2="174" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="158" y1="509" x2="383" y2="509" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="158,509 164,503 170,509 164,515" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="383" y1="403" x2="377" y2="409" />
+	<line stroke="black" stroke-opacity="1" x1="383" y1="403" x2="389" y2="409" />
+	<line stroke="black" stroke-opacity="1" x1="383" y1="509" x2="383" y2="403" />
+</g>
+<g>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="250" y="522">&lt;&lt;:shared_ptr&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="137" y="22" width="2" height="188" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="15" y="208" width="124" height="2" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="12" y="19" width="125" height="189" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="75" y="31">BaseHostDataSource</text>
+	<line stroke="black" stroke-opacity="1" x1="12" y1="32" x2="137" y2="32" />
+	<line stroke="black" stroke-opacity="1" x1="12" y1="38" x2="137" y2="38" />
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="15" y="50">~BaseHostDataSource()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="62">getAll()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="74">getAll()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="86">getAll4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="98">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="110">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="122">get4()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="134">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="146">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="158">get6()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="170">add()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="15" y="182">getType()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="15" y="194">commit()</text>
+	<text font-family=".Helvetica Neue DeskInterface" font-size="11" fill="#000000" xml:space="preserve" x="15" y="206">rollback()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="74" y1="233" x2="74" y2="217" />
+	<line stroke="black" stroke-opacity="1" x1="74" y1="211" x2="68" y2="217" />
+	<line stroke="black" stroke-opacity="1" x1="74" y1="211" x2="80" y2="217" />
+	<line stroke="black" stroke-opacity="1" x1="68" y1="217" x2="80" y2="217" />
+</g>
+</svg>

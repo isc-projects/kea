@@ -21,6 +21,10 @@ const char* PsqlBindArray::TRUE_STR = "TRUE";
 const char* PsqlBindArray::FALSE_STR = "FALSE";
 
 void PsqlBindArray::add(const char* value) {
+    if (!value) {
+        isc_throw(BadValue, "PsqlBindArray::add - char* value cannot be NULL");
+    }
+
     values_.push_back(value);
     lengths_.push_back(strlen(value));
     formats_.push_back(TEXT_FMT);
@@ -38,8 +42,50 @@ void PsqlBindArray::add(const std::vector<uint8_t>& data) {
     formats_.push_back(BINARY_FMT);
 }
 
+void PsqlBindArray::add(const uint8_t* data, const size_t len) {
+    if (!data) {
+        isc_throw(BadValue, "PsqlBindArray::add - uint8_t data cannot be NULL");
+    }
+
+    values_.push_back(reinterpret_cast<const char*>(&(data[0])));
+    lengths_.push_back(len);
+    formats_.push_back(BINARY_FMT);
+}
+
 void PsqlBindArray::add(const bool& value)  {
     add(value ? TRUE_STR : FALSE_STR);
+}
+
+void PsqlBindArray::add(const uint8_t& byte) {
+    // We static_cast to an unsigned int, otherwise lexcial_cast may to
+    // treat byte as a character, which yields "" for unprintable values 
+    addTempString(boost::lexical_cast<std::string>
+                              (static_cast<unsigned int>(byte)));
+}
+
+void PsqlBindArray::add(const isc::asiolink::IOAddress& addr) {
+    if (addr.isV4()) {
+        addTempString(boost::lexical_cast<std::string>
+                   (static_cast<uint32_t>(addr)));
+    } else {
+        addTempString(addr.toText());
+    }
+}
+
+void PsqlBindArray::addNull(const int format) {
+    values_.push_back(NULL);
+    lengths_.push_back(0);
+    formats_.push_back(format);
+}
+
+/// @todo Eventually this could replace add(std::string&)? This would mean
+/// all bound strings would be internally copies rather than perhaps belonging
+/// to the originating object such as Host::hostname_.  One the one hand it
+/// would make all strings handled one-way only, on the other hand it would
+/// mean duplicating strings where it isn't strictly necessary.
+void PsqlBindArray::addTempString(const std::string& str) {
+    bound_strs_.push_back(ConstStringPtr(new std::string(str)));
+    PsqlBindArray::add((bound_strs_.back())->c_str());
 }
 
 std::string PsqlBindArray::toText() const {
@@ -54,12 +100,13 @@ std::string PsqlBindArray::toText() const {
                 stream << "empty" << std::endl;
             } else {
                 stream << "0x";
-                for (int i = 0; i < lengths_[i]; ++i) {
+                for (int x = 0; x < lengths_[i]; ++x) {
                     stream << std::setfill('0') << std::setw(2)
                            << std::setbase(16)
-                           << static_cast<unsigned int>(data[i]);
+                           << static_cast<unsigned int>(data[x]);
                 }
                 stream << std::endl;
+                stream << std::setbase(10);
             }
         }
     }
@@ -111,18 +158,32 @@ PgSqlExchange::convertFromDatabaseTime(const std::string& db_time_val) {
 
 const char*
 PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
-                                 const size_t col) const {
+                                 const size_t col) {
+    r.rowColCheck(row,col);
     const char* value = PQgetvalue(r, row, col);
     if (!value) {
         isc_throw(DbOperationError, "getRawColumnValue no data for :"
-                    << getColumnLabel(col) << " row:" << row);
+                    << getColumnLabel(r, col) << " row:" << row);
     }
     return (value);
 }
 
+bool 
+PgSqlExchange::isColumnNull(const PgSqlResult& r, const int row, 
+                            const size_t col) {
+    r.rowColCheck(row,col);
+    return (PQgetisnull(r, row, col));
+}
+
 void
 PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, bool &value) const {
+                              const size_t col, std::string& value) {
+    value = getRawColumnValue(r, row, col);
+}
+
+void
+PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
+                              const size_t col, bool &value) {
     const char* data = getRawColumnValue(r, row, col);
     if (!strlen(data) || *data == 'f') {
         value = false;
@@ -130,40 +191,14 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
         value = true;
     } else {
         isc_throw(DbOperationError, "Invalid boolean data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
                   << " : must be 't' or 'f'");
     }
 }
 
 void
 PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, uint32_t &value) const {
-    const char* data = getRawColumnValue(r, row, col);
-    try {
-        value = boost::lexical_cast<uint32_t>(data);
-    } catch (const std::exception& ex) {
-        isc_throw(DbOperationError, "Invalid uint32_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
-                  << " : " << ex.what());
-    }
-}
-
-void
-PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, int32_t &value) const {
-    const char* data = getRawColumnValue(r, row, col);
-    try {
-        value = boost::lexical_cast<int32_t>(data);
-    } catch (const std::exception& ex) {
-        isc_throw(DbOperationError, "Invalid int32_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
-                  << " : " << ex.what());
-    }
-}
-
-void
-PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
-                              const size_t col, uint8_t &value) const {
+                              const size_t col, uint8_t &value) {
     const char* data = getRawColumnValue(r, row, col);
     try {
         // lexically casting as uint8_t doesn't convert from char
@@ -171,7 +206,20 @@ PgSqlExchange::getColumnValue(const PgSqlResult& r, const int row,
         value = boost::lexical_cast<uint16_t>(data);
     } catch (const std::exception& ex) {
         isc_throw(DbOperationError, "Invalid uint8_t data: " << data
-                  << " for: " << getColumnLabel(col) << " row:" << row
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
+                  << " : " << ex.what());
+    }
+}
+
+isc::asiolink::IOAddress
+PgSqlExchange::getIPv6Value(const PgSqlResult& r, const int row,
+                            const size_t col) {
+    const char* data = getRawColumnValue(r, row, col);
+    try {
+        return (isc::asiolink::IOAddress(data));
+    } catch (const std::exception& ex) {
+        isc_throw(DbOperationError, "Cannot convert data: " << data
+                  << " for: " << getColumnLabel(r, col) << " row:" << row
                   << " : " << ex.what());
     }
 }
@@ -180,7 +228,7 @@ void
 PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
                                 const size_t col, uint8_t* buffer,
                                 const size_t buffer_size,
-                                size_t &bytes_converted) const {
+                                size_t &bytes_converted) {
     // Returns converted bytes in a dynamically allocated buffer, and
     // sets bytes_converted.
     unsigned char* bytes = PQunescapeBytea((const unsigned char*)
@@ -190,7 +238,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
     // Unlikely it couldn't allocate it but you never know.
     if (!bytes) {
         isc_throw (DbOperationError, "PQunescapeBytea failed for:"
-                   << getColumnLabel(col) << " row:" << row);
+                   << getColumnLabel(r, col) << " row:" << row);
     }
 
     // Make sure it's not larger than expected.
@@ -199,7 +247,7 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
         PQfreemem(bytes);
         isc_throw (DbOperationError, "Converted data size: "
                    << bytes_converted << " is too large for: "
-                   << getColumnLabel(col) << " row:" << row);
+                   << getColumnLabel(r, col) << " row:" << row);
     }
 
     // Copy from the allocated buffer to caller's buffer the free up
@@ -209,14 +257,41 @@ PgSqlExchange::convertFromBytea(const PgSqlResult& r, const int row,
 }
 
 std::string
-PgSqlExchange::getColumnLabel(const size_t column) const {
-    if (column > column_labels_.size()) {
-        std::ostringstream os;
-        os << "Unknown column:" << column;
-        return (os.str());
+PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
+    return (r.getColumnLabel(column));
+}
+
+std::string 
+PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
+    r.rowCheck(row);
+    std::ostringstream stream;
+    int columns = r.getCols();
+    for (int col = 0; col < columns; ++col) {
+        const char* val = getRawColumnValue(r, row, col);
+        std::string name = r.getColumnLabel(col);
+        int format = PQfformat(r, col); 
+
+        stream << col << "   " << name << " : " ;
+        if (format == PsqlBindArray::TEXT_FMT) {
+            stream << "\"" << val << "\"" << std::endl;
+        } else {
+            const char *data = val;
+            int length = PQfsize(r, col);
+            if (length == 0) {
+                stream << "empty" << std::endl;
+            } else {
+                stream << "0x";
+                for (int i = 0; i < length; ++i) {
+                    stream << std::setfill('0') << std::setw(2)
+                           << std::setbase(16)
+                           << static_cast<unsigned int>(data[i]);
+                }
+                stream << std::endl;
+            }
+        }
     }
 
-    return (column_labels_[column]);
+    return (stream.str());
 }
 
 }; // end of isc::dhcp namespace

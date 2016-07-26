@@ -114,6 +114,7 @@ libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
 
 if HAVE_PGSQL
 libdhcpsrv_unittests_SOURCES += pgsql_exchange_unittest.cc
+libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
 if HAVE_CQL

@@ -26,6 +26,9 @@ using namespace std;
 
 namespace {
 
+/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source 
+/// columns.  This is coverd by tickets #3557, #4530, and PR#9.
+
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
 /// that the occur in the table.  This does not apply to the where clause.
@@ -278,16 +281,16 @@ public:
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
         // Set the column names (for error messages)
-        column_labels_.push_back("address");
-        column_labels_.push_back("hwaddr");
-        column_labels_.push_back("client_id");
-        column_labels_.push_back("valid_lifetime");
-        column_labels_.push_back("expire");
-        column_labels_.push_back("subnet_id");
-        column_labels_.push_back("fqdn_fwd");
-        column_labels_.push_back("fqdn_rev");
-        column_labels_.push_back("hostname");
-        column_labels_.push_back("state");
+        columns_.push_back("address");
+        columns_.push_back("hwaddr");
+        columns_.push_back("client_id");
+        columns_.push_back("valid_lifetime");
+        columns_.push_back("expire");
+        columns_.push_back("subnet_id");
+        columns_.push_back("fqdn_fwd");
+        columns_.push_back("fqdn_rev");
+        columns_.push_back("hostname");
+        columns_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -466,19 +469,19 @@ public:
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
         // Set the column names (for error messages)
-        column_labels_.push_back("address");
-        column_labels_.push_back("duid");
-        column_labels_.push_back("valid_lifetime");
-        column_labels_.push_back("expire");
-        column_labels_.push_back("subnet_id");
-        column_labels_.push_back("pref_lifetime");
-        column_labels_.push_back("lease_type");
-        column_labels_.push_back("iaid");
-        column_labels_.push_back("prefix_len");
-        column_labels_.push_back("fqdn_fwd");
-        column_labels_.push_back("fqdn_rev");
-        column_labels_.push_back("hostname");
-        column_labels_.push_back("state");
+        columns_.push_back("address");
+        columns_.push_back("duid");
+        columns_.push_back("valid_lifetime");
+        columns_.push_back("expire");
+        columns_.push_back("subnet_id");
+        columns_.push_back("pref_lifetime");
+        columns_.push_back("lease_type");
+        columns_.push_back("iaid");
+        columns_.push_back("prefix_len");
+        columns_.push_back("fqdn_fwd");
+        columns_.push_back("fqdn_rev");
+        columns_.push_back("hostname");
+        columns_.push_back("state");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -639,28 +642,7 @@ public:
 
             default:
                 isc_throw(DbOperationError, "Invalid lease type: " << raw_value
-                      << " for: " << getColumnLabel(col) << " row:" << row);
-        }
-    }
-
-    /// @brief Converts a column in a row in a result set into IPv6 address.
-    ///
-    /// @param r the result set containing the query results
-    /// @param row the row number within the result set
-    /// @param col the column number within the row
-    ///
-    /// @return isc::asiolink::IOAddress containing the IPv6 address.
-    /// @throw  DbOperationError if the value cannot be fetched or is
-    /// invalid.
-    isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r, const int row,
-                                          const size_t col) const {
-        const char* data = getRawColumnValue(r, row, col);
-        try {
-            return (isc::asiolink::IOAddress(data));
-        } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Cannot convert data: " << data
-                      << " for: " << getColumnLabel(col) << " row:" << row
-                      << " : " << ex.what());
+                      << " for: " << getColumnLabel(r, col) << " row:" << row);
         }
     }
 
