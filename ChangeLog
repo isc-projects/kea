@@ -1,3 +1,8 @@
+1145.	[func]		tmark
+	The Postgresql backend now supports host reservations for both DHCPv4 and
+	DHCPv6, with options and IPv6 reservations.
+	(Trac #4277 git ac1eaa1026987c2d86d57b4aa0dc9a4d093787f0)
+
 1144.	[bug]		mihu
 	Response to DHCPINFORM is generally sent to port 68, rather
 	than port 67. Thanks to Michal Humpula for providing a patch.
