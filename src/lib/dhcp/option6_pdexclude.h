@@ -9,26 +9,52 @@
 #ifndef OPTION6_PDEXCLUDE_H
 #define OPTION6_PDEXCLUDE_H
 
-#include <dhcp/option.h>
-
 #include <asiolink/io_address.h>
+#include <dhcp/option.h>
 #include <boost/shared_ptr.hpp>
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief DHCPv6 Option class for handling list of IPv6 addresses.
+/// @brief DHCPv6 option class representing Prefix Exclude Option (RFC 6603).
 ///
-/// This class handles a list of IPv6 addresses. An example of such option
-/// is dns-servers option. It can also be used to handle single address.
+/// This class represents DHCPv6 Prefix Exclude option (67). This option is
+/// carried in the IA Prefix option and it conveys a single prefix which is
+/// used by the delegating router to communicate with a requesting router on
+/// the requesting router's uplink. This prefix is not used on the
+/// requesting router's downlinks (is excluded from other delegated prefixes).
 class Option6PDExclude: public Option {
-
 public:
 
-    Option6PDExclude(const isc::asiolink::IOAddress& delegated_address,
-            uint8_t delegated_prefix_length,
-            const isc::asiolink::IOAddress& excluded_address,
-            uint8_t excluded_prefix_length);
+    /// @brief Constructor.
+    ///
+    /// @param delegated_prefix Delagated prefix.
+    /// @param delegated_prefix_length Delegated prefix length.
+    /// @param excluded_prefix Excluded prefix.
+    /// @param excluded_prefix_length Excluded prefix length.
+    ///
+    /// @throw BadValue if prefixes are invalid, if excluded prefix length
+    /// is not greater than delegated prefix length or if common parts of
+    /// prefixes does not match.
+    Option6PDExclude(const isc::asiolink::IOAddress& delegated_prefix,
+                     const uint8_t delegated_prefix_length,
+                     const isc::asiolink::IOAddress& excluded_prefix,
+                     const uint8_t excluded_prefix_length);
+
+    /// @brief Constructor, creates option instance from part of the buffer.
+    ///
+    /// This constructor is mostly used to parse Prefix Exclude options in the
+    /// received messages.
+    ///
+    /// @param begin Lower bound of the buffer to create option from.
+    /// @param end Upper bound of the buffer to create option from.
+    Option6PDExclude(const isc::asiolink::IOAddress& delegated_prefix,
+                     const uint8_t delegated_prefix_length,
+                     OptionBufferConstIter begin, OptionBufferConstIter end);
+
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
 
     /// @brief Writes option in wire-format to a buffer.
     ///
@@ -36,9 +62,12 @@ public:
     /// byte after stored option (that is useful for writing options one after
     /// another).
     ///
-    /// @param buf pointer to a buffer
+    /// The format of the option includes excluded prefix length specified as
+    /// a number of bits. It also includes IPv6 subnet ID field which is
+    /// computed from the delegated and excluded prefixes, according to the
+    /// section 4.2 of RFC 6603.
     ///
-    /// @throw BadValue Universe of the option is neither V4 nor V6.
+    /// @param [out] buf Pointer to a buffer.
     virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
@@ -53,56 +82,52 @@ public:
     /// @return length of the option
     virtual uint16_t len() const;
 
-    /// @brief Returns the address of the delegated address space.
+    /// @brief Returns Prefix Exclude option in textual format.
     ///
-    /// @return address of delegated address space
-    isc::asiolink::IOAddress getDelegatedAddress() const {
-        return delegated_address_;
+    /// @param ident Number of spaces to be inserted before the text.
+    virtual std::string toText(int indent = 0) const;
+
+    /// @brief Returns delegated prefix.
+    isc::asiolink::IOAddress getDelegatedPrefix() const {
+        return (delegated_prefix_);
     }
 
-    /// @brief Returns the prefix length of the delegated address space.
-    ///
-    /// @return prefix length of delegated address space
+    /// @brief Returns delegated prefix length.
     uint8_t getDelegatedPrefixLength() const {
-        return delegated_prefix_length_;
+        return (delegated_prefix_length_);
     }
 
-    /// @brief Returns the address of the excluded address space.
-    ///
-    /// @return address of excluded address space
-    isc::asiolink::IOAddress getExcludedAddress() const {
-        return excluded_address_;
+    /// @brief Returns excluded prefix.
+    isc::asiolink::IOAddress getExcludedPrefix() const {
+        return (excluded_prefix_);
     }
 
-    /// @brief Returns the prefix length of the excluded address space.
-    ///
-    /// @return prefix length of excluded address space
+    /// @brief Returns excluded prefix length.
     uint8_t getExcludedPrefixLength() const {
-        return excluded_prefix_length_;
+        return (excluded_prefix_length_);
     }
 
-protected:
-    /// @brief Returns the prefix length of the excluded prefix.
+private:
+
+    /// @brief Returns IPv6 subnet ID length in octets.
     ///
-    /// @return prefix length of excluded prefix
-    uint8_t getSubtractedPrefixesOctetLength() const;
+    /// The IPv6 subnet ID length is between 1 and 16 octets.
+    uint8_t getSubnetIDLength() const;
 
-    /// @brief The address and prefix length identifying the delegated IPV6
-    /// prefix.
-    /// {
-    isc::asiolink::IOAddress delegated_address_;
+    /// @brief Holds delegated prefix.
+    isc::asiolink::IOAddress delegated_prefix_;
+
+    /// @brief Holds delegated prefix length,
     uint8_t delegated_prefix_length_;
-    /// }
 
-    /// @brief The address and prefix length identifying the excluded IPV6
-    /// prefix.
-    /// {
-    isc::asiolink::IOAddress excluded_address_;
+    /// @brief Holds excluded prefix.
+    isc::asiolink::IOAddress excluded_prefix_;
+
+    /// @brief Holds excluded prefix length.
     uint8_t excluded_prefix_length_;
-    /// }
 };
 
-/// @brief Pointer to the @c Option6PDExclude object.
+/// @brief Pointer to the @ref Option6PDExclude object.
 typedef boost::shared_ptr<Option6PDExclude> Option6PDExcludePtr;
 
 } // isc::dhcp namespace
