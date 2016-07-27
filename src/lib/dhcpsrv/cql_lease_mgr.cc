@@ -809,7 +809,6 @@ public:
     Lease6Ptr createBindForReceive(const CassRow* row) {
         try {
             CqlDataArray data;
-            CqlDataArray size;
 
             // address: varchar
             data.add(reinterpret_cast<void*>(&addr6_));
