@@ -514,6 +514,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     // The database is initially opened in "read-write" mode. We can
     // insert some data to the databse.
     HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    ASSERT_TRUE(host);
     ASSERT_NO_THROW(hdsptr_->add(host));
 
     // Subnet id will be used in queries to the database.
@@ -524,6 +525,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     ConstHostPtr host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
                                             &host->getIdentifier()[0],
                                             host->getIdentifier().size());
+    ASSERT_TRUE(host_by_id);
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
 
     // Close the database connection and reopen in "read-only" mode as
@@ -536,15 +538,21 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
                                                    VALID_PASSWORD,
                                                    VALID_READONLY_DB));
 
+    hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+
     // Check that an attempt to insert new host would result in
     // exception.
-    host = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
-    ASSERT_THROW(hdsptr_->add(host), ReadOnlyDb);
+    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    ASSERT_TRUE(host2);
+    ASSERT_THROW(hdsptr_->add(host2), ReadOnlyDb);
+    ASSERT_THROW(hdsptr_->commit(), ReadOnlyDb);
+    ASSERT_THROW(hdsptr_->rollback(), ReadOnlyDb);
 
     // Reading from the database should still be possible, though.
     host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
                                &host->getIdentifier()[0],
                                host->getIdentifier().size());
+    ASSERT_TRUE(host_by_id);
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
 }
 

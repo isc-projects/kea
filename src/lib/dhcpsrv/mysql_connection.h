@@ -247,8 +247,12 @@ public:
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
     ///        represents an internal error within the code.
-    void prepareStatements(const TaggedStatement tagged_statements[],
+    void prepareStatements(const TaggedStatement* start_statement,
+                           const TaggedStatement* end_statement,
                            size_t num_statements);
+
+    /// @brief Clears prepared statements and text statements.
+    void clearStatements();
 
     /// @brief Open Database
     ///

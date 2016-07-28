@@ -213,20 +213,25 @@ MySqlConnection::prepareStatement(uint32_t index, const char* text) {
 }
 
 void
-MySqlConnection::prepareStatements(const TaggedStatement tagged_statements[],
+MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
+                                   const TaggedStatement* end_statement,
                                    size_t num_statements) {
     // Allocate space for all statements
-    statements_.clear();
     statements_.resize(num_statements, NULL);
 
-    text_statements_.clear();
     text_statements_.resize(num_statements, std::string(""));
 
     // Created the MySQL prepared statements for each DML statement.
-    for (int i = 0; tagged_statements[i].text != NULL; ++i) {
-        prepareStatement(tagged_statements[i].index,
-                         tagged_statements[i].text);
+    for (const TaggedStatement* tagged_statement = start_statement;
+         tagged_statement != end_statement; ++tagged_statement) {
+        prepareStatement(tagged_statement->index,
+                         tagged_statement->text);
     }
+}
+
+void MySqlConnection::clearStatements() {
+    statements_.clear();
+    text_statements_.clear();
 }
 
 /// @brief Destructor

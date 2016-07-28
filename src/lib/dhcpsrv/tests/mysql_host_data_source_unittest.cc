@@ -63,8 +63,13 @@ public:
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
-        hdsptr_->rollback();
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
         HostDataSourceFactory::destroy();
+        hdsptr_.reset();
         destroyMySQLSchema();
     }
 
