@@ -8,7 +8,9 @@
 #define MYSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
+#include <util/pointer_util.h>
 
 namespace isc {
 namespace dhcp {
@@ -255,7 +257,7 @@ public:
 private:
 
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
-    MySqlHostDataSourceImpl* impl_; 
+    util::RestrictedConstPtr<MySqlHostDataSourceImpl, ReadOnlyDb> impl_;
 };
 
 }
