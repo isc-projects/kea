@@ -11,11 +11,13 @@
     <title>Databases and Database Version Numbers</title>
 
     <para>
-      Kea stores leases in one of several supported databases.
-      As future versions of Kea are released, the structure of those
-      databases will change. For example, Kea currently only stores
-      lease information: in the future, additional data - such as host
-      reservation details - will also be stored.
+      Kea supports storing leases and host reservations (i.e. static
+      assignments of addresses, prefixes and options) in one of
+      the several supported databases. As future versions of Kea
+      are released, the structure of those databases will change.
+      For example, Kea currently only stores lease information
+      and host reservations: in the future, additional
+      data - such as subnet definitions - will also be stored.
     </para>
 
     <para>
@@ -706,6 +708,18 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
   </section> <!-- end of CQL sections -->
 
     <section>
+      <title>Using read only databases with host reservations</title>
+      <para>If read only database is used for storing host reservations,
+      Kea must be explicitly configured to operate on the database in
+      the read only mode.
+      Sections <xref linkend="read-only-database-configuration4"/> and
+      <xref linkend="read-only-database-configuration6"/> describe when
+      such configuration may be desired and how to configure Kea to
+      operate using read only host database.
+      </para>
+    </section>
+
+    <section>
       <title>Limitations related to the use of the SQL databases</title>
 
       <para>
@@ -721,6 +735,7 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
         2147483647 seconds since the beginning of the epoch (around year 2038).
       </para>
     </section>
+
   </section> <!-- End of Database sections -->
 
 </chapter>
