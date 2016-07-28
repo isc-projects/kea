@@ -8,8 +8,10 @@
 #define PGSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_exchange.h>
+#include <util/pointer_util.h>
 
 namespace isc {
 namespace dhcp {
@@ -273,10 +275,20 @@ public:
     ///        has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.
+    virtual void commit();
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.
+    virtual void rollback();
+
 private:
 
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
-    PgSqlHostDataSourceImpl* impl_;
+    util::RestrictedConstPtr<PgSqlHostDataSourceImpl, ReadOnlyDb> impl_;
 };
 
 }
