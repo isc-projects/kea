@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
@@ -1230,6 +1231,14 @@ public:
                          StatementIndex stindex,
                          boost::shared_ptr<PgSqlHostExchange> exchange) const;
 
+    /// @brief Throws exception if database is read only.
+    ///
+    /// This method should be called by the methods which write to the
+    /// database. If the backend is operating in read-only mode this
+    /// method will throw exception.
+    ///
+    /// @throw DbReadOnly if backend is operating in read only mode.
+    void checkReadOnly() const;
 
     /// @brief Returns PostgreSQL schema version of the open database
     ///
@@ -1661,23 +1670,32 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     return (std::make_pair<uint32_t, uint32_t>(version, minor));
 }
 
+void
+PgSqlHostDataSourceImpl::checkReadOnly() const {
+    if (is_readonly_) {
+        isc_throw(ReadOnlyDb, "PostgreSQL host database backend is configured"
+                  " to operate in read only mode");
+    }
+}
+
+
 /*********** PgSqlHostDataSource *********************/
 
 
 PgSqlHostDataSource::
 PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters)
-    : impl_(new PgSqlHostDataSourceImpl(parameters),
-            "PostgreSQL host database backend is configured to"
-            " operate in read only mode") {
-    impl_.allowConstOnly(impl_->is_readonly_);
+    : impl_(new PgSqlHostDataSourceImpl(parameters)) {
 }
 
 PgSqlHostDataSource::~PgSqlHostDataSource() {
-    delete impl_.getPtr();
+    delete impl_;
 }
 
 void
 PgSqlHostDataSource::add(const HostPtr& host) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
     // Initiate PostgreSQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -1928,12 +1946,16 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSource::getVersion() const {
 
 void
 PgSqlHostDataSource::commit() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.commit();
 }
 
 
 void
 PgSqlHostDataSource::rollback() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.rollback();
 }
 

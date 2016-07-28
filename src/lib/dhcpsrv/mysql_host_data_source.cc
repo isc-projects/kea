@@ -11,6 +11,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/db_exceptions.h>
@@ -1760,6 +1761,15 @@ public:
                          StatementIndex stindex,
                          boost::shared_ptr<MySqlHostExchange> exchange) const;
 
+    /// @brief Throws exception if database is read only.
+    ///
+    /// This method should be called by the methods which write to the
+    /// database. If the backend is operating in read-only mode this
+    /// method will throw exception.
+    ///
+    /// @throw DbReadOnly if backend is operating in read only mode.
+    void checkReadOnly() const;
+
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<MySqlHostWithOptionsExchange> host_exchange_;
@@ -2202,21 +2212,29 @@ getHost(const SubnetID& subnet_id,
     return (result);
 }
 
+void
+MySqlHostDataSourceImpl::checkReadOnly() const {
+    if (is_readonly_) {
+        isc_throw(ReadOnlyDb, "MySQL host database backend is configured to"
+                  " operate in read only mode");
+    }
+}
+
 
 MySqlHostDataSource::
 MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
-    : impl_(new MySqlHostDataSourceImpl(parameters),
-            "MySQL host database backend is configured to"
-            " operate in read only mode") {
-    impl_.allowConstOnly(impl_->is_readonly_);
+    : impl_(new MySqlHostDataSourceImpl(parameters)) {
 }
 
 MySqlHostDataSource::~MySqlHostDataSource() {
-    delete impl_.getPtr();
+    delete impl_;
 }
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
     // Initiate MySQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -2539,12 +2557,16 @@ std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
 
 void
 MySqlHostDataSource::commit() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.commit();
 }
 
 
 void
 MySqlHostDataSource::rollback() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.rollback();
 }
 
