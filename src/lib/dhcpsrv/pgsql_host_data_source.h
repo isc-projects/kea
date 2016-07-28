@@ -8,10 +8,8 @@
 #define PGSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_exchange.h>
-#include <util/pointer_util.h>
 
 namespace isc {
 namespace dhcp {
@@ -288,7 +286,7 @@ public:
 private:
 
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
-    util::RestrictedConstPtr<PgSqlHostDataSourceImpl, ReadOnlyDb> impl_;
+    PgSqlHostDataSourceImpl* impl_;
 };
 
 }

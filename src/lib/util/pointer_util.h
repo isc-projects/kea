@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,48 +7,8 @@
 #ifndef POINTER_UTIL_H
 #define POINTER_UTIL_H
 
-#include <exceptions/exceptions.h>
-#include <string>
-
 namespace isc {
 namespace util {
-
-template <typename T, typename E>
-class RestrictedConstPtr {
-public:
-
-    RestrictedConstPtr(T* ptr, const std::string& error_text)
-        : ptr_(ptr), const_only_(false), error_text_(error_text) {
-    }
-
-    void allowConstOnly(const bool const_only) {
-        const_only_ = const_only;
-    }
-
-    T* operator->() const {
-        return (ptr_);
-    }
-
-    T* operator->() {
-        if (const_only_) {
-            isc_throw(E, error_text_);
-        }
-        return (ptr_);
-    }
-
-    T* getPtr() const {
-        return (ptr_);
-    }
-
-private:
-
-    T* ptr_;
-
-    bool const_only_;
-
-    std::string error_text_;
-};
-
 
 /// @brief This function checks if two pointers are non-null and values
 /// are equal.
