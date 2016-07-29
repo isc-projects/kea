@@ -1844,4 +1844,3 @@ TEST_F(TestControlTest, getCurrentTimeoutRenewRelease) {
     EXPECT_LE(tc.getCurrentTimeout(), 5000000);
 
 }
-#include <algorithm>
