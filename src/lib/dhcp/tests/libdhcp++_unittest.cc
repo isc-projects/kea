@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -22,6 +23,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
+#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -34,11 +36,13 @@
 
 #include <iostream>
 #include <sstream>
+#include <typeinfo>
 
 #include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 
@@ -51,7 +55,19 @@ const uint16_t OPTION_CM_MAC = 1026;
 
 class LibDhcpTest : public ::testing::Test {
 public:
-    LibDhcpTest() { }
+    /// @brief Constructor.
+    ///
+    /// Removes runtime option definitions.
+    LibDhcpTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Removes runtime option definitions.
+    virtual ~LibDhcpTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+    }
 
     /// @brief Generic factory function to create any option.
     ///
@@ -219,10 +235,10 @@ private:
         // the definition for a particular option code.
         // We don't have to initialize option definitions here because they
         // are initialized in the class's constructor.
-        OptionDefContainer options = LibDHCP::getOptionDefs(u);
+        OptionDefContainerPtr options = LibDHCP::getOptionDefs(u);
         // Get the container index #1. This one allows for searching
         // option definitions using option code.
-        const OptionDefContainerTypeIndex& idx = options.get<1>();
+        const OptionDefContainerTypeIndex& idx = options->get<1>();
         // Get 'all' option definitions for a particular option code.
         // For standard options we expect that the range returned
         // will contain single option as their codes are unique.
@@ -504,22 +520,133 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_TRUE(x == options.end()); // option 32000 not found */
 }
 
+// Check parsing of an empty DHCPv6 option.
+TEST_F(LibDhcpTest, unpackEmptyOption6) {
+    // Create option definition for the option code 1024 without fields.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 1024,
+                                                     "empty", false));
+
+    // Use it as runtime option definition within standard options space.
+    // The tested code should find this option definition within runtime
+    // option definitions set when it detects that this definition is
+    // not a standard definition.
+    OptionDefSpaceContainer defs;
+    defs.addItem(opt_def, DHCP6_OPTION_SPACE);
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of the empty option.
+    const uint8_t raw_data[] = {
+      0x04, 0x00,                // option code = 1024
+      0x00, 0x00                 // option length = 0
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
+                                            options));
+
+    // There should be one option.
+    ASSERT_EQ(1, options.size());
+    OptionPtr option_empty = options.begin()->second;
+    ASSERT_TRUE(option_empty);
+    EXPECT_EQ(1024, option_empty->getType());
+    EXPECT_EQ(4, option_empty->len());
+}
+
+// This test verifies that the following option structure can be parsed:
+// - option (option space 'foobar')
+//   - sub option (option space 'foo')
+//      - sub option (option space 'bar')
+TEST_F(LibDhcpTest, unpackSubOptions6) {
+    // Create option definition for each level of encapsulation. Each option
+    // definition is for the option code 1. Options may have the same
+    // option code because they belong to different option spaces.
+
+    // Top level option encapsulates options which belong to 'space-foo'.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-foobar", 1, "uint32",
+                                                      "space-foo"));\
+    // Middle option encapsulates options which belong to 'space-bar'
+    OptionDefinitionPtr opt_def2(new OptionDefinition("option-foo", 1, "uint16",
+                                                      "space-bar"));
+    // Low level option doesn't encapsulate any option space.
+    OptionDefinitionPtr opt_def3(new OptionDefinition("option-bar", 1,
+                                                      "uint8"));
+
+    // Register created option definitions as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(defs.addItem(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(defs.addItem(opt_def3, "space-bar"));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of options.
+    const char raw_data[] = {
+        // First option starts here.
+        0x00, 0x01,   // option code = 1
+        0x00, 0x0F,   // option length = 15
+        0x00, 0x01, 0x02, 0x03, // This option carries uint32 value
+        // Sub option starts here.
+        0x00, 0x01,  // option code = 1
+        0x00, 0x07,  // option length = 7
+        0x01, 0x02,  // this option carries uint16 value
+        // Last option starts here.
+        0x00, 0x01,  // option code = 1
+        0x00, 0x01,  // option length = 1
+        0x00 // This option carries a single uint8 value and has no sub options.
+    };
+    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, "space-foobar", options, 0, 0));
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+    boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
+                                                          second);
+    ASSERT_TRUE(option_foobar);
+    EXPECT_EQ(1, option_foobar->getType());
+    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    // There should be a middle level option held in option_foobar.
+    boost::shared_ptr<OptionInt<uint16_t> > option_foo =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
+                                                          getOption(1));
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    EXPECT_EQ(0x0102, option_foo->getValue());
+    // Finally, there should be a low level option under option_foo.
+    boost::shared_ptr<OptionInt<uint8_t> > option_bar =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
+    ASSERT_TRUE(option_bar);
+    EXPECT_EQ(1, option_bar->getType());
+    EXPECT_EQ(0x0, option_bar->getValue());
+}
+
 /// V4 Options being used to test pack/unpack operations.
 /// These are variable length options only so as there
 /// is no restriction on the data length being carried by them.
 /// For simplicity, we assign data of the length 3 for each
 /// of them.
 static uint8_t v4_opts[] = {
-    12,  3, 0,   1,  2, // Hostname
-    60,  3, 10, 11, 12, // Class Id
-    14,  3, 20, 21, 22, // Merit Dump File
-    254, 3, 30, 31, 32, // Reserved
-    128, 3, 40, 41, 42, // Vendor specific
-    0x52, 0x19,         // RAI
+    12,  3, 0,   1,  2,        // Hostname
+    60,  3, 10, 11, 12,        // Class Id
+    14,  3, 20, 21, 22,        // Merit Dump File
+    254, 3, 30, 31, 32,        // Reserved
+    128, 3, 40, 41, 42,        // Vendor specific
+    125, 11, 0, 0, 0x11, 0x8B, // V-I Vendor-Specific Information (Cable Labs)
+    6, 2, 4, 10, 0, 0, 10,     // TFTP servers suboption (2)
+    43, 2,                     // Vendor Specific Information
+    0xDC, 0,                   // VSI suboption
+    0x52, 0x19,                // RAI
     0x01, 0x04, 0x20, 0x00, 0x00, 0x02, // Agent Circuit ID
     0x02, 0x06, 0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x14, // Agent Remote ID
     0x09, 0x09, 0x00, 0x00, 0x11, 0x8B, 0x04, // Vendor Specific Information
-    0x01, 0x02, 0x03, 0x00  // Vendor Specific Information continued
+    0x01, 0x02, 0x03, 0x00 // Vendor Specific Information continued
 };
 
 // This test verifies that pack options for v4 is working correctly.
@@ -539,6 +666,15 @@ TEST_F(LibDhcpTest, packOptions4) {
     OptionPtr opt4(new Option(Option::V4,254, payload[3]));
     OptionPtr opt5(new Option(Option::V4,128, payload[4]));
 
+    // Create vendor option instance with DOCSIS3.0 enterprise id.
+    OptionVendorPtr vivsi(new OptionVendor(Option::V4, 4491));
+    vivsi->addOption(OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
+                                                  IOAddress("10.0.0.10"))));
+
+    OptionPtr vsi(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
+                              OptionBuffer()));
+    vsi->addOption(OptionPtr(new Option(Option::V4, 0xDC, OptionBuffer())));
+
     // Add RAI option, which comprises 3 sub-options.
 
     // Get the option definition for RAI option. This option is represented
@@ -556,19 +692,19 @@ TEST_F(LibDhcpTest, packOptions4) {
 
     // Create Ciruit ID sub-option and add to RAI.
     OptionPtr circuit_id(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
-                                    OptionBuffer(v4_opts + 29,
-                                                 v4_opts + 33)));
+                                    OptionBuffer(v4_opts + 46,
+                                                 v4_opts + 50)));
     rai->addOption(circuit_id);
 
     // Create Remote ID option and add to RAI.
     OptionPtr remote_id(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
-                                   OptionBuffer(v4_opts + 35, v4_opts + 41)));
+                                   OptionBuffer(v4_opts + 52, v4_opts + 58)));
     rai->addOption(remote_id);
 
     // Create Vendor Specific Information and add to RAI.
-    OptionPtr vsi(new Option(Option::V4, RAI_OPTION_VSI,
-                             OptionBuffer(v4_opts + 43, v4_opts + 52)));
-    rai->addOption(vsi);
+    OptionPtr rai_vsi(new Option(Option::V4, RAI_OPTION_VSI,
+                                 OptionBuffer(v4_opts + 60, v4_opts + 69)));
+    rai->addOption(rai_vsi);
 
     isc::dhcp::OptionCollection opts; // list of options
     // Note that we insert each option under the same option code into
@@ -580,6 +716,8 @@ TEST_F(LibDhcpTest, packOptions4) {
     opts.insert(make_pair(opt1->getType(), opt3));
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
+    opts.insert(make_pair(opt1->getType(), vivsi));
+    opts.insert(make_pair(opt1->getType(), vsi));
     opts.insert(make_pair(opt1->getType(), rai));
 
     OutputBuffer buf(100);
@@ -659,18 +797,57 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 12, 3)); // data len=3
 
     x = options.find(254);
-    ASSERT_FALSE(x == options.end()); // option 3 should exist
+    ASSERT_FALSE(x == options.end()); // option 4 should exist
     EXPECT_EQ(254, x->second->getType());  // this should be option 254
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 17, 3)); // data len=3
 
     x = options.find(128);
-    ASSERT_FALSE(x == options.end()); // option 3 should exist
-    EXPECT_EQ(128, x->second->getType());  // this should be option 254
+    ASSERT_FALSE(x == options.end()); // option 5 should exist
+    EXPECT_EQ(128, x->second->getType());  // this should be option 128
     ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
     EXPECT_EQ(5, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 22, 3)); // data len=3
+
+    // Verify that V-I Vendor Specific Information option is parsed correctly.
+    x = options.find(125);
+    ASSERT_FALSE(x == options.end());
+    OptionVendorPtr vivsi = boost::dynamic_pointer_cast<OptionVendor>(x->second);
+    ASSERT_TRUE(vivsi);
+    EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
+    EXPECT_EQ(4491, vivsi->getVendorId());
+    OptionCollection suboptions = vivsi->getOptions();
+
+    // There should be one suboption of V-I VSI.
+    ASSERT_EQ(1, suboptions.size());
+    // This vendor option has a standard definition and thus should be
+    // converted to appropriate class, i.e. Option4AddrLst. If this cast
+    // fails, it means that its definition was not used while it was
+    // parsed.
+    Option4AddrLstPtr tftp =
+        boost::dynamic_pointer_cast<Option4AddrLst>(suboptions.begin()->second);
+    ASSERT_TRUE(tftp);
+    EXPECT_EQ(DOCSIS3_V4_TFTP_SERVERS, tftp->getType());
+    EXPECT_EQ(6, tftp->len());
+    Option4AddrLst::AddressContainer addresses = tftp->getAddresses();
+    ASSERT_EQ(1, addresses.size());
+    EXPECT_EQ("10.0.0.10", addresses[0].toText());
+
+    // Vendor Specific Information option
+    x = options.find(43);
+    ASSERT_FALSE(x == options.end());
+    OptionPtr vsi = x->second;
+    ASSERT_TRUE(vsi);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, vsi->getType());
+    suboptions = vsi->getOptions();
+
+    // There should be one suboption of VSI.
+    ASSERT_EQ(1, suboptions.size());
+    OptionPtr eso = suboptions.begin()->second;
+    ASSERT_TRUE(eso);
+    EXPECT_EQ(0xdc, eso->getType());
+    EXPECT_EQ(2, eso->len());
 
     // Checking DHCP Relay Agent Information Option.
     x = options.find(DHO_DHCP_AGENT_OPTIONS);
@@ -694,21 +871,21 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
     ASSERT_EQ(6, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 29, 4));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 46, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
     ASSERT_EQ(8, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 35, 6));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 52, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_VSI);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
     ASSERT_EQ(11, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 9));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 60, 9));
 
     // Make sure, that option other than those above is not present.
     EXPECT_FALSE(rai->getOption(10));
@@ -723,6 +900,116 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     x = options.find(2);
     EXPECT_TRUE(x == options.end()); // option 2 not found
 
+}
+
+// Check parsing of an empty option.
+TEST_F(LibDhcpTest, unpackEmptyOption4) {
+    // Create option definition for the option code 254 without fields.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-empty", 254,
+                                                     "empty", false));
+
+    // Use it as runtime option definition within standard options space.
+    // The tested code should find this option definition within runtime
+    // option definitions set when it detects that this definition is
+    // not a standard definition.
+    OptionDefSpaceContainer defs;
+    defs.addItem(opt_def, DHCP4_OPTION_SPACE);
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of the empty option.
+    const uint8_t raw_data[] = {
+      0xFE,                     // option code = 254
+      0x00                      // option length = 0
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
+                                            options));
+
+    // There should be one option.
+    ASSERT_EQ(1, options.size());
+    OptionPtr option_empty = options.begin()->second;
+    ASSERT_TRUE(option_empty);
+    EXPECT_EQ(254, option_empty->getType());
+    EXPECT_EQ(2, option_empty->len());
+}
+
+// This test verifies that the following option structure can be parsed:
+// - option (option space 'foobar')
+//   - sub option (option space 'foo')
+//      - sub option (option space 'bar')
+// @todo Add more thorough unit tests for unpackOptions.
+TEST_F(LibDhcpTest, unpackSubOptions4) {
+    // Create option definition for each level of encapsulation. Each option
+    // definition is for the option code 1. Options may have the same
+    // option code because they belong to different option spaces.
+
+    // Top level option encapsulates options which belong to 'space-foo'.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-foobar", 1, "uint32",
+                                                      "space-foo"));\
+    // Middle option encapsulates options which belong to 'space-bar'
+    OptionDefinitionPtr opt_def2(new OptionDefinition("option-foo", 1, "uint16",
+                                                      "space-bar"));
+    // Low level option doesn't encapsulate any option space.
+    OptionDefinitionPtr opt_def3(new OptionDefinition("option-bar", 1,
+                                                      "uint8"));
+
+    // Register created option definitions as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(defs.addItem(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(defs.addItem(opt_def3, "space-bar"));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of options.
+    const uint8_t raw_data[] = {
+        // First option starts here.
+        0x01,                   // option code = 1
+        0x0B,                   // option length = 11
+        0x00, 0x01, 0x02, 0x03, // This option carries uint32 value
+        // Sub option starts here.
+        0x01,                   // option code = 1
+        0x05,                   // option length = 5
+        0x01, 0x02,             // this option carries uint16 value
+        // Last option starts here.
+        0x01,                   // option code = 1
+        0x01,                   // option length = 1
+        0x00                    // This option carries a single uint8
+                                // value and has no sub options.
+    };
+    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
+    OptionBuffer buf(raw_data, raw_data + raw_data_len);
+
+    // Parse options.
+    OptionCollection options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar", options));
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+    boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
+                                                          second);
+    ASSERT_TRUE(option_foobar);
+    EXPECT_EQ(1, option_foobar->getType());
+    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    // There should be a middle level option held in option_foobar.
+    boost::shared_ptr<OptionInt<uint16_t> > option_foo =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
+                                                          getOption(1));
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    EXPECT_EQ(0x0102, option_foo->getValue());
+    // Finally, there should be a low level option under option_foo.
+    boost::shared_ptr<OptionInt<uint8_t> > option_bar =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
+    ASSERT_TRUE(option_bar);
+    EXPECT_EQ(1, option_bar->getType());
+    EXPECT_EQ(0x0, option_bar->getValue());
 }
 
 TEST_F(LibDhcpTest, isStandardOption4) {
@@ -1338,10 +1625,10 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 // an option name.
 TEST_F(LibDhcpTest, getOptionDefByName6) {
     // Get all definitions.
-    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V6);
+    const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(Option::V6);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs.begin();
-         def != defs.end(); ++def) {
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V6, (*def)->getName());
         ASSERT_TRUE(def_by_name);
@@ -1354,10 +1641,10 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
 // an option name.
 TEST_F(LibDhcpTest, getOptionDefByName4) {
     // Get all definitions.
-    const OptionDefContainer& defs = LibDHCP::getOptionDefs(Option::V4);
+    const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(Option::V4);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs.begin();
-         def != defs.end(); ++def) {
+    for (OptionDefContainer::const_iterator def = defs->begin();
+         def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getOptionDef(Option::V4, (*def)->getName());
         ASSERT_TRUE(def_by_name);
@@ -1368,9 +1655,9 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
 // This test checks if the definition of the DHCPv6 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
-    const OptionDefContainer* defs =
+    const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOption6Defs(VENDOR_ID_CABLE_LABS);
-    ASSERT_TRUE(defs != NULL);
+    ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =
@@ -1384,9 +1671,9 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
 // This test checks if the definition of the DHCPv4 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
-    const OptionDefContainer* defs =
+    const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOption4Defs(VENDOR_ID_CABLE_LABS);
-    ASSERT_TRUE(defs != NULL);
+    ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
         OptionDefinitionPtr def_by_name =

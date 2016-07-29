@@ -33,10 +33,6 @@ CLEANFILES += *.json *.log
 DISTCLEANFILES = dhcp6_process_tests.sh
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -94,8 +90,8 @@ dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += infrequest_unittest.cc
 dhcp6_unittests_SOURCES += decline_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
-
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
@@ -106,6 +102,9 @@ dhcp6_unittests_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 dhcp6_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+if HAVE_CQL
+dhcp6_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,11 @@ OptionString::OptionString(const Option::Universe u, const uint16_t type,
     unpack(begin, end);
 }
 
+OptionPtr
+OptionString::clone() const {
+    return (cloneInternal<OptionString>());
+}
+
 std::string
 OptionString::getValue() const {
     const OptionBuffer& data = getData();
@@ -48,12 +53,12 @@ OptionString::setValue(const std::string& value) {
 
 
 uint16_t
-OptionString::len() {
+OptionString::len() const {
     return (getHeaderLen() + getData().size());
 }
 
 void
-OptionString::pack(isc::util::OutputBuffer& buf) {
+OptionString::pack(isc::util::OutputBuffer& buf) const {
     // Pack option header.
     packHeader(buf);
     // Pack data.
@@ -76,7 +81,7 @@ OptionString::unpack(OptionBufferConstIter begin,
 }
 
 std::string
-OptionString::toText(int indent) {
+OptionString::toText(int indent) const {
     std::ostringstream output;
     output << headerToText(indent) << ": "
            << "\"" << getValue() << "\" (string)";
@@ -85,7 +90,7 @@ OptionString::toText(int indent) {
 }
 
 std::string
-OptionString::toString() {
+OptionString::toString() const {
     return (getValue());
 }
 

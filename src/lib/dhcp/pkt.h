@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,10 +14,68 @@
 #include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <utility>
 
 namespace isc {
 
 namespace dhcp {
+
+/// @brief RAII object enabling copying options retrieved from the
+/// packet.
+///
+/// This object enables copying retrieved options from a packet within
+/// a scope in which this object exists. When the object goes out of scope
+/// copying options is disabled. This is applicable in cases when the
+/// server is going to invoke a callout (hook library) where copying options
+/// must be enabled by default. When the callouts return copying options
+/// should be disabled. The use of RAII object eliminates the need for
+/// explicitly re-disabling options copying and is safer in case of
+/// exceptions thrown by callouts and a presence of multiple exit points.
+///
+/// @tparam PktType Type of the packet, e.g. Pkt4, Pkt6, Pkt4o6.
+template<typename PktType>
+class ScopedEnableOptionsCopy {
+public:
+
+    /// @brief Pointer to an encapsulated packet.
+    typedef boost::shared_ptr<PktType> PktTypePtr;
+
+    /// @brief Constructor.
+    ///
+    /// Enables options copying on a packet(s).
+    ///
+    /// @param pkt1 Pointer to first packet.
+    /// @param pkt2 Optional pointer to the second packet.
+    ScopedEnableOptionsCopy(const PktTypePtr& pkt1,
+                            const PktTypePtr& pkt2 = PktTypePtr())
+        : pkts_(pkt1, pkt2) {
+        if (pkt1) {
+            pkt1->setCopyRetrievedOptions(true);
+        }
+        if (pkt2) {
+            pkt2->setCopyRetrievedOptions(true);
+        }
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Disables options copying on a packets.
+    ~ScopedEnableOptionsCopy() {
+        if (pkts_.first) {
+            pkts_.first->setCopyRetrievedOptions(false);
+        }
+        if (pkts_.second) {
+            pkts_.second->setCopyRetrievedOptions(false);
+        }
+    }
+
+private:
+
+    /// @brief Holds a pointers to the packets.
+    std::pair<PktTypePtr, PktTypePtr> pkts_;
+};
 
 /// @brief Base class for classes representing DHCP messages.
 ///
@@ -74,7 +132,7 @@ public:
     /// prior to calling this method.
     ///
     /// Output buffer will be stored in buffer_out_.
-    /// The buffer_out_ should be cleared before writting to the buffer
+    /// The buffer_out_ should be cleared before writing to the buffer
     /// in the derived classes.
     ///
     /// @note This is a pure virtual method and must be implemented in
@@ -190,7 +248,7 @@ public:
     /// For all unsupported messages the derived classes must return
     /// "UNKNOWN".
     ///
-    /// @return Ponter to "const" string containing DHCP message name.
+    /// @return Pointer to "const" string containing DHCP message name.
     /// The implementations in the derived classes should statically
     /// allocate returned strings and the caller must not release the
     /// returned pointer.
@@ -220,7 +278,7 @@ public:
     ///
     /// @note It is a matter of naming convention. Conceptually, the server
     /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specifed
+    /// classes. From that perspective, this method adds a packet to specified
     /// class. Implementation wise, it looks the opposite - the class name
     /// is added to the packet. Perhaps the most appropriate name for this
     /// method would be associateWithClass()? But that seems overly long,
@@ -239,24 +297,78 @@ public:
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     OptionBuffer data_;
 
+protected:
+
+    /// @brief Returns the first option of specified type without copying.
+    ///
+    /// This method is internally used by the @ref Pkt class and derived
+    /// classes to retrieve a pointer to the specified option. This
+    /// method doesn't copy the option before returning it to the
+    /// caller.
+    ///
+    /// @param type Option type.
+    ///
+    /// @return Pointer to the option of specified type or NULL pointer
+    /// if such option is not present.
+    OptionPtr getNonCopiedOption(const uint16_t type) const;
+
+public:
+
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see \ref Pkt6::getOptions().
+    /// Also see @ref Pkt6::getOptions().
     ///
     /// The options will be only returned after unpack() is called.
     ///
     /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
-    OptionPtr getOption(uint16_t type) const;
+    OptionPtr getOption(const uint16_t type);
+
+    /// @brief Controls whether the option retrieved by the @ref Pkt::getOption
+    /// should be copied before being returned.
+    ///
+    /// Setting this value to true enables the mechanism of copying options
+    /// retrieved from the packet to prevent accidental modifications of
+    /// options that shouldn't be modified. The typical use case for this
+    /// mechanism is to prevent hook library from modifying instance of
+    /// an option within the packet that would also affect the value for
+    /// this option within the Kea configuration structures.
+    ///
+    /// Kea doesn't copy option instances which it stores in the packet.
+    /// It merely copy pointers into the packets. Thus, any modification
+    /// to an option would change the value of this option in the
+    /// Kea configuration. To prevent this, option copying should be
+    /// enabled prior to passing the pointer to a packet to a hook library.
+    ///
+    /// Note that only only does this method causes the server to copy
+    /// an option, but the copied option also replaces the original
+    /// option within the packet. The option can be then freely modified
+    /// and the modifications will only affect the instance of this
+    /// option within the packet but not within the server configuration.
+    ///
+    /// @param copy Indicates if the options should be copied when
+    /// retrieved (if true), or not copied (if false).
+    virtual void setCopyRetrievedOptions(const bool copy) {
+        copy_retrieved_options_ = copy;
+    }
+
+    /// @brief Returns whether the copying of retrieved options is enabled.
+    ///
+    /// Also see @ref setCopyRetrievedOptions.
+    ///
+    /// @return true if retrieved options are copied.
+    bool isCopyRetrievedOptions() const {
+        return (copy_retrieved_options_);
+    }
 
     /// @brief Update packet timestamp.
     ///
@@ -283,14 +395,6 @@ public:
     /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
-
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
 
     /// @brief Sets remote IP address.
     ///
@@ -447,7 +551,7 @@ public:
     /// @param hw_addr_src a bitmask that specifies hardware address source
     HWAddrPtr getMAC(uint32_t hw_addr_src);
 
-    /// @brief Virtual desctructor.
+    /// @brief Virtual destructor.
     ///
     /// There is nothing to clean up here, but since there are virtual methods,
     /// we define virtual destructor to ensure that derived classes will have
@@ -467,7 +571,7 @@ public:
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
@@ -617,20 +721,23 @@ protected:
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     isc::util::OutputBuffer buffer_out_;
+
+    /// @brief Indicates if a copy of the retrieved option should be
+    /// returned when @ref Pkt::getOption is called.
+    ///
+    /// @see the documentation for @ref Pkt::setCopyRetrievedOptions.
+    bool copy_retrieved_options_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
 
     // remote HW address (src if receiving packet, dst if sending packet)
     HWAddrPtr remote_hwaddr_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
 
 private:
 
@@ -644,7 +751,7 @@ private:
     /// @param hw_addr pointer to actual hardware address.
     /// @param [out] storage pointer to a class member to be modified.
     ///
-    /// @trow isc::OutOfRange if invalid HW address specified.
+    /// @throw isc::OutOfRange if invalid HW address specified.
     virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
                                  const std::vector<uint8_t>& hw_addr,
                                  HWAddrPtr& storage);

@@ -32,10 +32,6 @@ CLEANFILES += *.json *.log
 DISTCLEANFILES = dhcp4_process_tests.sh
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -89,10 +85,12 @@ dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
 dhcp4_unittests_SOURCES += hooks_unittest.cc
 dhcp4_unittests_SOURCES += inform_unittest.cc
 dhcp4_unittests_SOURCES += dora_unittest.cc
+dhcp4_unittests_SOURCES += host_options_unittest.cc
 dhcp4_unittests_SOURCES += release_unittest.cc
 dhcp4_unittests_SOURCES += out_of_range_unittest.cc
 dhcp4_unittests_SOURCES += decline_unittest.cc
 dhcp4_unittests_SOURCES += kea_controller_unittest.cc
+dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
@@ -103,6 +101,9 @@ dhcp4_unittests_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 dhcp4_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+if HAVE_CQL
+dhcp4_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 

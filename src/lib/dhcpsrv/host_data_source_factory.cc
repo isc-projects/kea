@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,10 @@
 
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_host_data_source.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_host_data_source.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -63,7 +67,16 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
 #ifdef HAVE_PGSQL
     if (db_type == "postgresql") {
-        isc_throw(NotImplemented, "Sorry, PostgreSQL backend for host reservations "
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters));
+        return;
+    }
+#endif
+
+#ifdef HAVE_CQL
+    if (db_type == "cql") {
+        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
                   "is not implemented yet.");
     }
 #endif

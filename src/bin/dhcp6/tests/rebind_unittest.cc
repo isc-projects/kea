@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,9 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
@@ -59,6 +62,12 @@ namespace {
 ///   - addresses and prefixes
 ///   - address pool: 2001:db8:1::/64
 ///   - prefix pool: 3000::/72
+///
+/// - Configuration 7:
+///   - only addresses (no prefixes)
+///   - 2 subnets with 2001:db8:1::/64 and 2001:db8:2::/64
+///   - 1 subnet for eth0 and 1 subnet for eth1
+///   - DOCSIS vendor config file sub-option
 ///
 const char* REBIND_CONFIGS[] = {
 // Configuration 0
@@ -221,6 +230,32 @@ const char* REBIND_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 7
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "    \"name\": \"config-file\","
+        "    \"space\": \"vendor-4491\","
+        "    \"data\": \"normal_erouter_v6.cm\""
+        "}],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth1\""
+        " } ],"
         "\"valid-lifetime\": 4000 }"
 };
 
@@ -259,7 +294,7 @@ TEST_F(RebindTest, sanityCheck) {
 TEST_F(RebindTest, directClient) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -288,7 +323,7 @@ TEST_F(RebindTest, directClient) {
 TEST_F(RebindTest, directClientChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -325,15 +360,16 @@ TEST_F(RebindTest, directClientChangingSubnet) {
 TEST_F(RebindTest, directClientChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
     Lease6 lease_client = client.getLease(0);
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(true, 1235);
+    client.requestAddress(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -358,7 +394,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
 TEST_F(RebindTest, directClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -383,7 +419,7 @@ TEST_F(RebindTest, directClientLostLease) {
 TEST_F(RebindTest, relayedClient) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -416,7 +452,7 @@ TEST_F(RebindTest, relayedClient) {
 TEST_F(RebindTest, relayedClientChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -447,7 +483,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
 TEST_F(RebindTest, relayedClientChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -459,8 +495,9 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 1235;
-    client.useNA(true, 1235);
+    client.requestAddress(1235);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -485,7 +522,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 TEST_F(RebindTest, relayedClientLostLease) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -514,7 +551,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 TEST_F(RebindTest, relayedClientChangingAddress) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[2], 2, client));
     // Keep the client's lease for future reference.
@@ -570,7 +607,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
 TEST_F(RebindTest, directClientPD) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -597,7 +634,7 @@ TEST_F(RebindTest, directClientPD) {
 TEST_F(RebindTest, directClientPDChangingSubnet) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -634,7 +671,7 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
 TEST_F(RebindTest, directClientPDChangingIAID) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -642,8 +679,9 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 
     // Modify the IAID of the lease record that client stores. By adding
     // one to IAID we guarantee that the IAID will change.
+    client.clearRequestedIAs();
     client.config_.leases_[0].iaid_ = 5679;
-    client.usePD(true, 5679);
+    client.requestPrefix(5679);
 
     // Try to Rebind. The server should allocate new lease for this IAID.
     ASSERT_NO_THROW(client.doRebind());
@@ -668,7 +706,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 TEST_F(RebindTest, directClientPDChangingPrefix) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
-    client.usePD();
+    client.requestPrefix();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[4], 2, client));
     // Keep the client's lease for future reference.
@@ -724,7 +762,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 TEST_F(RebindTest, unicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[0], 2, client));
     // Keep the client's lease for future reference.
@@ -753,7 +791,7 @@ TEST_F(RebindTest, unicast) {
 TEST_F(RebindTest, relayedUnicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
-    client.useNA();
+    client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
     // agent. The default link-addr is 3001:1::1. This address should be used
     // by the server to pick the suitable subnet.
@@ -788,8 +826,8 @@ TEST_F(RebindTest, requestPrefixInRebind) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.requestAddress();
+    client.requestPrefix();
 
     // Configure the server with NA pools only.
     ASSERT_NO_THROW(configure(REBIND_CONFIGS[0], *client.getServer()));
@@ -843,8 +881,8 @@ TEST_F(RebindTest, requestAddressInRebind) {
     Dhcp6Client client;
 
     // Configure client to request IA_NA and IA_PD.
-    client.useNA();
-    client.usePD();
+    client.requestAddress();
+    client.requestPrefix();
 
     // Configure the server with PD pools only.
     ASSERT_NO_THROW(configure(REBIND_CONFIGS[4], *client.getServer()));
@@ -892,5 +930,78 @@ TEST_F(RebindTest, requestAddressInRebind) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
+// This test verifies that the client can request the DOCSIS sub-options.
+TEST_F(RebindTest, docsisORO) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA.
+    client.requestAddress();
+    // Configure the DOCSIS vendor ORO for 32, 33, 34, 37 and 38.
+    client.requestDocsisOption(DOCSIS3_V6_TFTP_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_CONFIG_FILE);
+    client.requestDocsisOption(DOCSIS3_V6_SYSLOG_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_SERVERS);
+    client.requestDocsisOption(DOCSIS3_V6_TIME_OFFSET);
+    // Don't add it for now.
+    client.useDocsisORO(false);
+    // Make 4-way exchange to get the lease.
+    ASSERT_NO_FATAL_FAILURE(requestLease(REBIND_CONFIGS[7], 2, client));
+    // Keep the client's lease for future reference.
+    Lease6 lease_client = client.getLease(0);
+
+    // Send Rebind message to the server.
+    ASSERT_NO_THROW(client.doRebind());
+    // The client should still have one lease which belong to one of the
+    // subnets.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client2 = client.getLease(0);
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
+    // The client's lease should have been extended. The client will
+    // update the cltt to current time when the lease gets extended.
+    ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
+    // Make sure, that the client's lease matches the lease held by the
+    // server.
+    Lease6Ptr lease_server2 = checkLease(lease_client2);
+    EXPECT_TRUE(lease_server2);
+    // No vendor option was included in the renew so there should be none
+    // in the received configuration.
+    OptionPtr opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_FALSE(opt);
+
+    // Add a DOCSIS ORO.
+    client.useDocsisORO(true);
+    // Send Rebind message to the server.
+    ASSERT_NO_THROW(client.doRebind());
+    // The client should still have one lease which belong to one of the
+    // subnets.
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client2 = client.getLease(0);
+    ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
+                selectSubnet(lease_client2.addr_, ClientClasses()));
+    // The client's lease should have been extended. The client will
+    // update the cltt to current time when the lease gets extended.
+    ASSERT_GE(lease_client2.cltt_ - lease_client.cltt_, 1000);
+    // Make sure, that the client's lease matches the lease held by the
+    // server.
+    lease_server2 = checkLease(lease_client2);
+    EXPECT_TRUE(lease_server2);
+
+    // Verify whether there is a vendor option.
+    opt = client.config_.findOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(opt);
+    // The vendor option must be a OptionVendor object.
+    boost::shared_ptr<OptionVendor> vendor =
+        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+    // The vendor-id should be DOCSIS.
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
+    // There must be a config file sub-option.
+    opt = vendor->getOption(DOCSIS3_V6_CONFIG_FILE);
+    // With the expected content.
+    OptionStringPtr config_file =
+        boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
 
 } // end of anonymous namespace

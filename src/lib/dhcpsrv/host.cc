@@ -81,7 +81,7 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
       dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
-      cfg_option4_(), cfg_option6_() {
+      cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -136,6 +136,9 @@ Host::getIdentifierType(const std::string& identifier_name) {
     } else if (identifier_name == "circuit-id") {
         return (IDENT_CIRCUIT_ID);
 
+    } else if (identifier_name == "client-id") {
+        return (IDENT_CLIENT_ID);
+
     } else {
         isc_throw(isc::BadValue, "invalid client identifier type '"
                   << identifier_name << "'");
@@ -176,6 +179,9 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
     case IDENT_CIRCUIT_ID:
         s << "circuit-id";
         break;
+    case IDENT_CLIENT_ID:
+        s << "client-id";
+        break;
     default:
         // This should never happen actually, unless we add new identifier
         // and forget to add a case for it above.
@@ -197,6 +203,9 @@ Host::getIdentifierName(const IdentifierType& type) {
 
     case Host::IDENT_CIRCUIT_ID:
         return ("circuit-id");
+
+    case Host::IDENT_CLIENT_ID:
+        return ("client-id");
 
     default:
         ;

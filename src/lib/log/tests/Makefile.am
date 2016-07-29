@@ -71,10 +71,6 @@ TESTS =
 
 # Define the flags used in each set of tests
 TESTSCXXFLAGS  = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Workaround unused variables tcout and tcerr in log4cplus's streams.h.
-TESTSCXXFLAGS += -Wno-unused-variable
-endif
 TESTSCPPFLAGS  = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 TESTSLDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 

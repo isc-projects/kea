@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,13 +6,16 @@
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/pool.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
 #include <boost/foreach.hpp>
@@ -20,6 +23,7 @@
 #include <cstdlib>
 #include <time.h>
 
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -53,7 +57,7 @@ struct getLeasesByPropertyFun {
         for (typename std::vector<Lease6>::const_iterator lease =
                  config.leases_.begin(); lease != config.leases_.end();
              ++lease) {
-            // Check if fulfils the condition.
+            // Check if fulfills the condition.
             if ((equals && ((*lease).*MemberPointer) == property) ||
                 (!equals && ((*lease).*MemberPointer) != property)) {
                 // Found the matching lease.
@@ -62,6 +66,25 @@ struct getLeasesByPropertyFun {
         }
     }
 };
+
+/// @brief Returns leases which belong to specified pool.
+///
+/// @param config DHCP client configuration structure holding leases.
+/// @param pool Pool to which returned leases belong.
+/// @param [out] leases A vector in which the function will store leases
+/// found.
+void getLeasesByPool(const Dhcp6Client::Configuration& config,
+                     const Pool6& pool, std::vector<Lease6>& leases) {
+    for (std::vector<Lease6>::const_iterator lease =
+             config.leases_.begin(); lease != config.leases_.end();
+         ++lease) {
+        // Check if prefix in range.
+        if (pool.inRange(lease->addr_)) {
+            // Found the matching lease.
+            leases.push_back(*lease);
+        }
+    }
+}
 
 }; // end of anonymous namespace
 
@@ -77,18 +100,13 @@ Dhcp6Client::Dhcp6Client() :
     link_local_("fe80::3a60:77ff:fed5:cdef"),
     iface_name_("eth0"),
     srv_(boost::shared_ptr<NakedDhcpv6Srv>(new NakedDhcpv6Srv(0))),
-    use_na_(false),
-    use_pd_(false),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
-    address_hint_(),
-    prefix_hint_(),
-    fqdn_(),
-    na_iaid_(1234),
-    pd_iaid_(5678),
-    include_address_(true) {
+    client_ias_(),
+    fqdn_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -99,18 +117,13 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     link_local_("fe80::3a60:77ff:fed5:cdef"),
     iface_name_("eth0"),
     srv_(srv),
-    use_na_(false),
-    use_pd_(false),
     use_relay_(false),
     use_oro_(false),
+    use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
-    address_hint_(),
-    prefix_hint_(),
-    fqdn_(),
-    na_iaid_(1234),
-    pd_iaid_(5678),
-    include_address_(true) {
+    client_ias_(),
+    fqdn_() {
 }
 
 void
@@ -240,52 +253,70 @@ Dhcp6Client::appendFQDN() {
 
 void
 Dhcp6Client::appendRequestedIAs(const Pkt6Ptr& query) const {
-    if (use_na_) {
-        conditionallyAppendRequestedIA(query, D6O_IA_NA, na_iaid_);
-    }
+    BOOST_FOREACH(const ClientIA& ia, client_ias_) {
+        OptionCollection options =
+            query->getOptions(ia.type_ == Lease::TYPE_NA ?
+                              D6O_IA_NA : D6O_IA_PD);
+        std::pair<unsigned int, OptionPtr> option_pair;
+        Option6IAPtr existing_ia;
+        BOOST_FOREACH(option_pair, options) {
+            Option6IAPtr ia_opt =
+                boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
+            // This shouldn't happen.
+            if (!ia_opt) {
+                isc_throw(Unexpected,
+                          "Dhcp6Client: IA option has an invalid C++ type;"
+                          " this is a programming issue");
+            }
+            if (ia_opt->getIAID() == ia.iaid_) {
+                existing_ia = ia_opt;
+            }
+        }
+        if (!existing_ia) {
+            existing_ia.reset(new Option6IA(ia.type_ == Lease::TYPE_NA ?
+                                            D6O_IA_NA : D6O_IA_PD, ia.iaid_));
+            query->addOption(existing_ia);
+        }
 
-    if (use_pd_) {
-        conditionallyAppendRequestedIA(query, D6O_IA_PD, pd_iaid_);
+        bool option_exists = false;
+        if ((ia.type_ == Lease::TYPE_NA) && !ia.prefix_.isV6Zero()) {
+            Option6IAAddrPtr ia_addr(new Option6IAAddr(D6O_IAADDR, ia.prefix_,
+                                                       0, 0));
+            BOOST_FOREACH(option_pair, existing_ia->getOptions()) {
+                Option6IAAddrPtr existing_addr = boost::dynamic_pointer_cast<
+                    Option6IAAddr>(option_pair.second);
+                if (existing_addr &&
+                    (existing_addr->getAddress() == ia.prefix_)) {
+                    option_exists = true;
+                }
+            }
+
+            if (!option_exists) {
+                existing_ia->addOption(ia_addr);
+            }
+
+        } else if ((ia.type_ == Lease::TYPE_PD) &&
+                   (!ia.prefix_.isV6Zero() || (ia.prefix_len_ > 0))) {
+            Option6IAPrefixPtr ia_prefix(new Option6IAPrefix(D6O_IAPREFIX,
+                                                             ia.prefix_,
+                                                             ia.prefix_len_,
+                                                             0, 0));
+            BOOST_FOREACH(option_pair, existing_ia->getOptions()) {
+                Option6IAPrefixPtr existing_prefix =
+                    boost::dynamic_pointer_cast<Option6IAPrefix>(option_pair.second);
+                if (existing_prefix &&
+                    (existing_prefix->getAddress() == ia.prefix_) &&
+                    existing_prefix->getLength()) {
+                    option_exists = true;
+                }
+            }
+
+            if (!option_exists) {
+                existing_ia->addOption(ia_prefix);
+            }
+        }
     }
 }
-
-void
-Dhcp6Client::conditionallyAppendRequestedIA(const Pkt6Ptr& query,
-                                            const uint8_t ia_type,
-                                            const uint32_t iaid) const {
-    // Get existing options of the specified type.
-    OptionCollection options = query->getOptions(ia_type);
-    std::pair<unsigned int, OptionPtr> option_pair;
-
-    // Check if the option we want to add is already present.
-    BOOST_FOREACH(option_pair, options) {
-        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option_pair.second);
-        // This shouldn't happen.
-        if (!ia) {
-            isc_throw(Unexpected, "Dhcp6Client: IA option has an invalid C++ type;"
-                      " this is a programming issue");
-        }
-        // There is an option of the specific type already. If it has our
-        // IAID we return here, because we don't want to duplicate the IA.
-        // If IAID is different, we check other existing IAs.
-        if (ia->getIAID() == iaid) {
-            return;
-        }
-    }
-
-    // If we're here, it means that there is no instance of our IA yet.
-    Option6IAPtr requested_ia(new Option6IA(ia_type, iaid));
-    // Add prefix hint if specified.
-    if (prefix_hint_ && (ia_type == D6O_IA_PD)) {
-        requested_ia->addOption(prefix_hint_);
-
-    } else if (address_hint_ && (ia_type == D6O_IA_NA)) {
-        requested_ia->addOption(address_hint_);
-    }
-
-    query->addOption(requested_ia);
-}
-
 
 void
 Dhcp6Client::copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest) {
@@ -369,6 +400,15 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
         msg->addOption(oro);
     };
 
+    if (use_docsis_oro_) {
+        OptionUint16ArrayPtr vendor_oro(new OptionUint16Array(Option::V6,
+                                                              DOCSIS3_V6_ORO));
+        vendor_oro->setValues(docsis_oro_);
+        OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+        vendor->addOption(vendor_oro);
+        msg->addOption(vendor);
+    }
+
     // If there are any custom options specified, add them all to the message.
     if (!extra_options_.empty()) {
         for (OptionCollection::iterator opt = extra_options_.begin();
@@ -390,7 +430,7 @@ Dhcp6Client::doSARR() {
 }
 
 void
-Dhcp6Client::doSolicit() {
+Dhcp6Client::doSolicit(const bool always_apply_config) {
     context_.query_ = createMsg(DHCPV6_SOLICIT);
     if (forced_server_id_) {
         context_.query_->addOption(forced_server_id_);
@@ -410,9 +450,12 @@ Dhcp6Client::doSolicit() {
     context_.response_ = receiveOneMsg();
 
     // If using Rapid Commit and the server has responded with Reply,
-    // let's apply received configuration.
-    if (use_rapid_commit_ && context_.response_ &&
-        context_.response_->getType() == DHCPV6_REPLY) {
+    // let's apply received configuration. We also apply the configuration
+    // for the Advertise if instructed to do so.
+    if (context_.response_ &&
+        (always_apply_config ||
+         (use_rapid_commit_ &&
+          context_.response_->getType() == DHCPV6_REPLY))) {
         config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
@@ -451,24 +494,15 @@ Dhcp6Client::doInfRequest() {
 
     // IA_NA, IA_TA and IA_PD options are not allowed in INF-REQUEST,
     // but hey! Let's test it.
-    if (use_na_) {
-        // Insert IA_NA option.
-        context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
-                                                              na_iaid_)));
-    }
-
-    // IA-PD is also not allowed. So it may be useful in testing, too.
-    if (use_pd_) {
-        // Insert IA_PD option.
-        Option6IAPtr ia(new Option6IA(D6O_IA_PD, pd_iaid_));
-        if (prefix_hint_) {
-            ia->addOption(prefix_hint_);
-        }
-        context_.query_->addOption(ia);
-    }
+    appendRequestedIAs(context_.query_);
 
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
+    // Apply new configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
 }
 
 void
@@ -485,8 +519,10 @@ Dhcp6Client::doRenew() {
     appendFQDN();
 
     context_.query_ = query;
+
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
+
     // Apply configuration only if the server has responded.
     if (context_.response_) {
         config_.clear();
@@ -531,7 +567,7 @@ Dhcp6Client::doConfirm() {
 }
 
 void
-Dhcp6Client::doDecline() {
+Dhcp6Client::doDecline(const bool include_address) {
     Pkt6Ptr query = createMsg(DHCPV6_DECLINE);
     if (!forced_server_id_) {
         query->addOption(context_.response_->getOption(D6O_SERVERID));
@@ -539,7 +575,7 @@ Dhcp6Client::doDecline() {
         query->addOption(forced_server_id_);
     }
 
-    generateIAFromLeases(query);
+    generateIAFromLeases(query, include_address);
 
     context_.query_ = query;
     sendMsg(context_.query_);
@@ -553,13 +589,9 @@ Dhcp6Client::doDecline() {
 }
 
 void
-Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
+Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
+                                  const bool include_address) {
     /// @todo: add support for IAPREFIX here.
-
-    if (!use_na_) {
-        // If we're told to not use IA_NA at all, there's nothing to be done here
-        return;
-    }
 
     for (std::vector<Lease6>::const_iterator lease = config_.leases_.begin();
          lease != config_.leases_.end(); ++lease) {
@@ -569,7 +601,7 @@ Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query) {
 
         Option6IAPtr ia(new Option6IA(D6O_IA_NA, lease->iaid_));
 
-        if (include_address_) {
+        if (include_address) {
             ia->addOption(OptionPtr(new Option6IAAddr(D6O_IAADDR,
                   lease->addr_, lease->preferred_lft_, lease->valid_lft_)));
         }
@@ -660,6 +692,118 @@ Dhcp6Client::getLeasesWithZeroLifetime() const {
     return (leases);
 }
 
+std::vector<Lease6>
+Dhcp6Client::getLeasesByAddress(const IOAddress& address) const {
+    std::vector<Lease6> leases;
+    getLeasesByProperty<Lease, IOAddress, &Lease::addr_>(address, true, leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByAddressRange(const IOAddress& first,
+                                     const IOAddress& second) const {
+    std::vector<Lease6> leases;
+    getLeasesByPool(config_, Pool6(Lease::TYPE_NA, first, second), leases);
+    return (leases);
+}
+
+std::vector<Lease6>
+Dhcp6Client::getLeasesByPrefixPool(const asiolink::IOAddress& prefix,
+                                   const uint8_t prefix_len,
+                                   const uint8_t delegated_len) const {
+    std::vector<Lease6> leases;
+    getLeasesByPool(config_, Pool6(Lease::TYPE_PD, prefix, prefix_len,
+                                   delegated_len), leases);
+    return (leases);
+}
+
+bool
+Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    return (!leases.empty());
+}
+
+bool
+Dhcp6Client::hasLeaseForAddress(const asiolink::IOAddress& address,
+                                const IAID& iaid) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if (lease.iaid_ == iaid) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+Dhcp6Client::hasLeaseForAddressRange(const asiolink::IOAddress& first,
+                                     const asiolink::IOAddress& last) const {
+    std::vector<Lease6> leases = getLeasesByAddressRange(first, last);
+    return (!leases.empty());
+}
+
+bool
+Dhcp6Client::
+hasLeaseWithZeroLifetimeForAddress(const asiolink::IOAddress& address) const {
+    std::vector<Lease6> leases = getLeasesByAddress(address);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.preferred_lft_ == 0) && (lease.valid_lft_ == 0)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+
+bool
+Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if (lease.prefixlen_ == prefix_len) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+Dhcp6Client::hasLeaseForPrefix(const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len,
+                               const IAID& iaid) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.prefixlen_ == prefix_len) &&
+            (lease.iaid_ == iaid)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+Dhcp6Client::hasLeaseForPrefixPool(const asiolink::IOAddress& prefix,
+                                   const uint8_t prefix_len,
+                                   const uint8_t delegated_len) const {
+    std::vector<Lease6> leases = getLeasesByPrefixPool(prefix, prefix_len,
+                                                       delegated_len);
+    return (!leases.empty());
+}
+
+bool
+Dhcp6Client::hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix,
+                                               const uint8_t prefix_len) const {
+    std::vector<Lease6> leases = getLeasesByAddress(prefix);
+    BOOST_FOREACH(const Lease6& lease, leases) {
+        if ((lease.prefixlen_ == prefix_len) && (lease.preferred_lft_ == 0) &&
+            (lease.valid_lft_ == 0)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+
 uint16_t
 Dhcp6Client::getStatusCode(const uint32_t iaid) const {
     std::map<uint32_t, uint16_t>::const_iterator status_code =
@@ -727,30 +871,29 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     }
     // Repack the message to simulate wire-data parsing.
     msg->pack();
+
     Pkt6Ptr msg_copy(new Pkt6(static_cast<const uint8_t*>
                               (msg->getBuffer().getData()),
                               msg->getBuffer().getLength()));
     msg_copy->setRemoteAddr(link_local_);
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
+
     srv_->fakeReceive(msg_copy);
     srv_->run();
 }
 
 void
-Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
-                     const std::string& address) {
-    address_hint_.reset(new Option6IAAddr(D6O_IAADDR,
-                                          asiolink::IOAddress(address),
-                                          pref_lft, valid_lft));
+Dhcp6Client::requestAddress(const uint32_t iaid,
+                            const asiolink::IOAddress& address) {
+    client_ias_.push_back(ClientIA(Lease::TYPE_NA, iaid, address, 128));
 }
 
 void
-Dhcp6Client::useHint(const uint32_t pref_lft, const uint32_t valid_lft,
-                     const uint8_t len, const std::string& prefix) {
-    prefix_hint_.reset(new Option6IAPrefix(D6O_IAPREFIX,
-                                           asiolink::IOAddress(prefix),
-                                           len, pref_lft, valid_lft));
+Dhcp6Client::requestPrefix(const uint32_t iaid,
+                           const uint8_t prefix_len,
+                           const asiolink::IOAddress& prefix) {
+    client_ias_.push_back(ClientIA(Lease::TYPE_PD, iaid, prefix, prefix_len));
 }
 
 void

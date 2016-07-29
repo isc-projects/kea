@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,11 +58,11 @@ const char* INFORM_CONFIGS[] = {
         "    },"
         "    {"
         "        \"name\": \"log-servers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "        \"data\": \"10.0.0.202,10.0.0.203\""
         "    },"
         "    {"
         "        \"name\": \"cookie-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
         "    } ]"
         " } ]"
     "}",
@@ -159,12 +159,12 @@ TEST_F(InformTest, directClientBroadcast) {
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
     ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
-    EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
+    EXPECT_EQ("10.0.0.200", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.quotes_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
     ASSERT_EQ(2, client.config_.log_servers_.size());
-    EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
-    EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
+    EXPECT_EQ("10.0.0.202", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.log_servers_[1].toText());
 
     // Check that we can send another DHCPINFORM message using
     // different ciaddr and we will get the configuration.
@@ -268,6 +268,8 @@ TEST_F(InformTest, directClientNoCiaddr) {
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
@@ -303,6 +305,8 @@ TEST_F(InformTest, relayedClient) {
     EXPECT_EQ(IOAddress("192.0.2.56"), resp->getLocalAddr());
     // Response is unicast to the client, so it must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
@@ -313,14 +317,14 @@ TEST_F(InformTest, relayedClient) {
     ASSERT_EQ(2, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
-    // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
-    EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
-    EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
+    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    EXPECT_EQ("10.0.0.202", client.config_.quotes_servers_[0].toText());
+    EXPECT_EQ("10.0.0.203", client.config_.quotes_servers_[1].toText());
+    // Make sure that the Log Servers option has been received.
     ASSERT_EQ(2, client.config_.log_servers_.size());
-    EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
-    EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
+    EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
+    EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
 }
 
 // This test checks that the server can respond to the DHCPINFORM message
@@ -342,6 +346,8 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getLocalAddr());
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getGiaddr());
     EXPECT_EQ(1, resp->getHops());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // In the case when the client didn't set the ciaddr and the message
     // was received via relay the server sets the Broadcast flag to help
     // the relay forwarding the message (without yiaddr) to the client.

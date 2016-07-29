@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,10 +76,6 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 Subnet4Ptr
 CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
-    if (selector.dhcp4o6_) {
-        return selectSubnet4o6(selector);
-    }
-
     // First use RAI link select sub-option or subnet select option
     if (!selector.option_select_.isV4Zero()) {
         return (selectSubnet(selector.option_select_,
@@ -100,7 +96,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                 continue;
             }
 
-            // Eliminate those subnets that do not meet client class criteria.
+            // If a subnet meets the client class criteria return it.
             if ((*subnet)->clientSupported(selector.client_classes_)) {
                 return (*subnet);
             }
@@ -138,7 +134,20 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                       << " doesn't exist and therefore it is impossible"
                       " to find a suitable subnet for its IPv4 address");
         }
-        iface->getAddress4(address);
+
+        // Attempt to select subnet based on the interface name.
+        Subnet4Ptr subnet = selectSubnet(selector.iface_name_,
+                                         selector.client_classes_);
+
+        // If it matches - great. If not, we'll try to use a different
+        // selection criteria below.
+        if (subnet) {
+            return (subnet);
+        } else {
+            // Let's try to get an address from the local interface and
+            // try to match it to defined subnet.
+            iface->getAddress4(address);
+        }
     }
 
     // Unable to find a suitable address to use for subnet selection.
@@ -152,6 +161,38 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 }
 
 Subnet4Ptr
+CfgSubnets4::selectSubnet(const std::string& iface,
+                 const ClientClasses& client_classes) const {
+    for (Subnet4Collection::const_iterator subnet = subnets_.begin();
+         subnet != subnets_.end(); ++subnet) {
+
+        // If there's no interface specified for this subnet, proceed to
+        // the next subnet.
+        if ((*subnet)->getIface().empty()) {
+            continue;
+        }
+
+        // If it's specified, but does not match, proceed to the next
+        // subnet.
+        if ((*subnet)->getIface() != iface) {
+            continue;
+        }
+
+        // If a subnet meets the client class criteria return it.
+        if ((*subnet)->clientSupported(client_classes)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET4_IFACE)
+                .arg((*subnet)->toText())
+                .arg(iface);
+            return (*subnet);
+        }
+    }
+
+    // Failed to find a subnet.
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
 CfgSubnets4::selectSubnet(const IOAddress& address,
                  const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
@@ -162,8 +203,11 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
             continue;
         }
 
-        // Eliminate those subnets that do not meet client class criteria.
+        // If a subnet meets the client class criteria return it.
         if ((*subnet)->clientSupported(client_classes)) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_SUBNET4_ADDR)
+                .arg((*subnet)->toText())
+                .arg(address.toText());
             return (*subnet);
         }
     }

@@ -165,6 +165,12 @@ EOF
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "host_identifier_type table is missing or broken. (returned status code %d, expected %d)"
+    # Seventh table: dhcp_option_scope
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT scope_id, scope_name FROM dhcp_option_scope;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp_option_scope table is missing or broken. (returned status code %d, expected %d)"
 
     # Let's wipe the whole database
     mysql_wipe

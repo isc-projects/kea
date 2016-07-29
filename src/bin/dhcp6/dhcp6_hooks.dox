@@ -167,6 +167,38 @@ packet processing. Hook points that are not specific to packet processing
    this fact; otherwise the client will think the lease was renewed and continue
    to operate under this assumption.
 
+@subsection dhcpv6HooksLease6Rebind lease6_rebind
+
+ - @b Arguments:
+   - name: @b query6, type: isc::dhcp::PktPtr, direction: <b>in</b>
+   - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
+   - name: @b ia_na, type: boost::shared_ptr<Option6IA>, direction: <b>in/out</b>
+
+ - @b Description: This callout is executed when the server engine is
+   about to rebind an existing lease. The client's request is provided as
+   the "query6" argument and the existing lease with the appropriate fields
+   already modified is given in the "lease6" argument. The final argument,
+   ia_na, is the IA_NA option that will be sent back to the client.
+   Callouts installed on the "lease6_rebind" may modify the content of
+   the "lease6" object. Care should be taken however, as that modified
+   information will be written to the database without any further
+   checking. \n\n Although the envisaged usage assumes modification of T1,
+   T2, preferred and valid lifetimes only, other parameters associated
+   with the lease may be modified as well. The only exception is the @c addr_
+   field, which must not be modified as it is used by the database to
+   select the existing lease to be updated. Care should also be taken to
+   modify the "ia_na" argument to match any changes in the "lease6" argument.
+   If a client sends more than one IA_NA option, callouts will be called
+   separately for each IA_NA instance. The callout will be called only
+   when the update is valid, i.e. conditions such as an invalid addresses
+   or invalid iaid rebinding attempts will not trigger this hook point.
+
+ - <b>Next step status</b>: If any callout installed on "lease6_rebind"
+   sets the status to SKIP, the server will not rebind the lease. Under these
+   circumstances, the callout should modify the "ia_na" argument to reflect
+   this fact; otherwise the client will think the lease was rebound and continue
+   to operate under this assumption.
+
 @subsection dhcpv6HooksLease6Decline lease6_decline
 
  - @b Arguments:
@@ -300,5 +332,56 @@ packet processing. Hook points that are not specific to packet processing
   the lease as is. This is not recommended in general, as the declined
   expired leases will remain in the database and their recovery will
   be attempted during the next reclaim cycle.
+
+@section dhcpv6HooksOptionsAccess Accessing DHCPv6 Options within a Packet
+When the server constructs a response message to a client it includes
+DHCP options configured for this client in a response message. Apart
+from the dynamically created options, such as IA_NA or ClientFQDN, it
+typically includes many options specified in the server configuration
+and held within the configuration structures by @c CfgMgr. Option
+instances are created once, during server configuration, and the
+@c CfgMgr holds pointers to those instances until the next server
+reconfiguration.
+
+When the server includes an option in a response message it copies
+a pointer to the instance of this option, rather than entire option.
+This ensures the good performance of response message creation. However,
+it also implies that any modification to the option carried in the
+DHCP response will affect an instance of this option in the server
+configuration structures. This is obviously not desired as it would
+affect all subsequent DHCP transactions involving this option. The
+DHCP server code avoids modifying the options included in the messages
+so it is possible to ensure good performance without a risk of
+accidentally modifying server configuration. The situation is
+different with hooks libraries which purpose is, in many cases,
+to modify values of options inserted by the server.
+
+Thus, @c Pkt class provides a mechanism to return a copy of an
+option to a caller (e.g. a callout), rather than an instance
+shared with the @c CfgMgr. This mechanism is enabled for all instances
+of @c Pkt6 passed to the callouts, i.e. "query6" and "response6"
+arguments. It is also automatically disabled when the callout
+returns the control back to the server.
+
+At every hook point, where the server passes an instance of a packet
+to the callouts, the server calls
+@c isc::dhcp::Pkt6::setCopyRetrievedOptions (true)
+to force copying options retrieved by @c isc::dhcp::Pkt6::getOption,
+@c isc::dhcp::Pkt6::getOptions, @c isc::dhcp::Pkt6::getRelayOption
+and @c isc::dhcp::Pkt6::getAnyRelayOption within callouts. The copied
+option replaces an original option within the packet and any
+modification to the option content by the callout would only affect
+the option instance associated with the packet.
+
+On the other hand, copying each retrieved option may be expensive.
+If performance of a hook library is a concern, it is possible for the
+hook library to disable copying retrieved options by calling
+@c isc::dhcp::Pkt6::setCopyRetrievedOptions (false) within a callout.
+In this case however, the hook library implementer must be aware that
+any modification of the option instance would affect the server
+configuration and may disrupt server's operation. Thus, disabling
+copying of retrieved options is not recommended unless the hook
+library is not intended to modify configured options carried
+within a packet.
 
 */

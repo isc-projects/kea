@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,32 +41,6 @@ typedef boost::shared_ptr<Option> OptionPtr;
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
-
-/// @brief This type describes a callback function to parse options from buffer.
-///
-/// @note The last two parameters should be specified in the callback function
-/// parameters list only if DHCPv6 options are parsed. Exclude these parameters
-/// from the callback function defined to parse DHCPv4 options.
-///
-/// @param buffer A buffer holding options to be parsed.
-/// @param encapsulated_space A name of the option space to which options being
-/// parsed belong.
-/// @param [out] options A container to which parsed options should be appended.
-/// @param relay_msg_offset A pointer to a size_t value. It indicates the
-/// offset to beginning of relay_msg option. This parameter should be specified
-/// for DHCPv6 options only.
-/// @param relay_msg_len A pointer to a size_t value. It holds the length of
-/// of the relay_msg option. This parameter should be specified for DHCPv6
-/// options only.
-///
-/// @return An offset to the first byte after last parsed option.
-typedef boost::function< size_t(const OptionBuffer& buffer,
-                                const std::string encapsulated_space,
-                                OptionCollection& options,
-                                size_t* relay_msg_offset,
-                                size_t* relay_msg_len)
-                         > UnpackOptionsCallback;
-
 
 class Option {
 public:
@@ -170,6 +144,33 @@ public:
     Option(Universe u, uint16_t type, OptionBufferConstIter first,
            OptionBufferConstIter last);
 
+    /// @brief Copy constructor.
+    ///
+    /// This constructor makes a deep copy of the option and all of the
+    /// suboptions. It calls @ref getOptionsCopy to deep copy suboptions.
+    ///
+    /// @param source Option to be copied.
+    Option(const Option& source);
+
+    /// @brief Assignment operator.
+    ///
+    /// The assignment operator performs a deep copy of the option and
+    /// its suboptions. It calls @ref getOptionsCopy to deep copy
+    /// suboptions.
+    ///
+    /// @param rhs Option to be assigned.
+    Option& operator=(const Option& rhs);
+
+    /// @brief Copies this option and returns a pointer to the copy.
+    ///
+    /// This function must be overridden in the derived classes to make
+    /// a copy of the derived type. The simplest way to do it is by
+    /// calling @ref cloneInternal function with an appropriate template
+    /// parameter.
+    ///
+    /// @return Pointer to the copy of the option.
+    virtual OptionPtr clone() const;
+
     /// @brief returns option universe (V4 or V6)
     ///
     /// @return universe type
@@ -184,7 +185,7 @@ public:
     /// @param buf pointer to a buffer
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -198,15 +199,15 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns string representation of the value
     ///
-    /// This is terse repesentation used in cases where client classification
+    /// This is terse representation used in cases where client classification
     /// refers to a specific option.
     ///
     /// @return string that represents the value of the option.
-    virtual std::string toString();
+    virtual std::string toString() const;
 
     /// @brief Returns binary representation of the option.
     ///
@@ -215,7 +216,7 @@ public:
     /// header fields.
     ///
     /// @return Vector holding binary representation of the option.
-    virtual std::vector<uint8_t> toBinary(const bool include_header = false);
+    virtual std::vector<uint8_t> toBinary(const bool include_header = false) const;
 
     /// @brief Returns string containing hexadecimal representation of option.
     ///
@@ -224,7 +225,7 @@ public:
     /// header fields.
     ///
     /// @return String containing hexadecimal representation of the option.
-    virtual std::string toHexString(const bool include_header = false);
+    virtual std::string toHexString(const bool include_header = false) const;
 
     /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
     ///
@@ -235,17 +236,17 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    virtual uint16_t getHeaderLen();
+    virtual uint16_t getHeaderLen() const;
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
     /// @return true, if option is valid
-    virtual bool valid();
+    virtual bool valid() const;
 
     /// Returns pointer to actual data.
     ///
@@ -271,8 +272,8 @@ public:
     ///
     /// @param type type of requested suboption
     ///
-    /// @return shared_ptr to requested suoption
-    OptionPtr getOption(uint16_t type);
+    /// @return shared_ptr to requested suboption
+    OptionPtr getOption(uint16_t type) const;
 
     /// @brief Returns all encapsulated options.
     ///
@@ -282,6 +283,13 @@ public:
     const OptionCollection& getOptions() const {
         return (options_);
     }
+
+    /// @brief Performs deep copy of suboptions.
+    ///
+    /// This method calls @ref clone method to deep copy each option.
+    ///
+    /// @param [out] options_copy Container where copied options are stored.
+    void getOptionsCopy(OptionCollection& options_copy) const;
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -295,21 +303,21 @@ public:
     /// @throw isc::OutOfRange Thrown if the option has a length of 0.
     ///
     /// @return value of the first byte
-    uint8_t getUint8();
+    uint8_t getUint8() const;
 
     /// @brief Returns content of first word.
     ///
     /// @throw isc::OutOfRange Thrown if the option has a length less than 2.
     ///
     /// @return uint16_t value stored on first two bytes
-    uint16_t getUint16();
+    uint16_t getUint16() const;
 
     /// @brief Returns content of first double word.
     ///
     /// @throw isc::OutOfRange Thrown if the option has a length less than 4.
     ///
     /// @return uint32_t value stored on first four bytes
-    uint32_t getUint32();
+    uint32_t getUint32() const;
 
     /// @brief Sets content of this option to singe uint8 value.
     ///
@@ -361,22 +369,14 @@ public:
         return (encapsulated_space_);
     }
 
-    /// @brief Set callback function to be used to parse options.
-    ///
-    /// @param callback An instance of the callback function or NULL to
-    /// uninstall callback.
-    void setCallback(UnpackOptionsCallback callback) {
-        callback_ = callback;
-    }
-
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
     /// @brief Checks if options are equal.
     ///
     /// This method calls a virtual @c equals function to compare objects.
-    /// This method is not meant to be overriden in the derived classes.
-    /// Instead, the other @c equals function must be overriden.
+    /// This method is not meant to be overridden in the derived classes.
+    /// Instead, the other @c equals function must be overridden.
     ///
     /// @param other Pointer to the option to compare this option to.
     /// @return true if both options are equal, false otherwise.
@@ -398,6 +398,22 @@ public:
 
 protected:
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    ///
+    /// The deep copy of the option is performed by calling copy
+    /// constructor of the option of a given type. Derived classes call
+    /// this method in the implementations of @ref clone methods to
+    /// create a copy of the option of their type.
+    ///
+    /// @tparam OptionType Type of the option of which a clone should
+    /// be created.
+    template<typename OptionType>
+    OptionPtr cloneInternal() const {
+        boost::shared_ptr<OptionType>
+            option(new OptionType(*dynamic_cast<const OptionType*>(this)));
+        return (option);
+    }
+
     /// @brief Store option's header in a buffer.
     ///
     /// This method writes option's header into a buffer in the
@@ -412,7 +428,7 @@ protected:
     /// directly by other classes.
     ///
     /// @param [out] buf output buffer.
-    void packHeader(isc::util::OutputBuffer& buf);
+    void packHeader(isc::util::OutputBuffer& buf) const;
 
     /// @brief Store sub options in a buffer.
     ///
@@ -427,7 +443,7 @@ protected:
     /// exceptions thrown by pack methods invoked on objects
     /// representing sub options. We should consider whether to aggregate
     /// those into one exception which can be documented here.
-    void packOptions(isc::util::OutputBuffer& buf);
+    void packOptions(isc::util::OutputBuffer& buf) const;
 
     /// @brief Builds a collection of sub options from the buffer.
     ///
@@ -454,7 +470,7 @@ protected:
     ///
     /// @return Option header in the textual format.
     std::string headerToText(const int indent = 0,
-                             const std::string& type_name = "");
+                             const std::string& type_name = "") const;
 
     /// @brief Returns collection of suboptions in the textual format.
     ///
@@ -475,7 +491,7 @@ protected:
     /// It is used in constructors. In there are any problems detected
     /// (like specifying type > 255 for DHCPv4 option), it will throw
     /// BadValue or OutOfRange exceptions.
-    void check();
+    void check() const;
 
     /// option universe (V4 or V6)
     Universe universe_;
@@ -491,9 +507,6 @@ protected:
 
     /// Name of the option space being encapsulated by this option.
     std::string encapsulated_space_;
-
-    /// A callback to be called to unpack options from the packet.
-    UnpackOptionsCallback callback_;
 
     /// @todo probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)

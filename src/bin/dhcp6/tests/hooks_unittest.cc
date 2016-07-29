@@ -56,6 +56,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_buffer6_send    = -1;
     int hook_index_lease6_renew    = -1;
     int hook_index_lease6_release  = -1;
+    int hook_index_lease6_rebind   = -1;
+    int hook_index_lease6_decline  = -1;
     int hook_index_pkt6_received   = -1;
     int hook_index_select_subnet   = -1;
     int hook_index_pkt6_send       = -1;
@@ -69,6 +71,10 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("lease6_renew"));
     EXPECT_NO_THROW(hook_index_lease6_release = ServerHooks::getServerHooks()
                     .getIndex("lease6_release"));
+    EXPECT_NO_THROW(hook_index_lease6_rebind = ServerHooks::getServerHooks()
+                    .getIndex("lease6_rebind"));
+    EXPECT_NO_THROW(hook_index_lease6_decline = ServerHooks::getServerHooks()
+                    .getIndex("lease6_decline"));
     EXPECT_NO_THROW(hook_index_pkt6_received = ServerHooks::getServerHooks()
                     .getIndex("pkt6_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
@@ -83,6 +89,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_buffer6_send    > 0);
     EXPECT_TRUE(hook_index_lease6_renew    > 0);
     EXPECT_TRUE(hook_index_lease6_release  > 0);
+    EXPECT_TRUE(hook_index_lease6_rebind   > 0);
+    EXPECT_TRUE(hook_index_lease6_decline  > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -139,6 +147,11 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -202,6 +215,11 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -276,6 +294,15 @@ public:
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        if (callback_resp_pkt6_) {
+            callback_resp_options_copy_ = callback_resp_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -329,6 +356,24 @@ public:
         return pkt6_send_callout(callout_handle);
     }
 
+    /// @brief Test callback that stores response packet.
+    /// @param callout_handle handle passed by the hooks framework.
+    /// @return always 0
+    static int
+    buffer6_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer6_send");
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+
+        callout_handle.getArgument("response6", callback_resp_pkt6_);
+
+        if (callback_resp_pkt6_) {
+            callback_resp_options_copy_ = callback_resp_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
     /// Test callback that stores received callout name and subnet6 values
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -341,6 +386,11 @@ public:
         callout_handle.getArgument("subnet6collection", callback_subnet6collection_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -379,24 +429,13 @@ public:
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
-
-    /// Test callback that stores received callout name and pkt6 value
-    /// @param callout_handle handle passed by the hooks framework
-    /// @return always 0
-    static int
-    lease6_rebind_callout(CalloutHandle& callout_handle) {
-        callback_name_ = string("lease6_rebind");
-
-        callout_handle.getArgument("query6", callback_qry_pkt6_);
-        callout_handle.getArgument("lease6", callback_lease6_);
-        callout_handle.getArgument("ia_na", callback_ia_na_);
-
-        callback_argument_names_ = callout_handle.getArgumentNames();
-        return (0);
-    }
-
 
     /// The following values are used by the callout to override
     /// renewed lease parameters
@@ -418,6 +457,8 @@ public:
         callout_handle.getArgument("lease6", callback_lease6_);
         callout_handle.getArgument("ia_na", callback_ia_na_);
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_lease6_);
         // Let's override some values in the lease
         callback_lease6_->iaid_          = override_iaid_;
         callback_lease6_->t1_            = override_t1_;
@@ -425,6 +466,8 @@ public:
         callback_lease6_->preferred_lft_ = override_preferred_;
         callback_lease6_->valid_lft_     = override_valid_;
 
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_ia_na_);
         // Override the values to be sent to the client as well
         callback_ia_na_->setIAID(override_iaid_);
         callback_ia_na_->setT1(override_t1_);
@@ -446,6 +489,81 @@ public:
         return (0);
     }
 
+    /// Test callback that stores received callout name and pkt6 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_rebind_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_rebind");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+        callout_handle.getArgument("ia_na", callback_ia_na_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    /// Test callback that overrides received lease. It updates
+    /// T1, T2, preferred and valid lifetimes
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_rebind_update_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease6_rebind");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+        callout_handle.getArgument("lease6", callback_lease6_);
+        callout_handle.getArgument("ia_na", callback_ia_na_);
+
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_lease6_);
+        // Let's override some values in the lease
+        callback_lease6_->iaid_          = override_iaid_;
+        callback_lease6_->t1_            = override_t1_;
+        callback_lease6_->t2_            = override_t2_;
+        callback_lease6_->preferred_lft_ = override_preferred_;
+        callback_lease6_->valid_lft_     = override_valid_;
+
+        // Should be an ASSERT but it is not allowed here
+        EXPECT_TRUE(callback_ia_na_);
+        // Override the values to be sent to the client as well
+        callback_ia_na_->setIAID(override_iaid_);
+        callback_ia_na_->setT1(override_t1_);
+        callback_ia_na_->setT2(override_t2_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Lease6_rebind callout that sets status to SKIP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_rebind_skip_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (lease6_rebind_callout(callout_handle));
+    }
+
+    /// Lease6_rebind callout that sets status to DROP
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease6_rebind_drop_callout(CalloutHandle& callout_handle) {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        return (lease6_rebind_callout(callout_handle));
+    }
+
+
     /// Test callback that stores received callout name passed parameters
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -457,6 +575,11 @@ public:
         callout_handle.getArgument("lease6", callback_lease6_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -483,6 +606,10 @@ public:
         callback_name_ = string("lease6_decline");
         callout_handle.getArgument("query6", callback_qry_pkt6_);
         callout_handle.getArgument("lease6", callback_lease6_);
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
 
         return (0);
     }
@@ -519,6 +646,8 @@ public:
         callback_ia_na_.reset();
         callback_subnet6collection_ = NULL;
         callback_argument_names_.clear();
+        callback_qry_options_copy_ = false;
+        callback_resp_options_copy_ = false;
     }
 
     /// Pointer to Dhcpv6Srv that is used in tests
@@ -538,7 +667,7 @@ public:
     /// Pointer to lease6
     static Lease6Ptr callback_lease6_;
 
-    /// Pointer to IA_NA option being renewed
+    /// Pointer to IA_NA option being renewed or rebound
     static boost::shared_ptr<Option6IA> callback_ia_na_;
 
     /// Pointer to a subnet received by callout
@@ -549,6 +678,14 @@ public:
 
     /// A list of all received arguments
     static vector<string> callback_argument_names_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a query during callout execution.
+    static bool callback_qry_options_copy_;
+
+    /// Flag indicating if copying retrieved options was enabled for
+    /// a response during callout execution.
+    static bool callback_resp_options_copy_;
 };
 
 // The following parameters are used by callouts to override
@@ -569,6 +706,8 @@ const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
 boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
+bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
+bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
@@ -636,6 +775,9 @@ TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Receive) {
     expected_argument_names.push_back(string("query6"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on buffer6_receive is able to change
@@ -757,6 +899,9 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Receive) {
     expected_argument_names.push_back(string("query6"));
 
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Checks if callouts installed on pkt6_received is able to change
@@ -881,6 +1026,10 @@ TEST_F(HooksDhcpv6SrvTest, simplePkt6Send) {
     expected_argument_names.push_back(string("query6"));
     expected_argument_names.push_back(string("response6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+    EXPECT_TRUE(callback_resp_options_copy_);
 }
 
 // Checks if callouts installed on pkt6_send is able to change
@@ -982,6 +1131,46 @@ TEST_F(HooksDhcpv6SrvTest, skipPkt6Send) {
     EXPECT_EQ(0, sent->getBuffer().getLength());
 }
 
+// Checks if callouts installed on buffer6_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv6SrvTest, simpleBuffer6Send) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer6_send", buffer6_send_callout));
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = Pkt6Ptr(PktCaptures::captureSimpleSolicit());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer6_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt6Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt6 argument passing was successful and returned proper
+    // values
+    EXPECT_TRUE(callback_resp_pkt6_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("response6"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_resp_options_copy_);
+}
+
 // This test checks if subnet6_select callout is triggered and reports
 // valid parameters
 TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
@@ -1053,6 +1242,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet6collection_)[0].get());
     EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet6collection_)[1].get());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if callout installed on subnet6_select hook point can pick
@@ -1225,6 +1417,9 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     // Check that the returned lease6 in callout is the same as the one in the
     // database
     EXPECT_TRUE(*callback_lease6_ == *l);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1471,6 +1666,88 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_FALSE(l);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// This is a variant of the previous test that tests that callouts are
+// properly invoked for the prefix release case.
+TEST_F(HooksDhcpv6SrvTest, basicLease6ReleasePD) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_release", lease6_release_callout));
+
+    const IOAddress prefix("2001:db8:1:2:1::");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the prefix we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, prefix));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during RENEW.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 80));
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                                        prefix);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, iaid, 1500, 3000);
+
+    OptionPtr released_addr_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix, 80,
+                                                    300, 500));
+    ia->addOption(released_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Server-id is mandatory in RELEASE
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(req);
+
+    ASSERT_TRUE(reply);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease6_release", callback_name_);
+
+    // Check that appropriate parameters are passed to the callouts
+    EXPECT_TRUE(callback_qry_pkt6_);
+    EXPECT_TRUE(callback_lease6_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("lease6");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Check that the lease is really gone in the database
+    // get lease by address
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+    ASSERT_FALSE(l);
+
+    // Get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_FALSE(l);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly,
@@ -1544,6 +1821,260 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Release) {
     ASSERT_TRUE(l);
 }
 
+// This test verifies that incoming (positive) REBIND can be handled properly,
+// and the lease6_rebind callouts are triggered.
+TEST_F(HooksDhcpv6SrvTest, basicLease6Rebind) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_rebind", lease6_rebind_callout));
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during REBIND.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set and not using
+    // previous (500, 501, etc.) values
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+
+    // Let's create a REBIND
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
+
+    OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(rebound_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRebind(req);
+    ASSERT_TRUE(reply);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease6_rebind", callback_name_);
+
+    // Check that appropriate parameters are passed to the callouts
+    EXPECT_TRUE(callback_qry_pkt6_);
+    EXPECT_TRUE(callback_lease6_);
+    EXPECT_TRUE(callback_ia_na_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("lease6");
+    expected_argument_names.push_back("ia_na");
+
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                           subnet_->getT2());
+
+    ASSERT_TRUE(addr_opt);
+    // Check that the lease is really in the database
+    l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
+    ASSERT_TRUE(l);
+
+    // Check that the lease has been returned
+    ASSERT_TRUE(callback_lease6_);
+
+    // Check that the returned lease6 in callout is the same as the one in the
+    // database
+    EXPECT_TRUE(*callback_lease6_ == *l);
+}
+
+// This test verifies that incoming (positive) REBIND can be handled properly,
+// and the lease6_rebind callouts are able to change the lease being updated.
+TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_rebind", lease6_rebind_update_callout));
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during REBIND.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set and not using
+    // previous (500, 501, etc.) values
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+
+    // Let's create a REBIND
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
+
+    OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(rebound_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRebind(req);
+    ASSERT_TRUE(reply);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 1001, 1002);
+
+    ASSERT_TRUE(addr_opt);
+    // Check that the lease is really in the database
+    l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
+    ASSERT_TRUE(l);
+
+    // Check that we chose the distinct override values
+    ASSERT_NE(override_t1_,        subnet_->getT1());
+    ASSERT_NE(override_t2_,        subnet_->getT2());
+    ASSERT_NE(override_preferred_, subnet_->getPreferred());
+    EXPECT_NE(override_valid_,     subnet_->getValid());
+
+    // Check that T1, T2, preferred, valid were overridden the the callout
+    EXPECT_EQ(override_t1_, l->t1_);
+    EXPECT_EQ(override_t2_, l->t2_);
+    EXPECT_EQ(override_preferred_, l->preferred_lft_);
+    EXPECT_EQ(override_valid_, l->valid_lft_);
+
+    // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
+    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t expected = static_cast<int32_t>(time(NULL));
+    // Equality or difference by 1 between cltt and expected is ok.
+    EXPECT_GE(1, abs(cltt - expected));
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
+}
+
+// This test verifies that incoming (positive) REBIND can be handled properly,
+// and the lease6_rebind callouts are able to set the skip flag that will
+// reject the rebinding
+TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
+    NakedDhcpv6Srv srv(0);
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_rebind", lease6_rebind_skip_callout));
+
+    const IOAddress addr("2001:db8:1:1::cafe:babe");
+    const uint32_t iaid = 234;
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
+
+    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
+    // value on purpose. They should be updated during REBIND.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set and not using
+    // previous (500, 501, etc.) values
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+
+    // Let's create a REBIND
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
+
+    OptionPtr rebound_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
+    ia->addOption(rebound_addr_opt);
+    req->addOption(ia);
+    req->addOption(clientid);
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRebind(req);
+    ASSERT_TRUE(reply);
+
+    // Check that our callback was called
+    EXPECT_EQ("lease6_rebind", callback_name_);
+
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+
+    // Check that the old values are still there and they were not
+    // updated by the rebinding
+    EXPECT_NE(l->t1_, subnet_->getT1());
+    EXPECT_NE(l->t2_, subnet_->getT2());
+    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
+    EXPECT_NE(l->valid_lft_, subnet_->getValid());
+    EXPECT_NE(l->cltt_, time(NULL));
+}
+
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
 TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
@@ -1587,6 +2118,9 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     // And that the parameters passed to callout are consistent with the database
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease6_->addr_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // Test that the lease6_decline hook point can handle SKIP status.

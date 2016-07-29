@@ -10,12 +10,11 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -26,7 +25,7 @@ CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
-EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox
+EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 
 if GENERATE_DOCS
 
@@ -63,6 +62,7 @@ libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
 libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
+libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 
 libdhcp6_la_SOURCES += kea_controller.cc
 
@@ -98,6 +98,9 @@ kea_dhcp6_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 kea_dhcp6_LDFLAGS += $(PGSQL_LIBS)
+endif
+if HAVE_CQL
+kea_dhcp6_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)

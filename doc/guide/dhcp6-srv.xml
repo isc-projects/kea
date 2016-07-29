@@ -11,10 +11,10 @@
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-      It is recommended that the Kea DHCPv6 server be started and stopped
-      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-      However, it is also possible to run the server directly: it accepts
-      the following command-line switches:
+        It is recommended that the Kea DHCPv6 server be started and stopped
+        using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
+        However, it is also possible to run the server directly: it accepts
+        the following command-line switches:
       </para>
 
       <itemizedlist>
@@ -62,25 +62,25 @@
       </itemizedlist>
 
       <para>
-            The <command>-V</command> command returns the versions of the
-            external libraries dynamically linked.
+        The <command>-V</command> command returns the versions of the
+        external libraries dynamically linked.
       </para>
 
       <para>
-            The <command>-W</command> command describes the environment used
-            to build Kea.  This command displays a copy of the
-            <filename>config.report</filename> file produced by
-            <userinput>./configure</userinput> that is embedded in the
-            executable binary.
+        The <command>-W</command> command describes the environment used
+        to build Kea.  This command displays a copy of the
+        <filename>config.report</filename> file produced by
+        <userinput>./configure</userinput> that is embedded in the
+        executable binary.
       </para>
 
       <para>
-            The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
-            in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
-            <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
+        The <filename>config.report</filename> may also be accessed more
+        directly.  The following command may be used to extract this
+        information.  The binary <userinput>path</userinput> may be found
+        in the install directory or in the <filename>.libs</filename>
+        subdirectory in the source tree. For example
+        <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
 
 <screen>
 strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
@@ -88,9 +88,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-            When running in a console, the server can be shut down by
-            pressing ctrl-c. It detects the key combination and shuts
-            down gracefully.
+        When running in a console, the server can be shut down by
+        pressing ctrl-c. It detects the key combination and shuts
+        down gracefully.
       </para>
 
       <para>
@@ -290,7 +290,7 @@ syntax would be used:
     }
 ]
 </screen>
-Note that indentation is optional and is used for aesthetic purposes only.
+Note that indentation is optional and is used for esthetic purposes only.
 In some cases in may be preferable to use more compact notation.
 </para>
 
@@ -306,8 +306,8 @@ be followed by a comma and another object definition.</para>
 <section>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
-  Currently there are three database backends available:
-  memfile (which is the default backend), MySQL and PostgreSQL.</para>
+  Currently there are four database backends available:  memfile (which is the
+  default backend), MySQL, PostgreSQL and CQL.</para>
 <section>
   <title>Memfile, Basic Storage for Leases</title>
 
@@ -435,13 +435,15 @@ be followed by a comma and another object definition.</para>
 
   <para>Lease database configuration is controlled through the
   Dhcp6/lease-database parameters. The type of the database must be set to
-  "memfile", "mysql" or "postgresql", e.g.
+  "memfile", "mysql", "postgresql" or "cql", e.g.
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
-  or <xref linkend="pgsql-database-create"/>).
+  name used when the lease database was created
+  (see <xref linkend="mysql-database-create"/>,
+  <xref linkend="pgsql-database-create"/>
+  or <xref linkend="cql-database-create"/>).
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
@@ -477,22 +479,8 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 </section>
 
-<!-- Uncomment this once 4212 is merged. While the host storage for
-     MySQL is there, it is able to store hosts, but not IPv6
-     reservations. So technically we have host reservations for v6 in
-     MySQL, but in practice it's kinda useless right now as it can't
-     store addresses or prefixes. Let's keep it commented out until
-     we implement that functionality
-
-<section>
+<section id="hosts6-storage">
   <title>Hosts Storage</title>
-
-    <note>
-      <para>This feature did not undergo the regular system level
-      testing conducted by ISC. As such, please treat it as
-      experimental.</para>
-    </note>
-
     <para>Kea is also able to store information about host reservations in the
     database. Hosts database configuration uses the same syntax as lease
     database. In fact, Kea server opens independent connections for each
@@ -662,11 +650,24 @@ temporarily override a list of interface names and listen on all interfaces.
         "interfaces": [ <userinput>"eth1/2001:db8::1"</userinput> ]
     },
     ...
+    "option-data": [
+        {
+            "name": "unicast",
+            "data": "2001:db8::1"
+        } ],
+    ...
 }
  </screen>
 
         This configuration will cause the server to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        Usually unicast support is associated with a server unicast option
+        which allows clients to send unicast messages to the server.
+        The example above contains a server unicast option specification
+        which causes the client to send messages to the specified
+        unicast address.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
@@ -998,7 +999,9 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
 <row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+-->
 <row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<!--
 <row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
@@ -2179,6 +2182,92 @@ should include options from the isc option space:
       </para>
     </section>
 
+    <section id="dhcp6-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv6 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv6 side
+      (the DHCPv4 side is described in <xref linkend="dhcp4-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      There is only one specific parameter for the DHCPv6 side:
+      <command>dhcp4o6-port</command> which specifies the first of the
+      two consecutive ports of the UDP sockets used for the communication
+      between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
+      to ::1 on <command>port</command> and connected to ::1 on
+      <command>port</command> + 1).
+      </para>
+      <para>
+      Two other configuration entries are in general required: unicast traffic
+      support (see <xref linkend="dhcp6-unicast"/>) and DHCP 4o6 server
+      address option (name "dhcp4o6-server-addr", code  88).
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv6 conf
+"Dhcp6": {
+
+    "interfaces-config": {
+        "interfaces": [ "eno33554984/2001:db8:1:1::1" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases6"
+    },
+
+    "preferred-lifetime": 3000,
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+
+    "subnet6": [ {
+        "subnet": "2001:db8:1:1::/64",
+        "interface": "eno33554984",
+        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767,
+
+    "option-data": [ {
+        "name": "dhcp4o6-server-addr",
+        "code": 88,
+        "space": "dhcp6",
+        "csv-format": true,
+        "data": "2001:db8:1:1::1"
+    } ]
+</userinput>
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp6",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp6.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+      </para>
+      <note>
+      Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
+      </note>
+    </section>
+
    </section>
 
   <!-- Host reservation is a large topic. There will be many subsections,
@@ -2416,26 +2505,94 @@ should include options from the isc option space:
 </section>
 
     <section id="reservation6-options">
-      <title>Reserving specific options</title>
-      <!-- @todo: replace this with the actual text once #3573 is implemented -->
-      <para>Currently it is not possible to specify options in host
-      reservation. Such a feature will be added in the upcoming Kea
-      releases.</para>
+      <title>Including specific DHCPv6 options in reservations</title>
+
+      <para>Kea 1.1.0 introduced the ability to specify options on a
+      per host basis. The options follow the same rules as any other
+      options. These can be standard options (see <xref
+      linkend="dhcp6-std-options" />), custom options (see <xref
+      linkend="dhcp6-custom-options"/>) or vendor specific options
+      (see <xref linkend="dhcp6-vendor-opts" />). The following
+      example showcases how standard options can be defined.</para>
+
+      <screen>
+"reservations": [
+{
+   "duid": "01:02:03:05:06:07:08",
+   "ip-addresses": [ "2001:db8:1::2" ],
+    <userinput>"option-data": [
+    {
+        "option-data": [ {
+            "name": "dns-servers",
+            "data": "3000:1::234"
+        },
+        {
+            "name": "nis-servers",
+            "data": "3000:1::234"
+        }
+    } ]</userinput>
+} ]</screen>
+
+    <para>Vendor specific options can be reserved in a similar manner:</para>
+
+    <screen>
+"reservations": [
+{
+    "duid": "aa:bb:cc:dd:ee:ff",
+    "ip-addresses": [ "2001:db8::1" ],
+    <userinput>"option-data": [
+    {
+        "name": "vendor-opts",
+        "data": 4491"
+    },
+    {
+        "name": "tftp-servers",
+        "space": "vendor-4491",
+        "data": "3000:1::234"
+    } ]</userinput>
+} ]</screen>
+
+<para>
+ Options defined on host level have the highest priority. In other words,
+ if there are options defined with the same type on global, subnet, class and
+ host level, the host specific values will be used.
+</para>
+
     </section>
 
-    <section id="reservation6-mode">
-      <title>Fine Tuning IPv6 Host Reservation</title>
+    <section id="reservations6-mysql">
+      <title>Storing host reservations in MySQL</title>
 
-      <note>
-        <para><command>reservation-mode</command> in the DHCPv6 server is
-        implemented in Kea 0.9.1 beta, but has not been tested and is
-        considered experimental.</para>
-      </note>
+      <para>
+        It is possible to store host reservations in MySQL. See <xref
+        linkend="hosts6-storage" /> for information how to configure Kea to use
+        reservations stored in MySQL. Kea does not provide any dedicated tools
+        for managing MySQL reservations. See Kea wiki <ulink
+        url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
+        information and examples of how reservations can be inserted into the
+        database.
+      </para>
+    </section>
+
+    <section id="reservations6-pgsql">
+      <title>Storing host reservations in PostgreSQL</title>
+      <para>Kea currently does not support storing reservations in
+      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
+    </section>
+
+    <section id="reservations6-cql">
+      <title>Storing host reservations in CQL (Cassandra)</title>
+      <para>Kea currently does not support storing reservations in
+      Cassandra (CQL).</para>
+    </section>
+
+    <section id="reservations6-tuning">
+      <title>Fine Tuning IPv6 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to be not used by another DHCP client. It
+      sufficient for a candidate lease to not be used by another DHCP client. It
       also must not be reserved for another client. Second, when renewing a lease,
       additional check must be performed whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address or a
@@ -2491,6 +2648,51 @@ should include options from the isc option space:
 }
 </screen>
       </para>
+
+      <para>Another aspect of the host reservations are different types of
+      identifiers. Currently (June 2016) Kea supports two types of identifiers
+      in DHCPv6: hw-address and duid, but more identifier types
+      are likely to be added in the future. This is beneficial from a
+      usability perspective. However, there is a drawback. For each incoming
+      packet Kea has to to extract each identifier type and then query the
+      database to see if there's a reservation done by this particular
+      identifier. If there is not, the next identifier is extracted and next
+      query is issued. This process continues until either a reservation is
+      found or all identifier types have been checked. Over time with an increasing
+      number of supported identifier types, Kea would become slower and
+      slower.</para>
+
+      <para>To address this problem, a parameter called
+      <command>host-reservation-identifiers</command> has been introduced. It
+      takes a list of identifier types as a parameter. Kea will check only those
+      identifier types enumerated in host-reservation-identifiers. From the
+      performance perspective the number of identifier types should be kept to
+      minimum, ideally limited to one. If your deployment uses several
+      reservation types, please enumerate them from most to least frequently
+      used as this increases the chances of Kea finding the reservation using the
+      fewest number of queries. An example of host reservation identifiers looks
+      as follows:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "duid", "hw-address" ],</userinput>
+"subnet6": [
+    {
+        "subnet": "2001:db8:1::/64",
+        ...
+    }
+]</screen>
+</para>
+
+<para>
+  If not specified, the default value is:
+<screen>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid" ]</userinput>
+</screen>
+
+</para>
+<!-- see CfgHostOperations::createConfig6() in
+     src/lib/dhcpsrv/cfg_host_operations.cc -->
+
    </section>
 
     <!-- @todo: add support for per IA reservation (that specifies IAID in
@@ -3280,6 +3482,33 @@ should include options from the isc option space:
             </row>
 
             <row>
+              <entry>pkt6-dhcpv4-query-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of DHCPv4-QUERY packets received. This
+                statistic is expected to grow if there are devices
+                that are using DHCPv4-over-DHCPv6. DHCPv4-QUERY
+                messages are used by DHCPv4 clients on an IPv6 only
+                line so that encapsulate requests over DHCPv6.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-dhcpv4-response-received</entry>
+              <entry>integer</entry>
+              <entry>
+                Number of DHCPv4-RESPONSE packets received. This
+                statistic is expected to remain zero at all times, as
+                DHCPv4-RESPONSE packets are sent by the server and the
+                server is never expected to receive them. A non-zero
+                value indicates an error.  One likely cause would be a
+                misbehaving relay agent that incorrectly forwards
+                DHCPv4-RESPONSE message towards the server, rather
+                back to the clients.
+              </entry>
+            </row>
+
+            <row>
               <entry>pkt6-unknown-received</entry>
               <entry>integer</entry>
               <entry>Number of packets received of an unknown type. Non-zero
@@ -3316,6 +3545,16 @@ should include options from the isc option space:
               grow in most cases after a SOLICIT (with rapid-commit), REQUEST,
               RENEW, REBIND, RELEASE, DECLINE or INFORMATION-REQUEST is
               processed. There are certain cases where there is no response.
+              </entry>
+            </row>
+
+            <row>
+              <entry>pkt6-dhcpv4-response-sent</entry>
+              <entry>integer</entry>
+              <entry>Number of DHCPv4-RESPONSE packets sent. This
+              statistic is expected to grow in most cases after a
+              DHCPv4-QUERY is processed. There are certain cases where
+              there is no response.
               </entry>
             </row>
 
@@ -3568,8 +3807,8 @@ should include options from the isc option space:
               that are stored in the lease database. Removing non-last subnet will
               cause the configuration information to mismatch data in the lease
               database. It is possible to manually update subnet-id fields in
-              MySQL or PostgreSQL database, but it is awkward and error prone
-              process. A better reconfiguration support is planned.
+              MySQL, PostgreSQL or CQL database, but it is awkward and
+              error prone process. A better reconfiguration support is planned.
             </para>
           </listitem>
 

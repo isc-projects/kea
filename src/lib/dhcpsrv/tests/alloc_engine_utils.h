@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,6 +188,17 @@ public:
         EXPECT_EQ(hostname_, lease->hostname_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
         /// @todo: check cltt
+    }
+
+    /// @brief Checks if specified address or prefix has been recorded as
+    /// allocated to the client.
+    ///
+    /// @param lease Allocated lease.
+    /// @param ctx Context structure in which this function should check if
+    /// leased address is stored as allocated resource.
+    void checkAllocatedResources(const Lease6Ptr& lease,
+                                 AllocEngine::ClientContext6& ctx) {
+        EXPECT_TRUE(ctx.isAllocated(lease->addr_, lease->prefixlen_));
     }
 
     /// @brief Checks if specified address is increased properly

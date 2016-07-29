@@ -61,6 +61,42 @@ TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 }
 
+// This test verifies that it is possible to select a subnet by
+// matching an interface name.
+TEST(CfgSubnets4Test, selectSubnetByIface) {
+    // The IfaceMgrTestConfig object initializes fake interfaces:
+    // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
+    // object uses interface names to select the appropriate subnet.
+    IfaceMgrTestConfig config(true);
+
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+    // No interface defined for subnet1
+    subnet2->setIface("lo");
+    subnet3->setIface("eth1");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Make sure that initially the subnets don't exist.
+    SubnetSelector selector;
+    // Set an interface to a name that is not defined in the config.
+    // Subnet selection should fail.
+    selector.iface_name_ = "eth0";
+    ASSERT_FALSE(cfg.selectSubnet(selector));
+
+    // Now select an interface name that matches. Selection should succeed
+    // and return subnet3.
+    selector.iface_name_ = "eth1";
+    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ASSERT_TRUE(selected);
+    EXPECT_EQ(subnet3, selected);
+}
 
 // This test verifies that when the classification information is specified for
 // subnets, the proper subnets are returned by the subnet configuration.
@@ -339,7 +375,7 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByAddress) {
     selector.dhcp4o6_ = true;
     selector.remote_address_ = IOAddress("2001:db8:1::dead:beef");
 
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -369,11 +405,11 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceId) {
     selector.dhcp4o6_ = true;
     selector.interface_id_ = interfaceId2;
     // We have mismatched interface-id options (data1 vs data2). Should not match.
-    EXPECT_FALSE(cfg.selectSubnet(selector));
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
 
     // This time we have correct interface-id. Should match.
     selector.interface_id_ = interfaceId1;
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -395,11 +431,11 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceName) {
     selector.dhcp4o6_ = true;
     selector.iface_name_ = "eth5";
     // We have mismatched interface names. Should not match.
-    EXPECT_FALSE(cfg.selectSubnet(selector));
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
 
     // This time we have correct names. Should match.
     selector.iface_name_ = "eth7";
-    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 

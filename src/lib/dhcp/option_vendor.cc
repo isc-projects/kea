@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,8 +23,12 @@ OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
+OptionPtr
+OptionVendor::clone() const {
+    return (cloneInternal<OptionVendor>());
+}
 
-void OptionVendor::pack(isc::util::OutputBuffer& buf) {
+void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
     packHeader(buf);
 
     // Store vendor-id
@@ -59,7 +63,7 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
     }
 }
 
-uint16_t OptionVendor::len() {
+uint16_t OptionVendor::len() const {
     uint16_t length = getHeaderLen();
 
     length += sizeof(uint32_t); // Vendor-id field
@@ -70,7 +74,7 @@ uint16_t OptionVendor::len() {
     }
 
     // length of all suboptions
-    for (OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -79,7 +83,7 @@ uint16_t OptionVendor::len() {
 }
 
 uint8_t
-OptionVendor::dataLen() {
+OptionVendor::dataLen() const {
     // Calculate and store data-len as follows:
     // data-len = total option length - header length
     //            - enterprise id field length - data-len field size
@@ -87,7 +91,7 @@ OptionVendor::dataLen() {
 }
 
 std::string
-OptionVendor::toText(int indent) {
+OptionVendor::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent) << ": "
            << getVendorId() << " (uint32)";

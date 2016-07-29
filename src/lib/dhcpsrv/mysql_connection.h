@@ -8,8 +8,12 @@
 #define MYSQL_CONNECTION_H
 
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/dhcpsrv_log.h>
+#include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
+#include <mysqld_error.h>
+#include <errmsg.h>
 #include <vector>
 #include <stdint.h>
 
@@ -36,8 +40,8 @@ extern const int MLM_MYSQL_FETCH_FAILURE;
 
 /// @name Current database schema version values.
 //@{
-const uint32_t CURRENT_VERSION_VERSION = 4;
-const uint32_t CURRENT_VERSION_MINOR = 2;
+const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 4;
+const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 2;
 
 //@}
 
@@ -139,6 +143,63 @@ public:
 private:
     MYSQL* mysql_;      ///< Initialization context
 };
+
+/// @brief Forward declaration to @ref MySqlConnection.
+class MySqlConnection;
+
+/// @brief RAII object representing MySQL transaction.
+///
+/// An instance of this class should be created in a scope where multiple
+/// INSERT statements should be executed within a single transaction. The
+/// transaction is started when the constructor of this class is invoked.
+/// The transaction is ended when the @ref MySqlTransaction::commit is
+/// explicitly called or when the instance of this class is destroyed.
+/// The @ref MySqlTransaction::commit commits changes to the database
+/// and the changes remain in the database when the instance of the
+/// class is destroyed. If the class instance is destroyed before the
+/// @ref MySqlTransaction::commit is called, the transaction is rolled
+/// back. The rollback on destruction guarantees that partial data is
+/// not stored in the database when there is an error during any
+/// of the operations belonging to a transaction.
+///
+/// The default MySQL backend configuration enables 'autocommit'.
+/// Starting a transaction overrides 'autocommit' setting for this
+/// particular transaction only. It does not affect the global 'autocommit'
+/// setting for the database connection, i.e. all modifications to the
+/// database which don't use transactions will still be auto committed.
+class MySqlTransaction : public boost::noncopyable {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Starts transaction by making a "START TRANSACTION" query.
+    ///
+    /// @param conn MySQL connection to use for the transaction. This
+    /// connection will be later used to commit or rollback changes.
+    ///
+    /// @throw DbOperationError if "START TRANSACTION" query fails.
+    MySqlTransaction(MySqlConnection& conn);
+
+    /// @brief Destructor.
+    ///
+    /// Rolls back the transaction if changes haven't been committed.
+    ~MySqlTransaction();
+
+    /// @brief Commits transaction.
+    void commit();
+
+private:
+
+    /// @brief Holds reference to the MySQL database connection.
+    MySqlConnection& conn_;
+
+    /// @brief Boolean flag indicating if the transaction has been committed.
+    ///
+    /// This flag is used in the class destructor to assess if the
+    /// transaction should be rolled back.
+    bool committed_;
+};
+
 
 /// @brief Common MySQL Connector Pool
 ///
@@ -259,6 +320,9 @@ public:
             uint32_t valid_lifetime, time_t& cltt);
     ///@}
 
+    /// @brief Starts Transaction
+    void startTransaction();
+
     /// @brief Commit Transactions
     ///
     /// Commits all pending database operations. On databases that don't
@@ -274,6 +338,69 @@ public:
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();
+
+    /// @brief Check Error and Throw Exception
+    ///
+    /// Virtually all MySQL functions return a status which, if non-zero,
+    /// indicates an error.  This function centralizes the error checking
+    /// code.
+    ///
+    /// It is used to determine whether or not the function succeeded, and
+    /// in the event of failures, decide whether or not those failures are
+    /// recoverable.
+    ///
+    /// If the error is recoverable, the method will throw a DbOperationError.
+    /// In the error is deemed unrecoverable, such as a loss of connectivity
+    /// with the server, this method will log the error and call exit(-1);
+    ///
+    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
+    /// Two tickets are likely to alter this behavior, first is #3639, which
+    /// calls for the ability to attempt to reconnect to the database. The
+    /// second ticket, #4087 which calls for the implementation of a generic,
+    /// FatalException class which will propagate outward.
+    ///
+    /// @param status Status code: non-zero implies an error
+    /// @param index Index of statement that caused the error
+    /// @param what High-level description of the error
+    ///
+    /// @tparam Enumeration representing index of a statement to which an
+    /// error pertains.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    template<typename StatementIndex>
+    void checkError(const int status, const StatementIndex& index,
+                    const char* what) const {
+        if (status != 0) {
+            switch(mysql_errno(mysql_)) {
+                // These are the ones we consider fatal. Remember this method is
+                // used to check errors of API calls made subsequent to successfully
+                // connecting.  Errors occuring while attempting to connect are
+                // checked in the connection code. An alternative would be to call
+                // mysql_ping() - assuming autoreconnect is off. If that fails
+                // then we know connection is toast.
+            case CR_SERVER_GONE_ERROR:
+            case CR_SERVER_LOST:
+            case CR_OUT_OF_MEMORY:
+            case CR_CONNECTION_ERROR:
+                // We're exiting on fatal
+                LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_FATAL_ERROR)
+                         .arg(what)
+                         .arg(text_statements_[static_cast<int>(index)])
+                         .arg(mysql_error(mysql_))
+                         .arg(mysql_errno(mysql_));
+                exit (-1);
+
+            default:
+                // Connection is ok, so it must be an SQL error
+                isc_throw(DbOperationError, what << " for <"
+                          << text_statements_[static_cast<int>(index)]
+                          << ">, reason: "
+                          << mysql_error(mysql_) << " (error code "
+                          << mysql_errno(mysql_) << ")");
+            }
+        }
+    }
 
     /// @brief Prepared statements
     ///
@@ -293,8 +420,6 @@ public:
     /// and will be from MySqlHostDataSource.
     MySqlHolder mysql_;
 };
-
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -293,11 +293,17 @@ Option6ClientFqdn::Option6ClientFqdn(const Option6ClientFqdn& source)
       impl_(new Option6ClientFqdnImpl(*source.impl_)) {
 }
 
+OptionPtr
+Option6ClientFqdn::clone() const {
+    return (cloneInternal<Option6ClientFqdn>());
+}
+
 Option6ClientFqdn&
 // This assignment operator handles assignment to self, it uses copy
 // constructor of Option6ClientFqdnImpl to copy all required values.
 // cppcheck-suppress operatorEqToSelf
 Option6ClientFqdn::operator=(const Option6ClientFqdn& source) {
+    Option::operator=(source);
     Option6ClientFqdnImpl* old_impl = impl_;
     impl_ = new Option6ClientFqdnImpl(*source.impl_);
     delete(old_impl);
@@ -395,7 +401,7 @@ Option6ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) {
+Option6ClientFqdn::pack(isc::util::OutputBuffer& buf) const {
     // Header = option code and length.
     packHeader(buf);
     // Flags field.
@@ -416,7 +422,7 @@ Option6ClientFqdn::unpack(OptionBufferConstIter first,
 }
 
 std::string
-Option6ClientFqdn::toText(int indent) {
+Option6ClientFqdn::toText(int indent) const {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
     stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << ", "
@@ -432,7 +438,7 @@ Option6ClientFqdn::toText(int indent) {
 }
 
 uint16_t
-Option6ClientFqdn::len() {
+Option6ClientFqdn::len() const {
     uint16_t domain_name_length = 0;
     if (impl_->domain_name_) {
         // If domain name is partial, the NULL terminating character

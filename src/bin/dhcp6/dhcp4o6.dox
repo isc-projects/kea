@@ -1,0 +1,53 @@
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page dhcpv4o6Dhcp6 DHCPv4-over-DHCPv6 DHCPv6 Server Side
+
+Kea supports DHCPv4-over-DHCPv6 using cooperating DHCPv6 and DHCPv4
+servers. This section describes the DHCPv6 server side. For its
+DHCPv6 counter-part, see @ref dhcpv4o6Dhcp4.
+
+@section dhcp6to4Ipc DHCPv6-to-DHCPv4 Inter Process Communication
+
+The @c Dhcp6to4Ipc class is derived from the base @c Dhcp4o6IpcBase as
+a singleton class (by the static @ref isc::dhcp::Dhcp6to4Ipc::instance
+function).  @ref isc::dhcp::Dhcp6to4Ipc::open is called to open IPC
+UDP sockets and to register @ref isc::dhcp::Dhcp6to4Ipc::handler on
+external sockets on the @c IfaceMgr.
+
+@section dhcp6to4Process DHCPv6-to-DHCPv4 Packet Processing
+
+Following the DHCPv4-over-DHCPv6 packet flow:
+
+- a DHCPv6 DHCPv4-QUERY is received from a DHCPv4-over-DHCPv6 client
+  (standard incoming DHCPv6 message processing is done until
+   the message type specific part)
+
+- the isc::dhcp::Dhcpv6Srv::processDhcp4Query method which verifies
+  a DHCPv4 message option is present and calls the (inherited) @ref
+  isc::dhcp::Dhcp4o6IpcBase::send method to transmit the DHCPv4-QUERY
+  with the interface name and remote IPv6 address to the DHCPv4 server
+
+- the DHCPv4 server processes the DHCPv4-QUERY and returns a
+  DHCPv4-RESPONSE using the IPC
+
+- the interface manager (@c IfaceMgr) using the external socket
+  mechanism invokes @ref isc::dhcp::Dhcp6to4Ipc::handler
+
+- @ref isc::dhcp::Dhcp6to4Ipc::handler receives the packet by
+  (inherited) @ref isc::dhcp::Dhcp4o6IpcBase::receive which
+  decodes and strips the ISC Vendor option. From this point
+  the code mimics the sending part of standard DHCPv6 packet
+  processing.
+
+- the callouts registered for "buffer6_send" hook point are called
+  (@ref dhcpv6HooksBuffer6Send). Note the "pkt6_send" hook is not used
+  because the matching query packet is not available
+
+- the DHCPv6 DHCPv4-RESPONSE packet is sent back to the IPv6 remote address
+
+*/

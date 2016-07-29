@@ -45,6 +45,7 @@ public:
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt6_.reset();
+        callback_qry_options_copy_ = false;
     }
 
     /// callback that stores received callout name and received values
@@ -61,6 +62,12 @@ public:
         callback_addr_original_ = callback_lease6_->addr_;
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ =
+                callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -102,6 +109,7 @@ public:
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
     static Pkt6Ptr callback_qry_pkt6_;
+    static bool callback_qry_options_copy_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -122,6 +130,7 @@ Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
 Pkt6Ptr HookAllocEngine6Test::callback_qry_pkt6_;
+bool HookAllocEngine6Test::callback_qry_options_copy_;
 
 // This test checks if the lease6_select callout is executed and expected
 // parameters as passed.
@@ -148,13 +157,12 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_callout));
 
-    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-
     Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
-                                    Lease::TYPE_NA, false, false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
-    ctx.callout_handle_ = callout_handle;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+    ctx.currentIA().iaid_ = iaid_;
+
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -196,6 +204,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
 
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if lease6_select callout is able to override the values
@@ -223,16 +233,12 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_different_callout));
 
-    // Normally, dhcpv6_srv would passed the handle when calling allocateLeases6,
-    // but in tests we need to create it on our own.
-    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-
     // Call allocateLeases6. Callouts should be triggered here.
     Lease6Ptr lease;
-    AllocEngine::ClientContext6 ctx(subnet_, duid_, iaid_, IOAddress("::"),
-                                    Lease::TYPE_NA, false, false, "", false);
-    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
-    ctx.callout_handle_ = callout_handle;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+    ctx.currentIA().iaid_ = iaid_;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -287,6 +293,7 @@ public:
         callback_addr_original_ = IOAddress("::");
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt4_.reset();
+        callback_qry_options_copy_ = false;
     }
 
     /// callback that stores received callout name and received values
@@ -303,6 +310,12 @@ public:
         callback_addr_original_ = callback_lease4_->addr_;
 
         callback_argument_names_ = callout_handle.getArgumentNames();
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ =
+                callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
         return (0);
     }
 
@@ -342,6 +355,7 @@ public:
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
     static Pkt4Ptr callback_qry_pkt4_;
+    static bool callback_qry_options_copy_;
 };
 
 // For some reason intialization within a class makes the linker confused.
@@ -361,6 +375,7 @@ Lease4Ptr HookAllocEngine4Test::callback_lease4_;
 bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;
 Pkt4Ptr HookAllocEngine4Test::callback_qry_pkt4_;
+bool HookAllocEngine4Test::callback_qry_options_copy_;
 
 // This test checks if the lease4_select callout is executed and expected
 // parameters as passed.
@@ -433,6 +448,8 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test checks if lease4_select callout is able to override the values

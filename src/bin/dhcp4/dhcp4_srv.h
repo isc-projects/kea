@@ -81,6 +81,11 @@ public:
     /// response is not initialized.
     void initResponse();
 
+    /// @brief Initializes the DHCPv6 part of the response message
+    ///
+    /// Called by initResponse() when the query is a DHCP4o6 message
+    void initResponse4o6();
+
     /// @brief Returns the pointer to the query from the client.
     Pkt4Ptr getQuery() const {
         return (query_);
@@ -713,6 +718,12 @@ protected:
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query) const;
 
+    /// @brief Selects a subnet for a given client's DHCP4o6 packet.
+    ///
+    /// @param query client's message
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query) const;
+
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
@@ -728,18 +739,6 @@ protected:
     /// This method is useful for testing purposes, where its replacement
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt4Ptr& pkt);
-
-    /// @brief Implements a callback function to parse options in the message.
-    ///
-    /// @param buf a A buffer holding options in on-wire format.
-    /// @param option_space A name of the option space which holds definitions
-    /// of to be used to parse options in the packets.
-    /// @param [out] options A reference to the collection where parsed options
-    /// will be stored.
-    /// @return An offset to the first byte after last parsed option.
-    size_t unpackOptions(const OptionBuffer& buf,
-                         const std::string& option_space,
-                         isc::dhcp::OptionCollection& options);
 
     /// @brief Assigns incoming packet to zero or more classes.
     ///
@@ -789,21 +788,47 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
+    uint16_t port_;  ///< UDP port number on which server listens.
+    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+
+public:
+    /// Class methods for DHCPv4-over-DHCPv6 handler
+
     /// @brief Updates statistics for received packets
     /// @param query packet received
     static void processStatsReceived(const Pkt4Ptr& query);
 
     /// @brief Updates statistics for transmitted packets
-    /// @param query packet transmitted
+    /// @param response packet transmitted
     static void processStatsSent(const Pkt4Ptr& response);
 
-    uint16_t port_;  ///< UDP port number on which server listens.
-    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+    /// @brief Returns the index for "buffer4_receive" hook point
+    /// @return the index for "buffer4_receive" hook point
+    static int getHookIndexBuffer4Receive();
 
-    /// Indexes for registered hook points
-    int hook_index_pkt4_receive_;
-    int hook_index_subnet4_select_;
-    int hook_index_pkt4_send_;
+    /// @brief Returns the index for "pkt4_receive" hook point
+    /// @return the index for "pkt4_receive" hook point
+    static int getHookIndexPkt4Receive();
+
+    /// @brief Returns the index for "subnet4_select" hook point
+    /// @return the index for "subnet4_select" hook point
+    static int getHookIndexSubnet4Select();
+
+    /// @brief Returns the index for "lease4_release" hook point
+    /// @return the index for "lease4_release" hook point
+    static int getHookIndexLease4Release();
+
+    /// @brief Returns the index for "pkt4_send" hook point
+    /// @return the index for "pkt4_send" hook point
+    static int getHookIndexPkt4Send();
+
+    /// @brief Returns the index for "buffer4_send" hook point
+    /// @return the index for "buffer4_send" hook point
+    static int getHookIndexBuffer4Send();
+
+    /// @brief Returns the index for "lease4_decline" hook point
+    /// @return the index for "lease4_decline" hook point
+    static int getHookIndexLease4Decline();
 };
 
 }; // namespace isc::dhcp

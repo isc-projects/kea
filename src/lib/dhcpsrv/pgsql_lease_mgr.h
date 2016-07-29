@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,103 +9,24 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/pgsql_connection.h>
+#include <dhcpsrv/pgsql_exchange.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <libpq-fe.h>
 
 #include <vector>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Structure used to bind C++ input values to dynamic SQL parameters
-/// The structure contains three vectors which store the input values,
-/// data lengths, and formats.  These vectors are passed directly into the
-/// PostgreSQL execute call.
-///
-/// Note that the data values are stored as pointers. These pointers need to
-/// valid for the duration of the PostgreSQL statement execution.  In other
-/// words populating them with pointers to values that go out of scope before
-/// statement is executed is a bad idea.
-struct PsqlBindArray {
-    /// @brief Vector of pointers to the data values.
-    std::vector<const char *> values_;
-    /// @brief Vector of data lengths for each value.
-    std::vector<int> lengths_;
-    /// @brief Vector of "format" for each value. A value of 0 means the
-    /// value is text, 1 means the value is binary.
-    std::vector<int> formats_;
-
-    /// @brief Format value for text data.
-    static const int TEXT_FMT;
-    /// @brief Format value for binary data.
-    static const int BINARY_FMT;
-
-    /// @brief Constant string passed to DB for boolean true values.
-    static const char* TRUE_STR;
-    /// @brief Constant string passed to DB for boolean false values.
-    static const char* FALSE_STR;
-
-    /// @brief Fetches the number of entries in the array.
-    /// @return Returns size_t containing the number of entries.
-    size_t size() {
-        return (values_.size());
-    }
-
-    /// @brief Indicates it the array is empty.
-    /// @return Returns true if there are no entries in the array, false
-    /// otherwise.
-    bool empty() {
-
-        return (values_.empty());
-    }
-
-    /// @brief Adds a char array to bind array based
-    ///
-    /// Adds a TEXT_FMT value to the end of the bind array, using the given
-    /// char* as the data source. Note that value is expected to be NULL
-    /// terminated.
-    ///
-    /// @param value char array containing the null-terminated text to add.
-    void add(const char* value);
-
-    /// @brief Adds an string value to the bind array
-    ///
-    /// Adds a TEXT formatted value to the end of the bind array using the
-    /// given string as the data source.
-    ///
-    /// @param value std::string containing the value to add.
-    void add(const std::string& value);
-
-    /// @brief Adds a binary value to the bind array.
-    ///
-    /// Adds a BINARY_FMT value to the end of the bind array using the
-    /// given vector as the data source.
-    ///
-    /// @param data vector of binary bytes.
-    void add(const std::vector<uint8_t>& data);
-
-    /// @brief Adds a boolean value to the bind array.
-    ///
-    /// Converts the given boolean value to its corresponding to PostgreSQL
-    /// string value and adds it as a TEXT_FMT value to the bind array.
-    ///
-    /// @param value bool value to add.
-    void add(const bool& value);
-
-    /// @brief Dumps the contents of the array to a string.
-    /// @return std::string containing the dump
-    std::string toText();
-};
-
 // Forward definitions (needed for shared_ptr definitions)
 // See pgsql_lease_mgr.cc file for actual class definitions
 class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
 
-/// Defines PostgreSQL backend version: 2.0
-const uint32_t PG_CURRENT_VERSION = 2;
+/// Defines PostgreSQL backend version: 3.0
+const uint32_t PG_CURRENT_VERSION = 3;
 const uint32_t PG_CURRENT_MINOR = 0;
 
 /// @brief PostgreSQL Lease Manager
@@ -430,7 +351,7 @@ public:
     ///
     /// Commits all pending database operations.
     ///
-    /// @throw DbOperationError Iif the commit failed.
+    /// @throw DbOperationError If the commit failed.
     virtual void commit();
 
     /// @brief Rollback Transactions
@@ -439,15 +360,6 @@ public:
     ///
     /// @throw DbOperationError If the rollback failed.
     virtual void rollback();
-
-    /// @brief Checks a result set's SQL state against an error state.
-    ///
-    /// @param r result set to check
-    /// @param error_state error state to compare against
-    ///
-    /// @return True if the result set's SQL state equals the error_state,
-    /// false otherwise.
-    bool compareError(PGresult*& r, const char* error_state);
 
     /// @brief Statement Tags
     ///
@@ -477,26 +389,6 @@ public:
     };
 
 private:
-
-    /// @brief Prepare statements
-    ///
-    /// Creates the prepared statements for all of the SQL statements used
-    /// by the PostgreSQL backend.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
-    ///        represents an internal error within the code.
-    void prepareStatements();
-
-    /// @brief Open Database
-    ///
-    /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
-    ///
-    /// @throw NoDatabaseName Mandatory database name not given
-    /// @throw DbOpenError Error opening the database
-    void openDatabase();
 
     /// @brief Add Lease Common Code
     ///
@@ -581,28 +473,6 @@ private:
         getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
 
-    /// @brief Checks result of the r object
-    ///
-    /// This function is used to determine whether or not the SQL statement
-    /// execution succeeded, and in the event of failures, decide whether or
-    /// not the failures are recoverable.
-    ///
-    /// If the error is recoverable, the method will throw a DbOperationError.
-    /// In the error is deemed unrecoverable, such as a loss of connectivity
-    /// with the server, this method will log the error and call exit(-1);
-    ///
-    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
-    /// Two tickets are likely to alter this behavior, first is #3639, which
-    /// calls for the ability to attempt to reconnect to the database. The
-    /// second ticket, #4087 which calls for the implementation of a generic,
-    /// FatalException class which will propagate outward.
-    ///
-    /// @param r result of the last PostgreSQL operation
-    /// @param index will be used to print out compiled statement name
-    ///
-    /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
-    void checkStatementError(PGresult*& r, StatementIndex index) const;
-
     /// @brief Get Lease4 Common Code
     ///
     /// This method performs the common actions for the various getLease4()
@@ -679,7 +549,8 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
+    uint64_t deleteLeaseCommon(StatementIndex stindex,
+                               PsqlBindArray& bind_array);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -700,14 +571,8 @@ private:
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
-    /// Database connection object
-    ///
-    /// @todo: Implement PgSQLConnection object and collapse
-    /// dbconn_ and conn_ into a single object.
-    DatabaseConnection dbconn_;
-
     /// PostgreSQL connection handle
-    PGconn* conn_;
+    PgSqlConnection conn_;
 };
 
 }; // end of isc::dhcp namespace

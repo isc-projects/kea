@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <util/staged_value.h>
 
 #include <iostream>
+#include <stdint.h>
 #include <string>
 
 namespace isc {
@@ -36,8 +37,8 @@ public:
     ///
     /// @param u universe of the options (V4 or V6).
     ///
-    /// @return collection of option definitions.
-    static const OptionDefContainer& getOptionDefs(const Option::Universe u);
+    /// @return Pointer to a collection of option definitions.
+    static const OptionDefContainerPtr& getOptionDefs(const Option::Universe u);
 
     /// @brief Return the first option definition matching a
     /// particular option code.
@@ -250,17 +251,17 @@ public:
     /// @brief Returns v4 option definitions for a given vendor
     ///
     /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if not option
+    /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainer*
+    static const OptionDefContainerPtr&
     getVendorOption4Defs(const uint32_t vendor_id);
 
     /// @brief Returns v6 option definitions for a given vendor
     ///
     /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if not option
+    /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainer*
+    static const OptionDefContainerPtr&
     getVendorOption6Defs(const uint32_t vendor_id);
 
     /// @brief Parses provided buffer as DHCPv6 vendor options and creates
@@ -321,6 +322,21 @@ public:
     /// @brief Commits runtime option definitions.
     static void commitRuntimeOptionDefs();
 
+    /// @brief Converts option space name to vendor id.
+    ///
+    /// If the option space name is specified in the following format:
+    /// "vendor-X" where X is an uint32_t number, it is assumed to be
+    /// a vendor space and the uint32_t number is returned by this function.
+    /// If the option space name is invalid this method will return 0, which
+    /// is not a valid vendor-id, to signal an error.
+    ///
+    /// @todo remove this function once when the conversion is dealt by the
+    /// appropriate functions returning options by option space names.
+    ///
+    /// @param option_space Option space name.
+    /// @return vendor id.
+    static uint32_t optionSpaceToVendorId(const std::string& option_space);
+
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -356,10 +372,10 @@ private:
     static FactoryMap v6factories_;
 
     /// Container with DHCPv4 option definitions.
-    static OptionDefContainer v4option_defs_;
+    static OptionDefContainerPtr v4option_defs_;
 
     /// Container with DHCPv6 option definitions.
-    static OptionDefContainer v6option_defs_;
+    static OptionDefContainerPtr v6option_defs_;
 
     /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;

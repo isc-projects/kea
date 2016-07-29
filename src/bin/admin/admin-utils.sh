@@ -48,11 +48,11 @@ pgsql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 0 ]; then
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q $*
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q $*
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name
         retcode=$?
     fi
     return $retcode
@@ -72,11 +72,11 @@ pgsql_execute_script() {
     file=$1
     shift
     if [ $# -gt 0 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -q -f $file $*
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f $file $*
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -q -U $db_user -d $db_name -f $file
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name -f $file
         retcode=$?
     fi
     return $retcode
@@ -84,5 +84,50 @@ pgsql_execute_script() {
 
 pgsql_version() {
     pgsql_execute "SELECT version || '.' || minor FROM schema_version" "$@"
+    return $?
+}
+
+cql_execute() {
+    query=$1
+    shift
+    if [ $# -gt 1 ]; then
+        cqlsh $* -e "$query"
+        retcode=$?
+    else
+        cqlsh -u $db_user -p $db_password -k $db_name -e "$query"
+        retcode=$?
+    fi
+
+    if [ $retcode -ne 0 ]; then
+        printf "cqlsh returned with exit status $retcode\n"
+        exit $retcode
+    fi
+
+    return $retcode
+}
+
+cql_execute_script() {
+    file=$1
+    shift
+    if [ $# -gt 1 ]; then
+        cqlsh $* -e "$file"
+        retcode=$?
+    else
+        cqlsh -u $db_user -p $db_password -k $db_name -f "$file"
+        retcode=$?
+    fi
+
+    if [ $retcode -ne 0 ]; then
+        printf "cqlsh returned with exit status $retcode\n"
+        exit $retcode
+    fi
+
+    return $retcode
+}
+
+cql_version() {
+    version=`cql_execute "SELECT version, minor FROM schema_version" "$@"`
+    version=`echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter="."`
+    echo $version
     return $?
 }

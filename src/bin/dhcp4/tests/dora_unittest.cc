@@ -59,8 +59,17 @@ namespace {
 ///     uses HW address for lease lookup, rather than client id
 ///
 /// - Configuration 4:
-///   - The same as configuration 2, but using different values in
-///     'host-reservation-identifiers'
+///   - Used for testing host reservations where circuit-id takes precedence
+///     over hw-address, and the hw-address takes precedence over duid.
+///   - 1 subnet: 10.0.0.0/24
+///   - 3 reservations for this subnet:
+///     - IP address 10.0.0.7 for HW address aa:bb:cc:dd:ee:ff
+///     - IP address 10.0.0.8 for DUID 01:02:03:04:05
+///     - IP address 10.0.0.9 for circuit-id 'charter950'
+///
+/// - Configuration 5:
+///   - The same as configuration 4, but using the following order of
+///     host-reservation-identifiers: duid, circuit-id, hw-address.
 ///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
@@ -138,6 +147,10 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"circuit-id\": \"'charter950'\","
         "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
         "       }"
         "    ]"
         "} ]"
@@ -164,7 +177,8 @@ const char* DORA_CONFIGS[] = {
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
-        "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\" ],"
+        "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\","
+        "                                    \"duid\", \"client-id\" ],"
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
@@ -181,6 +195,41 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"circuit-id\": \"'charter950'\","
         "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
+
+    // Configuration 5
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\", \"client-id\","
+        "                                    \"circuit-id\", \"hw-address\" ],"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.7\""
+        "       },"
+        "       {"
+        "         \"duid\": \"01:02:03:04:05\","
+        "         \"ip-address\": \"10.0.0.8\""
+        "       },"
+        "       {"
+        "         \"circuit-id\": \"'charter950'\","
+        "         \"ip-address\": \"10.0.0.9\""
+        "       },"
+        "       {"
+        "         \"client-id\": \"01:11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.1\""
         "       }"
         "    ]"
         "} ]"
@@ -728,6 +777,38 @@ TEST_F(DORATest, reservation) {
 }
 
 // This test checks that it is possible to make a reservation by
+// DUID carried in the Client Identifier option.
+TEST_F(DORATest, reservationByDUID) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent so as the circuit-id can be inserted.
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+    // Modify HW address so as the server doesn't assign reserved
+    // address by HW address.
+    client.modifyHWAddr();
+    // Specify DUID for which address 10.0.0.8 is reserved.
+    // The value specified as client id includes:
+    // - FF is a client identifier type for DUID,
+    // - 45454545 - represents 4 bytes for IAID
+    // - 01:02:03:04:05 - is an actual DUID for which there is a
+    //   reservation.
+    client.includeClientId("FF:45:45:45:45:01:02:03:04:05");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.8", client.config_.lease_.addr_.toText());
+}
+
+// This test checks that it is possible to make a reservation by
 // circuit-id inserted by the relay agent.
 TEST_F(DORATest, reservationByCircuitId) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -758,6 +839,13 @@ TEST_F(DORATest, hostIdentifiersOrder) {
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Use relay agent so as the circuit-id can be inserted.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+    // Specify DUID for which address 10.0.0.8 is reserved.
+    // The value specified as client id includes:
+    // - FF is a client identifier type for DUID,
+    // - 45454545 - represents 4 bytes for IAID
+    // - 01:02:03:04:05 - is an actual DUID for which there is a
+    //   reservation.
+    client.includeClientId("FF:45:45:45:45:01:02:03:04:05");
     // Specify circuit-id.
     client.setCircuitId("charter950");
 
@@ -778,7 +866,7 @@ TEST_F(DORATest, hostIdentifiersOrder) {
 
     // Reconfigure the server to change the preference order of the
     // host identifiers. The 'circuit-id' should now take precedence over
-    // the hw-address.
+    // the hw-address, duid and client-id.
     configure(DORA_CONFIGS[4], *client.getServer());
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
@@ -790,6 +878,36 @@ TEST_F(DORATest, hostIdentifiersOrder) {
     // Make sure that the client has got the lease for the reserved address.
     ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
 
+    // Reconfigure the server to change the preference order of the
+    // host identifiers. The 'duid' should now take precedence over
+    // the client-id, hw-address and circuit-id
+    configure(DORA_CONFIGS[5], *client.getServer());
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.8", client.config_.lease_.addr_.toText());
+
+    // Replace the client identifier with the one for which address
+    // 10.0.0.1 is reserved. Because the DUID is a special type of
+    // client identifier, this change effectively removes the association
+    // of the client with the DUID for which address 10.0.0.8 is reserved.
+    // The next identifier type to be used by the server (after DUID) is
+    // client-id and thus the server should assign address 10.0.0.1.
+    client.includeClientId("01:11:22:33:44:55:66");
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.1", client.config_.lease_.addr_.toText());
 }
 
 // This test checks that setting the match-client-id value to false causes

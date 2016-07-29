@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,17 @@ public:
     virtual bool isDhcp4o6() const {
         return (true);
     }
+
+    /// @brief Overrides the @ref Pkt::setCopyRetrievedOptions to also
+    /// set the flag for encapsulated @ref Pkt6 instance.
+    ///
+    /// When the flag is set for the instance of the @ref Pkt4o6 the
+    /// encapsulated Pkt6, retrieved with @ref Pkt4o6::getPkt6, will
+    /// inherit this setting.
+    ///
+    /// @param copy Indicates if the options should be copied when
+    /// retrieved (if true), or not copied (if false).
+    virtual void setCopyRetrievedOptions(const bool copy);
 
 private:
     /// Encapsulating DHCPv6 message

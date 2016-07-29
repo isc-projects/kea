@@ -16,6 +16,9 @@ endif
 if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -41,6 +44,9 @@ EXTRA_DIST += parsers/host_reservations_list_parser.h
 EXTRA_DIST += parsers/ifaces_config_parser.cc
 EXTRA_DIST += parsers/ifaces_config_parser.h
 
+# Devel guide diagrams
+EXTRA_DIST += images/pgsql_host_data_source.svg
+
 # Define rule to build logging source files from message file
 alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
 dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
@@ -63,12 +69,6 @@ s-messages: alloc_engine_messages.mes dhcpsrv_messages.mes hosts_messages.mes
 BUILT_SOURCES = alloc_engine_messages.h alloc_engine_messages.cc
 BUILT_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 BUILT_SOURCES += hosts_messages.h hosts_messages.cc
-
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Make sure the generated files are deleted in a "clean" operation
 CLEANFILES = *.gcno *.gcda
@@ -107,6 +107,7 @@ libkea_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
 libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
 libkea_dhcpsrv_la_SOURCES += database_connection.cc database_connection.h
 libkea_dhcpsrv_la_SOURCES += db_exceptions.h
+libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
@@ -133,7 +134,14 @@ endif
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 
 if HAVE_PGSQL
+libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
+libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
+libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
+endif
+if HAVE_CQL
+libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
+libkea_dhcpsrv_la_SOURCES += cql_connection.cc cql_connection.h
 endif
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
@@ -194,11 +202,8 @@ endif
 if HAVE_PGSQL
 libkea_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
 endif
-
-if USE_CLANGPP
-# Disable unused parameter warning caused by some of the
-# Boost headers when compiling with clang.
-libkea_dhcpsrv_la_CXXFLAGS += -Wno-unused-parameter
+if HAVE_CQL
+libkea_dhcpsrv_la_LDFLAGS += $(CQL_LIBS)
 endif
 
 # The message file should be in the distribution

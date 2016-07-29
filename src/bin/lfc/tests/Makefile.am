@@ -24,10 +24,6 @@ CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 DISTCLEANFILES = 
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-if USE_CLANGPP
-# Disable unused parameter warning caused by some Boost headers when compiling with clang
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
@@ -51,6 +47,9 @@ lfc_unittests_LDFLAGS += $(MYSQL_LIBS)
 endif
 if HAVE_PGSQL
 lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
+if HAVE_CQL
+lfc_unittests_LDFLAGS += $(CQL_LIBS)
 endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 

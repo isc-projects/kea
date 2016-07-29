@@ -10,13 +10,11 @@
     <section id="dhcp4-start-stop">
       <title>Starting and Stopping the DHCPv4 Server</title>
 
-      <!-- @todo Rewrite this section once #3422 is done -->
-
       <para>
-      It is recommended that the Kea DHCPv4 server be started and stopped
-      using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-      However, it is also possible to run the server directly: it accepts
-      the following command-line switches:
+        It is recommended that the Kea DHCPv4 server be started and stopped
+        using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
+        However, it is also possible to run the server directly: it accepts
+        the following command-line switches:
       </para>
 
       <itemizedlist>
@@ -64,25 +62,25 @@
       </itemizedlist>
 
       <para>
-            The <command>-V</command> command returns the versions of the
-            external libraries dynamically linked.
+        The <command>-V</command> command returns the versions of the
+        external libraries dynamically linked.
       </para>
 
       <para>
-            The <command>-W</command> command describes the environment used
-            to build Kea.  This command displays a copy of the
-            <filename>config.report</filename> file produced by
-            <userinput>./configure</userinput> that is embedded in the
-            executable binary.
+        The <command>-W</command> command describes the environment used
+        to build Kea.  This command displays a copy of the
+        <filename>config.report</filename> file produced by
+        <userinput>./configure</userinput> that is embedded in the
+        executable binary.
       </para>
 
       <para>
-            The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
-            in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
-            <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
+        The <filename>config.report</filename> may also be accessed more
+        directly.  The following command may be used to extract this
+        information.  The binary <userinput>path</userinput> may be found
+        in the install directory or in the <filename>.libs</filename>
+        subdirectory in the source tree. For example
+        <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
 
 <screen>
 strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
@@ -90,9 +88,9 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-	    When running in a console, the server can be shut down by
-	    pressing ctrl-c. It detects the key combination and shuts
-	    down gracefully.
+        When running in a console, the server can be shut down by
+        pressing ctrl-c. It detects the key combination and shuts
+        down gracefully.
       </para>
 
       <para>
@@ -301,8 +299,8 @@ be followed by a comma and another object definition.</para>
 <section>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
-  Currently there are three database backends available:
-  memfile (which is the default backend), MySQL and PostgreSQL.</para>
+  Currently there are four database backends available:  memfile (which is the
+  default backend), MySQL, PostgreSQL and CQL.</para>
 <section>
   <title>Memfile, Basic Storage for Leases</title>
 
@@ -441,8 +439,10 @@ be followed by a comma and another object definition.</para>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>
-  or <xref linkend="pgsql-database-create"/>).
+  name used when the lease database was created
+  (see <xref linkend="mysql-database-create"/>,
+  <xref linkend="pgsql-database-create"/> or
+  <xref linkend="cql-database-create"/>).
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
@@ -479,13 +479,7 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 
 <section>
-  <title>Hosts Storage</title>
-
-    <note>
-      <para>This feature did not undergo the regular system level
-      testing conducted by ISC. As such, please treat it as
-      experimental.</para>
-    </note>
+  <title id="hosts4-storage">Hosts Storage</title>
 
     <para>Kea is also able to store information about host reservations in the
     database. Hosts database configuration uses the same syntax as lease
@@ -748,8 +742,8 @@ temporarily override a list of interface names and listen on all interfaces.
     manually specify a unique identifier for each subnet.
   </para>
       <para>
-	The following configuration will assign the specified subnet
-	identifier to the newly configured subnet:
+        The following configuration will assign the specified subnet
+        identifier to the newly configured subnet:
 
         <screen>
 "Dhcp4": {
@@ -1433,7 +1427,7 @@ It is merely echoed by the server
             "type": "ipv4-address",
             "record-types": "",
             "array": false,
-            "encapsulate ""
+            "encapsulate": ""
         },
         {
             "name": "subopt2",
@@ -2236,7 +2230,7 @@ It is merely echoed by the server
       which updated
       <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.
       That update now states that the server must
-      send client-id if the client sent it. That is the default behaviour
+      send client-id if the client sent it. That is the default behavior
       that Kea offers. However, in some cases older devices that do
       not support
       <ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>.
@@ -2417,7 +2411,98 @@ It is merely echoed by the server
 
     </section>
 
-  </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
+"    <section id="dhcp4-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv4 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv4 side
+      (the DHCPv6 side is described in <xref linkend="dhcp6-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      The <command>dhcp4o6-port</command> global parameter specifies
+      the first of the two consecutive ports of the UDP sockets used
+      for the communication between the DHCPv6 and DHCPv4 servers
+      (the DHCPv4 server is bound to ::1 on <command>port</command> + 1
+      and connected to ::1 on <command>port</command>).
+      </para>
+      <para>
+      With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
+      to several of the identifiers it would normally use to select a
+      subnet.  In order to address this issue three new configuration
+      entires have been added.  The presence of any of these allows the
+      subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
+      <itemizedlist>
+        <listitem>
+        <simpara><command>4o6-subnet</command>: Takes a prefix (i.e., an
+        IPv6 address followed by a slash and a prefix length) which is
+        matched against the source address.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface-id</command>: Takes a relay interface
+        ID option value.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface</command>: Takes an interface name
+        which is matched against the incoming interface name.
+        </simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv4 conf
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eno33554984" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases4"
+    },
+
+    "valid-lifetime": 4000,
+
+    "subnet4": [ {
+        "subnet": "10.10.10.0/24",
+        <userinput>"4o6-interface": "eno33554984",</userinput>
+        <userinput>"4o6-subnet": "2001:db8:1:1::/64",</userinput>
+        "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767</userinput>
+
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp4",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp4.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+    </para>
+    </section>
+
+  </section> <!-- end of configuring kea-dhcp4 server section -->
 
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
@@ -2442,23 +2527,18 @@ It is merely echoed by the server
     near future.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
-    has to be identified by its hardware/MAC address. There is an optional
+    has to be identified by an identifier, for example hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure, that holds information
     about reservations for a single host. In particular, such a structure has
     to have an identifier that uniquely identifies a host.  In DHCPv4 context, such an
-    identifier is a hardware or MAC address.  In most cases, also an address
-    will be specified. It is possible to specify a hostname. Additional
-    capabilities are planned.</para>
+    identifier is a hardware or MAC address.  In most cases an address
+    will be specified. It is also possible to specify a hostname or host
+    specific options. Additional capabilities are planned.</para>
 
-    <note><para>In Kea 1.0.0 it is only possible to create host reservations
-    using client's hardware address. Host reservations by client identifier
-    (or DUID) are not supported in this version of Kea. This capability will
-    be implemented in Kea 1.1.0. Currently, the configuration parsing code
-    will accept the "duid" parameter in the reservation configuration, but
-    the server will misinterpret its value. Therefore, this parameter MUST
-    NOT be used until the client identifier based host reservations are
-    properly implemented and documented.</para></note>
+    <para>In Kea 1.0.0 it was only possible to create host reservations
+    using client's hardware address. Host reservations by client
+    identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
     <para>The following example shows how to reserve addresses for specific
     hosts:
@@ -2475,20 +2555,37 @@ It is merely echoed by the server
                 "ip-address": "192.0.2.202"
             },
             {
-                "hw-address": "0a:0b:0c:0d:0e:0f",
+                "duid": "0a:0b:0c:0d:0e:0f",
                 "ip-address": "192.0.2.100",
                 "hostname": "alice-laptop"
+            },
+            {
+                "circuit-id": "'charter950'",
+                "ip-address": "192.0.2.203"
+            },
+            {
+                "client-id": "01:11:22:33:44:55:66",
+                "ip-address": "192.0.2.204"
             }
         ]</userinput>
     }
 ]
 </screen>
     The first entry reserves the 192.0.2.202 address for the client that uses
-    MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
-    192.0.2.100 and the hostname of alice-laptop for client using MAC
-    address 0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
-    is strongly recommended for the hostnames to be unique.
-    </para>
+    a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the address
+    192.0.2.100 and the hostname of alice-laptop for the client using a DUID
+    0a:0b:0c:0d:0e:0f. Note that if you plan to do DNS updates, it
+    is strongly recommended for the hostnames to be unique. The third
+    example reserves address 192.0.3.203 to a client whose request
+    would be relayed by a relay agent that inserts a circuid-it option
+    with the value 'charter950'. The fourth entry reserves address
+    192.0.2.204 for a client that uses a client identifier with value
+    01:11:22:33:44:55:66.</para>
+
+    <para>The above example is used for ilustrational purposes only
+    and in actual deployments it is recommended to use as few types as possible
+    (preferably just one). See <xref linkend="reservations4-tuning"/> for detailed
+    discussion.</para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
     requires a separate host definition in each subnet it is expected to visit.
@@ -2667,26 +2764,100 @@ It is merely echoed by the server
     </section>
 
     <section id="reservation4-options">
-      <title>Reserving specific options</title>
-      <!-- @todo: replace this with the actual text once #3572 is implemented -->
-      <para>Currently it is not possible to specify options in host
-      reservation. Such a feature will be added in the upcoming Kea
-      releases.</para>
+      <title>Including specific DHCPv4 options in reservations</title>
+      <para>Kea 1.1.0 introduced the ability to specify options on a
+      per host basis. The options follow the same rules as any other
+      options. These can be standard options (see <xref
+      linkend="dhcp4-std-options" />), custom options (see <xref
+      linkend="dhcp4-custom-options"/>) or vendor specific options
+      (see <xref linkend="dhcp4-vendor-opts" />). The following
+      example showcases how standard options can be defined.</para>
+
+      <screen>
+{
+    "subnet4": [ {
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            "ip-address": "192.0.2.1",
+            <userinput>"option-data": [
+            {
+                "name": "cookie-servers",
+                "data": "10.1.1.202,10.1.1.203"
+            },
+            {
+                "name": "log-servers",
+                "data": "10.1.1.200,10.1.1.201"
+            } ]</userinput>
+        } ]
+    } ]
+}</screen>
+
+    <para>Vendor specific options can be reserved in a similar manner:</para>
+
+    <screen>
+{
+    "subnet4": [ {
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            "ip-address": "10.0.0.7",
+            <userinput>"option-data": [
+            {
+                "name": "vivso-suboptions",
+                "data": "4491"
+            },
+            {
+                "name": "tftp-servers",
+                "space": "vendor-4491",
+                "data": "10.1.1.202,10.1.1.203"
+            } ]</userinput>
+        } ]
+    } ]
+}</screen>
+
+<para>
+ Options defined on host level have the highest priority. In other words,
+ if there are options defined with the same type on global, subnet, class and
+ host level, the host specific values will be used.
+</para>
+
     </section>
 
-    <section id="reservation4-mode">
-      <title>Fine Tuning IPv4 Host Reservation</title>
+    <section id="reservations4-mysql">
+      <title>Storing host reservations in MySQL</title>
 
-      <note>
-        <para><command>reservation-mode</command> configuration parameter in DHCPv4
-        server is accepted, but not used in the Kea 0.9.1 beta. Full implementation
-        will be available in the upcoming releases.</para>
-      </note>
+      <para>
+        It is possible to store host reservations in MySQL. See <xref
+        linkend="hosts4-storage" /> for information on how to configure Kea to use
+        reservations stored in MySQL. Kea does not provide any dedicated tools
+        for managing MySQL reservations. See Kea wiki <ulink
+        url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
+        information and examples of how reservations can be inserted into the
+        database.
+      </para>
+    </section>
+
+    <section id="reservations4-pgsql">
+      <title>Storing host reservations in PostgreSQL</title>
+      <para>Kea currently does not support storing reservations in
+      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
+    </section>
+
+    <section id="reservations4-cql">
+      <title>Storing host reservations in CQL (Cassandra)</title>
+      <para>Kea currently does not support storing reservations in
+      Cassandra (CQL).</para>
+    </section>
+
+
+    <section id="reservations4-tuning">
+      <title>Fine Tuning IPv4 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to be not used by another DHCP client. It
+      sufficient for a candidate lease to not be used by another DHCP client. It
       also must not be reserved for another client. Second, when renewing a lease,
       additional check must be performed whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address, the server
@@ -2743,6 +2914,53 @@ It is merely echoed by the server
 }
 </screen>
       </para>
+
+      <para>Another aspect of the host reservations are different types of
+      identifiers. Currently (June 2016) Kea supports four types of identifiers
+      (hw-address, duid, client-id and circuit-id), but more identifier types
+      are likely to be added in the future. This is beneficial from a
+      usability perspective. However, there is a drawback. For each incoming
+      packet Kea has to to extract each identifier type and then query the
+      database to see if there's a reservation done by this particular
+      identifier. If there is not, the next identifier is extracted and the next
+      query is issued. This process continues until either a reservation is
+      found or all identifier types have been checked. Over time with an increasing
+      number of supported identifier types, Kea would become slower and
+      slower.</para>
+
+      <para>To address this problem, a parameter called
+      <command>host-reservation-identifiers</command> has been introduced. It
+      takes a list of identifier types as a parameter. Kea will check only those
+      identifier types enumerated in host-reservation-identifiers. From a
+      performance perspective the number of identifier types should be kept to a
+      minimum, ideally limited to one. If your deployment uses several
+      reservation types, please enumerate them from most to least frequently
+      used as this increases the chances of Kea finding the reservation using the
+      fewest number of queries. An example of host reservation identifiers looks
+      as follows:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "circuit-id", "hw-address", "duid", "client-id" ],</userinput>
+"subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        ...
+    }
+]</screen>
+</para>
+
+<para>If not specified, the default value is:
+
+<screen>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id" ]</userinput>
+</screen>
+<!-- see CfgHostOperations::createConfig4() in
+src/lib/dhcpsrv/cfg_host_operations.cc -->
+
+</para>
+
+
+
    </section>
 
   </section>
@@ -3139,10 +3357,11 @@ It is merely echoed by the server
             <entry>pkt4-nak-sent</entry>
             <entry>integer</entry>
             <entry>
-            Number of DHCPNAK packets sent. This statistic is expected to
-            grow when the server choses to not honor the address requested by a
-            client. In general, the sum of pkt4-ack-sent and pkt4-nak-sent
-            should be close to pkt4-request-received.
+            Number of DHCPNAK packets sent. This statistic is expected
+            to grow when the server chooses to not honor the address
+            requested by a client. In general, the sum of
+            pkt4-ack-sent and pkt4-nak-sent should be close to
+            pkt4-request-received.
             </entry>
             </row>
 
@@ -3281,12 +3500,12 @@ It is merely echoed by the server
       </para>
 
       <para>
-	The length of the path specified by the <command>socket-name</command>
-	parameter is restricted by the maximum length for the unix socket name
-	on your operating system, i.e. the size of the <command>sun_path</command>
-	field in the <command>sockaddr_un</command> structure, decreased by 1.
-	This value varies on different operating systems between 91 and 107
-	characters. The typical values are 107 on Linux and 103 on FreeBSD.
+        The length of the path specified by the <command>socket-name</command>
+        parameter is restricted by the maximum length for the unix socket name
+        on your operating system, i.e. the size of the <command>sun_path</command>
+        field in the <command>sockaddr_un</command> structure, decreased by 1.
+        This value varies on different operating systems between 91 and 107
+        characters. The typical values are 107 on Linux and 103 on FreeBSD.
       </para>
 
       <para>

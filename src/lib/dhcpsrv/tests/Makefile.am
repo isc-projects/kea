@@ -14,12 +14,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-# Some versions of GCC warn about some versions of Boost regarding
-# missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
-# But older GCC compilers don't have the flag.
-AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
-
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
@@ -92,6 +86,7 @@ libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
 libdhcpsrv_unittests_SOURCES += daemon_unittest.cc
 libdhcpsrv_unittests_SOURCES += database_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
@@ -118,7 +113,12 @@ endif
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
 
 if HAVE_PGSQL
+libdhcpsrv_unittests_SOURCES += pgsql_exchange_unittest.cc
+libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
+endif
+if HAVE_CQL
+libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
@@ -135,6 +135,11 @@ endif
 if HAVE_PGSQL
 libdhcpsrv_unittests_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
+if HAVE_CQL
+libdhcpsrv_unittests_CPPFLAGS += $(CQL_CPPFLAGS)
+endif
+
+libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 if HAVE_MYSQL
@@ -143,13 +148,8 @@ endif
 if HAVE_PGSQL
 libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
 endif
-
-libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h and unused parameters from some of the
-# Boost headers.
-libdhcpsrv_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
+if HAVE_CQL
+libdhcpsrv_unittests_LDFLAGS  += $(CQL_LIBS)
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la

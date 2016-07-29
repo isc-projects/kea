@@ -289,6 +289,16 @@ protected:
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
 
+    /// @brief Processes incoming DHCPv4-query message.
+    ///
+    /// It always returns NULL, as there is nothing to be sent back to the
+    /// client at this time. The message was sent to DHCPv4 server using
+    /// @ref isc::dhcp::Dhcp6to4Ipc::handler()). We will send back a response
+    /// to the client once we get back DHCP4-REPLY from the DHCPv4 server.
+    ///
+    /// @param dhcp4_query message received from client
+    void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
+
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
@@ -307,13 +317,13 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_NA option (client's request)
     ///
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
@@ -326,12 +336,12 @@ protected:
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param answer server's response to the client's message.
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
     OptionPtr assignIA_PD(const Pkt6Ptr& query,
                           const isc::dhcp::Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           boost::shared_ptr<Option6IA> ia);
 
     /// @brief Extends lifetime of the specific IA_NA option.
@@ -357,12 +367,12 @@ protected:
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_NA option which carries address for which lease lifetime
     /// will be extended.
     /// @return IA_NA option (server's response)
     OptionPtr extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Extends lifetime of the prefix.
@@ -377,14 +387,14 @@ protected:
     /// (see RFC3633, section 12.2. for details).
     ///
     /// @param query client's message
-    /// @param orig_ctx client context (contains subnet, duid and other parameters)
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia IA_PD option that is being renewed
     /// @return IA_PD option (server's response)
     /// @throw DHCPv6DiscardMessageError when the message being processed should
     /// be discarded by the server, i.e. there is no binding for the client doing
     /// Rebind.
     OptionPtr extendIA_PD(const Pkt6Ptr& query,
-                          AllocEngine::ClientContext6& orig_ctx,
+                          AllocEngine::ClientContext6& ctx,
                           Option6IAPtr ia);
 
     /// @brief Releases specific IA_NA option
@@ -607,24 +617,6 @@ protected:
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt6Ptr& pkt);
 
-    /// @brief Implements a callback function to parse options in the message.
-    ///
-    /// @param buf a A buffer holding options in on-wire format.
-    /// @param option_space A name of the option space which holds definitions
-    /// of to be used to parse options in the packets.
-    /// @param [out] options A reference to the collection where parsed options
-    /// will be stored.
-    /// @param relay_msg_offset Reference to a size_t structure. If specified,
-    /// offset to beginning of relay_msg option will be stored in it.
-    /// @param relay_msg_len reference to a size_t structure. If specified,
-    /// length of the relay_msg option will be stored in it.
-    /// @return An offset to the first byte after last parsed option.
-    size_t unpackOptions(const OptionBuffer& buf,
-                         const std::string& option_space,
-                         isc::dhcp::OptionCollection& options,
-                         size_t* relay_msg_offset,
-                         size_t* relay_msg_len);
-
     /// @brief Assigns incoming packet to zero or more classes.
     ///
     /// @note This is done in two phases: first the content of the
@@ -656,9 +648,9 @@ protected:
     /// - there is no such option provided by the server)
     void processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp);
 
-    /// @brief Creates client context for specified packet
+    /// @brief Initializes client context for specified packet
     ///
-    /// Instantiates the ClientContext6 and then:
+    /// This method:
     /// - Performs the subnet selection and stores the result in context
     /// - Extracts the duid from the packet and saves it to the context
     /// - Extracts the hardware address from the packet and saves it to
@@ -666,8 +658,16 @@ protected:
     /// - Performs host reservation lookup and stores the result in the
     /// context
     ///
-    /// @return client context
-    AllocEngine::ClientContext6 createContext(const Pkt6Ptr& pkt);
+    /// Even though the incoming packet type is known to this method, it
+    /// doesn't set the @c fake_allocation flag, because of a possibility
+    /// that the Rapid Commit option is in use. The @c fake_allocation
+    /// flag is set appropriately after it has been determined whether
+    /// the Rapid Commit option was included and that the server respects
+    /// it.
+    ///
+    /// @param pkt pointer to a packet for which context will be created.
+    /// @param [out] ctx reference to context object to be initialized.
+    void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief this is a prefix added to the contend of vendor-class option
     ///
@@ -791,12 +791,19 @@ private:
     /// @param query packet received
     static void processStatsReceived(const Pkt6Ptr& query);
 
-    /// @brief Updates statistics for transmitted packets
-    /// @param query packet transmitted
-    static void processStatsSent(const Pkt6Ptr& response);
-
     /// UDP port number on which server listens.
     uint16_t port_;
+
+public:
+    /// @note used by DHCPv4-over-DHCPv6 so must be public and static
+
+    /// @brief Updates statistics for transmitted packets
+    /// @param response packet transmitted
+    static void processStatsSent(const Pkt6Ptr& response);
+
+    /// @brief Returns the index of the buffer6_send hook
+    /// @return the index of the buffer6_send hook
+    static int getHookIndexBuffer6Send();
 
 protected:
 

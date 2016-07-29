@@ -367,7 +367,7 @@ Debian and Ubuntu:
 
         <para>
           <userinput>./configure</userinput> when it succeeds displays a report
-          with the building parameters. This report is saved into 
+          with the building parameters. This report is saved into
           <filename>config.report</filename> and embedded into executable
           binaries, e.g., <userinput>kea-dhcp4</userinput>.
         </para>
@@ -499,6 +499,46 @@ Debian and Ubuntu:
         <para>
           See <xref linkend="pgsql-database-create"/> for details regarding
           PostgreSQL database configuration.
+        </para>
+      </section>
+
+      <section>
+        <title>Building with CQL (Cassandra) support</title>
+        <para>
+          Install Cassandra according to the instructions for your system. The
+          Cassandra project webpage contains useful pointers: <ulink
+          url="http://cassandra.apache.org/download/" />.
+        </para>
+        <para>
+          Download and compile cpp-driver from DataStax. For details regarding
+          dependencies for building cpp-driver, see the project homepage
+          <ulink url="https://github.com/datastax/cpp-driver" />. As of June
+          2016, the following commands were used:
+          <screen>
+$ <userinput>git clone https://github.com/datastax/cpp-driver</userinput>
+$ <userinput>cd cpp-driver</userinput>
+$ <userinput>mkdir build</userinput>
+$ <userinput>cmake ..</userinput>
+$ <userinput>make</userinput>
+</screen>
+        </para>
+        <para>
+          As of June 2016, cpp-driver does not include cql_config script
+          yet. There is a work in progress to contribute such a script to
+          cpp-driver project. Until such contribution is accepted, there are
+          intermediate steps that need to be conducted. The cql_config
+          script and cql_config_defines.sh are temporarily stored in
+          tools/ directory of the Kea sources. Before using it, please
+          edit cql_config_defines.sh: change CPP_DRIVER_PATH to the directory,
+          where cpp-driver sources are located. If cpp-driver sources already
+          provide cql_config script please use that rather than the version
+          from Kea sources.
+        </para>
+        <para>
+          Build and install Kea as described in <xref linkend="installation"/>, with
+          the following modification. To enable the Cassandra (CQL) database code, at the
+          "configure" step (see <xref linkend="configure"/>), do:
+          <screen><userinput>./configure [other-options] --with-cql=<replaceable>path-to-cql_config</replaceable></userinput></screen>
         </para>
       </section>
    </section>

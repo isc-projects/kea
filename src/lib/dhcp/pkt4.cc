@@ -201,17 +201,9 @@ Pkt4::unpack() {
 
     // Use readVector because a function which parses option requires
     // a vector as an input.
-    size_t offset;
     buffer_in.readVector(opts_buffer, opts_len);
-    if (callback_.empty()) {
-        offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
-    } else {
-        // The last two arguments are set to NULL because they are
-        // specific to DHCPv6 options parsing. They are unused for
-        // DHCPv4 case. In DHCPv6 case they hold are the relay message
-        // offset and length.
-        offset = callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
-    }
+
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input
@@ -236,7 +228,7 @@ Pkt4::unpack() {
 }
 
 uint8_t Pkt4::getType() const {
-    OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
+    OptionPtr generic = getNonCopiedOption(DHO_DHCP_MESSAGE_TYPE);
     if (!generic) {
         return (DHCP_NOTYPE);
     }
@@ -253,7 +245,7 @@ uint8_t Pkt4::getType() const {
 }
 
 void Pkt4::setType(uint8_t dhcp_type) {
-    OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
+    OptionPtr opt = getNonCopiedOption(DHO_DHCP_MESSAGE_TYPE);
     if (opt) {
 
         // There is message type option already, update it. It seems that
@@ -340,7 +332,7 @@ Pkt4::getLabel() const {
     /// use the instance member rather than fetch it every time.
     std::string suffix;
     ClientIdPtr client_id;
-    OptionPtr client_opt = getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr client_opt = getNonCopiedOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_opt) {
         try {
             client_id = ClientIdPtr(new ClientId(client_opt->getData()));
@@ -554,7 +546,7 @@ Pkt4::getHlen() const {
 void
 Pkt4::addOption(const OptionPtr& opt) {
     // Check for uniqueness (DHCPv4 options must be unique)
-    if (getOption(opt->getType())) {
+    if (getNonCopiedOption(opt->getType())) {
         isc_throw(BadValue, "Option " << opt->getType()
                   << " already present in this message.");
     }

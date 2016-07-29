@@ -52,6 +52,7 @@
  *   - @subpage dhcpv4ConfigBackend
  *   - @subpage dhcpv4SignalBasedReconfiguration
  *   - @subpage dhcpv4Other
+ *   - @subpage dhcpv4o6Dhcp4
  * - @subpage dhcp6
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
@@ -61,6 +62,7 @@
  *   - @subpage dhcpv6ConfigBackend
  *   - @subpage dhcpv6SignalBasedReconfiguration
  *   - @subpage dhcpv6Other
+ *   - @subpage dhcpv4o6Dhcp6
  * - @subpage d2
  *   - @subpage d2CPL
  *   - @subpage d2ProcessDerivation
@@ -94,6 +96,8 @@
  *   - @subpage allocengine
  *   - @subpage timerManager
  *   - @subpage leaseReclamationRoutine
+ *   - @subpage subnetSelect
+ *   - @subpage dhcp4o6Ipc
  * - @subpage libdhcp_ddns
  * - @subpage dhcpDatabaseBackends
  * - @subpage dhcpEval
