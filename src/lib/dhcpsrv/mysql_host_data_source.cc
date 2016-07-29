@@ -2013,6 +2013,8 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
         conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
                                 tagged_statements.end(),
                                 tagged_statements.size());
+    } else {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_READONLY);
     }
 }
 
