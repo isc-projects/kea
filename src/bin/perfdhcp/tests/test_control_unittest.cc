@@ -1119,6 +1119,30 @@ TEST_F(TestControlTest, GenerateDuid) {
     // Simulate 50 clients. Different DUID will be generated.
     ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -R 50 all"));
     testDuid();
+
+    // Checks that the random mac address returned by generateDuid
+    // is in the list of mac addresses in the mac_list.txt data file
+    std::string mac_list_full_path = getFullPath("mac_list.txt");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -M " << mac_list_full_path << " abc";
+    ASSERT_NO_THROW(processCmdLine(cmd.str()));
+    // Initialize Test Controller.
+    NakedTestControl tc;
+    uint8_t randomized = 0;
+    std::vector<uint8_t> generated_duid = tc.generateDuid(randomized);
+    // check that generated_duid is DUID_LL
+    DuidPtr duid(new DUID(generated_duid));
+    ASSERT_EQ(duid->getType(), DUID::DUID_LL);
+    // make sure it's on the list
+    CommandOptions& options = CommandOptions::instance();
+    vector<vector<uint8_t> > macs = options.getAllMacs();
+    // duid_ll is made of 2 bytes of duid type, 2 bytes of hardwaretype,
+    // then 6 bytes of mac
+    vector<uint8_t> mac(6);
+    std::copy(
+      generated_duid.begin() + 4, generated_duid.begin() + 10, mac.begin());
+    // check that mac is in macs
+    std::find(macs.begin(), macs.end(), mac);
 }
 
 TEST_F(TestControlTest, MisMatchVerionServer) {
@@ -1142,6 +1166,21 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     // Simulate 50 clients. Different MAC addresses will be generated.
     ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -R 50 all"));
     testMacAddress();
+
+    // Checks that the random mac address returned by generateMacAddress
+    // is in the list of mac addresses in the mac_list.txt data file
+    std::string mac_list_full_path = getFullPath("mac_list.txt");
+    std::ostringstream cmd;
+    cmd << "perfdhcp -M " << mac_list_full_path << " abc";
+    ASSERT_NO_THROW(processCmdLine(cmd.str()));
+    // Initialize Test Controller.
+    NakedTestControl tc;
+    uint8_t randomized = 0;
+    std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
+    CommandOptions& options = CommandOptions::instance();
+    vector<vector<uint8_t> > macs = options.getAllMacs();
+    // check that mac is in macs
+    std::find(macs.begin(), macs.end(), mac);
 }
 
 TEST_F(TestControlTest, Options4) {
@@ -1805,3 +1844,4 @@ TEST_F(TestControlTest, getCurrentTimeoutRenewRelease) {
     EXPECT_LE(tc.getCurrentTimeout(), 5000000);
 
 }
+#include <algorithm>
