@@ -118,7 +118,7 @@ CommandOptions::reset() {
     mac_template_.assign(mac, mac + 6);
     duid_template_.clear();
     base_.clear();
-    mac_list_file_.clear();
+    mac_file_list_.clear();
     mac_list_.clear();
     num_request_.clear();
     period_ = 0;
@@ -347,7 +347,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'M':
             check(num_mac_list_files >= 1, "only -M option can be specified");
             num_mac_list_files++;
-            mac_list_file_ = std::string(optarg);
+            mac_file_list_ = std::string(optarg);
             loadMacs();
             break;
 
@@ -565,7 +565,7 @@ CommandOptions::decodeBase(const std::string& base) {
 
     // Currently we only support mac and duid
     if ((b.substr(0, 4) == "mac=") || (b.substr(0, 6) == "ether=")) {
-        decodeMac(b);
+        decodeMacBase(b);
     } else if (b.substr(0, 5) == "duid=") {
         decodeDuid(b);
     } else {
@@ -576,7 +576,7 @@ CommandOptions::decodeBase(const std::string& base) {
 }
 
 void
-CommandOptions::decodeMac(const std::string& base) {
+CommandOptions::decodeMacBase(const std::string& base) {
     // Strip string from mac=
     size_t found = base.find('=');
     static const char* errmsg = "expected -b<base> format for"
@@ -698,13 +698,13 @@ CommandOptions::convertHexString(const std::string& text) const {
 
 void CommandOptions::loadMacs() {
   std::string line;
-  std::ifstream infile(mac_list_file_.c_str());
+  std::ifstream infile(mac_file_list_.c_str());
   while (std::getline(infile, line)) {
-    check(validateMac(line), "invalid mac in input");
+    check(decodeMacString(line), "invalid mac in input");
   }
 }
 
-bool CommandOptions::validateMac(std::string& line) {
+bool CommandOptions::decodeMacString(const std::string& line) {
   // decode mac string into a vector of uint8_t returns true in case of error.
   std::istringstream s(line);
   std::string token;
@@ -717,14 +717,14 @@ bool CommandOptions::validateMac(std::string& line) {
         // Do actual conversion
         ui = convertHexString(token);
       } catch (isc::InvalidParameter&) {
-        return true;
+        return (true);
       }
       // If conversion succeeded store byte value
       mac.push_back(ui);
     }
   }
   mac_list_.push_back(mac);
-  return false;
+  return (false);
 }
 
 void
@@ -914,8 +914,8 @@ CommandOptions::printCommandLine() const {
     if (use_first_) {
         std::cout << "use-first" << std::endl;
     }
-    if (!mac_list_file_.empty()) {
-        std::cout << "mac-file-list=" << mac_list_file_ << std::endl;
+    if (!mac_file_list_.empty()) {
+        std::cout << "mac-file-list=" << mac_file_list_ << std::endl;
     }
     for (size_t i = 0; i < template_file_.size(); ++i) {
         std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
@@ -1027,6 +1027,8 @@ CommandOptions::usage() const {
         "    (the value 0 means to use the default).\n"
         "-M<mac-file-list>: A text file containing a list of macs, one per line.\n"
         "   If provided a random mac will be choosen for every exchange.\n"
+        "   Must not be used in conjunction with the -b parameter.\n"
+        "   In the v6 case MAC addresses are used to generate DUID-LLs.\n"
         "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
         "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
         "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"

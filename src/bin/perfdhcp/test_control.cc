@@ -21,6 +21,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -551,12 +552,7 @@ TestControl::generateDuid(uint8_t& randomized) {
       std::vector<uint8_t> duid(duid_ll,
                                 duid_ll + sizeof(duid_ll) / sizeof(duid_ll[0]));
       // put the mac address bytes at the end
-      duid[4] = mac[0];
-      duid[5] = mac[1];
-      duid[6] = mac[2];
-      duid[7] = mac[3];
-      duid[8] = mac[4];
-      duid[9] = mac[5];
+      std::copy(mac.begin(), mac.end(), duid.begin() + 4);
       return (duid);
     } else {
       uint32_t clients_num = options.getClientsNum();

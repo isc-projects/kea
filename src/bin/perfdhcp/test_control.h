@@ -282,6 +282,7 @@ protected:
     /// only via \ref instance method.
     TestControl();
 
+    /// Generate uniformly distributed integers in range of [min, max]
     isc::util::random::UniformRandomIntegerGenerator number_generator_;
 
     /// \brief Check if test exit conditions fulfilled.

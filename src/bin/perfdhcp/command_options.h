@@ -274,15 +274,18 @@ public:
     /// \return template file names.
     std::vector<std::string> getTemplateFiles() const { return template_file_; }
 
-    /// \brief Returns template file name for macs.
+    /// \brief Returns location of the file containing list of MAC addresses
+    ///
+    /// MAC addresses read from the file are used by the perfdhcp in message
+    /// exchanges with the DHCP server.
     ///
     /// \return mac_template file name.
-    std::string getMacListFile() const { return mac_list_file_; }
+    std::string getMacListFile() const { return mac_file_list_; }
 
     /// \brief Returns the list of macs, every mac is a vector<uint8_t>
     ///
     /// \return mac_list_ vector of vectors.
-    std::vector<std::vector<uint8_t> >& getAllMacs() { return mac_list_; }
+    const std::vector<std::vector<uint8_t> >& getAllMacs() const { return mac_list_; }
 
     /// brief Returns template offsets for xid.
     ///
@@ -437,7 +440,7 @@ private:
     ///
     /// \param base Base string given as -b mac=00:01:02:03:04:05.
     /// \throws isc::InvalidParameter if mac address is invalid.
-    void decodeMac(const std::string& base);
+    void decodeMacBase(const std::string& base);
 
     /// \brief Decodes base DUID provided with -b<base>.
     ///
@@ -464,13 +467,13 @@ private:
     /// \throw isc::InvalidParameter if string does not represent hex byte.
     uint8_t convertHexString(const std::string& hex_text) const;
 
-    /// \brief opens the text file containing list of macs (one per line)
+    /// \brief Opens the text file containing list of macs (one per line)
     /// and adds them to the mac_list_ vector.
     void loadMacs();
 
-    /// \brief decods a mac string into a vector of uint8_t and adds it to the
+    /// \brief Decodes a mac string into a vector of uint8_t and adds it to the
     /// mac_list_ vector.
-    bool validateMac(std::string& line);
+    bool decodeMacString(const std::string& line);
 
     /// IP protocol version to be used, expected values are:
     /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
@@ -546,11 +549,10 @@ private:
     /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
-    // A file containing a list of macs, one per line. This can be used if
-    // you don't want to genrate Mac starting from a base mac but rather provide
-    // the tool with a list of macs it should randomize on.
-    std::string mac_list_file_;
-    // TODO: add comment
+    /// A file containing a list of macs, one per line. This can be used if
+    /// you don't want to genrate Mac starting from a base mac but rather provide
+    /// the tool with a list of macs it should randomize on.
+    std::string mac_file_list_;
     std::vector<std::vector<uint8_t> > mac_list_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
