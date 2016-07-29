@@ -548,12 +548,12 @@ configuration, may not have write privileges to the database. This is often
 required by the policy within a given network to secure the data from being
 unintentionally modified. In many cases administrators have inventory databases
 deployed, which contain substantially more information about the hosts than
-static reservations assigned to them. Such database can be used to create
+static reservations assigned to them. The inventory database can be used to create
 a view of a Kea hosts database and such view is often read only.
 </para>
 <para>
 Kea host database backends operate with implicit configuration to both read
-and write from the database. If the host database is read only for the
+from and write to the database. If the host database is read only for the
 particular user, the backend will fail to start and consequently the server
 will refuse to start/reconfigure. If the administrator intends to use the
 read only host database for retrieving reservations for clients, to assign
