@@ -138,4 +138,211 @@
       hooks libraries.
       </para>
     </section>
+
+    <section>
+      <title>Available Hooks Libraries</title>
+      <para>
+      As described above the hooks functionality provides a way to customize
+      a Kea server without modifying the core code.  ISC has chosen to take
+      advantage of this feature to provide functions that may not be useful
+      to all users.  To this end ISC has created some hooks libraries which
+      are discussed in the following sections.
+      </para>
+
+      <para>
+      Some of these libraries will be available with the base code while
+      others will only be available via a support contract.
+      </para>
+      <section>
+        <title>Legal Log Hooks</title>
+        <para>
+        This section describes the legal log hooks library. This library
+        povides hooks that record a detailed log of lease assignments
+        and renewals into a set of log files.  Currently this library
+        is only available to customers with a support contract.
+        </para>
+        <para>
+        In many legal jurisdictions companies, especially ISPs, must record
+        information about the addresses they have leased to DHCP clients.
+        This library is designed to help with that requirement.  If the
+        information that it records is sufficient it may be used directly.
+        If your jurisdiction requires that you save a different set of
+        information you may use it as a template or example and create your
+        own custom logging hooks.
+        </para>
+        <section>
+        <title>Log File Naming</title>
+          <para>
+          The names for the log files have the following form:
+          </para>
+<screen>
+path/base-name.CCYYMMDD.txt
+</screen>
+          <para>
+          The &quot;path&quot; and &quot;base-name&quot; are supplied in the
+          configuration as described below see
+          <xref linkend="legal-log-configuration"/>.  The next part of the name is
+          the date the log file was started, with four digits for year, two digits
+          for month and two digits for day.  The file is rotated on a daily basis.
+          </para>
+          <note><para>
+          When running Kea servers for both DHCPv4 and DHCPv6 the log names must
+          be distinct.  See the examples in <xref linkend="legal-log-configuration"/>.
+          </para></note>
+        </section>
+        <section>
+        <title>DHCPv4 Log Entries</title>
+          <para>
+          For DHCPv4 the library creates entries based on DHCPREQUEST messages
+          and corresponding DHCPv4 leases intercepted by lease4_select
+          (for new leases) and lease4_renew (for renewed leases) hooks.
+          </para>
+          <para>
+          An entry is a single string with no embedded end-of-line markers
+          and has the following sections:
+<screen>
+address duration device-id {client-info} {relay-info}
+</screen>
+          </para>
+          <para>
+          Where:
+          <itemizedlist>
+            <listitem><para>
+            address - the leased IPv4 address given out and whether it was
+            assigned or renewed.
+            </para></listitem>
+            <listitem><para>
+            duration - the lease lifetime expressed in days (if present),
+            hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
+            denoted with the text &quot;infinite duration&quot;.
+            </para></listitem>
+            <listitem><para>
+            device-id - the client's hardware address shown as numerical type
+            and hex digit string.
+            </para></listitem>
+            <listitem><para>
+            client-info - the DHCP client id option (61) if present, shown as
+            a hex string.
+            </para></listitem>
+            <listitem><para>
+            relay-info - for relayed packets the giaddr and the RAI circuit id
+            and remote id options (option 82 sub options 1 and 2) if present.
+            The circuit id and remote id are presented as hex strings
+            </para></listitem>
+          </itemizedlist>
+          </para>
+          <para>
+          For instance (line breaks added for readability, they would not
+          be present in the log file).
+<screen>
+Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with
+hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54
+connected via relay at address: 192.2.16.33, identified by circuit-id:
+68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+</screen>
+          </para>
+        </section>
+        <section>
+        <title>DHCPv6 Log Entries</title>
+          <para>
+          For DHCPv6 the library creates entries based on lease management
+          actions intercepted by the lease6_select (for new leases), lease6_renew
+          (for renewed leases) and lease6_rebind (for rebound leases).
+          </para>
+          <para>
+          An entry is a single string with no embedded end-of-line markers
+          and has the following sections:
+<screen>
+address duration device-id {relay-info}*
+</screen>
+          </para>
+          <para>
+          Where:
+          <itemizedlist>
+            <listitem><para>
+            address - the leased IPv6 address or prefix given out and whether
+            it was assigned or renewed.
+            </para></listitem>
+            <listitem><para>
+            duration - the lease lifetime expressed in days (if present),
+            hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
+            denoted with the text "infinite duration".
+            </para></listitem>
+            <listitem><para>
+            device-id - the client's DUID and hardware address (if present).
+            </para></listitem>
+            <listitem><para>
+            relay-info - for relayed packets the content of relay agent
+            messages, remote id and subscriber id options (x and xx) if present.
+            </para></listitem>
+          </itemizedlist>
+          </para>
+          <para>
+          For instance (line breaks added for readability, they would not
+          be present in the log file).
+<screen>
+Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with
+DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
+(from Raw Socket) connected via relay at address: fe80::abcd for client on
+link address: 3001::1, hop count: 1, identified by remote-id:
+01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+</screen>
+          </para>
+        </section>
+        <section id="legal-log-configuration">
+        <title>Configuring the legal log hooks</title>
+          <para>
+          To use this functionality the hook library must be included in the
+          configuration of the desired DHCP server modules. The legal_log
+          library is installed alongside the Kea libraries in
+          <filename>[kea-install-dir]/lib</filename> where
+          <filename>kea-install-dir</filename> is determined by the
+          &quot;--prefix&quot; option of the configure script.  It defaults to
+          <filename>/usr/local</filename>.  Assuming the
+          default value then, configuring kea-dhcp4 to load the legal_log
+          library could be done with the following Kea4 configuration:
+<screen>
+"Dhcp4": { <userinput>
+    "hook_libraries": [
+        { "library": "/usr/local/lib/libdhcp_legal_log.so",
+          "parameters": {
+            "path": "/var/kea/var",
+            "base-name": "kea-legal4" } },
+        ...
+    ] </userinput>
+}
+</screen>
+          </para>
+          <para>
+          To configure it for kea-dhcp6, the commands are simply as shown below:
+<screen>
+"Dhcp6": { <userinput>
+    "hook_libraries": [
+        { "library": "/usr/local/lib/libdhcp_legal_log.so",
+          "parameters": {
+            "path": "/var/kea/var",
+            "base-name": "kea-legal6" } },
+        ...
+    ] </userinput>
+}
+</screen>
+          </para>
+          <para>
+          Two Hook Library parameters are supported:
+          <itemizedlist>
+            <listitem><para>
+            path - the directory in which the legal file(s) will be written.  The
+            default value is
+            <filename>[prefix]/kea/var</filename>.  The directory must exist.
+            </para></listitem>
+            <listitem><para>
+            base-name - an arbitrary value which is used in conjunction with
+            the current system date to form the current legal file name.  It defaults
+            to <filename>kea-legal</filename>.
+            </para></listitem>
+          </itemizedlist>
+          </para>
+        </section>
+      </section>
+    </section>
    </chapter> <!-- hooks-libraries -->
