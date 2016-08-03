@@ -154,9 +154,9 @@
       others will only be available via a support contract.
       </para>
       <section>
-        <title>Legal Log Hooks</title>
+        <title>Forensic Logging Hooks</title>
         <para>
-        This section describes the legal log hooks library. This library
+        This section describes the forensic log hooks library. This library
         povides hooks that record a detailed log of lease assignments
         and renewals into a set of log files.  Currently this library
         is only available to customers with a support contract.
@@ -170,6 +170,13 @@
         information you may use it as a template or example and create your
         own custom logging hooks.
         </para>
+        <para>
+        This logging is done as a set of hooks to allow it to be customized
+        to any particular need.  Modifying a hooks library is easier and
+        safer than updating the core code.  In addition by using the hooks
+        features those users who don't need to log this information can
+        leave it out and avoid any performance penalties.
+        </para>
         <section>
         <title>Log File Naming</title>
           <para>
@@ -181,13 +188,13 @@ path/base-name.CCYYMMDD.txt
           <para>
           The &quot;path&quot; and &quot;base-name&quot; are supplied in the
           configuration as described below see
-          <xref linkend="legal-log-configuration"/>.  The next part of the name is
+          <xref linkend="forensic-log-configuration"/>.  The next part of the name is
           the date the log file was started, with four digits for year, two digits
           for month and two digits for day.  The file is rotated on a daily basis.
           </para>
           <note><para>
           When running Kea servers for both DHCPv4 and DHCPv6 the log names must
-          be distinct.  See the examples in <xref linkend="legal-log-configuration"/>.
+          be distinct.  See the examples in <xref linkend="forensic-log-configuration"/>.
           </para></note>
         </section>
         <section>
@@ -289,8 +296,8 @@ link address: 3001::1, hop count: 1, identified by remote-id:
 </screen>
           </para>
         </section>
-        <section id="legal-log-configuration">
-        <title>Configuring the legal log hooks</title>
+        <section id="forensic-log-configuration">
+        <title>Configuring the Forensic Log Hooks</title>
           <para>
           To use this functionality the hook library must be included in the
           configuration of the desired DHCP server modules. The legal_log
@@ -303,11 +310,14 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           library could be done with the following Kea4 configuration:
 <screen>
 "Dhcp4": { <userinput>
-    "hook_libraries": [
-        { "library": "/usr/local/lib/libdhcp_legal_log.so",
-          "parameters": {
-            "path": "/var/kea/var",
-            "base-name": "kea-legal4" } },
+    "hooks-libraries": [
+        {
+            "library": "/usr/local/lib/libdhcp_legal_log.so",
+            "parameters": {
+                "path": "/var/kea/var",
+                "base-name": "kea-forensic4"
+            }
+        },
         ...
     ] </userinput>
 }
@@ -317,11 +327,14 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           To configure it for kea-dhcp6, the commands are simply as shown below:
 <screen>
 "Dhcp6": { <userinput>
-    "hook_libraries": [
-        { "library": "/usr/local/lib/libdhcp_legal_log.so",
-          "parameters": {
-            "path": "/var/kea/var",
-            "base-name": "kea-legal6" } },
+    "hooks-libraries": [
+        {
+            "library": "/usr/local/lib/libdhcp_legal_log.so",
+            "parameters": {
+                "path": "/var/kea/var",
+                "base-name": "kea-forensic6"
+            }
+        },
         ...
     ] </userinput>
 }
@@ -331,13 +344,13 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           Two Hook Library parameters are supported:
           <itemizedlist>
             <listitem><para>
-            path - the directory in which the legal file(s) will be written.  The
+            path - the directory in which the forensic file(s) will be written.  The
             default value is
             <filename>[prefix]/kea/var</filename>.  The directory must exist.
             </para></listitem>
             <listitem><para>
             base-name - an arbitrary value which is used in conjunction with
-            the current system date to form the current legal file name.  It defaults
+            the current system date to form the current foresnic file name.  It defaults
             to <filename>kea-legal</filename>.
             </para></listitem>
           </itemizedlist>
