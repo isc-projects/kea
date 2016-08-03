@@ -1,3 +1,6 @@
+11xx.	[bunc]		sar
+	Add the forensic hook library documentation to the admin guide.
+
 1145.	[func]		tmark
 	The Postgresql backend now supports host reservations for both DHCPv4 and
 	DHCPv6, with options and IPv6 reservations.
