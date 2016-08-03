@@ -1,6 +1,6 @@
 1146.	[bunc]		sar
 	Add the forensic hook library documentation to the admin guide.
-	(Trac #4511 git TBD)
+	(Trac #4511 git 0bb39840a3cbdaf815819f846120c90d9ca038ff)
 
 1145.	[func]		tmark
 	The Postgresql backend now supports host reservations for both DHCPv4 and
