@@ -18,12 +18,23 @@ Developer's Guide</a> and in particular its section about hooks: <a
 href="http://git.kea.isc.org/~tester/kea/doxygen/df/d46/hooksdgDevelopersGuide.html">
 Hooks Developer's Guide</a>.
 
-@section libdhcp_legal_logUser Libdhcp_legal_log: An Example Hooks Library, How To Use It
+@section libdhcp_legal_logUser How To Use Libdhcp_legal_log
 ## Introduction
-libdhcp_legal_log is an example hooks library which customizes the
+libdhcp_legal_log is a hooks library which customizes the
 DHCP lease management provided by Kea DHCP server modules (kea-dhcp4
 and kea-dhcp6).  Specifically it implements recording a detailed log of lease
-assignments and renewals as might be required for legal purposes.
+assignments and renewals as might be required for legal purposes.  It is
+also described in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea
+Administrator Reference Manual</a> instead in the section titled
+Forensic Logging Hooks.
+
+This library is designed to help with the requirement
+that in many legal jurisdictions companies, especially ISPs, must
+record information about the addresses they have leased to
+DHCP clients.  If the information that it records is sufficient
+it may be used directly. If your jurisdiction requires that
+you save a different set of information you may use it as a
+template or example and create your own custom logging hooks.
 
 ## Log Files
 Legal logs are appended into a text file implemented by the class
@@ -103,7 +114,7 @@ configuration:
         { "library": "/usr/local/lib/libdhcp_legal_log.so",
           "parameters": {
             "path": "/var/kea/var",
-            "base-name": "kea-legal" } },
+            "base-name": "kea-legal4" } },
         ...
     ]
 }
@@ -117,7 +128,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
         { "library": "/usr/local/lib/libdhcp_legal_log.so",
           "parameters": {
             "path": "/var/kea/var",
-            "base-name": "kea-legal" } },
+            "base-name": "kea-legal6" } },
         ...
     ]
 }
@@ -130,8 +141,10 @@ Two string Hook Library Parameters are supported:
  the current system date to form the current legal file name.  It defaults
  to "kea-legal".
 
+When running Kea servers for both DHCPv4 and DHCPv6 the log names must be distinct,
+either the path or the base-name (or both) should be different for Dhcp4 vs Dhcp6.
 
-@section libdhcp_legal_logDesign Libdhcp_legal_log: An Example Hooks Library, Commented Design
+@section libdhcp_legal_logDesign Commented Design for Libdhcp_legal_log
 ## Introduction
 Some countries require ISPs to log the connection meta-data for legal purposes.
 A legal log hook library demonstrating how to log this information is then
