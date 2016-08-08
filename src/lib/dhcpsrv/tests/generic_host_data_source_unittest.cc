@@ -327,10 +327,11 @@ GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
 }
 
 void
-GenericHostDataSourceTest::compareClientClasses(const ClientClasses& /*classes1*/,
-                                                const ClientClasses& /*classes2*/) {
-    /// @todo: Implement client classes comparison.
-    ///        This is part of the work for #4213.
+GenericHostDataSourceTest::compareClientClasses(const ClientClasses& classes1,
+                                                const ClientClasses& classes2) {
+    // Currently simple comparison works as ClientClasses derives from
+    // std::set<ClientClass>.
+    EXPECT_EQ(classes1, classes2);
 }
 
 void
@@ -1152,6 +1153,108 @@ void GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) 
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
 }
 
+void
+GenericHostDataSourceTest::testMultipleClientClasses4() {
+    /// Add host reservation with a multiple v4 client-classes, retrieve it and
+    /// make sure that all client classes are retrieved properly.
+    ASSERT_TRUE(hdsptr_);
+    uint8_t len = 128;
+
+    // Create the Host object.
+    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+
+    // Add v4 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class4_" << i;
+        host->addClientClass4(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv4SubnetID();
+
+    // Fetch the host from the source.
+    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+    ASSERT_TRUE(from_hds);
+
+    // Verify they match.
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMultipleClientClasses6() {
+    /// Add host reservation with a multiple v6 client-classes, retrieve it and
+    /// make sure that all client classes are retrieved properly.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+
+    // Add v6 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class6_" << i;
+        host->addClientClass6(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Fetch the host from the source.
+    ConstHostPtr from_hds = hdsptr_->get6(subnet_id, Host::IDENT_HWADDR,
+                                           &host->getIdentifier()[0],
+                                           host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+
+    // Verify they match.
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMultipleClientClassesBoth() {
+    /// Add host reservation with a multiple v4 and v6 client-classes,
+    /// retrieve it and make sure that all client classes are retrieved
+    /// properly.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+
+    // Add v4 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class4_" << i;
+        host->addClientClass4(os.str());
+    }
+
+    // Add v6 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class6_" << i;
+        host->addClientClass6(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Fetch the host from the source.
+    ConstHostPtr from_hds = hdsptr_->get6(subnet_id, Host::IDENT_HWADDR,
+                                           &host->getIdentifier()[0],
+                                           host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+
+    // Verify they match.
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
 
 }; // namespace test
 }; // namespace dhcp

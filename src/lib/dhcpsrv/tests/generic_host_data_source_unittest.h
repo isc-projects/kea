@@ -137,7 +137,7 @@ public:
     /// @param classes1 first list of client classes
     /// @param classes2 second list of client classes
     void compareClientClasses(const ClientClasses& classes1,
-                              const ClientClasses& classes2);                           
+                              const ClientClasses& classes2);
 
     /// @brief Compares options within two configurations.
     ///
@@ -474,6 +474,27 @@ public:
     /// @param formatted Boolean value indicating if the option values
     /// should be stored in the textual format in the database.
     void testOptionsReservations46(const bool formatted);
+
+    /// @brief Test that multiple client classes for IPv4 can be inserted and
+    /// retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClasses4();
+
+    /// @brief Test that multiple client classes for IPv6 can be inserted and
+    /// retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClasses6();
+
+    /// @brief Test that multiple client classes for both IPv5 and IPv6 can
+    /// be inserted and retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClassesBoth();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///
