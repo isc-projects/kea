@@ -342,7 +342,7 @@ protected:
 /// Currently supported meta datas are:
 /// - iface (incoming/outgoinginterface name)
 /// - src   (source IP address, 4 or 16 octets)
-/// - dst   (destination IP address, 4 octets)
+/// - dst   (destination IP address, 4 or 16 octets)
 /// - len   (length field in the UDP header, padded to 4 octets)
 class TokenPkt : public Token {
 public:

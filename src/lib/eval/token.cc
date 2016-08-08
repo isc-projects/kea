@@ -7,28 +7,19 @@
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <util/encode/hex.h>
+#include <util/io_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>
-#include <boost/lexical_cast.hpp>
 #include <dhcp/pkt6.h>
+#include <boost/lexical_cast.hpp>
 #include <cstring>
 #include <string>
 
 using namespace isc::dhcp;
+using namespace isc::util;
 using namespace std;
 
-namespace {
-
-/// @brief encode in hexadecimal
-///
-/// @param value the value to encode
-/// @return 0x followed by the value encoded in hexa
-inline string toHex(string value) {
-    vector<uint8_t> bin(value.begin(), value.end());
-    return ("0x" + isc::util::encode::encodeHex(bin));
-}
-
-}; // end of anonymous namespace
+using isc::util::encode::toHex;
 
 void
 TokenString::evaluate(const Pkt& /*pkt*/, ValueStack& values) {
@@ -217,10 +208,8 @@ TokenPkt::evaluate(const Pkt& pkt, ValueStack& values) {
         // the len() method is not const because of DHCPv6 relays.
         // We assume here it has no bad side effects...
         len = static_cast<uint32_t>(const_cast<Pkt&>(pkt).len());
-        binary.push_back(len >> 24);
-        binary.push_back((len >> 16) & 0xFF);
-        binary.push_back((len >> 8) & 0xFF);
-        binary.push_back(len & 0xFF);
+        binary.resize(sizeof(uint32_t));
+        static_cast<void>(writeUint32(len, &binary[0], binary.size()));
         type_str = "len";
         break;
 
@@ -238,15 +227,9 @@ TokenPkt::evaluate(const Pkt& pkt, ValueStack& values) {
     values.push(value);
 
     // Log what we pushed
-    if (is_binary) {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
-            .arg(type_str)
-            .arg(toHex(value));
-    } else {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
-            .arg(type_str)
-            .arg(value);
-    }
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
+        .arg(type_str)
+        .arg(is_binary ? toHex(value) : value);
 }
 
 void
