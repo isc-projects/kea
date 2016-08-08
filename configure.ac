@@ -202,10 +202,23 @@ case "$host" in
 esac
 KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
-# Don't use -Werror if configured not to
+# Disable -Werror by default. Only use it if specifically enabled.
+# The usage of this flag is:
+#
+# No flag:           -Werror is disabled
+# --with-werror:     -Werror is enabled
+# --with-werror=yes: -Werror is enabled
+# --with-werror=no:  -Werror is disabled
+# --With-error=value -Werror is enabled and "value" is included in the compiler flags
+#
+# In the last case, "value" may be one or more compiler flags, e.g.
+
+# --with-werror=-Wundef
+# --with-error='-Wundef -Wconversion'
+
 werror_extras=
 AC_ARG_WITH(werror,
-    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=no)]),
     [
      case "${withval}" in
          yes) with_werror=1 ;;
@@ -213,7 +226,7 @@ AC_ARG_WITH(werror,
          -*)  with_werror=1; werror_extras=${withval} ;;
 	 *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
      esac],
-     [with_werror=1])
+     [with_werror=0])
 
 werror_ok=0
 
