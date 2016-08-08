@@ -304,7 +304,6 @@ public:
             strncpy(dhcp6_client_classes_, classes6_txt.c_str(), CLIENT_CLASSES_MAX_LEN - 1);
             bind_[8].buffer = dhcp6_client_classes_;
             bind_[8].buffer_length = classes6_txt.length();
-            bind_[8].buffer_length = sizeof(host->getClientClasses6());
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
