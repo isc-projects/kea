@@ -46,6 +46,15 @@ std::string encodeHex(const std::vector<uint8_t>& binary);
 /// \param result A vector in which the decoded %data is to be stored.
 void decodeHex(const std::string& input, std::vector<uint8_t>& result);
 
+/// \brief Encode in hexadecimal inline
+///
+/// \param value the value to encode
+/// \return 0x followed by the value encoded in hexa
+inline std::string toHex(std::string value) {
+    std::vector<uint8_t> bin(value.begin(), value.end());
+    return ("0x" + encodeHex(bin));
+}
+
 } // namespace encode
 } // namespace util
 } // namespace isc

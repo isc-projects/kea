@@ -911,11 +911,9 @@ TEST_F(TokenTest, pkt4MetaData) {
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(4, values_.top().size());
-    EXPECT_EQ(10, values_.top()[0]);
-    EXPECT_EQ(0, values_.top()[1]);
-    EXPECT_EQ(0, values_.top()[2]);
-    EXPECT_EQ(2, values_.top()[3]);
+    vector<uint8_t> a2 = IOAddress("10.0.0.2").toBytes();
+    ASSERT_EQ(a2.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&a2[0], &values_.top()[0], a2.size()));
 
     // Check destination (expect 10.0.0.1)
     clearStack();
