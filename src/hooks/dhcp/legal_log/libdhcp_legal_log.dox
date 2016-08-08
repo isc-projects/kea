@@ -141,8 +141,9 @@ Two string Hook Library Parameters are supported:
  the current system date to form the current legal file name.  It defaults
  to "kea-legal".
 
-When running Kea servers for both DHCPv4 and DHCPv6 the log names must be distinct,
-either the path or the base-name (or both) should be different for Dhcp4 vs Dhcp6.
+When running Kea servers for both DHCPv4 and DHCPv6 the log names must
+be distinct, either the path or the base-name (or both) should be
+different for DHCP4 vs DHCP6.
 
 @section libdhcp_legal_logDesign Commented Design for Libdhcp_legal_log
 ## Introduction
