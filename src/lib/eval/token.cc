@@ -140,13 +140,14 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     }
 }
 
-void
+std::string
 TokenOption::pushFailure(ValueStack& values) {
+    std::string txt;
     if (representation_type_ == EXISTS) {
-        values.push("false");
-    } else {
-        values.push("");
+        txt = "false";
     }
+    values.push(txt);
+    return (txt);
 }
 
 TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
@@ -654,14 +655,21 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     if (!vendor) {
         // There's no vendor option, give up.
-        pushFailure(values);
+        std::string txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_NO_OPTION)
+            .arg(code)
+            .arg(txt);
         return;
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
         // There is vendor option, but it has other vendor-id value
         // than we're looking for. (0 means accept any vendor-id)
-        pushFailure(values);
+        std::string txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH)
+            .arg(vendor_id_)
+            .arg(vendor->getVendorId())
+            .arg(txt);
         return;
     }
 
@@ -673,6 +681,10 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         uint32_t value = htonl(vendor->getVendorId());
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID)
+            .arg(vendor_id_)
+            .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
+                                                              txt.end())));
         return;
     }
     case SUBOPTION:
@@ -683,6 +695,8 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_EXISTS)
+            .arg("true");
         values.push("true");
         return;
     case DATA:
@@ -746,15 +760,22 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr opt = pkt.getOption(code);
     OptionVendorClassPtr vendor = boost::dynamic_pointer_cast<OptionVendorClass>(opt);
     if (!vendor) {
-        // There's no vendor option, give up.
-        pushFailure(values);
+        // There's no vendor class option, give up.
+        std::string txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_NO_OPTION)
+            .arg(code)
+            .arg(txt);
         return;
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
         // There is vendor option, but it has other vendor-id value
         // than we're looking for. (0 means accept any vendor-id)
-        pushFailure(values);
+        std::string txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH)
+            .arg(vendor_id_)
+            .arg(vendor->getVendorId())
+            .arg(txt);
         return;
     }
 
@@ -766,6 +787,10 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         uint32_t value = htonl(vendor->getVendorId());
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID)
+            .arg(vendor_id_)
+            .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
+                                                              txt.end())));
         return;
     }
     case SUBOPTION:
@@ -775,6 +800,8 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_EXISTS)
+            .arg("true");
         values.push("true");
         return;
     case DATA:
@@ -790,6 +817,12 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         OpaqueDataTuple tuple = vendor->getTuple(index_);
         OpaqueDataTuple::Buffer buf = tuple.getData();
         string txt(buf.begin(), buf.end());
+
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA)
+            .arg(index_)
+            .arg(max)
+            .arg(util::encode::encodeHex(buf));
+
         values.push(txt);
         return;
     }
