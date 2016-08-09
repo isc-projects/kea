@@ -111,3 +111,50 @@ still pushed.  The strings are displayed in hex.
 This debug message indicates that the expression has been evaluated
 to said value. This message is mostly useful during debugging of the
 client classification expressions.
+
+% EVAL_DEBUG_VENDOR_NO_OPTION Vendor option (code %1) missing, pushing result %2
+This debug message indicates that the expression has been evaluated
+and vendor option was not found. This message is mostly useful during
+debugging of the client classification expressions.
+
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Vendor option was found, but does not have expected enterprise-id (was looking for %1, option had %2), pushing result %3
+This debug message indicates that the expression has been evaluated
+and vendor option was found, but has different enterprise-id than specified
+in the expression. This message is mostly useful during debugging of the
+client classification expressions.
+
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID Vendor option found, pushing enterprise-id %1 as result %2
+This debug message indicates that the expression has been evaluated and vendor
+option was found and its enterprise-id is being reported. This message is mostly
+useful during debugging of the client classification expressions.
+
+% EVAL_DEBUG_VENDOR_EXISTS Vendor option exists, pushing result %1
+This debug message indicates that the expression has been evaluated and vendor
+option was found. This message is mostly useful during debugging of the client
+classification expressions.
+
+% EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Vendor class option (code %1) missing, pushing result %2
+This debug message indicates that the expression has been evaluated
+and vendor class option was not found. This message is mostly useful during
+debugging of the client classification expressions.
+
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Vendor class option was found, but does not have expected enterprise-id (was looking for %1, option had %2), pushing result %3
+This debug message indicates that the expression has been evaluated
+and vendor class option was found, but has different enterprise-id than specified
+in the expression. This message is mostly useful during debugging of the
+client classification expressions.
+
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Vendor class option found, pushing enterprise-id %1 as result %2
+This debug message indicates that the expression has been evaluated and vendor
+class option was found and its enterprise-id is being reported. This message is mostly
+useful during debugging of the client classification expressions.
+
+% EVAL_DEBUG_VENDOR_CLASS_EXISTS Vendor class option exists, pushing result %1
+This debug message indicates that the expression has been evaluated and vendor
+class option was found. This message is mostly useful during debugging of the
+client classification expressions.
+
+% EVAL_DEBUG_VENDOR_CLASS_DATA Vendor class data %1 (out of %2 received) is pushed as %3
+This debug message indicates that vendor class option was found and passed
+enterprise-id checks and has sufficient number of data chunks. Total numer
+of chunks and value pushed are reported as debugging aid.

@@ -261,7 +261,8 @@ protected:
     /// Depending on the representation type, this is either "" or "false".
     ///
     /// @param values a string representing failure will be pushed here.
-    virtual void pushFailure(ValueStack& values);
+    /// @return value pushed
+    virtual std::string pushFailure(ValueStack& values);
 
     uint16_t option_code_; ///< Code of the option to be extracted
     RepresentationType representation_type_; ///< Representation type.
