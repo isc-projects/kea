@@ -63,6 +63,12 @@ public:
     /// @brief remove the test log file
     void remFile();
 
+    /// @brief Enables or disables verbose mode.
+    /// @param talk_a_lot (true - as the name says, false - shut up)
+    void logCheckVerbose(bool talk_a_lot) {
+        verbose_ = talk_a_lot;
+    }
+
     /// @brief Add a string to the vector of expected strings
     ///
     /// @param new_string the string to add to the end of the vector
@@ -71,6 +77,8 @@ public:
 
     vector<string> exp_strings_;
     static const char* LOG_FILE;
+
+    bool verbose_;
 };
 
 
