@@ -696,6 +696,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_EXISTS)
+            .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
         return;
@@ -801,6 +802,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_EXISTS)
+            .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
         return;

@@ -1923,6 +1923,17 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
 
     // Case 3: option present and has matchin enterprise-id, should suceed
     testVendorExists(Option::V4, 4491, 4491, "true");
+
+
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, "
+              "pushing result false");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result false");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result true");
+
+    logCheckVerbose(true);
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies if expression vendor[4491].exist works properly in DHCPv6.
