@@ -11,6 +11,10 @@
 #include <dhcp/pkt4.h>
 #include <boost/lexical_cast.hpp>
 #include <dhcp/pkt6.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <cstring>
 #include <string>
 
@@ -63,7 +67,7 @@ TokenHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
-								 value_.end())));
+                                                                 value_.end())));
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
@@ -89,7 +93,7 @@ TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value_.begin(),
-								 value_.end())));
+                                                                 value_.end())));
 }
 
 OptionPtr
@@ -133,6 +137,15 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(option_code_)
             .arg('\'' + opt_str + '\'');
+    }
+}
+
+void
+TokenOption::pushFailure(ValueStack& values) {
+    if (representation_type_ == EXISTS) {
+        values.push("false");
+    } else {
+        values.push("");
     }
 }
 
@@ -598,4 +611,189 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(type_str)
         .arg("0x" + util::encode::encodeHex(std::vector<uint8_t>(value.begin(),
                                                                  value.end())));
+}
+
+TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
+                         uint16_t option_code)
+    :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
+     field_(option_code ? SUBOPTION : EXISTS)
+{
+}
+
+TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
+    :TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
+     field_(field)
+{
+    if (field_ == EXISTS) {
+        representation_type_ = TokenOption::EXISTS;
+    }
+}
+
+uint32_t TokenVendor::getVendorId() const {
+    return (vendor_id_);
+}
+
+TokenVendor::FieldType TokenVendor::getField() const {
+    return (field_);
+}
+
+void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
+
+    // Get the option first.
+    uint16_t code = 0;
+    switch (universe_) {
+    case Option::V4:
+        code = DHO_VIVSO_SUBOPTIONS;
+        break;
+    case Option::V6:
+        code = D6O_VENDOR_OPTS;
+        break;
+    }
+
+    OptionPtr opt = pkt.getOption(code);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    if (!vendor) {
+        // There's no vendor option, give up.
+        pushFailure(values);
+        return;
+    }
+
+    if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
+        // There is vendor option, but it has other vendor-id value
+        // than we're looking for. (0 means accept any vendor-id)
+        pushFailure(values);
+        return;
+    }
+
+    switch (field_) {
+    case ENTERPRISE_ID:
+    {
+        // Extract enterprise-id
+        string txt(sizeof(uint32_t), 0);
+        uint32_t value = htonl(vendor->getVendorId());
+        memcpy(&txt[0], &value, sizeof(uint32_t));
+        values.push(txt);
+        return;
+    }
+    case SUBOPTION:
+        /// This is vendor[X].option[Y].exists, let's try to
+        /// extract the option
+        TokenOption::evaluate(pkt, values);
+        return;
+    case EXISTS:
+        // We already passed all the checks: the option is there and has specified
+        // enterprise-id.
+        values.push("true");
+        return;
+    case DATA:
+        // This is for vendor-class option, we can skip it here.
+        isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
+        return;
+    }
+}
+
+OptionPtr TokenVendor::getOption(Pkt& pkt) {
+   uint16_t code = 0;
+    switch (universe_) {
+    case Option::V4:
+        code = DHO_VIVSO_SUBOPTIONS;
+        break;
+    case Option::V6:
+        code = D6O_VENDOR_OPTS;
+        break;
+    }
+
+    OptionPtr opt = pkt.getOption(code);
+    if (!opt) {
+        // If vendor option is not found, return NULL
+        return (opt);
+    }
+
+    // If vendor option is found, try to return its
+    // encapsulated option.
+    return (opt->getOption(option_code_));
+}
+
+TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
+                                   RepresentationType repr)
+    :TokenVendor(u, vendor_id, repr, 0), index_(0) {
+}
+
+TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
+                                   FieldType field, uint16_t index)
+    :TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index)
+{
+    field_ = field;
+}
+
+uint16_t TokenVendorClass::getDataIndex() const {
+    return (index_);
+}
+
+void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
+
+    // Get the option first.
+    uint16_t code = 0;
+    switch (universe_) {
+    case Option::V4:
+        code = DHO_VIVCO_SUBOPTIONS;
+        break;
+    case Option::V6:
+        code = D6O_VENDOR_CLASS;
+        break;
+    }
+
+    OptionPtr opt = pkt.getOption(code);
+    OptionVendorClassPtr vendor = boost::dynamic_pointer_cast<OptionVendorClass>(opt);
+    if (!vendor) {
+        // There's no vendor option, give up.
+        pushFailure(values);
+        return;
+    }
+
+    if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
+        // There is vendor option, but it has other vendor-id value
+        // than we're looking for. (0 means accept any vendor-id)
+        pushFailure(values);
+        return;
+    }
+
+    switch (field_) {
+    case ENTERPRISE_ID:
+    {
+        // Extract enterprise-id
+        string txt(sizeof(uint32_t), 0);
+        uint32_t value = htonl(vendor->getVendorId());
+        memcpy(&txt[0], &value, sizeof(uint32_t));
+        values.push(txt);
+        return;
+    }
+    case SUBOPTION:
+        // Extract sub-options
+        isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
+        return;
+    case EXISTS:
+        // We already passed all the checks: the option is there and has specified
+        // enterprise-id.
+        values.push("true");
+        return;
+    case DATA:
+    {
+        size_t max = vendor->getTuplesNum();
+        if (index_ + 1 > max) {
+            // The index specified if out of bound, e.g. there are only
+            // 2 tuples and index specified is 5.
+            values.push("");
+            return;
+        }
+
+        OpaqueDataTuple tuple = vendor->getTuple(index_);
+        OpaqueDataTuple::Buffer buf = tuple.getData();
+        string txt(buf.begin(), buf.end());
+        values.push(txt);
+        return;
+    }
+    default:
+        isc_throw(EvalTypeError, "Invalid field specified." << field_);
+    }
 }

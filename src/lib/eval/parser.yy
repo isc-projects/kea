@@ -69,6 +69,11 @@ using namespace isc::eval;
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
+  VENDOR_CLASS "vendor-class"
+  VENDOR "vendor"
+  ANY "*"
+  DATA "data"
+  ENTERPRISE "enterprise"
 ;
 
 %token <std::string> STRING "constant string"
@@ -78,6 +83,7 @@ using namespace isc::eval;
 %token <std::string> IP_ADDRESS "ip address"
 
 %type <uint16_t> option_code
+%type <uint32_t> enterprise_id
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
@@ -160,7 +166,35 @@ bool_expr : "(" bool_expr ")"
                         error(@1, "relay6 can only be used in DHCPv6.");
                     }
                 }
-          ;
+| VENDOR_CLASS "[" enterprise_id "]" "." EXISTS
+{
+    // Expression: vendor-class[1234].exists
+    //
+    // This token will find option 124 (DHCPv4) or 16 (DHCPv6), and will check
+    // if enterprise-id equals specified value.
+    TokenPtr exist(new TokenVendorClass(ctx.getUniverse(), $3, TokenOption::EXISTS));
+    ctx.expression.push_back(exist);
+}
+| VENDOR "[" enterprise_id "]" "." EXISTS
+{
+    // Expression: vendor[1234].exists
+    //
+    // This token will find option 125 (DHCPv4) or 17 (DHCPv6), and will check
+    // if enterprise-id equals specified value.
+    TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS));
+    ctx.expression.push_back(exist);
+
+}
+| VENDOR "[" enterprise_id "]" "." OPTION "[" option_code "]" "." EXISTS
+{
+    // Expression vendor[1234].option[123].exists
+    //
+    // This token will check if specified vendor option exists, has specified
+    // enterprise-id and if has specified suboption.
+    TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS, $8));
+    ctx.expression.push_back(exist);
+}
+;
 
 string_expr : STRING
                   {
@@ -253,7 +287,59 @@ string_expr : STRING
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
                   }
-            ;
+| VENDOR "." ENTERPRISE
+{
+    // expression: vendor.enterprise
+    //
+    // This token will return enterprise-id number of received vendor option.
+    TokenPtr vendor(new TokenVendor(ctx.getUniverse(), 0, TokenVendor::ENTERPRISE_ID));
+    ctx.expression.push_back(vendor);
+}
+| VENDOR_CLASS "." ENTERPRISE
+{
+    // expression: vendor-class.enterprise
+    //
+    // This token will return enterprise-id number of received vendor class option.
+    TokenPtr vendor(new TokenVendorClass(ctx.getUniverse(), 0,
+                                         TokenVendor::ENTERPRISE_ID));
+    ctx.expression.push_back(vendor);
+}
+| VENDOR "[" enterprise_id "]" "." OPTION "[" option_code "]" "." option_repr_type
+{
+    // expression: vendor[1234].option[56].exists
+    // expression: vendor[1234].option[56].hex
+    //
+    // This token will search for vendor option with specified enterprise-id.
+    // If found, will search for specified suboption and finally will return
+    // if it exists ('exists') or its content ('hex')
+    TokenPtr opt(new TokenVendor(ctx.getUniverse(), $3, $11, $8));
+    ctx.expression.push_back(opt);
+}
+| VENDOR_CLASS "[" enterprise_id "]" "." DATA
+{
+    // expression: vendor-class[1234].data
+    //
+    // Vendor class option does not have suboptions, but chunks of data (typically 1,
+    // but the option structure allows multiple of them). If chunk offset is not
+    // specified, we assume the first (0th) is requested.
+    TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), $3,
+                                               TokenVendor::DATA, 0));
+    ctx.expression.push_back(vendor_class);
+}
+| VENDOR_CLASS "[" enterprise_id "]" "." DATA "[" INTEGER "]"
+{
+    // expression: vendor-class[1234].data[5]
+    //
+    // Vendor class option does not have suboptions, but chunks of data (typically 1,
+    // but the option structure allows multiple of them). This syntax specifies
+    // which data chunk (tuple) we want.
+    uint8_t index = ctx.convertUint8($8, @8);
+    TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), $3,
+                                               TokenVendor::DATA, index));
+    ctx.expression.push_back(vendor_class);
+}
+
+;
 
 option_code : INTEGER
                  {
@@ -274,6 +360,15 @@ option_repr_type : TEXT
                           $$ = TokenOption::HEXADECIMAL;
                       }
                  ;
+
+enterprise_id : INTEGER
+{
+    $$ = ctx.convertUint32($1, @1);
+}
+| "*"
+{
+    $$ = 0;
+}
 
 pkt4_field : CHADDR
                 {
@@ -330,7 +425,7 @@ relay6_field : PEERADDR { $$ = TokenRelay6Field::PEERADDR; }
 
 nest_level : INTEGER
                  {
-		 $$ = ctx.convertNestLevelNumber($1, @1);
+                 $$ = ctx.convertNestLevelNumber($1, @1);
                  }
                  // Eventually we may add strings to handle different
                  // ways of choosing from which relay we want to extract

@@ -169,10 +169,15 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
+"*"         return isc::eval::EvalParser::make_ANY(loc);
 
 "pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
 "msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
 "transid"   return isc::eval::EvalParser::make_TRANSID(loc);
+"vendor"    return isc::eval::EvalParser::make_VENDOR(loc);
+"vendor-class" return isc::eval::EvalParser::make_VENDOR_CLASS(loc);
+"data"      return isc::eval::EvalParser::make_DATA(loc);
+"enterprise" return isc::eval::EvalParser::make_ENTERPRISE(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);

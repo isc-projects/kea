@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
+#include <limits>
 
 EvalContext::EvalContext(const Option::Universe& option_universe)
   : trace_scanning_(false), trace_parsing_(false),
@@ -97,14 +98,9 @@ uint8_t
 EvalContext::convertNestLevelNumber(const std::string& nest_level,
                                     const isc::eval::location& loc)
 {
-    int n = 0;
-    try {
-        n  = boost::lexical_cast<int>(nest_level);
-    } catch (const boost::bad_lexical_cast &) {
-        error(loc, "Nest level has invalid value in " + nest_level);
-    }
+    uint8_t n = convertUint8(nest_level, loc);
     if (option_universe_ == Option::V6) {
-        if (n < 0 || n >= HOP_COUNT_LIMIT) {
+        if (n >= HOP_COUNT_LIMIT) {
             error(loc, "Nest level has invalid value in "
                       + nest_level + ". Allowed range: 0..31");
 	}
@@ -112,9 +108,44 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
         error(loc, "Nest level invalid for DHCPv4 packets");
     }
 
+    return (n);
+}
+
+uint8_t
+EvalContext::convertUint8(const std::string& number,
+                          const isc::eval::location& loc)
+{
+    int n = 0;
+    try {
+        n  = boost::lexical_cast<int>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid integer value in " + number);
+    }
+    if (n < 0 || n >= std::numeric_limits<uint8_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: 0..255");
+    }
+
     return (static_cast<uint8_t>(n));
 }
 
+uint32_t
+EvalContext::convertUint32(const std::string& number,
+                          const isc::eval::location& loc)
+{
+    uint64_t n = 0;
+    try {
+        n  = boost::lexical_cast<uint64_t>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid value in " + number);
+    }
+    if (n >= std::numeric_limits<uint32_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: 0..4294967295");
+    }
+
+    return (static_cast<uint32_t>(n));
+}
 
 void
 EvalContext::fatal (const std::string& what)
