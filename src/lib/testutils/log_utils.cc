@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <testutils/log_utils.h>
+#include <iostream>
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
-LogContentTest::LogContentTest() {
+LogContentTest::LogContentTest()
+    :verbose_(false) {
     // Get rid of any old files
     remFile();
 
@@ -41,18 +43,31 @@ bool LogContentTest::checkFile() {
     int i = 0;
     bool found = true;
 
+    using namespace std;
+
     while (getline(file, line) && (i != exp_strings_.size())) {
         exp_line = exp_strings_[i];
+        if (verbose_) {
+            cout << "Read line  :" << line << endl;
+            cout << "Looking for:" << exp_line << endl;
+        }
         i++;
         if (string::npos == line.find(exp_line)) {
+            if (verbose_) {
+                cout << "Verdict    : not found" << endl;
+            }
             found = false;
         }
     }
 
     file.close();
 
-    if ((i != exp_strings_.size()) || (found == false))
+    if ((i != exp_strings_.size()) || (found == false)) {
+        if (verbose_) {
+            cout << "Final verdict: false" << endl;
+        }
         return (false);
+    }
 
     return (true);
 }
