@@ -372,7 +372,188 @@ public:
         checkTokenPkt6(eval.expression.at(0), exp_type);
     }
 
-    Option::Universe universe_;
+
+    /// @brief Checks if the given token is TokenVendor and has expected characteristics
+    /// @param token token to be checked
+    /// @param exp_vendor_id expected vendor-id (aka enterprise number)
+    /// @param exp_repr expected representation (either 'exists' or 'hex')
+    /// @param exp_option_code expected option code (ignored if 0)
+    void checkTokenVendor(const TokenPtr& token, uint32_t exp_vendor_id,
+                          uint16_t exp_option_code,
+                          TokenOption::RepresentationType exp_repr) {
+        ASSERT_TRUE(token);
+
+        boost::shared_ptr<TokenVendor> vendor =
+            boost::dynamic_pointer_cast<TokenVendor>(token);
+
+        ASSERT_TRUE(vendor);
+
+        EXPECT_EQ(exp_vendor_id, vendor->getVendorId());
+        EXPECT_EQ(exp_repr, vendor->getRepresentation());
+        EXPECT_EQ(exp_option_code, vendor->getCode());
+    }
+
+    /// @brief Tests if specified token vendor expression can be parsed
+    ///
+    /// This test assumes the first token will be token vendor. Any additional
+    /// tokens are ignored. Tests experssions:
+    /// vendor[1234].option[234].hex
+    /// vendor[1234].option[234].exists
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id expected vendor-id (aka enterprise number)
+    /// @param option_code expected option code (ignored if 0)
+    /// @param expected_repr expected representation (either 'exists' or 'hex')
+    void testVendor(std::string expr, Option::Universe u, uint32_t vendor_id,
+                    uint16_t option_code, TokenOption::RepresentationType expected_repr) {
+        EvalContext eval(u);
+
+        EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
+        EXPECT_TRUE(parsed_);
+
+        // We need at least one token, we will evaluate the first one.
+        ASSERT_FALSE(eval.expression.empty());
+
+        checkTokenVendor(eval.expression.at(0), vendor_id, option_code, expected_repr);
+    }
+
+    /// @brief Checks if token is really a TokenVendor, that the vendor_id was
+    /// stored properly and that it has expected representation
+    ///
+    /// This test is able to handle expressions similar to:
+    /// vendor[4491].option[1].hex
+    /// vendor[4491].option[1].exists
+    /// vendor[4491].exists
+    /// vendor[*].exists
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id expected vendor-id (aka enterprise number)
+    /// @param expected_repr expected representation (either 'exists' or 'hex')
+    void testVendor(std::string expr, Option::Universe u, uint32_t vendor_id,
+                    TokenOption::RepresentationType expected_repr) {
+        testVendor(expr, u, vendor_id, 0, expected_repr);
+    }
+
+    /// @brief Tests if the expression parses into token vendor that returns enterprise-id
+    ///
+    /// This test is able to handle expressions similar to:
+    /// vendor.enterprise
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    void testVendorEnterprise(std::string expr, Option::Universe u) {
+        EvalContext eval(u);
+
+        EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
+        EXPECT_TRUE(parsed_);
+
+        ASSERT_FALSE(eval.expression.empty());
+
+        boost::shared_ptr<TokenVendor> vendor =
+            boost::dynamic_pointer_cast<TokenVendor>(eval.expression.at(0));
+
+        ASSERT_TRUE(vendor);
+        EXPECT_EQ(TokenVendor::ENTERPRISE_ID, vendor->getField());
+    }
+
+    /// @brief This test checks if vendor-class token is correct
+    ///
+    /// This test checks if EXISTS representation is set correctly.
+    /// It covers cases like:
+    /// - vendor-class[4491].exist
+    /// - vendor-class[*].exist
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id expected vendor-id (aka enterprise number)
+    void testVendorClass(std::string expr, Option::Universe u, uint32_t vendor_id) {
+        EvalContext eval(u);
+
+        EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
+        EXPECT_TRUE(parsed_);
+
+        ASSERT_EQ(1, eval.expression.size());
+        checkTokenVendorClass(eval.expression.at(0), vendor_id, 0, TokenOption::EXISTS,
+                              TokenVendor::EXISTS);
+    }
+
+    /// @brief Tests if specified token vendor class expression can be parsed
+    ///
+    /// This test assumes the first token will be token vendor. Any additional
+    /// tokens are ignored. Tests experssions:
+    /// - vendor-class[4491].exists
+    /// - vendor-class[*].exists
+    /// - vendor-class[4491].data
+    /// - vendor-class[4491].data[3]
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id expected vendor-id (aka enterprise number)
+    /// @param index expected data index
+    void testVendorClass(std::string expr, Option::Universe u, uint32_t vendor_id,
+                         uint16_t index) {
+        EvalContext eval(u);
+
+        EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
+        EXPECT_TRUE(parsed_);
+
+        // Make sure there's at least one token
+        ASSERT_FALSE(eval.expression.empty());
+
+        // The first token should be TokenVendorClass, let's take a closer look.
+        checkTokenVendorClass(eval.expression.at(0), vendor_id, index,
+                              TokenOption::HEXADECIMAL, TokenVendor::DATA);
+
+    }
+
+    /// @brief Tests if the expression parses into vendor class token that
+    ///        returns enterprise-id.
+    ///
+    /// This test is able to handle expressions similar to:
+    /// - vendor-class.enterprise
+    ///
+    /// @param expr expression to be parsed
+    /// @param u universe (V4 or V6)
+    void testVendorClassEnterprise(std::string expr, Option::Universe u) {
+        EvalContext eval(u);
+
+        EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
+        EXPECT_TRUE(parsed_);
+
+        // Make sure there's at least one token
+        ASSERT_FALSE(eval.expression.empty());
+
+        // The first token should be TokenVendorClass, let's take a closer look.
+        checkTokenVendorClass(eval.expression.at(0), 0, 0, TokenOption::HEXADECIMAL,
+                              TokenVendor::ENTERPRISE_ID);
+    }
+
+    /// @brief Checks if the given token is TokenVendorClass and has expected characteristics
+    ///
+    /// @param token token to be checked
+    /// @param vendor_id expected vendor-id (aka enterprise number)
+    /// @param index expected index (used for data field only)
+    /// @param repr expected representation (either 'exists' or 'hex')
+    /// @param field expected field (none, enterprise or data)
+    void checkTokenVendorClass(const TokenPtr& token, uint32_t vendor_id,
+                               uint16_t index, TokenOption::RepresentationType repr,
+                               TokenVendor::FieldType field) {
+        ASSERT_TRUE(token);
+
+        boost::shared_ptr<TokenVendorClass> vendor =
+            boost::dynamic_pointer_cast<TokenVendorClass>(token);
+
+        ASSERT_TRUE(vendor);
+
+        EXPECT_EQ(vendor_id, vendor->getVendorId());
+        EXPECT_EQ(index, vendor->getDataIndex());
+        EXPECT_EQ(repr, vendor->getRepresentation());
+        EXPECT_EQ(field, vendor->getField());
+    }
+
+    Option::Universe universe_; ///< Universe (V4 or V6)
     bool parsed_; ///< Parsing status
 };
 
@@ -1023,6 +1204,97 @@ TEST_F(EvalContextTest, typeErrors) {
                "<string>:1.8-10: syntax error, unexpected and, expecting ==");
     checkError("'true' or 'false'",
                "<string>:1.8-9: syntax error, unexpected or, expecting ==");
+}
+
+
+TEST_F(EvalContextTest, vendor4SpecificVendorExists) {
+    testVendor("vendor[4491].exists", Option::V4, 4491, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor6SpecificVendorExists) {
+    testVendor("vendor[4491].exists", Option::V6, 4491, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor4AnyVendorExists) {
+    testVendor("vendor[*].exists", Option::V4, 0, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor6AnyVendorExists) {
+    testVendor("vendor[*].exists", Option::V6, 0, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor4enterprise) {
+    testVendorEnterprise("vendor.enterprise == 0x1234", Option::V4);
+}
+
+TEST_F(EvalContextTest, vendor6enterprise) {
+    testVendorEnterprise("vendor.enterprise == 0x1234", Option::V6);
+}
+
+TEST_F(EvalContextTest, vendor4SuboptionExists) {
+    testVendor("vendor[4491].option[1].exists", Option::V4, 4491, 1, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor6SuboptionExists) {
+    testVendor("vendor[4491].option[1].exists", Option::V6, 4491, 1, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor4SuboptionHex) {
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V4, 4491, 1,
+               TokenOption::HEXADECIMAL);
+}
+
+TEST_F(EvalContextTest, vendor6SuboptionHex) {
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V6, 4491, 1,
+               TokenOption::HEXADECIMAL);
+}
+
+TEST_F(EvalContextTest, vendorClass4SpecificVendorExists) {
+    testVendorClass("vendor-class[4491].exists", Option::V4, 4491);
+}
+
+TEST_F(EvalContextTest, vendorClass6SpecificVendorExists) {
+    testVendorClass("vendor-class[4491].exists", Option::V6, 4491);
+}
+
+TEST_F(EvalContextTest, vendorClass4AnyVendorExists) {
+    testVendorClass("vendor-class[*].exists", Option::V4, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass6AnyVendorExists) {
+    testVendorClass("vendor-class[*].exists", Option::V6, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass4enterprise) {
+    testVendorClassEnterprise("vendor-class.enterprise == 0x1234", Option::V4);
+}
+
+TEST_F(EvalContextTest, vendorClass6enterprise) {
+    testVendorClassEnterprise("vendor-class.enterprise == 0x1234", Option::V6);
+}
+
+TEST_F(EvalContextTest, vendorClass4SpecificVendorData) {
+    testVendorClass("vendor-class[4491].data == 0x1234", Option::V4, 4491, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass6SpecificVendorData) {
+    testVendorClass("vendor-class[4491].data == 0x1234", Option::V6, 4491, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass4AnyVendorData) {
+    testVendorClass("vendor-class[*].data == 0x1234", Option::V4, 0, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass6AnyVendorData) {
+    testVendorClass("vendor-class[*].data == 0x1234", Option::V6, 0, 0);
+}
+
+TEST_F(EvalContextTest, vendorClass4DataIndex) {
+    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V4, 4491, 3);
+}
+
+TEST_F(EvalContextTest, vendorClass6DataIndex) {
+    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, 4491, 3);
 }
 
 };

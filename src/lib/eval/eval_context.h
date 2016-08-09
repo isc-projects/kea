@@ -96,10 +96,28 @@ public:
     ///
     /// @param option_name the option name
     /// @param loc the location of the token
-    /// @result the option code
+    /// @return the option code
     /// @throw calls the syntax error function if the name cannot be resolved
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to unsinged 32bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the option code
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    uint32_t convertUint32(const std::string& number,
+                           const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to unsinged 8bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the option code
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    uint8_t convertUint8(const std::string& number,
+                         const isc::eval::location& loc);
 
     /// @brief Nest level conversion
     ///
