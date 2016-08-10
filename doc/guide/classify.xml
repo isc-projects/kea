@@ -460,6 +460,9 @@
       <para>Asterisk (*) or 0 can be used to specify wildcard enterprise-id
       value, i.e. it will match any enterprise-id value.</para>
 
+      <para>Vendor Class Identifier (option 60 in DHCPv4) can be
+      accessed using option[60] expression.</para>
+
       <para>
         <table frame="all" id="classification-expressions-list">
           <title>List of Classification Expressions</title>
