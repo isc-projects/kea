@@ -3584,9 +3584,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             <simpara>Host reservation (static addresses) is not supported yet.</simpara>
           </listitem>
           <listitem>
-            <simpara>Full featured client classification is not supported yet.</simpara>
-          </listitem>
-          <listitem>
             <simpara>
               BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
               is not supported. This is a design choice. BOOTP support is not planned.
@@ -3608,9 +3605,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             assigned address is unused. According to <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>, the
             allocating server should verify that address is not used by
             sending ICMP echo request.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
           </listitem>
       </itemizedlist>
     </section>
