@@ -3828,8 +3828,7 @@ should include options from the isc option space:
 
         <listitem>
           <simpara>
-            Duplication report (DECLINE) and client reconfiguration (RECONFIGURE) are
-            not yet supported.
+            Client reconfiguration (RECONFIGURE) is not yet supported.
           </simpara>
         </listitem>
       </itemizedlist>
