@@ -682,7 +682,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID)
-            .arg(vendor_id_)
+            .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
         return;
@@ -789,7 +789,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID)
-            .arg(vendor_id_)
+            .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
         return;
@@ -812,6 +812,11 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         if (index_ + 1 > max) {
             // The index specified if out of bound, e.g. there are only
             // 2 tuples and index specified is 5.
+            LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND)
+                .arg(index_)
+                .arg(vendor->getVendorId())
+                .arg(max)
+                .arg("");
             values.push("");
             return;
         }
@@ -823,7 +828,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA)
             .arg(index_)
             .arg(max)
-            .arg(util::encode::encodeHex(buf));
+            .arg(txt);
 
         values.push(txt);
         return;
