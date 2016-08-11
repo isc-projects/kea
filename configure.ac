@@ -205,16 +205,16 @@ KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 # Disable -Werror by default. Only use it if specifically enabled.
 # The usage of this flag is:
 #
-# No flag:           -Werror is disabled
-# --with-werror:     -Werror is enabled
-# --with-werror=yes: -Werror is enabled
-# --with-werror=no:  -Werror is disabled
-# --With-error=value -Werror is enabled and "value" is included in the compiler flags
+# No flag:            -Werror is disabled
+# --with-werror:      -Werror is enabled
+# --with-werror=yes:  -Werror is enabled
+# --with-werror=no:   -Werror is disabled
+# --with-werror=value -Werror is enabled and "value" is included in the compiler flags
 #
 # In the last case, "value" may be one or more compiler flags, e.g.
 
 # --with-werror=-Wundef
-# --with-error='-Wundef -Wconversion'
+# --with-werror='-Wundef -Wconversion'
 
 werror_extras=
 AC_ARG_WITH(werror,
