@@ -25,7 +25,6 @@ namespace dhcp {
 class MySqlLease4Exchange;
 class MySqlLease6Exchange;
 
-
 /// @brief MySQL Lease Manager
 ///
 /// This class provides the \ref isc::dhcp::LeaseMgr interface to the MySQL
@@ -410,6 +409,7 @@ public:
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry
         UPDATE_LEASE6,               // Update a Lease6 entry
+        RECOUNT_LEASE4_STATS,        // Fetches address statisics
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -590,6 +590,15 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a MySqlAddressStatsQuery4 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// The query object is then returned.
+    /// 
+    /// @return The populated query as a pointer to an AddressStatsQuery4
+    virtual AddressStatsQuery4Ptr startAddressStatsQuery4();
 
     /// @brief Check Error and Throw Exception
     ///

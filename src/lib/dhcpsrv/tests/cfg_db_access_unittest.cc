@@ -88,6 +88,7 @@ public:
     /// @brief Destructor.
     virtual ~CfgMySQLDbAccessTest() {
         destroyMySQLSchema();
+        LeaseMgrFactory::destroy();
     }
 };
 

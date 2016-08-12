@@ -40,18 +40,18 @@ struct Lease {
     /// @return text decription
     static std::string typeToText(Type type);
 
-    /// @name Common lease states constants.
+    /// @name Enumeration of lease states
     //@{
-    ///
-    /// @brief A lease in the default state.
-    static const uint32_t STATE_DEFAULT;
-
-    /// @brief Declined lease.
-    static const uint32_t STATE_DECLINED;
-
-    /// @brief Expired and reclaimed lease.
-    static const uint32_t STATE_EXPIRED_RECLAIMED;
-
+    typedef enum {
+        /// @brief A lease in the default (assigned) state.
+        STATE_DEFAULT,
+        /// @brief Declined lease.
+        STATE_DECLINED,
+        /// @brief Expired and reclaimed lease.
+        STATE_EXPIRED_RECLAIMED,
+        /// @brief The number of defined lease states.
+        NUM_LEASE_STATES
+    } LeaseState;
     //@}
 
     /// @brief Returns name(s) of the basic lease state(s).

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,12 @@
 namespace isc {
 namespace dhcp {
 namespace test {
+
+
+/// @brief typedefs to simplify lease statistic testing
+typedef std::map<std::string, int64_t> StatValMap;
+typedef std::pair<std::string, int64_t> StatValPair;
+typedef std::vector<StatValMap> StatValMapList;
 
 /// @brief Test Fixture class with utility functions for LeaseMgr backends
 ///
@@ -93,6 +99,34 @@ public:
     ///
     /// @return vector<Lease6Ptr> Vector of pointers to leases
     std::vector<Lease6Ptr> createLeases6();
+
+    /// @brief Compares a StatsMgr statistic to an expected value
+    ///
+    /// Attempt to fetch the named statistic from the StatsMg and if
+    /// found, compare its observed value to the given value.
+    /// Fails if the stat is not found or if the values do not match.
+    ///
+    /// @param name StatsMgr name for the statistic to check
+    /// @param expected_value expected value of the statistic
+    void checkStat(const std::string& name, const int64_t expected_value);
+
+    /// @brief Compares StatsMgr statistics against an expected list of values
+    ///
+    /// Iterates over a list of statistic names and expectec values, attempting
+    /// to fetch each from the StatsMgr and if found, compare its observed value
+    /// to the expected value.  Fails any the stat is not found or if the values
+    /// do not match.
+    ///
+    /// @param expected_stats Map of expected static names and values.
+    void checkAddressStats4(const StatValMapList& expected_stats);
+
+    /// @brief Constructs a minimal IPv4 lease and adds it to the lease storage
+    ///
+    /// @param address - IPv4 address for the lease
+    /// @param subnet_id - subnet ID to which the lease belongs
+    /// @param state - the state of the lease
+    void makeLease4(const std::string& address, const SubnetID& subnet_id,
+                    const Lease::LeaseState& state = Lease::STATE_DEFAULT);
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
@@ -312,6 +346,13 @@ public:
     /// as expired-reclaimed. It later verifies that the expired-reclaimed
     /// leases can be removed.
     void testDeleteExpiredReclaimedLeases4();
+
+    /// @brief Check that the IPv4 lease statistics can be recounted
+    ///
+    /// This test creates two subnets and several leases associated with
+    /// them, then verifies that lease statistics are recalculated correctly
+    /// after altering the lease states in various ways.
+    void testRecountAddressStats4();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
