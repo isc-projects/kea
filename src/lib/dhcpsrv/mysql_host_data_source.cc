@@ -1275,7 +1275,7 @@ private:
     uint8_t prefix_len_;
 
     /// @brief IAID.
-    uint8_t iaid_;
+    uint32_t iaid_;
 
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
