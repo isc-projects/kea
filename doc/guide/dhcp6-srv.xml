@@ -542,10 +542,10 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 
 <section id="read-only-database-configuration6">
-<title>Using Read Only Databases for Host Reservations</title>
+<title>Using Read-Only Databases for Host Reservations</title>
 <para>
-In some deployments the database user, which name is specified in the database backend
-configuration, may not have write privileges to the database. This is often
+In some deployments the database user whose name is specified in the database backend
+configuration may not have write privileges to the database. This is often
 required by the policy within a given network to secure the data from being
 unintentionally modified. In many cases administrators have inventory databases
 deployed, which contain substantially more information about the hosts than
@@ -553,16 +553,16 @@ static reservations assigned to them. The inventory database can be used to crea
 a view of a Kea hosts database and such view is often read only.
 </para>
 <para>
-Kea host database backends operate with implicit configuration to both read from
-and write to the database. If the host database is read only for the
-particular user, the backend will fail to start and consequently the server
-will refuse to start/reconfigure. If the administrator intends to use the
-read only host database for retrieving reservations for clients, to assign
-specific addresses and options, it is possible to explicitly configure
-Kea to start in "read-only" mode. This is controlled by the
+Kea host database backends operate with an implicit configuration to both
+read from and write to the database. If the database user does not have
+write access to the host database, the backend will fail to start and the
+server will refuse to start (or reconfigure). However, if access to a read
+only host database is required for retrieving reservations for clients
+and/or assign specific addresses and options, it is possible to explicitly
+configure Kea to start in "read-only" mode. This is controlled by the
 <command>readonly</command> boolean parameter as follows:
 <screen>
-"Dhcp4": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
+"Dhcp6": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
 </screen>
 Setting this parameter to <userinput>false</userinput> would configure the
 database backend to operate in "read-write" mode, which is also a default

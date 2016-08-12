@@ -714,7 +714,7 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       the read only mode.
       Sections <xref linkend="read-only-database-configuration4"/> and
       <xref linkend="read-only-database-configuration6"/> describe when
-      such configuration may be desired and how to configure Kea to
+      such configuration may be reqired and how to configure Kea to
       operate using read only host database.
       </para>
     </section>
