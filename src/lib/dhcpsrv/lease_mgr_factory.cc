@@ -101,6 +101,11 @@ LeaseMgrFactory::destroy() {
     getLeaseMgrPtr().reset();
 }
 
+bool 
+LeaseMgrFactory::haveInstance() {
+    return (getLeaseMgrPtr().get());
+}
+
 LeaseMgr&
 LeaseMgrFactory::instance() {
     LeaseMgr* lmptr = getLeaseMgrPtr().get();

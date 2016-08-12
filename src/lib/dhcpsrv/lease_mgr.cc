@@ -6,8 +6,11 @@
 
 #include <config.h>
 
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
+#include <stats/stats_mgr.h>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -42,6 +45,82 @@ LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
         return (Lease6Ptr());
     }
     return (*col.begin());
+}
+
+void 
+LeaseMgr::recountAddressStats4() {
+    using namespace stats;
+
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    AddressStatsQuery4Ptr query = startAddressStatsQuery4();
+    if (!query) {
+        /// NULL means not backend does not support recounting.
+        return;
+    }
+
+    // Zero out the global stats. (Ok, so currently there's only one
+    // that should be cleared.  "reclaimed-declined-addresses" never
+    // gets zeroed. @todo discuss with Tomek the rational of not
+    // clearing it when we clear the rest.
+    int64_t zero = 0;
+    stats_mgr.setValue("declined-addresses", zero);
+    stats_mgr.setValue("declined-reclaimed-addresses", zero);
+
+    // Clear subnet level stats.  This ensures we don't end up with corner
+    // cases that leave stale values in place. 
+    const Subnet4Collection* subnets = 
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+
+    for (Subnet4Collection::const_iterator subnet = subnets->begin();
+         subnet != subnets->end(); ++subnet) {
+        SubnetID subnet_id = (*subnet)->getID();
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "assigned-addresses"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "declined-addresses"),
+                           zero);
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "declined-reclaimed-addresses"),
+                           zero);
+    }
+   
+    // Get counts per state per subnet. Iterate over the result set
+    // updating the subnet and global values. 
+    AddressStatsRow4 row;
+    while (query->getNextRow(row)) {
+        switch(row.lease_state_) {
+            case Lease::STATE_DEFAULT:
+                // Set subnet level value.
+                stats_mgr.setValue(StatsMgr::generateName("subnet", 
+                                                          row.subnet_id_,
+                                                          "assigned-addresses"),
+                                   row.state_count_);
+                break;
+
+            case Lease::STATE_DECLINED:
+                // Set subnet level value.
+                stats_mgr.setValue(StatsMgr::generateName("subnet",
+                                                          row.subnet_id_,
+                                                          "declined-addresses"),
+                                   row.state_count_);
+
+                // Add to the global value.
+                stats_mgr.addValue("declined-addresses", row.state_count_);
+                break;
+
+            default:
+                // Not one we're tracking.
+                break;
+        }
+    }
+}
+
+AddressStatsQuery4Ptr
+LeaseMgr::startAddressStatsQuery4() {
+    return(AddressStatsQuery4Ptr());
 }
 
 std::string

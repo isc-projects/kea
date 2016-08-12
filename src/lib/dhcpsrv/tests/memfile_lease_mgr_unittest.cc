@@ -1883,6 +1883,10 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     }
 }
 
-
+// Verifies that IPv4 lease statistics can be recalculated.
+TEST_F(MemfileLeaseMgrTest, recountAddressStats4) {
+    startBackend(V4);
+    testRecountAddressStats4();
+}
 
 }; // end of anonymous namespace

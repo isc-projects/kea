@@ -146,6 +146,70 @@ public:
     virtual ~SqlExchange() {};
     ExchangeColumnInfoContainer parameters_;   ///< Column names and types
 };
+
+/// @brief Contains a single row of IPv4 lease statistical data
+///
+/// The contents of the row consist of a subnet ID, a lease state,
+/// and the number of leases in that state for that subnet ID.
+struct AddressStatsRow4 {
+    /// @brief Default constructor
+    AddressStatsRow4() : 
+        subnet_id_(0), lease_state_(Lease::STATE_DEFAULT), state_count_(0) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_state The lease state counted
+    /// @param state_count The count of leases in the lease state
+    AddressStatsRow4(const SubnetID& subnet_id,
+                     const Lease::LeaseState& lease_state,
+                     const int64_t state_count) 
+        : subnet_id_(subnet_id), lease_state_(lease_state), 
+          state_count_(state_count) {
+    }
+
+    /// @brief The subnet ID to which this data applies
+    SubnetID subnet_id_;
+    /// @brief The lease_state to which the count applies
+    uint32_t lease_state_;
+    /// @brief state_count The count of leases in the lease state
+    int64_t state_count_;
+};
+
+/// @brief Base class for fulfilling IPv4 statistical lease data query
+///
+/// LeaseMgr derivations implement this class such that it provides
+/// upto date IPv4 statistical lease data organized as rows of
+/// AddressStatsRow4 instances.  The rows must be accessible in
+/// ascending order by subnet id.
+class AddressStatsQuery4 {
+public:
+    /// @brief Default constructor
+    AddressStatsQuery4() {};
+
+    /// @brief virtual destructor 
+    virtual ~AddressStatsQuery4() {};
+
+    /// @brief Executes the query
+    ///
+    /// This method should conduct whatever steps are required to 
+    /// calculate the IPv4 lease statistical data by examining the
+    /// IPv4 lease data and making that results available row by row.
+    virtual void start() {};
+
+    /// @brief Fetches the next row of data
+    ///
+    /// @param[out] row Storage into which the row is fetched
+    ///
+    /// @return True if a row was fetched, false if there are no
+    /// more rows.
+    virtual bool getNextRow(AddressStatsRow4& row) { return(false); };
+};
+
+/// @brief Defines a pointer to an AddressStatsQuery4.
+typedef boost::shared_ptr<AddressStatsQuery4> AddressStatsQuery4Ptr;
+
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified
@@ -396,6 +460,36 @@ public:
     ///
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
+
+    /// @brief Recalculates per-subnet and global stats for IPv4 leases
+    ///
+    /// This method recalculates the following statistics: 
+    /// per-subnet:
+    /// - assigned-addresses
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    /// global:
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    ///
+    /// It invokes the virtual method, startAddressStatsQuery4(), which
+    /// returns an instance of an AddressStats4Qry.  The query
+    /// query contains a "result set"  where each row is an AddressStatRow4
+    /// that contains a subnet id, a lease state, the number of leases in that
+    /// state and is ordered by subnet id.  The method iterates over the 
+    /// result set rows, setting the appropriate statistic per subnet and
+    /// adding to the approporate global statistic. 
+    void recountAddressStats4();
+
+    /// @brief Virtual method which creates and runs the IPv4 lease stats query 
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an AddressStatsQuery whose result set has been 
+    /// populated with upto date IPv4 lease statistical data.  Each row of the 
+    /// result set is an AddressStatRow4 which ordered ascending by subnet ID.  
+    ///
+    /// @return A populated AddressStatsQuery4
+    virtual AddressStatsQuery4Ptr startAddressStatsQuery4();
 
     /// @brief Return backend type
     ///

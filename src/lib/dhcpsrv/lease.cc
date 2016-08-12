@@ -15,10 +15,6 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const uint32_t Lease::STATE_DEFAULT = 0x0;
-const uint32_t Lease::STATE_DECLINED = 0x1;
-const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
-
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
