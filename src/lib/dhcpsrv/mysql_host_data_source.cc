@@ -1588,7 +1588,7 @@ private:
     std::vector<uint8_t> value_;
 
     /// @brief Option value length.
-    size_t value_len_;
+    unsigned long value_len_;
 
     /// @brief Formatted option value length.
     unsigned long formatted_value_len_;
@@ -1597,7 +1597,7 @@ private:
     std::string space_;
 
     /// @brief Option space name length.
-    size_t space_len_;
+    unsigned long space_len_;
 
     /// @brief Boolean flag indicating if the option is always returned to
     /// a client or only when requested.
@@ -1607,7 +1607,7 @@ private:
     std::string client_class_;
 
     /// @brief Length of the string holding client classes for the option.
-    size_t client_class_len_;
+    unsigned long client_class_len_;
 
     /// @brief Subnet identifier.
     uint32_t subnet_id_;
