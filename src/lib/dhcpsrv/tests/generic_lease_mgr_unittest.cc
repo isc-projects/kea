@@ -2406,13 +2406,6 @@ GenericLeaseMgrTest::checkAddressStats4(const StatValMapList& expectedStats) {
     int64_t declined_addresses = 0;
     int64_t declined_reclaimed_addresses = 0;
 
-#if 0
-    isc::data::ConstElementPtr allstats = stats::StatsMgr::instance().getAll();
-    std::cout << "ALL: ";
-    allstats->toJSON(std::cout);
-    std::cout << std::endl;
-#endif
-
     // Iterate over all stats for each subnet
     for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
         BOOST_FOREACH(StatValPair expectedStat, expectedStats[subnet_idx]) {

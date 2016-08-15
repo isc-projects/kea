@@ -47,7 +47,7 @@ LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
     return (*col.begin());
 }
 
-void 
+void
 LeaseMgr::recountAddressStats4() {
     using namespace stats;
 
@@ -68,8 +68,8 @@ LeaseMgr::recountAddressStats4() {
     stats_mgr.setValue("declined-reclaimed-addresses", zero);
 
     // Clear subnet level stats.  This ensures we don't end up with corner
-    // cases that leave stale values in place. 
-    const Subnet4Collection* subnets = 
+    // cases that leave stale values in place.
+    const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
 
     for (Subnet4Collection::const_iterator subnet = subnets->begin();
@@ -86,15 +86,15 @@ LeaseMgr::recountAddressStats4() {
                                                   "declined-reclaimed-addresses"),
                            zero);
     }
-   
+
     // Get counts per state per subnet. Iterate over the result set
-    // updating the subnet and global values. 
+    // updating the subnet and global values.
     AddressStatsRow4 row;
     while (query->getNextRow(row)) {
         switch(row.lease_state_) {
             case Lease::STATE_DEFAULT:
                 // Set subnet level value.
-                stats_mgr.setValue(StatsMgr::generateName("subnet", 
+                stats_mgr.setValue(StatsMgr::generateName("subnet",
                                                           row.subnet_id_,
                                                           "assigned-addresses"),
                                    row.state_count_);
@@ -122,6 +122,114 @@ AddressStatsQuery4Ptr
 LeaseMgr::startAddressStatsQuery4() {
     return(AddressStatsQuery4Ptr());
 }
+
+void
+LeaseMgr::recountAddressStats6() {
+    using namespace stats;
+
+    StatsMgr& stats_mgr = StatsMgr::instance();
+
+    AddressStatsQuery6Ptr query = startAddressStatsQuery6();
+    if (!query) {
+        /// NULL means not backend does not support recounting.
+        return;
+    }
+
+    // Zero out the global stats. (Ok, so currently there's only one
+    // that should be cleared.  "reclaimed-declined-addresses" never
+    // gets zeroed. @todo discuss with Tomek the rational of not
+    // clearing it when we clear the rest.
+    int64_t zero = 0;
+    stats_mgr.setValue("declined-addresses", zero);
+    stats_mgr.setValue("declined-reclaimed-addresses", zero);
+
+    // Clear subnet level stats.  This ensures we don't end up with corner
+    // cases that leave stale values in place.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+
+    for (Subnet6Collection::const_iterator subnet = subnets->begin();
+         subnet != subnets->end(); ++subnet) {
+        SubnetID subnet_id = (*subnet)->getID();
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "assigned-nas"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "declined-nas"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::
+                           generateName("subnet", subnet_id,
+                                        "declined-reclaimed-addresses"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "assigned-pds"),
+                           zero);
+    }
+
+    // Get counts per state per subnet. Iterate over the result set
+    // updating the subnet and global values.
+    AddressStatsRow6 row;
+    while (query->getNextRow(row)) {
+        switch(row.lease_type_) {
+            case Lease::TYPE_NA:
+                switch(row.lease_state_) {
+                    case Lease::STATE_DEFAULT:
+                        // Set subnet level value.
+                        stats_mgr.setValue(StatsMgr::
+                                           generateName("subnet",
+                                                        row.subnet_id_,
+                                                        "assigned-nas"),
+                                           row.state_count_);
+                        break;
+                    case Lease::STATE_DECLINED:
+                        // Set subnet level value.
+                        stats_mgr.setValue(StatsMgr::
+                                           generateName("subnet",
+                                                        row.subnet_id_,
+                                                        "declined-nas"),
+                                           row.state_count_);
+
+                        // Add to the global value.
+                        stats_mgr.addValue("declined-addresses",
+                                           row.state_count_);
+                        break;
+                    default:
+                        // Not one we're tracking.
+                        break;
+                }
+                break;
+
+            case Lease::TYPE_PD:
+                switch(row.lease_state_) {
+                    case Lease::STATE_DEFAULT:
+                        // Set subnet level value.
+                        stats_mgr.setValue(StatsMgr::
+                                           generateName("subnet",
+                                                        row.subnet_id_,
+                                                        "assigned-pds"),
+                                           row.state_count_);
+                        break;
+                    default:
+                        // Not one we're tracking.
+                        break;
+                }
+                break;
+
+            default:
+                // We dont' support TYPE_TAs yet
+                break;
+        }
+    }
+}
+
+AddressStatsQuery6Ptr
+LeaseMgr::startAddressStatsQuery6() {
+    return(AddressStatsQuery6Ptr());
+}
+
 
 std::string
 LeaseMgr::getDBVersion() {
