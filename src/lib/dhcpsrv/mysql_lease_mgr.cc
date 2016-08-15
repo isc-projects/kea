@@ -207,7 +207,7 @@ TaggedStatement tagged_statements[] = {
                             "WHERE address = ?"},
     {MySqlLeaseMgr::RECOUNT_LEASE4_STATS,
                     "SELECT subnet_id, state, count(state) as state_count "
-                        "FROM lease4 group by subnet_id, state"},
+                        "FROM lease4 GROUP BY subnet_id, state ORDER BY subnet_id"},
     // End of list sentinel
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
 };

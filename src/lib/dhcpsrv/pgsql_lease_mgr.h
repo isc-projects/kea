@@ -317,6 +317,16 @@ public:
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a PgSqlAddressStatsQuery4 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// The query object is then returned.
+    /// 
+    /// @return The populated query as a pointer to an AddressStatsQuery4
+    virtual AddressStatsQuery4Ptr startAddressStatsQuery4();
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -385,6 +395,7 @@ public:
         INSERT_LEASE6,              // Add entry to lease6 table
         UPDATE_LEASE4,              // Update a Lease4 entry
         UPDATE_LEASE6,              // Update a Lease6 entry
+        RECOUNT_LEASE4_STATS,       // Fetch IPv4 lease statistical data
         NUM_STATEMENTS              // Number of statements
     };
 
