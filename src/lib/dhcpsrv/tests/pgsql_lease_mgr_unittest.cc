@@ -402,4 +402,10 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
+// Verifies that IPv4 lease statistics can be recalculated.
+TEST_F(PgSqlLeaseMgrTest, recountAddressStats4) {
+    testRecountAddressStats4();
+}
+
+
 }; // namespace

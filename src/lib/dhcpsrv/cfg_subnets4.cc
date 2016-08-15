@@ -267,8 +267,8 @@ CfgSubnets4::updateStatistics() {
                                                                      TYPE_V4)));
     }
 
-    // If we have subnets and a lease mgr, recount the least statistics
-    if (subnets_.begin() != subnets_.end() && LeaseMgrFactory::haveInstance()) {
+    // Only recount the stats if we have subnets.
+    if (subnets_.begin() != subnets_.end()) {
             LeaseMgrFactory::instance().recountAddressStats4();
     }
 }
