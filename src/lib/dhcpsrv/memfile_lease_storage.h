@@ -106,7 +106,17 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<Lease, int64_t,
                                                   &Lease::getExpirationTime>
             >
+        >,
+
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetIdIndexTag>,
+            // The subnet id is held in the subnet_id_ member of Lease6
+            // class. Note that the subnet_id_ is defined in the base
+            // class (Lease) so we have to point to this class rather
+            // than derived class: Lease6.
+            boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
         >
+
      >
 > Lease6Storage; // Specify the type name of this container.
 
@@ -240,6 +250,9 @@ typedef Lease6Storage::index<DuidIaidTypeIndexTag>::type Lease6StorageDuidIaidTy
 
 /// @brief DHCPv6 lease storage index by expiration time.
 typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
+
+/// @brief DHCPv6 lease storage index by subnet id.
+typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
 
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;

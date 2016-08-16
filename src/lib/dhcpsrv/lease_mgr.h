@@ -229,8 +229,8 @@ struct AddressStatsRow6 {
     AddressStatsRow6(const SubnetID& subnet_id, const Lease::Type& lease_type,
                      const Lease::LeaseState& lease_state,
                      const int64_t state_count)
-        : subnet_id_(subnet_id), lease_state_(lease_state),
-          state_count_(state_count) {
+        : subnet_id_(subnet_id), lease_type_(lease_type),
+          lease_state_(lease_state), state_count_(state_count) {
     }
 
     /// @brief The subnet ID to which this data applies
