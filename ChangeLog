@@ -2,7 +2,7 @@
 	Added the pkt classification token to extract incoming packet
 	meta-data (receiving interface name, source and destination
 	address, length).
-	(Trac #4272, git ...)
+	(Trac #4272, git 9a3bdfa43cf65ef56a8d63580dd5d7414fc41373)
 
 1147.	[func]		stephen
 	-Werror is no longer the default for compilation.  Promotion of all
