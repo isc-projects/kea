@@ -409,7 +409,8 @@ public:
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry
         UPDATE_LEASE6,               // Update a Lease6 entry
-        RECOUNT_LEASE4_STATS,        // Fetches address statisics
+        RECOUNT_LEASE4_STATS,        // Fetches IPv4 address statisics
+        RECOUNT_LEASE6_STATS,        // Fetches IPv6 address statisics
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -596,9 +597,19 @@ private:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS4 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an AddressStatsQuery4
     virtual AddressStatsQuery4Ptr startAddressStatsQuery4();
+
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a MySqlAddressStatsQuery6 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an AddressStatsQuery6
+    virtual AddressStatsQuery6Ptr startAddressStatsQuery6();
 
     /// @brief Check Error and Throw Exception
     ///

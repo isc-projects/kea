@@ -482,4 +482,9 @@ TEST_F(MySqlLeaseMgrTest, recountAddressStats4) {
     testRecountAddressStats4();
 }
 
+// Verifies that IPv6 lease statistics can be recalculated.
+TEST_F(MySqlLeaseMgrTest, recountAddressStats6) {
+    testRecountAddressStats6();
+}
+
 }; // Of anonymous namespace
