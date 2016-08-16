@@ -60,16 +60,22 @@ the value stack.  Then are then combined via logical or and
 the result is pushed onto the value stack. The string is displayed
 in text.
 
+# For use with TokenPkt
+% EVAL_DEBUG_PKT Pushing PKT meta data %1 with value %2
+This debug message indicates that the given binary string representing
+the value of the requested meta data is being pushed onto the value stack.
+The string is displayed in hex at the exception of interface name.
+
 # For use with TokenPkt4
 % EVAL_DEBUG_PKT4 Pushing PKT4 field %1 with value %2
 This debug message indicates that the given binary string representing
-the value of the requested fied is being pushed onto the value stack.
+the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
 # For use with TokenPkt6
 % EVAL_DEBUG_PKT6 Pushing PKT6 field %1 with value %2
 This debug message indicates that the given binary string representing
-the value of the requested fied is being pushed onto the value stack.
+the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
 # For use with TokenRelay6Field
