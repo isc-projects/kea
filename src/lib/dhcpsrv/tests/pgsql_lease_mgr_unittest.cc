@@ -407,5 +407,9 @@ TEST_F(PgSqlLeaseMgrTest, recountAddressStats4) {
     testRecountAddressStats4();
 }
 
+// Verifies that IPv6 lease statistics can be recalculated.
+TEST_F(PgSqlLeaseMgrTest, recountAddressStats6) {
+    testRecountAddressStats6();
+}
 
 }; // namespace

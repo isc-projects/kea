@@ -1379,8 +1379,8 @@ public:
     /// @brief Creates the IPv6 lease statistical data result set
     ///
     /// The result set is populated by executing an SQL query against the
-    /// lease4 table which sums the leases per lease state per subnet id.
-    /// The query used is the prepared statement identified by
+    /// lease6 table which sums the leases per lease state per lease type
+    /// per subnet id.  The query used is the prepared statement identified by
     /// MySqlLeaseMgr::RECOUNT_LEASE6_STATS.  This method creates the binds
     /// the statement to the output bind array  and then executes the
     /// statement.
