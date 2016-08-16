@@ -156,7 +156,7 @@ LeaseMgr::recountAddressStats6() {
                            zero);
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "declined-nas"),
+                                                  "declined-addresses"),
                            zero);
 
         stats_mgr.setValue(StatsMgr::
@@ -189,7 +189,7 @@ LeaseMgr::recountAddressStats6() {
                         stats_mgr.setValue(StatsMgr::
                                            generateName("subnet",
                                                         row.subnet_id_,
-                                                        "declined-nas"),
+                                                        "declined-addresses"),
                                            row.state_count_);
 
                         // Add to the global value.

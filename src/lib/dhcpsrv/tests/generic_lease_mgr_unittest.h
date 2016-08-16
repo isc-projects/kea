@@ -118,7 +118,7 @@ public:
     /// do not match.
     ///
     /// @param expected_stats Map of expected static names and values.
-    void checkAddressStats4(const StatValMapList& expected_stats);
+    void checkAddressStats(const StatValMapList& expected_stats);
 
     /// @brief Constructs a minimal IPv4 lease and adds it to the lease storage
     ///
@@ -126,6 +126,19 @@ public:
     /// @param subnet_id - subnet ID to which the lease belongs
     /// @param state - the state of the lease
     void makeLease4(const std::string& address, const SubnetID& subnet_id,
+                    const Lease::LeaseState& state = Lease::STATE_DEFAULT);
+
+    /// @brief Constructs a minimal IPv6 lease and adds it to the lease storage
+    ///
+    /// The DUID is constructed from the address and prefix length.
+    ///
+    /// @param type - type of lease to create (TYPE_NA, TYPE_PD...)
+    /// @param address - IPv6 address/prefix for the lease
+    /// @param prefix_len = length of the prefix (should be 0 for TYPE_NA)
+    /// @param subnet_id - subnet ID to which the lease belongs
+    /// @param state - the state of the lease
+    void makeLease6(const Lease::Type& type, const std::string& address,
+                    uint8_t prefix_len, const SubnetID& subnet_id,
                     const Lease::LeaseState& state = Lease::STATE_DEFAULT);
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
@@ -353,6 +366,13 @@ public:
     /// them, then verifies that lease statistics are recalculated correctly
     /// after altering the lease states in various ways.
     void testRecountAddressStats4();
+
+    /// @brief Check that the IPv6 lease statistics can be recounted
+    ///
+    /// This test creates two subnets and several leases associated with
+    /// them, then verifies that lease statistics are recalculated correctly
+    /// after altering the lease states in various ways.
+    void testRecountAddressStats6();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
