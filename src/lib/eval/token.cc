@@ -159,7 +159,7 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
-        const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+        Pkt6& pkt6 = dynamic_cast<Pkt6&>(pkt);
 
         try {
             // Now that we have the right type of packet we can
