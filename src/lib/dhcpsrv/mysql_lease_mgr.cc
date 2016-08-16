@@ -1286,8 +1286,12 @@ private:
     /// @brief Bind array used to store the query result set;
     std::vector<MYSQL_BIND> bind_;
 
-    /// @brief Member struct that is bound to the statement;
-    AddressStatsRow4 stat_row_;
+    /// @brief Receives subnet ID when fetching a row
+    uint32_t subnet_id_;
+    /// @brief Receives the lease state when fetching a row
+    uint32_t lease_state_;
+    /// @brief Receives the state count when fetching a row
+    uint32_t state_count_;
 };
 
 MySqlAddressStatsQuery4::MySqlAddressStatsQuery4(MySqlConnection& conn)
@@ -1305,17 +1309,17 @@ void
 MySqlAddressStatsQuery4::start() {
     // subnet_id: unsigned int
     bind_[0].buffer_type = MYSQL_TYPE_LONG;
-    bind_[0].buffer = reinterpret_cast<char*>(&stat_row_.subnet_id_);
+    bind_[0].buffer = reinterpret_cast<char*>(&subnet_id_);
     bind_[0].is_unsigned = MLM_TRUE;
 
     // state:  uint32_t
     bind_[1].buffer_type = MYSQL_TYPE_LONG;
-    bind_[1].buffer = reinterpret_cast<char*>(&stat_row_.lease_state_);
+    bind_[1].buffer = reinterpret_cast<char*>(&lease_state_);
     bind_[1].is_unsigned = MLM_TRUE;
 
     // state_count_: uint32_t
     bind_[2].buffer_type = MYSQL_TYPE_LONG;
-    bind_[2].buffer = reinterpret_cast<char*>(&stat_row_.state_count_);
+    bind_[2].buffer = reinterpret_cast<char*>(&state_count_);
     bind_[2].is_unsigned = MLM_TRUE;
 
     // Set up the MYSQL_BIND array for the data being returned
@@ -1338,7 +1342,9 @@ MySqlAddressStatsQuery4::getNextRow(AddressStatsRow4& row) {
     bool have_row = false;
     int status = mysql_stmt_fetch(statement_);
     if (status == MLM_MYSQL_FETCH_SUCCESS) {
-        row = stat_row_;
+        row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
+        row.lease_state_ = static_cast<Lease::LeaseState>(lease_state_);
+        row.state_count_ = state_count_;
         have_row = true;
     } else if (status != MYSQL_NO_DATA) {
         checkError(status, "RECOUNT_LEASE4_STATS: getNextRow failed");
