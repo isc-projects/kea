@@ -1,16 +1,22 @@
+1148.	[func]		fdupont
+	Added the pkt classification token to extract incoming packet
+	meta-data (receiving interface name, source and destination
+	address, length).
+	(Trac #4272, git ...)
+
 1147.	[func]		stephen
 	-Werror is no longer the default for compilation.  Promotion of all
 	compilation warnings to errors now requires the --with-werror switch
 	to be specified when running configure.
-	(Trac #4533 git 874e3a3f5cb10313856284646fcee7cf86e4fcce)
+	(Trac #4533, git 874e3a3f5cb10313856284646fcee7cf86e4fcce)
 
 1146.	[func]		sar
 	Add the forensic hook library documentation to the admin guide.
-	(Trac #4511 git 0bb39840a3cbdaf815819f846120c90d9ca038ff)
+	(Trac #4511, git 0bb39840a3cbdaf815819f846120c90d9ca038ff)
 
 1145.	[func]		tmark
-	The Postgresql backend now supports host reservations for both DHCPv4 and
-	DHCPv6, with options and IPv6 reservations.
+	The Postgresql backend now supports host reservations for both
+	DHCPv4 and DHCPv6, with options and IPv6 reservations.
 	(Trac #4277 git ac1eaa1026987c2d86d57b4aa0dc9a4d093787f0)
 
 1144.	[bug]		mihu

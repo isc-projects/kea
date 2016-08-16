@@ -54,6 +54,11 @@ using namespace isc::eval;
   TEXT "text"
   HEX "hex"
   EXISTS "exists"
+  PKT "pkt"
+  IFACE "iface"
+  SRC "src"
+  DST "dst"
+  LEN "len"
   PKT4 "pkt4"
   CHADDR "mac"
   HLEN "hlen"
@@ -62,13 +67,13 @@ using namespace isc::eval;
   GIADDR "giaddr"
   YIADDR "yiaddr"
   SIADDR "siaddr"
+  PKT6 "pkt6"
+  MSGTYPE "msgtype"
+  TRANSID "transid"
   SUBSTRING "substring"
   ALL "all"
   COMA ","
   CONCAT "concat"
-  PKT6 "pkt6"
-  MSGTYPE "msgtype"
-  TRANSID "transid"
 ;
 
 %token <std::string> STRING "constant string"
@@ -81,6 +86,7 @@ using namespace isc::eval;
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
+%type <TokenPkt::MetadataType> pkt_metadata
 %type <TokenPkt4::FieldType> pkt4_field
 %type <TokenPkt6::FieldType> pkt6_field
 
@@ -218,6 +224,39 @@ string_expr : STRING
                      }
                   }
 
+            | PKT "." pkt_metadata
+                  {
+                      TokenPtr pkt_metadata(new TokenPkt($3));
+                      ctx.expression.push_back(pkt_metadata);
+                  }
+            | PKT4 "." pkt4_field
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V4:
+                     {
+                         TokenPtr pkt4_field(new TokenPkt4($3));
+                         ctx.expression.push_back(pkt4_field);
+                         break;
+                     }
+                     case Option::V6:
+                         // For now we only use pkt4 in DHCPv4.
+                         error(@1, "pkt4 can only be used in DHCPv4.");
+                     }
+                  }
+            | PKT6 "." pkt6_field
+                  {
+                     switch (ctx.getUniverse()) {
+                     case Option::V6:
+                     {
+                         TokenPtr pkt6_field(new TokenPkt6($3));
+                         ctx.expression.push_back(pkt6_field);
+                         break;
+                     }
+                     case Option::V4:
+                         // For now we only use pkt6 in DHCPv6.
+                         error(@1, "pkt6 can only be used in DHCPv6.");
+                     }
+                  }
             | RELAY6 "[" nest_level "]" "." relay6_field
                   {
                      switch (ctx.getUniverse()) {
@@ -233,16 +272,6 @@ string_expr : STRING
                      }
                   }
 
-            | PKT4 "." pkt4_field
-                  {
-                      TokenPtr pkt4_field(new TokenPkt4($3));
-                      ctx.expression.push_back(pkt4_field);
-                  }
-            | PKT6 "." pkt6_field
-                  {
-                      TokenPtr pkt6_field(new TokenPkt6($3));
-                      ctx.expression.push_back(pkt6_field);
-                  }
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
@@ -275,6 +304,33 @@ option_repr_type : TEXT
                       }
                  ;
 
+nest_level : INTEGER
+                 {
+                     $$ = ctx.convertNestLevelNumber($1, @1);
+                 }
+                 // Eventually we may add strings to handle different
+                 // ways of choosing from which relay we want to extract
+                 // an option or field.
+           ;
+
+pkt_metadata : IFACE
+                  {
+                      $$ = TokenPkt::IFACE;
+                  }
+             | SRC
+                  {
+                      $$ = TokenPkt::SRC;
+                  }
+             | DST
+                  {
+                      $$ = TokenPkt::DST;
+                  }
+             | LEN
+                  {
+                      $$ = TokenPkt::LEN;
+                  }
+             ;
+
 pkt4_field : CHADDR
                 {
                     $$ = TokenPkt4::CHADDR;
@@ -305,6 +361,26 @@ pkt4_field : CHADDR
                 }
            ;
 
+pkt6_field : MSGTYPE
+                 {
+                     $$ = TokenPkt6::MSGTYPE;
+                 }
+           | TRANSID
+                 {
+                     $$ = TokenPkt6::TRANSID;
+                 }
+           ;
+
+relay6_field : PEERADDR
+                   {
+                       $$ = TokenRelay6Field::PEERADDR;
+                   }
+             | LINKADDR
+                   {
+                       $$ = TokenRelay6Field::LINKADDR;
+                   }
+             ;
+
 start_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));
@@ -323,23 +399,6 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
-
-relay6_field : PEERADDR { $$ = TokenRelay6Field::PEERADDR; }
-             | LINKADDR { $$ = TokenRelay6Field::LINKADDR; }
-             ;
-
-nest_level : INTEGER
-                 {
-		 $$ = ctx.convertNestLevelNumber($1, @1);
-                 }
-                 // Eventually we may add strings to handle different
-                 // ways of choosing from which relay we want to extract
-                 // an option or field.
-           ;
-
-pkt6_field:MSGTYPE { $$ = TokenPkt6::MSGTYPE; }
-          | TRANSID { $$ = TokenPkt6::TRANSID; }
-          ;
 
 %%
 void

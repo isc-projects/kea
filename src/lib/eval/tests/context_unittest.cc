@@ -132,67 +132,6 @@ public:
         }
     }
 
-    /// @brief checks if the given token is Pkt4 of specified type
-    /// @param token token to be checked
-    /// @param type expected type of the Pkt4 field
-    void checkTokenPkt4(const TokenPtr& token, TokenPkt4::FieldType type) {
-        ASSERT_TRUE(token);
-        boost::shared_ptr<TokenPkt4> pkt =
-            boost::dynamic_pointer_cast<TokenPkt4>(token);
-        ASSERT_TRUE(pkt);
-
-        EXPECT_EQ(type, pkt->getType());
-    }
-
-    /// @brief Test that verifies access to the DHCPv4 packet fields.
-    ///
-    /// This test attempts to parse the expression, will check if the number
-    /// of tokens is exactly as expected and then will try to verify if the
-    /// first token represents the expected field in DHCPv4 packet.
-    ///
-    /// @param expr expression to be parsed
-    /// @param exp_type expected field type to be parsed
-    /// @param exp_tokens expected number of tokens
-    void testPkt4Field(std::string expr,
-                       TokenPkt4::FieldType exp_type,
-                       int exp_tokens) {
-        EvalContext eval(Option::V4);
-
-        // Parse the expression.
-        try {
-            parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
-            FAIL() << "Exception thrown: " << ex.what();
-            return;
-        }
-
-        // Parsing should succeed and return a token.
-        EXPECT_TRUE(parsed_);
-
-        // There should be exactly the expected number of tokens.
-        ASSERT_EQ(exp_tokens, eval.expression.size());
-
-        // Check that the first token is TokenPkt4 instance and has correct type.
-        checkTokenPkt4(eval.expression.at(0), exp_type);
-    }
-
-    /// @brief checks if the given token is a substring operator
-    void checkTokenSubstring(const TokenPtr& token) {
-        ASSERT_TRUE(token);
-        boost::shared_ptr<TokenSubstring> sub =
-            boost::dynamic_pointer_cast<TokenSubstring>(token);
-        EXPECT_TRUE(sub);
-    }
-
-    /// @brief checks if the given token is a concat operator
-    void checkTokenConcat(const TokenPtr& token) {
-        ASSERT_TRUE(token);
-        boost::shared_ptr<TokenConcat> conc =
-            boost::dynamic_pointer_cast<TokenConcat>(token);
-        EXPECT_TRUE(conc);
-    }
-
     /// @brief checks if the given token is a TokenRelay6Option with
     /// the correct nesting level, option code and representation.
     /// @param token token to be checked
@@ -249,6 +188,143 @@ public:
         checkTokenRelay6Option(eval.expression.at(0), exp_level, exp_code, exp_repr);
     }
 
+    /// @brief check if the given token is a Pkt of specified type
+    /// @param token token to be checked
+    /// @param type expected type of the Pkt metadata
+    void checkTokenPkt(const TokenPtr& token, TokenPkt::MetadataType type) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPkt> pkt =
+            boost::dynamic_pointer_cast<TokenPkt>(token);
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(type, pkt->getType());
+    }
+
+    /// @brief Test that verifies access to the DHCP packet metadatas.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as expected and then will try to verify if the
+    /// first token represents the expected metadata in DHCP packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected metadata type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPktMetadata(std::string expr,
+                         TokenPkt::MetadataType exp_type,
+                         int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be exactly the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt instance and has correct type.
+        checkTokenPkt(eval.expression.at(0), exp_type);
+    }
+
+    /// @brief checks if the given token is Pkt4 of specified type
+    /// @param token token to be checked
+    /// @param type expected type of the Pkt4 field
+    void checkTokenPkt4(const TokenPtr& token, TokenPkt4::FieldType type) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPkt4> pkt =
+            boost::dynamic_pointer_cast<TokenPkt4>(token);
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(type, pkt->getType());
+    }
+
+    /// @brief Test that verifies access to the DHCPv4 packet fields.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as expected and then will try to verify if the
+    /// first token represents the expected field in DHCPv4 packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected field type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPkt4Field(std::string expr,
+                       TokenPkt4::FieldType exp_type,
+                       int exp_tokens) {
+        EvalContext eval(Option::V4);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be exactly the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt4 instance and has correct type.
+        checkTokenPkt4(eval.expression.at(0), exp_type);
+    }
+
+    /// @brief checks if the given token is Pkt6 of specified type
+    /// @param token token to be checked
+    /// @param exp_type expected type of the Pkt6 field
+    void checkTokenPkt6(const TokenPtr& token,
+                        TokenPkt6::FieldType exp_type) {
+        ASSERT_TRUE(token);
+
+        boost::shared_ptr<TokenPkt6> pkt =
+            boost::dynamic_pointer_cast<TokenPkt6>(token);
+
+        ASSERT_TRUE(pkt);
+
+        EXPECT_EQ(exp_type, pkt->getType());
+    }
+
+    /// @brief Test that verifies access to the DHCPv6 packet fields.
+    ///
+    /// This test attempts to parse the expression, will check if the number
+    /// of tokens is exactly as planned and then will try to verify if the
+    /// first token represents expected the field in DHCPv6 packet.
+    ///
+    /// @param expr expression to be parsed
+    /// @param exp_type expected field type to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testPkt6Field(std::string expr, TokenPkt6::FieldType exp_type,
+                       int exp_tokens) {
+        EvalContext eval(Option::V6);
+
+        // Parse the expression.
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() << "Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be the requested number of tokens
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // Check that the first token is TokenPkt6 instance and has correct type.
+        checkTokenPkt6(eval.expression.at(0), exp_type);
+    }
+
     /// @brief checks if the given token is a TokenRelay with the
     /// correct nesting level and field type.
     /// @param token token to be checked
@@ -301,19 +377,20 @@ public:
         checkTokenRelay6Field(eval.expression.at(0), exp_level, exp_type);
     }
 
-    /// @brief checks if the given token is Pkt6 of specified type
-    /// @param token token to be checked
-    /// @param exp_type expected type of the Pkt6 field
-    void checkTokenPkt6(const TokenPtr& token,
-                        TokenPkt6::FieldType exp_type) {
+    /// @brief checks if the given token is a substring operator
+    void checkTokenSubstring(const TokenPtr& token) {
         ASSERT_TRUE(token);
+        boost::shared_ptr<TokenSubstring> sub =
+            boost::dynamic_pointer_cast<TokenSubstring>(token);
+        EXPECT_TRUE(sub);
+    }
 
-        boost::shared_ptr<TokenPkt6> pkt =
-            boost::dynamic_pointer_cast<TokenPkt6>(token);
-
-        ASSERT_TRUE(pkt);
-
-        EXPECT_EQ(exp_type, pkt->getType());
+    /// @brief checks if the given token is a concat operator
+    void checkTokenConcat(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenConcat> conc =
+            boost::dynamic_pointer_cast<TokenConcat>(token);
+        EXPECT_TRUE(conc);
     }
 
     /// @brief checks if the given expression raises the expected message
@@ -340,41 +417,45 @@ public:
         universe_ = universe;
     }
 
-    /// @brief Test that verifies access to the DHCPv6 packet fields.
-    ///
-    /// This test attempts to parse the expression, will check if the number
-    /// of tokens is exactly as planned and then will try to verify if the
-    /// first token represents expected the field in DHCPv6 packet.
-    ///
-    /// @param expr expression to be parsed
-    /// @param exp_type expected field type to be parsed
-    /// @param exp_tokens expected number of tokens
-    void testPkt6Field(std::string expr, TokenPkt6::FieldType exp_type,
-                       int exp_tokens) {
-        EvalContext eval(Option::V6);
-
-        // Parse the expression.
-        try {
-            parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
-            FAIL() << "Exception thrown: " << ex.what();
-            return;
-        }
-
-        // Parsing should succeed and return a token.
-        EXPECT_TRUE(parsed_);
-
-        // There should be the requested number of tokens
-        ASSERT_EQ(exp_tokens, eval.expression.size());
-
-        // Check that the first token is TokenPkt6 instance and has correct type.
-        checkTokenPkt6(eval.expression.at(0), exp_type);
-    }
-
     Option::Universe universe_;
     bool parsed_; ///< Parsing status
 };
+
+// Test the error method without location
+TEST_F(EvalContextTest, error) {
+
+    EvalContext eval(Option::V4);
+
+    EXPECT_THROW(eval.error("an error"), EvalParseError);
+}
+
+// Test the fatal method
+TEST_F(EvalContextTest, fatal) {
+
+    EvalContext eval(Option::V4);
+
+    EXPECT_THROW(eval.fatal("a fatal error"), isc::Unexpected);
+}
+
+// Test the convertOptionCode method with an illegal input
+TEST_F(EvalContextTest, badOptionCode) {
+
+    EvalContext eval(Option::V4);
+
+    // the option code must be a number
+    EXPECT_THROW(eval.convertOptionCode("bad", location(position())),
+                 EvalParseError);
+}
+
+// Test the convertNestLevelNumber method with an illegal input
+TEST_F(EvalContextTest, badNestLevelNumber) {
+
+    EvalContext eval(Option::V4);
+
+    // the nest level number must be a number
+    EXPECT_THROW(eval.convertNestLevelNumber("bad", location(position())),
+                 EvalParseError);
+}
 
 // Test the parsing of a basic expression
 TEST_F(EvalContextTest, basic) {
@@ -630,6 +711,81 @@ TEST_F(EvalContextTest, relay4Error) {
                "<string>:1.1-6: relay4 can only be used in DHCPv4.");
 }
 
+// Test the parsing of a relay6 option
+TEST_F(EvalContextTest, relay6Option) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[0].option[123].text == 'foo'",
+                     0, 123, TokenOption::TEXTUAL, 3);
+}
+
+// Test the parsing of existence for a relay6 option
+TEST_F(EvalContextTest, relay6OptionExists) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[1].option[75].exists",
+                     1, 75, TokenOption::EXISTS, 1);
+}
+
+// Test the parsing of hex for a relay6 option
+TEST_F(EvalContextTest, relay6OptionHex) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[2].option[85].hex == 'foo'",
+                     2, 85, TokenOption::HEXADECIMAL, 3);
+}
+
+// Test the nest level of a relay6 option should be in [0..32[
+TEST_F(EvalContextTest, relay6OptionLimits) {
+    EvalContext eval(Option::V6);
+
+    // max nest level is hop count limit minus one so 31
+    testRelay6Option("relay6[31].option[123].text == 'foo'",
+                     31, 123, TokenOption::TEXTUAL, 3);
+
+    universe_ = Option::V6;
+
+    checkError("relay6[32].option[123].text == 'foo'",
+               "<string>:1.8-9: Nest level has invalid value in 32. "
+               "Allowed range: 0..31");
+                     
+    // next level must be a positive number
+    checkError("relay6[-1].option[123].text == 'foo'",
+               "<string>:1.8-9: Nest level has invalid value in -1. "
+               "Allowed range: 0..31");
+}
+
+// Verify that relay6[13].option is not usable in v4
+TEST_F(EvalContextTest, relay6OptionError) {
+    universe_ = Option::V4;
+
+    // nest_level is reduced first so raises the error
+    // (if we'd like to get a relay6 error we have to insert an
+    //  intermediate action to check the universe)
+    checkError("relay6[0].option[123].text == 'foo'",
+               "<string>:1.8: Nest level invalid for DHCPv4 packets");
+}
+
+// Tests whether iface metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataIface) {
+    testPktMetadata("pkt.iface == 'eth0'", TokenPkt::IFACE, 3);
+}
+
+// Tests whether src metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataSrc) {
+    testPktMetadata("pkt.src == fe80::1", TokenPkt::SRC, 3);
+}
+
+// Tests whether dst metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataDst) {
+    testPktMetadata("pkt.dst == fe80::2", TokenPkt::DST, 3);
+}
+
+// Tests whether len metadata in DHCP can be accessed.
+TEST_F(EvalContextTest, pktMetadataLen) {
+    testPktMetadata("pkt.len == 0x00000100", TokenPkt::LEN, 3);
+}
+
 // Tests whether chaddr field in DHCPv4 can be accessed.
 TEST_F(EvalContextTest, pkt4FieldChaddr) {
     testPkt4Field("pkt4.mac == 0x000102030405", TokenPkt4::CHADDR, 3);
@@ -673,6 +829,29 @@ TEST_F(EvalContextTest, pkt6FieldMsgtype) {
 // Tests whether transaction id field in DHCPv6 can be accessed.
 TEST_F(EvalContextTest, pkt6FieldTransid) {
     testPkt6Field("pkt6.transid == '1'", TokenPkt6::TRANSID, 3);
+}
+
+// Tests if the linkaddr field in a Relay6 encapsulation can be accessed.
+TEST_F(EvalContextTest, relay6FieldLinkAddr) {
+    testRelay6Field("relay6[0].linkaddr == ::",
+                    0, TokenRelay6Field::LINKADDR, 3);
+}
+
+// Tests if the peeraddr field in a Relay6 encapsulation can be accessed.
+TEST_F(EvalContextTest, relay6FieldPeerAddr) {
+    testRelay6Field("relay6[1].peeraddr == ::",
+                    1, TokenRelay6Field::PEERADDR, 3);
+}
+
+// Verify that relay6[13].<field> is not usable in v4
+TEST_F(EvalContextTest, relay6FieldError) {
+    universe_ = Option::V4;
+
+    // nest_level is reduced first so raises the error
+    // (if we'd like to get a relay6 error we have to insert an
+    //  intermediate action to check the universe)
+    checkError("relay6[0].linkaddr == ::",
+               "<string>:1.8: Nest level invalid for DHCPv4 packets");
 }
 
 // Test parsing of logical operators
@@ -819,42 +998,6 @@ TEST_F(EvalContextTest, concat) {
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "bar");
     checkTokenConcat(tmp3);
-}
-
-// Test the parsing of a relay6 option
-TEST_F(EvalContextTest, relay6Option) {
-    EvalContext eval(Option::V6);
-
-    testRelay6Option("relay6[0].option[123].text == 'foo'",
-                     0, 123, TokenOption::TEXTUAL, 3);
-}
-
-// Test the parsing of existence for a relay6 option
-TEST_F(EvalContextTest, relay6OptionExists) {
-    EvalContext eval(Option::V6);
-
-    testRelay6Option("relay6[1].option[75].exists",
-                     1, 75, TokenOption::EXISTS, 1);
-}
-
-// Test the parsing of hex for a relay6 option
-TEST_F(EvalContextTest, relay6OptionHex) {
-    EvalContext eval(Option::V6);
-
-    testRelay6Option("relay6[2].option[85].hex == 'foo'",
-                     2, 85, TokenOption::HEXADECIMAL, 3);
-}
-
-// Tests if the linkaddr field in a Relay6 encapsulation can be accessed.
-TEST_F(EvalContextTest, relay6FieldLinkAddr) {
-    testRelay6Field("relay6[0].linkaddr == ::",
-                    0, TokenRelay6Field::LINKADDR, 3);
-}
-
-// Tests if the peeraddr field in a Relay6 encapsulation can be accessed.
-TEST_F(EvalContextTest, relay6FieldPeerAddr) {
-    testRelay6Field("relay6[1].peeraddr == ::",
-                    1, TokenRelay6Field::PEERADDR, 3);
 }
 
 //

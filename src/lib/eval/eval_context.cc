@@ -107,7 +107,7 @@ EvalContext::convertNestLevelNumber(const std::string& nest_level,
         if (n < 0 || n >= HOP_COUNT_LIMIT) {
             error(loc, "Nest level has invalid value in "
                       + nest_level + ". Allowed range: 0..31");
-	}
+        }
     } else {
         error(loc, "Nest level invalid for DHCPv4 packets");
     }

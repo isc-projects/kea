@@ -149,6 +149,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "text"      return isc::eval::EvalParser::make_TEXT(loc);
 "hex"       return isc::eval::EvalParser::make_HEX(loc);
 "exists"    return isc::eval::EvalParser::make_EXISTS(loc);
+"pkt"       return isc::eval::EvalParser::make_PKT(loc);
+"iface"     return isc::eval::EvalParser::make_IFACE(loc);
+"src"       return isc::eval::EvalParser::make_SRC(loc);
+"dst"       return isc::eval::EvalParser::make_DST(loc);
+"len"       return isc::eval::EvalParser::make_LEN(loc);
 "pkt4"      return isc::eval::EvalParser::make_PKT4(loc);
 "mac"       return isc::eval::EvalParser::make_CHADDR(loc);
 "hlen"      return isc::eval::EvalParser::make_HLEN(loc);
@@ -157,6 +162,9 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "giaddr"    return isc::eval::EvalParser::make_GIADDR(loc);
 "yiaddr"    return isc::eval::EvalParser::make_YIADDR(loc);
 "siaddr"    return isc::eval::EvalParser::make_SIADDR(loc);
+"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
+"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
+"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
 "substring" return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"       return isc::eval::EvalParser::make_ALL(loc);
 "concat"    return isc::eval::EvalParser::make_CONCAT(loc);
@@ -169,10 +177,6 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "["         return isc::eval::EvalParser::make_LBRACKET(loc);
 "]"         return isc::eval::EvalParser::make_RBRACKET(loc);
 ","         return isc::eval::EvalParser::make_COMA(loc);
-
-"pkt6"      return isc::eval::EvalParser::make_PKT6(loc);
-"msgtype"   return isc::eval::EvalParser::make_MSGTYPE(loc);
-"transid"   return isc::eval::EvalParser::make_TRANSID(loc);
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
