@@ -21,6 +21,7 @@ extern const char* INVALID_NAME;
 extern const char* VALID_HOST;
 extern const char* INVALID_HOST;
 extern const char* VALID_USER;
+extern const char* VALID_READONLY_USER;
 extern const char* INVALID_USER;
 extern const char* VALID_PASSWORD;
 extern const char* INVALID_PASSWORD;

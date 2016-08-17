@@ -25,6 +25,7 @@ const char* INVALID_NAME = "name=invalidname";
 const char* VALID_HOST = "host=localhost";
 const char* INVALID_HOST = "host=invalidhost";
 const char* VALID_USER = "user=keatest";
+const char* VALID_READONLY_USER = "user=keatest_readonly";
 const char* INVALID_USER = "user=invaliduser";
 const char* VALID_PASSWORD = "password=keatest";
 const char* INVALID_PASSWORD = "password=invalid";

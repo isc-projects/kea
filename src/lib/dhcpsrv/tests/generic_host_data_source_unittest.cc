@@ -534,7 +534,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     HostDataSourceFactory::create(connectionString(valid_db_type,
                                                    VALID_NAME,
                                                    VALID_HOST,
-                                                   VALID_USER,
+                                                   VALID_READONLY_USER,
                                                    VALID_PASSWORD,
                                                    VALID_READONLY_DB));
 
