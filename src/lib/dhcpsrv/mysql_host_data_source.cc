@@ -849,7 +849,7 @@ private:
         size_t start_column_;
 
         /// @brief Option id.
-        uint64_t option_id_;
+        uint32_t option_id_;
 
         /// @brief Option code.
         uint16_t code_;
@@ -919,7 +919,7 @@ private:
         //@}
 
         /// @brief Option id for last processed row.
-        uint64_t most_recent_option_id_;
+        uint32_t most_recent_option_id_;
     };
 
     /// @brief Pointer to the @ref OptionProcessor class.
@@ -1116,7 +1116,7 @@ public:
     /// @brief Returns last fetched reservation id.
     ///
     /// @return Reservation id or 0 if no reservation data is fetched.
-    uint64_t getReservationId() const {
+    uint32_t getReservationId() const {
         if (reserv_type_null_ == MLM_FALSE) {
             return (reservation_id_);
         }
@@ -1254,7 +1254,7 @@ public:
 private:
 
     /// @brief IPv6 reservation id.
-    uint64_t reservation_id_;
+    uint32_t reservation_id_;
 
     /// @brief IPv6 reservation type.
     uint8_t reserv_type_;
@@ -1297,7 +1297,7 @@ private:
     //@}
 
     /// @brief Reservation id for last processed row.
-    uint64_t most_recent_reservation_id_;
+    uint32_t most_recent_reservation_id_;
 
 };
 
@@ -1633,7 +1633,10 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of SQL statements.
+    /// It is assumed that the order is such that the indicies of statements
+    /// reading the database are less than those of statements modifying the
+    /// database.
     enum StatementIndex {
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
@@ -1986,33 +1989,18 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
     // information from the database, so they can be used even if the
     // database is read only for the current user.
     conn_.prepareStatements(tagged_statements.begin(),
-                            tagged_statements.begin() + WRITE_STMTS_BEGIN,
-                            WRITE_STMTS_BEGIN);
+                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
-    std::string readonly_value = "false";
-    try {
-        readonly_value = conn_.getParameter("readonly");
-        boost::algorithm::to_lower(readonly_value);
-    } catch (...) {
-        // Parameter "readonly" hasn't been specified so we simply use
-        // the default value of "false".
-    }
-
-    if (readonly_value == "true") {
-        is_readonly_ = true;
-
-    } else if (readonly_value != "false") {
-        isc_throw(DbInvalidReadOnly, "invalid value '" << readonly_value
-                  << "' specified for boolean parameter 'readonly'");
-    }
+    // Check if the backend is explicitly configured to operate with
+    // read only access to the database.
+    is_readonly_ = conn_.configuredReadOnly();
 
     // If we are using read-write mode for the database we also prepare
     // statements for INSERTS etc.
     if (!is_readonly_) {
         // Prepare statements for writing to the database, e.g. INSERT.
         conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
-                                tagged_statements.end(),
-                                tagged_statements.size());
+                                tagged_statements.end());
     } else {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_READONLY);
     }

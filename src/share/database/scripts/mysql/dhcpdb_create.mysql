@@ -465,6 +465,11 @@ ALTER TABLE dhcp6_options
     ADD CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id)
     REFERENCES dhcp_option_scope (scope_id);
 
+# Add UNSIGNED to reservation_id
+ALTER TABLE ipv6_reservations
+    MODIFY reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '4', minor = '2';

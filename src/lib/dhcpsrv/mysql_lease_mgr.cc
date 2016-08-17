@@ -1237,8 +1237,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     }
 
     // Prepare all statements likely to be used.
-    conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end(),
-                            tagged_statements.size());
+    conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end());
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
