@@ -2833,15 +2833,17 @@ TEST_F(IfaceMgrTest, unicastDuplicates) {
     NakedIfaceMgr ifacemgr;
 
     IfacePtr iface = ifacemgr.getIface(LOOPBACK);
-    if (iface) {
+    if (!iface) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
     }
 
     // Tell the interface that it should bind to this global interface
+    // It is the first attempt so it should succeed
     EXPECT_NO_THROW(iface->addUnicast(IOAddress("2001:db8::1")));
 
     // Tell the interface that it should bind to this global interface
+    // It is the second attempt so it should fail
     EXPECT_THROW(iface->addUnicast(IOAddress("2001:db8::1")), BadValue);
 }
 
