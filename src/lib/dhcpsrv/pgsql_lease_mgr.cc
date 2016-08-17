@@ -706,7 +706,11 @@ public:
     /// @brief Constructor
     ///
     /// @param conn A open connection to the database housing the lease data
-    PgSqlAddressStatsQuery4(PgSqlConnection& conn);
+    PgSqlAddressStatsQuery4(PgSqlConnection& conn)
+        : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
+                                                    ::RECOUNT_LEASE4_STATS]),
+        result_set_(), next_row_(0) {
+    }
 
     /// @brief Destructor
     virtual ~PgSqlAddressStatsQuery4() {};
@@ -718,7 +722,13 @@ public:
     /// The query used is the prepared statement identified by
     /// PgSqlLeaseMgr::RECOUNT_LEASE4_STATS. This method executes the
     /// statement which creates the result set.
-    void start();
+    void start() {
+        // The query has no parameters, so we only need it's name.
+        result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+                                          0, NULL, NULL, NULL, 0)));
+
+        conn_.checkStatementError(*result_set_, statement_);
+    }
 
     /// @brief Fetches the next row in the result set
     ///
@@ -731,22 +741,35 @@ public:
     ///
     /// @return True if the fetch succeeded, false if there are no more
     /// rows to fetch.
-    bool getNextRow(AddressStatsRow4& row);
+    bool getNextRow(AddressStatsRow4& row) {
+        // If we're past the end, punt.
+        if (next_row_ >= result_set_->getRows()) {
+            return (false);
+        }
+
+        // Fetch the subnet id.
+        uint32_t col = 0;
+        uint32_t subnet_id;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
+        row.subnet_id_ = static_cast<SubnetID>(subnet_id);
+        ++col;
+
+        // Fetch the lease state.
+        uint32_t state;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
+        row.lease_state_ = static_cast<Lease::LeaseState>(state);
+        ++col;
+
+        // Fetch the state count.
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
+                                      row.state_count_);
+
+        // Point to the next row.
+        ++next_row_;
+        return (true);
+    }
 
 private:
-
-    /// @brief Analyzes the given statement outcome status
-    ///
-    /// Wrapper method around the PgSqlConnection:checkError() that is
-    /// used to generate the appropriate exception if the status indicates
-    /// an error.
-    ////
-    /// a DbOperation error
-    /// @param status The MySQL statement execution outcome status
-    /// @param what invocation context message which will be included in
-    /// any exception
-    void checkError(int status, const char* what) const;
-
     /// @brief Database connection to use to execute the query
     PgSqlConnection& conn_;
 
@@ -759,58 +782,6 @@ private:
     /// @brief Index of the next row to fetch
     uint32_t next_row_;
 };
-
-PgSqlAddressStatsQuery4::PgSqlAddressStatsQuery4(PgSqlConnection& conn)
-    : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
-                                                ::RECOUNT_LEASE4_STATS]),
-      result_set_(), next_row_(0) {
-}
-
-void
-PgSqlAddressStatsQuery4::start() {
-    // The query has no parameters, so we only need it's name.
-    result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
-                                 0, NULL, NULL, NULL, 0)));
-
-    conn_.checkStatementError(*result_set_, statement_);
-}
-
-bool
-PgSqlAddressStatsQuery4::getNextRow(AddressStatsRow4& row) {
-    // If we're past the end, punt.
-    if (next_row_ >= result_set_->getRows()) {
-        return (false);
-    }
-
-    // Fetch the subnet id.
-    uint32_t col = 0;
-    uint32_t subnet_id;
-    PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
-    row.subnet_id_ = static_cast<SubnetID>(subnet_id);
-    ++col;
-
-    // Fetch the lease state.
-    uint32_t state;
-    PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
-    row.lease_state_ = static_cast<Lease::LeaseState>(state);
-    ++col;
-
-    // Fetch the state count.
-    PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
-                                  row.state_count_);
-
-    // Point to the next row.
-    ++next_row_;
-
-    return (true);
-}
-
-AddressStatsQuery4Ptr
-PgSqlLeaseMgr::startAddressStatsQuery4() {
-    AddressStatsQuery4Ptr query(new PgSqlAddressStatsQuery4(conn_));
-    query->start();
-    return(query);
-}
 
 /// @brief PgSql derivation of the IPv6 statistical lease data query
 ///
@@ -824,7 +795,11 @@ public:
     /// @brief Constructor
     ///
     /// @param conn A open connection to the database housing the lease data
-    PgSqlAddressStatsQuery6(PgSqlConnection& conn);
+    PgSqlAddressStatsQuery6(PgSqlConnection& conn)
+        : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
+                                                    ::RECOUNT_LEASE6_STATS]),
+        result_set_(), next_row_(0) {
+    }
 
     /// @brief Destructor
     virtual ~PgSqlAddressStatsQuery6() {};
@@ -836,7 +811,14 @@ public:
     /// per subnet id.  The query used is the prepared statement identified by
     /// PgSqlLeaseMgr::RECOUNT_LEASE6_STATS. This method executes the
     /// statement which creates the result set.
-    void start();
+    void start() {
+        // The query has no parameters, so we only need it's name.
+        result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+                                                         0, NULL, NULL, NULL,
+                                                         0)));
+
+        conn_.checkStatementError(*result_set_, statement_);
+    }
 
     /// @brief Fetches the next row in the result set
     ///
@@ -849,22 +831,43 @@ public:
     ///
     /// @return True if the fetch succeeded, false if there are no more
     /// rows to fetch.
-    bool getNextRow(AddressStatsRow6& row);
+    bool getNextRow(AddressStatsRow6& row) {
+        // If we're past the end, punt.
+        if (next_row_ >= result_set_->getRows()) {
+            return (false);
+        }
+
+        // Fetch the subnet id.
+        uint32_t col = 0;
+        uint32_t subnet_id;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
+        row.subnet_id_ = static_cast<SubnetID>(subnet_id);
+        ++col;
+
+        // Fetch the lease type.
+        uint32_t lease_type;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                      lease_type);
+        row.lease_type_ = static_cast<Lease::Type>(lease_type);
+        ++col;
+
+        // Fetch the lease state.
+        uint32_t state;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
+        row.lease_state_ = static_cast<Lease::LeaseState>(state);
+        ++col;
+
+        // Fetch the state count.
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
+                                      row.state_count_);
+
+         // Point to the next row.
+         ++next_row_;
+
+        return (true);
+    }
 
 private:
-
-    /// @brief Analyzes the given statement outcome status
-    ///
-    /// Wrapper method around the PgSqlConnection:checkError() that is
-    /// used to generate the appropriate exception if the status indicates
-    /// an error.
-    ////
-    /// a DbOperation error
-    /// @param status The MySQL statement execution outcome status
-    /// @param what invocation context message which will be included in
-    /// any exception
-    void checkError(int status, const char* what) const;
-
     /// @brief Database connection to use to execute the query
     PgSqlConnection& conn_;
 
@@ -877,63 +880,6 @@ private:
     /// @brief Index of the next row to fetch
     uint32_t next_row_;
 };
-
-PgSqlAddressStatsQuery6::PgSqlAddressStatsQuery6(PgSqlConnection& conn)
-    : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
-                                                ::RECOUNT_LEASE6_STATS]),
-      result_set_(), next_row_(0) {
-}
-
-void
-PgSqlAddressStatsQuery6::start() {
-    // The query has no parameters, so we only need it's name.
-    result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
-                                 0, NULL, NULL, NULL, 0)));
-
-    conn_.checkStatementError(*result_set_, statement_);
-}
-
-bool
-PgSqlAddressStatsQuery6::getNextRow(AddressStatsRow6& row) {
-    // If we're past the end, punt.
-    if (next_row_ >= result_set_->getRows()) {
-        return (false);
-    }
-
-    // Fetch the subnet id.
-    uint32_t col = 0;
-    uint32_t subnet_id;
-    PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
-    row.subnet_id_ = static_cast<SubnetID>(subnet_id);
-    ++col;
-
-    // Fetch the lease type.
-    uint32_t lease_type;
-    PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, lease_type);
-    row.lease_type_ = static_cast<Lease::Type>(lease_type);
-    ++col;
-
-    // Fetch the lease state.
-    uint32_t state;
-    PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
-    row.lease_state_ = static_cast<Lease::LeaseState>(state);
-    ++col;
-
-    // Fetch the state count.
-    PgSqlExchange::getColumnValue(*result_set_, next_row_, col, row.state_count_);
-
-    // Point to the next row.
-    ++next_row_;
-
-    return (true);
-}
-
-AddressStatsQuery6Ptr
-PgSqlLeaseMgr::startAddressStatsQuery6() {
-    AddressStatsQuery6Ptr query(new PgSqlAddressStatsQuery6(conn_));
-    query->start();
-    return(query);
-}
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
@@ -1474,6 +1420,20 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
     // Delete leases.
     return (deleteLeaseCommon(statement_index, bind_array));
+}
+
+AddressStatsQuery4Ptr
+PgSqlLeaseMgr::startAddressStatsQuery4() {
+    AddressStatsQuery4Ptr query(new PgSqlAddressStatsQuery4(conn_));
+    query->start();
+    return(query);
+}
+
+AddressStatsQuery6Ptr
+PgSqlLeaseMgr::startAddressStatsQuery6() {
+    AddressStatsQuery6Ptr query(new PgSqlAddressStatsQuery6(conn_));
+    query->start();
+    return(query);
 }
 
 string
