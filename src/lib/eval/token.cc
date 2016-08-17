@@ -810,7 +810,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     {
         size_t max = vendor->getTuplesNum();
         if (index_ + 1 > max) {
-            // The index specified if out of bound, e.g. there are only
+            // The index specified is out of bounds, e.g. there are only
             // 2 tuples and index specified is 5.
             LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND)
                 .arg(index_)

@@ -101,20 +101,20 @@ public:
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
 
-    /// @brief Attempts to convert string to unsinged 32bit integer
+    /// @brief Attempts to convert string to unsigned 32bit integer
     ///
     /// @param number string to be converted
     /// @param loc the location of the token
-    /// @return the option code
+    /// @return the integer value
     /// @throw EvalParseError if conversion fails or the value is out of range.
     uint32_t convertUint32(const std::string& number,
                            const isc::eval::location& loc);
 
-    /// @brief Attempts to convert string to unsinged 8bit integer
+    /// @brief Attempts to convert string to unsigned 8bit integer
     ///
     /// @param number string to be converted
     /// @param loc the location of the token
-    /// @return the option code
+    /// @return the integer value
     /// @throw EvalParseError if conversion fails or the value is out of range.
     uint8_t convertUint8(const std::string& number,
                          const isc::eval::location& loc);
@@ -123,7 +123,7 @@ public:
     ///
     /// @param nest_level a string representing the integer nesting level
     /// @param loc the location of the token
-    /// @result the nesting level
+    /// @return the nesting level
     /// @throw calls the syntax error function if the value is not in
     ///        the range 0..31
     uint8_t convertNestLevelNumber(const std::string& nest_level,

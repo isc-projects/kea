@@ -698,10 +698,10 @@ private:
 /// In particular, it allows retrieving enterprise-id.
 ///
 /// It can represent the following expressions:
-/// vendor[4491].exist - if vendor option with enterprise-id = 4491 exists
-/// vendor[*].exist - if any vendor option exists
+/// vendor[4491].exists - if vendor option with enterprise-id = 4491 exists
+/// vendor[*].exists - if any vendor option exists
 /// vendor.enterprise - returns enterprise-id from vendor option
-/// vendor[4491].option[1].exist - check if suboption 1 exists for vendor 4491
+/// vendor[4491].option[1].exists - check if suboption 1 exists for vendor 4491
 /// vendor[4491].option[1].hex - return content of suboption 1 for vendor 4491
 class TokenVendor : public TokenOption {
 public:
@@ -793,7 +793,7 @@ protected:
 
     /// @brief Enterprise-id value
     ///
-    /// Yeah, I know it's technically should be called enterprise-id, but that's
+    /// Yeah, I know it technically should be called enterprise-id, but that's
     /// too long and everyone calls it vendor-id.
     uint32_t vendor_id_;
 
@@ -813,8 +813,8 @@ protected:
 /// enterprise handling field and field type.
 ///
 /// It can represent the following expressions:
-/// vendor-class[4491].exist
-/// vendor-class[*].exist
+/// vendor-class[4491].exists
+/// vendor-class[*].exists
 /// vendor-class[*].enterprise
 /// vendor-class[4491].data - content of the opaque-data of the first tuple
 /// vendor-class[4491].data[3] - content of the opaque-data of the 4th tuple
@@ -860,7 +860,7 @@ protected:
     ///
     /// If FieldType is DATA, get specified data chunk represented by index_.
     ///
-    /// If FieldType is EXISTS, return true of vendor-id matches.
+    /// If FieldType is EXISTS, return true if vendor-id matches.
     ///
     /// @throw EvalTypeError for any other FieldType values.
     ///

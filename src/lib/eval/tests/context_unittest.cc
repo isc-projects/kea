@@ -462,8 +462,8 @@ public:
     ///
     /// This test checks if EXISTS representation is set correctly.
     /// It covers cases like:
-    /// - vendor-class[4491].exist
-    /// - vendor-class[*].exist
+    /// - vendor-class[4491].exists
+    /// - vendor-class[*].exists
     ///
     /// @param expr expression to be parsed
     /// @param u universe (V4 or V6)
@@ -481,7 +481,7 @@ public:
 
     /// @brief Tests if specified token vendor class expression can be parsed
     ///
-    /// This test assumes the first token will be token vendor. Any additional
+    /// This test assumes the first token will be token vendor-class. Any additional
     /// tokens are ignored. Tests experssions:
     /// - vendor-class[4491].exists
     /// - vendor-class[*].exists

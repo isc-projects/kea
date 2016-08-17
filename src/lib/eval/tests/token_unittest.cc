@@ -429,7 +429,7 @@ public:
         evaluate(u, expected_result);
     }
 
-    /// @brief Tests if vendor class token can handle sub-options properly.
+    /// @brief Tests if vendor token can handle sub-options properly.
     ///
     /// @param u universe (V4 or V6)
     /// @param token_vendor_id enterprise-id used in the token
@@ -1917,7 +1917,7 @@ TEST_F(TokenTest, pkt6Fields) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test verifies if expression vendor[4491].exist works properly in DHCPv4.
+// This test verifies if expression vendor[4491].exists works properly in DHCPv4.
 TEST_F(TokenTest, vendor4SpecificVendorExists) {
     // Case 1: no option, should evaluate to false
     testVendorExists(Option::V4, 4491, 0, "false");
@@ -1925,7 +1925,7 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
     // Case 2: option present, but uses different enterprise-id, should fail
     testVendorExists(Option::V4, 4491, 1234, "false");
 
-    // Case 3: option present and has matchin enterprise-id, should suceed
+    // Case 3: option present and has matchin enterprise-id, should succeed
     testVendorExists(Option::V4, 4491, 4491, "true");
 
     // Check if the logged messages are correct.
@@ -1938,7 +1938,7 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test verifies if expression vendor[4491].exist works properly in DHCPv6.
+// This test verifies if expression vendor[4491].exists works properly in DHCPv6.
 TEST_F(TokenTest, vendor6SpecificVendorExists) {
     // Case 1: no option, should evaluate to false
     testVendorExists(Option::V6, 4491, 0, "false");
@@ -2406,7 +2406,8 @@ TEST_F(TokenTest, vendorClass4AnyVendorData) {
     testVendorClassData(Option::V4, 0, 0, 4491, 0, "");
 
     // Case 4: Expression looks for any vendor-id (0), data[0], there is
-    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
+    // content of that data ("alpha")
     testVendorClassData(Option::V4, 0, 0, 1234, 1, "alpha");
 
     // Case 5: Expression looks for any vendor-id (0), data[0], there is
@@ -2444,7 +2445,8 @@ TEST_F(TokenTest, vendorClass6AnyVendorData) {
     testVendorClassData(Option::V6, 0, 0, 4491, 0, "");
 
     // Case 4: Expression looks for any vendor-id (0), data[0], there is
-    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
+    // content of that data ("alpha")
     testVendorClassData(Option::V6, 0, 0, 1234, 1, "alpha");
 
     // Case 5: Expression looks for any vendor-id (0), data[0], there is
@@ -2484,11 +2486,11 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
     testVendorClassData(Option::V4, 4491, 3, 4491, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[3], there is
-    // vendor-class with vendor-id 1234 and 2 data tuples, expected result is empty string.
+    // vendor-class with vendor-id 1234 and 1 data tuples, expected result is empty string.
     testVendorClassData(Option::V4, 4491, 3, 1234, 1, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[3], there is
-    // vendor-class with vendor-id 4491, but has only 2 data tuples, expected
+    // vendor-class with vendor-id 4491, but has only 3 data tuples, expected
     // result is empty string.
     testVendorClassData(Option::V4, 4491, 3, 4491, 3, "");
 

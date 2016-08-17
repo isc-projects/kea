@@ -202,7 +202,7 @@
 -->
             <row>
               <entry>Option existence</entry>
-              <entry>option[123].exist</entry>
+              <entry>option[123].exists</entry>
               <entry>'true'</entry>
               <entry>If the option with given code is present in the
               packet "true" else "false"</entry>
@@ -294,7 +294,7 @@
 
             <row>
               <entry>Vendor option existence (any vendor)</entry>
-              <entry>vendor[*].exist</entry>
+              <entry>vendor[*].exists</entry>
               <entry>true</entry>
               <entry>Returns whether a vendor option from any vendor
               is present ('true') or absent ('false').</entry>
@@ -335,7 +335,7 @@
 
             <row>
               <entry>Vendor class option existence (any vendor)</entry>
-              <entry>vendor-class[*].exist</entry>
+              <entry>vendor-class[*].exists</entry>
               <entry>true</entry>
               <entry>Returns whether a vendor class option from any vendor
               is present ('true') or absent ('false').</entry>
@@ -359,7 +359,7 @@
             <row>
               <entry>First data chunk from vendor class option</entry>
               <entry>vendor-class[4491].data</entry>
-              <entry>true</entry>
+              <entry>docsis3.0</entry>
               <entry>Returns content of the first data chunk from
               the vendor class option with specified enterprise-id.
               Returns '' if missing.</entry>
@@ -399,7 +399,7 @@
       </para>
 
       <para>
-      "option[code].exist" checks if an option with the code "code" is present
+      "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
       </para>
 
