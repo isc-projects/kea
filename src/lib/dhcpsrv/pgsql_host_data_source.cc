@@ -1105,7 +1105,10 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of SQL statements.
+    /// It is assumed that the order is such that the indicies of statements
+    /// reading the database are less than those of statements modifying the
+    /// database.
     enum StatementIndex {
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
@@ -1489,22 +1492,9 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
-    std::string readonly_value = "false";
-    try {
-        readonly_value = conn_.getParameter("readonly");
-        boost::algorithm::to_lower(readonly_value);
-    } catch (...) {
-        // Parameter "readonly" hasn't been specified so we simply use
-        // the default value of "false".
-    }
-
-    if (readonly_value == "true") {
-        is_readonly_ = true;
-
-    } else if (readonly_value != "false") {
-        isc_throw(DbInvalidReadOnly, "invalid value '" << readonly_value
-                  << "' specified for boolean parameter 'readonly'");
-    }
+    // Check if the backend is explicitly configured to operate with
+    // read only access to the database.
+    is_readonly_ = conn_.configuredReadOnly();
 
     // If we are using read-write mode for the database we also prepare
     // statements for INSERTS etc.

@@ -121,6 +121,14 @@ public:
     /// @return Redacted database access string.
     static std::string redactedAccessString(const ParameterMap& parameters);
 
+    /// @brief Convenience method checking if database should be opened with
+    /// read only access.
+    ///
+    /// @return true if "readonly" parameter is specified and set to true;
+    /// false if "readonly" parameter is not specified or it is specified
+    /// and set to false.
+    bool configuredReadOnly() const;
+
 private:
 
     /// @brief List of parameters passed in dbconfig
