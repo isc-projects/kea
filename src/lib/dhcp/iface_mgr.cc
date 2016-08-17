@@ -887,7 +887,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-    const SocketInfo* candidate = 0;
+    boost::shared_ptr<SocketInfo> candidate;
     IfacePtr iface;
     fd_set sockets;
     int maxfd = 0;
@@ -972,7 +972,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     BOOST_FOREACH(iface, ifaces_) {
         BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
             if (FD_ISSET(s.sockfd_, &sockets)) {
-                candidate = &(s);
+                candidate.reset(new SocketInfo(s));
                 break;
             }
         }
@@ -997,7 +997,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                   " one million microseconds");
     }
 
-    const SocketInfo* candidate = 0;
+    boost::shared_ptr<SocketInfo> candidate;
     fd_set sockets;
     int maxfd = 0;
 
@@ -1082,7 +1082,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
         BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
             if (FD_ISSET(s.sockfd_, &sockets)) {
-                candidate = &(s);
+                candidate.reset(new SocketInfo(s));
                 break;
             }
         }
