@@ -396,7 +396,7 @@ public:
     /// @brief Tests if specified token vendor expression can be parsed
     ///
     /// This test assumes the first token will be token vendor. Any additional
-    /// tokens are ignored. Tests experssions:
+    /// tokens are ignored. Tests expressions:
     /// vendor[1234].option[234].hex
     /// vendor[1234].option[234].exists
     ///
@@ -481,8 +481,8 @@ public:
 
     /// @brief Tests if specified token vendor class expression can be parsed
     ///
-    /// This test assumes the first token will be token vendor-class. Any additional
-    /// tokens are ignored. Tests experssions:
+    /// This test assumes the first token will be token vendor-class.
+    /// Any additional tokens are ignored. Tests expressions:
     /// - vendor-class[4491].exists
     /// - vendor-class[*].exists
     /// - vendor-class[4491].data
