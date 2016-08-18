@@ -256,6 +256,14 @@ protected:
     /// @return option instance (or NULL if not found)
     virtual OptionPtr getOption(Pkt& pkt);
 
+    /// @brief Auxiliary method that puts string representing a failure
+    ///
+    /// Depending on the representation type, this is either "" or "false".
+    ///
+    /// @param values a string representing failure will be pushed here.
+    /// @return value pushed
+    virtual std::string pushFailure(ValueStack& values);
+
     uint16_t option_code_; ///< Code of the option to be extracted
     RepresentationType representation_type_; ///< Representation type.
 };
@@ -726,6 +734,191 @@ public:
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
     void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents vendor options in DHCPv4 and DHCPv6.
+///
+/// It covers vendor independent vendor information option (125, DHCPv4)
+/// and vendor option (17, DHCPv6). Since both of those options may have
+/// suboptions, this class is derived from TokenOption and leverages its
+/// ability to operate on sub-options. It also adds additional capabilities.
+/// In particular, it allows retrieving enterprise-id.
+///
+/// It can represent the following expressions:
+/// vendor[4491].exists - if vendor option with enterprise-id = 4491 exists
+/// vendor[*].exists - if any vendor option exists
+/// vendor.enterprise - returns enterprise-id from vendor option
+/// vendor[4491].option[1].exists - check if suboption 1 exists for vendor 4491
+/// vendor[4491].option[1].hex - return content of suboption 1 for vendor 4491
+class TokenVendor : public TokenOption {
+public:
+
+    /// @brief Specifies a field of the vendor option
+    enum FieldType {
+        SUBOPTION,     ///< If this token fetches a suboption, not a field.
+        ENTERPRISE_ID, ///< enterprise-id field (vendor-info, vendor-class)
+        EXISTS,        ///< vendor[123].exists
+        DATA           ///< data chunk, used in derived vendor-class only
+    };
+
+    /// @brief Constructor used for accessing a field
+    ///
+    /// @param u universe (either V4 or V6)
+    /// @param vendor_id specifies enterprise-id (0 means any)
+    /// @param field specifies which field should be returned
+    TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field);
+
+
+    /// @brief Constructor used for accessing an option
+    ///
+    /// This constructor is used for accessing suboptions. In general
+    /// option_code is mandatory, except when repr is EXISTS. For
+    /// option_code = 0 and repr = EXISTS, the token will return true
+    /// if the whole option exists, not suboptions.
+    ///
+    /// @param u universe (either V4 or V6)
+    /// @param vendor_id specifies enterprise-id (0 means any)
+    /// @param repr representation type (hex or exists)
+    /// @param option_code sub-option code
+    TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
+                uint16_t option_code = 0);
+
+    /// @brief Returns enterprise-id
+    ///
+    /// Used in tests only.
+    ///
+    /// @return enterprise-id
+    uint32_t getVendorId() const;
+
+    /// @brief Returns field.
+    ///
+    /// Used in tests only.
+    ///
+    /// @return field type.
+    FieldType getField() const;
+
+    /// @brief This is a method for evaluating a packet.
+    ///
+    /// Depending on the value of vendor_id, field type, representation and
+    /// option code, it will attempt to return specified characteristic of the
+    /// vendor option
+    ///
+    /// If vendor-id is specified, check only option with that particular
+    /// enterprise-id. If vendor-id is 0, check any vendor option, regardless
+    /// of its enterprise-id value.
+    ///
+    /// If FieldType is NONE, get specified suboption represented by option_code
+    /// and represent it as specified by repr.
+    ///
+    /// If FieldType is ENTERPRISE_ID, return value of the enterprise-id field
+    /// or "" if there's no vendor option.
+    ///
+    /// @throw EvalTypeError for any other FieldType values.
+    ///
+    /// The parameters passed are:
+    ///
+    /// @param pkt - vendor options will be searched for here.
+    /// @param values - the evaluated value will be pushed here.
+    virtual void evaluate(Pkt& pkt, ValueStack& values);
+
+protected:
+    /// @brief Attempts to get a suboption.
+    ///
+    /// This method overrides behavior of TokenOption method. It attempts to retrieve
+    /// the sub-option of the vendor option. Using derived method allows usage of
+    /// TokenOption routines.
+    ///
+    /// @param pkt vendor option will be searched here.
+    /// @return suboption of the vendor option (if exists)
+    virtual OptionPtr getOption(Pkt& pkt);
+
+    /// @brief Universe (V4 or V6)
+    ///
+    /// We need to remember it, because depending on the universe, the code needs
+    /// to retrieve either option 125 (DHCPv4) or 17 (DHCPv6).
+    Option::Universe universe_;
+
+    /// @brief Enterprise-id value
+    ///
+    /// Yeah, I know it technically should be called enterprise-id, but that's
+    /// too long and everyone calls it vendor-id.
+    uint32_t vendor_id_;
+
+    /// @brief Specifies which field should be accessed.
+    FieldType field_;
+};
+
+/// @brief Token that represents vendor class options in DHCPv4 and DHCPv6.
+///
+/// It covers vendor independent vendor information option (124, DHCPv4)
+/// and vendor option (16, DHCPv6). Contrary to vendor options, vendor class
+/// options don't have suboptions, but have data chunks (tuples) instead.
+/// Therefore they're not referenced by option codes, but by indexes.
+/// The first data chunk is data[0], the second is data[1] etc.
+///
+/// This class is derived from OptionVendor to take advantage of the
+/// enterprise handling field and field type.
+///
+/// It can represent the following expressions:
+/// vendor-class[4491].exists
+/// vendor-class[*].exists
+/// vendor-class[*].enterprise
+/// vendor-class[4491].data - content of the opaque-data of the first tuple
+/// vendor-class[4491].data[3] - content of the opaque-data of the 4th tuple
+class TokenVendorClass : public TokenVendor {
+public:
+
+    /// @brief This constructor is used to access fields.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id value of enterprise-id field (0 means any)
+    /// @param repr representation type (EXISTS or HEX)
+    TokenVendorClass(Option::Universe u, uint32_t vendor_id, RepresentationType repr);
+
+    /// @brief This constructor is used to access data chunks.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id value of enterprise-id field (0 means any)
+    /// @param field type of the field (usually DATA or ENTERPRISE)
+    /// @param index specifies which data chunk to retrieve
+    TokenVendorClass(Option::Universe u, uint32_t vendor_id, FieldType field,
+                     uint16_t index = 0);
+
+    /// @brief Returns data index.
+    ///
+    /// Used in testing.
+    /// @return data index (specifies which data chunk to retrieve)
+    uint16_t getDataIndex() const;
+
+protected:
+
+    /// @brief This is a method for evaluating a packet.
+    ///
+    /// Depending on the value of vendor_id, field type, representation and
+    /// option code, it will attempt to return specified characteristic of the
+    /// vendor option
+    ///
+    /// If vendor-id is specified, check only option with that particular
+    /// enterprise-id. If vendor-id is 0, check any vendor option, regardless
+    /// of its enterprise-id value.
+    ///
+    /// If FieldType is ENTERPRISE_ID, return value of the enterprise-id field
+    /// or "" if there's no vendor option.
+    ///
+    /// If FieldType is DATA, get specified data chunk represented by index_.
+    ///
+    /// If FieldType is EXISTS, return true if vendor-id matches.
+    ///
+    /// @throw EvalTypeError for any other FieldType values.
+    ///
+    /// The parameters passed are:
+    ///
+    /// @param pkt - vendor options will be searched for here.
+    /// @param values - the evaluated value will be pushed here.
+    void evaluate(Pkt& pkt, ValueStack& values);
+
+    /// @brief Data chunk index.
+    uint16_t index_;
 };
 
 }; // end of isc::dhcp namespace

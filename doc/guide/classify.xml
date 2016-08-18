@@ -202,7 +202,7 @@
 -->
             <row>
               <entry>Option existence</entry>
-              <entry>option[123].exist</entry>
+              <entry>option[123].exists</entry>
               <entry>'true'</entry>
               <entry>If the option with given code is present in the
               packet "true" else "false"</entry>
@@ -315,6 +315,88 @@
               <entry>The value of the transaction id in the DHCPv6
               packet.</entry>
             </row>
+
+            <row>
+              <entry>Vendor option existence (any vendor)</entry>
+              <entry>vendor[*].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor option from any vendor
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Vendor option existence (specific vendor)</entry>
+              <entry>vendor[4491].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor option from specified
+              vendor (determined by its enterprise-id)
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Enterprise-id from vendor option</entry>
+              <entry>vendor.enterprise</entry>
+              <entry>0x0000118b</entry>
+              <entry>If the vendor option is present, it returns the
+              value of the enterprise-id field padded to 4
+              bytes. Returns '' otherwise.</entry>
+            </row>
+            <row>
+              <entry>Vendor sub-option existence</entry>
+              <entry>vendor[4491].option[1].exists</entry>
+              <entry>true</entry>
+              <entry>Returns 'true' if there is vendor option with
+              specified enterprise-id and given sub-option is present.
+              Returns 'false' otherwise.</entry>
+            </row>
+            <row>
+              <entry>Vendor sub-option content</entry>
+              <entry>vendor[4491].option[1].hex</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the specified sub-option of
+              a vendor option with specified enterprise id. Returns
+              '' if no such option or sub-option is present.
+              </entry>
+            </row>
+
+            <row>
+              <entry>Vendor class option existence (any vendor)</entry>
+              <entry>vendor-class[*].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor class option from any vendor
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Vendor class option existence (specific vendor)</entry>
+              <entry>vendor-class[4491].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor class option from specified
+              vendor (determined by its enterprise-id)
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Enterprise-id from vendor class option</entry>
+              <entry>vendor-class.enterprise</entry>
+              <entry>0x0000118b</entry>
+              <entry>If the vendor option is present, it returns the
+              value of the enterprise-id field padded to 4
+              bytes. Returns '' otherwise.</entry>
+            </row>
+            <row>
+              <entry>First data chunk from vendor class option</entry>
+              <entry>vendor-class[4491].data</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the first data chunk from
+              the vendor class option with specified enterprise-id.
+              Returns '' if missing.</entry>
+            </row>
+            <row>
+              <entry>Specific data chunk from vendor class option</entry>
+              <entry>vendor-class[4491].data[3]</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the specified data chunk of
+              a vendor class option with specified enterprise id. Returns
+              '' if no such option or data chunk is present.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
         </table>
@@ -341,7 +423,7 @@
       </para>
 
       <para>
-      "option[code].exist" checks if an option with the code "code" is present
+      "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
       </para>
 
@@ -388,6 +470,33 @@
       </para>
 
       <para>
+        Vendor option means Vendor-Identifying Vendor-specific Information
+        option (code 125, see Section 4 of RFC3925) in DHCPv4 and
+        Vendor-specific Information Option (code 17, defined in Section 22.17 of
+        RFC3315) in DHCPv6. Vendor class option means Vendor-Identifying Vendor
+        Class Option (code 124, see Section 3 of RFC3925) in DHCPv4 and Vendor
+        Class Option (code 16, see Section 22.16 of RFC3315). Vendor options may
+        have sub-options that are referenced by their codes. Vendor class
+        options do not have sub-options, but rather data chunks, which are
+        referenced by index value. Index 0 means the first data chunk, Index 1
+        is for the second data chunk (if present), etc.
+      </para>
+
+      <para>In the vendor and vendor-class constructs Asterisk (*) or 0 can be
+      used to specify a wildcard enterprise-id value, i.e. it will match any
+      enterprise-id value.</para>
+
+      <para>Vendor Class Identifier (option 60 in DHCPv4) can be
+      accessed using option[60] expression.</para>
+
+      <para>RFC3925 and RFC3315 allow for multiple instances of vendor options
+      to appear in a single message. The client classification code currently
+      examines the first instance if more than one appear. For vendor.enterprise
+      and vendor-class.enterprise expressions, the value from the first instance
+      is returned. Please submit a feature request on Kea website if you need
+      support for multiple instances.</para>
+
+      <para>
         <table frame="all" id="classification-expressions-list">
           <title>List of Classification Expressions</title>
           <tgroup cols='3'>
@@ -407,7 +516,8 @@
 <row><entry>And</entry> <entry>('foo' == 'bar') and ('bar' == 'foo')</entry><entry>Logical and</entry></row>
 <row><entry>Or</entry> <entry>('foo' == 'bar') or ('bar' == 'foo')</entry><entry>Logical or</entry></row>
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
-<row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the concatenation of the strings</entry></row>
+<row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
+concatenation of the strings</entry></row>
           </tbody>
           </tgroup>
         </table>
