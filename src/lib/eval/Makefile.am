@@ -85,6 +85,11 @@ parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
+# When debugging grammar issues, it's useful to add -v to bison parameters.
+# bison will generate parser.output file that explains the whole grammar.
+# It can be used to manually follow what's going on in the parser.
+# This is especially useful if yydebug_ is set to 1 as that variable
+# will cause parser to print out its internal state.
 location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 	$(YACC) --defines=parser.h -o parser.cc parser.yy
 
