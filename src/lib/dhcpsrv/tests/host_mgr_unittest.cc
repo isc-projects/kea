@@ -478,7 +478,7 @@ PostgreSQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(validPgSQLConnectionString());
+        HostMgr::create(test::validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
