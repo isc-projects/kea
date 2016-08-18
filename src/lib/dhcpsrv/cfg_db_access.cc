@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <sstream>
 
@@ -39,7 +40,7 @@ CfgDbAccess::createManagers() const {
     // Recreate host data source.
     HostDataSourceFactory::destroy();
     if (!host_db_access_.empty()) {
-        HostDataSourceFactory::create(getHostDbAccessString());
+        HostMgr::create(getHostDbAccessString());
     }
 }
 
