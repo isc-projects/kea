@@ -1,3 +1,8 @@
+1148.	[func]		tomek
+	The vendor options (124, 125 in DHCPv4 and 16, 17 in DHCPv6) are
+	now accessible from client classification.
+	(Trac #4270, #4271, git ef676368f9036625d73f7f34e3fe9b5eeeaee7f1)
+
 1148.	[func]		fdupont
 	Added the pkt classification token to extract incoming packet
 	meta-data (receiving interface name, source and destination
