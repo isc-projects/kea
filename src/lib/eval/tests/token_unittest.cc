@@ -437,6 +437,7 @@ public:
     /// @param option_vendor_id enterprise-id used in option (0 means don't
     ///        create the option)
     /// @param option_code sub-option code (0 means don't create suboption)
+    /// @param repr representation (TokenOption::EXISTS or HEXADECIMAL)
     /// @param expected_result text representation of the expected outcome
     void testVendorSuboption(Option::Universe u,
                              uint32_t token_vendor_id, uint16_t token_option_code,
@@ -2017,9 +2018,9 @@ TEST_F(TokenTest, vendor4enterprise) {
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing"
               " result ''");
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 1234 as "
-              "result '000004D2'");
+              "result 0x000004D2");
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 4294967295"
-              " as result 'FFFFFFFF'");
+              " as result 0xFFFFFFFF");
     EXPECT_TRUE(checkFile());
 }
 
@@ -2039,9 +2040,9 @@ TEST_F(TokenTest, vendor6enterprise) {
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing"
               " result ''");
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 1234 as "
-              "result '000004D2'");
+              "result 0x000004D2");
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 4294967295 "
-              "as result 'FFFFFFFF'");
+              "as result 0xFFFFFFFF");
     EXPECT_TRUE(checkFile());
 }
 
@@ -2283,9 +2284,9 @@ TEST_F(TokenTest, vendorClass4enterprise) {
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, pushing "
               "result ''");
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
-              "1234 as result '000004D2'");
+              "1234 as result 0x000004D2");
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
-              "4294967295 as result 'FFFFFFFF'");
+              "4294967295 as result 0xFFFFFFFF");
     EXPECT_TRUE(checkFile());
 }
 
@@ -2305,9 +2306,9 @@ TEST_F(TokenTest, vendorClass6enterprise) {
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
               "result ''");
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
-              "1234 as result '000004D2'");
+              "1234 as result 0x000004D2");
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
-              "4294967295 as result 'FFFFFFFF'");
+              "4294967295 as result 0xFFFFFFFF");
     EXPECT_TRUE(checkFile());
 }
 
@@ -2323,7 +2324,11 @@ TEST_F(TokenTest, vendorClass4SpecificVendorData) {
     testVendorClassData(Option::V4, 4491, 0, 1234, 0, "");
 
     // Case 3: Expression looks for vendor-id 4491, data[0], there is
-    // vendor-class with vendor-id 4491 and no data, expected result is empty string
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string.
+    // Note that vendor option in v4 always have at least one data chunk, even though
+    // it may be empty. The OptionVendor code was told to not create any special
+    // tuples, but it creates one empty on its own. So the code finds that one
+    // tuple and extracts its content (an empty string).
     testVendorClassData(Option::V4, 4491, 0, 4491, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[0], there is
@@ -2486,7 +2491,7 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
     testVendorClassData(Option::V4, 4491, 3, 4491, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[3], there is
-    // vendor-class with vendor-id 1234 and 1 data tuples, expected result is empty string.
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string.
     testVendorClassData(Option::V4, 4491, 3, 1234, 1, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[3], there is
@@ -2498,6 +2503,11 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
     // vendor-class with vendor-id 4491 and 5 data tuples, expected result is
     // content of that tuple ("gamma")
     testVendorClassData(Option::V4, 4491, 3, 4491, 5, "gamma");
+
+    // Case 6: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and 5 data tuples, expected result is
+    // empty string, because vendor-id does not match.
+    testVendorClassData(Option::V4, 4491, 3, 1234, 5, "");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -2514,6 +2524,8 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
               "pushing result ''");
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor "
               "class found, pushing result 'gamma'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
     EXPECT_TRUE(checkFile());
 }
 

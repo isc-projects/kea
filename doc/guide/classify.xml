@@ -457,11 +457,19 @@
         is for the second data chunk (if present), etc.
       </para>
 
-      <para>Asterisk (*) or 0 can be used to specify wildcard enterprise-id
-      value, i.e. it will match any enterprise-id value.</para>
+      <para>In the vendor and vendor-class constructs Asterisk (*) or 0 can be
+      used to specify a wildcard enterprise-id value, i.e. it will match any
+      enterprise-id value.</para>
 
       <para>Vendor Class Identifier (option 60 in DHCPv4) can be
       accessed using option[60] expression.</para>
+
+      <para>RFC3925 and RFC3315 allow for multiple instances of vendor options
+      to appear in a single message. The client classification code currently
+      examines the first instance if more than one appear. For vendor.enterprise
+      and vendor-class.enterprise expressions, the value from the first instance
+      is returned. Please submit a feature request on Kea website if you need
+      support for multiple instances.</para>
 
       <para>
         <table frame="all" id="classification-expressions-list">
