@@ -54,7 +54,7 @@
                      + __GNUC_PATCHLEVEL__)
 
 #if (defined(__GNUC__) && \
-    ((GNU_CC_VERSION >= 50200) && (GNU_CC_VERSION <= 50301)) \
+    ((GNU_CC_VERSION >= 50200) && (GNU_CC_VERSION <= 50401)) \
     && defined(BOOST_ERROR_CODE_HEADER_ONLY))
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
