@@ -25,7 +25,6 @@
 
 using namespace isc;
 using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 
 namespace {
@@ -397,12 +396,12 @@ MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    destroyMySQLSchema();
-    createMySQLSchema();
+    test::destroyMySQLSchema();
+    test::createMySQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::create(validMySQLConnectionString());
+        HostMgr::create(test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -417,7 +416,7 @@ void
 MySQLHostMgrTest::TearDown() {
     HostDataSourceFactory::getHostDataSourcePtr()->rollback();
     HostDataSourceFactory::destroy();
-    destroyMySQLSchema();
+    test::destroyMySQLSchema();
 }
 
 // This test verifies that reservations for a particular client can
@@ -461,9 +460,10 @@ TEST_F(MySQLHostMgrTest, get6ByPrefix) {
 class PostgreSQLHostMgrTest : public HostMgrTest {
 protected:
 
-    /// @brief Prepares the class for a test.
+    /// @brief Build PostgreSQL schema for a test.
     virtual void SetUp();
 
+    /// @brief Rollback and drop PostgreSQL schema after the test.
     virtual void TearDown();
 
 };
@@ -473,8 +473,8 @@ PostgreSQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    test::destroyPgSQLSchema();
+    test::createPgSQLSchema();
 
     // Connect to the database
     try {
@@ -493,7 +493,7 @@ void
 PostgreSQLHostMgrTest::TearDown() {
     HostDataSourceFactory::getHostDataSourcePtr()->rollback();
     HostDataSourceFactory::destroy();
-    destroyPgSQLSchema();
+    test::destroyPgSQLSchema();
 }
 
 // This test verifies that reservations for a particular client can
