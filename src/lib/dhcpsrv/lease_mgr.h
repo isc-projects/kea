@@ -224,6 +224,7 @@ struct AddressStatsRow6 {
     /// @brief Constructor
     ///
     /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_type The lease type for this state count
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
     AddressStatsRow6(const SubnetID& subnet_id, const Lease::Type& lease_type,
@@ -235,7 +236,7 @@ struct AddressStatsRow6 {
 
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
-    /// @brief The lease_state to which the count applies
+    /// @brief The lease_type to which the count applies
     Lease::Type lease_type_;
     /// @brief The lease_state to which the count applies
     uint32_t lease_state_;
