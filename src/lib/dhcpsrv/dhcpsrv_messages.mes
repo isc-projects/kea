@@ -552,7 +552,7 @@ A debug message issued when the server is about to obtain schema version
 information from the MySQL hosts database.
 
 % DHCPSRV_MYSQL_HOST_DB_READONLY MySQL host database opened for read access only
-This informational message is issued when the user has configured the PostgreSQL
+This informational message is issued when the user has configured the MySQL
 database in read-only mode. Kea will not be able to insert or modify
 host reservations but will be able to retrieve existing ones and
 assign them to the clients communicating with the server.
