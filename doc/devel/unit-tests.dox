@@ -1,0 +1,277 @@
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+ @page unitTests Building Kea with Unit Tests
+
+@section unitTestsIntroduction Introduction
+
+Kea uses the Google C++ Testing Framework (also called googletest or gtest) as a
+base for our C++ unit-tests. See http://code.google.com/p/googletest/ for
+details. We used to have Python unit-tests that were inherited from BIND10
+days. Those tests are removed now, so please do not develop any new Python
+tests in Kea. If you want to write DHCP tests in Python, we encourage you to
+take a look at ISC Forge: http://kea.isc.org/wiki/IscForge. You must have \c
+gtest installed or at least extracted in a directory before compiling Kea
+unit-tests. To enable unit-tests in Kea, use:
+
+@code
+./configure --with-gtest=/path/to/your/gtest/dir
+@endcode
+
+or
+
+@code
+./configure --with-gtest-source=/path/to/your/gtest/dir
+@endcode
+
+Depending on how you compiled or installed \c gtest (e.g. from sources
+or using some package management system) one of those two switches will
+find \c gtest. After that you make run unit-tests:
+
+@code
+make check
+
+@endcode
+
+@section unitTestsEnvironmentVariables Environment Variables
+
+The following environment variable can affect unit-tests:
+
+- KEA_LOCKFILE_DIR - Specifies a directory where the logging system should
+  create its lock file. If not specified, it is prefix/var/run/kea, where prefix
+  defaults to /usr/local. This variable must not end with a slash. There is one
+  special value: "none", which instructs Kea to not create lock file at
+  all. This may cause issues if several processes log to the same file.
+  Also see Kea User's Guide, section 15.3.
+
+- KEA_LOGGER_DESTINATION - Specifies logging destination. If not set, logged
+  messages will not be recorded anywhere. There are 3 special values:
+  stdout, stderr and syslog. Any other value is interpreted as a filename.
+  Also see Kea User's Guide, section 15.3.
+
+- KEA_PIDFILE_DIR - Specifies the directory which should be used for PID files
+  as used by dhcp::Daemon or its derivatives. If not specified, the default is
+  prefix/var/run/kea, where prefix defaults to /usr/local. This variable must
+  not end with a slash.
+
+- KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
+  sockets are created. There's OS limitation on how long a Unix socket
+  path can be. It is typcially slightly over 100 characters. If you
+  happen to build and run unit-tests in deeply nested directories, this
+  may become a problem. KEA_SOCKET_TEST_DIR can be specified to instruct
+  unit-test to use a different directory. Must not end with slash (e.g.
+  /tmp).
+
+@section unitTestsDatabaseConfig Databases Configuration for Unit Tests
+
+  With the use of databases requiring separate authorisation, there are
+  certain database-specific pre-requisites for successfully running the unit
+  tests.  These are listed in the following sections.
+
+  @subsection unitTestsDatabaseUsers Database Users Required for Unit Tests
+
+  Unit tests validating database backends require that <i>keatest</i> database
+  is created. This database should be empty (should not include any relations).
+  Unit tests will create required tables for each test case, and drop these tables
+  when the test case ends. The unit tests also require that <i>keatest</i> user
+  is created and that this user is configured to access <i>keatest</i>
+  database with a <i>keatest</i> password.
+
+  Unit tests use these credentials to create database schema, run test cases
+  and drop the schema. Thus, the <i>keatest</i> user must have sufficiently
+  high privileges to create and drop tables, as well as insert and modify the
+  data within those tables.
+
+  The database backends, which support read only access to the host reservations
+  databases (currently MySQL and PostgreSQL), include unit tests verifying that
+  a database user, with read-only privileges, can be used to retrieve host
+  reservations. Those tests require that a user <i>keatest_readonly</i>, with
+  SQL SELECT privilege to the <i>keatest</i> database (without INSERT, UPDATE etc.),
+  is also created.
+
+  The following sections provide step-by-step guidelines how to setup the
+  databases for running unit tests.
+
+  @subsection mysqlUnitTestsPrerequisites MySQL Database
+
+  A database called <i>keatest</i> must be created. A database user, also called
+  <i>keatest</i> (and with a password <i>keatest</i>) must also be created and
+  be given full privileges in that database.  The unit tests create the schema
+  in the database before each test and delete it afterwards.
+
+  In detail, the steps to create the database and user are:
+
+  -# Log into MySQL as root:
+  @verbatim
+  % mysql -u root -p
+  Enter password:
+     :
+  mysql>@endverbatim\n
+  -# Create the test database.  This must be called "keatest":
+  @verbatim
+  mysql> CREATE DATABASE keatest;
+  mysql>@endverbatim\n
+  -# Create the users under which the test client will connect to the database
+  (the apostrophes around the words <i>keatest</i> and <i>localhost</i> are
+  required):
+  @verbatim
+  mysql> CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';
+  mysql> CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';
+  mysql>@endverbatim\n
+  -# Grant the created users permissions to access the <i>keatest</i> database
+  (again, the apostrophes around the user names and <i>localhost</i>
+  are required):
+  @verbatim
+  mysql> GRANT ALL ON keatest.* TO 'keatest'@'localhost';
+  mysql> GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';
+  mysql>@endverbatim\n
+  -# Exit MySQL:
+  @verbatim
+  mysql> quit
+  Bye
+  %@endverbatim
+
+  The unit tests are run automatically when "make check" is executed (providing
+  that Kea has been build with the \--with-dhcp-mysql switch (see the installation
+  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  Reference Manual</a>).
+
+ @subsection pgsqlUnitTestsPrerequisites PostgreSQL Database
+
+  Conceptually, the steps required to run PostgreSQL unit-tests are the same as
+  in MySQL. First, a database called <i>keatest</i> must be created. A database
+  user, also called <i>keatest</i> (that will be allowed to log in using password
+  <i>keatest</i>) must be created and given full privileges in that database. A
+  database user, called <i>keatest_readonly</i> (using password <i>keatest</i>)
+  must be created with SELECT privilege on all tables.
+  The unit tests create the schema in the database before each test and delete it
+  afterwards.
+
+  PostgreSQL set up differs from system to system. Please consult your OS-specific
+  PostgreSQL documentation. The remainder of that section uses Ubuntu 13.10 x64
+  (with PostgreSQL 9.0+) as an example. On Ubuntu, after installing PostgreSQL
+  (with <tt>sudo apt-get install postgresql</tt>), it is installed as user
+  <i>postgres</i>. To create new databases or add new users, initial commands
+  must be issued as user postgres:
+
+@verbatim
+$ sudo -u postgres psql postgres
+[sudo] password for thomson:
+psql (9.1.12)
+Type "help" for help.
+postgres=# CREATE USER keatest WITH PASSWORD 'keatest';
+CREATE ROLE
+postgres=# CREATE DATABASE keatest;
+CREATE DATABASE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
+GRANT
+postgres=# \q
+@endverbatim
+
+  PostgreSQL versions earlier than 9.0 don't provide an SQL statement for granting
+  privileges on all tables in a database. In newer PostgreSQL versions, it is
+  possible to grant specific privileges on all tables within a schema.
+  However, this only affects tables which exist when the privileges are granted.
+  To ensure that the user has specific privileges to tables dynamically created
+  by the unit tests, the default schema privileges must be altered.
+
+  The following example demonstrates how to create user <i>keatest_readonly</i>,
+  which has SELECT privilege to the tables within the <i>keatest</i> database,
+  in Postgres 9.0+. For earlier versions of Postgres, it is recommended to
+  simply grant full privileges to <i>keatest_readonly</i> user, using the
+  same steps as for the <i>keatest</i> user.
+
+@verbatim
+$ psql -U postgres
+Password for user postgres:
+psql (9.1.12)
+Type "help" for help.
+
+postgres=# CREATE USER keatest_readonly WITH PASSWORD 'keatest';
+CREATE ROLE
+postgres=# \q
+
+$ psql -U keatest
+Password for user keatest:
+psql (9.1.12)
+Type "help" for help.
+
+keatest=> ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES to keatest_readonly;
+ALTER DEFAULT PRIVILEGES
+keatest=> \q
+@endverbatim
+
+  Note that <i>keatest</i> user (rather than <i>postgres</i>) is used to grant
+  privileges to the <i>keatest_readonly</i> user. This ensures that the SELECT
+  privilege is granted only on the tables that the <i>keatest</i> user can access
+  within the public schema.
+
+  Now we  should be able to log into the newly created database using both user
+  names:
+@verbatim
+$ psql -d keatest -U keatest
+Password for user keatest:
+psql (9.1.12)
+Type "help" for help.
+
+keatest=> \q
+
+$ psql -d keatest -U keatest_readonly
+Password for user keatest_readonly:
+psql (9.1.12)
+Type "help" for help.
+
+keatest=>
+@endverbatim
+
+  If instead of seeing keatest=> prompt, your login will be refused with error
+  code about failed peer or indent authentication, it means that PostgreSQL is
+  configured to check unix username and reject login attepts if PostgreSQL names
+  are different. To alter that, PostgreSQL configuration must be changed.
+  <tt>/etc/postgresql/9.1/main/pg_hba.conf</tt> config file
+  has to be tweaked. It may be in a different location in your system. The following
+  lines:
+
+@verbatim
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+@endverbatim
+
+  were replaced with:
+
+@verbatim
+local   all             all                                     password
+host    all             all             127.0.0.1/32            password
+host    all             all             ::1/128                 password
+@endverbatim
+
+  Another possible problem is to get no password prompt, in general because
+  you have no <tt>pg_hba.conf</tt> config file and everybody is by default
+  trusted. As it has a very bad effect on the security you should have
+  been warned it is a highly unsafe config. The solution is the same,
+  i.e., require password or md5 authentication method. If you lose
+  the postgres user access you can add first:
+@verbatim
+local   all             postgres                                trust
+@endverbatim
+  to trust only the local postgres user. Note the postgres user can
+  be pgsql on some systems.
+
+  Please consult your PostgreSQL user manual before applying those changes as
+  those changes may expose your other databases that you run on the same system.
+  In general case, it is a poor idea to run anything of value on a system
+  that runs tests. Use caution!
+
+  The unit tests are run automatically when "make check" is executed (providing
+  that Kea has been build with the \--with-dhcp-pgsql switch (see the installation
+  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  Reference Manual</a>).
+
+
+ */
