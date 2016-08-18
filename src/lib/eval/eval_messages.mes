@@ -107,53 +107,6 @@ string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
 
-% EVAL_RESULT Expression %1 evaluated to %2
-This debug message indicates that the expression has been evaluated
-to said value. This message is mostly useful during debugging of the
-client classification expressions.
-
-% EVAL_DEBUG_VENDOR_NO_OPTION Option with code %1 missing, pushing result '%2'
-This debug message indicates that the expression has been evaluated
-and vendor option was not found. This message is mostly useful during
-debugging of the client classification expressions.
-
-% EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
-This debug message indicates that the expression has been evaluated
-and vendor option was found, but has different enterprise-id than specified
-in the expression. This message is mostly useful during debugging of the
-client classification expressions.
-
-% EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id %1 as result '%2'
-This debug message indicates that the expression has been evaluated and vendor
-option was found and its enterprise-id is being reported. This message is mostly
-useful during debugging of the client classification expressions.
-
-% EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id %1 found, pushing result '%2'
-This debug message indicates that the expression has been evaluated and vendor
-option was found. This message is mostly useful during debugging of the client
-classification expressions.
-
-% EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code %1 missing, pushing result '%2'
-This debug message indicates that the expression has been evaluated
-and vendor class option was not found. This message is mostly useful during
-debugging of the client classification expressions.
-
-% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
-This debug message indicates that the expression has been evaluated
-and vendor class option was found, but has different enterprise-id than specified
-in the expression. This message is mostly useful during debugging of the
-client classification expressions.
-
-% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id %1 as result '%2'
-This debug message indicates that the expression has been evaluated and vendor
-class option was found and its enterprise-id is being reported. This message is mostly
-useful during debugging of the client classification expressions.
-
-% EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id %1 found, pushing result '%2'
-This debug message indicates that the expression has been evaluated and vendor
-class option was found. This message is mostly useful during debugging of the
-client classification expressions.
-
 % EVAL_DEBUG_VENDOR_CLASS_DATA Data %1 (out of %2 received) in vendor class found, pushing result '%3'
 This debug message indicates that vendor class option was found and passed
 enterprise-id checks and has sufficient number of data chunks. The total number
@@ -164,3 +117,42 @@ This debug message indicates that vendor class option was found and passed
 enterprise-id checks, but does not have sufficient number of data chunks.
 Note that the index starts at 0, so there has to be at least (index + 1)
 data chunks.
+
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id %1 as result 0x%2
+This debug message indicates that the expression has been evaluated and vendor
+class option was found and its enterprise-id is being reported.
+
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
+This debug message indicates that the expression has been evaluated
+and vendor class option was found, but has different enterprise-id than specified
+in the expression.
+
+% EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id %1 found, pushing result '%2'
+This debug message indicates that the expression has been evaluated and vendor
+class option was found.
+
+% EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code %1 missing, pushing result '%2'
+This debug message indicates that the expression has been evaluated
+and vendor class option was not found.
+
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id %1 as result 0x%2
+This debug message indicates that the expression has been evaluated and vendor
+option was found and its enterprise-id is being reported.
+
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
+This debug message indicates that the expression has been evaluated
+and vendor option was found, but has different enterprise-id than specified
+in the expression.
+
+% EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id %1 found, pushing result '%2'
+This debug message indicates that the expression has been evaluated and vendor
+option was found.
+
+% EVAL_DEBUG_VENDOR_NO_OPTION Option with code %1 missing, pushing result '%2'
+This debug message indicates that the expression has been evaluated
+and vendor option was not found.
+
+% EVAL_RESULT Expression %1 evaluated to %2
+This debug message indicates that the expression has been evaluated
+to said value. This message is mostly useful during debugging of the
+client classification expressions.
