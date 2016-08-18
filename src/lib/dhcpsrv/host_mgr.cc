@@ -47,7 +47,7 @@ HostMgr::create(const std::string& access) {
         HostDataSourceFactory::create(access);
     } else {
         // Ok, no parameters were specified. We should destroy the existing
-        // insteance.
+        // instance.
         HostDataSourceFactory::destroy();
     }
 
@@ -214,8 +214,12 @@ HostMgr::get6(const SubnetID& subnet_id,
 }
 
 void
-HostMgr::add(const HostPtr&) {
-    isc_throw(isc::NotImplemented, "HostMgr::add is not implemented");
+HostMgr::add(const HostPtr& host) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "unable to add new host because there is "
+                  "no alternate host data source present");
+    }
+    alternate_source_->add(host);
 }
 
 } // end of isc::dhcp namespace
