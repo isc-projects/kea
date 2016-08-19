@@ -2822,24 +2822,18 @@ It is merely echoed by the server
 
     </section>
 
-    <section id="reservations4-mysql">
-      <title>Storing host reservations in MySQL</title>
+    <section id="reservations4-mysql-pgsql">
+      <title>Storing host reservations in MySQL or PostgreSQL</title>
 
       <para>
-        It is possible to store host reservations in MySQL. See <xref
+        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts4-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL. Kea does not provide any dedicated tools
-        for managing MySQL reservations. See Kea wiki <ulink
+        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
+        tools for managing reservations in a database. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
-    </section>
-
-    <section id="reservations4-pgsql">
-      <title>Storing host reservations in PostgreSQL</title>
-      <para>Kea currently does not support storing reservations in
-      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
     </section>
 
     <section id="reservations4-cql">
