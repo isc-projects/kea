@@ -444,6 +444,9 @@ Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
+    /// @todo: what if mac_addr.size() doesn't match hlen?
+    /// We would happily copy over hardware address that is possibly
+    /// too long or doesn't match hlen value.
     hw_addr.reset(new HWAddr(mac_addr, htype));
 }
 
