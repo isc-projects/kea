@@ -1347,6 +1347,24 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
+    // Check msgtype.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_msgtype = encode(DHCPDISCOVER);
+    EXPECT_EQ(0, memcmp(&exp_msgtype[0], &values_.top()[0], 4));
+
+    // Check transaction-id
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_transid = encode(12345);
+    EXPECT_EQ(0, memcmp(&exp_transid[0], &values_.top()[0], 4));
+
     // Check a DHCPv6 packet throws.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
@@ -1367,6 +1385,8 @@ TEST_F(TokenTest, pkt4Fields) {
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field ciaddr with value 0xC0000202");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field yiaddr with value 0xC0000203");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field siaddr with value 0xC0000204");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field transid with value 0x00003039");
     EXPECT_TRUE(checkFile());
 }
 

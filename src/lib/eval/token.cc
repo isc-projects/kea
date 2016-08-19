@@ -303,6 +303,14 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
             value = EvalContext::fromUint32(pkt4.getHtype());
             type_str = "htype";
             break;
+        case MSGTYPE:
+            value = EvalContext::fromUint32(pkt4.getType());
+            type_str = "msgtype";
+            break;
+        case TRANSID:
+            value = EvalContext::fromUint32(pkt4.getTransid());
+            type_str = "transid";
+            break;
 
         default:
             isc_throw(EvalTypeError, "Bad field specified: "
