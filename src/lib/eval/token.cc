@@ -201,11 +201,12 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
     string value;
     vector<uint8_t> binary;
     string type_str;
-    uint32_t len;
     bool is_binary = true;
+    bool print_hex = true;
     switch (type_) {
     case IFACE:
         is_binary = false;
+        print_hex = false;
         value = pkt.getIface();
         type_str = "iface";
         break;
@@ -222,9 +223,8 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
         // (with UDP transport it fits in 16 bits)
         // the len() method is not const because of DHCPv6 relays.
         // We assume here it has no bad side effects...
-        len = static_cast<uint32_t>(const_cast<Pkt&>(pkt).len());
-        binary.resize(sizeof(uint32_t));
-        static_cast<void>(writeUint32(len, &binary[0], binary.size()));
+        value = EvalContext::fromUint32(static_cast<uint32_t>(const_cast<Pkt&>(pkt).len()));
+        is_binary = false;
         type_str = "len";
         break;
 
@@ -244,13 +244,14 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
         .arg(type_str)
-        .arg(is_binary ? toHex(value) : value);
+        .arg(print_hex ? toHex(value) : value);
 }
 
 void
 TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
     vector<uint8_t> binary;
+    string value;
     string type_str;
     try {
         // Check if it's a Pkt4. If it's not, the dynamic_cast will throw
@@ -293,19 +294,13 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
         case HLEN:
             // Pad the uint8_t field to 4 bytes.
-            binary.push_back(0);
-            binary.push_back(0);
-            binary.push_back(0);
-            binary.push_back(pkt4.getHlen());
+            value = EvalContext::fromUint32(pkt4.getHlen());
             type_str = "hlen";
             break;
 
         case HTYPE:
             // Pad the uint8_t field to 4 bytes.
-            binary.push_back(0);
-            binary.push_back(0);
-            binary.push_back(0);
-            binary.push_back(pkt4.getHtype());
+            value = EvalContext::fromUint32(pkt4.getHtype());
             type_str = "htype";
             break;
 
@@ -318,9 +313,8 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
         isc_throw(EvalTypeError, "Specified packet is not a Pkt4");
     }
 
-    string value;
-    value.resize(binary.size());
     if (!binary.empty()) {
+        value.resize(binary.size());
         memmove(&value[0], &binary[0], binary.size());
     }
     values.push(value);
@@ -334,7 +328,7 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 void
 TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
 
-    vector<uint8_t> binary;
+    string value;
     string type_str;
     try {
       // Check if it's a Pkt6.  If it's not the dynamic_cast will throw
@@ -345,20 +339,13 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
       switch (type_) {
       case MSGTYPE: {
           // msg type is an uint8_t integer.  We want a 4 byte string so 0 pad.
-          binary.push_back(0);
-          binary.push_back(0);
-          binary.push_back(0);
-          binary.push_back(pkt6.getType());
+          value = EvalContext::fromUint32(pkt6.getType());
           type_str = "msgtype";
           break;
       }
       case TRANSID: {
           // transaction id is an uint32_t integer.  We want a 4 byte string so copy
-          uint32_t transid = pkt6.getTransid();
-          binary.push_back(transid >> 24);
-          binary.push_back((transid >> 16) & 0xFF);
-          binary.push_back((transid >> 8) & 0xFF);
-          binary.push_back(transid & 0xFF);
+          value = EvalContext::fromUint32(pkt6.getTransid());
           type_str = "transid";
           break;
       }
@@ -371,9 +358,6 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
         isc_throw(EvalTypeError, "Specified packet is not Pkt6");
     }
 
-    string value;
-    value.resize(binary.size());
-    memmove(&value[0], &binary[0], binary.size());
     values.push(value);
 
     // Log what we pushed
