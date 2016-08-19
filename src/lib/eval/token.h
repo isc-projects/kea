@@ -155,6 +155,35 @@ protected:
     std::string value_; ///< Constant value
 };
 
+/// @brief Token representing an unsigned 32 bits integer
+///
+/// For performance reasons, the constant integer value is converted to string
+/// just once (in constructor). Afterwards, this effectively works as constant
+/// 4 bytes long string. Hence this class is derived from TokenString and
+/// does not even need its own evaluate() method.
+class TokenInteger : public TokenString {
+public:
+    /// @brief Integer value set during construction.
+    ///
+    /// The value is converted to string and stored in value_ provided by the
+    /// base class.
+    ///
+    /// @param value integer value to be stored.
+    TokenInteger(const uint32_t value);
+
+    /// @brief Returns integer value
+    ///
+    /// Used in tests only.
+    ///
+    /// @return integer value
+    uint32_t getInteger() const {
+        return (int_value_);
+    }
+
+protected:
+    uint32_t int_value_; ///< value as integer (stored for testing only)
+};
+
 /// @brief Token representing an IP address as a constant string
 ///
 /// This token holds the value of an IP address as a constant string,

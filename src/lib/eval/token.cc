@@ -6,6 +6,7 @@
 
 #include <eval/token.h>
 #include <eval/eval_log.h>
+#include <eval/eval_context.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <asiolink/io_address.h>
@@ -878,4 +879,9 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     default:
         isc_throw(EvalTypeError, "Invalid field specified." << field_);
     }
+}
+
+TokenInteger::TokenInteger(const uint32_t value)
+    :TokenString(EvalContext::fromUint32(value)), int_value_(value) {
+
 }

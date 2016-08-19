@@ -147,6 +147,17 @@ EvalContext::convertUint32(const std::string& number,
     return (static_cast<uint32_t>(n));
 }
 
+std::string
+EvalContext::fromUint32(const uint32_t integer) {
+    std::string tmp(4, 0);
+    tmp[0] = (integer >> 24) & 0xff;
+    tmp[1] = (integer >> 16) & 0xff;
+    tmp[2] = (integer >> 8) & 0xff;
+    tmp[3] = integer & 0xff;
+
+    return (tmp);
+}
+
 void
 EvalContext::fatal (const std::string& what)
 {
