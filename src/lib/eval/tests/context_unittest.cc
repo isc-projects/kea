@@ -1011,12 +1011,12 @@ TEST_F(EvalContextTest, pkt4FieldSiaddr) {
 
 // Tests whether message type field in DHCPv6 can be accessed.
 TEST_F(EvalContextTest, pkt6FieldMsgtype) {
-    testPkt6Field("pkt6.msgtype == '1'", TokenPkt6::MSGTYPE, 3);
+    testPkt6Field("pkt6.msgtype == 1", TokenPkt6::MSGTYPE, 3);
 }
 
 // Tests whether transaction id field in DHCPv6 can be accessed.
 TEST_F(EvalContextTest, pkt6FieldTransid) {
-    testPkt6Field("pkt6.transid == '1'", TokenPkt6::TRANSID, 3);
+    testPkt6Field("pkt6.transid == 1", TokenPkt6::TRANSID, 3);
 }
 
 // Tests if the linkaddr field in a Relay6 encapsulation can be accessed.

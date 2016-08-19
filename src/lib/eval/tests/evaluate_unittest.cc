@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <eval/evaluate.h>
+#include <eval/eval_context.h>
 #include <eval/token.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -280,6 +281,125 @@ TEST_F(EvaluateTest, complex) {
     EXPECT_TRUE(result_);
     ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
     EXPECT_TRUE(result_);
+}
+
+/// @brief Generic class for parsing expressions and evaluating them.
+///
+/// The main purpose of this class is to provide a generic interface to the
+/// eval library, so everything (expression parsing and then its evaluation for
+/// given packets) can be done in one simple call.
+///
+/// Those tests may be somewhat redundant to other more specialized tests, but
+/// the idea here is to mass produce tests that are trivial to write.
+class ExpressionsTest : public EvaluateTest {
+public:
+
+    /// @brief Checks if expression can be parsed and evaluated
+    ///
+    /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
+    /// tweak them as needed before calling this method.
+    ///
+    /// Note that contrary to the usual interface, this method calls
+    /// @ref isc::dhcp::evaluateString, rather than @ref isc::dhcp::evaluate.
+    /// The main benefit of this is the ability to test partial expressions that
+    /// not necessarily evaluate to bool.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param expr expression to be parsed
+    /// @param exp_result expected result (true or false)
+    void testExpression(const Option::Universe& u, const std::string& expr,
+                        const bool exp_result) {
+
+        EvalContext eval(u);
+        bool result;
+        bool parsed;
+
+        EXPECT_NO_THROW(parsed = eval.parseString(expr));
+        EXPECT_TRUE(parsed) << " for expression " << expr;
+
+        switch (u) {
+        case Option::V4:
+            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt4_))
+                << " for expression " << expr;
+            break;
+        case Option::V6:
+            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt6_))
+                << " for expression " << expr;
+            break;
+        }
+
+        EXPECT_EQ(exp_result, result) << " for expression " << expr;
+    }
+};
+
+// This is a quick way to check if certain expressions are valid or not and
+// whether the whole expression makes sense. This particular test checks if
+// integers can be used properly in expressions. There are many places where
+// integers are used. This particular test checks if pkt6.msgtype returns
+// something that can be compared with integers.
+//
+// For basic things we can take advantage of the skeleton packets created in
+// EvaluateTest constructors: The packet type is DISCOVER in DHCPv4 and
+// SOLICIT in DHCPv6. There is one option added with code 100 and content
+// being either "hundred4" or "hundred6" depending on the universe.
+
+// Tests if pkt6.msgtype returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger1) {
+    testExpression(Option::V6, "pkt6.msgtype == 1", true);
+    testExpression(Option::V6, "pkt6.msgtype == 2", false);
+
+    testExpression(Option::V6, "pkt6.msgtype == 0x00000001", true);
+    testExpression(Option::V6, "pkt6.msgtype == 0x00000002", false);
+}
+
+// Tests if pkt6.transid returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger2) {
+    testExpression(Option::V6, "pkt6.transid == 0", false);
+    testExpression(Option::V6, "pkt6.transid == 12345", true);
+    testExpression(Option::V6, "pkt6.transid == 12346", false);
+}
+
+// Tests if pkt4.transid returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger3) {
+    testExpression(Option::V4, "pkt4.transid == 0", false);
+    testExpression(Option::V4, "pkt4.transid == 12345", true);
+    testExpression(Option::V4, "pkt4.transid == 12346", false);
+}
+
+// Tests if integers can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger4) {
+    testExpression(Option::V6, "0 == 0", true);
+    testExpression(Option::V6, "2 == 3", false);
+}
+
+// Tests if pkt4.hlen and pkt4.htype return values that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
+
+    // By default there's no hardware set up. The default Pkt4 constructor
+    // creates HWAddr(), which has hlen=0 and htype set to HTYPE_ETHER.
+    testExpression(Option::V4, "pkt4.hlen == 0", true);
+    testExpression(Option::V4, "pkt4.htype == 1", true);
+
+    // Ok, let's initialized the hardware address to something plausible.
+    const size_t hwaddr_len = 6;
+    const uint16_t expected_htype = 123;
+    std::vector<uint8_t> hw(hwaddr_len,0);
+    for (int i = 0; i < hwaddr_len; i++) {
+        hw[i] = i + 1;
+    }
+    pkt4_->setHWAddr(expected_htype, hwaddr_len, hw);
+
+    testExpression(Option::V4, "pkt4.hlen == 0", false);
+    testExpression(Option::V4, "pkt4.hlen == 5", false);
+    testExpression(Option::V4, "pkt4.hlen == 6", true);
+    testExpression(Option::V4, "pkt4.hlen == 7", false);
+
+    testExpression(Option::V4, "pkt4.htype == 0", false);
+    testExpression(Option::V4, "pkt4.htype == 122", false);
+    testExpression(Option::V4, "pkt4.htype == 123", true);
+    testExpression(Option::V4, "pkt4.htype == 124", false);
+
+    testExpression(Option::V4, "pkt4.mac == 0x010203040506", true);
 }
 
 };
