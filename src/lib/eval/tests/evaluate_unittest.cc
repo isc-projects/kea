@@ -402,4 +402,18 @@ TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
     testExpression(Option::V4, "pkt4.mac == 0x010203040506", true);
 }
 
+TEST_F(ExpressionsTest, expressionsPkt4type) {
+
+    // We can inspect the option content directly, but
+    // it requires knowledge of the option type and its format.
+    testExpression(Option::V4, "option[53].hex == 0x0", false);
+    testExpression(Option::V4, "option[53].hex == 0x1", true);
+    testExpression(Option::V4, "option[53].hex == 0x2", false);
+
+    // It's easier to simply use the pkt4.msgtype
+    testExpression(Option::V4, "pkt4.msgtype == 0", false);
+    testExpression(Option::V4, "pkt4.msgtype == 1", true);
+    testExpression(Option::V4, "pkt4.msgtype == 2", false);
+}
+
 };
