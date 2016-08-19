@@ -7,6 +7,7 @@
 #include <config.h>
 #include <fstream>
 #include <eval/token.h>
+#include <eval/eval_context.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp4.h>
@@ -183,12 +184,14 @@ public:
     }
 
     /// @brief Convenience function. Removes token and values stacks.
-    void clearStack() {
+    /// @param token specifies if the convenience token should be removed or not
+    void clearStack(bool token = true) {
         while (!values_.empty()) {
             values_.pop();
         }
-
-        t_.reset();
+        if (token) {
+            t_.reset();
+        }
     }
 
     /// @brief Aux. function that stores integer values as 4 bytes string.
@@ -196,12 +199,7 @@ public:
     /// @param value integer value to be stored
     /// @return 4 bytes long string with encoded value.
     string encode(uint32_t value) {
-        string tmp(4,0);
-        tmp[0] = value >> 24;
-        tmp[1] = value >> 16;
-        tmp[2] = value >> 8;
-        tmp[3] = value;
-        return (tmp);
+        return EvalContext::fromUint32(value);
     }
 
     TokenPtr t_; ///< Just a convenience pointer
@@ -483,6 +481,26 @@ public:
         }
 
         evaluate(u, expected);
+    }
+
+    /// @brief Tests if TokenInteger evaluates to proper value
+    ///
+    /// @param value integer value passed to constructor
+    /// @param expected expected string representation on stack after evaluation
+    void testInteger(std::string expected, uint32_t value) {
+
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenInteger(value)));
+
+        // The universe (v4 or v6) shouldn't have any impact on this,
+        // but let's check it anyway.
+        evaluate(Option::V4, expected);
+
+        clearStack(false);
+        evaluate(Option::V6, expected);
+
+        clearStack(true);
     }
 };
 
@@ -2719,6 +2737,16 @@ TEST_F(TokenTest, vendorClass6DataIndex) {
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor"
               " class found, pushing result 'gamma'");
     EXPECT_TRUE(checkFile());
+}
+
+// Checks if various values can be represented as integer tokens
+TEST_F(TokenTest, integer) {
+    testInteger(encode(0), 0);
+    testInteger(encode(6), 6);
+    testInteger(encode(255), 255);
+    testInteger(encode(256), 256);
+    testInteger(encode(1410), 1410);
+    testInteger(encode(4294967295), 4294967295);
 }
 
 };
