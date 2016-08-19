@@ -256,7 +256,7 @@
             <row>
               <entry>Length of packet</entry>
               <entry>pkt.len</entry>
-              <entry>0x00000100</entry>
+              <entry>513</entry>
               <entry>The length of a DHCP packet (UDP header field), expressed
               as 32 bits unsigned integer.</entry>
             </row>
@@ -269,13 +269,13 @@
             <row>
               <entry>Hardware length in DHCPv4 packet</entry>
               <entry>pkt4.hlen</entry>
-              <entry>0x00000006</entry>
+              <entry>6</entry>
               <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
               <entry>Hardware type in DHCPv4 packet</entry>
               <entry>pkt4.htype</entry>
-              <entry>0x0000007b</entry>
+              <entry>6</entry>
               <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
@@ -349,7 +349,7 @@
             <row>
               <entry>Enterprise-id from vendor option</entry>
               <entry>vendor.enterprise</entry>
-              <entry>0x0000118b</entry>
+              <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
               bytes. Returns '' otherwise.</entry>
@@ -390,7 +390,7 @@
             <row>
               <entry>Enterprise-id from vendor class option</entry>
               <entry>vendor-class.enterprise</entry>
-              <entry>0x0000118b</entry>
+              <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
               bytes. Returns '' otherwise.</entry>
