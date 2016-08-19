@@ -145,7 +145,7 @@
     </para>
   </section>
 
-  <section>
+  <section id="supported-databases">
     <title>Supported Databases</title>
 
     <para>The following table presents the capabilities of available
@@ -574,9 +574,20 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
       <section id="pgsql-upgrade">
         <title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title>
         <para>
-          Currently, PostgreSQL only supports Kea schema version 1.0 so no upgrades
-          are available.  As upgrades become available, <command>kea-admin</command>
-          will support them.
+          PostgreSQL database schema can be upgraded using the same tool and
+          commands as described in <xref linkend="mysql-upgrade"/>, with an
+          exception that the "pgsql" database backend type must be used in
+          those commands.
+        </para>
+        <para>
+          Use the following command to check current schema version:
+<screen>
+$ <userinput>kea-admin lease-version pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+</screen>
+          Use the following command to perform an upgrade:
+<screen>
+$ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+</screen>
         </para>
       </section>
     </section> <!-- end of PostgreSQL sections -->
