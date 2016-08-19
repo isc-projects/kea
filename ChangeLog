@@ -1,3 +1,9 @@
+1149.	[bug]		marcin
+	Corrected a bug whereby clients were not assigned reserved
+	addresses from an external database, as a result of unexpected
+	closure of a connection to that database.
+	(Trac #4544, git 7f682112dd5ab9fcd6bfa4e10505c246775f353d)
+
 1148.	[func]		tomek
 	The vendor options (124, 125 in DHCPv4 and 16, 17 in DHCPv6) are
 	now accessible from client classification.
