@@ -469,6 +469,14 @@ pkt4_field : CHADDR
                 {
                     $$ = TokenPkt4::SIADDR;
                 }
+           | MSGTYPE
+                 {
+                    $$ = TokenPkt4::MSGTYPE;
+                 }
+           | TRANSID
+                 {
+                    $$ = TokenPkt4::TRANSID;
+                 }
            ;
 
 pkt6_field : MSGTYPE

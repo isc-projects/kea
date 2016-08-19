@@ -442,7 +442,9 @@ public:
         YIADDR, ///< yiaddr (IPv4 address)
         SIADDR, ///< siaddr (IPv4 address)
         HLEN,   ///< hlen (hardware address length)
-        HTYPE   ///< htype (hardware address type)
+        HTYPE,  ///< htype (hardware address type)
+        MSGTYPE, ///< message type (not really a field, content of option 53)
+        TRANSID, ///< transaction-id (xid)
     };
 
     /// @brief Constructor (does nothing)
