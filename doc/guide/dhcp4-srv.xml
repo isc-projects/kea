@@ -486,33 +486,31 @@ If a timeout is given though, it should be an integer greater than zero.
     database. In fact, Kea server opens independent connections for each
     purpose, be it lease or hosts information. This gives the solution most
     flexibility. Kea can be used to keep leases and host reservations
-    separately, but can also point to the same database. Currently the only
-    supported hosts database type is MySQL.</para>
+    separately, but can also point to the same database. Currently the
+    supported hosts database types are MySQL and PostgreSQL. Cassandra
+    backend does not support host reservations yet.</para>
 
     <para>Please note that usage of hosts storage is optional. User can define
     all host reservations in the configuration file. That is the recommended way
     if the number of reservations is small. However, with the number of
     reservations growing it's more convenient to use host storage. Please note
-    that both storages (configuration file and MySQL) can be used together. If
-    hosts are defined in both places, the definitions from configuration file
-    are checked first and external storage is checked later, if
-    necessary.</para>
-
-    <para>All hosts leases issued by the server are stored in the hosts
-    database. Currently there is only one available backend: MySQL. Other host
-    backends will become available in future Kea versions.</para>
+    that two storages (configuration file and one of the supported databases)
+    can be used together. If hosts are defined in both places, the definitions
+    from configuration file are checked first and external storage is checked
+    later, if necessary.</para>
 
 <section id="hosts-database-configuration4">
   <title>IPv4 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
-  parameters. If enabled, the type of the database must be set to "mysql". Other
-  hosts backends may be added in later Kea versions.
+  parameters. If enabled, the type of the database must be set to "mysql" or
+  "postgresql". Other hosts backends may be added in later Kea versions.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>).
+  Next, the name of the database to hold the reservations must be set: this is the
+  name used when the lease database was created (see <xref linkend="supported-databases"/>
+  for instructions how to setup desired database type).
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
