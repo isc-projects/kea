@@ -46,15 +46,18 @@
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69789
 // https://svn.boost.org/trac/boost/ticket/11989
 //
-// @todo Currently, 5.3.0 is the latest released versio of GCC. Version 6.0 is
-// in development and will need to be tested.
+// @todo Version 6.0 will need to be tested.
+//
+// As of 2016-08-19, the version 5.4.0 from Ubuntu 16.04 is affected. Updated
+// the check to cover everything that is not 6.0, hoping that 6.0 solves the
+// problem.
 
 #define GNU_CC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
 
 #if (defined(__GNUC__) && \
-    ((GNU_CC_VERSION >= 50200) && (GNU_CC_VERSION <= 50301)) \
+    ((GNU_CC_VERSION >= 50200) && (GNU_CC_VERSION < 60000)) \
     && defined(BOOST_ERROR_CODE_HEADER_ONLY))
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
