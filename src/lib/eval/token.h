@@ -155,11 +155,11 @@ protected:
     std::string value_; ///< Constant value
 };
 
-/// @brief Token representing an unsigned 32 bits integer
+/// @brief Token representing an unsigned 32 bit integer
 ///
-/// For performance reasons, the constant integer value is converted to string
-/// just once (in constructor). Afterwards, this effectively works as constant
-/// 4 bytes long string. Hence this class is derived from TokenString and
+/// For performance reasons, the constant integer value is converted to a string
+/// just once (in the constructor). Afterwards, this effectively works as a constant
+/// 4 byte long string. Hence this class is derived from TokenString and
 /// does not even need its own evaluate() method.
 class TokenInteger : public TokenString {
 public:

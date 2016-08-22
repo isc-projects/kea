@@ -34,12 +34,12 @@
 # Let's classify all incoming RENEW (message type 5) to a separate
 # class.
   {
-      "name": "discovers",
+      "name": "renews",
       "test": "pkt6.msgtype == 5"
   },
 
 # Let's pick cable modems. In this simple example we'll assume the device
-# is a cable modem if it sends vendor option with enterprise-id equal
+# is a cable modem if it sends a vendor option with enterprise-id equal
 # to 4491.    
   {
       "name": "cable-modems",
