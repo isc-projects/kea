@@ -1212,9 +1212,9 @@ TEST_F(EvalContextTest, scanParseErrors) {
     checkError("0abc",
                "<string>:1.2: Invalid character: a");
 
-    // This one is a little bid odd. This is truncated address, so it's not
-    // recognized as address. Instead, first token (10) is recognized as
-    // integer. The only thing we can do with integers right now is test
+    // This one is a little bid odd. This is a truncated address, so it's not
+    // recognized as an address. Instead, the first token (10) is recognized as
+    // an integer. The only thing we can do with integers right now is test
     // for equality, so the only possible next token is ==. There's a dot
     // instead, so an error is reported.
     checkError("10.0.1", "<string>:1.3: syntax error, unexpected ., expecting ==");
