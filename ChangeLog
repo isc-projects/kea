@@ -1,3 +1,9 @@
+1150.	[bug]		tomek
+	Extended gcc bug workaround to work on all versions of gcc
+	from 5.2 up to, but not including 6.0. See ChangeLog entry
+	1103 or Trac ticket #4243 for details.
+	(Trac #4553, git 80243d9d246b982d86dd7e0d00597383cae01706)
+
 1149.	[bug]		marcin
 	Corrected a bug whereby clients were not assigned reserved
 	addresses from an external database, as a result of unexpected
