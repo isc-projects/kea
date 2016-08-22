@@ -46,8 +46,7 @@
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69789
 // https://svn.boost.org/trac/boost/ticket/11989
 //
-// @todo Currently, 5.3.0 is the latest released version of GCC. Version 6.0 is
-// in development and will need to be tested.
+// @todo Version 6.0 will need to be tested.
 //
 // As of 2016-08-19, the version 5.4.0 from Ubuntu 16.04 is affected. Updated
 // the check to cover everything that is not 6.0, hoping that 6.0 solves the
