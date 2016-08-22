@@ -23,7 +23,7 @@ namespace test {
 
 Dhcp4Client::Configuration::Configuration()
     : routers_(), dns_servers_(), log_servers_(), quotes_servers_(),
-      serverid_("0.0.0.0") {
+      serverid_("0.0.0.0"), siaddr_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
     reset();
 }
 
@@ -34,6 +34,9 @@ Dhcp4Client::Configuration::reset() {
     log_servers_.clear();
     quotes_servers_.clear();
     serverid_ = asiolink::IOAddress("0.0.0.0");
+    siaddr_ = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+    sname_.clear();
+    boot_file_name_.clear();
     lease_ = Lease4();
 }
 
@@ -178,6 +181,17 @@ Dhcp4Client::applyConfiguration() {
     if (opt_vendor) {
         config_.vendor_suboptions_ = opt_vendor->getOptions();
     }
+    // siaddr
+    config_.siaddr_ = resp->getSiaddr();
+    // sname
+    OptionBuffer buf = resp->getSname();
+    // sname is a fixed length field holding null terminated string. Use
+    // of c_str() guarantess that only a useful portion (ending with null
+    // character) is assigned.
+    config_.sname_.assign(std::string(buf.begin(), buf.end()).c_str());
+    // (boot)file
+    buf = resp->getFile();
+    config_.boot_file_name_.assign(std::string(buf.begin(), buf.end()).c_str());
     // Server Identifier
     OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<
         OptionCustom>(resp->getOption(DHO_DHCP_SERVER_IDENTIFIER));

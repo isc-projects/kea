@@ -81,6 +81,12 @@ public:
         /// @brief Holds server id of the server which responded to the client's
         /// request.
         asiolink::IOAddress serverid_;
+        /// @brief Holds returned siaddr.
+        asiolink::IOAddress siaddr_;
+        /// @brief Holds returned sname.
+        std::string sname_;
+        /// @brief Holds returned (boot)file.
+        std::string boot_file_name_;
 
         /// @brief Constructor.
         Configuration();
