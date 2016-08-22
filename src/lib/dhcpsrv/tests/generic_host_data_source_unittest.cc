@@ -1239,16 +1239,16 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     ASSERT_EQ(1, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
 
-    //getAll(const Host::IdentifierType& identifier_type,
-    //       const uint8_t* identifier_begin,
-    //       const size_t identifier_len) const;
+    // getAll(const Host::IdentifierType& identifier_type,
+    //        const uint8_t* identifier_begin,
+    //        const size_t identifier_len) const;
     hosts_by_id = hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                                   host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
 
-    //get6(const SubnetID& subnet_id, const DuidPtr& duid,
-    //     const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+    // get6(const SubnetID& subnet_id, const DuidPtr& duid,
+    //      const HWAddrPtr& hwaddr = HWAddrPtr()) const;
     ConstHostPtr from_hds = hdsptr_->get6(subnet_id, DuidPtr(), host->getHWAddress());
     ASSERT_TRUE(from_hds);
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
