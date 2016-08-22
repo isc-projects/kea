@@ -74,14 +74,20 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const asiolink::IOAddress& ipv4_reservation,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
-           const std::string& dhcp6_client_classes)
+           const std::string& dhcp6_client_classes,
+           const asiolink::IOAddress& next_server,
+           const std::string& server_host_name,
+           const std::string& boot_file_name)
+
     : identifier_type_(identifier_type),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
-      cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      dhcp6_client_classes_(dhcp6_client_classes),
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
+      server_host_name_(server_host_name), boot_file_name_(boot_file_name),
+      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -90,6 +96,11 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
         // Validate and set IPv4 address reservation.
         setIPv4Reservation(ipv4_reservation);
     }
+
+    if (!next_server.isV4Zero()) {
+        // Validate and set next server address.
+        setNextServer(next_server);
+    }
 }
 
 Host::Host(const std::string& identifier, const std::string& identifier_name,
@@ -97,14 +108,19 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const asiolink::IOAddress& ipv4_reservation,
            const std::string& hostname,
            const std::string& dhcp4_client_classes,
-           const std::string& dhcp6_client_classes)
+           const std::string& dhcp6_client_classes,
+           const asiolink::IOAddress& next_server,
+           const std::string& server_host_name,
+           const std::string& boot_file_name)
     : identifier_type_(IDENT_HWADDR),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
       ipv4_reservation_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       hostname_(hostname), dhcp4_client_classes_(dhcp4_client_classes),
-      dhcp6_client_classes_(dhcp6_client_classes), host_id_(0),
-      cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      dhcp6_client_classes_(dhcp6_client_classes),
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
+      server_host_name_(server_host_name), boot_file_name_(boot_file_name),
+      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -112,6 +128,11 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
     if (!ipv4_reservation.isV4Zero()) {
         // Validate and set IPv4 address reservation.
         setIPv4Reservation(ipv4_reservation);
+    }
+
+    if (!next_server.isV4Zero()) {
+        // Validate and set next server address.
+        setNextServer(next_server);
     }
 }
 
@@ -339,6 +360,19 @@ Host::addClientClassInternal(ClientClasses& classes,
     }
 }
 
+void
+Host::setNextServer(const asiolink::IOAddress& next_server) {
+    if (!next_server.isV4()) {
+        isc_throw(isc::BadValue, "next server address '" << next_server
+                  << "' is not a valid IPv4 address");
+    } else if (next_server.isV4Zero() || next_server.isV4Bcast()) {
+        isc_throw(isc::BadValue, "invalid next server address '"
+                  << next_server << "'");
+    }
+
+    next_server_ = next_server;
+}
+
 std::string
 Host::toText() const {
     std::ostringstream s;
@@ -362,6 +396,16 @@ Host::toText() const {
     // Add IPv4 reservation.
     s << " ipv4_reservation=" << (ipv4_reservation_.isV4Zero() ? "(no)" :
                                   ipv4_reservation_.toText());
+
+    // Add next server.
+    s << " siaddr=" << (next_server_.isV4Zero() ? "(no)" :
+                             next_server_.toText());
+
+    // Add server host name.
+    s << " sname=" << (server_host_name_.empty() ? "(empty)" : server_host_name_);
+
+    // Add boot file name.
+    s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
 
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";
