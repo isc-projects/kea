@@ -150,6 +150,10 @@ private:
     /// host-reservation-identifiers
     void setHostIdentifiers();
 
+    /// @brief Sets reserved values of siaddr, sname and file in the
+    /// server's response.
+    void setReservedMessageFields();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.
