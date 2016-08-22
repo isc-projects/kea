@@ -311,29 +311,22 @@ TEST_F(PgSqlHostDataSourceTest, multipleReservationsDifferentOrder){
     testMultipleReservationsDifferentOrder();
 }
 
-// Test verifies if multiple client classes for IPv4 can be stored.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v4 client-classes, retrieve it and
-    /// make sure that all client classes are retrieved properly.
+// Test that multiple client classes for IPv4 can be inserted and
+// retrieved for a given host reservation.
+TEST_F(PgSqlHostDataSourceTest, multipleClientClasses4) {
+    testMultipleClientClasses4();
 }
 
-// Test verifies if multiple client classes for IPv6 can be stored.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v6 client-classes, retrieve it and
-    /// make sure that all client classes are retrieved properly.
+// Test that multiple client classes for IPv6 can be inserted and
+// retrieved for a given host reservation.
+TEST_F(PgSqlHostDataSourceTest, multipleClientClasses6) {
+    testMultipleClientClasses6();
 }
 
-// Test verifies if multiple client classes for both IPv4 and IPv6 can be stored.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
-    /// it and make sure that all client classes are retrieved properly. Also,
-    /// check that the classes are not confused.
+// Test that multiple client classes for both IPv4 and IPv6 can
+// be inserted and retrieved for a given host reservation.
+TEST_F(PgSqlHostDataSourceTest, multipleClientClassesBoth) {
+    testMultipleClientClassesBoth();
 }
 
 // Test if the same host can have reservations in different subnets (with the
