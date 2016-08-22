@@ -286,10 +286,10 @@ TEST_F(EvaluateTest, complex) {
 /// @brief Generic class for parsing expressions and evaluating them.
 ///
 /// The main purpose of this class is to provide a generic interface to the
-/// eval library, so everything (expression parsing and then its evaluation for
+/// eval library, so everything (expression parsing and then evaluation for
 /// given packets) can be done in one simple call.
 ///
-/// Those tests may be somewhat redundant to other more specialized tests, but
+/// These tests may be somewhat redundant to other more specialized tests, but
 /// the idea here is to mass produce tests that are trivial to write.
 class ExpressionsTest : public EvaluateTest {
 public:
@@ -302,7 +302,7 @@ public:
     /// Note that contrary to the usual interface, this method calls
     /// @ref isc::dhcp::evaluateString, rather than @ref isc::dhcp::evaluate.
     /// The main benefit of this is the ability to test partial expressions that
-    /// not necessarily evaluate to bool.
+    /// do not necessarily evaluate to bool.
     ///
     /// @param u universe (V4 or V6)
     /// @param expr expression to be parsed
@@ -380,7 +380,7 @@ TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
     testExpression(Option::V4, "pkt4.hlen == 0", true);
     testExpression(Option::V4, "pkt4.htype == 1", true);
 
-    // Ok, let's initialized the hardware address to something plausible.
+    // Ok, let's initialize the hardware address to something plausible.
     const size_t hwaddr_len = 6;
     const uint16_t expected_htype = 123;
     std::vector<uint8_t> hw(hwaddr_len,0);

@@ -194,10 +194,10 @@ public:
         }
     }
 
-    /// @brief Aux. function that stores integer values as 4 bytes string.
+    /// @brief Aux. function that stores integer values as 4 byte string.
     ///
     /// @param value integer value to be stored
-    /// @return 4 bytes long string with encoded value.
+    /// @return 4 byte long string with encoded value.
     string encode(uint32_t value) {
         return EvalContext::fromUint32(value);
     }
@@ -483,10 +483,10 @@ public:
         evaluate(u, expected);
     }
 
-    /// @brief Tests if TokenInteger evaluates to proper value
+    /// @brief Tests if TokenInteger evaluates to the proper value
     ///
-    /// @param value integer value passed to constructor
     /// @param expected expected string representation on stack after evaluation
+    /// @param value integer value passed to constructor
     void testInteger(std::string expected, uint32_t value) {
 
         clearStack();

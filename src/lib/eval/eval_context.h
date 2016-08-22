@@ -133,12 +133,12 @@ public:
 
     /// @brief Converts integer to string representation
     ///
-    /// The integer is coded as 4 bytes long string in network order, e.g.
+    /// The integer is coded as a 4 byte long string in network order, e.g.
     /// 6 is represented as 00000006. For reverse conversion, see
     /// @ref convertUint32.
     ///
     /// @param integer value to be converted
-    /// @return 4 bytes long string that encodes the value.
+    /// @return 4 byte long string that encodes the value.
     static std::string fromUint32(const uint32_t integer);
 
     /// @brief Returns the universe (v4 or v6)
