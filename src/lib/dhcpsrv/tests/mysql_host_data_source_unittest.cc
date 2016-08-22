@@ -363,7 +363,7 @@ TEST_F(MySqlHostDataSourceTest, multipleClientClasses6) {
     testMultipleClientClasses6();
 }
 
-// Test that multiple client classes for both IPv5 and IPv6 can
+// Test that multiple client classes for both IPv4 and IPv6 can
 // be inserted and retrieved for a given host reservation.
 TEST_F(MySqlHostDataSourceTest, multipleClientClassesBoth) {
     testMultipleClientClassesBoth();

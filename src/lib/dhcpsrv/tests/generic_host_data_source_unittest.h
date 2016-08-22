@@ -489,7 +489,7 @@ public:
     ///
     void testMultipleClientClasses6();
 
-    /// @brief Test that multiple client classes for both IPv5 and IPv6 can
+    /// @brief Test that multiple client classes for both IPv4 and IPv6 can
     /// be inserted and retrieved for a given host reservation.
     ///
     /// Uses gtest macros to report failures.
