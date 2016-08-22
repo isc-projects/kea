@@ -482,21 +482,21 @@ If a timeout is given though, it should be an integer greater than zero.
   <title id="hosts4-storage">Hosts Storage</title>
 
     <para>Kea is also able to store information about host reservations in the
-    database. Hosts database configuration uses the same syntax as lease
-    database. In fact, Kea server opens independent connections for each
-    purpose, be it lease or hosts information. This gives the solution most
+    database. The hosts database configuration uses the same syntax as the lease
+    database. In fact, a Kea server opens independent connections for each
+    purpose, be it lease or hosts information. This arrangement gives the most
     flexibility. Kea can be used to keep leases and host reservations
     separately, but can also point to the same database. Currently the
     supported hosts database types are MySQL and PostgreSQL. Cassandra
     backend does not support host reservations yet.</para>
 
-    <para>Please note that usage of hosts storage is optional. User can define
+    <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
-    if the number of reservations is small. However, with the number of
-    reservations growing it's more convenient to use host storage. Please note
-    that two storages (configuration file and one of the supported databases)
+    if the number of reservations is small. However, when the number of
+    reservations grows it's more convenient to use host storage. Please note
+    that both storage methods (configuration file and one of the supported databases)
     can be used together. If hosts are defined in both places, the definitions
-    from configuration file are checked first and external storage is checked
+    from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
 <section id="hosts-database-configuration4">
@@ -514,7 +514,7 @@ If a timeout is given though, it should be an integer greater than zero.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
-  If the database is located on a different system to the DHCPv4 server, the
+  If the database is located on a different system than the DHCPv4 server, the
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
