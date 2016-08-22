@@ -299,6 +299,34 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 }
 
+// This test verifies that the parser can parse reservation entry
+// containing next-server, server-name and boot-file-name values for
+// DHCPv4 message fields.
+TEST_F(HostReservationParserTest, dhcp4MessageFields) {
+    std::string config = "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"next-server\": \"192.0.2.11\","
+        "\"server-name\": \"some-name.example.org\","
+        "\"boot-file-name\": \"/tmp/some-file.efi\" }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
+                                              &hwaddr_->hwaddr_[0],
+                                              hwaddr_->hwaddr_.size()));
+
+    ASSERT_EQ(1, hosts.size());
+
+    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.11", hosts[0]->getNextServer().toText());
+    EXPECT_EQ("some-name.example.org", hosts[0]->getServerHostname());
+    EXPECT_EQ("/tmp/some-file.efi", hosts[0]->getBootFileName());
+}
+
 
 // This test verifies that the configuration parser for host reservations
 // throws an exception when IPv6 address is specified for IPv4 address
@@ -377,6 +405,30 @@ TEST_F(HostReservationParserTest, zeroAddress) {
 TEST_F(HostReservationParserTest, bcastAddress) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"ip-address\": \"255.255.255.255\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when invalid next server address is specified.
+TEST_F(HostReservationParserTest, malformedNextServer) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"next-server\": \"192.0.2.bogus\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when zero next server address is specified.
+TEST_F(HostReservationParserTest, zeroNextServer) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"next-server\": \"0.0.0.0\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test verifies that the configuration parser for host reservations
+// throws an exception when broadcast next server address is specified.
+TEST_F(HostReservationParserTest, bcastNextServer) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"next-server\": \"255.255.255.255\" }";
     testInvalidConfig<HostReservationParser4>(config);
 }
 
