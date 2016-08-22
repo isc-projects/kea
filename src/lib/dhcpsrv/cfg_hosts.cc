@@ -572,10 +572,13 @@ CfgHosts::add4(const HostPtr& host) {
     DuidPtr duid = host->getDuid();
 
     // There should be at least one resource reserved: hostname, IPv4
-    // address, IPv6 address or prefix.
+    // address, siaddr, sname, file or IPv6 address or prefix.
     if (host->getHostname().empty() &&
         (host->getIPv4Reservation().isV4Zero()) &&
-        (!host->hasIPv6Reservation()) &&
+        !host->hasIPv6Reservation() &&
+        host->getNextServer().isV4Zero() &&
+        host->getServerHostname().empty() &&
+        host->getBootFileName().empty() &&
         host->getCfgOption4()->empty() &&
         host->getCfgOption6()->empty()) {
         std::ostringstream s;

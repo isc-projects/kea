@@ -507,6 +507,24 @@
                         "item_type": "string",
                         "item_optional": false,
                         "item_default": "0.0.0.0"
+                      },
+                      {
+                        "item_name": "next-server",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": "0.0.0.0"
+                      },
+                      {
+                        "item_name": "server-name",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
+                      },
+                      {
+                        "item_name": "boot-file-name",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
                       } ]
                   }
                 },
