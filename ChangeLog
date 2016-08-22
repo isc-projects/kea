@@ -1,3 +1,8 @@
+1151.	[func]		tmark
+	Support for assigning client classes to host reservations has
+	been added to both the PostgreSQL and MySQL backends.
+	(Trac #4277, #4213 git 6990ab9d542e984c59ce5a11ff926c3c732a75fc)
+
 1150.	[bug]		tomek
 	Extended gcc bug workaround to work on all versions of gcc
 	from 5.2 up to, but not including 6.0. See ChangeLog entry
