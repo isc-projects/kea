@@ -756,8 +756,8 @@ public:
 
         // Fetch the lease state.
         uint32_t state;
-        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
-        row.lease_state_ = static_cast<Lease::LeaseState>(state);
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                      row.lease_state_);
         ++col;
 
         // Fetch the state count.
@@ -853,8 +853,8 @@ public:
 
         // Fetch the lease state.
         uint32_t state;
-        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, state);
-        row.lease_state_ = static_cast<Lease::LeaseState>(state);
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, 
+                                      row.lease_state_);
         ++col;
 
         // Fetch the state count.

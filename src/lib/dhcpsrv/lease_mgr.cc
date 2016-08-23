@@ -91,29 +91,19 @@ LeaseMgr::recountAddressStats4() {
     // updating the subnet and global values.
     AddressStatsRow4 row;
     while (query->getNextRow(row)) {
-        switch(row.lease_state_) {
-            case Lease::STATE_DEFAULT:
-                // Set subnet level value.
-                stats_mgr.setValue(StatsMgr::generateName("subnet",
-                                                          row.subnet_id_,
-                                                          "assigned-addresses"),
-                                   row.state_count_);
-                break;
+        if (row.lease_state_ == Lease::STATE_DEFAULT) {
+            // Set subnet level value.
+            stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      "assigned-addresses"),
+                               row.state_count_);
+        } else if (row.lease_state_ == Lease::STATE_DECLINED) {
+            // Set subnet level value.
+            stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                      "declined-addresses"),
+                               row.state_count_);
 
-            case Lease::STATE_DECLINED:
-                // Set subnet level value.
-                stats_mgr.setValue(StatsMgr::generateName("subnet",
-                                                          row.subnet_id_,
-                                                          "declined-addresses"),
-                                   row.state_count_);
-
-                // Add to the global value.
-                stats_mgr.addValue("declined-addresses", row.state_count_);
-                break;
-
-            default:
-                // Not one we're tracking.
-                break;
+            // Add to the global value.
+            stats_mgr.addValue("declined-addresses", row.state_count_);
         }
     }
 }
@@ -180,46 +170,31 @@ LeaseMgr::recountAddressStats6() {
     while (query->getNextRow(row)) {
         switch(row.lease_type_) {
             case Lease::TYPE_NA:
-                switch(row.lease_state_) {
-                    case Lease::STATE_DEFAULT:
-                        // Set subnet level value.
-                        stats_mgr.setValue(StatsMgr::
-                                           generateName("subnet",
-                                                        row.subnet_id_,
-                                                        "assigned-nas"),
-                                           row.state_count_);
-                        break;
-                    case Lease::STATE_DECLINED:
-                        // Set subnet level value.
-                        stats_mgr.setValue(StatsMgr::
-                                           generateName("subnet",
-                                                        row.subnet_id_,
-                                                        "declined-addresses"),
-                                           row.state_count_);
+                if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Set subnet level value.
+                    stats_mgr.setValue(StatsMgr::
+                                       generateName("subnet", row.subnet_id_,
+                                                    "assigned-nas"),
+                                       row.state_count_);
+                } if (row.lease_state_ == Lease::STATE_DECLINED) {
+                    // Set subnet level value.
+                    stats_mgr.setValue(StatsMgr::
+                                       generateName("subnet", row.subnet_id_,
+                                                    "declined-addresses"),
+                                       row.state_count_);
 
-                        // Add to the global value.
-                        stats_mgr.addValue("declined-addresses",
-                                           row.state_count_);
-                        break;
-                    default:
-                        // Not one we're tracking.
-                        break;
+                    // Add to the global value.
+                    stats_mgr.addValue("declined-addresses", row.state_count_);
                 }
                 break;
 
             case Lease::TYPE_PD:
-                switch(row.lease_state_) {
-                    case Lease::STATE_DEFAULT:
-                        // Set subnet level value.
-                        stats_mgr.setValue(StatsMgr::
-                                           generateName("subnet",
-                                                        row.subnet_id_,
-                                                        "assigned-pds"),
-                                           row.state_count_);
-                        break;
-                    default:
-                        // Not one we're tracking.
-                        break;
+                if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Set subnet level value.
+                    stats_mgr.setValue(StatsMgr::
+                                       generateName("subnet", row.subnet_id_,
+                                                    "assigned-pds"),
+                                        row.state_count_);
                 }
                 break;
 

@@ -2431,7 +2431,7 @@ GenericLeaseMgrTest::checkAddressStats(const StatValMapList& expectedStats) {
 void
 GenericLeaseMgrTest::makeLease4(const std::string& address,
                                 const SubnetID& subnet_id,
-                                const Lease::LeaseState& state) {
+                                const uint32_t state) {
     Lease4Ptr lease(new Lease4());
 
     // set the address
@@ -2455,7 +2455,7 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
                                 const std::string& address,
                                 uint8_t prefix_len,
                                 const SubnetID& subnet_id,
-                                const Lease::LeaseState& state) {
+                                const uint32_t state) {
     IOAddress addr(address);
 
     // make a DUID from the address
