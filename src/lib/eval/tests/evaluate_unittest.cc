@@ -433,10 +433,10 @@ TEST_F(ExpressionsTest, expressionsPkt4type) {
 }
 
 // This tests if inappropriate values (negative, too large) are
-// rejected, but extremal value still allowed for uint32_t are ok.
+// rejected, but extreme values still allowed for uint32_t are ok.
 TEST_F(ExpressionsTest, invalidIntegers) {
 
-    // These are the extremal uint32_t values that still should be accepted.
+    // These are the extreme uint32_t values that still should be accepted.
     testExpression(Option::V4, "4294967295 == 0", false);
 
     // Negative integers should be rejected.
