@@ -299,11 +299,6 @@ public:
     /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
     /// tweak them as needed before calling this method.
     ///
-    /// Note that contrary to the usual interface, this method calls
-    /// @ref isc::dhcp::evaluateString, rather than @ref isc::dhcp::evaluate.
-    /// The main benefit of this is the ability to test partial expressions that
-    /// do not necessarily evaluate to bool.
-    ///
     /// @param u universe (V4 or V6)
     /// @param expr expression to be parsed
     /// @param exp_result expected result (true or false)
