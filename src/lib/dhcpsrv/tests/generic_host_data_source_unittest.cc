@@ -240,6 +240,9 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     EXPECT_EQ(host1->getIPv6SubnetID(), host2->getIPv6SubnetID());
     EXPECT_EQ(host1->getIPv4Reservation(), host2->getIPv4Reservation());
     EXPECT_EQ(host1->getHostname(), host2->getHostname());
+    EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
+    EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
+    EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
 
     // Compare IPv6 reservations
     compareReservations6(host1->getIPv6Reservations(),
@@ -1306,6 +1309,67 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     ASSERT_TRUE(from_hds);
 
     // Verify they match.
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMessageFields4() {
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    // And assign values for DHCPv4 message fields.
+    ASSERT_NO_THROW({
+        host->setNextServer(IOAddress("10.1.1.1"));
+        host->setServerHostname("server-name.example.org");
+        host->setBootFileName("bootfile.efi");
+    });
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv4SubnetID();
+
+    // Fetch the host via:
+    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
+    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via:
+    // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
+    //       const size_t identifier_len) const;
+    hosts_by_id = hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
+                                  host->getIdentifier().size());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // getAll4(const asiolink::IOAddress& address) const;
+    hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
+    //     const DuidPtr& duid = DuidPtr()) const;
+    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+    //     const uint8_t* identifier_begin, const size_t identifier_len) const;
+    from_hds = hdsptr_->get4(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
+                             host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via:
+    // get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+    ASSERT_TRUE(from_hds);
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
