@@ -139,12 +139,23 @@ EvalContext::convertUint32(const std::string& number,
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid value in " + number);
     }
-    if (n >= std::numeric_limits<uint32_t>::max()) {
+    if (n > std::numeric_limits<uint32_t>::max()) {
         error(loc, "Invalid value in "
               + number + ". Allowed range: 0..4294967295");
     }
 
     return (static_cast<uint32_t>(n));
+}
+
+std::string
+EvalContext::fromUint32(const uint32_t integer) {
+    std::string tmp(4, 0);
+    tmp[0] = (integer >> 24) & 0xff;
+    tmp[1] = (integer >> 16) & 0xff;
+    tmp[2] = (integer >> 8) & 0xff;
+    tmp[3] = integer & 0xff;
+
+    return (tmp);
 }
 
 void

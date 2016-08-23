@@ -96,6 +96,18 @@ public:
         EXPECT_TRUE(eq);
     }
 
+    /// @brief Checks if the given token is integer with expected value
+    ///
+    /// @param token token to be inspected
+    /// @param exp_value expected integer value of the token
+    void checkTokenInteger(const TokenPtr& token, uint32_t exp_value) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenInteger> integer =
+            boost::dynamic_pointer_cast<TokenInteger>(token);
+        ASSERT_TRUE(integer);
+        EXPECT_EQ(exp_value, integer->getInteger());
+    }
+
     /// @brief checks if the given token is an option with the expected code
     /// and representation type
     /// @param token token to be checked
@@ -929,7 +941,7 @@ TEST_F(EvalContextTest, relay6OptionLimits) {
     checkError("relay6[32].option[123].text == 'foo'",
                "<string>:1.8-9: Nest level has invalid value in 32. "
                "Allowed range: 0..31");
-                     
+
     // next level must be a positive number
     checkError("relay6[-1].option[123].text == 'foo'",
                "<string>:1.8-9: Invalid value in -1. Allowed range: 0..255");
@@ -1003,12 +1015,12 @@ TEST_F(EvalContextTest, pkt4FieldSiaddr) {
 
 // Tests whether message type field in DHCPv6 can be accessed.
 TEST_F(EvalContextTest, pkt6FieldMsgtype) {
-    testPkt6Field("pkt6.msgtype == '1'", TokenPkt6::MSGTYPE, 3);
+    testPkt6Field("pkt6.msgtype == 1", TokenPkt6::MSGTYPE, 3);
 }
 
 // Tests whether transaction id field in DHCPv6 can be accessed.
 TEST_F(EvalContextTest, pkt6FieldTransid) {
-    testPkt6Field("pkt6.transid == '1'", TokenPkt6::TRANSID, 3);
+    testPkt6Field("pkt6.transid == 1", TokenPkt6::TRANSID, 3);
 }
 
 // Tests if the linkaddr field in a Relay6 encapsulation can be accessed.
@@ -1200,10 +1212,17 @@ TEST_F(EvalContextTest, scanErrors) {
 TEST_F(EvalContextTest, scanParseErrors) {
     checkError("", "<string>:1.1: syntax error, unexpected end of file");
     checkError(" ", "<string>:1.2: syntax error, unexpected end of file");
-    checkError("0x", "<string>:1.1: syntax error, unexpected integer");
+    checkError("0x", "<string>:1.2: Invalid character: x");
     checkError("0abc",
-               "<string>:1.1: syntax error, unexpected integer");
-    checkError("10.0.1", "<string>:1.1-2: syntax error, unexpected integer");
+               "<string>:1.2: Invalid character: a");
+
+    // This one is a little bid odd. This is a truncated address, so it's not
+    // recognized as an address. Instead, the first token (10) is recognized as
+    // an integer. The only thing we can do with integers right now is test
+    // for equality, so the only possible next token is ==. There's a dot
+    // instead, so an error is reported.
+    checkError("10.0.1", "<string>:1.3: syntax error, unexpected ., expecting ==");
+
     checkError("10.256.0.1",
                "<string>:1.1-10: Failed to convert 10.256.0.1 to "
                "an IP address.");
@@ -1332,10 +1351,13 @@ TEST_F(EvalContextTest, typeErrors) {
     checkError("substring('foobar',0x32,1) == 'foo'",
                "<string>:1.20-23: syntax error, unexpected constant "
                "hexstring, expecting integer");
-    checkError("concat('foo',3) == 'foo3'",
-               "<string>:1.14: syntax error, unexpected integer");
-    checkError("concat(3,'foo') == '3foo'",
-               "<string>:1.8: syntax error, unexpected integer");
+
+    // With the #4483 addition, all integers are treated as 4 byte strings,
+    // so those checks no longer makes sense. Commeting it out.
+    // checkError("concat('foo',3) == 'foo3'",
+    //            "<string>:1.14: syntax error, unexpected integer");
+    // checkError("concat(3,'foo') == '3foo'",
+    //           "<string>:1.8: syntax error, unexpected integer");
     checkError("('foo' == 'bar') == 'false'",
                "<string>:1.18-19: syntax error, unexpected ==, "
                "expecting end of file");
@@ -1437,6 +1459,25 @@ TEST_F(EvalContextTest, vendorClass4DataIndex) {
 
 TEST_F(EvalContextTest, vendorClass6DataIndex) {
     testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, 4491, 3);
+}
+
+// Checks if integer expressions can be parsed and checked for equality.
+TEST_F(EvalContextTest, integer1) {
+
+    EvalContext eval(Option::V6);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("1 == 2"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+    ASSERT_TRUE(tmp);
+    checkTokenInteger(tmp, 1);
+    tmp = eval.expression.at(1);
+
+    ASSERT_TRUE(tmp);
+    checkTokenInteger(tmp, 2);
 }
 
 };
