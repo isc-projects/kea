@@ -440,7 +440,7 @@ be followed by a comma and another object definition.</para>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created
+  name used when the database was created
   (see <xref linkend="mysql-database-create"/>,
   <xref linkend="pgsql-database-create"/>
   or <xref linkend="cql-database-create"/>).
@@ -482,41 +482,39 @@ If a timeout is given though, it should be an integer greater than zero.
 <section id="hosts6-storage">
   <title>Hosts Storage</title>
     <para>Kea is also able to store information about host reservations in the
-    database. Hosts database configuration uses the same syntax as lease
-    database. In fact, Kea server opens independent connections for each
-    purpose, be it lease or hosts information. This gives the solution most
+    database. The hosts database configuration uses the same syntax as the lease
+    database. In fact, a Kea server opens independent connections for each
+    purpose, be it lease or hosts information. This arrangment gives the most
     flexibility. Kea can be used to keep leases and host reservations
-    separately, but can also point to the same database. Currently the only
-    supported hosts database type is MySQL.</para>
+    separately, but can also point to the same database. Currently the
+    supported hosts database types are MySQL and PostgreSQL. Cassandra
+    backend does not support host reservations yet.</para>
 
-    <para>Please note that usage of hosts storage is optional. User can define
+    <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
-    if the number of reservations is small. However, with the number of
-    reservations growing it's more convenient to use host storage. Please note
-    that both storages (configuration file and MySQL) can be used together. If
-    hosts are defined in both places, the definitions from configuration file
-    are checked first and external storage is checked later, if
-    necessary.</para>
-
-    <para>All hosts leases issued by the server are stored in the hosts
-    database. Currently there is only one available backend: MySQL. Other host
-    backends will become available in future Kea versions.</para>
+    if the number of reservations is small. However, when the number of
+    reservations grows it's more convenient to use host storage. Please note
+    that both storage methods (configuration file and one of the supported databases)
+    can be used together. If hosts are defined in both places, the definitions
+    from the configuration file are checked first and external storage is checked
+    later, if necessary.</para>
 
 <section id="hosts-database-configuration6">
-  <title>IPv6 Hosts Database Configuration</title>
+  <title>DHCPv6 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
-  parameters. If enabled, the type of the database must be set to "mysql". Other
-  hosts backends may be added in later Kea versions.
+  parameters. If enabled, the type of the database must be set to "mysql" or
+  "postgresql". Other hosts backends may be added in later Kea versions.
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>).
+  Next, the name of the database to hold the reservations must be set: this is the
+  name used when the database was created  (see <xref linkend="supported-databases"/>
+  for instructions how to setup desired database type).
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
-  If the database is located on a different system to the DHCPv6 server, the
+  If the database is located on a different system than the DHCPv6 server, the
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
@@ -2560,24 +2558,18 @@ should include options from the isc option space:
 
     </section>
 
-    <section id="reservations6-mysql">
-      <title>Storing host reservations in MySQL</title>
+    <section id="reservations6-mysql-pgsql">
+      <title>Storing host reservations in MySQL or PostgreSQL</title>
 
       <para>
-        It is possible to store host reservations in MySQL. See <xref
+        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts6-storage" /> for information how to configure Kea to use
-        reservations stored in MySQL. Kea does not provide any dedicated tools
-        for managing MySQL reservations. See Kea wiki <ulink
+        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
+        tools for managing reservations in a database. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
-    </section>
-
-    <section id="reservations6-pgsql">
-      <title>Storing host reservations in PostgreSQL</title>
-      <para>Kea currently does not support storing reservations in
-      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
     </section>
 
     <section id="reservations6-cql">
@@ -2587,7 +2579,7 @@ should include options from the isc option space:
     </section>
 
     <section id="reservations6-tuning">
-      <title>Fine Tuning IPv6 Host Reservation</title>
+      <title>Fine Tuning DHCPv6 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
