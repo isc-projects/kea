@@ -2822,6 +2822,35 @@ It is merely echoed by the server
 
     </section>
 
+    <section id="reservation4-message-fields">
+      <title>Reserving Next Server, Server Hostname and Boot File Name</title>
+      <para>BOOTP/DHCPv4 messages include "siaddr", "sname" and "file" fields.
+      Even though, DHCPv4 includes corresponding options, such as option 66 and
+      option 67, some clients may not support these options. Thus, server
+      administrators often use "siaddr", "sname" and "file" fields instead.</para>
+
+      <para>With Kea, it is possible to make static reservations for these DHCPv4
+      message fields:</para>
+
+    <screen>
+{
+    "subnet4": [ {
+        "reservations": [
+        {
+            <userinput>"hw-address": "aa:bb:cc:dd:ee:ff",
+            "next-server": "10.1.1.2",
+            "server-hostname": "server-hostname.example.org",
+            "boot-file-name": "/tmp/bootfile.efi"</userinput>
+        } ]
+    } ]
+}</screen>
+
+    <para>Note that those parameters can be specified in combination with
+    other parameters for a reservation, e.g. reserved IPv4 address. These
+    parameters are optional, i.e. a subset of them can specified, or all of
+    them can be omitted.</para>
+    </section>
+
     <section id="reservations4-mysql-pgsql">
       <title>Storing host reservations in MySQL or PostgreSQL</title>
 
