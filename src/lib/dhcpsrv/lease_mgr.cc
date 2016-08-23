@@ -48,12 +48,12 @@ LeaseMgr::getLease6(Lease::Type type, const DUID& duid,
 }
 
 void
-LeaseMgr::recountAddressStats4() {
+LeaseMgr::recountLeaseStats4() {
     using namespace stats;
 
     StatsMgr& stats_mgr = StatsMgr::instance();
 
-    AddressStatsQuery4Ptr query = startAddressStatsQuery4();
+    LeaseStatsQueryPtr query = startLeaseStatsQuery4();
     if (!query) {
         /// NULL means not backend does not support recounting.
         return;
@@ -86,7 +86,7 @@ LeaseMgr::recountAddressStats4() {
 
     // Get counts per state per subnet. Iterate over the result set
     // updating the subnet and global values.
-    AddressStatsRow4 row;
+    LeaseStatsRow row;
     while (query->getNextRow(row)) {
         if (row.lease_state_ == Lease::STATE_DEFAULT) {
             // Set subnet level value.
@@ -105,23 +105,23 @@ LeaseMgr::recountAddressStats4() {
     }
 }
 
-AddressStatsQuery4Ptr
-LeaseMgr::startAddressStatsQuery4() {
-    return(AddressStatsQuery4Ptr());
+LeaseStatsQueryPtr
+LeaseMgr::startLeaseStatsQuery4() {
+    return(LeaseStatsQueryPtr());
 }
 
 bool
-AddressStatsQuery4::getNextRow(AddressStatsRow4& /*row*/) {
+LeaseStatsQuery::getNextRow(LeaseStatsRow& /*row*/) {
     return (false);
 }
 
 void
-LeaseMgr::recountAddressStats6() {
+LeaseMgr::recountLeaseStats6() {
     using namespace stats;
 
     StatsMgr& stats_mgr = StatsMgr::instance();
 
-    AddressStatsQuery6Ptr query = startAddressStatsQuery6();
+    LeaseStatsQueryPtr query = startLeaseStatsQuery6();
     if (!query) {
         /// NULL means not backend does not support recounting.
         return;
@@ -163,7 +163,7 @@ LeaseMgr::recountAddressStats6() {
 
     // Get counts per state per subnet. Iterate over the result set
     // updating the subnet and global values.
-    AddressStatsRow6 row;
+    LeaseStatsRow row;
     while (query->getNextRow(row)) {
         switch(row.lease_type_) {
             case Lease::TYPE_NA:
@@ -202,14 +202,9 @@ LeaseMgr::recountAddressStats6() {
     }
 }
 
-AddressStatsQuery6Ptr
-LeaseMgr::startAddressStatsQuery6() {
-    return(AddressStatsQuery6Ptr());
-}
-
-bool
-AddressStatsQuery6::getNextRow(AddressStatsRow6& /*row*/) {
-    return (false);
+LeaseStatsQueryPtr
+LeaseMgr::startLeaseStatsQuery6() {
+    return(LeaseStatsQueryPtr());
 }
 
 std::string

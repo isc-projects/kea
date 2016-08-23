@@ -2401,7 +2401,7 @@ GenericLeaseMgrTest::checkStat(const std::string& name,
 }
 
 void
-GenericLeaseMgrTest::checkAddressStats(const StatValMapList& expectedStats) {
+GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     // Global accumulators
     int64_t declined_addresses = 0;
     int64_t declined_reclaimed_addresses = 0;
@@ -2469,9 +2469,8 @@ GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
     ASSERT_TRUE(lmptr_->addLease(lease));
 }
 
-
 void
-GenericLeaseMgrTest::testRecountAddressStats4() {
+GenericLeaseMgrTest::testRecountLeaseStats4() {
     using namespace stats;
 
     StatsMgr::instance().removeAll();
@@ -2509,13 +2508,13 @@ GenericLeaseMgrTest::testRecountAddressStats4() {
     }
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Recount stats.  We should have the same results.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats4());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Now let's insert some leases into subnet 1.
     int subnet_id = 1;
@@ -2546,10 +2545,10 @@ GenericLeaseMgrTest::testRecountAddressStats4() {
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats4());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Delete some leases from subnet, and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(IOAddress("192.0.1.1")));
@@ -2559,14 +2558,15 @@ GenericLeaseMgrTest::testRecountAddressStats4() {
     expectedStats[0]["declined-addresses"] = 0;
 
     // Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats4());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
+
 void
-GenericLeaseMgrTest::testRecountAddressStats6() {
+GenericLeaseMgrTest::testRecountLeaseStats6() {
     using namespace stats;
 
     StatsMgr::instance().removeAll();
@@ -2615,14 +2615,14 @@ GenericLeaseMgrTest::testRecountAddressStats6() {
     }
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
 
     // Recount stats.  We should have the same results.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats4());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Now let's insert some leases into subnet 1.
     subnet_id = 1;
@@ -2669,10 +2669,10 @@ GenericLeaseMgrTest::testRecountAddressStats6() {
     expectedStats[subnet_id - 1]["declined-addresses"] = 1;
 
     // Now Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats6());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
     // Delete some leases and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(IOAddress("3001:1::2")));
@@ -2682,10 +2682,10 @@ GenericLeaseMgrTest::testRecountAddressStats6() {
     expectedStats[1]["declined-addresses"] = 0;
 
     // Recount the stats.
-    ASSERT_NO_THROW(lmptr_->recountAddressStats6());
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
 
     // Make sure stats are as expected.
-    ASSERT_NO_FATAL_FAILURE(checkAddressStats(expectedStats));
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
 

@@ -118,7 +118,7 @@ public:
     /// do not match.
     ///
     /// @param expected_stats Map of expected static names and values.
-    void checkAddressStats(const StatValMapList& expected_stats);
+    void checkLeaseStats(const StatValMapList& expected_stats);
 
     /// @brief Constructs a minimal IPv4 lease and adds it to the lease storage
     ///
@@ -365,14 +365,14 @@ public:
     /// This test creates two subnets and several leases associated with
     /// them, then verifies that lease statistics are recalculated correctly
     /// after altering the lease states in various ways.
-    void testRecountAddressStats4();
+    void testRecountLeaseStats4();
 
     /// @brief Check that the IPv6 lease statistics can be recounted
     ///
     /// This test creates two subnets and several leases associated with
     /// them, then verifies that lease statistics are recalculated correctly
     /// after altering the lease states in various ways.
-    void testRecountAddressStats6();
+    void testRecountLeaseStats6();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
