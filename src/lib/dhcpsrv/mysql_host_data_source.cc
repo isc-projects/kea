@@ -120,6 +120,8 @@ public:
         memset(hostname_, 0, sizeof(hostname_));
         memset(dhcp4_client_classes_, 0, sizeof(dhcp4_client_classes_));
         memset(dhcp6_client_classes_, 0, sizeof(dhcp6_client_classes_));
+        memset(dhcp4_server_hostname_, 0, sizeof(dhcp4_server_hostname_));
+        memset(dhcp4_boot_file_name_, 0, sizeof(dhcp4_boot_file_name_));
 
         // Set the column names for use by this class. This only comprises
         // names used by the MySqlHostExchange class. Derived classes will
@@ -320,6 +322,32 @@ public:
             bind_[8].buffer = dhcp6_client_classes_;
             bind_[8].buffer_length = classes6_txt.length();
 
+            // ipv4_address : INT UNSIGNED NULL
+            // The address in the Host structure is an IOAddress object.  Convert
+            // this to an integer for storage.
+            dhcp4_next_server_ = static_cast<uint32_t>(host->getNextServer());
+            bind_[9].buffer_type = MYSQL_TYPE_LONG;
+            bind_[9].buffer = reinterpret_cast<char*>(&dhcp4_next_server_);
+            bind_[9].is_unsigned = MLM_TRUE;
+            // bind_[9].is_null = &MLM_FALSE; // commented out for performance
+                                              // reasons, see memset() above
+
+            // dhcp4_server_hostname
+            bind_[10].buffer_type = MYSQL_TYPE_STRING;
+            std::string server_hostname = host->getServerHostname();
+            strncpy(dhcp4_server_hostname_, server_hostname.c_str(),
+                    SERVER_HOSTNAME_MAX_LEN - 1);
+            bind_[10].buffer = dhcp4_server_hostname_;
+            bind_[10].buffer_length = server_hostname.length();
+
+            // dhcp4_boot_file_name
+            bind_[11].buffer_type = MYSQL_TYPE_STRING;
+            std::string boot_file_name = host->getBootFileName();
+            strncpy(dhcp4_boot_file_name_, boot_file_name.c_str(),
+                    BOOT_FILE_NAME_MAX_LEN - 1);
+            bind_[11].buffer = dhcp4_boot_file_name_;
+            bind_[11].buffer_length = boot_file_name.length();
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Host: "
@@ -506,10 +534,32 @@ public:
                                                dhcp6_client_classes_length_);
         }
 
+        // Set next server value (siaddr) if non NULL value returned.
+        asiolink::IOAddress next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+        if (dhcp4_next_server_null_ == MLM_FALSE) {
+            next_server = asiolink::IOAddress(dhcp4_next_server_);
+        }
+
+        // Set server hostname (sname) if non NULL value returned.
+        std::string dhcp4_server_hostname;
+        if (dhcp4_server_hostname_null_ == MLM_FALSE) {
+            dhcp4_server_hostname = std::string(dhcp4_server_hostname_,
+                                                dhcp4_server_hostname_length_);
+        }
+
+        // Set boot file name (file) if non NULL value returned.
+        std::string dhcp4_boot_file_name;
+        if (dhcp4_boot_file_name_null_ == MLM_FALSE) {
+            dhcp4_boot_file_name = std::string(dhcp4_boot_file_name_,
+                                               dhcp4_boot_file_name_length_);
+        }
+
         // Create and return Host object from the data gathered.
         HostPtr h(new Host(dhcp_identifier_buffer_, dhcp_identifier_length_,
                            type, ipv4_subnet_id, ipv6_subnet_id, ipv4_reservation,
-                           hostname, dhcp4_client_classes, dhcp6_client_classes));
+                           hostname, dhcp4_client_classes, dhcp6_client_classes,
+                           next_server, dhcp4_server_hostname,
+                           dhcp4_boot_file_name));
         h->setHostId(host_id_);
 
         return (h);
@@ -1850,8 +1900,9 @@ TaggedStatement tagged_statements[] = {
     {MySqlHostDataSourceImpl::INSERT_HOST,
          "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
             "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-            "dhcp4_client_classes, dhcp6_client_classes) "
-         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+            "dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, "
+            "dhcp4_server_hostname, dhcp4_boot_file_name) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
     // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,

@@ -503,4 +503,10 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     EXPECT_FALSE(from_hds);
 }
 
+// This test checks that siaddr, sname, file fields can be retrieved
+/// from a database for a host.
+TEST_F(MySqlHostDataSourceTest, messageFields) {
+    testMessageFields4();
+}
+
 }; // Of anonymous namespace
