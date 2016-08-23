@@ -371,18 +371,18 @@ string_expr : STRING
                                                                TokenVendor::DATA, index));
                     ctx.expression.push_back(vendor_class);
                 }
-             | integer_expr
+            | integer_expr
                 {
                     TokenPtr integer(new TokenInteger($1));
                     ctx.expression.push_back(integer);
                 }
             ;
 
-integer_expr: INTEGER
-              {
-                  $$ = ctx.convertUint32($1, @1);
-              }
-            ;
+integer_expr : INTEGER
+                 {
+                     $$ = ctx.convertUint32($1, @1);
+                 }
+             ;
 
 option_code : INTEGER
                  {

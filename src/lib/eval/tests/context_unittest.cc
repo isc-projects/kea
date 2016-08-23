@@ -96,6 +96,10 @@ public:
         EXPECT_TRUE(eq);
     }
 
+    /// @brief Checks if the given token is integer with expected value
+    ///
+    /// @param token token to be inspected
+    /// @param exp_value expected integer value of the token
     void checkTokenInteger(const TokenPtr& token, uint32_t exp_value) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenInteger> integer =

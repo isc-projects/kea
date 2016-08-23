@@ -139,7 +139,7 @@ EvalContext::convertUint32(const std::string& number,
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid value in " + number);
     }
-    if (n >= std::numeric_limits<uint32_t>::max()) {
+    if (n > std::numeric_limits<uint32_t>::max()) {
         error(loc, "Invalid value in "
               + number + ". Allowed range: 0..4294967295");
     }

@@ -110,7 +110,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     std::string tmp(yytext);
 
     try {
-        static_cast<void>(boost::lexical_cast<int>(tmp));
+        // In substring we want to use negative values (e.g. -1).
+        // In enterprise-id we need to use values up to 0xffffffff.
+        // To cover both of those use cases, we need at least
+        // int64_t.
+        static_cast<void>(boost::lexical_cast<int64_t>(tmp));
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }

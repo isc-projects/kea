@@ -314,7 +314,8 @@ public:
         bool result;
         bool parsed;
 
-        EXPECT_NO_THROW(parsed = eval.parseString(expr));
+        EXPECT_NO_THROW(parsed = eval.parseString(expr))
+            << " while parsing expression " << expr;
         EXPECT_TRUE(parsed) << " for expression " << expr;
 
         switch (u) {
@@ -329,6 +330,19 @@ public:
         }
 
         EXPECT_EQ(exp_result, result) << " for expression " << expr;
+    }
+
+    /// @brief Checks that specified expression throws expected exception.
+    ///
+    /// @tparam ex exception type expected to be thrown
+    /// @param expr expression to be evaluated
+    template<typename ex>
+    void testExpressionNegative(const std::string& expr,
+                                const Option::Universe& u = Option::V4) {
+        EvalContext eval(u);
+
+        EXPECT_THROW(eval.parseString(expr), ex) << "while parsing expression "
+                                                 << expr;
     }
 };
 
@@ -402,6 +416,8 @@ TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
     testExpression(Option::V4, "pkt4.mac == 0x010203040506", true);
 }
 
+// Test if expressions message type can be detected in Pkt4.
+// It also doubles as a check for integer comparison here.
 TEST_F(ExpressionsTest, expressionsPkt4type) {
 
     // We can inspect the option content directly, but
@@ -416,4 +432,17 @@ TEST_F(ExpressionsTest, expressionsPkt4type) {
     testExpression(Option::V4, "pkt4.msgtype == 2", false);
 }
 
+// This tests if inappropriate values (negative, too large) are
+// rejected, but extremal value still allowed for uint32_t are ok.
+TEST_F(ExpressionsTest, invalidIntegers) {
+
+    // These are the extremal uint32_t values that still should be accepted.
+    testExpression(Option::V4, "4294967295 == 0", false);
+
+    // Negative integers should be rejected.
+    testExpressionNegative<EvalParseError>("4294967295 == -1");
+
+    // Oops, one too much.
+    testExpressionNegative<EvalParseError>("4294967296 == 0");
+}
 };
