@@ -163,7 +163,7 @@ struct AddressStatsRow4 {
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
     AddressStatsRow4(const SubnetID& subnet_id,
-                     const Lease::LeaseState& lease_state,
+                     const uint32_t lease_state,
                      const int64_t state_count)
         : subnet_id_(subnet_id), lease_state_(lease_state),
           state_count_(state_count) {
@@ -172,7 +172,7 @@ struct AddressStatsRow4 {
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
     /// @brief The lease_state to which the count applies
-    Lease::LeaseState lease_state_;
+    uint32_t lease_state_;
     /// @brief state_count The count of leases in the lease state
     int64_t state_count_;
 };
@@ -228,7 +228,7 @@ struct AddressStatsRow6 {
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
     AddressStatsRow6(const SubnetID& subnet_id, const Lease::Type& lease_type,
-                     const Lease::LeaseState& lease_state,
+                     const uint32_t lease_state,
                      const int64_t state_count)
         : subnet_id_(subnet_id), lease_type_(lease_type),
           lease_state_(lease_state), state_count_(state_count) {

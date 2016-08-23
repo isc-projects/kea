@@ -324,16 +324,10 @@ public:
             }
 
             // Bump the appropriate accumulator
-            switch ((*lease)->state_) {
-            case Lease::STATE_DEFAULT:
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
                 ++assigned;
-                break;
-            case Lease::STATE_DECLINED:
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
                 ++declined;
-                break;
-            default:
-                // Not one we're tracking.
-                break;
             }
         }
 
@@ -459,8 +453,7 @@ public:
             }
 
             // Bump the appropriate accumulator
-            switch ((*lease)->state_) {
-            case Lease::STATE_DEFAULT:
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
                 switch((*lease)->type_) {
                 case Lease::TYPE_NA:
                     ++assigned;
@@ -471,16 +464,11 @@ public:
                 default:
                     break;
                 }
-                break;
-            case Lease::STATE_DECLINED:
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
                 // In theory only NAs can be declined
                 if (((*lease)->type_) == Lease::TYPE_NA) {
                     ++declined;
                 }
-                break;
-            default:
-                // Not one we're tracking.
-                break;
             }
         }
 

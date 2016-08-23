@@ -1302,7 +1302,7 @@ public:
         int status = mysql_stmt_fetch(statement_);
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
-            row.lease_state_ = static_cast<Lease::LeaseState>(lease_state_);
+            row.lease_state_ = lease_state_;
             row.state_count_ = state_count_;
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
@@ -1430,7 +1430,7 @@ public:
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
-            row.lease_state_ = static_cast<Lease::LeaseState>(lease_state_);
+            row.lease_state_ = lease_state_;
             row.state_count_ = state_count_;
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
