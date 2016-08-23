@@ -145,7 +145,7 @@
     </para>
   </section>
 
-  <section>
+  <section id="supported-databases">
     <title>Supported Databases</title>
 
     <para>The following table presents the capabilities of available
@@ -410,12 +410,6 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       <title>PostgreSQL</title>
 
       <para>
-        PostgreSQL is able to store leases. The capability to store host
-        reservations (that include addresses, prefixes and options) is planned
-        for upcoming Kea 1.1.0.
-      </para>
-
-      <para>
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
@@ -574,9 +568,20 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
       <section id="pgsql-upgrade">
         <title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title>
         <para>
-          Currently, PostgreSQL only supports Kea schema version 1.0 so no upgrades
-          are available.  As upgrades become available, <command>kea-admin</command>
-          will support them.
+          The PostgreSQL database schema can be upgraded using the same tool and
+          commands as described in <xref linkend="mysql-upgrade"/>, with the
+          exception that the "pgsql" database backend type must be used in
+          the commands.
+        </para>
+        <para>
+          Use the following command to check the current schema version:
+<screen>
+$ <userinput>kea-admin lease-version pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+</screen>
+          Use the following command to perform an upgrade:
+<screen>
+$ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+</screen>
         </para>
       </section>
     </section> <!-- end of PostgreSQL sections -->
