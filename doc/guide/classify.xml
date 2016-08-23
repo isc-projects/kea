@@ -181,7 +181,7 @@
               <entry>Integer literal</entry>
               <entry>123</entry>
               <entry>'123'</entry>
-              <entry>An integer value</entry>
+              <entry>A 32 bit unsigned integer value</entry>
             </row>
             <row></row>
             <row>
@@ -256,8 +256,9 @@
             <row>
               <entry>Length of packet</entry>
               <entry>pkt.len</entry>
-              <entry>0x00000100</entry>
-              <entry>The length of a DHCP packet (UDP header field) padded to 4 bytes.</entry>
+              <entry>513</entry>
+              <entry>The length of a DHCP packet (UDP header field), expressed
+              as a 32 bit unsigned integer.</entry>
             </row>
             <row>
               <entry>Hardware address in DHCPv4 packet</entry>
@@ -268,13 +269,13 @@
             <row>
               <entry>Hardware length in DHCPv4 packet</entry>
               <entry>pkt4.hlen</entry>
-              <entry>0x00000006</entry>
+              <entry>6</entry>
               <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
               <entry>Hardware type in DHCPv4 packet</entry>
               <entry>pkt4.htype</entry>
-              <entry>0x0000007b</entry>
+              <entry>6</entry>
               <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
@@ -302,18 +303,32 @@
               <entry>The value of the siaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
             </row>
             <row>
+              <entry>Message Type in DHCPv4 packet</entry>
+              <entry>pkt4.msgtype</entry>
+              <entry>1</entry>
+              <entry>The value of the message type field in the DHCPv4
+              packet (expressed as a 32 bit unsigned integer).</entry>
+            </row>
+            <row>
+              <entry>Transaction ID (xid) in DHCPv4 packet</entry>
+              <entry>pkt4.transid</entry>
+              <entry>12345</entry>
+              <entry>The value of the transaction id in the DHCPv4
+              packet (expressed as a 32 bit unsigned integer).</entry>
+            </row>
+            <row>
               <entry>Message Type in DHCPv6 packet</entry>
               <entry>pkt6.msgtype</entry>
               <entry>1</entry>
               <entry>The value of the message type field in the DHCPv6
-              packet.</entry>
+              packet (expressed as a 32 bit unsigned integer).</entry>
             </row>
             <row>
               <entry>Transaction ID in DHCPv6 packet</entry>
               <entry>pkt6.transid</entry>
               <entry>12345</entry>
               <entry>The value of the transaction id in the DHCPv6
-              packet.</entry>
+              packet (expressed as a 32 bit unsigned integer).</entry>
             </row>
 
             <row>
@@ -334,7 +349,7 @@
             <row>
               <entry>Enterprise-id from vendor option</entry>
               <entry>vendor.enterprise</entry>
-              <entry>0x0000118b</entry>
+              <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
               bytes. Returns '' otherwise.</entry>
@@ -375,7 +390,7 @@
             <row>
               <entry>Enterprise-id from vendor class option</entry>
               <entry>vendor-class.enterprise</entry>
-              <entry>0x0000118b</entry>
+              <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
               bytes. Returns '' otherwise.</entry>
@@ -411,8 +426,16 @@
       </para>
 
       <para>
-      Integers in the expression are converted to strings
-      when the expression is read into Kea.
+      Integers in an expression are converted to 32 bit unsigned integers and
+      are represented as four byte strings. For example 123 is represented as
+      0x0000007b. All expressions that return numeric values use 32 bit
+      unsigned integers, even if the field in the packet is smaller.  In general
+      it is easier to use decimal notation to represent integers, but it is also
+      possible to use hex notation. When using hex notation to represent an
+      integer care should be taken to make sure the value is represented as 32
+      bits, e.g. use 0x00000001 instead of 0x1 or 0x01. Also, make
+      sure the value is specified in network order, e.g. 1 is
+      represented as 0x00000001.
       </para>
 
       <para>

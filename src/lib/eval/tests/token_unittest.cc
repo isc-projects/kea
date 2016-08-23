@@ -7,6 +7,7 @@
 #include <config.h>
 #include <fstream>
 #include <eval/token.h>
+#include <eval/eval_context.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp4.h>
@@ -183,25 +184,22 @@ public:
     }
 
     /// @brief Convenience function. Removes token and values stacks.
-    void clearStack() {
+    /// @param token specifies if the convenience token should be removed or not
+    void clearStack(bool token = true) {
         while (!values_.empty()) {
             values_.pop();
         }
-
-        t_.reset();
+        if (token) {
+            t_.reset();
+        }
     }
 
-    /// @brief Aux. function that stores integer values as 4 bytes string.
+    /// @brief Aux. function that stores integer values as 4 byte string.
     ///
     /// @param value integer value to be stored
-    /// @return 4 bytes long string with encoded value.
+    /// @return 4 byte long string with encoded value.
     string encode(uint32_t value) {
-        string tmp(4,0);
-        tmp[0] = value >> 24;
-        tmp[1] = value >> 16;
-        tmp[2] = value >> 8;
-        tmp[3] = value;
-        return (tmp);
+        return EvalContext::fromUint32(value);
     }
 
     TokenPtr t_; ///< Just a convenience pointer
@@ -483,6 +481,26 @@ public:
         }
 
         evaluate(u, expected);
+    }
+
+    /// @brief Tests if TokenInteger evaluates to the proper value
+    ///
+    /// @param expected expected string representation on stack after evaluation
+    /// @param value integer value passed to constructor
+    void testInteger(std::string expected, uint32_t value) {
+
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenInteger(value)));
+
+        // The universe (v4 or v6) shouldn't have any impact on this,
+        // but let's check it anyway.
+        evaluate(Option::V4, expected);
+
+        clearStack(false);
+        evaluate(Option::V6, expected);
+
+        clearStack(true);
     }
 };
 
@@ -1329,6 +1347,24 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
+    // Check msgtype.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_msgtype = encode(DHCPDISCOVER);
+    EXPECT_EQ(0, memcmp(&exp_msgtype[0], &values_.top()[0], 4));
+
+    // Check transaction-id
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_transid = encode(12345);
+    EXPECT_EQ(0, memcmp(&exp_transid[0], &values_.top()[0], 4));
+
     // Check a DHCPv6 packet throws.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
@@ -1349,6 +1385,8 @@ TEST_F(TokenTest, pkt4Fields) {
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field ciaddr with value 0xC0000202");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field yiaddr with value 0xC0000203");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field siaddr with value 0xC0000204");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field transid with value 0x00003039");
     EXPECT_TRUE(checkFile());
 }
 
@@ -2719,6 +2757,16 @@ TEST_F(TokenTest, vendorClass6DataIndex) {
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor"
               " class found, pushing result 'gamma'");
     EXPECT_TRUE(checkFile());
+}
+
+// Checks if various values can be represented as integer tokens
+TEST_F(TokenTest, integer) {
+    testInteger(encode(0), 0);
+    testInteger(encode(6), 6);
+    testInteger(encode(255), 255);
+    testInteger(encode(256), 256);
+    testInteger(encode(1410), 1410);
+    testInteger(encode(4294967295), 4294967295);
 }
 
 };

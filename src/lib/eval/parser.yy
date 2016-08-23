@@ -89,6 +89,7 @@ using namespace isc::eval;
 
 %type <uint16_t> option_code
 %type <uint32_t> enterprise_id
+%type <uint32_t> integer_expr
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
 %type <uint8_t> nest_level
@@ -370,7 +371,18 @@ string_expr : STRING
                                                                TokenVendor::DATA, index));
                     ctx.expression.push_back(vendor_class);
                 }
+            | integer_expr
+                {
+                    TokenPtr integer(new TokenInteger($1));
+                    ctx.expression.push_back(integer);
+                }
             ;
+
+integer_expr : INTEGER
+                 {
+                     $$ = ctx.convertUint32($1, @1);
+                 }
+             ;
 
 option_code : INTEGER
                  {
@@ -457,6 +469,14 @@ pkt4_field : CHADDR
                 {
                     $$ = TokenPkt4::SIADDR;
                 }
+           | MSGTYPE
+                 {
+                    $$ = TokenPkt4::MSGTYPE;
+                 }
+           | TRANSID
+                 {
+                    $$ = TokenPkt4::TRANSID;
+                 }
            ;
 
 pkt6_field : MSGTYPE

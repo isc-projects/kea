@@ -320,6 +320,7 @@ namespace isc { namespace eval {
       // option_code
       char dummy7[sizeof(uint16_t)];
 
+      // integer_expr
       // enterprise_id
       char dummy8[sizeof(uint32_t)];
 
@@ -914,9 +915,9 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 171,     ///< Last index in yytable_.
-      yynnts_ = 14,  ///< Number of nonterminal symbols.
-      yyfinal_ = 33, ///< Termination state number.
+      yylast_ = 174,     ///< Last index in yytable_.
+      yynnts_ = 15,  ///< Number of nonterminal symbols.
+      yyfinal_ = 35, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 50  ///< Number of tokens.
@@ -1001,23 +1002,23 @@ namespace isc { namespace eval {
   {
       switch (other.type_get ())
     {
-      case 55: // option_repr_type
+      case 56: // option_repr_type
         value.copy< TokenOption::RepresentationType > (other.value);
         break;
 
-      case 59: // pkt4_field
+      case 60: // pkt4_field
         value.copy< TokenPkt4::FieldType > (other.value);
         break;
 
-      case 60: // pkt6_field
+      case 61: // pkt6_field
         value.copy< TokenPkt6::FieldType > (other.value);
         break;
 
-      case 57: // pkt_metadata
+      case 58: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (other.value);
         break;
 
-      case 61: // relay6_field
+      case 62: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (other.value);
         break;
 
@@ -1029,15 +1030,16 @@ namespace isc { namespace eval {
         value.copy< std::string > (other.value);
         break;
 
-      case 54: // option_code
+      case 55: // option_code
         value.copy< uint16_t > (other.value);
         break;
 
-      case 58: // enterprise_id
+      case 54: // integer_expr
+      case 59: // enterprise_id
         value.copy< uint32_t > (other.value);
         break;
 
-      case 56: // nest_level
+      case 57: // nest_level
         value.copy< uint8_t > (other.value);
         break;
 
@@ -1058,23 +1060,23 @@ namespace isc { namespace eval {
     (void) v;
       switch (this->type_get ())
     {
-      case 55: // option_repr_type
+      case 56: // option_repr_type
         value.copy< TokenOption::RepresentationType > (v);
         break;
 
-      case 59: // pkt4_field
+      case 60: // pkt4_field
         value.copy< TokenPkt4::FieldType > (v);
         break;
 
-      case 60: // pkt6_field
+      case 61: // pkt6_field
         value.copy< TokenPkt6::FieldType > (v);
         break;
 
-      case 57: // pkt_metadata
+      case 58: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (v);
         break;
 
-      case 61: // relay6_field
+      case 62: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (v);
         break;
 
@@ -1086,15 +1088,16 @@ namespace isc { namespace eval {
         value.copy< std::string > (v);
         break;
 
-      case 54: // option_code
+      case 55: // option_code
         value.copy< uint16_t > (v);
         break;
 
-      case 58: // enterprise_id
+      case 54: // integer_expr
+      case 59: // enterprise_id
         value.copy< uint32_t > (v);
         break;
 
-      case 56: // nest_level
+      case 57: // nest_level
         value.copy< uint8_t > (v);
         break;
 
@@ -1202,23 +1205,23 @@ namespace isc { namespace eval {
     // Type destructor.
     switch (yytype)
     {
-      case 55: // option_repr_type
+      case 56: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 59: // pkt4_field
+      case 60: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 60: // pkt6_field
+      case 61: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
-      case 57: // pkt_metadata
+      case 58: // pkt_metadata
         value.template destroy< TokenPkt::MetadataType > ();
         break;
 
-      case 61: // relay6_field
+      case 62: // relay6_field
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
@@ -1230,15 +1233,16 @@ namespace isc { namespace eval {
         value.template destroy< std::string > ();
         break;
 
-      case 54: // option_code
+      case 55: // option_code
         value.template destroy< uint16_t > ();
         break;
 
-      case 58: // enterprise_id
+      case 54: // integer_expr
+      case 59: // enterprise_id
         value.template destroy< uint32_t > ();
         break;
 
-      case 56: // nest_level
+      case 57: // nest_level
         value.template destroy< uint8_t > ();
         break;
 
@@ -1265,23 +1269,23 @@ namespace isc { namespace eval {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 55: // option_repr_type
+      case 56: // option_repr_type
         value.move< TokenOption::RepresentationType > (s.value);
         break;
 
-      case 59: // pkt4_field
+      case 60: // pkt4_field
         value.move< TokenPkt4::FieldType > (s.value);
         break;
 
-      case 60: // pkt6_field
+      case 61: // pkt6_field
         value.move< TokenPkt6::FieldType > (s.value);
         break;
 
-      case 57: // pkt_metadata
+      case 58: // pkt_metadata
         value.move< TokenPkt::MetadataType > (s.value);
         break;
 
-      case 61: // relay6_field
+      case 62: // relay6_field
         value.move< TokenRelay6Field::FieldType > (s.value);
         break;
 
@@ -1293,15 +1297,16 @@ namespace isc { namespace eval {
         value.move< std::string > (s.value);
         break;
 
-      case 54: // option_code
+      case 55: // option_code
         value.move< uint16_t > (s.value);
         break;
 
-      case 58: // enterprise_id
+      case 54: // integer_expr
+      case 59: // enterprise_id
         value.move< uint32_t > (s.value);
         break;
 
-      case 56: // nest_level
+      case 57: // nest_level
         value.move< uint8_t > (s.value);
         break;
 
@@ -1660,7 +1665,7 @@ namespace isc { namespace eval {
 
 #line 13 "parser.yy" // lalr1.cc:377
 } } // isc::eval
-#line 1664 "parser.h" // lalr1.cc:377
+#line 1669 "parser.h" // lalr1.cc:377
 
 
 
