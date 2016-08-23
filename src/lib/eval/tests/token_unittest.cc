@@ -487,7 +487,7 @@ public:
     ///
     /// @param expected expected string representation on stack after evaluation
     /// @param value integer value passed to constructor
-    void testInteger(std::string expected, uint32_t value) {
+    void testInteger(const std::string& expected, uint32_t value) {
 
         clearStack();
 
