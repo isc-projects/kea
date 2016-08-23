@@ -439,7 +439,7 @@ be followed by a comma and another object definition.</para>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created
+  name used when the database was created
   (see <xref linkend="mysql-database-create"/>,
   <xref linkend="pgsql-database-create"/> or
   <xref linkend="cql-database-create"/>).
@@ -500,7 +500,7 @@ If a timeout is given though, it should be an integer greater than zero.
     later, if necessary.</para>
 
 <section id="hosts-database-configuration4">
-  <title>IPv4 Hosts Database Configuration</title>
+  <title>DHCPv4 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
   parameters. If enabled, the type of the database must be set to "mysql" or
@@ -2844,7 +2844,7 @@ It is merely echoed by the server
 
 
     <section id="reservations4-tuning">
-      <title>Fine Tuning IPv4 Host Reservation</title>
+      <title>Fine Tuning DHCPv4 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
