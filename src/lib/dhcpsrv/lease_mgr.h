@@ -204,7 +204,7 @@ public:
     ///
     /// @return True if a row was fetched, false if there are no
     /// more rows.
-    virtual bool getNextRow(AddressStatsRow4& row) { return(false); };
+    virtual bool getNextRow(AddressStatsRow4& row);
 };
 
 /// @brief Defines a pointer to an AddressStatsQuery4.
@@ -271,7 +271,7 @@ public:
     ///
     /// @return True if a row was fetched, false if there are no
     /// more rows.
-    virtual bool getNextRow(AddressStatsRow6& row) { return (false); };
+    virtual bool getNextRow(AddressStatsRow6& row);
 };
 
 /// @brief Defines a pointer to an AddressStatsQuery6.

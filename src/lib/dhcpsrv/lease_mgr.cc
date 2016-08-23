@@ -123,6 +123,11 @@ LeaseMgr::startAddressStatsQuery4() {
     return(AddressStatsQuery4Ptr());
 }
 
+bool
+AddressStatsQuery4::getNextRow(AddressStatsRow4& /*row*/) {
+    return (false);
+}
+
 void
 LeaseMgr::recountAddressStats6() {
     using namespace stats;
@@ -230,6 +235,10 @@ LeaseMgr::startAddressStatsQuery6() {
     return(AddressStatsQuery6Ptr());
 }
 
+bool
+AddressStatsQuery6::getNextRow(AddressStatsRow6& /*row*/) {
+    return (false);
+}
 
 std::string
 LeaseMgr::getDBVersion() {
