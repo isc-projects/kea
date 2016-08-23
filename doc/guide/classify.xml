@@ -433,7 +433,9 @@
       it is easier to use decimal notation to represent integers, but it is also
       possible to use hex notation. When using hex notation to represent an
       integer care should be taken to make sure the value is represented as 32
-      bits, e.g. use 0x00000001 instead of 0x1 or 0x01.
+      bits, e.g. use 0x00000001 instead of 0x1 or 0x01. Also, make
+      sure the value is specified in network order, e.g. 1 is
+      represented as 0x00000001.
       </para>
 
       <para>
