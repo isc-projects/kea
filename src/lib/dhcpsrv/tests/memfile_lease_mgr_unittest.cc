@@ -1884,15 +1884,15 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 }
 
 // Verifies that IPv4 lease statistics can be recalculated.
-TEST_F(MemfileLeaseMgrTest, recountAddressStats4) {
+TEST_F(MemfileLeaseMgrTest, recountLeaseStats4) {
     startBackend(V4);
-    testRecountAddressStats4();
+    testRecountLeaseStats4();
 }
 
 // Verifies that IPv6 lease statistics can be recalculated.
-TEST_F(MemfileLeaseMgrTest, recountAddressStats6) {
+TEST_F(MemfileLeaseMgrTest, recountLeaseStats6) {
     startBackend(V6);
-    testRecountAddressStats6();
+    testRecountLeaseStats6();
 }
 
 }; // end of anonymous namespace
