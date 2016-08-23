@@ -1,3 +1,8 @@
+1152.	[doc]		marcin
+	Use of PostgreSQL as a storage for host reservations is now
+	documented in the Kea Administrator Reference Manual.
+	(Trac #4282, git f2879919772c10b1ae8c45d0e761ef199cf84061)
+
 1151.	[func]		tmark
 	Support for assigning client classes to host reservations has
 	been added to both the PostgreSQL and MySQL backends.
