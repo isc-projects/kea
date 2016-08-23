@@ -482,7 +482,7 @@ public:
     }
 
     /// @brief Returns value of server hostname (sname).
-    std::string getServerHostname() const {
+    const std::string& getServerHostname() const {
         return (server_host_name_);
     }
 
@@ -494,7 +494,7 @@ public:
     }
 
     /// @brief Returns value of boot file name (file).
-    std::string getBootFileName() const {
+    const std::string& getBootFileName() const {
         return (boot_file_name_);
     }
 
