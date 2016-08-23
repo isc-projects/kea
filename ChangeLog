@@ -1,3 +1,7 @@
+1153.	[func]		tomek
+	Integers can now be used in client classification.
+	(Trac #4483, git e90cf0ee4007521b86177be6d5fbb970c02c1075)
+
 1152.	[doc]		marcin
 	Use of PostgreSQL as a storage for host reservations is now
 	documented in the Kea Administrator Reference Manual.
