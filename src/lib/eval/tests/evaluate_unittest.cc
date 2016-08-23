@@ -311,8 +311,8 @@ public:
                         const bool exp_result) {
 
         EvalContext eval(u);
-        bool result;
-        bool parsed;
+        bool result = false;
+        bool parsed = false;
 
         EXPECT_NO_THROW(parsed = eval.parseString(expr))
             << " while parsing expression " << expr;
