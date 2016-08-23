@@ -1109,8 +1109,8 @@ namespace isc { namespace eval {
   case 32:
 #line 382 "parser.yy" // lalr1.cc:859
     {
-                  yylhs.value.as< uint32_t > () = ctx.convertUint32(yystack_[0].value.as< std::string > (), yystack_[0].location);
-              }
+                     yylhs.value.as< uint32_t > () = ctx.convertUint32(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                 }
 #line 1115 "parser.cc" // lalr1.cc:859
     break;
 
