@@ -59,10 +59,7 @@ LeaseMgr::recountAddressStats4() {
         return;
     }
 
-    // Zero out the global stats. (Ok, so currently there's only one
-    // that should be cleared.  "reclaimed-declined-addresses" never
-    // gets zeroed. @todo discuss with Tomek the rational of not
-    // clearing it when we clear the rest.
+    // Zero out the global stats.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
     stats_mgr.setValue("declined-reclaimed-addresses", zero);
