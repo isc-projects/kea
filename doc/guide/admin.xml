@@ -410,12 +410,6 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       <title>PostgreSQL</title>
 
       <para>
-        PostgreSQL is able to store leases. The capability to store host
-        reservations (that include addresses, prefixes and options) is planned
-        for upcoming Kea 1.1.0.
-      </para>
-
-      <para>
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
