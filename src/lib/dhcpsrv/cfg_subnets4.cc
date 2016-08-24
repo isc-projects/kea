@@ -269,7 +269,6 @@ CfgSubnets4::updateStatistics() {
 
     // Only recount the stats if we have subnets.
     if (subnets_.begin() != subnets_.end()) {
-            //LeaseMgrFactory::instance().recountAddressStats4();
             LeaseMgrFactory::instance().recountLeaseStats4();
     }
 }
