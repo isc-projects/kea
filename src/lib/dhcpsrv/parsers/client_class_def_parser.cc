@@ -9,10 +9,14 @@
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <eval/eval_context.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
 
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::asiolink;
+using namespace std;
 
 /// @file client_class_def.cc
 ///
@@ -73,6 +77,11 @@ ClientClassDefParser::ClientClassDefParser(const std::string&,
 
 void
 ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
+
+    IOAddress next_server("0.0.0.0");
+    std::vector<uint8_t> sname;
+    std::vector<uint8_t> filename;
+
     // Parse the elements that make up the option definition.
     BOOST_FOREACH(ConfigPair param, class_def_cfg->mapValue()) {
         std::string entry(param.first);
@@ -92,6 +101,36 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
 
             opts_parser.reset(new OptionDataListParser(entry, options_, family));
             parser = opts_parser;
+        } else if (entry == "next-server") {
+            // Let's parse the next-server field
+            try {
+                next_server = IOAddress(param.second->stringValue());
+            } catch (const IOError& ex) {
+                isc_throw(DhcpConfigError, "Invalid next-server value specified: '"
+                          << param.second << "'");
+            }
+            if (next_server.getFamily() != AF_INET) {
+                isc_throw(DhcpConfigError, "Invalid next-server value: '"
+                          << param.second << "', must be IPv4 address");
+            }
+        } else if (entry == "server-hostname") {
+            string tmp = param.second->stringValue();
+            if (tmp.length() > Pkt4::MAX_SNAME_LEN) {
+                isc_throw(DhcpConfigError, "server-hostname must be at most "
+                          << Pkt4::MAX_SNAME_LEN << " bytes long, it is "
+                          << tmp.length());
+            }
+            sname = vector<uint8_t>(tmp.begin(), tmp.end());
+
+        } else if (entry == "boot-file-name") {
+            string tmp = param.second->stringValue();
+            if (tmp.length() > Pkt4::MAX_FILE_LEN) {
+                isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                          << Pkt4::MAX_FILE_LEN << " bytes long, it is "
+                          << tmp.length());
+            }
+            filename = vector<uint8_t>(tmp.begin(), tmp.end());
+
         } else {
             isc_throw(DhcpConfigError, "invalid parameter '" << entry
                       << "' (" << param.second->getPosition() << ")");

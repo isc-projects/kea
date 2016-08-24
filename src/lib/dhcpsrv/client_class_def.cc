@@ -115,8 +115,14 @@ ClientClassDictionary::~ClientClassDictionary() {
 void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
-                                const CfgOptionPtr& cfg_option) {
+                                const CfgOptionPtr& cfg_option,
+                                asiolink::IOAddress next_server,
+                                const std::vector<uint8_t>& sname,
+                                const std::vector<uint8_t>& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
+    cclass->setNextServer(next_server);
+    cclass->setSname(sname);
+    cclass->setFilename(filename);
     addClass(cclass);
 }
 
