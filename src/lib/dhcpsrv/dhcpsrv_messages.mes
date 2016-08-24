@@ -923,6 +923,3 @@ lease from the Cassandra database for the specified address.
 % DHCPSRV_CQL_UPDATE_ADDR6 updating IPv6 lease for address %1
 A debug message issued when the server is attempting to update IPv6
 lease from the Cassandra database for the specified address.
-
-% TOMS_UTILITY_MESSAGE %1
-Handy log message that should be deleted

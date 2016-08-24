@@ -2475,11 +2475,9 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
 
     StatsMgr::instance().removeAll();
 
-    // create subnets
-    CfgSubnets4Ptr cfg =
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
-
-    // Create 3 subnets.
+    // Create two subnets.
+    int num_subnets = 2;
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet;
     Pool4Ptr pool;
 
@@ -2493,7 +2491,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     subnet->addPool(pool);
     cfg->add(subnet);
 
-    int num_subnets = 2;
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
@@ -2571,14 +2568,11 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     StatsMgr::instance().removeAll();
 
-    // create subnets
-    CfgSubnets6Ptr cfg =
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
-
-    // Create 3 subnets.
+    // Create two subnets.
+    int num_subnets = 2;
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
     Subnet6Ptr subnet;
     Pool6Ptr pool;
-    int num_subnets = 2;
     StatValMapList expectedStats(num_subnets);
 
     int subnet_id = 1;

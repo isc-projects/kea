@@ -598,7 +598,7 @@ public:
     /// @brief Creates and runs the IPv4 lease stats query
     ///
     /// It creates an instance of a MemfileLeaseStatsQuery4 and then
-    /// invokes it's start method in which the query constructs its
+    /// invokes its start method in which the query constructs its
     /// statistical data result set.  The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
@@ -607,7 +607,7 @@ public:
     /// @brief Creates and runs the IPv6 lease stats query
     ///
     /// It creates an instance of a MemfileLeaseStatsQuery6 and then
-    /// invokes it's start method in which the query constructs its
+    /// invokes its start method in which the query constructs its
     /// statistical data result set.  The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery.

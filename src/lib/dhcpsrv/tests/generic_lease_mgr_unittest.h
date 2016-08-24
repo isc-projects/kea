@@ -112,10 +112,10 @@ public:
 
     /// @brief Compares StatsMgr statistics against an expected list of values
     ///
-    /// Iterates over a list of statistic names and expectec values, attempting
+    /// Iterates over a list of statistic names and expected values, attempting
     /// to fetch each from the StatsMgr and if found, compare its observed value
-    /// to the expected value.  Fails any the stat is not found or if the values
-    /// do not match.
+    /// to the expected value.  Fails if any of the expected stats are not
+    /// found or if the values do not match.
     ///
     /// @param expected_stats Map of expected static names and values.
     void checkLeaseStats(const StatValMapList& expected_stats);
