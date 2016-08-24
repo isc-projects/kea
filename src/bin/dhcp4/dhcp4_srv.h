@@ -513,6 +513,17 @@ protected:
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void appendBasicOptions(Dhcpv4Exchange& ex);
 
+    /// @brief Sets fixed fields of the outgoing packet.
+    ///
+    /// If the incoming packets belongs to a class and that class defines
+    /// next-server, server-hostname or boot-file-name, we need to set the
+    /// siaddr, sname or filename fields in the outgoing packet. This
+    /// is what this method does.
+    ///
+    /// @param ex DHCPv4 exchange holding the client's message and the server's
+    ///           response to be adjusted.
+    void setFixedFields(Dhcpv4Exchange& ex);
+
     /// @brief Processes Client FQDN and Hostname Options sent by a client.
     ///
     /// Client may send Client FQDN or Hostname option to communicate its name
