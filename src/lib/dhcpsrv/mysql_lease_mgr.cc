@@ -1223,26 +1223,34 @@ private:
     uint32_t        state_;             ///< Lease state.
 };
 
-/// @brief MySql derivation of the IPv4 statistical lease data query
+/// @brief MySql derivation of the statistical lease data query
 ///
-/// This class is used to recalculate IPv4 lease statistics for MySQL
+/// This class is used to recalculate lease statistics for MySQL
 /// lease storage.  It does so by executing a query which returns a result
-/// containining contain one row per monitored state per subnet, ordered
-/// by subnet id in ascending order.
+/// containining contain one row per monitored state per lease type per
+/// subnet, ordered by subnet id in ascending order.
 ///
-class MySqlAddressStatsQuery4 : public AddressStatsQuery4 {
+class MySqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
     /// @brief Constructor
     ///
     /// @param conn A open connection to the database housing the lease data
-    MySqlAddressStatsQuery4(MySqlConnection& conn)
-        : conn_(conn), statement_(conn_.statements_[MySqlLeaseMgr
-                                                    ::RECOUNT_LEASE4_STATS]),
-        bind_(3) {
+    /// @brief statement_index Index of the query's prepared statement
+    /// @brief fetch_type Indicates if query supplies lease type
+    MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
+                         const bool fetch_type)
+        : conn_(conn), statement_index_(statement_index), statement_(NULL),
+         fetch_type_(fetch_type), bind_(fetch_type_ ? 4 : 3) {
+        if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
+            isc_throw(BadValue, "MySqlLeaseStatsQuery"
+                      " - invalid statement index" << statement_index_);
+        }
+
+        statement_ = conn.statements_[statement_index_];
     }
 
     /// @brief Destructor
-    virtual ~MySqlAddressStatsQuery4() {
+    virtual ~MySqlLeaseStatsQuery() {
         (void) mysql_stmt_free_result(statement_);
     }
 
@@ -1255,161 +1263,48 @@ public:
     /// the statement to the output bind array  and then executes the
     /// statement.
     void start() {
+        int col = 0;
         // subnet_id: unsigned int
-        bind_[0].buffer_type = MYSQL_TYPE_LONG;
-        bind_[0].buffer = reinterpret_cast<char*>(&subnet_id_);
-        bind_[0].is_unsigned = MLM_TRUE;
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&subnet_id_);
+        bind_[col].is_unsigned = MLM_TRUE;
+        ++col;
 
-        // state:  uint32_t
-        bind_[1].buffer_type = MYSQL_TYPE_LONG;
-        bind_[1].buffer = reinterpret_cast<char*>(&lease_state_);
-        bind_[1].is_unsigned = MLM_TRUE;
-
-        // state_count_: uint32_t
-        bind_[2].buffer_type = MYSQL_TYPE_LONG;
-        bind_[2].buffer = reinterpret_cast<char*>(&state_count_);
-        bind_[2].is_unsigned = MLM_TRUE;
-
-        // Set up the MYSQL_BIND array for the data being returned
-        // and bind it to the statement.
-        int status = mysql_stmt_bind_result(statement_, &bind_[0]);
-        checkError(status, "RECOUNT_LEASE4_STATS: outbound binding failed");
-
-        // Execute the statement
-        status = mysql_stmt_execute(statement_);
-        checkError(status, "RECOUNT_LEASE4_STATS: unable to execute");
-
-        // Ensure that all the lease information is retrieved in one go to avoid
-        // overhead of going back and forth between client and server.
-        status = mysql_stmt_store_result(statement_);
-        checkError(status, "RECOUNT_LEASE4_STATS: results storage failed");
-    }
-
-
-    /// @brief Fetches the next row in the result set
-    ///
-    /// Once the internal result set has been populated by invoking the
-    /// the start() method, this method is used to iterate over the
-    /// result set rows. Once the last row has been fetched, subsequent
-    /// calls will return false.
-    ///
-    /// @param row Storage for the fetched row
-    ///
-    /// @return True if the fetch succeeded, false if there are no more
-    /// rows to fetch.
-    bool getNextRow(AddressStatsRow4& row) {
-        bool have_row = false;
-        int status = mysql_stmt_fetch(statement_);
-        if (status == MLM_MYSQL_FETCH_SUCCESS) {
-            row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
-            row.lease_state_ = lease_state_;
-            row.state_count_ = state_count_;
-            have_row = true;
-        } else if (status != MYSQL_NO_DATA) {
-            checkError(status, "RECOUNT_LEASE4_STATS: getNextRow failed");
+        // Fetch the lease type if we were told to do so.
+        if (fetch_type_) {
+            // lease type:  uint32_t
+            bind_[col].buffer_type = MYSQL_TYPE_LONG;
+            bind_[col].buffer = reinterpret_cast<char*>(&lease_type_);
+            bind_[col].is_unsigned = MLM_TRUE;
+            ++col;
+        } else {
+            fetch_type_ = Lease::TYPE_NA;
         }
 
-        return (have_row);
-    }
-
-private:
-
-    /// @brief Analyzes the given statement outcome status
-    ///
-    /// Wrapper method around the MySqlConnection:checkError() that is
-    /// used to generate the appropriate exception if the status indicates
-    /// an error.
-    ////
-    /// a DbOperation error
-    /// @param status The MySQL statement execution outcome status
-    /// @param what invocation context message which will be included in
-    /// any exception
-    void checkError(int status, const char* what) const {
-        conn_.checkError(status, MySqlLeaseMgr::RECOUNT_LEASE4_STATS, what);
-    }
-
-    /// @brief Database connection to use to execute the query
-    MySqlConnection& conn_;
-
-    /// @brief The query's prepared statement
-    MYSQL_STMT *statement_;
-
-    /// @brief Bind array used to store the query result set;
-    std::vector<MYSQL_BIND> bind_;
-
-    /// @brief Receives subnet ID when fetching a row
-    uint32_t subnet_id_;
-    /// @brief Receives the lease state when fetching a row
-    uint32_t lease_state_;
-    /// @brief Receives the state count when fetching a row
-    uint32_t state_count_;
-};
-
-/// @brief MySql derivation of the IPv6 statistical lease data query
-///
-/// This class is used to recalculate IPv6 lease statistics for MySQL
-/// lease storage.  It does so by executing a query which returns a result
-/// containining contain one row per monitored state per subnet, ordered
-/// by subnet id in ascending order.
-///
-class MySqlAddressStatsQuery6 : public AddressStatsQuery6 {
-public:
-    /// @brief Constructor
-    ///
-    /// @param conn A open connection to the database housing the lease data
-    MySqlAddressStatsQuery6(MySqlConnection& conn)
-        : conn_(conn), statement_(conn_.statements_[MySqlLeaseMgr
-                                                    ::RECOUNT_LEASE6_STATS]),
-        bind_(4) {
-    }
-
-    /// @brief Destructor
-    virtual ~MySqlAddressStatsQuery6() {
-        (void) mysql_stmt_free_result(statement_);
-    }
-
-    /// @brief Creates the IPv6 lease statistical data result set
-    ///
-    /// The result set is populated by executing an SQL query against the
-    /// lease6 table which sums the leases per lease state per lease type
-    /// per subnet id.  The query used is the prepared statement identified by
-    /// MySqlLeaseMgr::RECOUNT_LEASE6_STATS.  This method creates the binds
-    /// the statement to the output bind array  and then executes the
-    /// statement.
-    void start() {
-        // subnet_id: unsigned int
-        bind_[0].buffer_type = MYSQL_TYPE_LONG;
-        bind_[0].buffer = reinterpret_cast<char*>(&subnet_id_);
-        bind_[0].is_unsigned = MLM_TRUE;
-
-        // lease type:  uint32_t
-        bind_[1].buffer_type = MYSQL_TYPE_LONG;
-        bind_[1].buffer = reinterpret_cast<char*>(&lease_type_);
-        bind_[1].is_unsigned = MLM_TRUE;
-
         // state:  uint32_t
-        bind_[2].buffer_type = MYSQL_TYPE_LONG;
-        bind_[2].buffer = reinterpret_cast<char*>(&lease_state_);
-        bind_[2].is_unsigned = MLM_TRUE;
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&lease_state_);
+        bind_[col].is_unsigned = MLM_TRUE;
+        ++col;
 
         // state_count_: uint32_t
-        bind_[3].buffer_type = MYSQL_TYPE_LONG;
-        bind_[3].buffer = reinterpret_cast<char*>(&state_count_);
-        bind_[3].is_unsigned = MLM_TRUE;
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&state_count_);
+        bind_[col].is_unsigned = MLM_TRUE;
 
         // Set up the MYSQL_BIND array for the data being returned
         // and bind it to the statement.
         int status = mysql_stmt_bind_result(statement_, &bind_[0]);
-        checkError(status, "RECOUNT_LEASE6_STATS: outbound binding failed");
+        conn_.checkError(status, statement_index_, "outbound binding failed");
 
         // Execute the statement
         status = mysql_stmt_execute(statement_);
-        checkError(status, "RECOUNT_LEASE6_STATS: unable to execute");
+        conn_.checkError(status, statement_index_, "unable to execute");
 
         // Ensure that all the lease information is retrieved in one go to avoid
         // overhead of going back and forth between client and server.
         status = mysql_stmt_store_result(statement_);
-        checkError(status, "RECOUNT_LEASE6_STATS: results storage failed");
+        conn_.checkError(status, statement_index_, "results storage failed");
     }
 
 
@@ -1424,7 +1319,7 @@ public:
     ///
     /// @return True if the fetch succeeded, false if there are no more
     /// rows to fetch.
-    bool getNextRow(AddressStatsRow6& row) {
+    bool getNextRow(LeaseStatsRow& row) {
         bool have_row = false;
         int status = mysql_stmt_fetch(statement_);
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
@@ -1434,34 +1329,24 @@ public:
             row.state_count_ = state_count_;
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
-            checkError(status, "RECOUNT_LEASE6_STATS: getNextRow failed");
+            conn_.checkError(status, statement_index_, "getNextRow failed");
         }
 
         return (have_row);
     }
 
-
 private:
-
-    /// @brief Analyzes the given statement outcome status
-    ///
-    /// Wrapper method around the MySqlConnection:checkError() that is
-    /// used to generate the appropriate exception if the status indicates
-    /// an error.
-    ////
-    /// a DbOperation error
-    /// @param status The MySQL statement execution outcome status
-    /// @param what invocation context message which will be included in
-    /// any exception
-    void checkError(int status, const char* what) const {
-        conn_.checkError(status, MySqlLeaseMgr::RECOUNT_LEASE6_STATS, what);
-    }
-
     /// @brief Database connection to use to execute the query
     MySqlConnection& conn_;
 
+    /// @brief Index of the query's prepared statement
+    size_t statement_index_;
+
     /// @brief The query's prepared statement
     MYSQL_STMT *statement_;
+
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
 
     /// @brief Bind array used to store the query result set;
     std::vector<MYSQL_BIND> bind_;
@@ -2284,16 +2169,20 @@ MySqlLeaseMgr::getVersion() const {
     return (std::make_pair(major, minor));
 }
 
-AddressStatsQuery4Ptr
-MySqlLeaseMgr::startAddressStatsQuery4() {
-    AddressStatsQuery4Ptr query(new MySqlAddressStatsQuery4(conn_));
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE4_STATS,
+                                                      false));
     query->start();
     return(query);
 }
 
-AddressStatsQuery6Ptr
-MySqlLeaseMgr::startAddressStatsQuery6() {
-    AddressStatsQuery6Ptr query(new MySqlAddressStatsQuery6(conn_));
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE6_STATS,
+                                                      true));
     query->start();
     return(query);
 }
