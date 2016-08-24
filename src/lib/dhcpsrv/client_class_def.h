@@ -106,6 +106,24 @@ public:
     /// @brief Provides a convenient text representation of the class
     friend std::ostream& operator<<(std::ostream& os, const ClientClassDef& x);
 
+    /// @brief returns next-server value
+    /// @return next-server value
+    asiolink::IOAddress getNextServer() const {
+        return (next_server_);
+    }
+
+    /// @brief returns server-hostname value
+    /// @return the vector that contains server-hostname (may be empty if not defined)
+    const std::vector<uint8_t>& getSname() const {
+        return (sname_);
+    }
+
+    /// @brief returns boot-file-name value
+    /// @return the vector that contains boot-file-name (may be empty if not defined)
+    const std::vector<uint8_t>& getFilename() const {
+        return (filename_);
+    }
+
 private:
     /// @brief Unique text identifier by which this class is known.
     std::string name_;
@@ -116,6 +134,24 @@ private:
 
     /// @brief The option data configuration for this class
     CfgOptionPtr cfg_option_;
+
+    /// @brief Next server field
+    /// If set by the next-server parameter, this value will be set
+    /// in the siaddr field of the DHCPv4 packet.
+    asiolink::IOAddress next_server_;
+
+    /// @brief server-hostname
+    /// If set by the server-hostname parameter, this value will be
+    /// set in the sname field of the DHCPv4 packet.
+    /// This can be up to 64 octets long.
+    std::vector<uint8_t> sname_;
+
+    /// @brief boot-file-name
+    /// If set by the boot-file-name parameter, this value will be
+    /// set in the file field of the DHCPv4 packet.
+    /// This can be up to 128 octets long.
+    std::vector<uint8_t> filename_;
+
 };
 
 /// @brief a pointer to an ClientClassDef

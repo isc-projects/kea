@@ -15,7 +15,8 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option) {
+    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option),
+      next_server_(asiolink::IOAddress("0.0.0.0")) {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -33,7 +34,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()), next_server_(asiolink::IOAddress("0.0.0.0")) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());

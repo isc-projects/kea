@@ -1927,6 +1927,51 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     }
 }
 
+void
+Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr response = ex.getResponse();
+
+    const ClientClasses classes = query->getClasses();
+    if (classes.empty()) {
+        return;
+    }
+
+    // Let's get class definitions
+    const ClientClassDefMapPtr& defs = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->getClasses();
+
+    // Now we need to iterate over the classes assigned to the
+    // query packet and find corresponding class defintions for it.
+    for (ClientClasses::const_iterator name = classes.begin();
+         name != classes.end(); ++name) {
+
+        ClientClassDefMap::const_iterator cl = defs->find(*name);
+        if (cl == defs->end()) {
+            // Let's skip classes that don't have definitions. Currently
+            // these are automatic classes VENDOR_CLASS_something, but there
+            // may be other classes assigned under other circumstances, e.g.
+            // by hooks.
+            continue;
+        }
+
+        IOAddress next_server = cl->second->getNextServer();
+        if (!next_server.isV4Zero()) {
+            response->setSiaddr(next_server);
+        }
+
+        const vector<uint8_t>& sname = cl->second->getSname();
+        if (!sname.empty()) {
+            response->setSname(&sname[0], sname.size());
+        }
+
+        const vector<uint8_t>& filename = cl->second->getFilename();
+        if (!filename.empty()) {
+            response->setFile(&filename[0], filename.size());
+        }
+    }
+}
+
 
 OptionPtr
 Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
