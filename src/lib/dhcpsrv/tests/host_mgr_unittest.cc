@@ -209,9 +209,11 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     // If there non-matching HW address is specified, nothing should be
     // returned.
-    ASSERT_TRUE(HostMgr::instance().getAll(Host::IDENT_HWADDR,
+    hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
                                            &hwaddrs_[1]->hwaddr_[0],
-                                           hwaddrs_[1]->hwaddr_.size()).empty());
+                                           hwaddrs_[1]->hwaddr_.size());
+    ASSERT_TRUE(hosts.empty());
+
     // For the correct HW address, there should be two reservations.
     hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
                                        &hwaddrs_[0]->hwaddr_[0],
@@ -273,13 +275,16 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 
 void
 HostMgrTest::testGet4(BaseHostDataSource& data_source) {
+    // Initially, no host should be present.
     ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
     ASSERT_FALSE(host);
 
+    // Add new host to the database.
     addHost4(data_source, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
 
     CfgMgr::instance().commit();
 
+    // Retrieve the host from the database and expect that the parameters match.
     host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
                                     &hwaddrs_[0]->hwaddr_[0],
                                     hwaddrs_[0]->hwaddr_.size());
@@ -290,13 +295,16 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
 
 void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
+    // Initially, no host should be present.
     ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
     ASSERT_FALSE(host);
 
+    // Add new host to the database.
     addHost6(data_source, duids_[0], SubnetID(2), IOAddress("2001:db8:1::1"));
 
     CfgMgr::instance().commit();
 
+    // Retrieve the host from the database and expect that the parameters match.
     host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
@@ -323,7 +331,7 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
     host = HostMgr::instance().get6(IOAddress("2001:db8:1::"), 64);
     ASSERT_TRUE(host);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-    IOAddress("2001:db8:1::"), 64)));
+                                               IOAddress("2001:db8:1::"), 64)));
 
     // Make sure the first reservation is not retrieved when the prefix
     // length is incorrect.
@@ -334,7 +342,7 @@ HostMgrTest::testGet6ByPrefix(BaseHostDataSource& data_source1,
     host = HostMgr::instance().get6(IOAddress("2001:db8:1:0:6::"), 72);
     ASSERT_TRUE(host);
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-    IOAddress("2001:db8:1:0:6::"), 72)));
+                                               IOAddress("2001:db8:1:0:6::"), 72)));
 
     // Make sure the second reservation is not retrieved when the prefix
     // length is incorrect.
