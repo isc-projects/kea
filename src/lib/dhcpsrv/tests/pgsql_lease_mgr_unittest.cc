@@ -403,13 +403,13 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
 }
 
 // Verifies that IPv4 lease statistics can be recalculated.
-TEST_F(PgSqlLeaseMgrTest, recountAddressStats4) {
-    testRecountAddressStats4();
+TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
+    testRecountLeaseStats4();
 }
 
 // Verifies that IPv6 lease statistics can be recalculated.
-TEST_F(PgSqlLeaseMgrTest, recountAddressStats6) {
-    testRecountAddressStats6();
+TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
+    testRecountLeaseStats6();
 }
 
 }; // namespace
