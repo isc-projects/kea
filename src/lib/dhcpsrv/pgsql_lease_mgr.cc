@@ -694,34 +694,33 @@ private:
     //@}
 };
 
-/// @brief PgSql derivation of the IPv4 statistical lease data query
+/// @brief Base PgSql derivation of the statistical lease data query
 ///
-/// This class is used to recalculate IPv4 lease statistics for MySQL
-/// lease storage.  It does so by executing a query which returns a result
-/// containining contain one row per monitored state per subnet, ordered
-/// by subnet id in ascending order.
+/// This class provides the functionality such as results storgae and row
+/// fetching common to fulfilling the statistical lease data query.
 ///
-class PgSqlAddressStatsQuery4 : public AddressStatsQuery4 {
+class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
     /// @brief Constructor
     ///
     /// @param conn A open connection to the database housing the lease data
-    PgSqlAddressStatsQuery4(PgSqlConnection& conn)
-        : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
-                                                    ::RECOUNT_LEASE4_STATS]),
-        result_set_(), next_row_(0) {
+    /// @param statement The lease data SQL prepared statement to execute
+    /// @param fetch_statement Indicates whether or not lease_type should be
+    /// fetched from the result set
+    PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
+                         const bool fetch_type)
+        : conn_(conn), statement_(statement), result_set_(), next_row_(0),
+         fetch_type_(fetch_type) {
     }
 
     /// @brief Destructor
-    virtual ~PgSqlAddressStatsQuery4() {};
+    virtual ~PgSqlLeaseStatsQuery() {};
 
-    /// @brief Creates the IPv4 lease statistical data result set
+    /// @brief Creates the lease statistical data result set
     ///
-    /// The result set is populated by executing an SQL query against the
-    /// lease4 table which sums the leases per lease state per subnet id.
-    /// The query used is the prepared statement identified by
-    /// PgSqlLeaseMgr::RECOUNT_LEASE4_STATS. This method executes the
-    /// statement which creates the result set.
+    /// The result set is populated by executing a  prepared SQL query
+    /// against the database which sums the leases per lease state per
+    /// subnet id.
     void start() {
         // The query has no parameters, so we only need it's name.
         result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
@@ -741,7 +740,7 @@ public:
     ///
     /// @return True if the fetch succeeded, false if there are no more
     /// rows to fetch.
-    bool getNextRow(AddressStatsRow4& row) {
+    bool getNextRow(LeaseStatsRow& row) {
         // If we're past the end, punt.
         if (next_row_ >= result_set_->getRows()) {
             return (false);
@@ -753,6 +752,15 @@ public:
         PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
         row.subnet_id_ = static_cast<SubnetID>(subnet_id);
         ++col;
+
+        // Fetch the lease type if we were told to do so.
+        if (fetch_type_) {
+            uint32_t lease_type;
+            PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                          lease_type);
+            row.lease_type_ = static_cast<Lease::Type>(lease_type);
+            ++col;
+        }
 
         // Fetch the lease state.
         uint32_t state;
@@ -769,7 +777,7 @@ public:
         return (true);
     }
 
-private:
+protected:
     /// @brief Database connection to use to execute the query
     PgSqlConnection& conn_;
 
@@ -781,104 +789,9 @@ private:
 
     /// @brief Index of the next row to fetch
     uint32_t next_row_;
-};
 
-/// @brief PgSql derivation of the IPv6 statistical lease data query
-///
-/// This class is used to recalculate IPv6 lease statistics for MySQL
-/// lease storage.  It does so by executing a query which returns a result
-/// containining contain one row per monitored state per subnet, ordered
-/// by subnet id in ascending order.
-///
-class PgSqlAddressStatsQuery6 : public AddressStatsQuery6 {
-public:
-    /// @brief Constructor
-    ///
-    /// @param conn A open connection to the database housing the lease data
-    PgSqlAddressStatsQuery6(PgSqlConnection& conn)
-        : conn_(conn), statement_(tagged_statements[PgSqlLeaseMgr
-                                                    ::RECOUNT_LEASE6_STATS]),
-        result_set_(), next_row_(0) {
-    }
-
-    /// @brief Destructor
-    virtual ~PgSqlAddressStatsQuery6() {};
-
-    /// @brief Creates the IPv6 lease statistical data result set
-    ///
-    /// The result set is populated by executing an SQL query against the
-    /// lease6 table which sums the leases per lease state per lease type
-    /// per subnet id.  The query used is the prepared statement identified by
-    /// PgSqlLeaseMgr::RECOUNT_LEASE6_STATS. This method executes the
-    /// statement which creates the result set.
-    void start() {
-        // The query has no parameters, so we only need it's name.
-        result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
-                                                         0, NULL, NULL, NULL,
-                                                         0)));
-
-        conn_.checkStatementError(*result_set_, statement_);
-    }
-
-    /// @brief Fetches the next row in the result set
-    ///
-    /// Once the internal result set has been populated by invoking the
-    /// the start() method, this method is used to iterate over the
-    /// result set rows. Once the last row has been fetched, subsequent
-    /// calls will return false.
-    ///
-    /// @param row Storage for the fetched row
-    ///
-    /// @return True if the fetch succeeded, false if there are no more
-    /// rows to fetch.
-    bool getNextRow(AddressStatsRow6& row) {
-        // If we're past the end, punt.
-        if (next_row_ >= result_set_->getRows()) {
-            return (false);
-        }
-
-        // Fetch the subnet id.
-        uint32_t col = 0;
-        uint32_t subnet_id;
-        PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
-        row.subnet_id_ = static_cast<SubnetID>(subnet_id);
-        ++col;
-
-        // Fetch the lease type.
-        uint32_t lease_type;
-        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
-                                      lease_type);
-        row.lease_type_ = static_cast<Lease::Type>(lease_type);
-        ++col;
-
-        // Fetch the lease state.
-        uint32_t state;
-        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col, 
-                                      row.lease_state_);
-        ++col;
-
-        // Fetch the state count.
-        PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
-                                      row.state_count_);
-
-         // Point to the next row.
-         ++next_row_;
-
-        return (true);
-    }
-
-private:
-    /// @brief Database connection to use to execute the query
-    PgSqlConnection& conn_;
-
-    /// @brief The query's prepared statement
-    PgSqlTaggedStatement& statement_;
-
-    /// @brief The result set returned by Postgres.
-    boost::shared_ptr<PgSqlResult> result_set_;
-
-    /// @brief Index of the next row to fetch
-    uint32_t next_row_;
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
@@ -1422,16 +1335,22 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     return (deleteLeaseCommon(statement_index, bind_array));
 }
 
-AddressStatsQuery4Ptr
-PgSqlLeaseMgr::startAddressStatsQuery4() {
-    AddressStatsQuery4Ptr query(new PgSqlAddressStatsQuery4(conn_));
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_,
+                                 tagged_statements[RECOUNT_LEASE4_STATS],
+                                 false));
     query->start();
     return(query);
 }
 
-AddressStatsQuery6Ptr
-PgSqlLeaseMgr::startAddressStatsQuery6() {
-    AddressStatsQuery6Ptr query(new PgSqlAddressStatsQuery6(conn_));
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_,
+                                 tagged_statements[RECOUNT_LEASE6_STATS],
+                                 true));
     query->start();
     return(query);
 }
