@@ -300,12 +300,12 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
 }
 
 // This test verifies that the parser can parse reservation entry
-// containing next-server, server-name and boot-file-name values for
+// containing next-server, server-hostname and boot-file-name values for
 // DHCPv4 message fields.
 TEST_F(HostReservationParserTest, dhcp4MessageFields) {
     std::string config = "{ \"hw-address\": \"1:2:3:4:5:6\","
         "\"next-server\": \"192.0.2.11\","
-        "\"server-name\": \"some-name.example.org\","
+        "\"server-hostname\": \"some-name.example.org\","
         "\"boot-file-name\": \"/tmp/some-file.efi\" }";
 
     ElementPtr config_element = Element::fromJSON(config);

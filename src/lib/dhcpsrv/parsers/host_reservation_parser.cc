@@ -50,7 +50,7 @@ getSupportedParams4(const bool identifiers_only = false) {
         params_set.insert("ip-address");
         params_set.insert("option-data");
         params_set.insert("next-server");
-        params_set.insert("server-name");
+        params_set.insert("server-hostname");
         params_set.insert("boot-file-name");
     }
     return (identifiers_only ? identifiers_set : params_set);
@@ -212,7 +212,7 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
                 } else if (element.first == "next-server") {
                 host_->setNextServer(IOAddress(element.second->stringValue()));
 
-                } else if (element.first == "server-name") {
+                } else if (element.first == "server-hostname") {
                     host_->setServerHostname(element.second->stringValue());
 
                 } else if (element.first == "boot-file-name") {

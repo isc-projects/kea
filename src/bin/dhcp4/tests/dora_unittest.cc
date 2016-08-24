@@ -73,7 +73,7 @@ namespace {
 ///
 /// - Configuration 6:
 ///   - This configuration provides reservations for next-server,
-///     server-name and boot-file-name value.
+///     server-hostname and boot-file-name value.
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 reservation for this subnet:
 ///     - Client's HW address: aa:bb:cc:dd:ee:ff
@@ -257,7 +257,7 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
         "         \"next-server\": \"10.0.0.7\","
-        "         \"server-name\": \"some-name.example.org\","
+        "         \"server-hostname\": \"some-name.example.org\","
         "         \"boot-file-name\": \"bootfile.efi\""
         "       }"
         "    ]"
