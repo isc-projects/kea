@@ -179,20 +179,18 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
 // return the string DEBUG, else return the empty string.
 LoggerLevelImpl::LogLevelString
 LoggerLevelImpl::logLevelToString(log4cplus::LogLevel level) {
-    static const tstring debug_string("DEBUG");
-    static const tstring empty_string;
     Level bindlevel = convertToBindLevel(level);
     Severity& severity = bindlevel.severity;
     int& dbglevel = bindlevel.dbglevel;
 
     if ((severity == DEBUG) &&
         ((dbglevel >= MIN_DEBUG_LEVEL) && (dbglevel <= MAX_DEBUG_LEVEL))) {
-        return (debug_string);
+        return (tstring("DEBUG"));
     }
 
     // Unknown, so return empty string for log4cplus to try other conversion
     // functions.
-    return (empty_string);
+    return (tstring());
 }
 
 // Initialization.  Register the conversion functions with the LogLevelManager.

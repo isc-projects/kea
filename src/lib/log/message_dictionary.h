@@ -50,7 +50,8 @@ public:
     typedef std::map<std::string, std::string> Dictionary;
     typedef Dictionary::const_iterator  const_iterator;
 
-    // Default constructor and assignment operator are OK for this class
+    /// \brief Constructor
+    MessageDictionary();
 
     /// \brief Virtual Destructor
     virtual ~MessageDictionary();
@@ -198,6 +199,7 @@ public:
 
 private:
     Dictionary       dictionary_;   ///< Holds the ID to text lookups
+    const std::string empty_;       ///< Empty string
 };
 
 } // namespace log
