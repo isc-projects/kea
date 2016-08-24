@@ -1,3 +1,9 @@
+1154.	[bug]		stephen
+	Changes to logging to avoid premature destruction of some
+	objects during program exit.  On some systems this caused
+	one of the unit test programs to crash when it terminated.
+	(Trac #4494, git 023c2fc3688bcdbccb4b286bea873c8f9c06cd5f)
+
 1153.	[func]		tomek
 	Integers can now be used in client classification.
 	(Trac #4483, git e90cf0ee4007521b86177be6d5fbb970c02c1075)
