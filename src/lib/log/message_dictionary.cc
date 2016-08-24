@@ -13,6 +13,11 @@ using namespace std;
 namespace isc {
 namespace log {
 
+// Constructor
+
+MessageDictionary::MessageDictionary() : dictionary_(), empty_("") {
+}
+
 // (Virtual) Destructor
 
 MessageDictionary::~MessageDictionary() {
@@ -91,10 +96,9 @@ MessageDictionary::load(const char* messages[]) {
 
 const string&
 MessageDictionary::getText(const std::string& ident) const {
-    static const string empty("");
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
-        return (empty);
+        return (empty_);
     }
     else {
         return (i->second);
