@@ -593,23 +593,23 @@ private:
 
     /// @brief Creates and runs the IPv4 lease stats query
     ///
-    /// It creates an instance of a MySqlAddressStatsQuery4 and then
+    /// It creates an instance of a MySqlLeaseStatsQuery4 and then
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS4 query.
     /// The query object is then returned.
     ///
-    /// @return The populated query as a pointer to an AddressStatsQuery4
-    virtual AddressStatsQuery4Ptr startAddressStatsQuery4();
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
     /// @brief Creates and runs the IPv6 lease stats query
     ///
-    /// It creates an instance of a MySqlAddressStatsQuery6 and then
+    /// It creates an instance of a MySqlLeaseStatsQuery6 and then
     /// invokes its start method, which fetches its statistical data
-    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// result set by executing the RECOUNT_LEASE_STATS6 query.
     /// The query object is then returned.
     ///
-    /// @return The populated query as a pointer to an AddressStatsQuery6
-    virtual AddressStatsQuery6Ptr startAddressStatsQuery6();
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
     /// @brief Check Error and Throw Exception
     ///

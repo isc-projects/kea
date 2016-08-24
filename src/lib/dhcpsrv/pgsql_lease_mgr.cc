@@ -760,6 +760,8 @@ public:
                                           lease_type);
             row.lease_type_ = static_cast<Lease::Type>(lease_type);
             ++col;
+        } else {
+            row.lease_type_ = Lease::TYPE_NA;
         }
 
         // Fetch the lease state.
