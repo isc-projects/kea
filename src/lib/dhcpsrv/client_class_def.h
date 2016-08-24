@@ -112,6 +112,27 @@ public:
         return (next_server_);
     }
 
+    /// @brief sets the next-server value
+    ///
+    /// @param addr the value to be set
+    void setNextServer(const asiolink::IOAddress& addr) {
+        next_server_ = addr;
+    }
+
+    /// @brief sets the server-name value
+    ///
+    /// @param sname the value to be set
+    void setSname(const std::vector<uint8_t>& sname) {
+        sname_ = sname;
+    }
+
+    /// @brief sets the boot-file-name value
+    ///
+    /// @param filename the value to be set
+    void setFilename(const std::vector<uint8_t>& filename) {
+        filename_ = filename;
+    }
+
     /// @brief returns server-hostname value
     /// @return the vector that contains server-hostname (may be empty if not defined)
     const std::vector<uint8_t>& getSname() const {
@@ -183,12 +204,18 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param options Collection of options members should be given
+    /// @param next_server next-server value for this class (optional)
+    /// @param sname server-name value for this class (optional)
+    /// @param filename boot-file-name value for this class (optional)
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const CfgOptionPtr& options);
+                  const CfgOptionPtr& options,
+                  asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
+                  const std::vector<uint8_t>& sname = std::vector<uint8_t>(),
+                  const std::vector<uint8_t>& filename = std::vector<uint8_t>());
 
     /// @brief Adds a new class to the list
     ///
