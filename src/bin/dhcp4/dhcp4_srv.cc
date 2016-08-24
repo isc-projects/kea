@@ -1932,6 +1932,10 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
     Pkt4Ptr query = ex.getQuery();
     Pkt4Ptr response = ex.getResponse();
 
+    // Step 1: try to set values using HR.
+    /// @todo: Merge Marcin's code here.
+
+    // Step 2: if step 1 failed, try to set the values based on classes.
     const ClientClasses classes = query->getClasses();
     if (classes.empty()) {
         return;
@@ -1970,8 +1974,13 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             response->setFile(&filename[0], filename.size());
         }
     }
-}
 
+    // Step 3: Finally, set the values based on subnet values.
+    /// @todo implement this.
+
+    /// @todo: We need to implement some kind of logic here that only
+    /// the values that are not set yet in previous steps are overwritten.
+}
 
 OptionPtr
 Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
