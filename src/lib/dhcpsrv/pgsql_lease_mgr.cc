@@ -765,7 +765,6 @@ public:
         }
 
         // Fetch the lease state.
-        uint32_t state;
         PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
                                       row.lease_state_);
         ++col;
