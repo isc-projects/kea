@@ -2012,6 +2012,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         // them we append them for him.
         appendBasicOptions(ex);
 
+        // See if the class mandates setting any fixed fields (siaddr, sname,
+        // filename).
+        setFixedFields(ex);
+
     } else {
         // If the server can't offer an address, it drops the packet.
         return (Pkt4Ptr());
@@ -2067,6 +2071,10 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         // include in the response. If client did not request
         // them we append them for him.
         appendBasicOptions(ex);
+
+        // See if the class mandates setting any fixed fields (siaddr, sname,
+        // filename).
+        setFixedFields(ex);
     }
 
     // Set the src/dest IP address, port and interface for the outgoing
@@ -2351,6 +2359,10 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     appendRequestedVendorOptions(ex);
     appendBasicOptions(ex);
     adjustIfaceData(ex);
+
+    // See if the class mandates setting any fixed fields (siaddr, sname,
+    // filename).
+    setFixedFields(ex);
 
     // There are cases for the DHCPINFORM that the server receives it via
     // relay but will send the response to the client's unicast address
