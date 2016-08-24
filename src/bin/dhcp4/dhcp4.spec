@@ -515,7 +515,7 @@
                         "item_default": "0.0.0.0"
                       },
                       {
-                        "item_name": "server-name",
+                        "item_name": "server-hostname",
                         "item_type": "string",
                         "item_optional": true,
                         "item_default": ""
