@@ -12,6 +12,7 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <asiolink/io_address.h>
 #include <eval/evaluate.h>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -23,6 +24,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::asiolink;
 
 namespace {
 
@@ -582,5 +584,184 @@ TEST_F(ClientClassDefListParserTest, invalidClass) {
     ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, Option::V4),
                  DhcpConfigError);
 }
+
+TEST_F(ClientClassDefParserTest, noFixedFields) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And it should not have any fixed fields set
+    EXPECT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
+    EXPECT_EQ(0, cclass->getSname().size());
+    EXPECT_EQ(0, cclass->getFilename().size());
+}
+
+
+TEST_F(ClientClassDefParserTest, nextServer) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"next-server\": \"192.0.2.254\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And it should have next-server set, but everything else not set.
+    EXPECT_EQ(IOAddress("192.0.2.254"), cclass->getNextServer());
+    EXPECT_EQ(0, cclass->getSname().size());
+    EXPECT_EQ(0, cclass->getFilename().size());
+}
+
+TEST_F(ClientClassDefParserTest, nextServerBogus) {
+
+    std::string bogus_v6 =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"next-server\": \"2001:db8::1\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+    std::string bogus_junk =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"next-server\": \"not-an-address\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    EXPECT_THROW(parseClientClassDef(bogus_v6, Option::V4), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(bogus_junk, Option::V4), DhcpConfigError);
+}
+
+TEST_F(ClientClassDefParserTest, serverName) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"server-hostname\": \"hal9000\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And it should not have any fixed fields set
+    std::string exp_txt("hal9000");
+    std::vector<uint8_t> exp_sname(exp_txt.begin(), exp_txt.end());
+
+    EXPECT_EQ(exp_sname, cclass->getSname());
+}
+
+TEST_F(ClientClassDefParserTest, serverNameInvalid) {
+
+    std::string cfg_too_long =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"server-hostname\": \"1234567890123456789012345678901234567890"
+                                   "1234567890123456789012345\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    EXPECT_THROW(parseClientClassDef(cfg_too_long, Option::V4), DhcpConfigError);
+}
+
+
+TEST_F(ClientClassDefParserTest, filename) {
+
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"boot-file-name\": \"ipxe.efi\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And it should not have any fixed fields set
+    std::string exp_txt("ipxe.efi");
+    std::vector<uint8_t> exp_filename(exp_txt.begin(), exp_txt.end());
+
+    EXPECT_EQ(exp_filename, cclass->getFilename());
+}
+
+TEST_F(ClientClassDefParserTest, filenameBogus) {
+
+    // boot-file-name is allowed up to 128 bytes, this one is 129.
+    std::string cfg_too_long =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"boot-file-name\": \"1234567890123456789012345678901234567890"
+                                  "1234567890123456789012345678901234567890"
+                                  "1234567890123456789012345678901234567890"
+                                  "1234567890123456789012345678901234567890"
+                                  "1234567890123456789012345678901234567890"
+                                  "1234567890123456789012345678901234567890"
+                                  "123456789\", \n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    EXPECT_THROW(parseClientClassDef(cfg_too_long, Option::V4), DhcpConfigError);
+}
+
 
 } // end of anonymous namespace

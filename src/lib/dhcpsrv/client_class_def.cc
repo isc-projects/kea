@@ -44,6 +44,10 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     if (rhs.cfg_option_) {
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
+
+    next_server_ = rhs.next_server_;
+    sname_ = rhs.sname_;
+    filename_ = rhs.filename_;
 }
 
 ClientClassDef::~ClientClassDef() {
@@ -87,7 +91,10 @@ ClientClassDef::equals(const ClientClassDef& other) const {
          (*match_expr_ == *(other.match_expr_)))) &&
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
-         (*cfg_option_ == *other.cfg_option_))));
+         (*cfg_option_ == *other.cfg_option_))) &&
+            (next_server_ == other.next_server_) &&
+            (sname_ == other.sname_) &&
+            (filename_ == other.filename_));
 }
 
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {

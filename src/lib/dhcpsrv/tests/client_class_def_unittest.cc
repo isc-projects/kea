@@ -8,6 +8,7 @@
 #include <dhcpsrv/client_class_def.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
+#include <asiolink/io_address.h>
 
 #include <gtest/gtest.h>
 
@@ -17,6 +18,7 @@
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::asiolink;
 using namespace isc;
 
 namespace {
@@ -297,5 +299,60 @@ TEST(ClientClassDictionary, copyAndEquality) {
     EXPECT_FALSE(*dictionary == *dictionary2);
     EXPECT_TRUE(*dictionary != *dictionary2);
 }
+
+// Tests the default constructor regarding fixed fields
+TEST(ClientClassDef, fixedFieldsDefaults) {
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    std::string name = "class1";
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // Classes cannot have blank names
+    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, cfg_option)),
+                 BadValue);
+
+    // Verify we can create a class with a name, expression, and no cfg_option
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
+
+    // Let's checks that it doesn't return any nonsense
+    vector<uint8_t> empty;
+    ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
+    EXPECT_EQ(empty, cclass->getSname());
+    EXPECT_EQ(empty, cclass->getFilename());
+}
+
+// Tests basic operations of fixed fields
+TEST(ClientClassDef, fixedFieldsBasics) {
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    std::string name = "class1";
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // Classes cannot have blank names
+    ASSERT_THROW(cclass.reset(new ClientClassDef("", expr, cfg_option)),
+                 BadValue);
+
+    // Verify we can create a class with a name, expression, and no cfg_option
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
+
+
+    string sname_txt = "This is a very long string that can be a server name";
+    vector<uint8_t> sname(sname_txt.begin(), sname_txt.end());
+
+    string filename_txt = "this-is-a-slightly-longish-name-of-a-file.txt";
+    vector<uint8_t> filename(sname_txt.begin(), sname_txt.end());
+
+    cclass->setNextServer(IOAddress("1.2.3.4"));
+    cclass->setSname(sname);
+    cclass->setFilename(filename);
+
+    // Let's checks that it doesn't return any nonsense
+    ASSERT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
+    EXPECT_EQ(sname, cclass->getSname());
+    EXPECT_EQ(filename, cclass->getFilename());
+}
+
 
 } // end of anonymous namespace
