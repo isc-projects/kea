@@ -253,15 +253,19 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 void
 HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
                          BaseHostDataSource& data_source2) {
+    // Initially, no hosts should be present.
     ConstHostCollection hosts =
         HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
     ASSERT_TRUE(hosts.empty());
 
+    // Add two hosts to different data sources.
     addHost4(data_source1, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.5"));
     addHost4(data_source2, hwaddrs_[1], SubnetID(10), IOAddress("192.0.2.5"));
 
     CfgMgr::instance().commit();
 
+    // Retrieve all hosts, This should return hosts from both sources
+    // in a single container.
     hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
     ASSERT_EQ(2, hosts.size());
 
