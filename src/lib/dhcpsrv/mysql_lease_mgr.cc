@@ -1240,7 +1240,10 @@ public:
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),
-         fetch_type_(fetch_type), bind_(fetch_type_ ? 4 : 3) {
+         fetch_type_(fetch_type),
+         // Set the number of columns in the bind array based on fetch_type
+         // This is the number of columns expected in the result set
+         bind_(fetch_type_ ? 4 : 3) {
         if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
             isc_throw(BadValue, "MySqlLeaseStatsQuery"
                       " - invalid statement index" << statement_index_);
@@ -1256,12 +1259,11 @@ public:
 
     /// @brief Creates the IPv4 lease statistical data result set
     ///
-    /// The result set is populated by executing an SQL query against the
-    /// lease4 table which sums the leases per lease state per subnet id.
-    /// The query used is the prepared statement identified by
-    /// MySqlLeaseMgr::RECOUNT_LEASE4_STATS.  This method creates the binds
-    /// the statement to the output bind array  and then executes the
-    /// statement.
+    /// The result set is populated by executing a SQL query against the
+    /// lease(4/6) table which sums the leases per lease state per lease
+    /// type (v6 only) per subnet id. This method binds the statement to
+    /// the output bind array and then executes the statement, and fetches
+    /// entire result set.
     void start() {
         int col = 0;
         // subnet_id: unsigned int
