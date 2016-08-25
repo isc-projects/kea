@@ -126,17 +126,17 @@ public:
         sname_ = sname;
     }
 
+    /// @brief returns server-hostname value
+    /// @return the vector that contains server-hostname (may be empty if not defined)
+    const std::string& getSname() const {
+        return (sname_);
+    }
+
     /// @brief sets the boot-file-name value
     ///
     /// @param filename the value to be set
     void setFilename(const std::string& filename) {
         filename_ = filename;
-    }
-
-    /// @brief returns server-hostname value
-    /// @return the vector that contains server-hostname (may be empty if not defined)
-    const std::string& getSname() const {
-        return (sname_);
     }
 
     /// @brief returns boot-file-name value
