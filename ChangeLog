@@ -1,8 +1,13 @@
+1157.	[func]		marcin
+	Added support for static reservations for fixed fields in
+	DHCPv4 messages: siaddr, sname and file.
+	(Trac #4552, git 9b79fe005dd77328ea7c596fc6886f8fb838d1cf)
+
 1156.	[bug]		tmark
 	Lease statistics are now recalculated during server startup and
 	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
 	back ends.  This addressses issues caused by accumulated values being lost
-	across restarts and reconfigurations making rendering values incorrect. 
+	across restarts and reconfigurations making rendering values incorrect.
 	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
 
 1155.	[func]		marcin
