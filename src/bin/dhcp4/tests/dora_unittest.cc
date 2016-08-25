@@ -77,7 +77,7 @@ namespace {
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 reservation for this subnet:
 ///     - Client's HW address: aa:bb:cc:dd:ee:ff
-///     - next-server = 192.0.0.2
+///     - next-server = 10.0.0.7
 ///     - server name = "some-name.example.org"
 ///     - boot-file-name = "bootfile.efi"
 const char* DORA_CONFIGS[] = {
@@ -262,7 +262,7 @@ const char* DORA_CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
-    "}",
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -1028,8 +1028,8 @@ TEST_F(DORATest, messageFieldsReservations) {
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
     configure(DORA_CONFIGS[6], *client.getServer());
-    // Client A performs 4-way exchange and should obtain a reserved
-    // address.
+    // Client performs 4-way exchange and should obtain a reserved
+    // address and fixed fields.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
                                   IOAddress>(new IOAddress("0.0.0.0"))));
     // Make sure that the server responded.

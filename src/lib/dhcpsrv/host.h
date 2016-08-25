@@ -466,7 +466,7 @@ public:
     /// @param next_server New address of a next server.
     ///
     /// @throw isc::BadValue if the provided address is not an IPv4 address,
-    /// is a 0 address or broadcast address.
+    /// is broadcast address.
     void setNextServer(const asiolink::IOAddress& next_server);
 
     /// @brief Returns value of next server field (siaddr).
@@ -477,9 +477,9 @@ public:
     /// @brief Sets new value for server hostname (sname).
     ///
     /// @param server_host_name New value for server hostname.
-    void setServerHostname(const std::string& server_host_name) {
-        server_host_name_ = server_host_name;
-    }
+    ///
+    /// @throw BadValue if hostname is longer than 63 bytes.
+    void setServerHostname(const std::string& server_host_name);
 
     /// @brief Returns value of server hostname (sname).
     const std::string& getServerHostname() const {
@@ -489,9 +489,9 @@ public:
     /// @brief Sets new value for boot file name (file).
     ///
     /// @param boot_file_name New value of boot file name.
-    void setBootFileName(const std::string& boot_file_name) {
-        boot_file_name_ = boot_file_name;
-    }
+    ///
+    /// @throw BadValue if boot file name is longer than 128 bytes.
+    void setBootFileName(const std::string& boot_file_name);
 
     /// @brief Returns value of boot file name (file).
     const std::string& getBootFileName() const {

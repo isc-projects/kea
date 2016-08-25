@@ -686,10 +686,10 @@ TEST_F(HostTest, setValues) {
     EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_BCAST_ADDRESS()),
                  isc::BadValue);
 
-    // Zero or broadcast are invalid addresses for next server.
-    EXPECT_THROW(host->setNextServer(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-                 isc::BadValue);
+    // Broadcast and IPv6 are invalid addresses for next server.
     EXPECT_THROW(host->setNextServer(asiolink::IOAddress::IPV4_BCAST_ADDRESS()),
+                                     isc::BadValue);
+    EXPECT_THROW(host->setNextServer(IOAddress("2001:db8:1::1")),
                                      isc::BadValue);
 }
 
