@@ -20,6 +20,7 @@
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -327,6 +328,43 @@ TEST_F(HostReservationParserTest, dhcp4MessageFields) {
     EXPECT_EQ("/tmp/some-file.efi", hosts[0]->getBootFileName());
 }
 
+// This test verifies that the invalid value of the next server is rejected.
+TEST_F(HostReservationParserTest, invalidNextServer) {
+    // Invalid IPv4 address.
+    std::string config = "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"next-server\": \"192.0.2.foo\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+
+    // Broadcast address.
+    config = "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"next-server\": \"255.255.255.255\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+
+    // IPv6 address.
+    config = "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"next-server\": \"2001:db8:1::1\" }";
+    testInvalidConfig<HostReservationParser4>(config);
+}
+
+// This test verifies that the invalid server hostname is rejected.
+TEST_F(HostReservationParserTest, invalidServerHostname) {
+    std::ostringstream config;
+    config << "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"server-hostname\": \"";
+    config << std::string(64, 'a');
+    config << "\" }";
+    testInvalidConfig<HostReservationParser4>(config.str());
+}
+
+// This test verifies that the invalid boot file name is rejected.
+TEST_F(HostReservationParserTest, invalidBootFileName) {
+    std::ostringstream config;
+    config << "{ \"hw-address\": \"1:2:3:4:5:6\","
+        "\"boot-file-name\": \"";
+    config << std::string(128, 'a');
+    config << "\" }";
+    testInvalidConfig<HostReservationParser4>(config.str());
+}
 
 // This test verifies that the configuration parser for host reservations
 // throws an exception when IPv6 address is specified for IPv4 address

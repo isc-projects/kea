@@ -2837,8 +2837,8 @@ It is merely echoed by the server
     "subnet4": [ {
         "reservations": [
         {
-            <userinput>"hw-address": "aa:bb:cc:dd:ee:ff",
-            "next-server": "10.1.1.2",
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            <userinput>"next-server": "10.1.1.2",
             "server-hostname": "server-hostname.example.org",
             "boot-file-name": "/tmp/bootfile.efi"</userinput>
         } ]

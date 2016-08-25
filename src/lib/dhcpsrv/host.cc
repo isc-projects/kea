@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/pkt4.h>
 #include <dhcpsrv/host.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -365,12 +366,30 @@ Host::setNextServer(const asiolink::IOAddress& next_server) {
     if (!next_server.isV4()) {
         isc_throw(isc::BadValue, "next server address '" << next_server
                   << "' is not a valid IPv4 address");
-    } else if (next_server.isV4Zero() || next_server.isV4Bcast()) {
+    } else if (next_server.isV4Bcast()) {
         isc_throw(isc::BadValue, "invalid next server address '"
                   << next_server << "'");
     }
 
     next_server_ = next_server;
+}
+
+void
+Host::setServerHostname(const std::string& server_host_name) {
+    if (server_host_name.size() > Pkt4::MAX_SNAME_LEN - 1) {
+        isc_throw(isc::BadValue, "server hostname length must not exceed "
+                  << (Pkt4::MAX_SNAME_LEN - 1));
+    }
+    server_host_name_ = server_host_name;
+}
+
+void
+Host::setBootFileName(const std::string& boot_file_name) {
+    if (boot_file_name.size() > Pkt4::MAX_FILE_LEN - 1) {
+        isc_throw(isc::BadValue, "boot file length must not exceed "
+                  << (Pkt4::MAX_FILE_LEN - 1));
+    }
+    boot_file_name_ = boot_file_name;
 }
 
 std::string
