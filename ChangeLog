@@ -1,3 +1,8 @@
+1155.	[func]		marcin
+	Kea can be configured to operate using read-only host database.
+	This is only supported for MySQL and PostgreSQL databases.
+	(Trac #4489 git 0d8dc7affb67ad8066b44c6f81532b79a641d50b)
+
 1154.	[bug]		stephen
 	Changes to logging to avoid premature destruction of some
 	objects during program exit.  On some systems this caused
