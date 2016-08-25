@@ -329,10 +329,15 @@ public:
 
     /// @brief Creates the IPv4 lease statistical data result set
     ///
-    /// The result is populated by iterating over the IPv4 leases in storage,
-    /// in ascending order by subnet ID, accumulating the lease state counts.
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by address, accumulating the lease state
+    /// counts per subnet. Note that walking the leases by address should
+    /// inherently group them by subnet, and while this does not gaurantee
+    /// ascending order of subnet id, it should be sufficient to accumulate
+    /// state counts per subnet.  This avoids introducing an additional
+    /// subnet_id index.
     /// At the completion of all entries for a given subnet, the counts are
-    /// used to create AddressStatsRow4 instances which are appended to an
+    /// used to create LeaseStatsRow instances which are appended to an
     /// internal vector.  The process results in a vector containing one entry
     /// per state per subnet.
     ///
@@ -341,9 +346,8 @@ public:
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
     void start() {
-        // Get the subnet_id index
-        const Lease4StorageSubnetIdIndex& idx
-            = storage4_.get<SubnetIdIndexTag>();
+        const Lease4StorageAddressIndex& idx
+            = storage4_.get<AddressIndexTag>();
 
         // Iterate over the leases in order by subnet, accumulating per
         // subnet counts for each state of interest.  As we finish each
@@ -351,12 +355,11 @@ public:
         SubnetID cur_id = 0;
         int64_t assigned = 0;
         int64_t declined = 0;
-        for(Lease4StorageSubnetIdIndex::const_iterator lease = idx.begin();
+        for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
             lease != idx.end(); ++lease) {
-
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
-            if ((*lease)->subnet_id_ > cur_id) {
+            if ((*lease)->subnet_id_ != cur_id) {
                 if (cur_id > 0) {
                     rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
                                                   assigned));
@@ -419,12 +422,17 @@ public:
 
     /// @brief Creates the IPv6 lease statistical data result set
     ///
-    /// The result is populated by iterating over the IPv6 leases in storage,
-    /// in ascending order by subnet ID, accumulating the lease state counts
-    /// per lease type.  At the completion of all entries for a given subnet,
-    /// the counts are used to create AddressStatsRow5 instances which are
-    /// appended to an internal vector.  The process results in a vector
-    /// containing one entry per state per lease type per subnet.
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by address, accumulating the lease state
+    /// counts per subnet. Note that walking the leases by address should
+    /// inherently group them by subnet, and while this does not gaurantee
+    /// ascending order of subnet id, it should be sufficient to accumulate
+    /// state counts per subnet.  This avoids introducing an additional
+    /// subnet_id index.
+    /// At the completion of all entries for a given subnet, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per lease type per subnet.
     ///
     /// Currently the states counted are:
     ///
@@ -432,8 +440,8 @@ public:
     /// - Lease::STATE_DECLINED
     virtual void start() {
         // Get the subnet_id index
-        const Lease6StorageSubnetIdIndex& idx
-            = storage6_.get<SubnetIdIndexTag>();
+        const Lease6StorageAddressIndex& idx
+            = storage6_.get<AddressIndexTag>();
 
         // Iterate over the leases in order by subnet, accumulating per
         // subnet counts for each state of interest.  As we finish each
@@ -443,12 +451,12 @@ public:
         int64_t declined = 0;
         int64_t assigned_pds = 0;
 
-        for(Lease6StorageSubnetIdIndex::const_iterator lease = idx.begin();
+        for(Lease6StorageAddressIndex::const_iterator lease = idx.begin();
             lease != idx.end(); ++lease) {
 
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
-            if ((*lease)->subnet_id_ > cur_id) {
+            if ((*lease)->subnet_id_ != cur_id) {
                 if (cur_id > 0) {
                     rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
                                                   Lease::STATE_DEFAULT,
