@@ -146,6 +146,86 @@ public:
     virtual ~SqlExchange() {};
     ExchangeColumnInfoContainer parameters_;   ///< Column names and types
 };
+
+/// @brief Contains a single row of lease statistical data
+///
+/// The contents of the row consist of a subnet ID, a lease
+/// type, a lease state, and the number of leases in that state
+/// for that type for that subnet ID.
+struct LeaseStatsRow {
+    /// @brief Default constructor
+    LeaseStatsRow() :
+        subnet_id_(0), lease_type_(Lease::TYPE_NA),
+        lease_state_(Lease::STATE_DEFAULT), state_count_(0) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// Constructor which defaults the type to TYPE_NA.
+    ///
+    /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_state The lease state counted
+    /// @param state_count The count of leases in the lease state
+    LeaseStatsRow(const SubnetID& subnet_id, const uint32_t lease_state,
+                  const int64_t state_count)
+        : subnet_id_(subnet_id), lease_type_(Lease::TYPE_NA),
+          lease_state_(lease_state), state_count_(state_count) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_type The lease type for this state count
+    /// @param lease_state The lease state counted
+    /// @param state_count The count of leases in the lease state
+    LeaseStatsRow(const SubnetID& subnet_id, const Lease::Type& lease_type,
+                  const uint32_t lease_state, const int64_t state_count)
+        : subnet_id_(subnet_id), lease_type_(lease_type),
+          lease_state_(lease_state), state_count_(state_count) {
+    }
+
+    /// @brief The subnet ID to which this data applies
+    SubnetID subnet_id_;
+    /// @brief The lease_type to which the count applies
+    Lease::Type lease_type_;
+    /// @brief The lease_state to which the count applies
+    uint32_t lease_state_;
+    /// @brief state_count The count of leases in the lease state
+    int64_t state_count_;
+};
+
+/// @brief Base class for fulfilling a statistical lease data query
+///
+/// LeaseMgr derivations implement this class such that it provides
+/// upto date statistical lease data organized as rows of LeaseStatsRow
+/// instances. The rows must be accessible in ascending order by subnet id.
+class LeaseStatsQuery {
+public:
+    /// @brief Default constructor
+    LeaseStatsQuery() {};
+
+    /// @brief virtual destructor
+    virtual ~LeaseStatsQuery() {};
+
+    /// @brief Executes the query
+    ///
+    /// This method should conduct whatever steps are required to
+    /// calculate the lease statistical data by examining the
+    /// lease data and making that results available row by row.
+    virtual void start() {};
+
+    /// @brief Fetches the next row of data
+    ///
+    /// @param[out] row Storage into which the row is fetched
+    ///
+    /// @return True if a row was fetched, false if there are no
+    /// more rows.
+    virtual bool getNextRow(LeaseStatsRow& row);
+};
+
+/// @brief Defines a pointer to an LeaseStatsQuery.
+typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
+
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified
@@ -396,6 +476,68 @@ public:
     ///
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
+
+    /// @brief Recalculates per-subnet and global stats for IPv4 leases
+    ///
+    /// This method recalculates the following statistics:
+    /// per-subnet:
+    /// - assigned-addresses
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    /// global:
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    ///
+    /// It invokes the virtual method, startLeaseStatsQuery4(), which
+    /// returns an instance of an LeaseStatsQuery.  The query
+    /// query contains a "result set"  where each row is an LeaseStatRow
+    /// that contains a subnet id, a lease type (currently always TYPE_NA),
+    /// a lease state, and the number of leases of that type, in that state
+    /// and is ordered by subnet id.  The method iterates over the
+    /// result set rows, setting the appropriate statistic per subnet and
+    /// adding to the approporate global statistic.
+    void recountLeaseStats4();
+
+    /// @brief Virtual method which creates and runs the IPv4 lease stats query
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with upto date IPv4 lease statistical data.  Each row of the
+    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Recalculates per-subnet and global stats for IPv6 leases
+    ///
+    /// This method recalculates the following statistics:
+    /// per-subnet:
+    /// - assigned-addresses
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    /// - assigned-pds
+    /// global:
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    ///
+    /// It invokes the virtual method, startLeaseStatsQuery6(), which
+    /// returns an instance of an LeaseStatsQuery.  The query contains
+    /// a "result set" where each row is an LeaseStatRow that contains
+    /// a subnet id, a lease type, a lease state, and the number of leases
+    /// of that type, in that state and is ordered by subnet id. The method
+    /// iterates over the result set rows, setting the appropriate statistic
+    /// per subnet and adding to the approporate global statistic.
+    void recountLeaseStats6();
+
+    /// @brief Virtual method which creates and runs the IPv6 lease stats query
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with upto date IPv6 lease statistical data.  Each row of the
+    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
     /// @brief Return backend type
     ///

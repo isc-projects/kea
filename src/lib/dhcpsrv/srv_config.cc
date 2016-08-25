@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -164,11 +165,17 @@ SrvConfig::removeStatistics() {
 
 void
 SrvConfig::updateStatistics() {
+    // Updating subnet statistics involves updating lease statistics, which
+    // is done by the LeaseMgr.  Since servers with subnets, must have a
+    // LeaseMgr, we do not bother updating subnet stats for servers without
+    // a lease manager, such as D2. @todo We should probably examine why
+    // "SrvConfig" is being used by D2.
+    if (LeaseMgrFactory::haveInstance()) {
+        // Updates  statistics for v4 and v6 subnets
+        getCfgSubnets4()->updateStatistics();
 
-    // Updates  statistics for v4 and v6 subnets
-    getCfgSubnets4()->updateStatistics();
-
-    getCfgSubnets6()->updateStatistics();
+        getCfgSubnets6()->updateStatistics();
+    }
 }
 
 }

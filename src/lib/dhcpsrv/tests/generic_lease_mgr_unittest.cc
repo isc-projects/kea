@@ -5,11 +5,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/io_address.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
-#include <dhcpsrv/database_connection.h>
-#include <asiolink/io_address.h>
+#include <stats/stats_mgr.h>
+
+#include <boost/foreach.hpp>
+
 #include <gtest/gtest.h>
+
 #include <sstream>
 
 using namespace std;
@@ -57,6 +64,7 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         /// a template
         leasetype6_.push_back(LEASETYPE6[i]);
     }
+
 }
 
 GenericLeaseMgrTest::~GenericLeaseMgrTest() {
@@ -2380,6 +2388,300 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 }
+
+void
+GenericLeaseMgrTest::checkStat(const std::string& name,
+                               const int64_t expected_value) {
+    stats::ObservationPtr obs =
+        stats::StatsMgr::instance().getObservation(name);
+
+    ASSERT_TRUE(obs) << " stat: " << name << " not found ";
+    ASSERT_EQ(expected_value, obs->getInteger().first)
+                << " stat: " << name << " value wrong";
+}
+
+void
+GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
+    // Global accumulators
+    int64_t declined_addresses = 0;
+    int64_t declined_reclaimed_addresses = 0;
+
+    // Iterate over all stats for each subnet
+    for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
+        BOOST_FOREACH(StatValPair expectedStat, expectedStats[subnet_idx]) {
+            // Verify the per subnet value.
+            checkStat(stats::StatsMgr::generateName("subnet", subnet_idx+1,
+                                                    expectedStat.first),
+                      expectedStat.second);
+
+            // Add the value to globals as needed.
+            if (expectedStat.first == "declined-addresses") {
+                declined_addresses += expectedStat.second;
+            } else if (expectedStat.first == "declined-reclaimed-addresses") {
+                declined_reclaimed_addresses += expectedStat.second;
+            }
+        }
+    }
+
+    // Verify the globals.
+    checkStat("declined-addresses", declined_addresses);
+    checkStat("declined-reclaimed-addresses", declined_reclaimed_addresses);
+}
+
+void
+GenericLeaseMgrTest::makeLease4(const std::string& address,
+                                const SubnetID& subnet_id,
+                                const uint32_t state) {
+    Lease4Ptr lease(new Lease4());
+
+    // set the address
+    lease->addr_ = IOAddress(address);
+
+    // make a MAC from the address
+    std::vector<uint8_t> hwaddr = lease->addr_.toBytes();
+    hwaddr.push_back(0);
+    hwaddr.push_back(0);
+
+    lease->hwaddr_.reset(new HWAddr(hwaddr, HTYPE_ETHER));
+    lease->valid_lft_ = 86400;
+    lease->cltt_ = 168256;
+    lease->subnet_id_ = subnet_id;
+    lease->state_ = state;
+    ASSERT_TRUE(lmptr_->addLease(lease));
+}
+
+void
+GenericLeaseMgrTest::makeLease6(const Lease::Type& type,
+                                const std::string& address,
+                                uint8_t prefix_len,
+                                const SubnetID& subnet_id,
+                                const uint32_t state) {
+    IOAddress addr(address);
+
+    // make a DUID from the address
+    std::vector<uint8_t> bytes = addr.toBytes();
+    bytes.push_back(prefix_len);
+
+    Lease6Ptr lease(new Lease6(type, addr, DuidPtr(new DUID(bytes)), 77,
+                               16000, 24000, 0, 0, subnet_id, HWAddrPtr(),
+                               prefix_len));
+    lease->state_ = state;
+    ASSERT_TRUE(lmptr_->addLease(lease));
+}
+
+void
+GenericLeaseMgrTest::testRecountLeaseStats4() {
+    using namespace stats;
+
+    StatsMgr::instance().removeAll();
+
+    // Create two subnets.
+    int num_subnets = 2;
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+    Pool4Ptr pool;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 2));
+    pool.reset(new Pool4(IOAddress("192.0.2.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(num_subnets);
+    for (int i = 0; i < num_subnets; ++i) {
+        expectedStats[i]["total-addresses"] = 256;
+        expectedStats[i]["assigned-addresses"] = 0;
+        expectedStats[i]["declined-addresses"] = 0;
+        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+    }
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Recount stats.  We should have the same results.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Now let's insert some leases into subnet 1.
+    int subnet_id = 1;
+
+    // Insert one lease in default state, i.e. assigned.
+    makeLease4("192.0.1.1", subnet_id);
+
+    // Insert one lease in declined state.
+    makeLease4("192.0.1.2", subnet_id, Lease::STATE_DECLINED);
+
+    // Insert one lease in the expired state.
+    makeLease4("192.0.1.3", subnet_id, Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Insert another lease in default state, i.e. assigned.
+    makeLease4("192.0.1.4", subnet_id);
+
+    // Update the expected stats list for subnet 1.
+    expectedStats[subnet_id - 1]["assigned-addresses"] = 2;
+    expectedStats[subnet_id - 1]["declined-addresses"] = 1;
+
+    // Now let's add leases to subnet 2.
+    subnet_id = 2;
+
+    // Insert one delined lease.
+    makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
+
+    // Update the expected stats.
+    expectedStats[subnet_id - 1]["declined-addresses"] = 1;
+
+    // Now Recount the stats.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Delete some leases from subnet, and update the expected stats.
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("192.0.1.1")));
+    expectedStats[0]["assigned-addresses"] = 1;
+
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("192.0.1.2")));
+    expectedStats[0]["declined-addresses"] = 0;
+
+    // Recount the stats.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+}
+
+
+void
+GenericLeaseMgrTest::testRecountLeaseStats6() {
+    using namespace stats;
+
+    StatsMgr::instance().removeAll();
+
+    // Create two subnets.
+    int num_subnets = 2;
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+    StatValMapList expectedStats(num_subnets);
+
+    int subnet_id = 1;
+    subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, subnet_id));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::FF")));
+    subnet->addPool(pool);
+    expectedStats[subnet_id - 1]["total-nas"] = 256;
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"),96,112));
+    subnet->addPool(pool);
+    expectedStats[subnet_id - 1]["total-pds"] = 65536;
+    cfg->add(subnet);
+
+    ++subnet_id;
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
+                             subnet_id));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 120));
+    subnet->addPool(pool);
+    expectedStats[subnet_id - 1]["total-nas"] = 256;
+    expectedStats[subnet_id - 1]["total-pds"] = 0;
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-nas/total-pds.
+    for (int i = 0; i < num_subnets; ++i) {
+        expectedStats[i]["assigned-nas"] = 0;
+        expectedStats[i]["declined-addresses"] = 0;
+        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+        expectedStats[i]["assigned-pds"] = 0;
+    }
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+
+    // Recount stats.  We should have the same results.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Now let's insert some leases into subnet 1.
+    subnet_id = 1;
+
+    // Insert three assigned NAs.
+    makeLease6(Lease::TYPE_NA, "3001:1::1", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::3", 0, subnet_id);
+    expectedStats[subnet_id - 1]["assigned-nas"] = 3;
+
+    // Insert two declined NAs.
+    makeLease6(Lease::TYPE_NA, "3001:1::4", 0, subnet_id,
+               Lease::STATE_DECLINED);
+    makeLease6(Lease::TYPE_NA, "3001:1::5", 0, subnet_id,
+               Lease::STATE_DECLINED);
+    expectedStats[subnet_id - 1]["declined-addresses"] = 2;
+
+    // Insert one expired NA.
+    makeLease6(Lease::TYPE_NA, "3001:1::6", 0, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Insert two assigned PDs.
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0100::", 112, subnet_id);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0200::", 112, subnet_id);
+    expectedStats[subnet_id - 1]["assigned-pds"] = 2;
+
+    // Insert two expired PDs.
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0300::", 112, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0400::", 112, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Now let's add leases to subnet 2.
+    subnet_id = 2;
+
+    // Insert two assigned NAs.
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
+    expectedStats[subnet_id - 1]["assigned-nas"] = 2;
+
+    // Insert one declined NA.
+    makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id,
+               Lease::STATE_DECLINED);
+    expectedStats[subnet_id - 1]["declined-addresses"] = 1;
+
+    // Now Recount the stats.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Delete some leases and update the expected stats.
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("3001:1::2")));
+    expectedStats[0]["assigned-nas"] = 2;
+
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("2001:db81::3")));
+    expectedStats[1]["declined-addresses"] = 0;
+
+    // Recount the stats.
+    ASSERT_NO_THROW(lmptr_->recountLeaseStats6());
+
+    // Make sure stats are as expected.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+}
+
 
 }; // namespace test
 }; // namespace dhcp

@@ -256,6 +256,268 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
+
+/// @brief Base Memfile derivation of the statistical lease data query
+///
+/// This class provides the functionality such as results storage and row
+/// fetching common to fulfilling the statistical lease data query.
+///
+class MemfileLeaseStatsQuery : public LeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    MemfileLeaseStatsQuery()
+    : rows_(0), next_pos_(rows_.end()) {
+    };
+
+    /// @brief Destructor
+    virtual ~MemfileLeaseStatsQuery() {};
+
+    /// @brief Fetches the next row in the result set
+    ///
+    /// Once the internal result set has been populated by invoking the
+    /// the start() method, this method is used to iterate over the
+    /// result set rows.  Once the last row has been fetched, subsequent
+    /// calls will return false.
+    /// @param row Storage for the fetched row
+    ///
+    /// @return True if the fetch succeeded, false if there are no more
+    /// rows to fetch.
+    virtual bool getNextRow(LeaseStatsRow& row) {
+        if (next_pos_ == rows_.end()) {
+            return (false);
+        }
+
+        row = *next_pos_;
+        ++next_pos_;
+        return (true);
+    }
+
+    /// @brief Returns the number of rows in the result set
+    int getRowCount() const {
+        return (rows_.size());
+    }
+
+protected:
+    /// @brief A vector containing the "result set"
+    std::vector<LeaseStatsRow> rows_;
+
+    /// @brief An iterator for accessing the next row within the result set
+    std::vector<LeaseStatsRow>::iterator next_pos_;
+};
+
+/// @brief Memfile derivation of the IPv4 statistical lease data query
+///
+/// This class is used to recalculate IPv4 lease statistics for Memfile
+/// lease storage.  It does so by iterating over the given storage,
+/// accumulating counts of leases in each of the monitored lease states
+/// for each subnet and storing these counts in an internal collection.
+/// The populated result set will contain one entry per monitored state
+/// per subnet.
+///
+class MemfileLeaseStatsQuery4 : public MemfileLeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    /// @param storage4 A pointer to the v4 lease storage to be counted
+    MemfileLeaseStatsQuery4(Lease4Storage& storage4)
+    : MemfileLeaseStatsQuery(), storage4_(storage4) {
+    };
+
+    /// @brief Destructor
+    virtual ~MemfileLeaseStatsQuery4() {};
+
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by address, accumulating the lease state
+    /// counts per subnet. Note that walking the leases by address should
+    /// inherently group them by subnet, and while this does not gaurantee
+    /// ascending order of subnet id, it should be sufficient to accumulate
+    /// state counts per subnet.  This avoids introducing an additional
+    /// subnet_id index.
+    /// At the completion of all entries for a given subnet, the counts are
+    /// used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    void start() {
+        const Lease4StorageAddressIndex& idx
+            = storage4_.get<AddressIndexTag>();
+
+        // Iterate over the leases in order by subnet, accumulating per
+        // subnet counts for each state of interest.  As we finish each
+        // subnet, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
+            lease != idx.end(); ++lease) {
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
+                                                  assigned));
+                    assigned = 0;
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
+                                                  declined));
+                    declined = 0;
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                ++assigned;
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                ++declined;
+            }
+        }
+
+        // Make the rows for last subnet, unless there were no rows
+        if (idx.begin() != idx.end()) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
+                                          assigned));
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
+                                          declined));
+        }
+
+        // Set the next row position to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
+private:
+    /// @brief The Memfile storage containing the IPv4 leases to analyze
+    Lease4Storage& storage4_;
+};
+
+
+/// @brief Memfile derivation of the IPv6 statistical lease data query
+///
+/// This class is used to recalculate IPv6 lease statistics for Memfile
+/// lease storage.  It does so by iterating over the given storage,
+/// accumulating counts of leases in each of the monitored lease states
+/// for each subnet and storing these counts in an internal collection.
+/// The populated result set will contain one entry per monitored state
+/// per subnet.
+///
+class MemfileLeaseStatsQuery6 : public MemfileLeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    /// @param storage6 A pointer to the v6 lease storage to be counted
+    MemfileLeaseStatsQuery6(Lease6Storage& storage6)
+        : MemfileLeaseStatsQuery(), storage6_(storage6) {
+    };
+
+    /// @brief Destructor
+    virtual ~MemfileLeaseStatsQuery6() {};
+
+    /// @brief Creates the IPv6 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by address, accumulating the lease state
+    /// counts per subnet. Note that walking the leases by address should
+    /// inherently group them by subnet, and while this does not gaurantee
+    /// ascending order of subnet id, it should be sufficient to accumulate
+    /// state counts per subnet.  This avoids introducing an additional
+    /// subnet_id index.
+    /// At the completion of all entries for a given subnet, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per lease type per subnet.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    virtual void start() {
+        // Get the subnet_id index
+        const Lease6StorageAddressIndex& idx
+            = storage6_.get<AddressIndexTag>();
+
+        // Iterate over the leases in order by subnet, accumulating per
+        // subnet counts for each state of interest.  As we finish each
+        // subnet, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        int64_t assigned_pds = 0;
+
+        for(Lease6StorageAddressIndex::const_iterator lease = idx.begin();
+            lease != idx.end(); ++lease) {
+
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned));
+                    assigned = 0;
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DECLINED,
+                                                  declined));
+                    declined = 0;
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned_pds));
+                    assigned_pds = 0;
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                switch((*lease)->type_) {
+                case Lease::TYPE_NA:
+                    ++assigned;
+                    break;
+                case Lease::TYPE_PD:
+                    ++assigned_pds;
+                    break;
+                default:
+                    break;
+                }
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                // In theory only NAs can be declined
+                if (((*lease)->type_) == Lease::TYPE_NA) {
+                    ++declined;
+                }
+            }
+        }
+
+        // Make the rows for last subnet, unless there were no rows
+        if (idx.begin() != idx.end()) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DEFAULT,
+                                          assigned));
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DECLINED,
+                                          declined));
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                          Lease::STATE_DEFAULT,
+                                          assigned_pds));
+        }
+
+        // Set the next row position to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
+private:
+    /// @brief The Memfile storage containing the IPv6 leases to analyze
+    Lease6Storage& storage6_;
+};
+
 // Explicit definition of class static constants.  Values are given in the
 // declaration so they're not needed here.
 const int Memfile_LeaseMgr::MAJOR_VERSION;
@@ -299,6 +561,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         }
         lfcSetup(conversion_needed);
     }
+
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -1046,6 +1309,20 @@ void Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) 
     if (do_lfc) {
         lfc_setup_->execute();
     }
+}
+
+LeaseStatsQueryPtr
+Memfile_LeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+Memfile_LeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_));
+    query->start();
+    return(query);
 }
 
 } // end of namespace isc::dhcp
