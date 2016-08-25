@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,7 @@ public:
 
     /// @brief returns next-server value
     /// @return next-server value
-    asiolink::IOAddress getNextServer() const {
+    const asiolink::IOAddress& getNextServer() const {
         return (next_server_);
     }
 
@@ -122,26 +122,26 @@ public:
     /// @brief sets the server-name value
     ///
     /// @param sname the value to be set
-    void setSname(const std::vector<uint8_t>& sname) {
+    void setSname(const std::string& sname) {
         sname_ = sname;
     }
 
     /// @brief sets the boot-file-name value
     ///
     /// @param filename the value to be set
-    void setFilename(const std::vector<uint8_t>& filename) {
+    void setFilename(const std::string& filename) {
         filename_ = filename;
     }
 
     /// @brief returns server-hostname value
     /// @return the vector that contains server-hostname (may be empty if not defined)
-    const std::vector<uint8_t>& getSname() const {
+    const std::string& getSname() const {
         return (sname_);
     }
 
     /// @brief returns boot-file-name value
     /// @return the vector that contains boot-file-name (may be empty if not defined)
-    const std::vector<uint8_t>& getFilename() const {
+    const std::string& getFilename() const {
         return (filename_);
     }
 
@@ -165,13 +165,13 @@ private:
     /// If set by the server-hostname parameter, this value will be
     /// set in the sname field of the DHCPv4 packet.
     /// This can be up to 64 octets long.
-    std::vector<uint8_t> sname_;
+    std::string sname_;
 
     /// @brief boot-file-name
     /// If set by the boot-file-name parameter, this value will be
     /// set in the file field of the DHCPv4 packet.
     /// This can be up to 128 octets long.
-    std::vector<uint8_t> filename_;
+    std::string filename_;
 
 };
 
@@ -214,8 +214,8 @@ public:
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
                   const CfgOptionPtr& options,
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
-                  const std::vector<uint8_t>& sname = std::vector<uint8_t>(),
-                  const std::vector<uint8_t>& filename = std::vector<uint8_t>());
+                  const std::string& sname = std::string(),
+                  const std::string& filename = std::string());
 
     /// @brief Adds a new class to the list
     ///

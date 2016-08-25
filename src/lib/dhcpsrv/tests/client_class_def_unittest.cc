@@ -316,7 +316,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
-    vector<uint8_t> empty;
+    string empty;
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(empty, cclass->getSname());
     EXPECT_EQ(empty, cclass->getFilename());
@@ -338,11 +338,8 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
 
-    string sname_txt = "This is a very long string that can be a server name";
-    vector<uint8_t> sname(sname_txt.begin(), sname_txt.end());
-
-    string filename_txt = "this-is-a-slightly-longish-name-of-a-file.txt";
-    vector<uint8_t> filename(sname_txt.begin(), sname_txt.end());
+    string sname = "This is a very long string that can be a server name";
+    string filename = "this-is-a-slightly-longish-name-of-a-file.txt";
 
     cclass->setNextServer(IOAddress("1.2.3.4"));
     cclass->setSname(sname);

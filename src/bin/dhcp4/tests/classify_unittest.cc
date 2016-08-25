@@ -20,54 +20,19 @@ using namespace std;
 
 namespace {
 
-/// @brief Set of JSON configurations used throughout the DORA tests.
+/// @brief Set of JSON configurations used throughout the classify tests.
 ///
 /// - Configuration 0:
 ///   - Used for testing direct traffic
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
-///   - Router option present: 10.0.0.200 and 10.0.0.201
-///   - Domain Name Server option present: 10.0.0.202, 10.0.0.203.
-///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
-///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
-///   - no classes
-///
-/// - Configuration 1:
-///   - The same as configuration 0, but has the following classes defined:
+///   - the following classes defined:
 ///     option[93].hex == 0x0009, next-server set to 1.2.3.4
 ///     option[93].hex == 0x0007, set server-hostname to deneb
 ///     option[93].hex == 0x0006, set boot-file-name to pxelinux.0
 ///     option[93].hex == 0x0001, set boot-file-name to ipxe.efi
 const char* CONFIGS[] = {
-// Configuration 0
-    "{ \"interfaces-config\": {"
-        "      \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"valid-lifetime\": 600,"
-        "\"subnet4\": [ { "
-        "    \"subnet\": \"10.0.0.0/24\", "
-        "    \"id\": 1,"
-        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"option-data\": [ {"
-        "        \"name\": \"routers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
-        "    },"
-        "    {"
-        "        \"name\": \"domain-name-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
-        "    },"
-        "    {"
-        "        \"name\": \"log-servers\","
-        "        \"data\": \"10.0.0.200,10.0.0.201\""
-        "    },"
-        "    {"
-        "        \"name\": \"cookie-servers\","
-        "        \"data\": \"10.0.0.202,10.0.0.203\""
-        "    } ]"
-        " } ]"
-    "}",
-
-    // Configuration 6
+    // Configuration 0
     "{ \"interfaces-config\": {"
         "   \"interfaces\": [ \"*\" ]"
         "},"
@@ -124,6 +89,19 @@ public:
     ~ClassifyTest() {
     }
 
+    /// @brief Does client exchanges and checks if fixed fields have expected values.
+    ///
+    /// Depending on the value of msgtype (allowed types: DHCPDISCOVER, DHCPREQUEST or
+    /// DHCPINFORM), this method sets up the server, then conducts specified exchange
+    /// and then checks if the response contains expected values of next-server, sname
+    /// and filename fields.
+    ///
+    /// @param config server configuration to be used
+    /// @param msgtype DHCPDISCOVER, DHCPREQUEST or DHCPINFORM
+    /// @param extra_opt option to include in client messages (optional)
+    /// @param exp_next_server expected value of the next-server field
+    /// @param exp_sname expected value of the sname field
+    /// @param exp_filename expected value of the filename field
     void
     testFixedFields(const char* config, uint8_t msgtype, const OptionPtr& extra_opt,
                     const std::string& exp_next_server, const std::string& exp_sname,
@@ -181,17 +159,17 @@ public:
 // This test checks that an incoming DISCOVER that does not match any classes
 // will get the fixed fields empty.
 TEST_F(ClassifyTest, fixedFieldsDiscoverNoClasses) {
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, OptionPtr(), "0.0.0.0", "", "");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, OptionPtr(), "0.0.0.0", "", "");
 }
 // This test checks that an incoming REQUEST that does not match any classes
 // will get the fixed fields empty.
 TEST_F(ClassifyTest, fixedFieldsRequestNoClasses) {
-    testFixedFields(CONFIGS[1], DHCPREQUEST, OptionPtr(), "0.0.0.0", "", "");
+    testFixedFields(CONFIGS[0], DHCPREQUEST, OptionPtr(), "0.0.0.0", "", "");
 }
 // This test checks that an incoming INFORM that does not match any classes
 // will get the fixed fields empty.
 TEST_F(ClassifyTest, fixedFieldsInformNoClasses) {
-    testFixedFields(CONFIGS[1], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
+    testFixedFields(CONFIGS[0], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
 }
 
 
@@ -200,21 +178,21 @@ TEST_F(ClassifyTest, fixedFieldsInformNoClasses) {
 TEST_F(ClassifyTest, fixedFieldsDiscoverNextServer) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
 
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, pxe, "1.2.3.4", "", "");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "1.2.3.4", "", "");
 }
 // This test checks that an incoming REQUEST that does match a class that has
 // next-server specified will result in a response that has the next-server set.
 TEST_F(ClassifyTest, fixedFieldsRequestNextServer) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
 
-    testFixedFields(CONFIGS[1], DHCPREQUEST, pxe, "1.2.3.4", "", "");
+    testFixedFields(CONFIGS[0], DHCPREQUEST, pxe, "1.2.3.4", "", "");
 }
 // This test checks that an incoming INFORM that does match a class that has
 // next-server specified will result in a response that has the next-server set.
 TEST_F(ClassifyTest, fixedFieldsInformNextServer) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
 
-    testFixedFields(CONFIGS[1], DHCPINFORM, pxe, "1.2.3.4", "", "");
+    testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "1.2.3.4", "", "");
 }
 
 
@@ -223,21 +201,21 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer) {
 TEST_F(ClassifyTest, fixedFieldsDiscoverHostname) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
 
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, pxe, "0.0.0.0", "deneb", "");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "0.0.0.0", "deneb", "");
 }
 // This test checks that an incoming REQUEST that does match a class that has
 // server-hostname specified will result in a response that has the sname field set.
 TEST_F(ClassifyTest, fixedFieldsRequestHostname) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
 
-    testFixedFields(CONFIGS[1], DHCPREQUEST, pxe, "0.0.0.0", "deneb", "");
+    testFixedFields(CONFIGS[0], DHCPREQUEST, pxe, "0.0.0.0", "deneb", "");
 }
 // This test checks that an incoming INFORM that does match a class that has
 // server-hostname specified will result in a response that has the sname field set.
 TEST_F(ClassifyTest, fixedFieldsInformHostname) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
 
-    testFixedFields(CONFIGS[1], DHCPINFORM, pxe, "0.0.0.0", "deneb", "");
+    testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "0.0.0.0", "deneb", "");
 }
 
 
@@ -246,21 +224,21 @@ TEST_F(ClassifyTest, fixedFieldsInformHostname) {
 TEST_F(ClassifyTest, fixedFieldsDiscoverFile1) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
 
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
 }
 // This test checks that an incoming REQUEST that does match a class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsRequestFile1) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
 
-    testFixedFields(CONFIGS[1], DHCPREQUEST, pxe, "0.0.0.0", "", "pxelinux.0");
+    testFixedFields(CONFIGS[0], DHCPREQUEST, pxe, "0.0.0.0", "", "pxelinux.0");
 }
 // This test checks that an incoming INFORM that does match a class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsInformFile1) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
 
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
 }
 
 
@@ -269,21 +247,21 @@ TEST_F(ClassifyTest, fixedFieldsInformFile1) {
 TEST_F(ClassifyTest, fixedFieldsDiscoverFile2) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
-    testFixedFields(CONFIGS[1], DHCPDISCOVER, pxe, "0.0.0.0", "", "ipxe.efi");
+    testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "0.0.0.0", "", "ipxe.efi");
 }
 // This test checks that an incoming REQUEST that does match a different class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsRequestFile2) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
-    testFixedFields(CONFIGS[1], DHCPREQUEST, pxe, "0.0.0.0", "", "ipxe.efi");
+    testFixedFields(CONFIGS[0], DHCPREQUEST, pxe, "0.0.0.0", "", "ipxe.efi");
 }
 // This test checks that an incoming INFORM that does match a different class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsInformFile2) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
-    testFixedFields(CONFIGS[1], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
+    testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
 }
 
 

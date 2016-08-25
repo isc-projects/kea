@@ -1745,12 +1745,11 @@ It is merely echoed by the server
         </para>
 
         <para>
-        For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
-        field is set to the value of next-server (if specified in a subnet). If
-        there is a boot-file-name option specified, its value is also set in the
-        file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
-        always set to 0.0.0.0. That capability is expected to be moved to
-        an external hook library that will be dedicated to cable modems.
+          Note: Kea 1.0 and earlier versions performed special actions for
+          clients that were in VENDOR_CLASS_docsis3.0. This is no longer the
+          case in Kea 1.1 and newer. In those newer versions the old behavior
+          can be achieved by defining VENDOR_CLASS_docsis3.0 and setting
+          its next-server and boot-file-name values appropriately.
         </para>
 
         <para>

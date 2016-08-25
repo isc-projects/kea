@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -585,6 +585,8 @@ TEST_F(ClientClassDefListParserTest, invalidClass) {
                  DhcpConfigError);
 }
 
+// Test verifies that without any class specified, the fixed fields have their
+// default, empty value.
 TEST_F(ClientClassDefParserTest, noFixedFields) {
 
     std::string cfg_text =
@@ -610,7 +612,8 @@ TEST_F(ClientClassDefParserTest, noFixedFields) {
     EXPECT_EQ(0, cclass->getFilename().size());
 }
 
-
+// Test verifies that it is possible to define next-server field and it
+// is actually set in the class properly.
 TEST_F(ClientClassDefParserTest, nextServer) {
 
     std::string cfg_text =
@@ -637,6 +640,7 @@ TEST_F(ClientClassDefParserTest, nextServer) {
     EXPECT_EQ(0, cclass->getFilename().size());
 }
 
+// Test verifies that the parser rejects bogus next-server value.
 TEST_F(ClientClassDefParserTest, nextServerBogus) {
 
     std::string bogus_v6 =
@@ -666,6 +670,8 @@ TEST_F(ClientClassDefParserTest, nextServerBogus) {
     EXPECT_THROW(parseClientClassDef(bogus_junk, Option::V4), DhcpConfigError);
 }
 
+// Test verifies that it is possible to define server-hostname field and it
+// is actually set in the class properly.
 TEST_F(ClientClassDefParserTest, serverName) {
 
     std::string cfg_text =
@@ -687,12 +693,12 @@ TEST_F(ClientClassDefParserTest, serverName) {
     ASSERT_TRUE(cclass);
 
     // And it should not have any fixed fields set
-    std::string exp_txt("hal9000");
-    std::vector<uint8_t> exp_sname(exp_txt.begin(), exp_txt.end());
+    std::string exp_sname("hal9000");
 
     EXPECT_EQ(exp_sname, cclass->getSname());
 }
 
+// Test verifies that the parser rejects bogus server-hostname value.
 TEST_F(ClientClassDefParserTest, serverNameInvalid) {
 
     std::string cfg_too_long =
@@ -712,6 +718,8 @@ TEST_F(ClientClassDefParserTest, serverNameInvalid) {
 }
 
 
+// Test verifies that it is possible to define boot-file-name field and it
+// is actually set in the class properly.
 TEST_F(ClientClassDefParserTest, filename) {
 
     std::string cfg_text =
@@ -733,12 +741,11 @@ TEST_F(ClientClassDefParserTest, filename) {
     ASSERT_TRUE(cclass);
 
     // And it should not have any fixed fields set
-    std::string exp_txt("ipxe.efi");
-    std::vector<uint8_t> exp_filename(exp_txt.begin(), exp_txt.end());
-
+    std::string exp_filename("ipxe.efi");
     EXPECT_EQ(exp_filename, cclass->getFilename());
 }
 
+// Test verifies that the parser rejects bogus boot-file-name value.
 TEST_F(ClientClassDefParserTest, filenameBogus) {
 
     // boot-file-name is allowed up to 128 bytes, this one is 129.
