@@ -63,6 +63,12 @@ const size_t OPTION_FORMATTED_VALUE_MAX_LEN = 8192;
 /// @brief Maximum length of option space name.
 const size_t OPTION_SPACE_MAX_LEN = 128;
 
+/// @brief Maximum length of the server hostname.
+const size_t SERVER_HOSTNAME_MAX_LEN = 64;
+
+/// @brief Maximum length of the boot file name.
+const size_t BOOT_FILE_NAME_MAX_LEN = 128;
+
 /// @brief Numeric value representing last supported identifier.
 ///
 /// This value is used to validate whether the identifier type stored in
@@ -81,7 +87,7 @@ class MySqlHostExchange {
 private:
 
     /// @brief Number of columns returned for SELECT queries send by this class.
-    static const size_t HOST_COLUMNS = 9;
+    static const size_t HOST_COLUMNS = 12;
 
 public:
 
@@ -99,17 +105,25 @@ public:
           dhcp4_subnet_id_(0), dhcp6_subnet_id_(0), ipv4_address_(0),
           hostname_length_(0), dhcp4_client_classes_length_(0),
           dhcp6_client_classes_length_(0),
+          dhcp4_next_server_(0),
+          dhcp4_server_hostname_length_(0),
+          dhcp4_boot_file_name_length_(0),
           dhcp4_subnet_id_null_(MLM_FALSE),
           dhcp6_subnet_id_null_(MLM_FALSE),
           ipv4_address_null_(MLM_FALSE), hostname_null_(MLM_FALSE),
           dhcp4_client_classes_null_(MLM_FALSE),
-          dhcp6_client_classes_null_(MLM_FALSE) {
+          dhcp6_client_classes_null_(MLM_FALSE),
+          dhcp4_next_server_null_(MLM_FALSE),
+          dhcp4_server_hostname_null_(MLM_FALSE),
+          dhcp4_boot_file_name_null_(MLM_FALSE) {
 
         // Fill arrays with 0 so as they don't include any garbage.
         memset(dhcp_identifier_buffer_, 0, sizeof(dhcp_identifier_buffer_));
         memset(hostname_, 0, sizeof(hostname_));
         memset(dhcp4_client_classes_, 0, sizeof(dhcp4_client_classes_));
         memset(dhcp6_client_classes_, 0, sizeof(dhcp6_client_classes_));
+        memset(dhcp4_server_hostname_, 0, sizeof(dhcp4_server_hostname_));
+        memset(dhcp4_boot_file_name_, 0, sizeof(dhcp4_boot_file_name_));
 
         // Set the column names for use by this class. This only comprises
         // names used by the MySqlHostExchange class. Derived classes will
@@ -123,8 +137,11 @@ public:
         columns_[6] = "hostname";
         columns_[7] = "dhcp4_client_classes";
         columns_[8] = "dhcp6_client_classes";
+        columns_[9] = "dhcp4_next_server";
+        columns_[10] = "dhcp4_server_hostname";
+        columns_[11] = "dhcp4_boot_file_name";
 
-        BOOST_STATIC_ASSERT(8 < HOST_COLUMNS);
+        BOOST_STATIC_ASSERT(11 < HOST_COLUMNS);
     };
 
     /// @brief Virtual destructor.
@@ -307,6 +324,32 @@ public:
             bind_[8].buffer = dhcp6_client_classes_;
             bind_[8].buffer_length = classes6_txt.length();
 
+            // ipv4_address : INT UNSIGNED NULL
+            // The address in the Host structure is an IOAddress object.  Convert
+            // this to an integer for storage.
+            dhcp4_next_server_ = static_cast<uint32_t>(host->getNextServer());
+            bind_[9].buffer_type = MYSQL_TYPE_LONG;
+            bind_[9].buffer = reinterpret_cast<char*>(&dhcp4_next_server_);
+            bind_[9].is_unsigned = MLM_TRUE;
+            // bind_[9].is_null = &MLM_FALSE; // commented out for performance
+                                              // reasons, see memset() above
+
+            // dhcp4_server_hostname
+            bind_[10].buffer_type = MYSQL_TYPE_STRING;
+            std::string server_hostname = host->getServerHostname();
+            strncpy(dhcp4_server_hostname_, server_hostname.c_str(),
+                    SERVER_HOSTNAME_MAX_LEN - 1);
+            bind_[10].buffer = dhcp4_server_hostname_;
+            bind_[10].buffer_length = server_hostname.length();
+
+            // dhcp4_boot_file_name
+            bind_[11].buffer_type = MYSQL_TYPE_STRING;
+            std::string boot_file_name = host->getBootFileName();
+            strncpy(dhcp4_boot_file_name_, boot_file_name.c_str(),
+                    BOOT_FILE_NAME_MAX_LEN - 1);
+            bind_[11].buffer = dhcp4_boot_file_name_;
+            bind_[11].buffer_length = boot_file_name.length();
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Host: "
@@ -399,6 +442,31 @@ public:
         bind_[8].length = &dhcp6_client_classes_length_;
         bind_[8].is_null = &dhcp6_client_classes_null_;
 
+        // dhcp4_next_server
+        dhcp4_next_server_null_ = MLM_FALSE;
+        bind_[9].buffer_type = MYSQL_TYPE_LONG;
+        bind_[9].buffer = reinterpret_cast<char*>(&dhcp4_next_server_);
+        bind_[9].is_unsigned = MLM_TRUE;
+        bind_[9].is_null = &dhcp4_next_server_null_;
+
+        // dhcp4_server_hostname
+        dhcp4_server_hostname_null_ = MLM_FALSE;
+        dhcp4_server_hostname_length_ = sizeof(dhcp4_server_hostname_);
+        bind_[10].buffer_type = MYSQL_TYPE_STRING;
+        bind_[10].buffer = reinterpret_cast<char*>(dhcp4_server_hostname_);
+        bind_[10].buffer_length = dhcp4_server_hostname_length_;
+        bind_[10].length = &dhcp4_server_hostname_length_;
+        bind_[10].is_null = &dhcp4_server_hostname_null_;
+
+        // dhcp4_boot_file_name
+        dhcp4_boot_file_name_null_ = MLM_FALSE;
+        dhcp4_boot_file_name_length_ = sizeof(dhcp4_boot_file_name_);
+        bind_[11].buffer_type = MYSQL_TYPE_STRING;
+        bind_[11].buffer = reinterpret_cast<char*>(dhcp4_boot_file_name_);
+        bind_[11].buffer_length = dhcp4_boot_file_name_length_;
+        bind_[11].length = &dhcp4_boot_file_name_length_;
+        bind_[11].is_null = &dhcp4_boot_file_name_null_;
+
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -468,10 +536,32 @@ public:
                                                dhcp6_client_classes_length_);
         }
 
+        // Set next server value (siaddr) if non NULL value returned.
+        asiolink::IOAddress next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS();
+        if (dhcp4_next_server_null_ == MLM_FALSE) {
+            next_server = asiolink::IOAddress(dhcp4_next_server_);
+        }
+
+        // Set server hostname (sname) if non NULL value returned.
+        std::string dhcp4_server_hostname;
+        if (dhcp4_server_hostname_null_ == MLM_FALSE) {
+            dhcp4_server_hostname = std::string(dhcp4_server_hostname_,
+                                                dhcp4_server_hostname_length_);
+        }
+
+        // Set boot file name (file) if non NULL value returned.
+        std::string dhcp4_boot_file_name;
+        if (dhcp4_boot_file_name_null_ == MLM_FALSE) {
+            dhcp4_boot_file_name = std::string(dhcp4_boot_file_name_,
+                                               dhcp4_boot_file_name_length_);
+        }
+
         // Create and return Host object from the data gathered.
         HostPtr h(new Host(dhcp_identifier_buffer_, dhcp_identifier_length_,
                            type, ipv4_subnet_id, ipv6_subnet_id, ipv4_reservation,
-                           hostname, dhcp4_client_classes, dhcp6_client_classes));
+                           hostname, dhcp4_client_classes, dhcp6_client_classes,
+                           next_server, dhcp4_server_hostname,
+                           dhcp4_boot_file_name));
         h->setHostId(host_id_);
 
         return (h);
@@ -580,6 +670,21 @@ private:
     /// client classes.
     unsigned long dhcp6_client_classes_length_;
 
+    /// Next server address (siaddr).
+    uint32_t dhcp4_next_server_;
+
+    /// Server hostname (sname).
+    char dhcp4_server_hostname_[SERVER_HOSTNAME_MAX_LEN];
+
+    /// A length of the string holding server hostname.
+    unsigned long dhcp4_server_hostname_length_;
+
+    /// Boot file name (file).
+    char dhcp4_boot_file_name_[BOOT_FILE_NAME_MAX_LEN];
+
+    /// A length of the string holding boot file name.
+    unsigned long dhcp4_boot_file_name_length_;
+
     /// @name Boolean values indicating if values of specific columns in
     /// the database are NULL.
     //@{
@@ -602,6 +707,15 @@ private:
     /// Boolean flag indicating if the value of DHCPv6 client classes is
     /// NULL.
     my_bool dhcp6_client_classes_null_;
+
+    /// Boolean flag indicating if the value of next server is NULL.
+    my_bool dhcp4_next_server_null_;
+
+    /// Boolean flag indicating if the value of server hostname is NULL.
+    my_bool dhcp4_server_hostname_null_;
+
+    /// Boolean flag indicating if the value of boot file name is NULL.
+    my_bool dhcp4_boot_file_name_null_;
 
     //@}
 
@@ -1817,6 +1931,7 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
                 "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
                 "o4.persistent, "
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
@@ -1840,6 +1955,7 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent "
             "FROM hosts AS h "
@@ -1855,6 +1971,7 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent "
             "FROM hosts AS h "
@@ -1872,6 +1989,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
@@ -1893,6 +2011,7 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent "
             "FROM hosts AS h "
@@ -1912,6 +2031,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
@@ -1934,8 +2054,9 @@ TaggedStatementArray tagged_statements = { {
     {MySqlHostDataSourceImpl::INSERT_HOST,
          "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
             "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-            "dhcp4_client_classes, dhcp6_client_classes) "
-         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+            "dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, "
+            "dhcp4_server_hostname, dhcp4_boot_file_name) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
     // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,

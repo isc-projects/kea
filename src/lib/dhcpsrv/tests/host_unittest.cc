@@ -192,7 +192,11 @@ TEST_F(HostTest, createFromHWAddrString) {
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
-                                        "somehost.example.org")));
+                                        "somehost.example.org",
+                                        std::string(), std::string(),
+                                        IOAddress("192.0.0.2"),
+                                        "server-hostname.example.org",
+                                        "bootfile.efi")));
     // The HW address should be set to non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
     ASSERT_TRUE(hwaddr);
@@ -205,6 +209,9 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_EQ(2, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     EXPECT_EQ("somehost.example.org", host->getHostname());
+    EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
+    EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
+    EXPECT_EQ("bootfile.efi", host->getBootFileName());
 
     // Use invalid identifier name
     EXPECT_THROW(Host("01:02:03:04:05:06", "bogus", SubnetID(1), SubnetID(2),
@@ -264,7 +271,12 @@ TEST_F(HostTest, createFromHWAddrBinary) {
                                         Host::IDENT_HWADDR,
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
-                                        "somehost.example.org")));
+                                        "somehost.example.org",
+                                        std::string(), std::string(),
+                                        IOAddress("192.0.0.2"),
+                                        "server-hostname.example.org",
+                                        "bootfile.efi")));
+
     // Hardware address should be non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
     ASSERT_TRUE(hwaddr);
@@ -277,6 +289,9 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ(2, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     EXPECT_EQ("somehost.example.org", host->getHostname());
+    EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
+    EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
+    EXPECT_EQ("bootfile.efi", host->getBootFileName());
 }
 
 // This test verifies that it is possible to create a Host object using
@@ -644,11 +659,17 @@ TEST_F(HostTest, setValues) {
     host->setIPv6SubnetID(SubnetID(234));
     host->setIPv4Reservation(IOAddress("10.0.0.1"));
     host->setHostname("other-host.example.org");
+    host->setNextServer(IOAddress("192.0.2.2"));
+    host->setServerHostname("server-hostname.example.org");
+    host->setBootFileName("bootfile.efi");
 
     EXPECT_EQ(123, host->getIPv4SubnetID());
     EXPECT_EQ(234, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
     EXPECT_EQ("other-host.example.org", host->getHostname());
+    EXPECT_EQ("192.0.2.2", host->getNextServer().toText());
+    EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
+    EXPECT_EQ("bootfile.efi", host->getBootFileName());
 
     // Remove IPv4 reservation.
     host->removeIPv4Reservation();
@@ -664,6 +685,12 @@ TEST_F(HostTest, setValues) {
     // Broadcast address can't be set.
     EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_BCAST_ADDRESS()),
                  isc::BadValue);
+
+    // Broadcast and IPv6 are invalid addresses for next server.
+    EXPECT_THROW(host->setNextServer(asiolink::IOAddress::IPV4_BCAST_ADDRESS()),
+                                     isc::BadValue);
+    EXPECT_THROW(host->setNextServer(IOAddress("2001:db8:1::1")),
+                                     isc::BadValue);
 }
 
 // Test that Host constructors initialize client classes from string.
@@ -918,6 +945,9 @@ TEST_F(HostTest, toText) {
     EXPECT_EQ("hwaddr=010203040506 ipv4_subnet_id=1 ipv6_subnet_id=2"
               " hostname=myhost.example.com"
               " ipv4_reservation=192.0.2.3"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -931,6 +961,9 @@ TEST_F(HostTest, toText) {
 
     EXPECT_EQ("hwaddr=010203040506 ipv6_subnet_id=2"
               " hostname=(empty) ipv4_reservation=(no)"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -945,6 +978,9 @@ TEST_F(HostTest, toText) {
                                         "myhost")));
 
     EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
               " ipv6_reservations=(none)", host->toText());
 
     // Add some classes.
@@ -952,6 +988,9 @@ TEST_F(HostTest, toText) {
     host->addClientClass4("router");
 
     EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router",
               host->toText());
@@ -960,6 +999,9 @@ TEST_F(HostTest, toText) {
     host->addClientClass6("device");
 
     EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=device dhcp6_class1=hub",
