@@ -1,3 +1,10 @@
+1156.	[bug]		tmark
+	Lease statistics are now recalculated during server startup and
+	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
+	back ends.  This addressses issues caused by accumulated values being lost
+	across restarts and reconfigurations making rendering values incorrect. 
+	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
+
 1155.	[func]		marcin
 	Kea can be configured to operate using read-only host database.
 	This is only supported for MySQL and PostgreSQL databases.
