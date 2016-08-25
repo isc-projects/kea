@@ -71,6 +71,7 @@ using namespace std;
 ///   lease object.
 
 namespace {
+    
 /// @brief Maximum length of the hostname stored in DNS.
 ///
 /// This length is restricted by the length of the domain-name carried
@@ -206,7 +207,14 @@ tagged_statements = { {
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
                         "state = ? "
-                            "WHERE address = ?"}
+                            "WHERE address = ?"},
+    {MySqlLeaseMgr::RECOUNT_LEASE4_STATS,
+     "SELECT subnet_id, state, count(state) as state_count "
+     "  FROM lease4 GROUP BY subnet_id, state ORDER BY subnet_id"},
+    {MySqlLeaseMgr::RECOUNT_LEASE6_STATS,
+     "SELECT subnet_id, lease_type, state, count(state) as state_count"
+     "  FROM lease6 GROUP BY subnet_id, lease_type, state "
+     "  ORDER BY subnet_id" }
     }
 };
 
@@ -1215,8 +1223,145 @@ private:
     uint32_t        state_;             ///< Lease state.
 };
 
+/// @brief MySql derivation of the statistical lease data query
+///
+/// This class is used to recalculate lease statistics for MySQL
+/// lease storage.  It does so by executing a query which returns a result
+/// containining contain one row per monitored state per lease type per
+/// subnet, ordered by subnet id in ascending order.
+///
+class MySqlLeaseStatsQuery : public LeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    /// @param conn A open connection to the database housing the lease data
+    /// @brief statement_index Index of the query's prepared statement
+    /// @brief fetch_type Indicates if query supplies lease type
+    MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
+                         const bool fetch_type)
+        : conn_(conn), statement_index_(statement_index), statement_(NULL),
+         fetch_type_(fetch_type),
+         // Set the number of columns in the bind array based on fetch_type
+         // This is the number of columns expected in the result set
+         bind_(fetch_type_ ? 4 : 3) {
+        if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
+            isc_throw(BadValue, "MySqlLeaseStatsQuery"
+                      " - invalid statement index" << statement_index_);
+        }
+
+        statement_ = conn.statements_[statement_index_];
+    }
+
+    /// @brief Destructor
+    virtual ~MySqlLeaseStatsQuery() {
+        (void) mysql_stmt_free_result(statement_);
+    }
+
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by executing a SQL query against the
+    /// lease(4/6) table which sums the leases per lease state per lease
+    /// type (v6 only) per subnet id. This method binds the statement to
+    /// the output bind array and then executes the statement, and fetches
+    /// entire result set.
+    void start() {
+        int col = 0;
+        // subnet_id: unsigned int
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&subnet_id_);
+        bind_[col].is_unsigned = MLM_TRUE;
+        ++col;
+
+        // Fetch the lease type if we were told to do so.
+        if (fetch_type_) {
+            // lease type:  uint32_t
+            bind_[col].buffer_type = MYSQL_TYPE_LONG;
+            bind_[col].buffer = reinterpret_cast<char*>(&lease_type_);
+            bind_[col].is_unsigned = MLM_TRUE;
+            ++col;
+        } else {
+            fetch_type_ = Lease::TYPE_NA;
+        }
+
+        // state:  uint32_t
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&lease_state_);
+        bind_[col].is_unsigned = MLM_TRUE;
+        ++col;
+
+        // state_count_: uint32_t
+        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer = reinterpret_cast<char*>(&state_count_);
+        bind_[col].is_unsigned = MLM_TRUE;
+
+        // Set up the MYSQL_BIND array for the data being returned
+        // and bind it to the statement.
+        int status = mysql_stmt_bind_result(statement_, &bind_[0]);
+        conn_.checkError(status, statement_index_, "outbound binding failed");
+
+        // Execute the statement
+        status = mysql_stmt_execute(statement_);
+        conn_.checkError(status, statement_index_, "unable to execute");
+
+        // Ensure that all the lease information is retrieved in one go to avoid
+        // overhead of going back and forth between client and server.
+        status = mysql_stmt_store_result(statement_);
+        conn_.checkError(status, statement_index_, "results storage failed");
+    }
 
 
+    /// @brief Fetches the next row in the result set
+    ///
+    /// Once the internal result set has been populated by invoking the
+    /// the start() method, this method is used to iterate over the
+    /// result set rows. Once the last row has been fetched, subsequent
+    /// calls will return false.
+    ///
+    /// @param row Storage for the fetched row
+    ///
+    /// @return True if the fetch succeeded, false if there are no more
+    /// rows to fetch.
+    bool getNextRow(LeaseStatsRow& row) {
+        bool have_row = false;
+        int status = mysql_stmt_fetch(statement_);
+        if (status == MLM_MYSQL_FETCH_SUCCESS) {
+            row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
+            row.lease_type_ = static_cast<Lease::Type>(lease_type_);
+            row.lease_state_ = lease_state_;
+            row.state_count_ = state_count_;
+            have_row = true;
+        } else if (status != MYSQL_NO_DATA) {
+            conn_.checkError(status, statement_index_, "getNextRow failed");
+        }
+
+        return (have_row);
+    }
+
+private:
+    /// @brief Database connection to use to execute the query
+    MySqlConnection& conn_;
+
+    /// @brief Index of the query's prepared statement
+    size_t statement_index_;
+
+    /// @brief The query's prepared statement
+    MYSQL_STMT *statement_;
+
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
+
+    /// @brief Bind array used to store the query result set;
+    std::vector<MYSQL_BIND> bind_;
+
+    /// @brief Receives subnet ID when fetching a row
+    uint32_t subnet_id_;
+    /// @brief Receives the lease type when fetching a row
+    uint32_t lease_type_;
+    /// @brief Receives the lease state when fetching a row
+    uint32_t lease_state_;
+    /// @brief Receives the state count when fetching a row
+    uint32_t state_count_;
+};
 
 // MySqlLeaseMgr Constructor and Destructor
 
@@ -2026,6 +2171,23 @@ MySqlLeaseMgr::getVersion() const {
     return (std::make_pair(major, minor));
 }
 
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE4_STATS,
+                                                      false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE6_STATS,
+                                                      true));
+    query->start();
+    return(query);
+}
 
 void
 MySqlLeaseMgr::commit() {

@@ -123,6 +123,9 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 AllocEngine6Test::AllocEngine6Test() {
     CfgMgr::instance().clear();
 
+    // This lease mgr needs to exist to before configuration commits.
+    factory_.create("type=memfile universe=6 persist=false");
+
     duid_ = DuidPtr(new DUID(std::vector<uint8_t>(8, 0x42)));
     iaid_ = 42;
 
@@ -141,7 +144,6 @@ AllocEngine6Test::AllocEngine6Test() {
 
     initFqdn("", false, false);
 
-    factory_.create("type=memfile universe=6 persist=false");
 }
 
 void
@@ -525,6 +527,10 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
+
+    // This lease mgr needs to exist to before configuration commits.
+    factory_.create("type=memfile universe=4 persist=false");
+
     // Create fresh instance of the HostMgr, and drop any previous HostMgr state.
     HostMgr::instance().create();
 
@@ -548,7 +554,6 @@ AllocEngine4Test::AllocEngine4Test() {
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.109"));
     cfg_mgr.commit();
 
-    factory_.create("type=memfile universe=4 persist=false");
 
     // Create a default context. Note that remaining parameters must be
     // assigned when needed.

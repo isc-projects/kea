@@ -92,6 +92,7 @@ public:
 
     /// @}
 
+
     /// @brief Specifies universe (V4, V6)
     ///
     /// This enumeration is used by various functions in Memfile %Lease Manager,
@@ -594,6 +595,23 @@ public:
     int getLFCExitStatus() const;
     //@}
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery4 and then
+    /// invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery6 and then
+    /// invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery.
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
     /// @name Protected methods used for %Lease File Cleanup.
     /// The following methods are protected so as they can be accessed and

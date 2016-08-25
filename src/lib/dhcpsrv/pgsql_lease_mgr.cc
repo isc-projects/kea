@@ -26,7 +26,7 @@ using namespace std;
 
 namespace {
 
-/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source 
+/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source
 /// columns.  This is coverd by tickets #3557, #4530, and PR#9.
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
@@ -200,6 +200,19 @@ PgSqlTaggedStatement tagged_statements[] = {
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "state = $13 "
       "WHERE address = $14"},
+
+    // RECOUNT_LEASE4_STATS,
+    { 0, { OID_NONE },
+      "recount_lease4_stats",
+      "SELECT subnet_id, state, count(state) as state_count "
+      "FROM lease4 GROUP BY subnet_id, state ORDER BY subnet_id"},
+
+    // RECOUNT_LEASE6_STATS,
+    { 0, { OID_NONE },
+      "recount_lease6_stats",
+      "SELECT subnet_id, lease_type, state, count(state) as state_count "
+      "FROM lease6 GROUP BY subnet_id, lease_type, state "
+      "ORDER BY subnet_id"},
 
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
@@ -679,6 +692,107 @@ private:
     uint32_t        pref_lifetime_;
     std::string preferred_lft_str_;
     //@}
+};
+
+/// @brief Base PgSql derivation of the statistical lease data query
+///
+/// This class provides the functionality such as results storgae and row
+/// fetching common to fulfilling the statistical lease data query.
+///
+class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    /// @param conn A open connection to the database housing the lease data
+    /// @param statement The lease data SQL prepared statement to execute
+    /// @param fetch_statement Indicates whether or not lease_type should be
+    /// fetched from the result set
+    PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
+                         const bool fetch_type)
+        : conn_(conn), statement_(statement), result_set_(), next_row_(0),
+         fetch_type_(fetch_type) {
+    }
+
+    /// @brief Destructor
+    virtual ~PgSqlLeaseStatsQuery() {};
+
+    /// @brief Creates the lease statistical data result set
+    ///
+    /// The result set is populated by executing a  prepared SQL query
+    /// against the database which sums the leases per lease state per
+    /// subnet id.
+    void start() {
+        // The query has no parameters, so we only need it's name.
+        result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+                                          0, NULL, NULL, NULL, 0)));
+
+        conn_.checkStatementError(*result_set_, statement_);
+    }
+
+    /// @brief Fetches the next row in the result set
+    ///
+    /// Once the internal result set has been populated by invoking the
+    /// the start() method, this method is used to iterate over the
+    /// result set rows. Once the last row has been fetched, subsequent
+    /// calls will return false.
+    ///
+    /// @param row Storage for the fetched row
+    ///
+    /// @return True if the fetch succeeded, false if there are no more
+    /// rows to fetch.
+    bool getNextRow(LeaseStatsRow& row) {
+        // If we're past the end, punt.
+        if (next_row_ >= result_set_->getRows()) {
+            return (false);
+        }
+
+        // Fetch the subnet id.
+        uint32_t col = 0;
+        uint32_t subnet_id;
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col, subnet_id);
+        row.subnet_id_ = static_cast<SubnetID>(subnet_id);
+        ++col;
+
+        // Fetch the lease type if we were told to do so.
+        if (fetch_type_) {
+            uint32_t lease_type;
+            PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                          lease_type);
+            row.lease_type_ = static_cast<Lease::Type>(lease_type);
+            ++col;
+        } else {
+            row.lease_type_ = Lease::TYPE_NA;
+        }
+
+        // Fetch the lease state.
+        PgSqlExchange::getColumnValue(*result_set_, next_row_ , col,
+                                      row.lease_state_);
+        ++col;
+
+        // Fetch the state count.
+        PgSqlExchange::getColumnValue(*result_set_, next_row_, col,
+                                      row.state_count_);
+
+        // Point to the next row.
+        ++next_row_;
+        return (true);
+    }
+
+protected:
+    /// @brief Database connection to use to execute the query
+    PgSqlConnection& conn_;
+
+    /// @brief The query's prepared statement
+    PgSqlTaggedStatement& statement_;
+
+    /// @brief The result set returned by Postgres.
+    boost::shared_ptr<PgSqlResult> result_set_;
+
+    /// @brief Index of the next row to fetch
+    uint32_t next_row_;
+
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
@@ -1220,6 +1334,26 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
     // Delete leases.
     return (deleteLeaseCommon(statement_index, bind_array));
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_,
+                                 tagged_statements[RECOUNT_LEASE4_STATS],
+                                 false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_,
+                                 tagged_statements[RECOUNT_LEASE6_STATS],
+                                 true));
+    query->start();
+    return(query);
 }
 
 string

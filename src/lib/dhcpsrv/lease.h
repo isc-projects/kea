@@ -52,8 +52,6 @@ struct Lease {
     /// @brief Expired and reclaimed lease.
     static const uint32_t STATE_EXPIRED_RECLAIMED;
 
-    //@}
-
     /// @brief Returns name(s) of the basic lease state(s).
     ///
     /// @param state A numeric value holding a state information.
