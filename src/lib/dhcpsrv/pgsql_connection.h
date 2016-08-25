@@ -317,7 +317,11 @@ public:
     ///
     /// Creates the prepared statements for all of the SQL statements used
     /// by the PostgreSQL backend.
-    /// @param tagged_statements an array of statements to be compiled
+    ///
+    /// @param start_statement Pointer to the first statement in range of the
+    /// statements to be compiled.
+    /// @param end_statement Pointer to the statement marking end of the
+    /// range of statements to be compiled. This last statement is not compiled.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.

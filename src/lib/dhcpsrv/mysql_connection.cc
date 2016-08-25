@@ -12,7 +12,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <algorithm>
-#include <iterator>
 #include <stdint.h>
 #include <string>
 #include <limits>
@@ -215,18 +214,14 @@ MySqlConnection::prepareStatement(uint32_t index, const char* text) {
 void
 MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
                                    const TaggedStatement* end_statement) {
-    size_t num_statements = std::distance(start_statement, end_statement);
-    if (num_statements == 0) {
-        return;
-    }
-
-    // Expand vectors of allocated statements to hold additional statements.
-    statements_.resize(statements_.size() + num_statements, NULL);
-    text_statements_.resize(text_statements_.size() + num_statements, std::string(""));
-
     // Created the MySQL prepared statements for each DML statement.
     for (const TaggedStatement* tagged_statement = start_statement;
          tagged_statement != end_statement; ++tagged_statement) {
+        if (tagged_statement->index >= statements_.size()) {
+            statements_.resize(tagged_statement->index + 1, NULL);
+            text_statements_.resize(tagged_statement->index + 1,
+                                    std::string(""));
+        }
         prepareStatement(tagged_statement->index,
                          tagged_statement->text);
     }
