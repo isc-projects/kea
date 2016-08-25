@@ -11,6 +11,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/db_exceptions.h>
@@ -19,6 +20,7 @@
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/array.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/static_assert.hpp>
 
@@ -846,7 +848,7 @@ private:
         size_t start_column_;
 
         /// @brief Option id.
-        uint64_t option_id_;
+        uint32_t option_id_;
 
         /// @brief Option code.
         uint16_t code_;
@@ -916,7 +918,7 @@ private:
         //@}
 
         /// @brief Option id for last processed row.
-        uint64_t most_recent_option_id_;
+        uint32_t most_recent_option_id_;
     };
 
     /// @brief Pointer to the @ref OptionProcessor class.
@@ -1113,7 +1115,7 @@ public:
     /// @brief Returns last fetched reservation id.
     ///
     /// @return Reservation id or 0 if no reservation data is fetched.
-    uint64_t getReservationId() const {
+    uint32_t getReservationId() const {
         if (reserv_type_null_ == MLM_FALSE) {
             return (reservation_id_);
         }
@@ -1251,7 +1253,7 @@ public:
 private:
 
     /// @brief IPv6 reservation id.
-    uint64_t reservation_id_;
+    uint32_t reservation_id_;
 
     /// @brief IPv6 reservation type.
     uint8_t reserv_type_;
@@ -1272,7 +1274,7 @@ private:
     uint8_t prefix_len_;
 
     /// @brief IAID.
-    uint8_t iaid_;
+    uint32_t iaid_;
 
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
@@ -1294,7 +1296,7 @@ private:
     //@}
 
     /// @brief Reservation id for last processed row.
-    uint64_t most_recent_reservation_id_;
+    uint32_t most_recent_reservation_id_;
 
 };
 
@@ -1585,7 +1587,7 @@ private:
     std::vector<uint8_t> value_;
 
     /// @brief Option value length.
-    size_t value_len_;
+    unsigned long value_len_;
 
     /// @brief Formatted option value length.
     unsigned long formatted_value_len_;
@@ -1594,7 +1596,7 @@ private:
     std::string space_;
 
     /// @brief Option space name length.
-    size_t space_len_;
+    unsigned long space_len_;
 
     /// @brief Boolean flag indicating if the option is always returned to
     /// a client or only when requested.
@@ -1604,7 +1606,7 @@ private:
     std::string client_class_;
 
     /// @brief Length of the string holding client classes for the option.
-    size_t client_class_len_;
+    unsigned long client_class_len_;
 
     /// @brief Subnet identifier.
     uint32_t subnet_id_;
@@ -1630,12 +1632,11 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of SQL statements.
+    /// It is assumed that the order is such that the indicies of statements
+    /// reading the database are less than those of statements modifying the
+    /// database.
     enum StatementIndex {
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_OPTION,       // Insert DHCPv4 option
-        INSERT_V6_OPTION,       // Insert DHCPv6 option
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
@@ -1643,8 +1644,19 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_VERSION,            // Obtain version number
+        INSERT_HOST,            // Insert new host to collection
+        INSERT_V6_RESRV,        // Insert v6 reservation
+        INSERT_V4_OPTION,       // Insert DHCPv4 option
+        INSERT_V6_OPTION,       // Insert DHCPv6 option
         NUM_STATEMENTS          // Number of statements
     };
+
+    /// @brief Index of first statement performing write to the database.
+    ///
+    /// This value is used to mark border line between queries and other
+    /// statements and statements performing write operation on the database,
+    /// such as INSERT, DELETE, UPDATE.
+    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST;
 
     /// @brief Constructor.
     ///
@@ -1751,6 +1763,15 @@ public:
                          StatementIndex stindex,
                          boost::shared_ptr<MySqlHostExchange> exchange) const;
 
+    /// @brief Throws exception if database is read only.
+    ///
+    /// This method should be called by the methods which write to the
+    /// database. If the backend is operating in read-only mode this
+    /// method will throw exception.
+    ///
+    /// @throw DbReadOnly if backend is operating in read only mode.
+    void checkReadOnly() const;
+
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<MySqlHostWithOptionsExchange> host_exchange_;
@@ -1776,39 +1797,18 @@ public:
     /// @brief MySQL connection
     MySqlConnection conn_;
 
+    /// @brief Indicates if the database is opened in read only mode.
+    bool is_readonly_;
 };
 
-namespace {
+
+/// @brief Array of tagged statements.
+typedef boost::array<TaggedStatement, MySqlHostDataSourceImpl::NUM_STATEMENTS>
+TaggedStatementArray;
+
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve hosts from the database.
-TaggedStatement tagged_statements[] = {
-    // Inserts a host into the 'hosts' table.
-    {MySqlHostDataSourceImpl::INSERT_HOST,
-         "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
-            "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-            "dhcp4_client_classes, dhcp6_client_classes) "
-         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
-
-    // Inserts a single IPv6 reservation into 'reservations' table.
-    {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
-         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?)"},
-
-    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
-         "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
-            "persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
-
-    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
-         "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
-            "persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
-
+TaggedStatementArray tagged_statements = { {
     // Retrieves host information, IPv6 reservations and both DHCPv4 and
     // DHCPv6 options associated with the host. The LEFT JOIN clause is used
     // to retrieve information from 4 different tables using a single query.
@@ -1930,11 +1930,33 @@ TaggedStatement tagged_statements[] = {
     {MySqlHostDataSourceImpl::GET_VERSION,
             "SELECT version, minor FROM schema_version"},
 
-    // Marks the end of the statements table.
-    {MySqlHostDataSourceImpl::NUM_STATEMENTS, NULL}
-};
+    // Inserts a host into the 'hosts' table.
+    {MySqlHostDataSourceImpl::INSERT_HOST,
+         "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
+            "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+            "dhcp4_client_classes, dhcp6_client_classes) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
-}; // end anonymouse namespace
+    // Inserts a single IPv6 reservation into 'reservations' table.
+    {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
+         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+            "dhcp6_iaid, host_id) "
+         "VALUES (?,?,?,?,?)"},
+
+    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
+         "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
+            "persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+
+    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
+         "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
+            "persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"}}
+};
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
@@ -1944,23 +1966,43 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new MySqlIPv6ReservationExchange()),
       host_option_exchange_(new MySqlOptionExchange()),
-      conn_(parameters) {
+      conn_(parameters),
+      is_readonly_(false) {
 
     // Open the database.
     conn_.openDatabase();
 
-    // Disable autocommit.  To avoid a flush to disk on every commit, the global
-    // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
-    // cause the changes to be written to the log, but flushed to disk in the
-    // background every second.  Setting the parameter to that value will speed
-    // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(conn_.mysql_, 0);
+    // Enable autocommit. In case transaction is explicitly used, this
+    // setting will be overwritten for the transaction. However, there are
+    // cases when lack of autocommit could cause transactions to hang
+    // until commit or rollback is explicitly called. This already
+    // caused issues for some unit tests which were unable to cleanup
+    // the database after the test because of pending transactions.
+    // Use of autocommit will eliminate this problem.
+    my_bool result = mysql_autocommit(conn_.mysql_, 1);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(conn_.mysql_));
     }
 
-    // Prepare all statements likely to be used.
-    conn_.prepareStatements(tagged_statements, NUM_STATEMENTS);
+    // Prepare query statements. Those are will be only used to retrieve
+    // information from the database, so they can be used even if the
+    // database is read only for the current user.
+    conn_.prepareStatements(tagged_statements.begin(),
+                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
+
+    // Check if the backend is explicitly configured to operate with
+    // read only access to the database.
+    is_readonly_ = conn_.configuredReadOnly();
+
+    // If we are using read-write mode for the database we also prepare
+    // statements for INSERTS etc.
+    if (!is_readonly_) {
+        // Prepare statements for writing to the database, e.g. INSERT.
+        conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
+                                tagged_statements.end());
+    } else {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_READONLY);
+    }
 }
 
 MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
@@ -2159,6 +2201,14 @@ getHost(const SubnetID& subnet_id,
     return (result);
 }
 
+void
+MySqlHostDataSourceImpl::checkReadOnly() const {
+    if (is_readonly_) {
+        isc_throw(ReadOnlyDb, "MySQL host database backend is configured to"
+                  " operate in read only mode");
+    }
+}
+
 
 MySqlHostDataSource::
 MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
@@ -2171,6 +2221,9 @@ MySqlHostDataSource::~MySqlHostDataSource() {
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
     // Initiate MySQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -2493,12 +2546,16 @@ std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
 
 void
 MySqlHostDataSource::commit() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.commit();
 }
 
 
 void
 MySqlHostDataSource::rollback() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
     impl_->conn_.rollback();
 }
 

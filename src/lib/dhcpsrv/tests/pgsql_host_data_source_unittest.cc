@@ -64,8 +64,13 @@ public:
     /// close the database.  Then reopen it and delete everything created by
     /// the test.
     virtual ~PgSqlHostDataSourceTest() {
-        hdsptr_->rollback();
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
         HostDataSourceFactory::destroy();
+        hdsptr_.reset();
         destroyPgSQLSchema();
     }
 
@@ -166,6 +171,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
 
     // Tidy up after the test
     destroyPgSQLSchema();
+}
+
+
+// This test verifies that database backend can operate in Read-Only mode.
+TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
+    testReadOnlyDatabase(PGSQL_VALID_TYPE);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

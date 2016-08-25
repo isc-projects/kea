@@ -130,6 +130,16 @@ PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
 }
 
 void
+PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
+                                   const PgSqlTaggedStatement* end_statement) {
+    // Created the PostgreSQL prepared statements.
+    for (const PgSqlTaggedStatement* tagged_statement = start_statement;
+         tagged_statement != end_statement; ++tagged_statement) {
+        prepareStatement(*tagged_statement);
+    }
+}
+
+void
 PgSqlConnection::openDatabase() {
     string dbconnparameters;
     string shost = "localhost";

@@ -273,6 +273,16 @@ public:
     ///        has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
+    /// @brief Commit Transactions
+    ///
+    /// Commits all pending database operations.
+    virtual void commit();
+
+    /// @brief Rollback Transactions
+    ///
+    /// Rolls back all pending database operations.
+    virtual void rollback();
+
 private:
 
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.

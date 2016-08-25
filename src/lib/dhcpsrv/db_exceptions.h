@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,6 +37,13 @@ public:
 class DuplicateEntry : public Exception {
 public:
     DuplicateEntry(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Attempt to modify data in read-only database.
+class ReadOnlyDb : public Exception {
+public:
+    ReadOnlyDb(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
