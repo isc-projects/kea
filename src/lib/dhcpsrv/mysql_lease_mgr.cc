@@ -1235,8 +1235,8 @@ public:
     /// @brief Constructor
     ///
     /// @param conn A open connection to the database housing the lease data
-    /// @brief statement_index Index of the query's prepared statement
-    /// @brief fetch_type Indicates if query supplies lease type
+    /// @param statement_index Index of the query's prepared statement
+    /// @param fetch_type Indicates if query supplies lease type
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),

@@ -705,7 +705,7 @@ public:
     ///
     /// @param conn A open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement to execute
-    /// @param fetch_statement Indicates whether or not lease_type should be
+    /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set
     PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
                          const bool fetch_type)
