@@ -1486,8 +1486,13 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ASSERT_EQ(0, rcode_);
 }
 
-// Checks if DOCSIS client packets are classified properly
-TEST_F(Dhcpv4SrvTest, docsisClientClassification) {
+/// Checks if DOCSIS client packets are classified properly
+///
+/// @todo: With the change in #4626 the vendorClassSpecificProcessing
+/// code was removed and replaced with generic classification. One day
+/// we should rewrite this test to use classes. It would check that the
+/// classification system can be used for docsis packets.
+TEST_F(Dhcpv4SrvTest, DISABLED_docsisClientClassification) {
 
     NakedDhcpv4Srv srv(0);
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
     : name_(name), match_expr_(match_expr), cfg_option_(cfg_option),
-      next_server_(asiolink::IOAddress("0.0.0.0")) {
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -34,7 +34,8 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      cfg_option_(new CfgOption()), next_server_(asiolink::IOAddress("0.0.0.0")) {
+      cfg_option_(new CfgOption()),
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
@@ -124,8 +125,8 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const CfgOptionPtr& cfg_option,
                                 asiolink::IOAddress next_server,
-                                const std::vector<uint8_t>& sname,
-                                const std::vector<uint8_t>& filename) {
+                                const std::string& sname,
+                                const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setNextServer(next_server);
     cclass->setSname(sname);

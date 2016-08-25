@@ -119,43 +119,42 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
     std::string name;
     try {
         name = string_values_->getParam("name");
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << class_def_cfg->getPosition() << ")");
-    }
 
-    // Let's parse the next-server field
-    IOAddress next_server("0.0.0.0");
-    string next_server_txt = string_values_->getOptionalParam("next-server", "0.0.0.0");
-    try {
-        next_server = IOAddress(next_server_txt);
-    } catch (const IOError& ex) {
-        isc_throw(DhcpConfigError, "Invalid next-server value specified: '"
-                  << next_server_txt << "'");
-    }
-    if (next_server.getFamily() != AF_INET) {
-        isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                  << next_server_txt << "', must be IPv4 address");
-    }
+        // Let's parse the next-server field
+        IOAddress next_server("0.0.0.0");
+        string next_server_txt = string_values_->getOptionalParam("next-server", "0.0.0.0");
+        try {
+            next_server = IOAddress(next_server_txt);
+        } catch (const IOError& ex) {
+            isc_throw(DhcpConfigError, "Invalid next-server value specified: '"
+                      << next_server_txt);
+        }
 
-    // Let's try to parse sname
-    string sname_txt = string_values_->getOptionalParam("server-hostname", "");
-    if (sname_txt.length() > Pkt4::MAX_SNAME_LEN) {
-        isc_throw(DhcpConfigError, "server-hostname must be at most "
-                  << Pkt4::MAX_SNAME_LEN << " bytes long, it is "
-                  << sname_txt.length());
-    }
-    std::vector<uint8_t> sname(sname_txt.begin(), sname_txt.end());
+        if (next_server.getFamily() != AF_INET) {
+            isc_throw(DhcpConfigError, "Invalid next-server value: '"
+                      << next_server_txt << "', must be IPv4 address");
+        }
 
-    string file_txt = string_values_->getOptionalParam("boot-file-name", "");
-    if (file_txt.length() > Pkt4::MAX_FILE_LEN) {
-        isc_throw(DhcpConfigError, "boot-file-name must be at most "
-                  << Pkt4::MAX_FILE_LEN << " bytes long, it is "
-                  << file_txt.length());
-    }
-    std::vector<uint8_t> filename(file_txt.begin(), file_txt.end());
+        if (next_server.isV4Bcast()) {
+            isc_throw(DhcpConfigError, "Invalid next-server value: '"
+                      << next_server_txt << "', must not be a broadcast");
+        }
 
-    try {
+        // Let's try to parse sname
+        string sname = string_values_->getOptionalParam("server-hostname", "");
+        if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
+            isc_throw(DhcpConfigError, "server-hostname must be at most "
+                      << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
+                      << sname.length());
+        }
+
+        string filename = string_values_->getOptionalParam("boot-file-name", "");
+        if (filename.length() > Pkt4::MAX_FILE_LEN) {
+            isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                      << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
+                      << filename.length());
+        }
+
         // an OptionCollectionPtr
         class_dictionary_->addClass(name, match_expr_, options_, next_server,
                                     sname, filename);

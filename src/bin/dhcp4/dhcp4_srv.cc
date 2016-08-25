@@ -1964,14 +1964,26 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             response->setSiaddr(next_server);
         }
 
-        const vector<uint8_t>& sname = cl->second->getSname();
+        const string& sname = cl->second->getSname();
         if (!sname.empty()) {
-            response->setSname(&sname[0], sname.size());
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reineterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and live
+            // will be easier.
+            response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                               sname.size());
         }
 
-        const vector<uint8_t>& filename = cl->second->getFilename();
+        const string& filename = cl->second->getFilename();
         if (!filename.empty()) {
-            response->setFile(&filename[0], filename.size());
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reineterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and live
+            // will be easier.
+            response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
+                              filename.size());
         }
     }
 
@@ -2021,8 +2033,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         // them we append them for him.
         appendBasicOptions(ex);
 
-        // See if the class mandates setting any fixed fields (siaddr, sname,
-        // filename).
+        // Set fixed fields (siaddr, sname, filename) if defined in
+        // the reservation, class or subnet specific configuration.
         setFixedFields(ex);
 
     } else {
@@ -2036,14 +2048,6 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     adjustIfaceData(ex);
 
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        /// @todo add more verbosity here
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
-            .arg(discover->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -2081,8 +2085,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         // them we append them for him.
         appendBasicOptions(ex);
 
-        // See if the class mandates setting any fixed fields (siaddr, sname,
-        // filename).
+        // Set fixed fields (siaddr, sname, filename) if defined in
+        // the reservation, class or subnet specific configuration.
         setFixedFields(ex);
     }
 
@@ -2091,14 +2095,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     adjustIfaceData(ex);
 
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        /// @todo add more verbosity here
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
-            .arg(ex.getQuery()->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -2369,8 +2365,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     appendBasicOptions(ex);
     adjustIfaceData(ex);
 
-    // See if the class mandates setting any fixed fields (siaddr, sname,
-    // filename).
+    // Set fixed fields (siaddr, sname, filename) if defined in
+    // the reservation, class or subnet specific configuration.
     setFixedFields(ex);
 
     // There are cases for the DHCPINFORM that the server receives it via
@@ -2390,14 +2386,6 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     // The DHCPACK must contain server id.
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_INFORM_CLASS_PROCESSING_FAILED)
-            .arg(inform->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -2622,17 +2610,8 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
     // is indeed a modem, John B. suggested to check whether chaddr field
     // quals subscriber-id option that was inserted by the relay (CMTS).
     // This kind of logic will appear here soon.
-    if (vendor_class->getValue().find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
-        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM) + " ";
-    } else
-    if (vendor_class->getValue().find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
-        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
-    } else {
-        pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
-        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
-    }
+    pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
+    classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
@@ -2685,52 +2664,6 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
             .arg(pkt->getLabel())
             .arg(classes);
     }
-}
-
-bool
-Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
-
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
-    Pkt4Ptr query = ex.getQuery();
-    Pkt4Ptr rsp = ex.getResponse();
-
-    // If any of those is missing, there is nothing to do.
-    if (!subnet || !query || !rsp) {
-        return (true);
-    }
-
-    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
-
-        // Set next-server. This is TFTP server address. Cable modems will
-        // download their configuration from that server.
-        rsp->setSiaddr(subnet->getSiaddr());
-
-        // Now try to set up file field in DHCPv4 packet. We will just copy
-        // content of the boot-file option, which contains the same information.
-        const CfgOptionList& co_list = ex.getCfgOptionList();
-        for (CfgOptionList::const_iterator copts = co_list.begin();
-             copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get("dhcp4", DHO_BOOT_FILE_NAME);
-
-            if (desc.option_) {
-                boost::shared_ptr<OptionString> boot =
-                    boost::dynamic_pointer_cast<OptionString>(desc.option_);
-                if (boot) {
-                    std::string filename = boot->getValue();
-                    rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
-                    break;
-                }
-            }
-        }
-    }
-
-    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
-
-        // Do not set TFTP server address for eRouter devices.
-        rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-    }
-
-    return (true);
 }
 
 void
