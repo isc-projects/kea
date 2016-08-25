@@ -153,6 +153,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
+
+            // Set siaddr, sname and file.
+            setReservedMessageFields();
         }
     }
 };
@@ -329,6 +332,27 @@ Dhcpv4Exchange::setHostIdentifiers() {
 
         default:
             ;
+        }
+    }
+}
+
+void
+Dhcpv4Exchange::setReservedMessageFields() {
+    ConstHostPtr host = context_->host_;
+    // Nothing to do if host reservations not specified for this client.
+    if (host) {
+        if (!host->getNextServer().isV4Zero()) {
+            resp_->setSiaddr(host->getNextServer());
+        }
+
+        if (!host->getServerHostname().empty()) {
+            resp_->setSname(reinterpret_cast<
+                            const uint8_t*>(host->getServerHostname().c_str()));
+        }
+
+        if (!host->getBootFileName().empty()) {
+            resp_->setFile(reinterpret_cast<
+                           const uint8_t*>(host->getBootFileName().c_str()));
         }
     }
 }
@@ -1515,12 +1539,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // Set up siaddr. Perhaps assignLease is not the best place to call this
-    // as siaddr has nothing to do with a lease, but otherwise we would have
-    // to select subnet twice (performance hit) or update too many functions
-    // at once.
-    /// @todo: move subnet selection to a common code
-    resp->setSiaddr(subnet->getSiaddr());
 
     // Get the server identifier. It will be used to determine the state
     // of the client.
@@ -2635,9 +2653,12 @@ Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
 
     if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
 
-        // Set next-server. This is TFTP server address. Cable modems will
-        // download their configuration from that server.
-        rsp->setSiaddr(subnet->getSiaddr());
+        // Do not override
+        if (rsp->getSiaddr().isV4Zero()) {
+            // Set next-server. This is TFTP server address. Cable modems will
+            // download their configuration from that server.
+            rsp->setSiaddr(subnet->getSiaddr());
+        }
 
         // Now try to set up file field in DHCPv4 packet. We will just copy
         // content of the boot-file option, which contains the same information.
@@ -2662,6 +2683,12 @@ Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
 
         // Do not set TFTP server address for eRouter devices.
         rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    }
+
+    // Set up siaddr. Do not override siaddr if host specific value or
+    // vendor class specific value present.
+    if (rsp->getSiaddr().isV4Zero()) {
+        rsp->setSiaddr(subnet->getSiaddr());
     }
 
     return (true);

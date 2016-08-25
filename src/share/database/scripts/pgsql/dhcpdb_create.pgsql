@@ -471,6 +471,12 @@ CREATE FUNCTION lease6DumpData() RETURNS
      ORDER BY l.address;
 $$ LANGUAGE SQL;
 
+-- Add columns holding reservations for siaddr, sname and file fields
+-- carried within DHCPv4 message.
+ALTER TABLE hosts ADD COLUMN dhcp4_next_server BIGINT DEFAULT NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) DEFAULT NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) DEFAULT NULL;
+
 -- Set 3.0 schema version.
 UPDATE schema_version
     SET version = '3', minor = '0';

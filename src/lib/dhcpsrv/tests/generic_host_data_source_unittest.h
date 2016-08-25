@@ -513,6 +513,13 @@ public:
     ///
     void testMultipleClientClassesBoth();
 
+    /// @brief Test that siaddr, sname, file fields can be retrieved
+    /// from a database for a host.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMessageFields4();
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful
