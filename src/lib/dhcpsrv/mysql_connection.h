@@ -240,15 +240,21 @@ public:
     ///
     /// Creates the prepared statements for all of the SQL statements used
     /// by the MySQL backend.
-    /// @param tagged_statements an array of statements to be compiled
-    /// @param num_statements number of statements in tagged_statements
+    ///
+    /// @param start_statement Pointer to the first statement in range of the
+    /// statements to be compiled.
+    /// @param end_statement Pointer to the statement marking end of the
+    /// range of statements to be compiled. This last statement is not compiled.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
     ///        represents an internal error within the code.
-    void prepareStatements(const TaggedStatement tagged_statements[],
-                           size_t num_statements);
+    void prepareStatements(const TaggedStatement* start_statement,
+                           const TaggedStatement* end_statement);
+
+    /// @brief Clears prepared statements and text statements.
+    void clearStatements();
 
     /// @brief Open Database
     ///

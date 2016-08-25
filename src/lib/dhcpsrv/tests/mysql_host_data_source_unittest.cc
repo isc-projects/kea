@@ -63,8 +63,13 @@ public:
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
-        hdsptr_->rollback();
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
         HostDataSourceFactory::destroy();
+        hdsptr_.reset();
         destroyMySQLSchema();
     }
 
@@ -157,6 +162,9 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
@@ -166,6 +174,8 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     // Tidy up after the test
     destroyMySQLSchema();
 }
+
+
 
 /// @brief Check conversion functions
 ///
@@ -206,6 +216,10 @@ TEST(MySqlConnection, checkTimeConversion) {
     time_t converted_cltt = 0;
     MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
+}
+
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
+    testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

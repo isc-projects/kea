@@ -8,6 +8,7 @@
 #define MYSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
 
 namespace isc {
@@ -255,7 +256,7 @@ public:
 private:
 
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
-    MySqlHostDataSourceImpl* impl_; 
+    MySqlHostDataSourceImpl* impl_;
 };
 
 }

@@ -537,6 +537,38 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
+<section id="read-only-database-configuration4">
+<title>Using Read-Only Databases for Host Reservations</title>
+<para>
+In some deployments the database user whose name is specified in the database backend
+configuration may not have write privileges to the database. This is often
+required by the policy within a given network to secure the data from being
+unintentionally modified. In many cases administrators have inventory databases
+deployed, which contain substantially more information about the hosts than
+static reservations assigned to them. The inventory database can be used to create
+a view of a Kea hosts database and such view is often read only.
+</para>
+<para>
+Kea host database backends operate with an implicit configuration to both
+read from and write to the database. If the database user does not have
+write access to the host database, the backend will fail to start and the
+server will refuse to start (or reconfigure). However, if access to a read
+only host database is required for retrieving reservations for clients
+and/or assign specific addresses and options, it is possible to explicitly
+configure Kea to start in "read-only" mode. This is controlled by the
+<command>readonly</command> boolean parameter as follows:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
+</screen>
+Setting this parameter to <userinput>false</userinput> would configure the
+database backend to operate in "read-write" mode, which is also a default
+configuration if the parameter is not specified.
+</para>
+<note><para>The <command>readonly</command> parameter is currently only supported
+for MySQL and PostgreSQL databases.</para></note>
+</section>
+
 </section>
 
 <section id="dhcp4-interface-configuration">

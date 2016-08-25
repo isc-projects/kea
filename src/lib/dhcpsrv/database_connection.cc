@@ -1,10 +1,11 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <exceptions/exceptions.h>
 
@@ -84,6 +85,25 @@ DatabaseConnection::redactedAccessString(const ParameterMap& parameters) {
     }
 
     return (access);
+}
+
+bool
+DatabaseConnection::configuredReadOnly() const {
+    std::string readonly_value = "false";
+    try {
+        readonly_value = getParameter("readonly");
+        boost::algorithm::to_lower(readonly_value);
+    } catch (...) {
+        // Parameter "readonly" hasn't been specified so we simply use
+        // the default value of "false".
+    }
+
+    if ((readonly_value != "false") && (readonly_value != "true")) {
+        isc_throw(DbInvalidReadOnly, "invalid value '" << readonly_value
+                  << "' specified for boolean parameter 'readonly'");
+    }
+
+    return (readonly_value == "true");
 }
 
 };

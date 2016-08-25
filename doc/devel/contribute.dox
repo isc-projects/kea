@@ -94,7 +94,7 @@ written and observing the test fail, you can detect the situation
 where a bug in the test code will cause it to pass regardless of
 the code being tested.
 
-See @ref qaUnitTests for instructions on how to run unit-tests.
+See @ref unitTests for instructions on how to run unit-tests.
 
 If you happen to add new files or have modified any \c Makefile.am
 files, it is also a good idea to check if you haven't broken the

@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
@@ -19,6 +20,7 @@
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/array.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/static_assert.hpp>
 
@@ -35,7 +37,7 @@ namespace {
 
 /// @brief Maximum length of option value.
 /// The maximum size of the raw option data that may be read from the
-/// database. 
+/// database.
 const size_t OPTION_VALUE_MAX_LEN = 4096;
 
 /// @brief Numeric value representing last supported identifier.
@@ -1103,12 +1105,11 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of SQL statements.
+    /// It is assumed that the order is such that the indicies of statements
+    /// reading the database are less than those of statements modifying the
+    /// database.
     enum StatementIndex {
-        INSERT_HOST,            // Insert new host to collection
-        INSERT_V6_RESRV,        // Insert v6 reservation
-        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
-        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID, // Gets host by IPv4 SubnetID, HW address/DUID
@@ -1116,8 +1117,19 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_VERSION,            // Obtain version number
+        INSERT_HOST,            // Insert new host to collection
+        INSERT_V6_RESRV,        // Insert v6 reservation
+        INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
+        INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
         NUM_STATEMENTS          // Number of statements
     };
+
+    /// @brief Index of first statement performing write to the database.
+    ///
+    /// This value is used to mark border line between queries and other
+    /// statements and statements performing write operation on the database,
+    /// such as INSERT, DELETE, UPDATE.
+    static const StatementIndex WRITE_STMTS_BEGIN = INSERT_HOST;
 
     /// @brief Constructor.
     ///
@@ -1222,6 +1234,14 @@ public:
                          StatementIndex stindex,
                          boost::shared_ptr<PgSqlHostExchange> exchange) const;
 
+    /// @brief Throws exception if database is read only.
+    ///
+    /// This method should be called by the methods which write to the
+    /// database. If the backend is operating in read-only mode this
+    /// method will throw exception.
+    ///
+    /// @throw DbReadOnly if backend is operating in read only mode.
+    void checkReadOnly() const;
 
     /// @brief Returns PostgreSQL schema version of the open database
     ///
@@ -1258,66 +1278,25 @@ public:
     /// @brief MySQL connection
     PgSqlConnection conn_;
 
+    /// @brief Indicates if the database is opened in read only mode.
+    bool is_readonly_;
 };
 
 namespace {
 
+/// @brief Array of tagged statements.
+typedef boost::array<PgSqlTaggedStatement, PgSqlHostDataSourceImpl::NUM_STATEMENTS>
+TaggedStatementArray;
+
 /// @brief Prepared PosgreSQL statements used by the backend to insert and
 /// retrieve reservation data from the database.
-PgSqlTaggedStatement tagged_statements[] = {
-    // PgSqlHostDataSourceImpl::INSERT_HOST
-    // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {8, 
-     { OID_BYTEA, OID_INT2,
-       OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
-       OID_VARCHAR, OID_VARCHAR },
-     "insert_host",
-     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
-     "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-     "  dhcp4_client_classes, dhcp6_client_classes) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING host_id"
-    },
-
-    //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
-    // Inserts a single IPv6 reservation into 'reservations' table.
-    {5, 
-     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
-     "insert_v6_resrv",
-     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-     "  dhcp6_iaid, host_id) "
-     "VALUES ($1, $2, $3, $4, $5)"
-    },
-
-    // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
-    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {6, 
-     { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_INT8},
-     "insert_v4_host_option",
-     "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
-     "  persistent, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
-    },
-
-    // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
-    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {6,
-     { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_INT8},
-     "insert_v6_host_option",
-     "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
-     "  persistent, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
-    },
-
+TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::GET_HOST_DHCPID
     // Retrieves host information, IPv6 reservations and both DHCPv4 and
     // DHCPv6 options associated with the host. The LEFT JOIN clause is used
     // to retrieve information from 4 different tables using a single query.
     // Hence, this query returns multiple rows for a single host.
-    {2, 
+    {2,
      { OID_BYTEA, OID_INT2 },
      "get_host_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
@@ -1417,7 +1396,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     // are returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
     // IPv6 reservations and DHCPv6 options.
-    {2, 
+    {2,
      { OID_VARCHAR, OID_INT2 },
      "get_host_prefix",
      "SELECT h.host_id, h.dhcp_identifier, "
@@ -1439,14 +1418,59 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     //PgSqlHostDataSourceImpl::GET_VERSION
     // Retrieves MySQL schema version.
-    {0, 
+    {0,
      { OID_NONE },
      "get_version",
      "SELECT version, minor FROM schema_version"
     },
 
-    // Marks the end of the statements table.
-    {0, { 0 }, NULL, NULL}
+    // PgSqlHostDataSourceImpl::INSERT_HOST
+    // Inserts a host into the 'hosts' table. Returns the inserted host id.
+    {8,
+     { OID_BYTEA, OID_INT2,
+       OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
+       OID_VARCHAR, OID_VARCHAR },
+     "insert_host",
+     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
+     "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+     "  dhcp4_client_classes, dhcp6_client_classes) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING host_id"
+    },
+
+    //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
+    // Inserts a single IPv6 reservation into 'reservations' table.
+    {5,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
+     "insert_v6_resrv",
+     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+     "  dhcp6_iaid, host_id) "
+     "VALUES ($1, $2, $3, $4, $5)"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
+    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {6,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_INT8},
+     "insert_v4_host_option",
+     "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
+     "  persistent, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
+    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {6,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_INT8},
+     "insert_v6_host_option",
+     "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
+     "  persistent, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, 3)"
+    }
+}
 };
 
 }; // end anonymous namespace
@@ -1459,20 +1483,27 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
       host_option_exchange_(new PgSqlOptionExchange()),
-      conn_(parameters) {
+      conn_(parameters),
+      is_readonly_(false) {
 
     // Open the database.
     conn_.openDatabase();
 
-    int i = 0;
-    for( ; tagged_statements[i].text != NULL ; ++i) {
-        conn_.prepareStatement(tagged_statements[i]);
-    }
+    conn_.prepareStatements(tagged_statements.begin(),
+                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
-    // Just in case somebody foo-barred things
-    if (i != NUM_STATEMENTS) {
-        isc_throw(DbOpenError, "Number of statements prepared: " << i
-                  << " does not match expected count:" << NUM_STATEMENTS);
+    // Check if the backend is explicitly configured to operate with
+    // read only access to the database.
+    is_readonly_ = conn_.configuredReadOnly();
+
+    // If we are using read-write mode for the database we also prepare
+    // statements for INSERTS etc.
+    if (!is_readonly_) {
+        conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
+                                tagged_statements.end());
+
+    } else {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_READONLY);
     }
 }
 
@@ -1632,6 +1663,15 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     return (std::make_pair<uint32_t, uint32_t>(version, minor));
 }
 
+void
+PgSqlHostDataSourceImpl::checkReadOnly() const {
+    if (is_readonly_) {
+        isc_throw(ReadOnlyDb, "PostgreSQL host database backend is configured"
+                  " to operate in read only mode");
+    }
+}
+
+
 /*********** PgSqlHostDataSource *********************/
 
 
@@ -1646,6 +1686,9 @@ PgSqlHostDataSource::~PgSqlHostDataSource() {
 
 void
 PgSqlHostDataSource::add(const HostPtr& host) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
     // Initiate PostgreSQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -1892,6 +1935,21 @@ std::string PgSqlHostDataSource::getDescription() const {
 
 std::pair<uint32_t, uint32_t> PgSqlHostDataSource::getVersion() const {
     return(impl_->getVersion());
+}
+
+void
+PgSqlHostDataSource::commit() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+    impl_->conn_.commit();
+}
+
+
+void
+PgSqlHostDataSource::rollback() {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+    impl_->conn_.rollback();
 }
 
 }; // end of isc::dhcp namespace

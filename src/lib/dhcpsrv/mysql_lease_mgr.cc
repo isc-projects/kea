@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/mysql_connection.h>
 
+#include <boost/array.hpp>
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
@@ -82,7 +83,8 @@ const size_t HOSTNAME_MAX_LEN = 255;
 /// colon separators.
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
-TaggedStatement tagged_statements[] = {
+boost::array<TaggedStatement, MySqlLeaseMgr::NUM_STATEMENTS>
+tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE4,
                     "DELETE FROM lease4 WHERE address = ?"},
     {MySqlLeaseMgr::DELETE_LEASE4_STATE_EXPIRED,
@@ -204,9 +206,8 @@ TaggedStatement tagged_statements[] = {
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
                         "state = ? "
-                            "WHERE address = ?"},
-    // End of list sentinel
-    {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
+                            "WHERE address = ?"}
+    }
 };
 
 };
@@ -1236,7 +1237,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     }
 
     // Prepare all statements likely to be used.
-    conn_.prepareStatements(tagged_statements, MySqlLeaseMgr::NUM_STATEMENTS);
+    conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end());
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
