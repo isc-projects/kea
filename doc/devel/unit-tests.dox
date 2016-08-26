@@ -186,7 +186,7 @@ Password for user keatest:
 psql (9.1.12)
 Type "help" for help.
 
-keatest=> ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES to keatest_readonly;
+keatest=> ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;
 ALTER DEFAULT PRIVILEGES
 keatest=> \q
 @endverbatim
