@@ -1670,9 +1670,7 @@ It is merely echoed by the server
     <section id="dhcp4-client-classifier">
       <title>Client Classification in DHCPv4</title>
       <para>
-      The DHCPv4 server includes support for client classification.  At the
-      current time the capabilities of the classification process are limited
-      but it is expected they will be expanded in the future. For a deeper
+      The DHCPv4 server includes support for client classification.  For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
@@ -1723,6 +1721,52 @@ It is merely echoed by the server
       </para></note>
 
       <section>
+        <title>Setting fixed fields in Classification</title>
+        <para>
+          It is possible to specify that clients belonging to a particular class
+          should receive packets with specific values in certain fixed fields.
+          In particular, three fixed fields are supported:
+          <command>next-server</command> (that conveys an IPv4 address, which is
+          set in the siaddr field), <command>server-hostname</command> (that
+          conveys a server hostname, can be up to 64 bytes long and will be sent
+          in the sname field) and <command>boot-file-name</command> (that
+          conveys the configuration file, can be up to 128 bytes long and will
+          be sent using file field).
+        </para>
+        <para>
+          Obviously, there are many ways to assign clients to specific classes,
+          but for the iPXE clients the client architecture type option (code 93,
+          defined in RFC4578, Section 2.1) seems to be particularly suited to
+          make the distinction. The following example checks if the client
+          identifies itself as PXE device with architecture EFI x86-64, and
+          sets several fields if it does. See Section 2.1 of the RFC4578 or
+          documentation of your client for specific values.
+        </para>
+          <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "ipxe_efi_x64",
+            "test": "option[93].hex == 0x0009",
+            <userinput>"next-server": "192.0.2.254",
+            "server-hostname": "hal9000",
+            "boot-file-name": "/dev/null"</userinput>
+        },
+        ...
+    ],
+    ...
+          }</screen>
+
+          <para>
+            If there are multiple classes defined and incoming packet is matched
+            to multiple classes, then the classes are processed in the order in
+            which they're defined. In this case the last matching class
+            "overwrites" any values that may have been set by earlier matched
+            classes.
+          </para>
+        </section>
+
+      <section>
         <title>Using Vendor Class Information in Classification</title>
         <para>
         The server checks whether an incoming packet includes the vendor class identifier
@@ -1733,12 +1777,11 @@ It is merely echoed by the server
         </para>
 
         <para>
-        For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
-        field is set to the value of next-server (if specified in a subnet). If
-        there is a boot-file-name option specified, its value is also set in the
-        file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
-        always set to 0.0.0.0. That capability is expected to be moved to
-        an external hook library that will be dedicated to cable modems.
+          Note: Kea 1.0 and earlier versions performed special actions for
+          clients that were in VENDOR_CLASS_docsis3.0. This is no longer the
+          case in Kea 1.1 and newer. In those newer versions the old behavior
+          can be achieved by defining VENDOR_CLASS_docsis3.0 and setting
+          its next-server and boot-file-name values appropriately.
         </para>
 
         <para>

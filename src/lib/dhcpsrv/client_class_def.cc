@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,8 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option) {
+    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option),
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     // Name can't be blank
     if (name_.empty()) {
@@ -33,7 +34,8 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      cfg_option_(new CfgOption()) {
+      cfg_option_(new CfgOption()),
+      next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
@@ -43,6 +45,10 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     if (rhs.cfg_option_) {
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
+
+    next_server_ = rhs.next_server_;
+    sname_ = rhs.sname_;
+    filename_ = rhs.filename_;
 }
 
 ClientClassDef::~ClientClassDef() {
@@ -86,7 +92,10 @@ ClientClassDef::equals(const ClientClassDef& other) const {
          (*match_expr_ == *(other.match_expr_)))) &&
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
-         (*cfg_option_ == *other.cfg_option_))));
+         (*cfg_option_ == *other.cfg_option_))) &&
+            (next_server_ == other.next_server_) &&
+            (sname_ == other.sname_) &&
+            (filename_ == other.filename_));
 }
 
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
@@ -114,8 +123,14 @@ ClientClassDictionary::~ClientClassDictionary() {
 void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
-                                const CfgOptionPtr& cfg_option) {
+                                const CfgOptionPtr& cfg_option,
+                                asiolink::IOAddress next_server,
+                                const std::string& sname,
+                                const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
+    cclass->setNextServer(next_server);
+    cclass->setSname(sname);
+    cclass->setFilename(filename);
     addClass(cclass);
 }
 

@@ -118,6 +118,10 @@ public:
         return (cfg_option_list_);
     }
 
+    /// @brief Sets reserved values of siaddr, sname and file in the
+    /// server's response.
+    void setReservedMessageFields();
+
 private:
 
     /// @brief Copies default parameters from client's to server's message
@@ -149,10 +153,6 @@ private:
     /// The order of the set is determined by the configuration parameter,
     /// host-reservation-identifiers
     void setHostIdentifiers();
-
-    /// @brief Sets reserved values of siaddr, sname and file in the
-    /// server's response.
-    void setReservedMessageFields();
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
@@ -517,6 +517,19 @@ protected:
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void appendBasicOptions(Dhcpv4Exchange& ex);
 
+    /// @brief Sets fixed fields of the outgoing packet.
+    ///
+    /// If the incoming packets belongs to a class and that class defines
+    /// next-server, server-hostname or boot-file-name, we need to set the
+    /// siaddr, sname or filename fields in the outgoing packet. Also, those
+    /// values can be defined for subnet or in reservations. The values
+    /// defined in reservation takes precedence over class values, which
+    /// in turn take precedence over subnet values.
+    ///
+    /// @param ex DHCPv4 exchange holding the client's message and the server's
+    ///           response to be adjusted.
+    void setFixedFields(Dhcpv4Exchange& ex);
+
     /// @brief Processes Client FQDN and Hostname Options sent by a client.
     ///
     /// Client may send Client FQDN or Hostname option to communicate its name
@@ -755,18 +768,6 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
-
-    /// @brief Performs packet processing specific to a vendor class
-    ///
-    /// If the selected subnet, query or response in the @c ex object is NULL
-    /// this method returns immediately and returns true.
-    ///
-    /// @note This processing is a likely candidate to be pushed into hooks.
-    ///
-    /// @param ex The exchange holding both the client's message and the
-    /// server's response.
-    /// @return true if successful, false otherwise (will prevent sending response)
-    bool vendorClassSpecificProcessing(const Dhcpv4Exchange& ex);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
