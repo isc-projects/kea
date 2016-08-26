@@ -9,6 +9,7 @@
 #include <cryptolink/crypto_hmac.h>
 
 #include <botan/botan.h>
+#include <botan/init.h>
 
 namespace isc {
 namespace cryptolink {

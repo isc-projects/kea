@@ -587,6 +587,7 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
             #AC_MSG_RESULT([found])
             AC_LINK_IFELSE(
                 [AC_LANG_PROGRAM([#include <botan/botan.h>
+                                  #include <botan/init.h>
                                   #include <botan/hash.h>
                                  ],
                                  [using namespace Botan;
@@ -781,6 +782,7 @@ then
    LIBS="$LIBS $CRYPTO_LIBS"
    AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
+                          #include <botan/init.h>
                           #include <botan/hash.h>
                          ],
                          [using namespace Botan;
@@ -900,12 +902,15 @@ EOF
     dnl Check HMAC API
     AC_MSG_CHECKING([HMAC functions returning ints])
     AC_LINK_IFELSE(
-         [AC_LANG_PROGRAM([#include <openssl/hmac.h>],
-                          [HMAC_CTX ctx, tmp;
+         [AC_LANG_PROGRAM([#include <openssl/opensslv.h>
+                           #include <openssl/hmac.h>],
+                          [#if OPENSSL_VERSION_NUMBER < 0x10100000L
+                           HMAC_CTX ctx, tmp;
                            int n = HMAC_Init(&ctx, NULL, 0, NULL);
                            n += HMAC_Update(&ctx, NULL, 0);
                            n += HMAC_CTX_copy(&tmp, &ctx);
                            n += HMAC_Final(&tmp, NULL, NULL);
+                           #endif
                            ])],
          [AC_MSG_RESULT([yes])],
          [AC_MSG_ERROR([HMAC functions return void: the OpenSSL version should be too old, please change for >= 1.0.1])])
