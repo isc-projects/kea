@@ -10,6 +10,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/option_int.h>
+#include <algorithm>
 #include <vector>
 
 using namespace isc;
@@ -142,13 +143,15 @@ public:
          ASSERT_GE(max_sname, exp_sname.length());
          vector<uint8_t> sname(max_sname, 0);
          memcpy(&sname[0], &exp_sname[0], exp_sname.size());
-         EXPECT_EQ(sname, resp->getSname());
+         EXPECT_TRUE(std::equal(sname.begin(), sname.end(),
+                                resp->getSname().begin()));
 
          const size_t max_filename = Pkt4::MAX_FILE_LEN;
          ASSERT_GE(max_filename, exp_filename.length());
          vector<uint8_t> filename(max_filename, 0);
          memcpy(&filename[0], &exp_filename[0], exp_filename.size());
-         EXPECT_EQ(filename, resp->getFile());
+         EXPECT_TRUE(std::equal(filename.begin(), filename.end(),
+                                resp->getFile().begin()));
     }
 
     /// @brief Interface Manager's fake configuration control.
