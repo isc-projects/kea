@@ -409,6 +409,16 @@ private:
     /// which encapsulated options are appended.
     void encapsulateInternal(const std::string& option_space);
 
+    /// @brief Appends encapsulated options from the option space
+    /// defined in the specific option.
+    ///
+    /// This function will go over all options belonging to the encapsulated space
+    /// and will check which option spaces they encapsulate recursively,
+    /// adding these options to the current option
+    ///
+    /// @param option which encapsulated options.
+    void encapsulateOptions(OptionPtr option);
+
     /// @brief Merges data from two option containers.
     ///
     /// This method merges options from one option container to another

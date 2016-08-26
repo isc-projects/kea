@@ -9,7 +9,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -840,7 +839,7 @@ private:
             // definition created within libdhcp++.
             OptionDefinitionPtr def;
             if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
-                def = LibDHCP::getOptionDef(universe_, code_);
+                def = LibDHCP::getOptionDef(universe_, code_, space);
             }
 
             // Otherwise, we may check if this an option encapsulated within the

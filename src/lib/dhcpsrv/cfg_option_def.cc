@@ -7,7 +7,6 @@
 #include <config.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option_def.h>
 
 namespace isc {
@@ -91,10 +90,10 @@ CfgOptionDef::add(const OptionDefinitionPtr& def,
     // Must not override standard option definition.
     } else if (((option_space == DHCP4_OPTION_SPACE) &&
                 LibDHCP::isStandardOption(Option::V4, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V4, def->getCode())) ||
+                LibDHCP::getOptionDef(Option::V4, def->getCode(), option_space)) ||
                ((option_space == DHCP6_OPTION_SPACE) &&
                 LibDHCP::isStandardOption(Option::V6, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V6, def->getCode()))) {
+                LibDHCP::getOptionDef(Option::V6, def->getCode(), option_space))) {
         isc_throw(BadValue, "unable to override definition of option '"
                   << def->getCode() << "' in standard option space '"
                   << option_space << "'");

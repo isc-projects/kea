@@ -1241,7 +1241,7 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     // see if it rejects it.
     OptionBuffer buf(1);
     EXPECT_THROW(
-        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, "dhcp6",
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, DHCP6_OPTION_SPACE,
                                                buf.begin(), buf.end()),
         isc::dhcp::InvalidDataType
     );

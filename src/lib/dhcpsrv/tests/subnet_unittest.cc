@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -282,7 +283,7 @@ TEST(Subnet4Test, addInvalidOption) {
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, "dhcp4"),
+    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, DHCP4_OPTION_SPACE),
                  isc::BadValue);
 }
 
@@ -751,7 +752,7 @@ TEST(Subnet6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
@@ -762,7 +763,7 @@ TEST(Subnet6Test, addOptions) {
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
@@ -803,12 +804,12 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
         }
     }
 
     // Sanity check that all options are there.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(20, options->size());
 
     // Use container index #1 to get the options by their codes.
@@ -855,11 +856,11 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, DHCP6_OPTION_SPACE));
     }
 
     // Get added options from the subnet.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
 
     // options->get<2> returns reference to container index #2. This
     // index is used to access options by the 'persistent' flag.
@@ -886,7 +887,7 @@ TEST(Subnet6Test, getOptions) {
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptor using
@@ -898,7 +899,7 @@ TEST(Subnet6Test, getOptions) {
         // Returned descriptor should contain NULL option ptr.
         EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
-        desc = subnet->getCfgOption()->get("dhcp6", code);
+        desc = subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());

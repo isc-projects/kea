@@ -29,7 +29,7 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
                              uint32_t pref, uint32_t valid)
     :Option(V6, type), addr_(addr), preferred_(pref),
      valid_(valid) {
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     if (!addr.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
@@ -38,7 +38,7 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
 Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
     :Option(V6, type), addr_("::") {
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     unpack(begin, end);
 }
 

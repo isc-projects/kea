@@ -28,7 +28,7 @@ const size_t DUID_TYPE_LEN = 2;
 /// @brief Minimal length of the MAC address.
 const size_t MIN_MAC_LEN = 6;
 
-/// @brief Length of the enterprise if field.
+/// @brief Length of the enterprise ID field.
 const size_t ENTERPRISE_ID_LEN = 4;
 
 /// @brief Default length of the variable length identifier in the DUID-EN.

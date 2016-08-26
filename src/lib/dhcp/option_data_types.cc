@@ -24,6 +24,8 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_types_["uint32"] = OPT_UINT32_TYPE;
     data_types_["ipv4-address"] = OPT_IPV4_ADDRESS_TYPE;
     data_types_["ipv6-address"] = OPT_IPV6_ADDRESS_TYPE;
+    data_types_["ipv6-prefix"] = OPT_IPV6_PREFIX_TYPE;
+    data_types_["psid"] = OPT_PSID_TYPE;
     data_types_["string"] = OPT_STRING_TYPE;
     data_types_["fqdn"] = OPT_FQDN_TYPE;
     data_types_["record"] = OPT_RECORD_TYPE;
@@ -39,6 +41,8 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_UINT32_TYPE] = "uint32";
     data_type_names_[OPT_IPV4_ADDRESS_TYPE] = "ipv4-address";
     data_type_names_[OPT_IPV6_ADDRESS_TYPE] = "ipv6-address";
+    data_type_names_[OPT_IPV6_PREFIX_TYPE] = "ipv6-prefix";
+    data_type_names_[OPT_PSID_TYPE] = "psid";
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
     data_type_names_[OPT_RECORD_TYPE] = "record";
@@ -85,6 +89,9 @@ OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
 
     case OPT_IPV6_ADDRESS_TYPE:
         return (asiolink::V6ADDRESS_LEN);
+
+    case OPT_PSID_TYPE:
+        return (3);
 
     default:
         ;

@@ -291,7 +291,7 @@ TEST_F(Option6IATest, suboptionsUnpack) {
     ASSERT_NE(OptionPtr(), subopt); // non-NULL
 
     // Checks for address option
-    Option6IAAddr * addr = dynamic_cast<Option6IAAddr*>(subopt.get());
+    Option6IAAddr* addr = dynamic_cast<Option6IAAddr*>(subopt.get());
     ASSERT_TRUE(NULL != addr);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());

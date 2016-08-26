@@ -146,7 +146,7 @@ public:
         std::map<std::string, std::string> params;
         if (parameter == "name") {
             params["name"] = param_value;
-            params["space"] = "dhcp6";
+            params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = "38";
             params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
@@ -158,19 +158,19 @@ public:
             params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "subscriber-id";
-            params["space"] = "dhcp6";
+            params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = param_value;
             params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "subscriber-id";
-            params["space"] = "dhcp6";
+            params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = "38";
             params["data"] = param_value;
             params["csv-format"] = "False";
         } else if (parameter == "csv-format") {
             params["name"] = "subscriber-id";
-            params["space"] = "dhcp6";
+            params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = "38";
             params["data"] = "ABCDEF0105";
             params["csv-format"] = param_value;
@@ -260,7 +260,7 @@ public:
                           << " does not exist in Config Manager";
         }
         OptionContainerPtr options =
-            subnet->getCfgOption()->getAll("dhcp6");
+            subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
         if (expected_options_count != options->size()) {
             ADD_FAILURE() << "The number of options in the subnet '"
                           << subnet_address.toText() << "' is different "
@@ -383,7 +383,7 @@ public:
     template<typename ReturnType>
     ReturnType
     retrieveOption(const Host& host, const uint16_t option_code) const {
-        return (retrieveOption<ReturnType>(host, "dhcp6", option_code));
+        return (retrieveOption<ReturnType>(host, DHCP6_OPTION_SPACE, option_code));
     }
 
     /// @brief Retrieve an option associated with a host.
@@ -2059,7 +2059,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     ElementPtr json = Element::fromJSON(config);
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp6", 100);
+        getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 100);
     ASSERT_FALSE(def);
 
     // Use the configuration string to create new option definition.
@@ -2070,7 +2070,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // The option definition should now be available in the CfgMgr.
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp6", 100);
+        getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 100);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -2121,7 +2121,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get("dhcp6", 63);
+        getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 63);
     ASSERT_TRUE(def);
 
     // Check the option data.
@@ -2162,10 +2162,10 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(0, options->size());
 
-    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
+    options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2231,13 +2231,13 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
 
     // These options are subnet options
     OptionContainerPtr options =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(0, options->size());
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    options = subnet->getCfgOption()->getAll("dhcp6");
+    options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(2, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2324,7 +2324,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     // Options should be now available
     // Try to get the option from the space dhcp6.
     OptionDescriptor desc1 =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp6", 38);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP6_OPTION_SPACE, 38);
     ASSERT_TRUE(desc1.option_);
     EXPECT_EQ(38, desc1.option_->getType());
     // Try to get the option from the space isc.
@@ -2456,13 +2456,13 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 
     // We should have one option available.
     OptionContainerPtr options =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll("dhcp6");
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
     OptionDescriptor desc =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("dhcp6", 100);
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP6_OPTION_SPACE, 100);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(100, desc.option_->getType());
 
@@ -2514,7 +2514,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     Subnet6Ptr subnet1 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet1);
-    OptionContainerPtr options1 = subnet1->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options1 = subnet1->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2540,7 +2540,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     Subnet6Ptr subnet2 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:2::4"), classify_);
     ASSERT_TRUE(subnet2);
-    OptionContainerPtr options2 = subnet2->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options2 = subnet2->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options2->size());
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
@@ -2563,7 +2563,7 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
     // Create configuration. Use standard option 1000.
     std::map<std::string, std::string> params;
     params["name"] = "bool-option";
-    params["space"] = "dhcp6";
+    params["space"] = DHCP6_OPTION_SPACE;
     params["code"] = "1000";
     params["data"] = "true";
     params["csv-format"] = "true";
@@ -2709,7 +2709,7 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -2737,7 +2737,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     ConstElementPtr x;
     std::map<std::string, std::string> params;
     params["name"] = "ia-na";
-    params["space"] = "dhcp6";
+    params["space"] = DHCP6_OPTION_SPACE;
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
     params["data"] = "12345, 6789, 1516";
@@ -2752,7 +2752,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options->size());
 
     // Get the search index. Index #1 is to search using option code.
@@ -3007,12 +3007,12 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
     // Get the option.
-    OptionDescriptor desc = subnet->getCfgOption()->get("dhcp6", D6O_VENDOR_OPTS);
+    OptionDescriptor desc = subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS);
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(D6O_VENDOR_OPTS, desc.option_->getType());
 
