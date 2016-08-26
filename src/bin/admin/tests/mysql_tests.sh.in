@@ -50,35 +50,35 @@ mysql_lease_init_test() {
     SELECT version, minor FROM schema_version;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "schema_version table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "schema_version table is missing or broken. (expected status code %d, returned %d)"
 
     # Second table: lease4
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease4 table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease4 table is missing or broken. (expected status code %d, returned %d)"
 
     # Third table: lease6
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source FROM lease6;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease6 table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease6 table is missing or broken. (expected status code %d, returned %d)"
 
     # Fourth table: lease6_types
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT lease_type, name FROM lease6_types;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease6_types table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease6_types table is missing or broken. (expected status code %d, returned %d)"
 
     # Fifth table: lease_hwaddr_source
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT hwaddr_source, name FROM lease_hwaddr_source;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -129,48 +129,48 @@ mysql_host_reservation_init_test() {
     SELECT version, minor FROM schema_version;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "schema_version table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "schema_version table is missing or broken. (expected status code %d, returned %d)"
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "hosts table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
 
     # Third table: ipv6_reservations
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (expected status code %d, returned %d)"
 
     # Fourth table: dhcp4_options
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id FROM dhcp4_options;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Fifth table: dhcp6_options
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id FROM dhcp6_options;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Sixth table: host_identifier_type
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT type, name FROM host_identifier_type;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "host_identifier_type table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "host_identifier_type table is missing or broken. (expected status code %d, returned %d)"
     # Seventh table: dhcp_option_scope
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT scope_id, scope_name FROM dhcp_option_scope;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp_option_scope table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp_option_scope table is missing or broken. (expected status code %d, returned %d)"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -206,76 +206,76 @@ mysql_upgrade_test() {
     SELECT hwaddr, hwtype, hwaddr_source FROM lease6;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease6 table not upgraded to 2.0 (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease6 table not upgraded to 2.0 (expected status code %d, returned %d)"
 
     #table: lease_hwaddr_source (upgrade 1.0 -> 2.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT hwaddr_source, name FROM lease_hwaddr_source;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     #table: hosts (upgrade 2.0 -> 3.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "hosts table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
 
     #table: ipv6_reservations (upgrade 2.0 -> 3.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "ipv6_reservations table is missing or broken. (expected status code %d, returned %d)"
 
     #table: dhcp4_options (upgrade 2.0 -> 3.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: dhcp6_options (upgrade 2.0 -> 3.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: lease_state table added (upgrade 3.0 -> 4.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT state,name from lease_state;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: state column added to lease4 (upgrade 3.0 -> 4.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT state from lease4;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease4 is missing state column. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease4 is missing state column. (expected status code %d, returned %d)"
 
     #table: state column added to lease6 (upgrade 3.0 -> 4.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT state from lease6;
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease6 is missing state column. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease6 is missing state column. (expected status code %d, returned %d)"
 
     #table: stored procedures for lease dumps added (upgrade 3.0 -> 4.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     call lease4DumpHeader(); call lease4DumpData(); call lease6DumpHeader(); call lease6DumpHeader();
 EOF
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "lease dump stored procedures are missing or broken. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "lease dump stored procedures are missing or broken. (expected status code %d, returned %d)"
 
     #lease_hardware_source should have row for source = 0 (upgrade 4.0 -> 4.1)
     qry="select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (returned status code %d, expected %d)"
+    assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
     assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
 
     # table: stored procedures for lease data dumps were modified (upgrade 4.0 -> 4.1)
