@@ -17,7 +17,9 @@
 
 #include <cryptolink/botan_common.h>
 
-#include <cstring>
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,0)
+#define secure_vector SecureVector
+#endif
 
 namespace isc {
 namespace cryptolink {
@@ -38,7 +40,19 @@ public:
     : hash_algorithm_(hash_algorithm), hmac_() {
         Botan::HashFunction* hash;
         try {
-            hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
+            const std::string& name =
+                btn::getHashAlgorithmName(hash_algorithm);
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
+            std::unique_ptr<Botan::HashFunction> hash_ptr =
+                Botan::HashFunction::create(name);
+            if (hash_ptr) {
+                hash = hash_ptr.release();
+            } else {
+                throw Botan::Algorithm_Not_Found(name);
+            }
+#else
+            hash = Botan::get_hash(name);
+#endif
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
@@ -64,10 +78,10 @@ public:
             size_t block_length = 0;
 #endif
             if (secret_len > block_length) {
-                Botan::SecureVector<Botan::byte> hashed_key =
+                Botan::secure_vector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
                                   secret_len);
-                hmac_->set_key(hashed_key.begin(), hashed_key.size());
+                hmac_->set_key(&hashed_key[0], hashed_key.size());
             } else {
                 // Botan 1.8 considers len 0 a bad key. 1.9 does not,
                 // but we won't accept it anyway, and fail early
@@ -124,12 +138,12 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(isc::util::OutputBuffer& result, size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
 
             if (len > b_result.size()) {
                 len = b_result.size();
             }
-            result.writeData(b_result.begin(), len);
+            result.writeData(&b_result[0], len);
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, exc.what());
         }
@@ -140,12 +154,12 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(void* result, size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
             size_t output_size = getOutputLength();
             if (output_size > len) {
                 output_size = len;
             }
-            std::memcpy(result, b_result.begin(), output_size);
+            std::memcpy(result, &b_result[0], output_size);
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, exc.what());
         }
@@ -156,12 +170,11 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     std::vector<uint8_t> sign(size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
+            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
             if (len > b_result.size()) {
-                return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
-            } else {
-                return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+                len = b_result.size();
             }
+            return (std::vector<uint8_t>(&b_result[0], &b_result[len]));
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, exc.what());
         }
@@ -202,7 +215,7 @@ private:
     boost::scoped_ptr<Botan::HMAC> hmac_;
 
     /// @brief The digest cache for multiple verify
-    Botan::SecureVector<Botan::byte> digest_;
+    Botan::secure_vector<Botan::byte> digest_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,

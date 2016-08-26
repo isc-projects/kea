@@ -12,6 +12,8 @@
 #include <openssl/evp.h>
 
 #include <cryptolink/openssl_common.h>
+#define KEA_HASH
+#include <cryptolink/openssl_compat.h>
 
 #include <cstring>
 
@@ -55,7 +57,7 @@ public:
     ///
     /// @param hash_algorithm The hash algorithm
     explicit HashImpl(const HashAlgorithm hash_algorithm)
-    : hash_algorithm_(hash_algorithm), md_() {
+    : hash_algorithm_(hash_algorithm), md_(0) {
         const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
@@ -63,18 +65,20 @@ public:
                       static_cast<int>(hash_algorithm));
         }
 
-        md_.reset(new EVP_MD_CTX);
+        md_ = EVP_MD_CTX_new();
+        if (md_ == 0) {
+            isc_throw(isc::cryptolink::LibraryError, "EVP_MD_CTX_new");
+        }
 
-        EVP_MD_CTX_init(md_.get());
-
-        EVP_DigestInit_ex(md_.get(), algo, NULL);
+        EVP_DigestInit_ex(md_, algo, NULL);
     }
 
     /// @brief Destructor
     ~HashImpl() {
         if (md_) {
-            EVP_MD_CTX_cleanup(md_.get());
+            EVP_MD_CTX_free(md_);
         }
+        md_ = 0;
     }
 
     /// @brief Returns the HashAlgorithm of the object
@@ -86,14 +90,14 @@ public:
     ///
     /// @return output size of the digest
     size_t getOutputLength() const {
-        return (EVP_MD_CTX_size(md_.get()));
+        return (EVP_MD_CTX_size(md_));
     }
 
     /// @brief Adds data to the digest
     ///
     /// See @ref isc::cryptolink::Hash::update() for details.
     void update(const void* data, const size_t len) {
-        EVP_DigestUpdate(md_.get(), data, len);
+        EVP_DigestUpdate(md_, data, len);
     }
 
     /// @brief Calculate the final digest
@@ -102,7 +106,7 @@ public:
     void final(isc::util::OutputBuffer& result, size_t len) {
         size_t size = getOutputLength();
         std::vector<unsigned char> digest(size);
-        EVP_DigestFinal_ex(md_.get(), &digest[0], NULL);
+        EVP_DigestFinal_ex(md_, &digest[0], NULL);
         if (len > size) {
              len = size;
         }
@@ -115,7 +119,7 @@ public:
     void final(void* result, size_t len) {
         size_t size = getOutputLength();
         std::vector<unsigned char> digest(size);
-        EVP_DigestFinal_ex(md_.get(), &digest[0], NULL);
+        EVP_DigestFinal_ex(md_, &digest[0], NULL);
         if (len > size) {
              len = size;
         }
@@ -128,7 +132,7 @@ public:
     std::vector<uint8_t> final(size_t len) {
         size_t size = getOutputLength();
         std::vector<unsigned char> digest(size);
-        EVP_DigestFinal_ex(md_.get(), &digest[0], NULL);
+        EVP_DigestFinal_ex(md_, &digest[0], NULL);
         if (len < size) {
             digest.resize(len);
         }
@@ -139,8 +143,8 @@ private:
     /// @brief The hash algorithm
     HashAlgorithm hash_algorithm_;
 
-    /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
-    boost::scoped_ptr<EVP_MD_CTX> md_;
+    /// @brief The pointer to the OpenSSL EVP_MD_CTX structure
+    EVP_MD_CTX* md_;
 };
 
 Hash::Hash(const HashAlgorithm hash_algorithm)
