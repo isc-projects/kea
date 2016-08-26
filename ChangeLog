@@ -1,3 +1,8 @@
+1158.	[func]		tomek
+	It is now possible to specify fixed fields (next-server,
+	server-hostname and boot-file-name parameters) for client classes.
+	(Trac #4626, git 89cf54524d8b55cc982ab2146915c0a90fc6efe2)
+
 1157.	[func]		marcin
 	Added support for static reservations for fixed fields in
 	DHCPv4 messages: siaddr, sname and file.
