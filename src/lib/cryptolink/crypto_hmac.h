@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,6 +52,9 @@ public:
     /// \brief Destructor
     ~HMAC();
 
+    /// \brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const;
+
     /// \brief Returns the output size of the digest
     ///
     /// \return output size of the digest
@@ -93,7 +96,7 @@ public:
     /// result
     void sign(void* result, size_t len);
 
-    /// \brief Calculate the final signatre
+    /// \brief Calculate the final signature
     ///
     /// The result will be returned as a std::vector<uint8_t>
     ///

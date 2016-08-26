@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,7 +54,8 @@ public:
     /// @brief Constructor for specific hash algorithm
     ///
     /// @param hash_algorithm The hash algorithm
-    explicit HashImpl(const HashAlgorithm hash_algorithm) {
+    explicit HashImpl(const HashAlgorithm hash_algorithm)
+    : hash_algorithm_(hash_algorithm), md_() {
         const EVP_MD* algo = ossl::getHashAlgorithm(hash_algorithm);
         if (algo == 0) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
@@ -74,6 +75,11 @@ public:
         if (md_) {
             EVP_MD_CTX_cleanup(md_.get());
         }
+    }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_algorithm_);
     }
 
     /// @brief Returns the output size of the digest
@@ -130,6 +136,9 @@ public:
     }
 
 private:
+    /// @brief The hash algorithm
+    HashAlgorithm hash_algorithm_;
+
     /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
     boost::scoped_ptr<EVP_MD_CTX> md_;
 };
@@ -141,6 +150,11 @@ Hash::Hash(const HashAlgorithm hash_algorithm)
 
 Hash::~Hash() {
     delete impl_;
+}
+
+HashAlgorithm
+Hash::getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
 }
 
 size_t
