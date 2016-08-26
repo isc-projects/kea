@@ -1989,7 +1989,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reineterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
-                // sname and file fields in Pkt4 to string one day and live
+                // sname and file fields in Pkt4 to string one day and life
                 // will be easier.
                 response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
                                    sname.size());
@@ -2000,7 +2000,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reineterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
-                // sname and file fields in Pkt4 to string one day and live
+                // sname and file fields in Pkt4 to string one day and life
                 // will be easier.
                 response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
                                   filename.size());
@@ -2613,22 +2613,6 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
         return;
     }
 
-    // DOCSIS specific section
-
-    // Let's keep this as a series of checks. So far we're supporting only
-    // docsis3.0, but there are also docsis2.0, docsis1.1 and docsis1.0. We
-    // may come up with adding several classes, e.g. for docsis2.0 we would
-    // add classes docsis2.0, docsis1.1 and docsis1.0.
-
-    // Also we are using find, because we have at least one traffic capture
-    // where the user class was followed by a space ("docsis3.0 ").
-
-    // For now, the code is very simple, but it is expected to get much more
-    // complex soon. One specific case is that the vendor class is an option
-    // sent by the client, so we should not trust it. To confirm that the device
-    // is indeed a modem, John B. suggested to check whether chaddr field
-    // quals subscriber-id option that was inserted by the relay (CMTS).
-    // This kind of logic will appear here soon.
     pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
     classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
 }
