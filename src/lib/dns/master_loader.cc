@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@
 #include <cstdio> // for sscanf()
 
 using std::string;
-using std::auto_ptr;
+using std::unique_ptr;
 using std::vector;
 using std::pair;
 using boost::algorithm::iequals;
@@ -1034,10 +1034,11 @@ MasterLoader::MasterLoader(std::istream& stream,
     if (add_callback.empty()) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    auto_ptr<MasterLoaderImpl> impl(new MasterLoaderImpl("", zone_origin,
-                                                         zone_class, callbacks,
-                                                         add_callback,
-                                                         options));
+    unique_ptr<MasterLoaderImpl> impl(new MasterLoaderImpl("", zone_origin,
+                                                           zone_class,
+                                                           callbacks,
+                                                           add_callback,
+                                                           options));
     impl->pushStreamSource(stream);
     impl_ = impl.release();
 }

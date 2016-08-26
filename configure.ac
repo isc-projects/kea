@@ -814,7 +814,7 @@ then
 else
    CRYPTO_NAME="OpenSSL"
    DISABLED_CRYPTO="Botan"
-   CRYPTO_PACKAGE="openssl-1.0.0"
+   CRYPTO_PACKAGE="openssl-1.0.2"
    AC_DEFINE_UNQUOTED([WITH_OPENSSL], [], [Compile with OpenSSL crypto])
    AC_MSG_CHECKING(for OpenSSL library)
    # from bind9
@@ -837,18 +837,10 @@ else
    fi
    AC_MSG_RESULT(yes)
    if test "${use_openssl}" = "/usr" ; then
+      CRYPTO_CFLAGS=""
       CRYPTO_INCLUDES=""
       CRYPTO_LIBS="-lcrypto"
       DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl"
-      case "$host" in
-          *-apple-darwin*)
-              # Starting with OSX 10.7 (Lion) OpenSSL is deprecated
-              CRYPTO_CFLAGS="-Wno-deprecated-declarations"
-              ;;
-          *)
-              CRYPTO_CFLAGS=""
-              ;;
-      esac
    else
       CRYPTO_CFLAGS=""
       CRYPTO_INCLUDES="-I${use_openssl}/include"
@@ -873,6 +865,8 @@ else
       esac
     fi
     dnl Determine the OpenSSL version
+    # Officially we support >= 1.0.1, 0.9.8 should fail the HMAC API,
+    # 1.0.0 could work but is not recommended.
     AC_MSG_CHECKING([OpenSSL version])
     cat > conftest.cpp << EOF
 #include <openssl/opensslv.h>
@@ -903,6 +897,18 @@ EOF
                           ])],
         [AC_MSG_RESULT([yes])],
         [AC_MSG_ERROR([missing EVP entry for SHA-2])])
+    dnl Check HMAC API
+    AC_MSG_CHECKING([HMAC functions returning ints])
+    AC_LINK_IFELSE(
+         [AC_LANG_PROGRAM([#include <openssl/hmac.h>],
+                          [HMAC_CTX ctx, tmp;
+                           int n = HMAC_Init(&ctx, NULL, 0, NULL);
+                           n += HMAC_Update(&ctx, NULL, 0);
+                           n += HMAC_CTX_copy(&tmp, &ctx);
+                           n += HMAC_Final(&tmp, NULL, NULL);
+                           ])],
+         [AC_MSG_RESULT([yes])],
+         [AC_MSG_ERROR([HMAC functions return void: the OpenSSL version should be too old, please change for >= 1.0.1])])
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
@@ -1261,6 +1267,27 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
+#
+# Some Googletest versions bug with C++11 compilers
+#
+if test $enable_gtest != "no"; then
+   AC_MSG_CHECKING([if Google Test is compatible with the compiler])
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+   AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <boost/shared_ptr.hpp>
+	    #include <gtest/gtest.h>
+	    void foo() {
+	        boost::shared_ptr<int> bar;
+		ASSERT_TRUE(bar);
+            }],
+	    [return 0;])],
+	[AC_MSG_RESULT(yes)],
+    	[AC_MSG_ERROR([XXX_TRUE() Gtest macros won't compile: please use a different version of Gtest, e.g., git one])])
+    CPPFLAGS=$CPPFLAGS_SAVED
+fi
+	    
 #
 # ASIO: we extensively use it as the C++ event management module.
 #

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,11 @@ public:
     void resize(size_t sz) {
         vec_.resize(sz);
     };
+
+    void clear() {
+        std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
+        vec_.clear();
+    }
 
     SecBuf& operator=(const SecBuf& x) {
         if (&x != *this) {
