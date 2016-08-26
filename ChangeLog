@@ -1,3 +1,8 @@
+1160.	[build]		marcin
+	Bumped up version numbers of Kea libraries and KEA_HOOKS_VERSION
+	for the Kea 1.1.0 beta release.
+	(Trac #4632, git 93941523e039a1cc4bb34182a290f9d7b805df34)
+
 1159.	[func]		marcin
 	MySQL database schema updated to version 5.0.
 	(Trac #4562, git 0e40b35e280f0845686bcfdb2efb577c7878ede6)
