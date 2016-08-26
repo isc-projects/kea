@@ -1,0 +1,114 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "4.1" ]; then
+    printf "This script upgrades 4.1 to 5.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Update index used for searching DHCPv4 reservations by identifier and subnet id.
+# This index is now unique (to prevent duplicates) and includes DHCPv4 subnet
+# identifier.
+DROP INDEX key_dhcp4_identifier_subnet_id ON hosts;
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts (dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp4_subnet_id ASC);
+
+# Update index used for searching DHCPv6 reservations by identifier and subnet id.
+# This index is now unique to prevent duplicates.
+DROP INDEX key_dhcp6_identifier_subnet_id ON hosts;
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts (dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC);
+
+# Create index to search for reservations using IP address and subnet id.
+# This unique index guarantees that there is only one occurence of the
+# particular IPv4 address for a given subnet.
+CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts (ipv4_address ASC , dhcp4_subnet_id ASC);
+
+# Create index to search for reservations using address/prefix and prefix
+# length.
+CREATE UNIQUE INDEX key_dhcp6_address_prefix_len ON ipv6_reservations (address ASC , prefix_len ASC);
+
+# Create a table mapping host identifiers to their names. Values in this
+# table are used as a foreign key in hosts table to guarantee that only
+# identifiers present in host_identifier_type table are used in hosts
+# table.
+CREATE TABLE IF NOT EXISTS host_identifier_type (
+    type TINYINT PRIMARY KEY NOT NULL,   # Lease type code.
+    name VARCHAR(32)                     # Name of the lease type
+) ENGINE = INNODB;
+
+START TRANSACTION;
+INSERT INTO host_identifier_type VALUES (0, "hw-address"); # Non-temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (1, "duid");       # Temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (2, "circuit-id"); # Prefix delegations
+COMMIT;
+
+# Add a constraint that any identifier type value added to the hosts
+# must map to a value in the host_identifier_type table.
+ALTER TABLE hosts
+    ADD CONSTRAINT fk_host_identifier_type FOREIGN KEY (dhcp_identifier_type)
+    REFERENCES host_identifier_type (type);
+
+# Store DHCPv6 option code as 16-bit unsigned integer.
+ALTER TABLE dhcp6_options MODIFY code SMALLINT UNSIGNED NOT NULL;
+
+# Subnet identifier is unsigned.
+ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED NULL;
+ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED NULL;
+
+# Scopes associate DHCP options stored in dhcp4_options and
+# dhcp6_options tables with hosts, subnets, classes or indicate
+# that they are global options.
+CREATE TABLE IF NOT EXISTS dhcp_option_scope (
+    scope_id TINYINT UNSIGNED PRIMARY KEY NOT NULL,
+    scope_name VARCHAR(32)
+) ENGINE = INNODB;
+
+START TRANSACTION;
+INSERT INTO dhcp_option_scope VALUES (0, "global");
+INSERT INTO dhcp_option_scope VALUES (1, "subnet");
+INSERT INTO dhcp_option_scope VALUES (2, "client-class");
+INSERT INTO dhcp_option_scope VALUES (3, "host");
+COMMIT;
+
+# Add scopes into table holding DHCPv4 options
+ALTER TABLE dhcp4_options ADD COLUMN scope_id TINYINT UNSIGNED NOT NULL;
+ALTER TABLE dhcp4_options
+    ADD CONSTRAINT fk_dhcp4_option_scope FOREIGN KEY (scope_id)
+    REFERENCES dhcp_option_scope (scope_id);
+
+# Add scopes into table holding DHCPv6 options
+ALTER TABLE dhcp6_options ADD COLUMN scope_id TINYINT UNSIGNED NOT NULL;
+ALTER TABLE dhcp6_options
+    ADD CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id)
+    REFERENCES dhcp_option_scope (scope_id);
+
+# Add UNSIGNED to reservation_id
+ALTER TABLE ipv6_reservations
+    MODIFY reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+# Add columns holding reservations for siaddr, sname and file fields
+# carried within DHCPv4 message.
+ALTER TABLE hosts ADD COLUMN dhcp4_next_server INT UNSIGNED NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '0';
+# This line concludes database upgrade to version 5.0.
+
+EOF
+
+RESULT=$?
+
+exit $?

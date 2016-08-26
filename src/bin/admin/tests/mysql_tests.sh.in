@@ -133,7 +133,7 @@ EOF
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts;
+    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (returned status code %d, expected %d)"
@@ -147,14 +147,14 @@ EOF
 
     # Fourth table: dhcp4_options
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options;
+    SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id FROM dhcp4_options;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp4_options table is missing or broken. (returned status code %d, expected %d)"
 
     # Fifth table: dhcp6_options
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options;
+    SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id FROM dhcp6_options;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_options table is missing or broken. (returned status code %d, expected %d)"
@@ -193,8 +193,8 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 4.1
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir 
+    # Ok, we have a 1.0 database. Let's upgrade it to 5.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin lease-upgrade mysql returned non-zero status code %d, expected %d"
@@ -286,7 +286,7 @@ EOF
     assert_eq 0 $ERRCODE "procedure text fetch for lease4DumpData failed. (returned status code %d, expected %d)"
     count=`echo $text | grep -ic "order by l\.address"`
     assert_eq 1 $count "lease4DumpData doesn't have order by clause. (returned count %d, expected %d)"
-   
+
     # verify  lease6DumpData has order by lease address
     qry="show create procedure lease6DumpData"
     text=`mysql_execute "${qry}"`
@@ -295,10 +295,65 @@ EOF
     count=`echo $text | grep -ic "order by l\.address"`
     assert_eq 1 $count "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
-    # Verify upgraded schemd reports version 4.1.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir) 
-    assert_str_eq "4.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    # verify that host_identifier_type table exists.
+    qry="select count(*) from host_identifier_type";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
+    assert_eq 3 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
 
+    # verify that foreign key fk_host_identifier_type exists
+    qry="show create table hosts";
+    text=`mysql_execute "${qry}"`
+    count=`echo $text | grep -ic "fk_host_identifier_type"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show create table hosts failed. (expected status code %d, returned %d)"
+    assert_eq 2 "$count" "show create table hosts did not return correct number of fk_host_identifier_type instances. (expected %d, returned %d)"
+
+    # verify that dhcp_option_scope table exists.
+    qry="select count(*) from dhcp_option_scope";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
+    assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
+
+    # verify that dhcp4_options table includes scope_id
+    qry="select scope_id from dhcp4_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select scope_id from dhcp4_options failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp6_options table includes scope_id
+    qry="select scope_id from dhcp6_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select scope_id from dhcp6_options failed. (expected status code %d, returned %d)"
+
+    # verify that hosts table has columns holding values for DHCPv4 fixed fields
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp4_subnet_id is unsigned
+    qry="show columns from hosts like 'dhcp4_subnet_id'"
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from hosts like 'dhcp4_subnet_id' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic unsigned`
+    assert_eq $count 1 "dhcp4_subnet_id is not of unsigned type. (returned count %d, expected %d)"
+
+    # verify that dhcp6_subnet_id is unsigned
+    qry="show columns from hosts like 'dhcp6_subnet_id'"
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "show columns from hosts like 'dhcp6_subnet_id' failed. (expected status code %d, returned %d)"
+    count=`echo $text | grep -ic unsigned`
+    assert_eq 1 $count "dhcp6_subnet_id is not of unsigned type. (expected count %d, returned %d)"
+
+    # Verify upgraded schema reports version 5.0
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    assert_str_eq "5.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
