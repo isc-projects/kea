@@ -37,6 +37,7 @@
             <command>perfdhcp</command>
             <arg><option>-1</option></arg>
             <arg><option>-4|-6</option></arg>
+            <arg><option>-A</option></arg>
             <arg><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
             <arg><option>-b <replaceable class="parameter">base</replaceable></option></arg>
             <arg><option>-B</option></arg>
@@ -231,6 +232,16 @@
                     <para>
                         DHCPv6 operation. This is incompatible with the
                         <option>-4</option> option.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-A</option></term>
+                <listitem>
+                    <para>
+                        When acting as a DHCPv6 behave like a relay Agent.
+                        Send out packets as if they were relayed from an agent.
                     </para>
                 </listitem>
             </varlistentry>

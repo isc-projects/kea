@@ -269,6 +269,11 @@ public:
     /// \return true if server-iD to be taken from first package.
     bool isUseFirst() const { return use_first_; }
 
+    /// \brief Check if generated DHCPv6 messages shuold appear as relayed.
+    ///
+    /// \return true if generated traffic should appear as relayed.
+    bool isUseRelayedV6() const { return use_relayed_v6_; }
+
     /// \brief Returns template file names.
     ///
     /// \return template file names.
@@ -577,6 +582,8 @@ private:
     std::string wrapped_;
     /// Server name specified as last argument of command line.
     std::string server_name_;
+    /// Controls whether generated dhcpv6 test traffic should be relayed.
+    bool use_relayed_v6_;
 };
 
 } // namespace perfdhcp
