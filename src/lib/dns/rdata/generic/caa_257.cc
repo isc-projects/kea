@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,10 +95,10 @@ CAA::constructFromLexer(MasterLexer& lexer) {
 CAA::CAA(const string& caa_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
+    // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the CAAImpl that constructFromLexer() returns.
-    std::auto_ptr<CAAImpl> impl_ptr(NULL);
+    std::unique_ptr<CAAImpl> impl_ptr;
 
     try {
         std::istringstream ss(caa_str);
