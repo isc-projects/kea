@@ -1142,7 +1142,7 @@ TEST_F(TestControlTest, GenerateDuid) {
     std::copy(
       generated_duid.begin() + 4, generated_duid.begin() + 10, mac.begin());
     // check that mac is in macs
-    std::find(macs.begin(), macs.end(), mac);
+    ASSERT_NE(std::find(macs.begin(), macs.end(), mac), macs.end());
 }
 
 TEST_F(TestControlTest, MisMatchVerionServer) {
@@ -1180,7 +1180,7 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     CommandOptions& options = CommandOptions::instance();
     vector<vector<uint8_t> > macs = options.getAllMacs();
     // check that mac is in macs
-    std::find(macs.begin(), macs.end(), mac);
+    ASSERT_NE(std::find(macs.begin(), macs.end(), mac), macs.end());
 }
 
 TEST_F(TestControlTest, Options4) {
