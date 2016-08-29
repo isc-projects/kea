@@ -3050,7 +3050,7 @@ It is merely echoed by the server
 <para>If not specified, the default value is:
 
 <screen>
-<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id" ]</userinput>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id", "client-id" ]</userinput>
 </screen>
 <!-- see CfgHostOperations::createConfig4() in
 src/lib/dhcpsrv/cfg_host_operations.cc -->
