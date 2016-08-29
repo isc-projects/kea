@@ -1,3 +1,8 @@
+1161.	[bug]		fdupont
+	Fixed interface manager receive methods which raise a bug on
+	Fedora 24 / gcc 6.1?
+	(Trac #4551, git xxx)
+
 1160.	[build]		marcin
 	Bumped up version numbers of Kea libraries and KEA_HOOKS_VERSION
 	for the Kea 1.1.0 beta release.
