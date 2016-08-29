@@ -23,6 +23,7 @@ nobase_dist_doc_DATA += examples/kea6/classify.json
 nobase_dist_doc_DATA += examples/kea6/hooks.json
 nobase_dist_doc_DATA += examples/kea6/leases-expiration.json
 nobase_dist_doc_DATA += examples/kea6/multiple-options.json
+nobase_dist_doc_DATA += examples/kea6/mysql-reservations.json
 nobase_dist_doc_DATA += examples/kea6/reservations.json
 nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
