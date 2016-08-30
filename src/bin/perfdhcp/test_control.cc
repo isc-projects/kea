@@ -790,9 +790,9 @@ TestControl::openSocket() const {
 
     if (port == 0) {
         if (family == AF_INET6) {
-            // need server port (547) because the server is acting as a relayer
+            // need server port (547) because the server is acting as a relay agent
             port = DHCP6_CLIENT_PORT;
-            // if acting as a relayer change port.
+            // if acting as a relay agent change port.
             if (options.isUseRelayedV6()) {
               port = DHCP6_SERVER_PORT;
             }
@@ -2243,7 +2243,9 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 
-    // only act as a relayer when told so.
+    // only act as a relay agent when told so.
+    // TODO: support more level of encapsulation, at the moment we only support
+    // one, via -A1 option.
     if (options.isUseRelayedV6()) {
       Pkt6::RelayInfo relay_info;
       relay_info.msg_type_ = DHCPV6_RELAY_FORW;

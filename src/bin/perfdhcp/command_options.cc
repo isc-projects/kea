@@ -213,7 +213,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "Ahv46r:t:R:b:n:p:d:D:l:P:a:L:M:"
+    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
                         "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -227,6 +227,14 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         // act as a relay Agent (single char option and R/r are taken already).
         case 'A':
             use_relayed_v6_ = true;
+            // TODO: actually use level, at the moment we support only 1 level.
+            // See comment in https://github.com/isc-projects/kea/pull/22#issuecomment-243405600
+            int level;
+            level = positiveInteger(
+                        " -A<encapusulation_levels> must be a positive integer");
+            if (level != 1) {
+              isc_throw(isc::InvalidParameter, "-A only supports 1 at the moment.");
+            }
             break;
 
         case '4':
@@ -740,7 +748,7 @@ CommandOptions::validate() const {
     check((getIpVersion() != 6) && (isRapidCommit() != 0),
           "-6 (IPv6) must be set to use -c");
     check(getIpVersion() == 4 && isUseRelayedV6(),
-          "Can't use -4 with -A");
+          "Can't use -4 with -A, it's a V6 only option.");
     check((getIpVersion() != 6) && (getReleaseRate() != 0),
           "-F<release-rate> may be used with -6 (IPv6) only");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
@@ -964,7 +972,8 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hv] [-4|-6] [-e<lease-type>] [-r<rate>] [-f<renew-rate>]\n"
+        "perfdhcp [-hv] [-4|-6] [-A<encapusulation_levels>] [-e<lease-type>]"
+        "         [-r<rate>] [-f<renew-rate>]\n"
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
@@ -995,7 +1004,6 @@ CommandOptions::usage() const {
         "-1: Take the server-ID option from the first received message.\n"
         "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
         "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-        "-A: When acting in DHCPv6 mode, send out relay packets\n"
         "-a<aggressivity>: When the target sending rate is not yet reached,\n"
         "    control how many exchanges are initiated before the next pause.\n"
         "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
@@ -1077,6 +1085,8 @@ CommandOptions::usage() const {
         "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the renew-rate (given by -f<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
+        "-A<encapusulation_levels>: When acting in DHCPv6 mode, send out relay packets.\n"
+        "    <encapusulation_levels> specifies how many relays forwarded this message\n"
         "\n"
         "The remaining options are used only in conjunction with -r:\n"
         "\n"

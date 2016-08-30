@@ -1142,7 +1142,10 @@ TEST_F(TestControlTest, GenerateDuid) {
     std::copy(
       generated_duid.begin() + 4, generated_duid.begin() + 10, mac.begin());
     // check that mac is in macs
-    ASSERT_NE(std::find(macs.begin(), macs.end(), mac), macs.end());
+    ASSERT_TRUE(
+        std::find(macs.begin(), macs.end(), mac) !=
+        macs.end()
+    );
 }
 
 TEST_F(TestControlTest, MisMatchVerionServer) {
@@ -1401,6 +1404,42 @@ TEST_F(TestControlTest, Packet6) {
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
         EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+    } else {
+        std::cout << "Unable to find the loopback interface. Skip test. "
+                  << std::endl;
+    }
+}
+
+TEST_F(TestControlTest, Packet6Relayed) {
+    // Use Interface Manager to get the local loopback interface.
+    // If the interface can't be found we don't want to fail test.
+    std::string loopback_iface(getLocalLoopback());
+    if (!loopback_iface.empty()) {
+        ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
+                                       " -A1 -L 10547 servers"));
+        NakedTestControl tc;
+        int sock_handle = 0;
+        // Create the socket. It will be needed to set packet's
+        // parameters.
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
+        TestControl::TestControlSocket sock(sock_handle);
+        uint32_t transid = 123;
+        boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
+        // Set packet's parameters.
+        ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
+        // Validate if parameters have been set correctly.
+        EXPECT_EQ(loopback_iface, pkt6->getIface());
+        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
+        EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
+        EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
+        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
+        EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+        // check relay info
+        EXPECT_EQ(pkt6->relay_info_.size(), 1);
+        EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
+        EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
+        EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, sock.addr_);
+        EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, sock.addr_);
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;

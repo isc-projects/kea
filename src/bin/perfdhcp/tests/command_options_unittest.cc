@@ -280,10 +280,10 @@ TEST_F(CommandOptionsTest, UseFirst) {
 
 TEST_F(CommandOptionsTest, UseRelayV6) {
     CommandOptions& opt = CommandOptions::instance();
-    EXPECT_NO_THROW(process("perfdhcp -6 -A -l ethx all"));
+    EXPECT_NO_THROW(process("perfdhcp -6 -A1 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
     // -4 and -A must not coexist
-    EXPECT_THROW(process("perfdhcp -4 -A -l ethx all"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -4 -A1 -l ethx all"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, IpVersion) {
