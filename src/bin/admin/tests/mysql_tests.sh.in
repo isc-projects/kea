@@ -305,10 +305,10 @@ EOF
     # verify that foreign key fk_host_identifier_type exists
     qry="show create table hosts";
     text=`mysql_execute "${qry}"`
-    count=`echo $text | grep -ic "fk_host_identifier_type"`
+    count=`echo $text | grep -ic -m 1 "fk_host_identifier_type"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "show create table hosts failed. (expected status code %d, returned %d)"
-    assert_eq 2 "$count" "show create table hosts did not return correct number of fk_host_identifier_type instances. (expected %d, returned %d)"
+    assert_eq 1 "$count" "show create table hosts did not return correct number of fk_host_identifier_type instances. (expected %d, returned %d)"
 
     # verify that dhcp_option_scope table exists.
     qry="select count(*) from dhcp_option_scope";
