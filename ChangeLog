@@ -3,6 +3,8 @@
 	Fedora 24 / gcc 6.1?
 	(Trac #4551, git 8d590e434062535e850a60a7892481df845ff390)
 
+Kea 1.1.0-beta released on August 31, 2016
+
 1160.	[build]		marcin
 	Bumped up version numbers of Kea libraries and KEA_HOOKS_VERSION
 	for the Kea 1.1.0 beta release.
@@ -25,7 +27,7 @@
 1156.	[bug]		tmark
 	Lease statistics are now recalculated during server startup and
 	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
-	back ends.  This addressses issues caused by accumulated values being lost
+	back ends.  This addresses issues caused by accumulated values being lost
 	across restarts and reconfigurations making rendering values incorrect.
 	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
 
@@ -104,7 +106,7 @@
 
 1142.	[doc]		sar
 	Uncomment the example columns in some rows in the table
-	listing the classificaiton examples.
+	listing the classification examples.
 	(None, git dee442a64f57c8d9dd87636f9e39084ed1b11e03)
 
 1141.	[func]		marcin
@@ -155,7 +157,7 @@
 1132.	[func]		tmark
 	The Postgresql schema has been updated to support host
 	reservations and its version number has been bumped to 3.0.
-	This schema is content equivlent to the MySQL schema version 4.2.
+	This schema is content equivalent to the MySQL schema version 4.2.
 	(Trac #4275, git 6f8e646bee9de22c921ed26409f3d1856ebce9e6)
 
 1131.	[func]		fdupont

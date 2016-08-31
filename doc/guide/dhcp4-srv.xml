@@ -3669,16 +3669,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       are implications of the design choices made. Those are clearly
       marked as such.</para>
       <itemizedlist>
-          <listitem> <!-- see tickets #3234, #3281 -->
-            <simpara>
-              Removal of a subnet during server reconfiguration may cause renumbering
-              of auto-generated subnet identifiers, as described in section
-              <xref linkend="ipv4-subnet-id"/>.
-            </simpara>
-          </listitem>
-          <listitem>
-            <simpara>Host reservation (static addresses) is not supported yet.</simpara>
-          </listitem>
           <listitem>
             <simpara>
               BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
