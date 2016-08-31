@@ -96,6 +96,9 @@ We have received the following contributions:
 
  - Angelo Failla, Facebook
    2016-04: Fixes for transaction id generation in perfdhcp
+   2016-08: Using a file as a source of MAC addresses to be used
+            in new transactions.
+   2016-08: Support for generating relayed DHCPv6 traffic.
 
  - Razvan Becheriu, Qualitance
    2016-05: Added support for Cassandra
