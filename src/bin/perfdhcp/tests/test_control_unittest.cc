@@ -17,6 +17,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <stdint.h>
 #include <string>
@@ -1121,8 +1122,8 @@ TEST_F(TestControlTest, GenerateDuid) {
     testDuid();
 
     // Checks that the random mac address returned by generateDuid
-    // is in the list of mac addresses in the mac_list.txt data file
-    std::string mac_list_full_path = getFullPath("mac_list.txt");
+    // is in the list of mac addresses in the mac-list.txt data file
+    std::string mac_list_full_path = getFullPath("mac-list.txt");
     std::ostringstream cmd;
     cmd << "perfdhcp -M " << mac_list_full_path << " abc";
     ASSERT_NO_THROW(processCmdLine(cmd.str()));
@@ -1130,22 +1131,22 @@ TEST_F(TestControlTest, GenerateDuid) {
     NakedTestControl tc;
     uint8_t randomized = 0;
     std::vector<uint8_t> generated_duid = tc.generateDuid(randomized);
-    // check that generated_duid is DUID_LL
+
+    // Check that generated_duid is DUID_LL
+    ASSERT_EQ(10, generated_duid.size());
     DuidPtr duid(new DUID(generated_duid));
     ASSERT_EQ(duid->getType(), DUID::DUID_LL);
-    // make sure it's on the list
+
+    // Make sure it's on the list
     CommandOptions& options = CommandOptions::instance();
-    vector<vector<uint8_t> > macs = options.getAllMacs();
-    // duid_ll is made of 2 bytes of duid type, 2 bytes of hardwaretype,
-    // then 6 bytes of mac
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    // DUID LL comprises 2 bytes of duid type, 2 bytes of hardware type,
+    // then 6 bytes of HW address.
     vector<uint8_t> mac(6);
-    std::copy(
-      generated_duid.begin() + 4, generated_duid.begin() + 10, mac.begin());
-    // check that mac is in macs
-    ASSERT_TRUE(
-        std::find(macs.begin(), macs.end(), mac) !=
-        macs.end()
-    );
+    std::copy(generated_duid.begin() + 4, generated_duid.begin() + 10,
+              mac.begin());
+    // Check that mac is in macs.
+    ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) != macs.end());
 }
 
 TEST_F(TestControlTest, MisMatchVerionServer) {
@@ -1171,19 +1172,22 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     testMacAddress();
 
     // Checks that the random mac address returned by generateMacAddress
-    // is in the list of mac addresses in the mac_list.txt data file
-    std::string mac_list_full_path = getFullPath("mac_list.txt");
+    // is in the list of mac addresses in the mac-list.txt data file
+    std::string mac_list_full_path = getFullPath("mac-list.txt");
     std::ostringstream cmd;
     cmd << "perfdhcp -M " << mac_list_full_path << " abc";
     ASSERT_NO_THROW(processCmdLine(cmd.str()));
     // Initialize Test Controller.
     NakedTestControl tc;
     uint8_t randomized = 0;
+    // Generate MAC adddress and sanity check its size.
     std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
+    ASSERT_EQ(6, mac.size());
+    // Make sure that the generated MAC address belongs to the MAC addresses
+    // read from a file.
     CommandOptions& options = CommandOptions::instance();
-    vector<vector<uint8_t> > macs = options.getAllMacs();
-    // check that mac is in macs
-    ASSERT_NE(std::find(macs.begin(), macs.end(), mac), macs.end());
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) !=  macs.end());
 }
 
 TEST_F(TestControlTest, Options4) {
@@ -1404,6 +1408,9 @@ TEST_F(TestControlTest, Packet6) {
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
         EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+        // Packet must not be relayed.
+        EXPECT_TRUE(pkt6->relay_info_.empty());
+
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;
@@ -1434,7 +1441,7 @@ TEST_F(TestControlTest, Packet6Relayed) {
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
         EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
-        // check relay info
+        // Packet should be relayed.
         EXPECT_EQ(pkt6->relay_info_.size(), 1);
         EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
         EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);

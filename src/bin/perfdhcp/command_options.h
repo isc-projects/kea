@@ -24,6 +24,9 @@ namespace perfdhcp {
 class CommandOptions : public boost::noncopyable {
 public:
 
+    /// @brief A vector holding MAC addresses.
+    typedef std::vector<std::vector<uint8_t> > MacAddrsVector;
+
     /// \brief A class encapsulating the type of lease being requested from the
     /// server.
     ///
@@ -272,25 +275,27 @@ public:
     /// \brief Check if generated DHCPv6 messages shuold appear as relayed.
     ///
     /// \return true if generated traffic should appear as relayed.
-    bool isUseRelayedV6() const { return use_relayed_v6_; }
+    bool isUseRelayedV6() const { return (v6_relay_encapsulation_level_ > 0); }
 
     /// \brief Returns template file names.
     ///
     /// \return template file names.
     std::vector<std::string> getTemplateFiles() const { return template_file_; }
 
-    /// \brief Returns location of the file containing list of MAC addresses
+    /// \brief Returns location of the file containing list of MAC addresses.
     ///
     /// MAC addresses read from the file are used by the perfdhcp in message
     /// exchanges with the DHCP server.
     ///
-    /// \return mac_template file name.
-    std::string getMacListFile() const { return mac_file_list_; }
+    /// \return Location of the file containing list of MAC addresses.
+    std::string getMacListFile() const { return mac_list_file_; }
 
-    /// \brief Returns the list of macs, every mac is a vector<uint8_t>
+    /// \brief Returns reference to a vector of MAC addresses read from a file.
     ///
-    /// \return mac_list_ vector of vectors.
-    const std::vector<std::vector<uint8_t> >& getAllMacs() const { return mac_list_; }
+    /// Every MAC address is represented as a vector.
+    ///
+    /// \return Reference to a vector of vectors.
+    const MacAddrsVector& getMacsFromFile() const { return mac_list_; }
 
     /// brief Returns template offsets for xid.
     ///
@@ -554,10 +559,13 @@ private:
     /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
-    /// A file containing a list of macs, one per line. This can be used if
-    /// you don't want to genrate Mac starting from a base mac but rather provide
-    /// the tool with a list of macs it should randomize on.
-    std::string mac_file_list_;
+    /// Location of a file containing a list of MAC addresses, one per line.
+    /// This can be used if you don't want to generate MAC address from a
+    /// base MAC address, but rather provide the file with a list of MAC
+    /// addresses to be randomly picked. Note that in DHCPv6 those MAC
+    /// addresses will be used to generate DUID-LL.
+    std::string mac_list_file_;
+    /// List of MAC addresses loaded from a file.
     std::vector<std::vector<uint8_t> > mac_list_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
@@ -582,8 +590,8 @@ private:
     std::string wrapped_;
     /// Server name specified as last argument of command line.
     std::string server_name_;
-    /// Controls whether generated dhcpv6 test traffic should be relayed.
-    bool use_relayed_v6_;
+    /// Indicates how many DHCPv6 relay agents are simulated.
+    uint8_t v6_relay_encapsulation_level_;
 };
 
 } // namespace perfdhcp

@@ -11,7 +11,7 @@
 
 <refentry>
     <refentryinfo>
-        <date>February 19, 2014</date>
+        <date>August 31, 2016</date>
     </refentryinfo>
 
     <refmeta>
@@ -27,7 +27,7 @@
 
     <docinfo>
         <copyright>
-            <year>2014</year>
+            <year>2016</year>
             <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
         </copyright>
     </docinfo>
@@ -37,7 +37,7 @@
             <command>perfdhcp</command>
             <arg><option>-1</option></arg>
             <arg><option>-4|-6</option></arg>
-            <arg><option>-A</option></arg>
+            <arg><option>-A <replaceable class="parameter">encapsulation-level</replaceable></option></arg>
             <arg><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
             <arg><option>-b <replaceable class="parameter">base</replaceable></option></arg>
             <arg><option>-B</option></arg>
@@ -53,6 +53,7 @@
             <arg><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
             <arg><option>-l <replaceable class="parameter">local-address|interface</replaceable></option></arg>
             <arg><option>-L <replaceable class="parameter">local-port</replaceable></option></arg>
+            <arg><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></arg>
             <arg><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
             <arg><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
             <arg><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
@@ -237,16 +238,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-A</option></term>
-                <listitem>
-                    <para>
-                        When acting as a DHCPv6 behave like a relay Agent.
-                        Send out packets as if they were relayed from an agent.
-                    </para>
-                </listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-a <replaceable class="parameter">aggressivity</replaceable></option></term>
                 <listitem>
                     <para>
@@ -399,6 +390,19 @@
                         or a positive integer up to 65535.  A value of 0
                         (the default) allows <command>perfdhcp</command>
                         to choose its own port.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></term>
+                <listitem>
+                    <para>
+                      A text file containing a list of MAC addresses,
+                      one per line. If provided, a MAC address will be choosen randomly
+                      from this list for every new exchange. In the DHCPv6 case, MAC
+                      addresses are used to generate DUID-LLs. This parameter must not be
+                      used in conjunction with the -b parameter.
                     </para>
                 </listitem>
             </varlistentry>
@@ -603,6 +607,20 @@
                             must be equal to or less than the exchange rate.
                         </para>
                     </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                  <term><option>-A <replaceable class="parameter">encapsulation-level</replaceable></option></term>
+                  <listitem>
+                    <para>
+                      Specifies that relayed traffic must be
+                      generated. The argument specifies the level of encapsulation, i.e.
+                      how many relay agents are simulated. Currently the only supported
+                      <replaceable class="parameter">encapsulation-level</replaceable>
+                      value is 1, which means that the generated traffic is an equivalent
+                      of the traffic passing through a single relay agent.
+                    </para>
+                  </listitem>
                 </varlistentry>
 
             </variablelist>

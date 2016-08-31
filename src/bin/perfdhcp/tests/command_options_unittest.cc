@@ -848,13 +848,13 @@ TEST_F(CommandOptionsTest, Server) {
 TEST_F(CommandOptionsTest, LoadMacsFromFile) {
   CommandOptions &opt = CommandOptions::instance();
 
-  std::string mac_list_full_path = getFullPath("mac_list.txt");
+  std::string mac_list_full_path = getFullPath("mac-list.txt");
   std::ostringstream cmd;
   cmd << "perfdhcp -M " << mac_list_full_path << " abc";
   EXPECT_NO_THROW(process(cmd.str()));
   EXPECT_EQ(mac_list_full_path, opt.getMacListFile());
 
-  std::vector<std::vector<uint8_t> > m = opt.getAllMacs();
+  const CommandOptions::MacAddrsVector& m = opt.getMacsFromFile();
   EXPECT_EQ(4, m.size());
 }
 
