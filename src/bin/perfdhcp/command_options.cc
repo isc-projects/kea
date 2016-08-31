@@ -118,7 +118,7 @@ CommandOptions::reset() {
     mac_template_.assign(mac, mac + 6);
     duid_template_.clear();
     base_.clear();
-    mac_file_list_.clear();
+    mac_list_file_.clear();
     mac_list_.clear();
     num_request_.clear();
     period_ = 0;
@@ -136,7 +136,6 @@ CommandOptions::reset() {
     broadcast_ = false;
     rapid_commit_ = false;
     use_first_ = false;
-    use_relayed_v6_ = false;
     template_file_.clear();
     rnd_offset_.clear();
     xid_offset_.clear();
@@ -146,6 +145,7 @@ CommandOptions::reset() {
     diags_.clear();
     wrapped_.clear();
     server_name_.clear();
+    v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
 }
 
@@ -224,16 +224,16 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             use_first_ = true;
             break;
 
-        // act as a relay Agent (single char option and R/r are taken already).
+        // Simulate DHCPv6 relayed traffic.
         case 'A':
-            use_relayed_v6_ = true;
-            // TODO: actually use level, at the moment we support only 1 level.
+            // @todo: At the moment we only support simulating a single relay
+            // agent. In the future we should extend it to up to 32.
             // See comment in https://github.com/isc-projects/kea/pull/22#issuecomment-243405600
-            int level;
-            level = positiveInteger(
-                        " -A<encapusulation_levels> must be a positive integer");
-            if (level != 1) {
-              isc_throw(isc::InvalidParameter, "-A only supports 1 at the moment.");
+            v6_relay_encapsulation_level_ =
+                static_cast<uint8_t>(positiveInteger("-A<encapusulation-level> must"
+                                                     " be a positive integer"));
+            if (v6_relay_encapsulation_level_ != 1) {
+                isc_throw(isc::InvalidParameter, "-A only supports 1 at the moment.");
             }
             break;
 
@@ -361,7 +361,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'M':
             check(num_mac_list_files >= 1, "only -M option can be specified");
             num_mac_list_files++;
-            mac_file_list_ = std::string(optarg);
+            mac_list_file_ = std::string(optarg);
             loadMacs();
             break;
 
@@ -712,7 +712,7 @@ CommandOptions::convertHexString(const std::string& text) const {
 
 void CommandOptions::loadMacs() {
   std::string line;
-  std::ifstream infile(mac_file_list_.c_str());
+  std::ifstream infile(mac_list_file_.c_str());
   while (std::getline(infile, line)) {
     check(decodeMacString(line), "invalid mac in input");
   }
@@ -930,8 +930,8 @@ CommandOptions::printCommandLine() const {
     if (use_first_) {
         std::cout << "use-first" << std::endl;
     }
-    if (!mac_file_list_.empty()) {
-        std::cout << "mac-file-list=" << mac_file_list_ << std::endl;
+    if (!mac_list_file_.empty()) {
+        std::cout << "mac-list-file=" << mac_list_file_ << std::endl;
     }
     for (size_t i = 0; i < template_file_.size(); ++i) {
         std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
@@ -972,13 +972,13 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hv] [-4|-6] [-A<encapusulation_levels>] [-e<lease-type>]"
+        "perfdhcp [-hv] [-4|-6] [-A<encapusulation-level>] [-e<lease-type>]"
         "         [-r<rate>] [-f<renew-rate>]\n"
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
-        "         [-c] [-1] [-M<mac_list_file>] [-T<template-file>]\n"
+        "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
         "         [-w<wrapped>] [server]\n"
@@ -1042,10 +1042,11 @@ CommandOptions::usage() const {
         "    via which exchanges are initiated.\n"
         "-L<local-port>: Specify the local port to use\n"
         "    (the value 0 means to use the default).\n"
-        "-M<mac-file-list>: A text file containing a list of macs, one per line.\n"
-        "   If provided a random mac will be choosen for every exchange.\n"
-        "   Must not be used in conjunction with the -b parameter.\n"
-        "   In the v6 case MAC addresses are used to generate DUID-LLs.\n"
+        "-M<mac-list-file>: A text file containing a list of MAC addresses,\n"
+        "   one per line. If provided, a MAC address will be choosen randomly\n"
+        "   from this list for every new exchange. In the DHCPv6 case, MAC\n"
+        "   addresses are used to generate DUID-LLs. This parameter must not be\n"
+        "   used in conjunction with the -b parameter.\n"
         "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
         "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
         "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
@@ -1085,8 +1086,12 @@ CommandOptions::usage() const {
         "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the renew-rate (given by -f<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
-        "-A<encapusulation_levels>: When acting in DHCPv6 mode, send out relay packets.\n"
-        "    <encapusulation_levels> specifies how many relays forwarded this message\n"
+        "-A<encapusulation-level>: Specifies that relayed traffic must be\n"
+        "    generated. The argument specifies the level of encapsulation, i.e.\n"
+        "    how many relay agents are simulated. Currently the only supported\n"
+        "    <encapsulation-level> value is 1, which means that the generated\n"
+        "    traffic is an equivalent of the traffic passing through a single\n"
+        "    relay agent.\n"
         "\n"
         "The remaining options are used only in conjunction with -r:\n"
         "\n"

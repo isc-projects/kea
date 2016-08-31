@@ -81,7 +81,7 @@ TestControl::instance() {
 }
 
 TestControl::TestControl()
-    : number_generator_(0, CommandOptions::instance().getAllMacs().size()) {
+    : number_generator_(0, CommandOptions::instance().getMacsFromFile().size()) {
   reset();
 }
 
@@ -469,7 +469,7 @@ std::vector<uint8_t>
 TestControl::generateMacAddress(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
 
-    vector<vector<uint8_t> > macs = options.getAllMacs();
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
     // if we are using the -M option return a random one from the list...
     if (macs.size() > 0) {
       uint16_t r = number_generator_();
@@ -526,7 +526,7 @@ std::vector<uint8_t>
 TestControl::generateDuid(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
-    vector<vector<uint8_t> > macs = options.getAllMacs();
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
     // pick a random mac address if we are using option -M..
     if (macs.size() > 0) {
       uint16_t r = number_generator_();
