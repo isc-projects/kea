@@ -269,10 +269,28 @@ public:
     /// \return true if server-iD to be taken from first package.
     bool isUseFirst() const { return use_first_; }
 
+    /// \brief Check if generated DHCPv6 messages shuold appear as relayed.
+    ///
+    /// \return true if generated traffic should appear as relayed.
+    bool isUseRelayedV6() const { return use_relayed_v6_; }
+
     /// \brief Returns template file names.
     ///
     /// \return template file names.
     std::vector<std::string> getTemplateFiles() const { return template_file_; }
+
+    /// \brief Returns location of the file containing list of MAC addresses
+    ///
+    /// MAC addresses read from the file are used by the perfdhcp in message
+    /// exchanges with the DHCP server.
+    ///
+    /// \return mac_template file name.
+    std::string getMacListFile() const { return mac_file_list_; }
+
+    /// \brief Returns the list of macs, every mac is a vector<uint8_t>
+    ///
+    /// \return mac_list_ vector of vectors.
+    const std::vector<std::vector<uint8_t> >& getAllMacs() const { return mac_list_; }
 
     /// brief Returns template offsets for xid.
     ///
@@ -427,7 +445,7 @@ private:
     ///
     /// \param base Base string given as -b mac=00:01:02:03:04:05.
     /// \throws isc::InvalidParameter if mac address is invalid.
-    void decodeMac(const std::string& base);
+    void decodeMacBase(const std::string& base);
 
     /// \brief Decodes base DUID provided with -b<base>.
     ///
@@ -453,6 +471,14 @@ private:
     /// \param hex_text Hexadecimal string e.g. AF.
     /// \throw isc::InvalidParameter if string does not represent hex byte.
     uint8_t convertHexString(const std::string& hex_text) const;
+
+    /// \brief Opens the text file containing list of macs (one per line)
+    /// and adds them to the mac_list_ vector.
+    void loadMacs();
+
+    /// \brief Decodes a mac string into a vector of uint8_t and adds it to the
+    /// mac_list_ vector.
+    bool decodeMacString(const std::string& line);
 
     /// IP protocol version to be used, expected values are:
     /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
@@ -528,6 +554,11 @@ private:
     /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
+    /// A file containing a list of macs, one per line. This can be used if
+    /// you don't want to genrate Mac starting from a base mac but rather provide
+    /// the tool with a list of macs it should randomize on.
+    std::string mac_file_list_;
+    std::vector<std::vector<uint8_t> > mac_list_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
     /// second element points to transaction id offset for
@@ -551,6 +582,8 @@ private:
     std::string wrapped_;
     /// Server name specified as last argument of command line.
     std::string server_name_;
+    /// Controls whether generated dhcpv6 test traffic should be relayed.
+    bool use_relayed_v6_;
 };
 
 } // namespace perfdhcp
