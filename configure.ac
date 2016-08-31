@@ -1094,12 +1094,12 @@ elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-	log4cplusdirs="/usr/local /usr/pkg /opt /opt/local"
+	log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
 	for d in $log4cplusdirs
 	do
 		if test -f $d/include/log4cplus/logger.h; then
 			LOG4CPLUS_INCLUDES="-I$d/include"
-			LOG4CPLUS_LIBS="-L$d/lib"
+			LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
 			break
 		fi
 	done
