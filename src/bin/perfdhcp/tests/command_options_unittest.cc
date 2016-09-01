@@ -7,9 +7,10 @@
 #include <config.h>
 
 #include <cstddef>
+#include <fstream>
+#include <gtest/gtest.h>
 #include <stdint.h>
 #include <string>
-#include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <dhcp/iface_mgr.h>
@@ -152,6 +153,19 @@ protected:
         return (CommandOptionsHelper::process(cmdline));
     }
 
+    /// \brief Get full path to a file in testdata directory.
+    ///
+    /// \param filename filename being appended to absolute
+    /// path to testdata directory
+    ///
+    /// \return full path to a file in testdata directory.
+    std::string getFullPath(const std::string& filename) const {
+        std::ostringstream stream;
+        stream << TEST_DATA_DIR << "/" << filename;
+        return (stream.str());
+    }
+
+
     /// \brief Check default initialized values
     ///
     /// Check if initialized values are correct
@@ -263,6 +277,15 @@ TEST_F(CommandOptionsTest, UseFirst) {
     EXPECT_NO_THROW(process("perfdhcp -1 -B -l ethx all"));
     EXPECT_TRUE(opt.isUseFirst());
 }
+
+TEST_F(CommandOptionsTest, UseRelayV6) {
+    CommandOptions& opt = CommandOptions::instance();
+    EXPECT_NO_THROW(process("perfdhcp -6 -A1 -l ethx all"));
+    EXPECT_TRUE(opt.isUseRelayedV6());
+    // -4 and -A must not coexist
+    EXPECT_THROW(process("perfdhcp -4 -A1 -l ethx all"), isc::InvalidParameter);
+}
+
 TEST_F(CommandOptionsTest, IpVersion) {
     CommandOptions& opt = CommandOptions::instance();
     EXPECT_NO_THROW(process("perfdhcp -6 -l ethx -c -i all"));
@@ -820,4 +843,26 @@ TEST_F(CommandOptionsTest, Server) {
     // returned.
     ASSERT_NO_THROW(process("perfdhcp -6 abc"));
     EXPECT_EQ("abc", opt.getServerName());
+}
+
+TEST_F(CommandOptionsTest, LoadMacsFromFile) {
+  CommandOptions &opt = CommandOptions::instance();
+
+  std::string mac_list_full_path = getFullPath("mac-list.txt");
+  std::ostringstream cmd;
+  cmd << "perfdhcp -M " << mac_list_full_path << " abc";
+  EXPECT_NO_THROW(process(cmd.str()));
+  EXPECT_EQ(mac_list_full_path, opt.getMacListFile());
+
+  const CommandOptions::MacAddrsVector& m = opt.getMacsFromFile();
+  EXPECT_EQ(4, m.size());
+}
+
+TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {
+  // Negative test cases
+  // Too many -M parameters, expected only 1
+  EXPECT_THROW(process("perfdhcp -M foo -M foo1 all"), isc::InvalidParameter);
+  // -M option can't use with -b option
+  EXPECT_THROW(process("perfdhcp -M foo -b mac=1234 all"),
+               isc::InvalidParameter);
 }
