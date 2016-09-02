@@ -293,10 +293,10 @@ public:
         // Now let's add specified number of data tuples
         OpaqueDataTuple::LengthFieldType len = (u == Option::V4?OpaqueDataTuple::LENGTH_1_BYTE:
                                                 OpaqueDataTuple::LENGTH_2_BYTES);
-        const char * content[] = { "alpha", "beta", "delta", "gamma", "epsilon",
+        const char* content[10] = { "alpha", "beta", "delta", "gamma", "epsilon",
                                  "zeta", "eta", "theta", "iota", "kappa" };
-        ASSERT_TRUE(tuples_size < sizeof(content));
-        for (int i = 0; i < tuples_size; i++) {
+        ASSERT_TRUE(tuples_size < 10);
+        for (unsigned i = 0; i < tuples_size; ++i) {
             OpaqueDataTuple tuple(len);
             tuple.assign(string(content[i]));
             if (u == Option::V4 && i == 0) {
