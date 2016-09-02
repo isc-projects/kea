@@ -57,6 +57,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
@@ -153,7 +154,18 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
+
+            // Assign classes.
+            setReservedClientClasses();
         }
+    }
+
+    const ClientClasses& classes = query_->getClasses();
+    if (!classes.empty()) {
+        std::string joined_classes = boost::algorithm::join(classes, ", ");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query_->getLabel())
+            .arg(joined_classes);
     }
 };
 
@@ -329,6 +341,16 @@ Dhcpv4Exchange::setHostIdentifiers() {
 
         default:
             ;
+        }
+    }
+}
+
+void
+Dhcpv4Exchange::setReservedClientClasses() {
+    if (context_->host_ && query_) {
+        BOOST_FOREACH(const std::string& client_class,
+                      context_->host_->getClientClasses4()) {
+            query_->addClass(client_class);
         }
     }
 }
@@ -2604,7 +2626,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     }
 }
 
-void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
+void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt) {
     // Built-in vendor class processing
     boost::shared_ptr<OptionString> vendor_class =
         boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
@@ -2614,14 +2636,11 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
     }
 
     pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
-    classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
-    string classes = "";
-
     // First phase: built-in vendor class processing
-    classifyByVendor(pkt, classes);
+    classifyByVendor(pkt);
 
     // Run match expressions
     // Note getClientClassDictionary() cannot be null
@@ -2645,7 +2664,6 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
                     .arg(status);
                 // Matching: add the class
                 pkt->addClass(it->first);
-                classes += it->first + " ";
             } else {
                 LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
                     .arg(it->first)
@@ -2660,12 +2678,6 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
                 .arg(it->first)
                 .arg("get exception?");
         }
-    }
-
-    if (!classes.empty()) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
-            .arg(pkt->getLabel())
-            .arg(classes);
     }
 }
 
