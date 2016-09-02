@@ -1,3 +1,9 @@
+1162.	[func]		pallotron
+	Added two enhancements to perfdhcp: optionally using MAC
+	addresses from a file in new DHCP transactions, and
+	generation of DHCPv6 relayed messages.
+	(github #22, git c5b4a5981cf642ebb9aecb8acc07b87abdccbd91)
+
 1161.	[bug]		fdupont
 	Fixed interface manager receive methods which raise a bug on
 	Fedora 24 / gcc 6.1?
