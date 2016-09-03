@@ -2591,6 +2591,58 @@ should include options from the isc option space:
 
     </section>
 
+    <section id="reservation6-client-classes">
+      <title>Reserving Client Classes in DHCPv6</title>
+      <para>The <xref linkend="classification-using-expressions"/> explains how
+      to configure the server to assign classes to a client based on the content
+      of the options that this client sends to the server. Host reservations
+      mechanisms also allow for statically assigning classes to the clients.
+      The definitions of these classes must exist in the Kea
+      configuration. The following configuration snippet shows how to specify
+      that the client belongs to classes <command>reserved-class1</command>
+      and <command>reserved-class2</command>. Those classes are associated with
+      specific options being sent to the clients which belong to them.
+      </para>
+<screen>
+{
+    "client-classes": [
+    {
+       "name": "reserved-class1",
+       "option-data": [
+       {
+           "name": "dns-servers",
+           "data": "2001:db8:1::50"
+       }
+       ]
+   },
+   {
+       "name": "reserved-class2",
+       "option-data": [
+       {
+           "name": "nis-servers",
+           "data": "2001:db8:1::100"
+       }
+       ]
+    }
+    ],
+    "subnet6": [
+    {   "pools": [ { "pool": "2001:db8:1::/64" } ],
+        "subnet": "2001:db8:1::/48",
+        "reservations": [
+        {
+            "duid": "01:02:03:04:05:06:07:08",
+            <userinput>
+            "client-classes": [ "reserved-class1", "reserved-class2" ]
+            </userinput>
+         } ]"
+     } ]"
+ }"
+
+</screen>
+    <para>Static class assignments, as shown above, can be used in conjuction
+    with classification using expressions.</para>
+    </section>
+
     <section id="reservations6-mysql-pgsql">
       <title>Storing host reservations in MySQL or PostgreSQL</title>
 

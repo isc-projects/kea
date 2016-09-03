@@ -2926,6 +2926,61 @@ It is merely echoed by the server
     them can be omitted.</para>
     </section>
 
+    <section id="reservation4-client-classes">
+      <title>Reserving Client Classes in DHCPv4</title>
+      <para>The <xref linkend="classification-using-expressions"/> explains how
+      to configure the server to assign classes to a client based on the content
+      of the options that this client sends to the server. Host reservations
+      mechanisms also allow for statically assigning classes to the clients.
+      The definitions of these classes must exist in the Kea
+      configuration. The following configuration snippet shows how to specify
+      that the client belongs to classes <command>reserved-class1</command>
+      and <command>reserved-class2</command>. Those classes are associated with
+      specific options being sent to the clients which belong to them.
+      </para>
+
+<screen>
+{
+    "client-classes": [
+    {
+       "name": "reserved-class1",
+       "option-data": [
+       {
+           "name": "routers",
+           "data": "10.0.0.200"
+       }
+       ]
+    },
+    {
+       "name": "reserved-class2",
+       "option-data": [
+       {
+           "name": "domain-name-servers",
+           "data": "10.0.0.201"
+       }
+       ]
+    }
+    ],
+    "subnet4": [ {
+        "subnet": "10.0.0.0/24",
+        "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            <userinput>
+            "client-classes": [ "reserved-class1", "reserved-class2" ]
+            </userinput>
+        }
+        ]
+    } ]
+}
+
+</screen>
+
+    <para>Static class assignments, as shown above, can be used in conjuction
+    with classification using expressions.</para>
+    </section>
+
     <section id="reservations4-mysql-pgsql">
       <title>Storing host reservations in MySQL or PostgreSQL</title>
 
