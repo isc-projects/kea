@@ -110,6 +110,7 @@ public:
             leases_.clear();
             status_codes_.clear();
             resetGlobalStatusCode();
+            options_.clear();
         }
 
         /// @brief Clears global status code.

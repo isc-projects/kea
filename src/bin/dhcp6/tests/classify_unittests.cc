@@ -14,11 +14,13 @@
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor_class.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <asiolink/io_address.h>
+#include <boost/pointer_cast.hpp>
 #include <string>
 
 using namespace isc;
@@ -31,21 +33,19 @@ namespace {
 /// @brief Set of JSON configurations used by the classification unit tests.
 ///
 /// - Configuration 0:
-///   - one subnet 3000::/32 used on eth0 interface
-///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
-///   - the delegated prefix was intentionally selected to not match the
-///     subnet prefix, to test that the delegated prefix doesn't need to
-///     match the subnet prefix
-///
-/// - Configuration 1:
-///   - two subnets 2001:db8:1::/48 and 2001:db8:2::/48
-///   - first subnet assigned to interface eth0, another one assigned to eth1
-///   - one pool for subnet in a range of 2001:db8:X::1 - 2001:db8:X::10,
-///     where X is 1 or 2
-///   - enables Rapid Commit for the first subnet and disables for the second
-///     one
-///   - DNS updates enabled
-///
+///   - Specifies 3 classes: 'router', 'reserved-class1' and 'reserved-class2'.
+///   - 'router' class is assigned when the client sends option 1234 (string)
+///      equal to 'foo'.
+///   - The other two classes are reserved for the client having
+///     DUID '01:02:03:04'
+///   - Class 'router' includes option 'ipv6-forwarding'.
+///   - Class 'reserved-class1' includes option DNS servers.
+///   - Class 'reserved-class2' includes option NIS servers.
+///   - All three options are sent when client has reservations for the
+///     'reserved-class1', 'reserved-class2' and sends option 1234 with
+///     the 'foo' value.
+///   - There is one subnet specified 2001:db8:1::/48 with pool of
+///     IPv6 addresses.
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -54,46 +54,64 @@ const char* CONFIGS[] = {
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pd-pools\": ["
-        "        { \"prefix\": \"2001:db8:3::\", "
-        "          \"prefix-len\": 48, "
-        "          \"delegated-len\": 64"
-        "        } ],"
-        "    \"subnet\": \"3000::/32\", "
-        "    \"interface-id\": \"\","
-        "    \"interface\": \"eth0\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }",
-
-// Configuration 1
-    "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
         "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "{"
+        "    \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"router\","
+        "   \"test\": \"option[host-name].text == 'foo'\","
+        "    \"option-data\": ["
+        "    {"
+        "        \"name\": \"ipv6-forwarding\", "
+        "        \"data\": \"true\""
+        "    } ]"
+        "},"
+        "{"
+        "   \"name\": \"reserved-class1\","
+        "   \"option-data\": ["
+        "   {"
+        "       \"name\": \"dns-servers\","
+        "       \"data\": \"2001:db8:1::50\""
+        "   }"
+        "   ]"
+        "},"
+        "{"
+        "   \"name\": \"reserved-class2\","
+        "   \"option-data\": ["
+        "   {"
+        "       \"name\": \"nis-servers\","
+        "       \"data\": \"2001:db8:1::100\""
+        "   }"
+        "   ]"
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"interface\": \"eth0\","
-        "    \"rapid-commit\": True"
-        " },"
-        " {"
-        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
-        "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface\": \"eth1\","
-        "    \"rapid-commit\": False"
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:04\","
+        "        \"client-classes\": [ \"reserved-class1\", \"reserved-class2\" ]"
+        "    } ]"
         " } ],"
-        "\"valid-lifetime\": 4000,"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : True, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
-    "}"
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing client classification by the
 /// DHCPv6 server.
+///
+/// @todo There are numerous tests not using Dhcp6Client class. They should be
+/// migrated to use it one day.
 class ClassifyTest : public Dhcpv6SrvTest {
 public:
     /// @brief Constructor.
@@ -102,6 +120,60 @@ public:
     ClassifyTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
+    }
+
+    /// @brief Verify values of options returned by the server when the server
+    /// uses configuration with index 0.
+    ///
+    /// @param config Reference to DHCP client's configuration received.
+    /// @param ip_forwarding Expected value of IP forwarding option. This option
+    /// is expected to always be present.
+    /// @param dns_servers String holding an address carried within DNS
+    /// servers option. If this value is empty, the option is expected to not
+    /// be included in the response.
+    /// @param nis_servers String holding an address carried within NIS
+    /// servers option. If this value is empty, the option is expected to not
+    /// be included in the response.
+    void verifyConfig0Options(const Dhcp6Client::Configuration& config,
+                              const uint8_t ip_forwarding = 1,
+                              const std::string& dns_servers = "",
+                              const std::string& nis_servers = "") {
+        // IP forwarding option should always exist.
+        OptionPtr ip_forwarding_opt = config.findOption(2345);
+        ASSERT_TRUE(ip_forwarding_opt);
+        // The option comprises 2 bytes of option code, 2 bytes of option length,
+        // and a single 1 byte value. This makes it 5 bytes of a total length.
+        ASSERT_EQ(5, ip_forwarding_opt->len());
+        ASSERT_EQ(static_cast<int>(ip_forwarding),
+                  static_cast<int>(ip_forwarding_opt->getUint8()));
+
+        // DNS servers.
+        Option6AddrLstPtr dns_servers_opt = boost::dynamic_pointer_cast<
+            Option6AddrLst>(config.findOption(D6O_NAME_SERVERS));
+        if (!dns_servers.empty()) {
+            ASSERT_TRUE(dns_servers_opt);
+            Option6AddrLst::AddressContainer addresses = dns_servers_opt->getAddresses();
+            // For simplicity, we expect only a single address.
+            ASSERT_EQ(1, addresses.size());
+            EXPECT_EQ(dns_servers, addresses[0].toText());
+
+        } else {
+            EXPECT_FALSE(dns_servers_opt);
+        }
+
+        // NIS servers.
+        Option6AddrLstPtr nis_servers_opt = boost::dynamic_pointer_cast<
+            Option6AddrLst>(config.findOption(D6O_NIS_SERVERS));
+        if (!nis_servers.empty()) {
+            ASSERT_TRUE(nis_servers_opt);
+            Option6AddrLst::AddressContainer addresses = nis_servers_opt->getAddresses();
+            // For simplicity, we expect only a single address.
+            ASSERT_EQ(1, addresses.size());
+            EXPECT_EQ(nis_servers, addresses[0].toText());
+
+        } else {
+            EXPECT_FALSE(nis_servers_opt);
+        }
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -599,6 +671,78 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     // be accepted in the first subnet, because both class and relay-ip match.
     sol->addClass("foo");
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+}
+
+// This test checks that it is possible to specify static reservations for
+// client classes.
+TEST_F(ClassifyTest, clientClassesInHostReservations) {
+    Dhcp6Client client;
+    // Initially use a DUID for which there are no reservations. As a result,
+    // the client should be assigned a single class "router".
+    client.setDUID("01:02:03:05");
+    client.setInterface("eth1");
+    client.requestAddress();
+    // Request all options we may potentially get. Otherwise, the server will
+    // not return them, even when the client is assigned to the classes for
+    // which these options should be sent.
+    client.requestOption(2345);
+    client.requestOption(D6O_NAME_SERVERS);
+    client.requestOption(D6O_NIS_SERVERS);
+
+    ASSERT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
+
+    // Adding this option to the client's message will cause the client to
+    // belong to the 'router' class.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // IP forwarding should be present, but DNS and NIS servers should not.
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_));
+
+    // Modify the DUID of our client to the one for which class reservations
+    // have been made.
+    client.setDUID("01:02:03:04");
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // This time, the client should obtain options from all three classes.
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
+
+    // This should also work for Request case.
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
+
+    // Renew case.
+    ASSERT_NO_THROW(client.doRenew());
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
+
+    // Rebind case.
+    ASSERT_NO_THROW(client.doRebind());
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
+
+    // Confirm case. This must be before Information-request because the
+    // client must have an address to confirm from one of the transactions
+    // involving address assignment, i.e. Request, Renew or Rebind.
+    ASSERT_NO_THROW(client.doConfirm());
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
+
+    // Information-request case.
+    ASSERT_NO_THROW(client.doInfRequest());
+    ASSERT_NO_FATAL_FAILURE(verifyConfig0Options(client.config_, 1,
+                                                 "2001:db8:1::50",
+                                                 "2001:db8:1::100"));
 }
 
 
