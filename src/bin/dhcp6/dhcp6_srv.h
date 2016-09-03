@@ -629,6 +629,13 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
 
+    /// @brief Assigns classes retrieved from host reservation database.
+    ///
+    /// @param pkt Pointer to the packet to which classes will be assigned.
+    /// @param ctx Reference to the client context.
+    void setReservedClientClasses(const Pkt6Ptr& pkt,
+                                  const AllocEngine::ClientContext6& ctx);
+
     /// @brief Attempts to get a MAC/hardware address using configred sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
