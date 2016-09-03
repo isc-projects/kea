@@ -531,6 +531,19 @@
                         "item_type": "string",
                         "item_optional": true,
                         "item_default": ""
+                      },
+                      {
+                        "item_name": "client-classes",
+                        "item_type": "list",
+                        "item_optional": true,
+                        "item_default": [],
+                        "list_item_spec":
+                        {
+                          "item_name": "client-class",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": ""
+                        }
                       } ]
                   }
                 },
