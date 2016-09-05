@@ -86,11 +86,18 @@ PktFilterInet::openSocket(Iface& iface,
 
     // if there is no support for IP_PKTINFO, we are really out of luck
     // it will be difficult to undersand, where this packet came from
-#if defined(IP_PKTINFO)
+#if defined (IP_PKTINFO) && defined (OS_LINUX)
     int flag = 1;
     if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(SocketConfigError, "setsockopt: IP_PKTINFO: failed.");
+    }
+
+#elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
+    int flag = 1;
+    if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &flag, sizeof(flag)) != 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "setsockopt: IP_RECVDSTADDR: failed.");
     }
 #endif
 
@@ -154,17 +161,16 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(socket_info.port_);
 
+    struct cmsghdr* cmsg;
+    cmsg = CMSG_FIRSTHDR(&m);
+
 // In the future the OS-specific code may be abstracted to a different
 // file but for now we keep it here because there is no code yet, which
 // is specific to non-Linux systems.
 #if defined (IP_PKTINFO) && defined (OS_LINUX)
-    struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
-    struct in_addr to_addr;
-
     memset(&to_addr, 0, sizeof(to_addr));
 
-    cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
             (cmsg->cmsg_type == IP_PKTINFO)) {
@@ -184,6 +190,21 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
         }
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
+
+#elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
+    struct in_addr* to_addr;
+
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == IPPROTO_IP) &&
+            (cmsg->cmsg_type == IP_RECVDSTADDR)) {
+            to_addr = (struct in_addr*)CMSG_DATA(cmsg);
+
+            pkt->setLocalAddr(IOAddress(htonl(to_addr->s_addr)));
+            break;
+        }
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+
 #endif
 
     return (pkt);
@@ -239,6 +260,23 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     pktinfo->ipi_ifindex = pkt->getIndex();
     pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr()); // set the source IP address
     m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
+
+#elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
+/*    // Setting the interface is a bit more involved.
+    //
+    // We have to create a "control message", and set that to
+    // define the IPv4 packet information. We set the source address
+    // to handle correctly interfaces with multiple addresses.
+    m.msg_control = &control_buf_[0];
+    m.msg_controllen = control_buf_len_;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+    cmsg->cmsg_level = IPPROTO_IP;
+    cmsg->cmsg_type = IP_RECVDSTADDR;
+    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_addr));
+    struct in_addr* pktinfo =(struct in_addr *)CMSG_DATA(cmsg);
+    memset(pktinfo, 0, sizeof(struct in_addr));
+    pktinfo->s_addr = htonl(pkt->getLocalAddr());
+    m.msg_controllen = CMSG_SPACE(sizeof(struct in_addr)); */
 #endif
 
     pkt->updateTimestamp();
