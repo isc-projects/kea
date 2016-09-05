@@ -554,13 +554,18 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
         pkt->setLocalHWAddr(hwaddr);
     }
 
-    /// Loopback interface requires special treatment. It doesn't
-    /// use the ethernet header but rather a 4-bytes long pseudo header
-    /// holding an address family type (see bpf.c in OS sources).
+    // Loopback interface requires special treatment. It doesn't
+    // use the ethernet header but rather a 4-bytes long pseudo header
+    // holding an address family type (see bpf.c in OS sources).
+    // On OSX, it even lacks pseudo header.
+#if !defined (OS_OSX)
     if (iface.flag_loopback_) {
         writeAFPseudoHeader(AF_INET, buf);
+    }
+#endif
 
-    } else {
+    // If this is not a loopback interface create Ethernet frame header.
+    if (!iface.flag_loopback_) {
         // Ethernet frame header.
         // Note that we don't validate whether HW addresses in 'pkt'
         // are valid because they are validated by the function called.
