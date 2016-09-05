@@ -169,6 +169,8 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 // is specific to non-Linux systems.
 #if defined (IP_PKTINFO) && defined (OS_LINUX)
     struct in_pktinfo* pktinfo;
+    struct in_addr to_addr;
+
     memset(&to_addr, 0, sizeof(to_addr));
 
     while (cmsg != NULL) {
