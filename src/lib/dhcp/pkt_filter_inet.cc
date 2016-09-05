@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -198,7 +198,6 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
             (cmsg->cmsg_type == IP_RECVDSTADDR)) {
             to_addr = (struct in_addr*)CMSG_DATA(cmsg);
-
             pkt->setLocalAddr(IOAddress(htonl(to_addr->s_addr)));
             break;
         }
