@@ -532,7 +532,7 @@ ForwardTest::checkPushAndPop(int family, int type, int protocol,
     // reliable.  Instead we impose some reasonably large upper time limit of
     // blocking (normally it shouldn't even block at all; the limit is to
     // force the test to stop even if there's some bug and recv fails).
-    char recvbuf[sizeof(TEST_DATA) + 1];
+    char recvbuf[sizeof(TEST_DATA) + 1] = { };
     sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     if (protocol == IPPROTO_UDP) {

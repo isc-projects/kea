@@ -294,10 +294,10 @@ public:
         OpaqueDataTuple::LengthFieldType len = (u == Option::V4?OpaqueDataTuple::LENGTH_1_BYTE:
                                                 OpaqueDataTuple::LENGTH_2_BYTES);
         const char* content[] = { "alpha", "beta", "delta", "gamma", "epsilon",
-                                 "zeta", "eta", "theta", "iota", "kappa" };
-	size_t nb_content = sizeof(content) / sizeof(char*);
+                                  "zeta", "eta", "theta", "iota", "kappa" };
+        const size_t nb_content = sizeof(content) / sizeof(char*);
         ASSERT_TRUE(tuples_size < nb_content);
-        for (unsigned i = 0; i < tuples_size; ++i) {
+        for (size_t i = 0; i < tuples_size; ++i) {
             OpaqueDataTuple tuple(len);
             tuple.assign(string(content[i]));
             if (u == Option::V4 && i == 0) {
