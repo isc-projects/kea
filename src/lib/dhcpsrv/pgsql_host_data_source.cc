@@ -1698,7 +1698,7 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     uint32_t minor;
     PgSqlExchange::getColumnValue(r, 0, 0, minor);
 
-    return (std::make_pair<uint32_t, uint32_t>(version, minor));
+    return (std::make_pair(version, minor));
 }
 
 void
