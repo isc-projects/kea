@@ -151,8 +151,8 @@ CommandMgr::commandReader(int sockfd) {
     try {
 
         // Try to interpret it as JSON.
-	std::string sbuf(buf, static_cast<size_t>(rval));
-	cmd = Element::fromJSON(sbuf, true);
+        std::string sbuf(buf, static_cast<size_t>(rval));
+        cmd = Element::fromJSON(sbuf, true);
 
         // If successful, then process it as a command.
         rsp = CommandMgr::instance().processCommand(cmd);
