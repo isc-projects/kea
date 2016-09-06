@@ -23,6 +23,7 @@
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/pointer_cast.hpp>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 
@@ -145,8 +146,7 @@ TEST_F(Pkt6Test, constructor) {
 /// but we spent some time to make is less ugly than it used to be.
 ///
 /// @return pointer to Pkt6 that represents received SOLICIT
-Pkt6* capture1() {
-    Pkt6* pkt;
+Pkt6Ptr capture1() {
     uint8_t data[98];
     data[0]  = 1;
     data[1]  = 1;       data[2]  = 2;     data[3] = 3;      data[4]  = 0;
@@ -175,7 +175,7 @@ Pkt6* capture1() {
     data[93] = 6;       data[94] = 0;     data[95] = 2;     data[96] = 0;
     data[97] = 23;
 
-    pkt = new Pkt6(data, sizeof(data));
+    Pkt6Ptr pkt(new Pkt6(data, sizeof(data)));
     pkt->setRemotePort(546);
     pkt->setRemoteAddr(IOAddress("fe80::21e:8cff:fe9b:7349"));
     pkt->setLocalPort(0);
@@ -220,7 +220,7 @@ Pkt6* capture1() {
 /// The original capture was posted to dibbler users mailing list.
 ///
 /// @return created double relayed SOLICIT message
-Pkt6* capture2() {
+Pkt6Ptr capture2() {
 
     // string exported from Wireshark
     string hex_string =
@@ -238,18 +238,18 @@ Pkt6* capture2() {
     // to be OptionBuffer format)
     isc::util::encode::decodeHex(hex_string, bin);
 
-    NakedPkt6* pkt = new NakedPkt6(&bin[0], bin.size());
+    NakedPkt6Ptr pkt(new NakedPkt6(&bin[0], bin.size()));
     pkt->setRemotePort(547);
     pkt->setRemoteAddr(IOAddress("fe80::1234"));
     pkt->setLocalPort(547);
     pkt->setLocalAddr(IOAddress("ff05::1:3"));
     pkt->setIndex(2);
     pkt->setIface("eth0");
-    return (dynamic_cast<Pkt6*>(pkt));
+    return (boost::dynamic_pointer_cast<Pkt6>(pkt));
 }
 
 TEST_F(Pkt6Test, unpack_solicit1) {
-    scoped_ptr<Pkt6> sol(capture1());
+    Pkt6Ptr sol(capture1());
 
     ASSERT_NO_THROW(sol->unpack());
 
@@ -294,7 +294,7 @@ TEST_F(Pkt6Test, packUnpack) {
 TEST_F(Pkt6Test, unpackMalformed) {
     // Get a packet. We're really interested in its on-wire
     // representation only.
-    scoped_ptr<Pkt6> donor(capture1());
+    Pkt6Ptr donor(capture1());
 
     // That's our original content. It should be sane.
     OptionBuffer orig = donor->data_;
@@ -367,7 +367,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
 TEST_F(Pkt6Test, unpackVendorMalformed) {
     // Get a packet. We're really interested in its on-wire
     // representation only.
-    scoped_ptr<Pkt6> donor(capture1());
+    Pkt6Ptr donor(capture1());
 
     // Add a vendor option
     OptionBuffer orig = donor->data_;
@@ -680,7 +680,7 @@ TEST_F(Pkt6Test, getName) {
 // relays can be parsed properly. See capture2() method description
 // for details regarding the packet.
 TEST_F(Pkt6Test, relayUnpack) {
-    boost::scoped_ptr<Pkt6> msg(capture2());
+    Pkt6Ptr msg(capture2());
 
     EXPECT_NO_THROW(msg->unpack());
 
@@ -870,7 +870,7 @@ TEST_F(Pkt6Test, relayPack) {
 }
 
 TEST_F(Pkt6Test, getRelayOption) {
-    NakedPkt6Ptr msg(dynamic_cast<NakedPkt6*>(capture2()));
+    NakedPkt6Ptr msg(boost::dynamic_pointer_cast<NakedPkt6>(capture2()));
     ASSERT_TRUE(msg);
 
     ASSERT_NO_THROW(msg->unpack());
