@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -40,6 +41,7 @@ public:
     }
 
     using Option::unpackOptions;
+    using Option::cloneInternal;
 };
 
 class OptionTest : public ::testing::Test {
@@ -600,6 +602,20 @@ TEST_F(OptionTest, setEncapsulatedSpace) {
     optv4.setEncapsulatedSpace("dhcp4");
     EXPECT_EQ("dhcp4", optv4.getEncapsulatedSpace());
 
+}
+
+// This test verifies that cloneInternal returns NULL pointer if
+// non-compatible type is used as a template argument.
+// By non-compatible it is meant that the option instance doesn't
+// dynamic_cast to the type specified as template argument.
+// In our case, the NakedOption doesn't cast to OptionUint8 as the
+// latter is not derived from NakedOption.
+TEST_F(OptionTest, cloneInternal) {
+    NakedOption option;
+    OptionPtr clone;
+    // This shouldn't throw nor cause segmentation fault.
+    ASSERT_NO_THROW(clone = option.cloneInternal<OptionUint8>());
+    EXPECT_FALSE(clone);
 }
 
 }
