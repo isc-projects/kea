@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 
@@ -122,7 +123,7 @@ CSVFile::addColumn(const std::string& col_name) {
 
 void
 CSVFile::addColumnInternal(const std::string& col_name) {
-    if (getColumnIndex(col_name) >= 0) {
+    if (std::find(cols_.begin(), cols_.end(), col_name) != cols_.end()) {
         isc_throw(CSVFileError, "attempt to add duplicate column '"
                   << col_name << "'");
     }
@@ -199,14 +200,14 @@ CSVFile::size() const {
     return (pos);
 }
 
-int
+size_t
 CSVFile::getColumnIndex(const std::string& col_name) const {
     for (size_t i = 0; i < cols_.size(); ++i) {
         if (cols_[i] == col_name) {
-            return (static_cast<int>(i));
+            return (i);
         }
     }
-    return (-1);
+    isc_throw(isc::OutOfRange, "column '" << col_name << "' doesn't exist");
 }
 
 std::string
