@@ -181,7 +181,7 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
     // Send DHCPv4 message to the local loopback address and server's port.
     sendMessage();
 
-    // Receive the packet using LPF packet filter.
+    // Receive the packet using BPF packet filter.
     Pkt4Ptr rcvd_pkt;
     ASSERT_NO_THROW(rcvd_pkt = pkt_filter.receive(iface, sock_info_));
     // Check that the packet has been correctly received.

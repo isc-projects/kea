@@ -45,7 +45,7 @@ PktFilterInet::openSocket(Iface& iface,
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
-        isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
+        isc_throw(SocketConfigError, "Failed to create UDP4 socket.");
     }
 
     // Set the close-on-exec flag.
