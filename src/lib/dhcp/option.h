@@ -409,9 +409,11 @@ protected:
     /// be created.
     template<typename OptionType>
     OptionPtr cloneInternal() const {
-        boost::shared_ptr<OptionType>
-            option(new OptionType(*dynamic_cast<const OptionType*>(this)));
-        return (option);
+        const OptionType* cast_this = dynamic_cast<const OptionType*>(this);
+        if (cast_this) {
+            return (boost::shared_ptr<OptionType>(new OptionType(*cast_this)));
+        }
+        return (OptionPtr());
     }
 
     /// @brief Store option's header in a buffer.

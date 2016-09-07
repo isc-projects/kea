@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,13 +29,15 @@ VersionedCSVFile::addColumn(const std::string& name,
 
 void
 VersionedCSVFile::setMinimumValidColumns(const std::string& column_name) {
-    int index = getColumnIndex(column_name);
-    if (index <  0) {
-        isc_throw(VersionedCSVFileError,
-                  "setMinimumValidColumns: " << column_name << " is defined");
-    }
+    try {
+        int index = getColumnIndex(column_name);
+        minimum_valid_columns_ = index + 1;
 
-    minimum_valid_columns_ = index + 1;
+    } catch (...) {
+        isc_throw(VersionedCSVFileError,
+                  "setMinimumValidColumns: " << column_name << " is not "
+                  "defined");
+    }
 }
 
 size_t
