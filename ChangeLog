@@ -1,3 +1,8 @@
+1163.	[bug]		marcin
+	Corrected swapped DHCPSRV_MEMFILE_GET_EXPIRED{4,6} messages
+	in the Memfile lease manager.
+	(Trac #4717, git ce5919d97879c3fda0858894b24418af135ef8f3)
+
 1162.	[func]		pallotron
 	Added two enhancements to perfdhcp: optionally using MAC
 	addresses from a file in new DHCP transactions, and
