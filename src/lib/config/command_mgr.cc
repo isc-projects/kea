@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -151,7 +151,8 @@ CommandMgr::commandReader(int sockfd) {
     try {
 
         // Try to interpret it as JSON.
-        cmd = Element::fromJSON(std::string(buf), true);
+        std::string sbuf(buf, static_cast<size_t>(rval));
+        cmd = Element::fromJSON(sbuf, true);
 
         // If successful, then process it as a command.
         rsp = CommandMgr::instance().processCommand(cmd);
