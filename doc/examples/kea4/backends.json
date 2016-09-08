@@ -68,11 +68,7 @@
 #      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3"
 #  },
 
-# Addresses will be assigned with valid lifetimes being 4000. Client
-# is told to start renewing after 1000 seconds. If the server does not respond
-# after 2000 seconds since the lease was granted, client is supposed
-# to start REBIND procedure (emergency renewal that allows switching
-# to a different server).
+# Addresses will be assigned with valid lifetimes being 4000.
   "valid-lifetime": 4000,
 
 # Renew and rebind timers are commented out. This implies that options
