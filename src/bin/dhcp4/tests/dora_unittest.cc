@@ -71,6 +71,15 @@ namespace {
 ///   - The same as configuration 4, but using the following order of
 ///     host-reservation-identifiers: duid, circuit-id, hw-address.
 ///
+/// - Configuration 6:
+///   - This configuration provides reservations for next-server,
+///     server-hostname and boot-file-name value.
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 reservation for this subnet:
+///     - Client's HW address: aa:bb:cc:dd:ee:ff
+///     - next-server = 10.0.0.7
+///     - server name = "some-name.example.org"
+///     - boot-file-name = "bootfile.efi"
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -230,6 +239,26 @@ const char* DORA_CONFIGS[] = {
         "       {"
         "         \"client-id\": \"01:11:22:33:44:55:66\","
         "         \"ip-address\": \"10.0.0.1\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
+
+// Configuration 6
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"next-server\": \"10.0.0.1\","
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"next-server\": \"10.0.0.7\","
+        "         \"server-hostname\": \"some-name.example.org\","
+        "         \"boot-file-name\": \"bootfile.efi\""
         "       }"
         "    ]"
         "} ]"
@@ -987,6 +1016,32 @@ TEST_F(DORATest, changingHWAddress) {
     EXPECT_NE(client.config_.lease_.addr_, leased_address);
     // Check that the client id is not present in the lease.
     EXPECT_FALSE(client.config_.lease_.client_id_);
+}
+
+// This test verifies that the server assigns reserved values for the
+// siaddr, sname and file fields carried within DHCPv4 message.
+TEST_F(DORATest, messageFieldsReservations) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Set explicit HW address so as it matches the reservation in the
+    // configuration used below.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[6], *client.getServer());
+    // Client performs 4-way exchange and should obtain a reserved
+    // address and fixed fields.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the reserved values have been assigned.
+    EXPECT_EQ("10.0.0.7", client.config_.siaddr_.toText());
+    EXPECT_EQ("some-name.example.org", client.config_.sname_);
+    EXPECT_EQ("bootfile.efi", client.config_.boot_file_name_);
 }
 
 // This test checks the following scenario:

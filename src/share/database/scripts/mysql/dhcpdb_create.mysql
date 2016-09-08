@@ -465,10 +465,20 @@ ALTER TABLE dhcp6_options
     ADD CONSTRAINT fk_dhcp6_option_scope FOREIGN KEY (scope_id)
     REFERENCES dhcp_option_scope (scope_id);
 
+# Add UNSIGNED to reservation_id
+ALTER TABLE ipv6_reservations
+    MODIFY reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+# Add columns holding reservations for siaddr, sname and file fields
+# carried within DHCPv4 message.
+ALTER TABLE hosts ADD COLUMN dhcp4_next_server INT UNSIGNED NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_server_hostname VARCHAR(64) NULL;
+ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
+
 # Update the schema version number
 UPDATE schema_version
-SET version = '4', minor = '2';
-# This line concludes database upgrade to version 4.2.
+SET version = '5', minor = '0';
+# This line concludes database upgrade to version 5.0.
 
 # Notes:
 #

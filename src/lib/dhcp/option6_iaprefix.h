@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,9 @@ public:
     Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
                     OptionBuffer::const_iterator end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused
@@ -82,7 +85,7 @@ public:
     /// @throw BadValue if the address is not IPv6
     ///
     /// @param buf pointer to a buffer
-    void pack(isc::util::OutputBuffer& buf);
+    void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
     ///
@@ -103,7 +106,7 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// sets address in this option.
     ///
@@ -115,7 +118,7 @@ public:
     uint8_t getLength() const { return prefix_len_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
 private:
 
@@ -130,7 +133,7 @@ private:
     void mask(OptionBuffer::const_iterator begin,
               OptionBuffer::const_iterator end,
               const uint8_t len,
-              OptionBuffer& output_address);
+              OptionBuffer& output_address) const;
 
     uint8_t prefix_len_;
 };

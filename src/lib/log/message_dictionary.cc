@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,11 @@ using namespace std;
 
 namespace isc {
 namespace log {
+
+// Constructor
+
+MessageDictionary::MessageDictionary() : dictionary_(), empty_("") {
+}
 
 // (Virtual) Destructor
 
@@ -91,10 +96,9 @@ MessageDictionary::load(const char* messages[]) {
 
 const string&
 MessageDictionary::getText(const std::string& ident) const {
-    static const string empty("");
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
-        return (empty);
+        return (empty_);
     }
     else {
         return (i->second);

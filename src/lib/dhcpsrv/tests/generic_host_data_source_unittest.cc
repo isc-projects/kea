@@ -12,8 +12,10 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/schema.h>
 #include <dhcpsrv/database_connection.h>
 #include <asiolink/io_address.h>
 #include <util/buffer.h>
@@ -240,6 +242,9 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     EXPECT_EQ(host1->getIPv6SubnetID(), host2->getIPv6SubnetID());
     EXPECT_EQ(host1->getIPv4Reservation(), host2->getIPv4Reservation());
     EXPECT_EQ(host1->getHostname(), host2->getHostname());
+    EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
+    EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
+    EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
 
     // Compare IPv6 reservations
     compareReservations6(host1->getIPv6Reservations(),
@@ -327,10 +332,9 @@ GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
 }
 
 void
-GenericHostDataSourceTest::compareClientClasses(const ClientClasses& /*classes1*/,
-                                                const ClientClasses& /*classes2*/) {
-    /// @todo: Implement client classes comparison.
-    ///        This is part of the work for #4213.
+GenericHostDataSourceTest::compareClientClasses(const ClientClasses& classes1,
+                                                const ClientClasses& classes2) {
+    EXPECT_TRUE(std::equal(classes1.begin(), classes1.end(), classes2.begin()));
 }
 
 void
@@ -503,6 +507,55 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
     // host data source to convert option data into the appropriate option
     // classes when the options are retrieved.
     LibDHCP::setRuntimeOptionDefs(defs);
+}
+
+void
+GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
+    ASSERT_TRUE(hdsptr_);
+
+    // The database is initially opened in "read-write" mode. We can
+    // insert some data to the databse.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    ASSERT_TRUE(host);
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in queries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Make sure that the host has been inserted and that the data can be
+    // retrieved.
+    ConstHostPtr host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+    ASSERT_TRUE(host_by_id);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+
+    // Close the database connection and reopen in "read-only" mode as
+    // specified by the "VALID_READONLY_DB" parameter.
+    HostDataSourceFactory::destroy();
+    HostDataSourceFactory::create(connectionString(valid_db_type,
+                                                   VALID_NAME,
+                                                   VALID_HOST,
+                                                   VALID_READONLY_USER,
+                                                   VALID_PASSWORD,
+                                                   VALID_READONLY_DB));
+
+    hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+
+    // Check that an attempt to insert new host would result in
+    // exception.
+    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    ASSERT_TRUE(host2);
+    ASSERT_THROW(hdsptr_->add(host2), ReadOnlyDb);
+    ASSERT_THROW(hdsptr_->commit(), ReadOnlyDb);
+    ASSERT_THROW(hdsptr_->rollback(), ReadOnlyDb);
+
+    // Reading from the database should still be possible, though.
+    host_by_id = hdsptr_->get6(subnet_id, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+    ASSERT_TRUE(host_by_id);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
 }
 
 void GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
@@ -1152,6 +1205,224 @@ void GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) 
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
 }
 
+void
+GenericHostDataSourceTest::testMultipleClientClasses4() {
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+
+    // Add v4 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class4_" << i;
+        host->addClientClass4(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv4SubnetID();
+
+    // Fetch the host via:
+    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
+    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via:
+    // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
+    //       const size_t identifier_len) const;
+    hosts_by_id = hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
+                                  host->getIdentifier().size());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // getAll4(const asiolink::IOAddress& address) const;
+    hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
+    //     const DuidPtr& duid = DuidPtr()) const;
+    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+    //     const uint8_t* identifier_begin, const size_t identifier_len) const;
+    from_hds = hdsptr_->get4(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
+                             host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via:
+    // get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMultipleClientClasses6() {
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+
+    // Add v6 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class6_" << i;
+        host->addClientClass6(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Fetch the host via:
+    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
+    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // getAll(const Host::IdentifierType& identifier_type,
+    //        const uint8_t* identifier_begin,
+    //        const size_t identifier_len) const;
+    hosts_by_id = hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
+                                  host->getIdentifier().size());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // get6(const SubnetID& subnet_id, const DuidPtr& duid,
+    //      const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+    ConstHostPtr from_hds = hdsptr_->get6(subnet_id, DuidPtr(), host->getHWAddress());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via:
+    // get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+    //     const uint8_t* identifier_begin, const size_t identifier_len) const;
+    from_hds = hdsptr_->get6(subnet_id, Host::IDENT_HWADDR,
+                                           &host->getIdentifier()[0],
+                                           host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via:
+    // get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
+    from_hds = hdsptr_->get6(IOAddress("2001:db8::1"), 128);
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMultipleClientClassesBoth() {
+    /// Add host reservation with a multiple v4 and v6 client-classes,
+    /// retrieve it and make sure that all client classes are retrieved
+    /// properly.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+
+    // Add v4 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class4_" << i;
+        host->addClientClass4(os.str());
+    }
+
+    // Add v6 classes to the host.
+    for (int i = 0; i < 4; ++i) {
+        std::ostringstream os;
+        os << "class6_" << i;
+        host->addClientClass6(os.str());
+    }
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // Fetch the host from the source.
+    ConstHostPtr from_hds = hdsptr_->get6(subnet_id, Host::IDENT_HWADDR,
+                                           &host->getIdentifier()[0],
+                                           host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+
+    // Verify they match.
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
+
+void
+GenericHostDataSourceTest::testMessageFields4() {
+    ASSERT_TRUE(hdsptr_);
+
+    // Create the Host object.
+    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    // And assign values for DHCPv4 message fields.
+    ASSERT_NO_THROW({
+        host->setNextServer(IOAddress("10.1.1.1"));
+        host->setServerHostname("server-name.example.org");
+        host->setBootFileName("bootfile.efi");
+    });
+
+    // Add the host.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Subnet id will be used in quries to the database.
+    SubnetID subnet_id = host->getIPv4SubnetID();
+
+    // Fetch the host via:
+    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
+    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via:
+    // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
+    //       const size_t identifier_len) const;
+    hosts_by_id = hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
+                                  host->getIdentifier().size());
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // getAll4(const asiolink::IOAddress& address) const;
+    hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
+    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
+    //     const DuidPtr& duid = DuidPtr()) const;
+    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via
+    // get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+    //     const uint8_t* identifier_begin, const size_t identifier_len) const;
+    from_hds = hdsptr_->get4(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
+                             host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+
+    // Fetch the host via:
+    // get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
+    ASSERT_TRUE(from_hds);
+    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+}
 
 }; // namespace test
 }; // namespace dhcp

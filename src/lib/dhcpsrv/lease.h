@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,8 +51,6 @@ struct Lease {
 
     /// @brief Expired and reclaimed lease.
     static const uint32_t STATE_EXPIRED_RECLAIMED;
-
-    //@}
 
     /// @brief Returns name(s) of the basic lease state(s).
     ///

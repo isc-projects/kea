@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,12 @@
  *
  * @section contrib Contributor's Guide
  * - @subpage contributorGuide
+ *
+ * @section buildingKeaWithUnitTests Building Kea with Unit tests
+ * - @subpage unitTests
+ *   - @subpage unitTestsIntroduction
+ *   - @subpage unitTestsEnvironmentVariables
+ *   - @subpage unitTestsDatabaseConfig
  *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
@@ -106,9 +112,6 @@
  *   - @subpage configBackendJSONDesign
  *   - @subpage configBackendAdding
  * - @subpage perfdhcpInternals
- *
- * @section qualityAssurance Quality Assurance
- *   - @subpage qaUnitTests
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage logKeaLogging

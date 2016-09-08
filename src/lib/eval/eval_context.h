@@ -69,13 +69,13 @@ public:
     ///
     /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
-    void error(const isc::eval::location& loc, const std::string& what);
+    static void error(const isc::eval::location& loc, const std::string& what);
 
     /// @brief Error handler
     ///
     /// This is a simplified error reporting tool for possible future
     /// cases when the EvalParser is not able to handle the packet.
-    void error(const std::string& what);
+    static void error(const std::string& what);
 
     /// @brief Fatal error handler
     ///
@@ -96,20 +96,50 @@ public:
     ///
     /// @param option_name the option name
     /// @param loc the location of the token
-    /// @result the option code
+    /// @return the option code
     /// @throw calls the syntax error function if the name cannot be resolved
     uint16_t convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to unsigned 32bit integer
+    ///
+    /// For reverse conversion, see @ref fromUint32
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static uint32_t convertUint32(const std::string& number,
+                                  const isc::eval::location& loc);
+
+    /// @brief Attempts to convert string to unsigned 8bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static uint8_t convertUint8(const std::string& number,
+                                const isc::eval::location& loc);
 
     /// @brief Nest level conversion
     ///
     /// @param nest_level a string representing the integer nesting level
     /// @param loc the location of the token
-    /// @result the nesting level
+    /// @return the nesting level
     /// @throw calls the syntax error function if the value is not in
     ///        the range 0..31
     uint8_t convertNestLevelNumber(const std::string& nest_level,
-                                    const isc::eval::location& loc);
+                                   const isc::eval::location& loc);
+
+    /// @brief Converts integer to string representation
+    ///
+    /// The integer is coded as a 4 byte long string in network order, e.g.
+    /// 6 is represented as 00000006. For reverse conversion, see
+    /// @ref convertUint32.
+    ///
+    /// @param integer value to be converted
+    /// @return 4 byte long string that encodes the value.
+    static std::string fromUint32(const uint32_t integer);
 
     /// @brief Returns the universe (v4 or v6)
     ///

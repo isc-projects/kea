@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,15 @@ std::string encodeHex(const std::vector<uint8_t>& binary);
 /// \param input A text encoded in the base16 format.
 /// \param result A vector in which the decoded %data is to be stored.
 void decodeHex(const std::string& input, std::vector<uint8_t>& result);
+
+/// \brief Encode in hexadecimal inline
+///
+/// \param value the value to encode
+/// \return 0x followed by the value encoded in hexa
+inline std::string toHex(std::string value) {
+    std::vector<uint8_t> bin(value.begin(), value.end());
+    return ("0x" + encodeHex(bin));
+}
 
 } // namespace encode
 } // namespace util

@@ -228,7 +228,7 @@ Pkt4::unpack() {
 }
 
 uint8_t Pkt4::getType() const {
-    OptionPtr generic = getOption(DHO_DHCP_MESSAGE_TYPE);
+    OptionPtr generic = getNonCopiedOption(DHO_DHCP_MESSAGE_TYPE);
     if (!generic) {
         return (DHCP_NOTYPE);
     }
@@ -245,7 +245,7 @@ uint8_t Pkt4::getType() const {
 }
 
 void Pkt4::setType(uint8_t dhcp_type) {
-    OptionPtr opt = getOption(DHO_DHCP_MESSAGE_TYPE);
+    OptionPtr opt = getNonCopiedOption(DHO_DHCP_MESSAGE_TYPE);
     if (opt) {
 
         // There is message type option already, update it. It seems that
@@ -332,7 +332,7 @@ Pkt4::getLabel() const {
     /// use the instance member rather than fetch it every time.
     std::string suffix;
     ClientIdPtr client_id;
-    OptionPtr client_opt = getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    OptionPtr client_opt = getNonCopiedOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_opt) {
         try {
             client_id = ClientIdPtr(new ClientId(client_opt->getData()));
@@ -444,6 +444,9 @@ Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
+    /// @todo: what if mac_addr.size() doesn't match hlen?
+    /// We would happily copy over hardware address that is possibly
+    /// too long or doesn't match hlen value.
     hw_addr.reset(new HWAddr(mac_addr, htype));
 }
 
@@ -546,7 +549,7 @@ Pkt4::getHlen() const {
 void
 Pkt4::addOption(const OptionPtr& opt) {
     // Check for uniqueness (DHCPv4 options must be unique)
-    if (getOption(opt->getType())) {
+    if (getNonCopiedOption(opt->getType())) {
         isc_throw(BadValue, "Option " << opt->getType()
                   << " already present in this message.");
     }

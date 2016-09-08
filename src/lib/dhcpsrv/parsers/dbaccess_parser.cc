@@ -53,7 +53,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         try {
-            if (param.first == "persist") {
+            if ((param.first == "persist") || (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -72,7 +72,8 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
             }
         } catch (const isc::data::TypeError& ex) {
             // Append position of the element.
-            isc_throw(isc::data::TypeError, ex.what() << " ("
+            isc_throw(BadValue, "invalid value type specified for "
+                      "parameter '" << param.first << "' ("
                       << param.second->getPosition() << ")");
         }
     }

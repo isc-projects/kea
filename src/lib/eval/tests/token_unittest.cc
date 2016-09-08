@@ -7,11 +7,14 @@
 #include <config.h>
 #include <fstream>
 #include <eval/token.h>
+#include <eval/eval_context.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 #include <log/logger_support.h>
@@ -39,7 +42,7 @@ namespace {
 class TokenTest : public LogContentTest {
 public:
 
-    /// @brief Initializes Pkt4,Pkt6 and options that can be useful for
+    /// @brief Initializes Pkt4, Pkt6 and options that can be useful for
     ///        evaluation tests.
     TokenTest() {
         pkt4_.reset(new Pkt4(DHCPDISCOVER, 12345));
@@ -51,6 +54,10 @@ public:
 
         pkt4_->addOption(option_str4_);
         pkt6_->addOption(option_str6_);
+
+        // Change this to true if you need extra information about logging
+        // checks to be printed.
+        logCheckVerbose(false);
     }
 
     /// @brief Inserts RAI option with several suboptions
@@ -177,12 +184,22 @@ public:
     }
 
     /// @brief Convenience function. Removes token and values stacks.
-    void clearStack() {
+    /// @param token specifies if the convenience token should be removed or not
+    void clearStack(bool token = true) {
         while (!values_.empty()) {
             values_.pop();
         }
+        if (token) {
+            t_.reset();
+        }
+    }
 
-        t_.reset();
+    /// @brief Aux. function that stores integer values as 4 byte string.
+    ///
+    /// @param value integer value to be stored
+    /// @return 4 byte long string with encoded value.
+    string encode(uint32_t value) {
+        return EvalContext::fromUint32(value);
     }
 
     TokenPtr t_; ///< Just a convenience pointer
@@ -195,6 +212,8 @@ public:
     OptionPtr option_str4_; ///< A string option for DHCPv4
     OptionPtr option_str6_; ///< A string option for DHCPv6
 
+    OptionVendorPtr vendor_; ///< Vendor option used during tests
+    OptionVendorClassPtr vendor_class_; ///< Vendor class option used during tests
 
     /// @brief Verify that the substring eval works properly
     ///
@@ -236,8 +255,253 @@ public:
         }
     }
 
-    /// @todo: Add more option types here
+    /// @brief Creates vendor-option with specified value and adds it to packet
+    ///
+    /// This method creates specified vendor option, removes any existing
+    /// vendor options and adds the new one to v4 or v6 packet.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id specifies enterprise-id value.
+    void setVendorOption(Option::Universe u, uint32_t vendor_id) {
+        vendor_.reset(new OptionVendor(u, vendor_id));
+        switch (u) {
+        case Option::V4:
+            pkt4_->delOption(DHO_VIVSO_SUBOPTIONS);
+            pkt4_->addOption(vendor_);
+            break;
+        case Option::V6:
+            pkt6_->delOption(D6O_VENDOR_OPTS);
+            pkt6_->addOption(vendor_);
+            break;
+        }
+    }
 
+    /// @brief Creates vendor-class option with specified values and adds it to packet
+    ///
+    /// This method creates specified vendor-class option, removes any existing
+    /// vendor class options and adds the new one to v4 or v6 packet.
+    /// It also creates data tuples with greek alphabet names.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id specifies enterprise-id value.
+    /// @param tuples_size number of data tuples to create.
+    void setVendorClassOption(Option::Universe u, uint32_t vendor_id,
+                              size_t tuples_size = 0) {
+        // Create the option first.
+        vendor_class_.reset(new OptionVendorClass(u, vendor_id));
+
+        // Now let's add specified number of data tuples
+        OpaqueDataTuple::LengthFieldType len = (u == Option::V4?OpaqueDataTuple::LENGTH_1_BYTE:
+                                                OpaqueDataTuple::LENGTH_2_BYTES);
+        const char * content[] = { "alpha", "beta", "delta", "gamma", "epsilon",
+                                 "zeta", "eta", "theta", "iota", "kappa" };
+        ASSERT_TRUE(tuples_size < sizeof(content));
+        for (int i = 0; i < tuples_size; i++) {
+            OpaqueDataTuple tuple(len);
+            tuple.assign(string(content[i]));
+            if (u == Option::V4 && i == 0) {
+                // vendor-clas for v4 has a pecurilar quirk. The first tuple is being
+                // added, even if there's no data at all.
+                vendor_class_->setTuple(0, tuple);
+            } else {
+                vendor_class_->addTuple(tuple);
+            }
+        }
+
+        switch (u) {
+        case Option::V4:
+            pkt4_->delOption(DHO_VIVCO_SUBOPTIONS);
+            pkt4_->addOption(vendor_class_);
+            break;
+        case Option::V6:
+            pkt6_->delOption(D6O_VENDOR_CLASS);
+            pkt6_->addOption(vendor_class_);
+            break;
+        }
+    }
+
+    /// @brief Auxiliary function that evaluates tokens and checks result
+    ///
+    /// Depending on the universe, either pkt4_ or pkt6_ are supposed to have
+    /// all the necessary values and options set. The result is checked
+    /// on the values_ stack.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param expected_result text representation of the expected outcome
+    void evaluate(Option::Universe u, std::string expected_result) {
+        switch (u) {
+        case Option::V4:
+            EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+            break;
+        case Option::V6:
+            EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+            break;
+        default:
+            ADD_FAILURE() << "Invalid universe specified.";
+        }
+        ASSERT_EQ(1, values_.size());
+        EXPECT_EQ(expected_result, values_.top());
+    }
+
+    /// @brief Tests if vendor token behaves properly.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param token_vendor_id enterprise-id used in the token
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param expected_result text representation of the expected outcome
+    void testVendorExists(Option::Universe u, uint32_t token_vendor_id,
+                          uint32_t option_vendor_id, std::string expected_result) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        // Create the token
+        ASSERT_NO_THROW(t_.reset(new TokenVendor(u, token_vendor_id,
+                                                 TokenOption::EXISTS)));
+
+        // If specified option is non-zero, create it.
+        if (option_vendor_id) {
+            setVendorOption(u, option_vendor_id);
+        }
+
+        evaluate(u, expected_result);
+    }
+
+    /// @brief Tests if vendor token properly returns enterprise-id.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param expected_result text representation of the expected outcome
+    void testVendorEnterprise(Option::Universe u, uint32_t option_vendor_id,
+                              std::string expected_result) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenVendor(u, 0, TokenVendor::ENTERPRISE_ID)));
+        if (option_vendor_id) {
+            setVendorOption(u, option_vendor_id);
+        }
+
+        evaluate(u, expected_result);
+    }
+
+    /// @brief Tests if vendor class token properly returns enterprise-id.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param expected_result text representation of the expected outcome
+    void testVendorClassEnterprise(Option::Universe u, uint32_t option_vendor_id,
+                                   std::string expected_result) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenVendorClass(u, 0, TokenVendor::ENTERPRISE_ID)));
+        if (option_vendor_id) {
+            setVendorClassOption(u, option_vendor_id);
+        }
+
+        evaluate(u, expected_result);
+    }
+
+    /// @brief Tests if vendor class token can report existence properly.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param token_vendor_id enterprise-id used in the token
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param expected_result text representation of the expected outcome
+    void testVendorClassExists(Option::Universe u, uint32_t token_vendor_id,
+                               uint32_t option_vendor_id, std::string expected_result) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenVendorClass(u, token_vendor_id,
+                                                      TokenOption::EXISTS)));
+
+        if (option_vendor_id) {
+            setVendorClassOption(u, option_vendor_id);
+        }
+
+        evaluate(u, expected_result);
+    }
+
+    /// @brief Tests if vendor token can handle sub-options properly.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param token_vendor_id enterprise-id used in the token
+    /// @param token_option_code option code in the token
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param option_code sub-option code (0 means don't create suboption)
+    /// @param repr representation (TokenOption::EXISTS or HEXADECIMAL)
+    /// @param expected_result text representation of the expected outcome
+    void testVendorSuboption(Option::Universe u,
+                             uint32_t token_vendor_id, uint16_t token_option_code,
+                             uint32_t option_vendor_id, uint16_t option_code,
+                             TokenOption::RepresentationType repr, std::string expected) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenVendor(u, token_vendor_id, repr,
+                                                 token_option_code)));
+        if (option_vendor_id) {
+            setVendorOption(u, option_vendor_id);
+            if (option_code) {
+                ASSERT_TRUE(vendor_);
+                OptionPtr subopt(new OptionString(u, option_code, "alpha"));
+                vendor_->addOption(subopt);
+            }
+        }
+
+        evaluate(u, expected);
+    }
+
+    /// @brief Tests if vendor class token can handle data chunks properly.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param token_vendor_id enterprise-id used in the token
+    /// @param token_index data index used in the token
+    /// @param option_vendor_id enterprise-id used in option (0 means don't
+    ///        create the option)
+    /// @param data_tuples number of data tuples in the option
+    /// @param expected_result text representation of the expected outcome
+    void testVendorClassData(Option::Universe u,
+                             uint32_t token_vendor_id, uint16_t token_index,
+                             uint32_t option_vendor_id, uint16_t data_tuples,
+                             std::string expected) {
+        // Let's clear any old values, so we can run multiple cases in each test
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenVendorClass(u, token_vendor_id,
+                                                      TokenVendor::DATA, token_index)));
+        if (option_vendor_id) {
+            setVendorClassOption(u, option_vendor_id, data_tuples);
+        }
+
+        evaluate(u, expected);
+    }
+
+    /// @brief Tests if TokenInteger evaluates to the proper value
+    ///
+    /// @param expected expected string representation on stack after evaluation
+    /// @param value integer value passed to constructor
+    void testInteger(const std::string& expected, uint32_t value) {
+
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenInteger(value)));
+
+        // The universe (v4 or v6) shouldn't have any impact on this,
+        // but let's check it anyway.
+        evaluate(Option::V4, expected);
+
+        clearStack(false);
+        evaluate(Option::V6, expected);
+
+        clearStack(true);
+    }
 };
 
 // This tests the toBool() conversions
@@ -835,6 +1099,180 @@ TEST_F(TokenTest, relay4RAIOnly) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test checks if we can properly extract an option
+// from relay encapsulations.  Our packet has two relay
+// encapsulations.  Both include a common option with the
+// original message (option 100) and both include their
+// own option (101 and 102).  We attempt to extract the
+// options and compare them to expected values.  We also
+// try to extract an option from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Option) {
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both options it has and the check that
+    // the checking for an option it doesn't have results
+    // in an empty string.
+    verifyRelay6Option(0, 100, TokenOption::TEXTUAL, "hundred.zero");
+    verifyRelay6Option(0, 100, TokenOption::EXISTS, "true");
+    verifyRelay6Option(0, 101, TokenOption::TEXTUAL, "hundredone.zero");
+    verifyRelay6Option(0, 102, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(0, 102, TokenOption::EXISTS, "false");
+
+    // Level 1, again both options it has and the one for level 0
+    verifyRelay6Option(1, 100, TokenOption::TEXTUAL, "hundred.one");
+    verifyRelay6Option(1, 101, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+
+    // Level 2, no encapsulation so no options
+    verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
+
+    EXPECT_TRUE(checkFile());
+}
+
+// Verifies that relay6 option requires DHCPv6
+TEST_F(TokenTest, relay6OptionError) {
+    // Create a relay6 option token
+    ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, 13, TokenOption::TEXTUAL)));
+
+    // A DHCPv6 packet is required
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// Verifies that DHCPv4 packet metadata can be extracted.
+TEST_F(TokenTest, pkt4MetaData) {
+    pkt4_->setIface("eth0");
+    pkt4_->setLocalAddr(IOAddress("10.0.0.1"));
+    pkt4_->setRemoteAddr(IOAddress("10.0.0.2"));
+
+    // Check interface (expect eth0)
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ("eth0", values_.top());
+
+    // Check source (expect 10.0.0.2)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    vector<uint8_t> a2 = IOAddress("10.0.0.2").toBytes();
+    ASSERT_EQ(a2.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&a2[0], &values_.top()[0], a2.size()));
+
+    // Check destination (expect 10.0.0.1)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    vector<uint8_t> a1 = IOAddress("10.0.0.1").toBytes();
+    ASSERT_EQ(a1.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&a1[0], &values_.top()[0], a1.size()));
+
+    // Check length (expect 249)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t length = htonl(static_cast<uint32_t>(pkt4_->len()));
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
+
+    // Unknown metadata type fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::MetadataType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data iface with value eth0");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data src with value 0x0A000002");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data dst with value 0x0A000001");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data len with value 0x000000F9");
+    EXPECT_TRUE(checkFile());
+}
+
+// Verifies that DHCPv6 packet metadata can be extracted.
+TEST_F(TokenTest, pkt6MetaData) {
+    pkt6_->setIface("eth0");
+    pkt6_->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt6_->setRemoteAddr(IOAddress("fe80::1234"));
+
+    // Check interface (expect eth0)
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ("eth0", values_.top());
+
+    // Check source (expect fe80::1234)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(16, values_.top().size());
+    EXPECT_EQ(0xfe, static_cast<uint8_t>(values_.top()[0]));
+    EXPECT_EQ(0x80, static_cast<uint8_t>(values_.top()[1]));
+    for (unsigned i = 2; i < 14; ++i) {
+        EXPECT_EQ(0, values_.top()[i]);
+    }
+    EXPECT_EQ(0x12, values_.top()[14]);
+    EXPECT_EQ(0x34, values_.top()[15]);
+
+    // Check destination (expect ff02::1:2)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    vector<uint8_t> ma = IOAddress("ff02::1:2").toBytes();
+    ASSERT_EQ(ma.size(), values_.top().size());
+    EXPECT_EQ(0, memcmp(&ma[0], &values_.top()[0], ma.size()));
+
+    // Check length (expect 16)
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t length = htonl(static_cast<uint32_t>(pkt6_->len()));
+    ASSERT_EQ(4, values_.top().size());
+    EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
+
+    // Unknown meta data type fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::MetadataType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data iface with value eth0");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data src with value "
+              "0xFE800000000000000000000000001234");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data dst with value "
+              "0xFF020000000000000000000000010002");
+    addString("EVAL_DEBUG_PKT Pushing PKT meta data len with value 0x00000010");
+    EXPECT_TRUE(checkFile());
+}
+
 // Verifies if the DHCPv4 packet fields can be extracted.
 TEST_F(TokenTest, pkt4Fields) {
     pkt4_->setGiaddr(IOAddress("192.0.2.1"));
@@ -909,10 +1347,33 @@ TEST_F(TokenTest, pkt4Fields) {
     ASSERT_EQ(4, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
+    // Check msgtype.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_msgtype = encode(DHCPDISCOVER);
+    EXPECT_EQ(0, memcmp(&exp_msgtype[0], &values_.top()[0], 4));
+
+    // Check transaction-id
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(4, values_.top().size());
+    string exp_transid = encode(12345);
+    EXPECT_EQ(0, memcmp(&exp_transid[0], &values_.top()[0], 4));
+
     // Check a DHCPv6 packet throws.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
     EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // Unknown field fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::FieldType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
@@ -924,7 +1385,135 @@ TEST_F(TokenTest, pkt4Fields) {
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field ciaddr with value 0xC0000202");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field yiaddr with value 0xC0000203");
     addString("EVAL_DEBUG_PKT4 Pushing PKT4 field siaddr with value 0xC0000204");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT4 Pushing PKT4 field transid with value 0x00003039");
     EXPECT_TRUE(checkFile());
+}
+
+// Verifies if the DHCPv6 packet fields can be extracted.
+TEST_F(TokenTest, pkt6Fields) {
+    // The default test creates a v6 DHCPV6_SOLICIT packet with a
+    // transaction id of 12345.
+
+    // Check the message type
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    uint32_t expected = htonl(1);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check the transaction id field
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
+    ASSERT_EQ(1, values_.size());
+    expected = htonl(12345);
+    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
+
+    // Check that working with a v4 packet generates an error
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Unknown field fails
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::FieldType(100))));
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype with value 0x00000001");
+    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field transid with value 0x00003039");
+
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if we can properly extract the link and peer
+// address fields from relay encapsulations.  Our packet has
+// two relay encapsulations.  We attempt to extract the two
+// fields from both of the encapsulations and compare them.
+// We also try to extract one of the fields from an encapsulation
+// that doesn't exist (level 2), this should result in an empty
+// string.
+TEST_F(TokenTest, relay6Field) {
+    // Values for the address results
+    uint8_t zeroaddr[] = { 0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t linkaddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 1 };
+    uint8_t peeraddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 2 };
+
+    // We start by adding a set of relay encapsulations to the
+    // basic v6 packet.
+    addRelay6Encapsulations();
+
+    // Then we work our way through the set of choices
+    // Level 0 both link and peer address should be 0::0
+    verifyRelay6Eval(0, TokenRelay6Field::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(0, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+
+    // Level 1 link and peer should have different non-zero addresses
+    verifyRelay6Eval(1, TokenRelay6Field::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+
+    // Level 2 has no encapsulation so the address should be zero length
+    verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+
+    // Lets check that the layout of the address returned by the
+    // token matches that of the TokenIpAddress
+    TokenPtr trelay;
+    TokenPtr taddr;
+    TokenPtr tequal;
+    ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
+    ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
+    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+
+    EXPECT_NO_THROW(trelay->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(taddr->evaluate(*pkt6_, values_));
+    EXPECT_NO_THROW(tequal->evaluate(*pkt6_, values_));
+
+    // We should have a single value on the stack and it should be "true"
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // be tidy
+    clearStack();
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
+              "with value 0x00010000000000000000000000000002");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
+              "with value 0x");
+
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
+              "0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
+              "and 0x00010000000000000000000000000001 pushing result 'true'");
+
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks some error cases for a relay6 field token
+TEST_F(TokenTest, relay6FieldError) {
+    // Create a valid relay6 field token
+    ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(0, TokenRelay6Field::LINKADDR)));
+
+    // a DHCPv6 packet is required
+    ASSERT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // No test for unknown field as it is not (yet) checked?!
 }
 
 // This test checks if a token representing an == operator is able to
@@ -985,206 +1574,6 @@ TEST_F(TokenTest, optionEqualTrue) {
     // for comparison
     addString("EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F "
               "pushing result 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing a not is able to
-// negate a boolean value (with incorrectly built stack).
-TEST_F(TokenTest, operatorNotInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenNot()));
-
-    // CASE 1: The stack is empty.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: The top value is not a boolean
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing a not operator is able to
-// negate a boolean value.
-TEST_F(TokenTest, operatorNot) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenNot()));
-
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be the negation of the value.
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Double negation is identity.
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_NOT Popping 'true' pushing 'false'");
-    addString("EVAL_DEBUG_NOT Popping 'false' pushing 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an and is able to
-// conjugate two values (with incorrectly built stack).
-TEST_F(TokenTest, operatorAndInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    // CASE 1: There's not enough values on the stack. and is an operator that
-    // takes two parameters. There are 0 on the stack.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: One value is still not enough.
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 3: The two values must be logical
-    values_.push("true");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-
-    // Swap the 2 values
-    values_.push("true");
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing an and operator is able to
-// conjugate false with another logical
-TEST_F(TokenTest, operatorAndFalse) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    values_.push("true");
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // After true and false, check false and true
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // And false and false
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_AND Popping 'false' and 'true' pushing 'false'");
-    addString("EVAL_DEBUG_AND Popping 'true' and 'false' pushing 'false'");
-    addString("EVAL_DEBUG_AND Popping 'false' and 'false' pushing 'false'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an and is able to
-// conjugate two true values.
-TEST_F(TokenTest, operatorAndTrue) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-
-    values_.push("true");
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_AND Popping 'true' and 'true' pushing 'true'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an or is able to
-// combinate two values (with incorrectly built stack).
-TEST_F(TokenTest, operatorOrInvalid) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    // CASE 1: There's not enough values on the stack. or is an operator that
-    // takes two parameters. There are 0 on the stack.
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 2: One value is still not enough.
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
-
-    // CASE 3: The two values must be logical
-    values_.push("true");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-
-    // Swap the 2 values
-    values_.push("true");
-    values_.push("foo");
-    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-}
-
-// This test checks if a token representing an or is able to
-// conjugate two false values.
-TEST_F(TokenTest, operatorOrFalse) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    values_.push("false");
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("false", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OR Popping 'false' and 'false' pushing 'false'");
-    EXPECT_TRUE(checkFile());
-}
-
-// This test checks if a token representing an == operator is able to
-// conjugate true with another logical
-TEST_F(TokenTest, operatorOrTrue) {
-
-    ASSERT_NO_THROW(t_.reset(new TokenOr()));
-
-    values_.push("false");
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-
-    // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // After false or true, checks true or false
-    values_.push("false");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // And true or true
-    values_.push("true");
-    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
-    ASSERT_EQ(1, values_.size());
-    EXPECT_EQ("true", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OR Popping 'true' and 'false' pushing 'true'");
-    addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
-    addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
     EXPECT_TRUE(checkFile());
 }
 
@@ -1512,163 +1901,872 @@ TEST_F(TokenTest, concat) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test checks if we can properly extract the link and peer
-// address fields from relay encapsulations.  Our packet has
-// two relay encapsulations.  We attempt to extract the two
-// fields from both of the encapsulations and compare them.
-// We also try to extract one of the fields from an encapsulation
-// that doesn't exist (level 2), this should result in an empty
-// string.
-TEST_F(TokenTest, relay6Field) {
-    // Values for the address results
-    uint8_t zeroaddr[] = { 0, 0, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 0 };
-    uint8_t linkaddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 1 };
-    uint8_t peeraddr[] = { 0, 1, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0, 0, 0, 0, 0, 2 };
+// This test checks if a token representing a not is able to
+// negate a boolean value (with incorrectly built stack).
+TEST_F(TokenTest, operatorNotInvalid) {
 
-    // We start by adding a set of relay encapsulations to the
-    // basic v6 packet.
-    addRelay6Encapsulations();
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
-    // Then we work our way through the set of choices
-    // Level 0 both link and peer address should be 0::0
-    verifyRelay6Eval(0, TokenRelay6Field::LINKADDR, 16, zeroaddr);
-    verifyRelay6Eval(0, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Level 1 link and peer should have different non-zero addresses
-    verifyRelay6Eval(1, TokenRelay6Field::LINKADDR, 16, linkaddr);
-    verifyRelay6Eval(1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+    // CASE 2: The top value is not a boolean
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
 
-    // Level 2 has no encapsulation so the address should be zero length
-    verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+// This test checks if a token representing a not operator is able to
+// negate a boolean value.
+TEST_F(TokenTest, operatorNot) {
 
-    // Lets check that the layout of the address returned by the
-    // token matches that of the TokenIpAddress
-    TokenPtr trelay;
-    TokenPtr taddr;
-    TokenPtr tequal;
-    ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
-    ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
-    ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
+    ASSERT_NO_THROW(t_.reset(new TokenNot()));
 
-    EXPECT_NO_THROW(trelay->evaluate(*pkt6_, values_));
-    EXPECT_NO_THROW(taddr->evaluate(*pkt6_, values_));
-    EXPECT_NO_THROW(tequal->evaluate(*pkt6_, values_));
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
-    // We should have a single value on the stack and it should be "true"
+    // After evaluation there should be the negation of the value.
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Double negation is identity.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
-    // be tidy
-    clearStack();
-
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 0 "
-              "with value 0x00000000000000000000000000000000");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 0 "
-              "with value 0x00000000000000000000000000000000");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-              "with value 0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
-              "with value 0x00010000000000000000000000000002");
-    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
-              "with value 0x");
-
-    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
-              "with value 0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_IPADDRESS Pushing IPAddress "
-              "0x00010000000000000000000000000001");
-    addString("EVAL_DEBUG_EQUAL Popping 0x00010000000000000000000000000001 "
-              "and 0x00010000000000000000000000000001 pushing result 'true'");
-
+    addString("EVAL_DEBUG_NOT Popping 'true' pushing 'false'");
+    addString("EVAL_DEBUG_NOT Popping 'false' pushing 'true'");
     EXPECT_TRUE(checkFile());
 }
 
-// This test checks if we can properly extract an option
-// from relay encapsulations.  Our packet has two relay
-// encapsulations.  Both include a common option with the
-// original message (option 100) and both include their
-// own option (101 and 102).  We attempt to extract the
-// options and compare them to expected values.  We also
-// try to extract an option from an encapsulation
-// that doesn't exist (level 2), this should result in an empty
-// string.
-TEST_F(TokenTest, relay6Option) {
-    // We start by adding a set of relay encapsulations to the
-    // basic v6 packet.
-    addRelay6Encapsulations();
+// This test checks if a token representing an and is able to
+// conjugate two values (with incorrectly built stack).
+TEST_F(TokenTest, operatorAndInvalid) {
 
-    // Then we work our way through the set of choices
-    // Level 0 both options it has and the check that
-    // the checking for an option it doesn't have results
-    // in an empty string.
-    verifyRelay6Option(0, 100, TokenOption::TEXTUAL, "hundred.zero");
-    verifyRelay6Option(0, 100, TokenOption::EXISTS, "true");
-    verifyRelay6Option(0, 101, TokenOption::TEXTUAL, "hundredone.zero");
-    verifyRelay6Option(0, 102, TokenOption::TEXTUAL, "");
-    verifyRelay6Option(0, 102, TokenOption::EXISTS, "false");
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
 
-    // Level 1, again both options it has and the one for level 0
-    verifyRelay6Option(1, 100, TokenOption::TEXTUAL, "hundred.one");
-    verifyRelay6Option(1, 101, TokenOption::TEXTUAL, "");
-    verifyRelay6Option(1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+    // CASE 1: There's not enough values on the stack. and is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Level 2, no encapsulation so no options
-    verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
-    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
-
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
-    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
-    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
-
-    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
-
-    EXPECT_TRUE(checkFile());
-}
-
-// Verifies if the DHCPv6 packet fields can be extracted.
-TEST_F(TokenTest, pkt6Fields) {
-    // The default test creates a v6 DHCPV6_SOLICIT packet with a
-    // transaction id of 12345.
-
-    // Check the message type
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-    uint32_t expected = htonl(1);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
-
-    // Check the transaction id field
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
-    EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
-    ASSERT_EQ(1, values_.size());
-    expected = htonl(12345);
-    EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
-
-    // Check that working with a v4 packet generates an error
-    clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
+    // CASE 3: The two values must be logical
+    values_.push("true");
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
 
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an and operator is able to
+// conjugate false with another logical
+TEST_F(TokenTest, operatorAndFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // After true and false, check false and true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // And false and false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field msgtype with value 0x00000001");
-    addString("EVAL_DEBUG_PKT6 Pushing PKT6 field transid with value 0x00003039");
-
+    addString("EVAL_DEBUG_AND Popping 'false' and 'true' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'true' and 'false' pushing 'false'");
+    addString("EVAL_DEBUG_AND Popping 'false' and 'false' pushing 'false'");
     EXPECT_TRUE(checkFile());
 }
+
+// This test checks if a token representing an and is able to
+// conjugate two true values.
+TEST_F(TokenTest, operatorAndTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+
+    values_.push("true");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_AND Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if a token representing an or is able to
+// combinate two values (with incorrectly built stack).
+TEST_F(TokenTest, operatorOrInvalid) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    // CASE 1: There's not enough values on the stack. or is an operator that
+    // takes two parameters. There are 0 on the stack.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: One value is still not enough.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 3: The two values must be logical
+    values_.push("true");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Swap the 2 values
+    values_.push("true");
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+}
+
+// This test checks if a token representing an or is able to
+// conjugate two false values.
+TEST_F(TokenTest, operatorOrFalse) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "false" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'false' and 'false' pushing 'false'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if a token representing an == operator is able to
+// conjugate true with another logical
+TEST_F(TokenTest, operatorOrTrue) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenOr()));
+
+    values_.push("false");
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // After evaluation there should be a single "true" value
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // After false or true, checks true or false
+    values_.push("false");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // And true or true
+    values_.push("true");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OR Popping 'true' and 'false' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
+    addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if expression vendor[4491].exists works properly in DHCPv4.
+TEST_F(TokenTest, vendor4SpecificVendorExists) {
+    // Case 1: no option, should evaluate to false
+    testVendorExists(Option::V4, 4491, 0, "false");
+
+    // Case 2: option present, but uses different enterprise-id, should fail
+    testVendorExists(Option::V4, 4491, 1234, "false");
+
+    // Case 3: option present and has matchin enterprise-id, should succeed
+    testVendorExists(Option::V4, 4491, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if expression vendor[4491].exists works properly in DHCPv6.
+TEST_F(TokenTest, vendor6SpecificVendorExists) {
+    // Case 1: no option, should evaluate to false
+    testVendorExists(Option::V6, 4491, 0, "false");
+
+    // Case 2: option present, but uses different enterprise-id, should fail
+    testVendorExists(Option::V6, 4491, 1234, "false");
+
+    // Case 3: option present and has matchin enterprise-id, should suceed
+    testVendorExists(Option::V6, 4491, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+/// Test if expression vendor[*].exists works properly for DHCPv4.
+TEST_F(TokenTest, vendor4AnyVendorExists) {
+    // Case 1: no option, should evaluate to false
+    testVendorExists(Option::V4, 0, 0, "false");
+
+    // Case 2: option present with vendor-id 1234, should succeed
+    testVendorExists(Option::V4, 0, 1234, "true");
+
+    // Case 3: option present with vendor-id 4491, should succeed
+    testVendorExists(Option::V4, 0, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 1234 "
+              "found, pushing result 'true'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test if expression vendor[*].exists works properly for DHCPv6.
+TEST_F(TokenTest, vendor6AnyVendorExists) {
+    // Case 1: no option, should evaluate to false
+    testVendorExists(Option::V6, 0, 0, "false");
+
+    // Case 2: option present with vendor-id 1234, should succeed
+    testVendorExists(Option::V6, 0, 1234, "true");
+
+    // Case 3: option present with vendor-id 4491, should succeed
+    testVendorExists(Option::V6, 0, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 1234 "
+              "found, pushing result 'true'");
+    addString("EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test if expression vendor[*].enterprise works properly for DHCPv4.
+TEST_F(TokenTest, vendor4enterprise) {
+    // Case 1: No option present, should return empty string
+    testVendorEnterprise(Option::V4, 0, "");
+
+    // Case 2: Option with vendor-id 1234, should return "1234"
+    testVendorEnterprise(Option::V4, 1234, encode(1234));
+
+    // Case 3: Option with vendor-id set to maximum value, should still
+    // be able to handle it
+    testVendorEnterprise(Option::V4, 4294967295, encode(4294967295));
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing"
+              " result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 1234 as "
+              "result 0x000004D2");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 4294967295"
+              " as result 0xFFFFFFFF");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test if expression vendor[*].enterprise works properly for DHCPv6.
+TEST_F(TokenTest, vendor6enterprise) {
+    // Case 1: No option present, should return empty string
+    testVendorEnterprise(Option::V6, 0, "");
+
+    // Case 2: Option with vendor-id 1234, should return "1234"
+    testVendorEnterprise(Option::V6, 1234, encode(1234));
+
+    // Case 3: Option with vendor-id set to maximum value, should still
+    // be able to handle it
+    testVendorEnterprise(Option::V6, 4294967295, encode(4294967295));
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing"
+              " result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 1234 as "
+              "result 0x000004D2");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id 4294967295 "
+              "as result 0xFFFFFFFF");
+    EXPECT_TRUE(checkFile());
+}
+
+// This one tests "vendor[4491].option[1].exists" expression. There are so many
+// wonderful ways in which this could fail: the option could not be there,
+// it could have different enterprise-id, may not have suboption 1. Or may
+// have the suboption with valid type, but enterprise may be different.
+TEST_F(TokenTest, vendor4SuboptionExists) {
+    // Case 1: expression vendor[4491].option[1].exists, no option present
+    testVendorSuboption(Option::V4, 4491, 1, 0, 0, TokenOption::EXISTS, "false");
+
+    // Case 2: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
+    // no suboptions, expected result "false"
+    testVendorSuboption(Option::V4, 4491, 1, 1234, 0, TokenOption::EXISTS, "false");
+
+    // Case 3: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
+    // suboption 1, expected result "false"
+    testVendorSuboption(Option::V4, 4491, 1, 1234, 1, TokenOption::EXISTS, "false");
+
+    // Case 4: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
+    // suboption 2, expected result "false"
+    testVendorSuboption(Option::V4, 4491, 1, 4491, 2, TokenOption::EXISTS, "false");
+
+    // Case 5: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
+    // suboption 1, expected result "true"
+    testVendorSuboption(Option::V4, 4491, 1, 4491, 1, TokenOption::EXISTS, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing "
+              "result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'false'");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This is similar to the previous one, but tests vendor[4491].option[1].exists
+// for DHCPv6.
+TEST_F(TokenTest, vendor6SuboptionExists) {
+    // Case 1: expression vendor[4491].option[1].exists, no option present
+    testVendorSuboption(Option::V6, 4491, 1, 0, 0, TokenOption::EXISTS, "false");
+
+    // Case 2: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
+    // no suboptions, expected result "false"
+    testVendorSuboption(Option::V6, 4491, 1, 1234, 0, TokenOption::EXISTS, "false");
+
+    // Case 3: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
+    // suboption 1, expected result "false"
+    testVendorSuboption(Option::V6, 4491, 1, 1234, 1, TokenOption::EXISTS, "false");
+
+    // Case 4: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
+    // suboption 2, expected result "false"
+    testVendorSuboption(Option::V6, 4491, 1, 4491, 2, TokenOption::EXISTS, "false");
+
+    // Case 5: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
+    // suboption 1, expected result "true"
+    testVendorSuboption(Option::V6, 4491, 1, 4491, 1, TokenOption::EXISTS, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing "
+              "result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'false'");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if vendor[4491].option[1].hex expression properly returns
+// value of said sub-option or empty string if desired option is not present.
+// This test is for DHCPv4.
+TEST_F(TokenTest, vendor4SuboptionHex) {
+    // Case 1: no option present, should return empty string
+    testVendorSuboption(Option::V4, 4491, 1, 0, 0, TokenOption::HEXADECIMAL, "");
+
+    // Case 2: option with vendor-id = 1234, no suboptions, expected result ""
+    testVendorSuboption(Option::V4, 4491, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
+
+    // Case 3: option with vendor-id = 1234, suboption 1, expected result ""
+    testVendorSuboption(Option::V4, 4491, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
+
+    // Case 4: option with vendor-id = 4491, suboption 2, expected result ""
+    testVendorSuboption(Option::V4, 4491, 1, 4491, 2, TokenOption::HEXADECIMAL, "");
+
+    // Case 5: option with vendor-id = 4491, suboption 1, expected result content
+    // of the option
+    testVendorSuboption(Option::V4, 4491, 1, 4491, 1, TokenOption::HEXADECIMAL, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing "
+              "result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 0x");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 0x616C706861");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if vendor[4491].option[1].hex expression properly returns
+// value of said sub-option or empty string if desired option is not present.
+// This test is for DHCPv4.
+TEST_F(TokenTest, vendor6SuboptionHex) {
+    // Case 1: no option present, should return empty string
+    testVendorSuboption(Option::V6, 4491, 1, 0, 0, TokenOption::HEXADECIMAL, "");
+
+    // Case 2: option with vendor-id = 1234, no suboptions, expected result ""
+    testVendorSuboption(Option::V6, 4491, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
+
+    // Case 3: option with vendor-id = 1234, suboption 1, expected result ""
+    testVendorSuboption(Option::V6, 4491, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
+
+    // Case 4: option with vendor-id = 4491, suboption 2, expected result ""
+    testVendorSuboption(Option::V6, 4491, 1, 4491, 2, TokenOption::HEXADECIMAL, "");
+
+    // Case 5: option with vendor-id = 4491, suboption 1, expected result content
+    // of the option
+    testVendorSuboption(Option::V6, 4491, 1, 4491, 1, TokenOption::HEXADECIMAL, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing "
+              "result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for 4491, "
+              "option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 0x");
+    addString("EVAL_DEBUG_OPTION Pushing option 1 with value 0x616C706861");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies that "vendor-class[4491].exists" expression can be used
+// in DHCPv4.
+TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
+    // Case 1: no option present, should fail
+    testVendorClassExists(Option::V4, 4491, 0, "false");
+
+    // Case 2: option exists, but has different vendor-id (1234), should fail
+    testVendorClassExists(Option::V4, 4491, 1234, "false");
+
+    // Case 3: option exists and has matching vendor-id, should succeed
+    testVendorClassExists(Option::V4, 4491, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies that "vendor-class[4491].exists" expression can be used
+// in DHCPv6.
+TEST_F(TokenTest, vendorClass6SpecificVendorExists) {
+    // Case 1: no option present, should fail
+    testVendorClassExists(Option::V6, 4491, 0, "false");
+
+    // Case 2: option exists, but has different vendor-id (1234), should fail
+    testVendorClassExists(Option::V6, 4491, 1234, "false");
+
+    // Case 3: option exists and has matching vendor-id, should succeed
+    testVendorClassExists(Option::V6, 4491, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
+              "result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies that "vendor-class[*].exists" can be used in DHCPv4
+// and it matches a vendor class option with any vendor-id.
+TEST_F(TokenTest, vendorClass4AnyVendorExists) {
+    // Case 1: no option present, should fail
+    testVendorClassExists(Option::V4, 0, 0, "false");
+
+    // Case 2: option exists, should succeed, regardless of the vendor-id
+    testVendorClassExists(Option::V4, 0, 1234, "true");
+
+    // Case 3: option exists, should succeed, regardless of the vendor-id
+    testVendorClassExists(Option::V4, 0, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
+              "pushing result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 1234 "
+              "found, pushing result 'true'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies that "vendor-class[*].exists" can be used in DHCPv6
+// and it matches a vendor class option with any vendor-id.
+TEST_F(TokenTest, vendorClass6AnyVendorExists) {
+    // Case 1: no option present, should fail
+    testVendorClassExists(Option::V6, 0, 0, "false");
+
+    // Case 2: option exists, should succeed, regardless of the vendor-id
+    testVendorClassExists(Option::V6, 0, 1234, "true");
+
+    // Case 3: option exists, should succeed, regardless of the vendor-id
+    testVendorClassExists(Option::V6, 0, 4491, "true");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
+              "result 'false'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 1234 "
+              "found, pushing result 'true'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id 4491 "
+              "found, pushing result 'true'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test if expression "vendor-class.enterprise" works properly for DHCPv4.
+TEST_F(TokenTest, vendorClass4enterprise) {
+    // Case 1: No option present, should return empty string
+    testVendorClassEnterprise(Option::V4, 0, "");
+
+    // Case 2: Option with vendor-id 1234, should return "1234"
+    testVendorClassEnterprise(Option::V4, 1234, encode(1234));
+
+    // Case 3: Option with vendor-id set to maximum value, should still
+    // be able to handle it
+    testVendorClassEnterprise(Option::V4, 4294967295, encode(4294967295));
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, pushing "
+              "result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
+              "1234 as result 0x000004D2");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
+              "4294967295 as result 0xFFFFFFFF");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test if expression "vendor-class.enterprise" works properly for DHCPv6.
+TEST_F(TokenTest, vendorClass6enterprise) {
+    // Case 1: No option present, should return empty string
+    testVendorClassEnterprise(Option::V6, 0, "");
+
+    // Case 2: Option with vendor-id 1234, should return "1234"
+    testVendorClassEnterprise(Option::V6, 1234, encode(1234));
+
+    // Case 3: Option with vendor-id set to maximum value, should still
+    // be able to handle it.
+    testVendorClassEnterprise(Option::V6, 4294967295, encode(4294967295));
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
+              "result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
+              "1234 as result 0x000004D2");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id "
+              "4294967295 as result 0xFFFFFFFF");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test that expression "vendor-class[4491].data" is able to retrieve content
+// of the first tuple of the vendor-class option in DHCPv4.
+TEST_F(TokenTest, vendorClass4SpecificVendorData) {
+    // Case 1: Expression looks for vendor-id 4491, data[0], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V4, 4491, 0, 0, 0, "");
+
+    // Case 2: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 1234 and no data, expected result is empty string.
+    testVendorClassData(Option::V4, 4491, 0, 1234, 0, "");
+
+    // Case 3: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string.
+    // Note that vendor option in v4 always have at least one data chunk, even though
+    // it may be empty. The OptionVendor code was told to not create any special
+    // tuples, but it creates one empty on its own. So the code finds that one
+    // tuple and extracts its content (an empty string).
+    testVendorClassData(Option::V4, 4491, 0, 4491, 0, "");
+
+    // Case 4: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
+    testVendorClassData(Option::V4, 4491, 0, 1234, 1, "");
+
+    // Case 5: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V4, 4491, 0, 4491, 1, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in vendor "
+              "class found, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in vendor "
+              "class found, pushing result 'alpha'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test that expression "vendor-class[4491].data" is able to retrieve content
+// of the first tuple of the vendor-class option in DHCPv6.
+TEST_F(TokenTest, vendorClass6SpecificVendorData) {
+    // Case 1: Expression looks for vendor-id 4491, data[0], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V6, 4491, 0, 0, 0, "");
+
+    // Case 2: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 1234 and no data, expected result is empty string.
+    testVendorClassData(Option::V6, 4491, 0, 1234, 0, "");
+
+    // Case 3: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string
+    testVendorClassData(Option::V6, 4491, 0, 4491, 0, "");
+
+    // Case 4: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
+    testVendorClassData(Option::V6, 4491, 0, 1234, 1, "");
+
+    // Case 5: Expression looks for vendor-id 4491, data[0], there is
+    // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V6, 4491, 0, 4491, 1, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 0, "
+              "but option with enterprise-id 4491 has only 0 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in vendor "
+              "class found, pushing result 'alpha'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test that expression "vendor-class[*].data" is able to retrieve content
+// of the first tuple of the vendor-class option in DHCPv4.
+TEST_F(TokenTest, vendorClass4AnyVendorData) {
+    // Case 1: Expression looks for any vendor-id (0), data[0], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V4, 0, 0, 0, 0, "");
+
+    // Case 2: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 1234 and no data (one empty tuple), expected
+    // result is empty string.
+    testVendorClassData(Option::V4, 0, 0, 1234, 0, "");
+
+    // Case 3: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 4491 and no data (one empty tuple), expected
+    // result is empty string.
+    testVendorClassData(Option::V4, 0, 0, 4491, 0, "");
+
+    // Case 4: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V4, 0, 0, 1234, 1, "alpha");
+
+    // Case 5: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V4, 0, 0, 4491, 1, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in "
+              "vendor class found, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in "
+              "vendor class found, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in "
+              "vendor class found, pushing result 'alpha'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in "
+              "vendor class found, pushing result 'alpha'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Test that expression "vendor-class[*].data" is able to retrieve content
+// of the first tuple of the vendor-class option in DHCPv6.
+TEST_F(TokenTest, vendorClass6AnyVendorData) {
+    // Case 1: Expression looks for any vendor-id (0), data[0], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V6, 0, 0, 0, 0, "");
+
+    // Case 2: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 1234 and no data, expected result is empty string.
+    testVendorClassData(Option::V6, 0, 0, 1234, 0, "");
+
+    // Case 3: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string
+    testVendorClassData(Option::V6, 0, 0, 4491, 0, "");
+
+    // Case 4: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V6, 0, 0, 1234, 1, "alpha");
+
+    // Case 5: Expression looks for any vendor-id (0), data[0], there is
+    // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
+    // content of that data ("alpha")
+    testVendorClassData(Option::V6, 0, 0, 4491, 1, "alpha");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 0, "
+              "but option with enterprise-id 1234 has only 0 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 0, "
+              "but option with enterprise-id 4491 has only 0 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in vendor "
+              "class found, pushing result 'alpha'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 0 (out of 1 received) in vendor "
+              "class found, pushing result 'alpha'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if expression vendor-class[4491].data[3] is able to access
+// the tuple specified by index. This is a DHCPv4 test.
+TEST_F(TokenTest, vendorClass4DataIndex) {
+    // Case 1: Expression looks for vendor-id 4491, data[3], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V4, 4491, 3, 0, 0, "");
+
+    // Case 2: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and no data, expected result is empty string.
+    testVendorClassData(Option::V4, 4491, 3, 1234, 0, "");
+
+    // Case 3: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string
+    testVendorClassData(Option::V4, 4491, 3, 4491, 0, "");
+
+    // Case 4: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string.
+    testVendorClassData(Option::V4, 4491, 3, 1234, 1, "");
+
+    // Case 5: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491, but has only 3 data tuples, expected
+    // result is empty string.
+    testVendorClassData(Option::V4, 4491, 3, 4491, 3, "");
+
+    // Case 6: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491 and 5 data tuples, expected result is
+    // content of that tuple ("gamma")
+    testVendorClassData(Option::V4, 4491, 3, 4491, 5, "gamma");
+
+    // Case 6: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and 5 data tuples, expected result is
+    // empty string, because vendor-id does not match.
+    testVendorClassData(Option::V4, 4491, 3, 1234, 5, "");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 3, "
+              "but option with enterprise-id 4491 has only 1 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 3, "
+              "but option with enterprise-id 4491 has only 3 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor "
+              "class found, pushing result 'gamma'");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test verifies if expression vendor-class[4491].data[3] is able to access
+// the tuple specified by index. This is a DHCPv6 test.
+TEST_F(TokenTest, vendorClass6DataIndex) {
+    // Case 1: Expression looks for vendor-id 4491, data[3], there is no
+    // vendor-class option at all, expected result is empty string.
+    testVendorClassData(Option::V6, 4491, 3, 0, 0, "");
+
+    // Case 2: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and no data, expected result is empty string.
+    testVendorClassData(Option::V6, 4491, 3, 1234, 0, "");
+
+    // Case 3: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491 and no data, expected result is empty string
+    testVendorClassData(Option::V6, 4491, 3, 4491, 0, "");
+
+    // Case 4: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 1234 and 5 data tuples, expected result is empty string.
+    testVendorClassData(Option::V6, 4491, 3, 1234, 5, "");
+
+    // Case 5: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491, but has only 3 data tuples, expected
+    // result is empty string.
+    testVendorClassData(Option::V6, 4491, 3, 4491, 3, "");
+
+    // Case 6: Expression looks for vendor-id 4491, data[3], there is
+    // vendor-class with vendor-id 4491 and 5 data tuples, expected result is
+    // content of that tuple ("gamma")
+    testVendorClassData(Option::V6, 4491, 3, 4491, 5, "gamma");
+
+    // Check if the logged messages are correct.
+    addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 3, "
+              "but option with enterprise-id 4491 has only 0 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for "
+              "4491, option had 1234, pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index 3, "
+              "but option with enterprise-id 4491 has only 3 data tuple(s), "
+              "pushing result ''");
+    addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor"
+              " class found, pushing result 'gamma'");
+    EXPECT_TRUE(checkFile());
+}
+
+// Checks if various values can be represented as integer tokens
+TEST_F(TokenTest, integer) {
+    testInteger(encode(0), 0);
+    testInteger(encode(6), 6);
+    testInteger(encode(255), 255);
+    testInteger(encode(256), 256);
+    testInteger(encode(1410), 1410);
+    testInteger(encode(4294967295), 4294967295);
+}
+
 };

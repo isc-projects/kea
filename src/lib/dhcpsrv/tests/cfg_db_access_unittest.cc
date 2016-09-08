@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
@@ -88,6 +89,7 @@ public:
     /// @brief Destructor.
     virtual ~CfgMySQLDbAccessTest() {
         destroyMySQLSchema();
+        LeaseMgrFactory::destroy();
     }
 };
 
@@ -108,6 +110,20 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
     ASSERT_NO_THROW({
         HostDataSourcePtr& host_data_source =
             HostDataSourceFactory::getHostDataSourcePtr();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    // Because of the lazy initialization of the HostMgr instance, it is
+    // possible that the first call to the instance() function tosses
+    // existing connection to the database created by the call to
+    // createManagers(). Let's make sure that this doesn't happen.
+    ASSERT_NO_THROW(HostMgr::instance());
+
+    ASSERT_NO_THROW({
+        HostDataSourcePtr& host_data_source =
+            HostDataSourceFactory::getHostDataSourcePtr();
+        ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });
 }

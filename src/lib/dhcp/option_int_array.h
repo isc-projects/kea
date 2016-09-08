@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <util/io_utilities.h>
+#include <boost/shared_ptr.hpp>
 #include <sstream>
 #include <stdint.h>
 
@@ -53,6 +54,10 @@ typedef boost::shared_ptr<OptionUint32Array> OptionUint32ArrayPtr;
 /// @param T data field type (see above).
 template<typename T>
 class OptionIntArray: public Option {
+private:
+
+    /// @brief Pointer to the option type for the specified T.
+    typedef boost::shared_ptr<OptionIntArray<T> > OptionIntArrayTypePtr;
 
 public:
 
@@ -116,6 +121,11 @@ public:
         unpack(begin, end);
     }
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const {
+        return (cloneInternal<OptionIntArray<T> >());
+    }
+
     /// @brief Adds a new value to the array.
     ///
     /// @param value a value being added.
@@ -131,7 +141,7 @@ public:
     /// @throw isc::dhcp::InvalidDataType if size of a data fields type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
-    void pack(isc::util::OutputBuffer& buf) {
+    void pack(isc::util::OutputBuffer& buf) const {
         // Pack option header.
         packHeader(buf);
         // Pack option data.
@@ -229,11 +239,11 @@ public:
     /// Returns length of this option, including option header and suboptions
     ///
     /// @return length of this option
-    virtual uint16_t len() {
+    virtual uint16_t len() const {
         uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
         length += values_.size() * sizeof(T);
         // length of all suboptions
-        for (OptionCollection::iterator it = options_.begin();
+        for (OptionCollection::const_iterator it = options_.begin();
              it != options_.end();
              ++it) {
             length += (*it).second->len();
@@ -247,7 +257,7 @@ public:
     /// the text.
     ///
     /// @return textual representation of the option.
-    virtual std::string toText(int indent = 0) {
+    virtual std::string toText(int indent = 0) const {
         std::stringstream output;
         output << headerToText(indent) << ":";
 

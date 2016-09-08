@@ -290,7 +290,7 @@ syntax would be used:
     }
 ]
 </screen>
-Note that indentation is optional and is used for aesthetic purposes only.
+Note that indentation is optional and is used for esthetic purposes only.
 In some cases in may be preferable to use more compact notation.
 </para>
 
@@ -440,7 +440,7 @@ be followed by a comma and another object definition.</para>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database is to hold the leases must be set: this is the
-  name used when the lease database was created
+  name used when the database was created
   (see <xref linkend="mysql-database-create"/>,
   <xref linkend="pgsql-database-create"/>
   or <xref linkend="cql-database-create"/>).
@@ -477,46 +477,45 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
 </section>
 
 <section id="hosts6-storage">
   <title>Hosts Storage</title>
     <para>Kea is also able to store information about host reservations in the
-    database. Hosts database configuration uses the same syntax as lease
-    database. In fact, Kea server opens independent connections for each
-    purpose, be it lease or hosts information. This gives the solution most
+    database. The hosts database configuration uses the same syntax as the lease
+    database. In fact, a Kea server opens independent connections for each
+    purpose, be it lease or hosts information. This arrangment gives the most
     flexibility. Kea can be used to keep leases and host reservations
-    separately, but can also point to the same database. Currently the only
-    supported hosts database type is MySQL.</para>
+    separately, but can also point to the same database. Currently the
+    supported hosts database types are MySQL and PostgreSQL. Cassandra
+    backend does not support host reservations yet.</para>
 
-    <para>Please note that usage of hosts storage is optional. User can define
+    <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
-    if the number of reservations is small. However, with the number of
-    reservations growing it's more convenient to use host storage. Please note
-    that both storages (configuration file and MySQL) can be used together. If
-    hosts are defined in both places, the definitions from configuration file
-    are checked first and external storage is checked later, if
-    necessary.</para>
-
-    <para>All hosts leases issued by the server are stored in the hosts
-    database. Currently there is only one available backend: MySQL. Other host
-    backends will become available in future Kea versions.</para>
+    if the number of reservations is small. However, when the number of
+    reservations grows it's more convenient to use host storage. Please note
+    that both storage methods (configuration file and one of the supported databases)
+    can be used together. If hosts are defined in both places, the definitions
+    from the configuration file are checked first and external storage is checked
+    later, if necessary.</para>
 
 <section id="hosts-database-configuration6">
-  <title>IPv6 Hosts Database Configuration</title>
+  <title>DHCPv6 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
-  parameters. If enabled, the type of the database must be set to "mysql". Other
-  hosts backends may be added in later Kea versions.
+  parameters. If enabled, the type of the database must be set to "mysql" or
+  "postgresql". Other hosts backends may be added in later Kea versions.
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>).
+  Next, the name of the database to hold the reservations must be set: this is the
+  name used when the database was created  (see <xref linkend="supported-databases"/>
+  for instructions how to setup desired database type).
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
-  If the database is located on a different system to the DHCPv6 server, the
+  If the database is located on a different system than the DHCPv6 server, the
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
@@ -539,8 +538,40 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
+<section id="read-only-database-configuration6">
+<title>Using Read-Only Databases for Host Reservations</title>
+<para>
+In some deployments the database user whose name is specified in the database backend
+configuration may not have write privileges to the database. This is often
+required by the policy within a given network to secure the data from being
+unintentionally modified. In many cases administrators have inventory databases
+deployed, which contain substantially more information about the hosts than
+static reservations assigned to them. The inventory database can be used to create
+a view of a Kea hosts database and such view is often read only.
+</para>
+<para>
+Kea host database backends operate with an implicit configuration to both
+read from and write to the database. If the database user does not have
+write access to the host database, the backend will fail to start and the
+server will refuse to start (or reconfigure). However, if access to a read
+only host database is required for retrieving reservations for clients
+and/or assign specific addresses and options, it is possible to explicitly
+configure Kea to start in "read-only" mode. This is controlled by the
+<command>readonly</command> boolean parameter as follows:
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
+</screen>
+Setting this parameter to <userinput>false</userinput> would configure the
+database backend to operate in "read-write" mode, which is also a default
+configuration if the parameter is not specified.
+</para>
+<note><para>The <command>readonly</command> parameter is currently only supported
+for MySQL and PostgreSQL databases.</para></note>
 </section>
--->
+
+</section>
+
 
 <section id="dhcp6-interface-selection">
   <title>Interface selection</title>
@@ -650,11 +681,24 @@ temporarily override a list of interface names and listen on all interfaces.
         "interfaces": [ <userinput>"eth1/2001:db8::1"</userinput> ]
     },
     ...
+    "option-data": [
+        {
+            "name": "unicast",
+            "data": "2001:db8::1"
+        } ],
+    ...
 }
  </screen>
 
         This configuration will cause the server to listen on
         eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        Usually unicast support is associated with a server unicast option
+        which allows clients to send unicast messages to the server.
+        The example above contains a server unicast option specification
+        which causes the client to send messages to the specified
+        unicast address.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
@@ -986,7 +1030,9 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
 <row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+-->
 <row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<!--
 <row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
@@ -2167,6 +2213,92 @@ should include options from the isc option space:
       </para>
     </section>
 
+    <section id="dhcp6-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv6 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv6 side
+      (the DHCPv4 side is described in <xref linkend="dhcp4-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      There is only one specific parameter for the DHCPv6 side:
+      <command>dhcp4o6-port</command> which specifies the first of the
+      two consecutive ports of the UDP sockets used for the communication
+      between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
+      to ::1 on <command>port</command> and connected to ::1 on
+      <command>port</command> + 1).
+      </para>
+      <para>
+      Two other configuration entries are in general required: unicast traffic
+      support (see <xref linkend="dhcp6-unicast"/>) and DHCP 4o6 server
+      address option (name "dhcp4o6-server-addr", code  88).
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv6 conf
+"Dhcp6": {
+
+    "interfaces-config": {
+        "interfaces": [ "eno33554984/2001:db8:1:1::1" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases6"
+    },
+
+    "preferred-lifetime": 3000,
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+
+    "subnet6": [ {
+        "subnet": "2001:db8:1:1::/64",
+        "interface": "eno33554984",
+        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767,
+
+    "option-data": [ {
+        "name": "dhcp4o6-server-addr",
+        "code": 88,
+        "space": "dhcp6",
+        "csv-format": true,
+        "data": "2001:db8:1:1::1"
+    } ]
+</userinput>
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp6",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp6.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+      </para>
+      <note>
+      Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
+      </note>
+    </section>
+
    </section>
 
   <!-- Host reservation is a large topic. There will be many subsections,
@@ -2459,24 +2591,18 @@ should include options from the isc option space:
 
     </section>
 
-    <section id="reservations6-mysql">
-      <title>Storing host reservations in MySQL</title>
+    <section id="reservations6-mysql-pgsql">
+      <title>Storing host reservations in MySQL or PostgreSQL</title>
 
       <para>
-        It is possible to store host reservations in MySQL. See <xref
+        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts6-storage" /> for information how to configure Kea to use
-        reservations stored in MySQL. Kea does not provide any dedicated tools
-        for managing MySQL reservations. See Kea wiki <ulink
+        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
+        tools for managing reservations in a database. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
-    </section>
-
-    <section id="reservations6-pgsql">
-      <title>Storing host reservations in PostgreSQL</title>
-      <para>Kea currently does not support storing reservations in
-      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
     </section>
 
     <section id="reservations6-cql">
@@ -2486,7 +2612,7 @@ should include options from the isc option space:
     </section>
 
     <section id="reservations6-tuning">
-      <title>Fine Tuning IPv6 Host Reservation</title>
+      <title>Fine Tuning DHCPv6 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
@@ -3695,22 +3821,6 @@ should include options from the isc option space:
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
-          <listitem> <!-- see tickets #3234, #3281 -->
-            <para>
-              On-line configuration has some limitations. Adding new subnets or
-              modifying existing ones work, as is removing the last subnet from
-              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
-              there are 4 subnets configured) will cause issues. The problem is
-              caused by simplistic subnet-id assignment. The subnets are always
-              numbered, starting from 1. That subnet-id is then used in leases
-              that are stored in the lease database. Removing non-last subnet will
-              cause the configuration information to mismatch data in the lease
-              database. It is possible to manually update subnet-id fields in
-              MySQL, PostgreSQL or CQL database, but it is awkward and
-              error prone process. A better reconfiguration support is planned.
-            </para>
-          </listitem>
-
         <listitem>
           <simpara>
             The server will allocate, renew or rebind a maximum of one lease
@@ -3727,8 +3837,7 @@ should include options from the isc option space:
 
         <listitem>
           <simpara>
-            Duplication report (DECLINE) and client reconfiguration (RECONFIGURE) are
-            not yet supported.
+            Client reconfiguration (RECONFIGURE) is not yet supported.
           </simpara>
         </listitem>
       </itemizedlist>

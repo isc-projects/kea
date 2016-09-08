@@ -63,8 +63,13 @@ public:
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
-        hdsptr_->rollback();
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
         HostDataSourceFactory::destroy();
+        hdsptr_.reset();
         destroyMySQLSchema();
     }
 
@@ -157,6 +162,9 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
@@ -166,6 +174,8 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     // Tidy up after the test
     destroyMySQLSchema();
 }
+
+
 
 /// @brief Check conversion functions
 ///
@@ -206,6 +216,10 @@ TEST(MySqlConnection, checkTimeConversion) {
     time_t converted_cltt = 0;
     MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
+}
+
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
+    testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
@@ -351,29 +365,22 @@ TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrder){
     testMultipleReservationsDifferentOrder();
 }
 
-// Test verifies if multiple client classes for IPv4 can be stored.
-TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v4 client-classes, retrieve it and
-    /// make sure that all client classes are retrieved properly.
+// Test that multiple client classes for IPv4 can be inserted and
+// retrieved for a given host reservation.
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses4) {
+    testMultipleClientClasses4();
 }
 
-// Test verifies if multiple client classes for IPv6 can be stored.
-TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v6 client-classes, retrieve it and
-    /// make sure that all client classes are retrieved properly.
+// Test that multiple client classes for IPv6 can be inserted and
+// retrieved for a given host reservation.
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses6) {
+    testMultipleClientClasses6();
 }
 
-// Test verifies if multiple client classes for both IPv4 and IPv6 can be stored.
-TEST_F(MySqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
-    /// @todo: Implement this test as part of #4213.
-
-    /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
-    /// it and make sure that all client classes are retrieved properly. Also,
-    /// check that the classes are not confused.
+// Test that multiple client classes for both IPv4 and IPv6 can
+// be inserted and retrieved for a given host reservation.
+TEST_F(MySqlHostDataSourceTest, multipleClientClassesBoth) {
+    testMultipleClientClassesBoth();
 }
 
 // Test if the same host can have reservations in different subnets (with the
@@ -508,6 +515,12 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
                                           &host->getIdentifier()[0],
                                           host->getIdentifier().size());
     EXPECT_FALSE(from_hds);
+}
+
+// This test checks that siaddr, sname, file fields can be retrieved
+/// from a database for a host.
+TEST_F(MySqlHostDataSourceTest, messageFields) {
+    testMessageFields4();
 }
 
 }; // Of anonymous namespace

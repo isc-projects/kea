@@ -44,6 +44,9 @@ EXTRA_DIST += parsers/host_reservations_list_parser.h
 EXTRA_DIST += parsers/ifaces_config_parser.cc
 EXTRA_DIST += parsers/ifaces_config_parser.h
 
+# Devel guide diagrams
+EXTRA_DIST += images/pgsql_host_data_source.svg
+
 # Define rule to build logging source files from message file
 alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
 dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
@@ -134,6 +137,7 @@ libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
 libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
+libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 
@@ -194,7 +198,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 4:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 5:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)

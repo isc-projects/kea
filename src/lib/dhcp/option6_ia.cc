@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,12 @@ Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
     unpack(begin, end);
 }
 
-void Option6IA::pack(isc::util::OutputBuffer& buf) {
+OptionPtr
+Option6IA::clone() const {
+    return (cloneInternal<Option6IA>());
+}
+
+void Option6IA::pack(isc::util::OutputBuffer& buf) const {
     buf.writeUint16(type_);
     buf.writeUint16(len() - OPTION6_HDR_LEN);
     buf.writeUint32(iaid_);
@@ -76,7 +81,7 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IA::toText(int indent) {
+std::string Option6IA::toText(int indent) const {
     stringstream output;
 
     switch(getType()) {
@@ -96,13 +101,13 @@ std::string Option6IA::toText(int indent) {
     return (output.str());
 }
 
-uint16_t Option6IA::len() {
+uint16_t Option6IA::len() const {
 
     uint16_t length = OPTION6_HDR_LEN /*header (4)*/ +
         OPTION6_IA_LEN  /* option content (12) */;
 
     // length of all suboptions
-    for (OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

@@ -20,15 +20,16 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <util/range_utilities.h>
-
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include <arpa/inet.h>
 
@@ -40,6 +41,38 @@ using namespace isc::dhcp::test;
 using boost::scoped_ptr;
 
 namespace {
+
+class NakedPkt6 : public Pkt6 {
+public:
+
+    /// @brief Constructor, used in replying to a message
+    ///
+    /// @param msg_type type of message (SOLICIT=1, ADVERTISE=2, ...)
+    /// @param transid transaction-id
+    /// @param proto protocol (TCP or UDP)
+    NakedPkt6(const uint8_t msg_type, const uint32_t transid,
+              const DHCPv6Proto& proto = UDP)
+        : Pkt6(msg_type, transid, proto) {
+    }
+
+    /// @brief Constructor, used in message transmission
+    ///
+    /// Creates new message. Transaction-id will randomized.
+    ///
+    /// @param buf pointer to a buffer of received packet content
+    /// @param len size of buffer of received packet content
+    /// @param proto protocol (usually UDP, but TCP will be supported eventually)
+    NakedPkt6(const uint8_t* buf, const uint32_t len,
+              const DHCPv6Proto& proto = UDP)
+        : Pkt6(buf, len, proto) {
+    }
+
+    using Pkt6::getNonCopiedOptions;
+    using Pkt6::getNonCopiedRelayOption;
+    using Pkt6::getNonCopiedAnyRelayOption;
+};
+
+typedef boost::shared_ptr<NakedPkt6> NakedPkt6Ptr;
 
 class Pkt6Test : public ::testing::Test {
 public:
@@ -205,14 +238,14 @@ Pkt6* capture2() {
     // to be OptionBuffer format)
     isc::util::encode::decodeHex(hex_string, bin);
 
-    Pkt6* pkt = new Pkt6(&bin[0], bin.size());
+    NakedPkt6* pkt = new NakedPkt6(&bin[0], bin.size());
     pkt->setRemotePort(547);
     pkt->setRemoteAddr(IOAddress("fe80::1234"));
     pkt->setLocalPort(547);
     pkt->setLocalAddr(IOAddress("ff05::1:3"));
     pkt->setIndex(2);
     pkt->setIface("eth0");
-    return (pkt);
+    return (dynamic_cast<Pkt6*>(pkt));
 }
 
 TEST_F(Pkt6Test, unpack_solicit1) {
@@ -446,6 +479,92 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     // Finally try to get a non-existent option
     options = parent->getOptions(1234);
     EXPECT_EQ(0, options.size());
+}
+
+// Check that multiple options of the same type may be retrieved by using
+// Pkt6::getOptions or Pkt6::getNonCopiedOptions. In the former case, also
+// check that retrieved options are copied when Pkt6::setCopyRetrievedOptions
+// is enabled.
+TEST_F(Pkt6Test, getOptions) {
+    NakedPkt6 pkt(DHCPV6_SOLICIT, 1234);
+    OptionPtr opt1(new Option(Option::V6, 1));
+    OptionPtr opt2(new Option(Option::V6, 1));
+    OptionPtr opt3(new Option(Option::V6, 2));
+    OptionPtr opt4(new Option(Option::V6, 2));
+
+    pkt.addOption(opt1);
+    pkt.addOption(opt2);
+    pkt.addOption(opt3);
+    pkt.addOption(opt4);
+
+    // Retrieve options with option code 1.
+    OptionCollection options = pkt.getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    OptionCollection::const_iterator opt_it;
+
+    // Make sure that the first option is returned. We're using the pointer
+    // to opt1 to find the option.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Make sure that the second option is returned.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Retrieve options with option code 2.
+    options = pkt.getOptions(2);
+
+    // opt3 and opt4 should exist.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Enable copying options when they are retrieved.
+    pkt.setCopyRetrievedOptions(true);
+
+    options = pkt.getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    // Both retrieved options should be copied so an attempt to find them
+    // using option pointer should fail. Original pointers should have
+    // been replaced with new instances.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it == options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it == options.end());
+
+    // Return instances of options with the option code 1 and make sure
+    // that copies of the options were used to replace original options
+    // in the packet.
+    OptionCollection options_modified = pkt.getNonCopiedOptions(1);
+    for (OptionCollection::const_iterator opt_it_modified = options_modified.begin();
+         opt_it_modified != options_modified.end(); ++opt_it_modified) {
+        opt_it = std::find(options.begin(), options.end(), *opt_it_modified);
+        ASSERT_TRUE(opt_it != options.end());
+    }
+
+    // Let's check that remaining two options haven't been affected by
+    // retrieving the options with option code 1.
+    options = pkt.getNonCopiedOptions(2);
+    ASSERT_EQ(2, options.size());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
 }
 
 TEST_F(Pkt6Test, Timestamp) {
@@ -750,12 +869,35 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_EQ(0, memcmp(expected0, &binary[0], 16));
 }
 
+TEST_F(Pkt6Test, getRelayOption) {
+    NakedPkt6Ptr msg(dynamic_cast<NakedPkt6*>(capture2()));
+    ASSERT_TRUE(msg);
 
-// This test verified that options added by relays to the message can be
+    ASSERT_NO_THROW(msg->unpack());
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    OptionPtr opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
+    ASSERT_TRUE(opt_iface_id);
+
+    OptionPtr opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
+    ASSERT_TRUE(opt_iface_id_returned);
+
+    EXPECT_TRUE(opt_iface_id == opt_iface_id_returned);
+
+    msg->setCopyRetrievedOptions(true);
+
+    opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
+    EXPECT_FALSE(opt_iface_id == opt_iface_id_returned);
+
+    opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
+    EXPECT_TRUE(opt_iface_id == opt_iface_id_returned);
+}
+
+// This test verifies that options added by relays to the message can be
 // accessed and retrieved properly
 TEST_F(Pkt6Test, getAnyRelayOption) {
 
-    boost::scoped_ptr<Pkt6> msg(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+    boost::scoped_ptr<NakedPkt6> msg(new NakedPkt6(DHCPV6_ADVERTISE, 0x020304));
     msg->addOption(generateRandomOption(300));
 
     // generate options for relay1
@@ -813,22 +955,69 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
+    EXPECT_TRUE(opt == relay3_opt1);
 
     // We want to ge that one inserted by relay1 (first match, starting from
     // closest to the server.
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
+    EXPECT_TRUE(opt == relay1_opt1);
 
     // We just want option from the first relay (closest to the client)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
+    EXPECT_TRUE(opt == relay3_opt1);
 
     // We just want option from the last relay (closest to the server)
     opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
+    EXPECT_TRUE(opt == relay1_opt1);
+
+    // Enable copying options when they are retrieved and redo the tests
+    // but expect that options are still equal but different pointers
+    // are returned.
+    msg->setCopyRetrievedOptions(true);
+
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(relay3_opt1));
+    EXPECT_FALSE(opt == relay3_opt1);
+    // Test that option copy has replaced the original option within the
+    // packet. We achive that by calling a variant of the method which
+    // retrieved non-copied option.
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(relay3_opt1);
+    EXPECT_TRUE(opt == relay3_opt1);
+
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(relay1_opt1));
+    EXPECT_FALSE(opt == relay1_opt1);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(relay1_opt1);
+    EXPECT_TRUE(opt == relay1_opt1);
+
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(relay3_opt1));
+    EXPECT_FALSE(opt == relay3_opt1);
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    ASSERT_TRUE(relay3_opt1);
+    EXPECT_TRUE(opt == relay3_opt1);
+
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equals(relay1_opt1));
+    EXPECT_FALSE(opt == relay1_opt1);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    ASSERT_TRUE(relay1_opt1);
+    EXPECT_TRUE(opt == relay1_opt1);
+
+    // Disable copying options and continue with other tests.
+    msg->setCopyRetrievedOptions(false);
 
     // Let's try to ask for something that is inserted by the middle relay
     // only.

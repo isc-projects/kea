@@ -8,6 +8,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <asiolink/io_address.h>
@@ -232,18 +233,21 @@ CfgSubnets4::removeStatistics() {
     using namespace isc::stats;
 
     // For each v4 subnet currently configured, remove the statistic.
-    /// @todo: May move this to CfgSubnets4 class if there will be more
-    /// statistics here.
+    StatsMgr& stats_mgr = StatsMgr::instance();
     for (Subnet4Collection::const_iterator subnet4 = subnets_.begin();
          subnet4 != subnets_.end(); ++subnet4) {
+        SubnetID subnet_id = (*subnet4)->getID();
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "total-addresses"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet4)->getID(),
-                                                        "total-addresses"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "assigned-addresses"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet4)->getID(),
-                                                        "assigned-addresses"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "declined-addresses"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "declined-reclaimed-addresses"));
     }
 }
 
@@ -251,14 +255,21 @@ void
 CfgSubnets4::updateStatistics() {
     using namespace isc::stats;
 
-    /// @todo: May move this to CfgSubnets4 class if there will be more
-    /// statistics here.
-    for (Subnet4Collection::const_iterator subnet = subnets_.begin();
-         subnet != subnets_.end(); ++subnet) {
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    for (Subnet4Collection::const_iterator subnet4 = subnets_.begin();
+         subnet4 != subnets_.end(); ++subnet4) {
+        SubnetID subnet_id = (*subnet4)->getID();
 
-        StatsMgr::instance().setValue(
-            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-addresses"),
-            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_V4)));
+        stats_mgr.setValue(StatsMgr::
+                           generateName("subnet", subnet_id, "total-addresses"),
+                                        static_cast<int64_t>
+                                        ((*subnet4)->getPoolCapacity(Lease::
+                                                                     TYPE_V4)));
+    }
+
+    // Only recount the stats if we have subnets.
+    if (subnets_.begin() != subnets_.end()) {
+            LeaseMgrFactory::instance().recountLeaseStats4();
     }
 }
 

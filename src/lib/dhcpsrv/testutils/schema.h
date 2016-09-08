@@ -21,12 +21,16 @@ extern const char* INVALID_NAME;
 extern const char* VALID_HOST;
 extern const char* INVALID_HOST;
 extern const char* VALID_USER;
+extern const char* VALID_READONLY_USER;
 extern const char* INVALID_USER;
 extern const char* VALID_PASSWORD;
 extern const char* INVALID_PASSWORD;
 extern const char* VALID_TIMEOUT;
 extern const char* INVALID_TIMEOUT_1;
 extern const char* INVALID_TIMEOUT_2;
+extern const char* VALID_READONLY_DB;
+extern const char* INVALID_READONLY_DB;
+
 /// @brief Given a combination of strings above, produce a connection string.
 ///
 /// @param type type of the database
@@ -35,10 +39,12 @@ extern const char* INVALID_TIMEOUT_2;
 /// @param user username used to authenticate during connection attempt
 /// @param password password used to authenticate during connection attempt
 /// @param timeout timeout used during connection attempt
+/// @param readonly_db specifies if database is read only
 /// @return string containing all specified parameters
 std::string connectionString(const char* type, const char* name = NULL,
                              const char* host = NULL, const char* user = NULL,
-                             const char* password = NULL, const char* timeout = NULL);
+                             const char* password = NULL, const char* timeout = NULL,
+                             const char* readonly_db = NULL);
 };
 };
 };

@@ -100,6 +100,12 @@ We have received the following contributions:
  - Razvan Becheriu, Qualitance
    2016-05: Added support for Cassandra
 
+ - Patrik Lundin
+   2016-07: Replace test by expr for < in configure.ac
+
+ - Michal Humpula
+   2016-07: Response to DHCPINFORM is sent to port 68
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for

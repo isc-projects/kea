@@ -201,10 +201,6 @@ a client's error or a server's purged database.
 % DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
 A malformed DHCPv4o6 packet was received.
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 on interface %3
-This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication.
-
 % DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6: %7 (type %8)
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
@@ -232,11 +228,6 @@ argument contains the client and the transaction identification
 information. The second and third argument contains the packet name
 and type respectively. The fourth argument contains detailed packet
 information.
-
-% DHCP4_DISCOVER_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPDISCOVER
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-The argument holds the client and transaction identification information.
 
 % DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv4 server starts reconfiguration
@@ -312,12 +303,6 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
 The argument specifies the client and transaction identification
-information.
-
-% DHCP4_INFORM_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPINFORM
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-The argument specifies the client and the transaction identification
 information.
 
 % DHCP4_INFORM_DIRECT_REPLY %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3
@@ -615,12 +600,6 @@ and the lease. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the leased address.
 
-% DHCP4_REQUEST_CLASS_PROCESSING_FAILED %1: client class specific processing failed for DHCPREQUEST
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-The argument contains the client and transaction identification
-information.
-
 % DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being sent
 to the client. The first argument contains the client and the transaction
@@ -718,3 +697,7 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
+
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 on interface %3
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication.

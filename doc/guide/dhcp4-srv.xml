@@ -439,7 +439,7 @@ be followed by a comma and another object definition.</para>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
   Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created
+  name used when the database was created
   (see <xref linkend="mysql-database-create"/>,
   <xref linkend="pgsql-database-create"/> or
   <xref linkend="cql-database-create"/>).
@@ -482,41 +482,39 @@ If a timeout is given though, it should be an integer greater than zero.
   <title id="hosts4-storage">Hosts Storage</title>
 
     <para>Kea is also able to store information about host reservations in the
-    database. Hosts database configuration uses the same syntax as lease
-    database. In fact, Kea server opens independent connections for each
-    purpose, be it lease or hosts information. This gives the solution most
+    database. The hosts database configuration uses the same syntax as the lease
+    database. In fact, a Kea server opens independent connections for each
+    purpose, be it lease or hosts information. This arrangement gives the most
     flexibility. Kea can be used to keep leases and host reservations
-    separately, but can also point to the same database. Currently the only
-    supported hosts database type is MySQL.</para>
+    separately, but can also point to the same database. Currently the
+    supported hosts database types are MySQL and PostgreSQL. Cassandra
+    backend does not support host reservations yet.</para>
 
-    <para>Please note that usage of hosts storage is optional. User can define
+    <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
-    if the number of reservations is small. However, with the number of
-    reservations growing it's more convenient to use host storage. Please note
-    that both storages (configuration file and MySQL) can be used together. If
-    hosts are defined in both places, the definitions from configuration file
-    are checked first and external storage is checked later, if
-    necessary.</para>
-
-    <para>All hosts leases issued by the server are stored in the hosts
-    database. Currently there is only one available backend: MySQL. Other host
-    backends will become available in future Kea versions.</para>
+    if the number of reservations is small. However, when the number of
+    reservations grows it's more convenient to use host storage. Please note
+    that both storage methods (configuration file and one of the supported databases)
+    can be used together. If hosts are defined in both places, the definitions
+    from the configuration file are checked first and external storage is checked
+    later, if necessary.</para>
 
 <section id="hosts-database-configuration4">
-  <title>IPv4 Hosts Database Configuration</title>
+  <title>DHCPv4 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
-  parameters. If enabled, the type of the database must be set to "mysql". Other
-  hosts backends may be added in later Kea versions.
+  parameters. If enabled, the type of the database must be set to "mysql" or
+  "postgresql". Other hosts backends may be added in later Kea versions.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database to hold the leases must be set: this is the
-  name used when the lease database was created (see <xref linkend="mysql-database-create"/>).
+  Next, the name of the database to hold the reservations must be set: this is the
+  name used when the lease database was created (see <xref linkend="supported-databases"/>
+  for instructions how to setup desired database type).
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
-  If the database is located on a different system to the DHCPv4 server, the
+  If the database is located on a different system than the DHCPv4 server, the
   database host name must also be specified (although it should be noted that this
   configuration may have a severe impact on server performance):
 <screen>
@@ -539,6 +537,38 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
+<section id="read-only-database-configuration4">
+<title>Using Read-Only Databases for Host Reservations</title>
+<para>
+In some deployments the database user whose name is specified in the database backend
+configuration may not have write privileges to the database. This is often
+required by the policy within a given network to secure the data from being
+unintentionally modified. In many cases administrators have inventory databases
+deployed, which contain substantially more information about the hosts than
+static reservations assigned to them. The inventory database can be used to create
+a view of a Kea hosts database and such view is often read only.
+</para>
+<para>
+Kea host database backends operate with an implicit configuration to both
+read from and write to the database. If the database user does not have
+write access to the host database, the backend will fail to start and the
+server will refuse to start (or reconfigure). However, if access to a read
+only host database is required for retrieving reservations for clients
+and/or assign specific addresses and options, it is possible to explicitly
+configure Kea to start in "read-only" mode. This is controlled by the
+<command>readonly</command> boolean parameter as follows:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
+</screen>
+Setting this parameter to <userinput>false</userinput> would configure the
+database backend to operate in "read-write" mode, which is also a default
+configuration if the parameter is not specified.
+</para>
+<note><para>The <command>readonly</command> parameter is currently only supported
+for MySQL and PostgreSQL databases.</para></note>
+</section>
+
 </section>
 
 <section id="dhcp4-interface-configuration">
@@ -1640,9 +1670,7 @@ It is merely echoed by the server
     <section id="dhcp4-client-classifier">
       <title>Client Classification in DHCPv4</title>
       <para>
-      The DHCPv4 server includes support for client classification.  At the
-      current time the capabilities of the classification process are limited
-      but it is expected they will be expanded in the future. For a deeper
+      The DHCPv4 server includes support for client classification.  For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
@@ -1693,6 +1721,52 @@ It is merely echoed by the server
       </para></note>
 
       <section>
+        <title>Setting fixed fields in Classification</title>
+        <para>
+          It is possible to specify that clients belonging to a particular class
+          should receive packets with specific values in certain fixed fields.
+          In particular, three fixed fields are supported:
+          <command>next-server</command> (that conveys an IPv4 address, which is
+          set in the siaddr field), <command>server-hostname</command> (that
+          conveys a server hostname, can be up to 64 bytes long and will be sent
+          in the sname field) and <command>boot-file-name</command> (that
+          conveys the configuration file, can be up to 128 bytes long and will
+          be sent using file field).
+        </para>
+        <para>
+          Obviously, there are many ways to assign clients to specific classes,
+          but for the iPXE clients the client architecture type option (code 93,
+          defined in RFC4578, Section 2.1) seems to be particularly suited to
+          make the distinction. The following example checks if the client
+          identifies itself as PXE device with architecture EFI x86-64, and
+          sets several fields if it does. See Section 2.1 of the RFC4578 or
+          documentation of your client for specific values.
+        </para>
+          <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "ipxe_efi_x64",
+            "test": "option[93].hex == 0x0009",
+            <userinput>"next-server": "192.0.2.254",
+            "server-hostname": "hal9000",
+            "boot-file-name": "/dev/null"</userinput>
+        },
+        ...
+    ],
+    ...
+          }</screen>
+
+          <para>
+            If there are multiple classes defined and incoming packet is matched
+            to multiple classes, then the classes are processed in the order in
+            which they're defined. In this case the last matching class
+            "overwrites" any values that may have been set by earlier matched
+            classes.
+          </para>
+        </section>
+
+      <section>
         <title>Using Vendor Class Information in Classification</title>
         <para>
         The server checks whether an incoming packet includes the vendor class identifier
@@ -1703,12 +1777,11 @@ It is merely echoed by the server
         </para>
 
         <para>
-        For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
-        field is set to the value of next-server (if specified in a subnet). If
-        there is a boot-file-name option specified, its value is also set in the
-        file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
-        always set to 0.0.0.0. That capability is expected to be moved to
-        an external hook library that will be dedicated to cable modems.
+          Note: Kea 1.0 and earlier versions performed special actions for
+          clients that were in VENDOR_CLASS_docsis3.0. This is no longer the
+          case in Kea 1.1 and newer. In those newer versions the old behavior
+          can be achieved by defining VENDOR_CLASS_docsis3.0 and setting
+          its next-server and boot-file-name values appropriately.
         </para>
 
         <para>
@@ -2230,7 +2303,7 @@ It is merely echoed by the server
       which updated
       <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>.
       That update now states that the server must
-      send client-id if the client sent it. That is the default behaviour
+      send client-id if the client sent it. That is the default behavior
       that Kea offers. However, in some cases older devices that do
       not support
       <ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>.
@@ -2411,7 +2484,98 @@ It is merely echoed by the server
 
     </section>
 
-  </section> <!-- end of configuring kea-dhcp4 server section with many subsections -->
+"    <section id="dhcp4-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6 DHCPv4 side</title>
+      <para>
+      The support of DHCPv4-over-DHCPv6 transport
+      <ulink url="http://tools.ietf.org/html/rfc7341">RFC 7341</ulink>
+      is implemented using cooperating DHCPv4 and DHCPv6 servers.
+      This section is about the configuration of the DHCPv4 side
+      (the DHCPv6 side is described in <xref linkend="dhcp6-dhcp4o6-config"/>).
+      </para>
+      <note>
+      DHCPv4-over-DHCPv6 support is experimental and the details of
+      the inter-process communication can change: DHCPv4 and DHCPv6
+      should run the same version of Kea.
+      </note>
+      <para>
+      The <command>dhcp4o6-port</command> global parameter specifies
+      the first of the two consecutive ports of the UDP sockets used
+      for the communication between the DHCPv6 and DHCPv4 servers
+      (the DHCPv4 server is bound to ::1 on <command>port</command> + 1
+      and connected to ::1 on <command>port</command>).
+      </para>
+      <para>
+      With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
+      to several of the identifiers it would normally use to select a
+      subnet.  In order to address this issue three new configuration
+      entires have been added.  The presence of any of these allows the
+      subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
+      <itemizedlist>
+        <listitem>
+        <simpara><command>4o6-subnet</command>: Takes a prefix (i.e., an
+        IPv6 address followed by a slash and a prefix length) which is
+        matched against the source address.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface-id</command>: Takes a relay interface
+        ID option value.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><command>4o6-interface</command>: Takes an interface name
+        which is matched against the incoming interface name.
+        </simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+      <para>
+      The following configuration was used during some tests:
+<screen>
+{
+
+# DHCPv4 conf
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eno33554984" ]
+    },
+
+    "lease-database": {
+        "type": "memfile",
+        "name": "leases4"
+    },
+
+    "valid-lifetime": 4000,
+
+    "subnet4": [ {
+        "subnet": "10.10.10.0/24",
+        <userinput>"4o6-interface": "eno33554984",</userinput>
+        <userinput>"4o6-subnet": "2001:db8:1:1::/64",</userinput>
+        "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
+    } ],
+
+    <userinput>"dhcp4o6-port": 6767</userinput>
+
+},
+
+"Logging": {
+    "loggers": [ {
+        "name": "kea-dhcp4",
+        "output_options": [ {
+            "output": "/tmp/kea-dhcp4.log"
+        } ],
+        "severity": "DEBUG",
+        "debuglevel": 0
+    } ]
+}
+
+}
+</screen>
+    </para>
+    </section>
+
+  </section> <!-- end of configuring kea-dhcp4 server section -->
 
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
@@ -2733,24 +2897,47 @@ It is merely echoed by the server
 
     </section>
 
-    <section id="reservations4-mysql">
-      <title>Storing host reservations in MySQL</title>
+    <section id="reservation4-message-fields">
+      <title>Reserving Next Server, Server Hostname and Boot File Name</title>
+      <para>BOOTP/DHCPv4 messages include "siaddr", "sname" and "file" fields.
+      Even though, DHCPv4 includes corresponding options, such as option 66 and
+      option 67, some clients may not support these options. Thus, server
+      administrators often use "siaddr", "sname" and "file" fields instead.</para>
+
+      <para>With Kea, it is possible to make static reservations for these DHCPv4
+      message fields:</para>
+
+    <screen>
+{
+    "subnet4": [ {
+        "reservations": [
+        {
+            "hw-address": "aa:bb:cc:dd:ee:ff",
+            <userinput>"next-server": "10.1.1.2",
+            "server-hostname": "server-hostname.example.org",
+            "boot-file-name": "/tmp/bootfile.efi"</userinput>
+        } ]
+    } ]
+}</screen>
+
+    <para>Note that those parameters can be specified in combination with
+    other parameters for a reservation, e.g. reserved IPv4 address. These
+    parameters are optional, i.e. a subset of them can specified, or all of
+    them can be omitted.</para>
+    </section>
+
+    <section id="reservations4-mysql-pgsql">
+      <title>Storing host reservations in MySQL or PostgreSQL</title>
 
       <para>
-        It is possible to store host reservations in MySQL. See <xref
+        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts4-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL. Kea does not provide any dedicated tools
-        for managing MySQL reservations. See Kea wiki <ulink
+        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
+        tools for managing reservations in a database. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
-    </section>
-
-    <section id="reservations4-pgsql">
-      <title>Storing host reservations in PostgreSQL</title>
-      <para>Kea currently does not support storing reservations in
-      PostgreSQL, but this feature is planned for Kea 1.1.0.</para>
     </section>
 
     <section id="reservations4-cql">
@@ -2761,7 +2948,7 @@ It is merely echoed by the server
 
 
     <section id="reservations4-tuning">
-      <title>Fine Tuning IPv4 Host Reservation</title>
+      <title>Fine Tuning DHCPv4 Host Reservation</title>
 
       <para>Host reservation capability introduces additional restrictions for the
       allocation engine during lease selection and renewal. In particular, three
@@ -3266,10 +3453,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             <entry>pkt4-nak-sent</entry>
             <entry>integer</entry>
             <entry>
-            Number of DHCPNAK packets sent. This statistic is expected to
-            grow when the server choses to not honor the address requested by a
-            client. In general, the sum of pkt4-ack-sent and pkt4-nak-sent
-            should be close to pkt4-request-received.
+            Number of DHCPNAK packets sent. This statistic is expected
+            to grow when the server chooses to not honor the address
+            requested by a client. In general, the sum of
+            pkt4-ack-sent and pkt4-nak-sent should be close to
+            pkt4-request-received.
             </entry>
             </row>
 
@@ -3481,19 +3669,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       are implications of the design choices made. Those are clearly
       marked as such.</para>
       <itemizedlist>
-          <listitem> <!-- see tickets #3234, #3281 -->
-            <simpara>
-              Removal of a subnet during server reconfiguration may cause renumbering
-              of auto-generated subnet identifiers, as described in section
-              <xref linkend="ipv4-subnet-id"/>.
-            </simpara>
-          </listitem>
-          <listitem>
-            <simpara>Host reservation (static addresses) is not supported yet.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Full featured client classification is not supported yet.</simpara>
-          </listitem>
           <listitem>
             <simpara>
               BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
@@ -3516,9 +3691,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             assigned address is unused. According to <ulink url="http://tools.ietf.org/html/rfc2131">RFC 2131</ulink>, the
             allocating server should verify that address is not used by
             sending ICMP echo request.</simpara>
-          </listitem>
-          <listitem>
-            <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
           </listitem>
       </itemizedlist>
     </section>

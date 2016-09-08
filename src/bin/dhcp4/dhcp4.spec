@@ -275,6 +275,12 @@
                 "item_type": "integer",
                 "item_optional": true,
                 "item_default": 0
+            },
+            {
+                "item_name": "readonly",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false
             }
         ]
       },
@@ -507,6 +513,24 @@
                         "item_type": "string",
                         "item_optional": false,
                         "item_default": "0.0.0.0"
+                      },
+                      {
+                        "item_name": "next-server",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": "0.0.0.0"
+                      },
+                      {
+                        "item_name": "server-hostname",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
+                      },
+                      {
+                        "item_name": "boot-file-name",
+                        "item_type": "string",
+                        "item_optional": true,
+                        "item_default": ""
                       } ]
                   }
                 },

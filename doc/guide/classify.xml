@@ -181,7 +181,7 @@
               <entry>Integer literal</entry>
               <entry>123</entry>
               <entry>'123'</entry>
-              <entry>An integer value</entry>
+              <entry>A 32 bit unsigned integer value</entry>
             </row>
             <row></row>
             <row>
@@ -202,7 +202,7 @@
 -->
             <row>
               <entry>Option existence</entry>
-              <entry>option[123].exist</entry>
+              <entry>option[123].exists</entry>
               <entry>'true'</entry>
               <entry>If the option with given code is present in the
               packet "true" else "false"</entry>
@@ -217,23 +217,48 @@
             <row>
               <entry>DHCPv6 Relay Options</entry>
               <entry>relay6[nest].option[code].hex</entry>
-              <!--  <entry>Value of the option</entry> -->
+              <entry>(value of the option)</entry>
               <entry>The value of the option with code "code" from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Peer Address</entry>
               <entry>relay6[nest].peeraddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the peer address field from the
               relay encapsulation "nest"</entry>
             </row>
             <row>
               <entry>DHCPv6 Relay Link Address</entry>
               <entry>relay6[nest].linkaddr</entry>
-              <!-- <entry>2001:DB8::1</entry> -->n
+              <entry>2001:DB8::1</entry>
               <entry>The value of the link address field from the
               relay encapsulation "nest"</entry>
+            </row>
+            <row>
+              <entry>Interface name of packet</entry>
+              <entry>pkt.iface</entry>
+              <entry>eth0</entry>
+              <entry>The name of the incoming interface of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Source address of packet</entry>
+              <entry>pkt.src</entry>
+              <entry>10.1.2.3</entry>
+              <entry>The IP source address of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Destination address of packet</entry>
+              <entry>pkt.dst</entry>
+              <entry>10.1.2.3</entry>
+              <entry>The IP destination address of a DHCP packet.</entry>
+            </row>
+            <row>
+              <entry>Length of packet</entry>
+              <entry>pkt.len</entry>
+              <entry>513</entry>
+              <entry>The length of a DHCP packet (UDP header field), expressed
+              as a 32 bit unsigned integer.</entry>
             </row>
             <row>
               <entry>Hardware address in DHCPv4 packet</entry>
@@ -244,13 +269,13 @@
             <row>
               <entry>Hardware length in DHCPv4 packet</entry>
               <entry>pkt4.hlen</entry>
-              <entry>0x00000006</entry>
+              <entry>6</entry>
               <entry>The value of the hlen field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
               <entry>Hardware type in DHCPv4 packet</entry>
               <entry>pkt4.htype</entry>
-              <entry>0x0000007b</entry>
+              <entry>6</entry>
               <entry>The value of the htype field of the DHCPv4 packet padded to 4 bytes</entry>
             </row>
             <row>
@@ -278,18 +303,114 @@
               <entry>The value of the siaddr field of the DHCPv4 packet (IPv4 address, 4 bytes)</entry>
             </row>
             <row>
+              <entry>Message Type in DHCPv4 packet</entry>
+              <entry>pkt4.msgtype</entry>
+              <entry>1</entry>
+              <entry>The value of the message type field in the DHCPv4
+              packet (expressed as a 32 bit unsigned integer).</entry>
+            </row>
+            <row>
+              <entry>Transaction ID (xid) in DHCPv4 packet</entry>
+              <entry>pkt4.transid</entry>
+              <entry>12345</entry>
+              <entry>The value of the transaction id in the DHCPv4
+              packet (expressed as a 32 bit unsigned integer).</entry>
+            </row>
+            <row>
               <entry>Message Type in DHCPv6 packet</entry>
               <entry>pkt6.msgtype</entry>
-              <!--  <entry>1</entry> -->
+              <entry>1</entry>
               <entry>The value of the message type field in the DHCPv6
-              packet.</entry>
+              packet (expressed as a 32 bit unsigned integer).</entry>
             </row>
             <row>
               <entry>Transaction ID in DHCPv6 packet</entry>
               <entry>pkt6.transid</entry>
-              <!--  <entry>12345</entry> -->
+              <entry>12345</entry>
               <entry>The value of the transaction id in the DHCPv6
-              packet.</entry>
+              packet (expressed as a 32 bit unsigned integer).</entry>
+            </row>
+
+            <row>
+              <entry>Vendor option existence (any vendor)</entry>
+              <entry>vendor[*].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor option from any vendor
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Vendor option existence (specific vendor)</entry>
+              <entry>vendor[4491].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor option from specified
+              vendor (determined by its enterprise-id)
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Enterprise-id from vendor option</entry>
+              <entry>vendor.enterprise</entry>
+              <entry>4491</entry>
+              <entry>If the vendor option is present, it returns the
+              value of the enterprise-id field padded to 4
+              bytes. Returns '' otherwise.</entry>
+            </row>
+            <row>
+              <entry>Vendor sub-option existence</entry>
+              <entry>vendor[4491].option[1].exists</entry>
+              <entry>true</entry>
+              <entry>Returns 'true' if there is vendor option with
+              specified enterprise-id and given sub-option is present.
+              Returns 'false' otherwise.</entry>
+            </row>
+            <row>
+              <entry>Vendor sub-option content</entry>
+              <entry>vendor[4491].option[1].hex</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the specified sub-option of
+              a vendor option with specified enterprise id. Returns
+              '' if no such option or sub-option is present.
+              </entry>
+            </row>
+
+            <row>
+              <entry>Vendor class option existence (any vendor)</entry>
+              <entry>vendor-class[*].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor class option from any vendor
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Vendor class option existence (specific vendor)</entry>
+              <entry>vendor-class[4491].exists</entry>
+              <entry>true</entry>
+              <entry>Returns whether a vendor class option from specified
+              vendor (determined by its enterprise-id)
+              is present ('true') or absent ('false').</entry>
+            </row>
+            <row>
+              <entry>Enterprise-id from vendor class option</entry>
+              <entry>vendor-class.enterprise</entry>
+              <entry>4491</entry>
+              <entry>If the vendor option is present, it returns the
+              value of the enterprise-id field padded to 4
+              bytes. Returns '' otherwise.</entry>
+            </row>
+            <row>
+              <entry>First data chunk from vendor class option</entry>
+              <entry>vendor-class[4491].data</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the first data chunk from
+              the vendor class option with specified enterprise-id.
+              Returns '' if missing.</entry>
+            </row>
+            <row>
+              <entry>Specific data chunk from vendor class option</entry>
+              <entry>vendor-class[4491].data[3]</entry>
+              <entry>docsis3.0</entry>
+              <entry>Returns content of the specified data chunk of
+              a vendor class option with specified enterprise id. Returns
+              '' if no such option or data chunk is present.
+              </entry>
             </row>
           </tbody>
           </tgroup>
@@ -305,8 +426,16 @@
       </para>
 
       <para>
-      Integers in the expression are converted to strings
-      when the expression is read into Kea.
+      Integers in an expression are converted to 32 bit unsigned integers and
+      are represented as four byte strings. For example 123 is represented as
+      0x0000007b. All expressions that return numeric values use 32 bit
+      unsigned integers, even if the field in the packet is smaller.  In general
+      it is easier to use decimal notation to represent integers, but it is also
+      possible to use hex notation. When using hex notation to represent an
+      integer care should be taken to make sure the value is represented as 32
+      bits, e.g. use 0x00000001 instead of 0x1 or 0x01. Also, make
+      sure the value is specified in network order, e.g. 1 is
+      represented as 0x00000001.
       </para>
 
       <para>
@@ -317,7 +446,7 @@
       </para>
 
       <para>
-      "option[code].exist" checks if an option with the code "code" is present
+      "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
       </para>
 
@@ -351,7 +480,8 @@
       </para>
 
       <para>
-        Expressions starting with pkt4 can be used only in DHCPv4.
+        Expressions starting with "pkt4" can be used only in DHCPv4.
+        They allows access to DHCPv4 message fields.
       </para>
 
       <para>
@@ -361,6 +491,33 @@
        or transaction id.  For example the message type SOLICIT will be
        "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
       </para>
+
+      <para>
+        Vendor option means Vendor-Identifying Vendor-specific Information
+        option (code 125, see Section 4 of RFC3925) in DHCPv4 and
+        Vendor-specific Information Option (code 17, defined in Section 22.17 of
+        RFC3315) in DHCPv6. Vendor class option means Vendor-Identifying Vendor
+        Class Option (code 124, see Section 3 of RFC3925) in DHCPv4 and Vendor
+        Class Option (code 16, see Section 22.16 of RFC3315). Vendor options may
+        have sub-options that are referenced by their codes. Vendor class
+        options do not have sub-options, but rather data chunks, which are
+        referenced by index value. Index 0 means the first data chunk, Index 1
+        is for the second data chunk (if present), etc.
+      </para>
+
+      <para>In the vendor and vendor-class constructs Asterisk (*) or 0 can be
+      used to specify a wildcard enterprise-id value, i.e. it will match any
+      enterprise-id value.</para>
+
+      <para>Vendor Class Identifier (option 60 in DHCPv4) can be
+      accessed using option[60] expression.</para>
+
+      <para>RFC3925 and RFC3315 allow for multiple instances of vendor options
+      to appear in a single message. The client classification code currently
+      examines the first instance if more than one appear. For vendor.enterprise
+      and vendor-class.enterprise expressions, the value from the first instance
+      is returned. Please submit a feature request on Kea website if you need
+      support for multiple instances.</para>
 
       <para>
         <table frame="all" id="classification-expressions-list">
@@ -382,7 +539,8 @@
 <row><entry>And</entry> <entry>('foo' == 'bar') and ('bar' == 'foo')</entry><entry>Logical and</entry></row>
 <row><entry>Or</entry> <entry>('foo' == 'bar') or ('bar' == 'foo')</entry><entry>Logical or</entry></row>
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
-<row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the concatenation of the strings</entry></row>
+<row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
+concatenation of the strings</entry></row>
           </tbody>
           </tgroup>
         </table>

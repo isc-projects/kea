@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,11 +58,7 @@ namespace log {
 class LoggerLevelImpl {
 public:
 
-#if (LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(1, 1, 0))
-    typedef log4cplus::tstring const & LogLevelString;
-#else
-    typedef log4cplus::tstring LogLevelString;
-#endif
+typedef log4cplus::tstring LogLevelString;
 
     /// \brief Convert Kea level to log4cplus logging level
     ///

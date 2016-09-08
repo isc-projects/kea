@@ -53,7 +53,7 @@ namespace dhcp {
 /// reservations specified in the configuration file) can't be disabled.
 ///
 /// @todo Implement alternate host data sources: MySQL, PostgreSQL, etc.
-class HostMgr : public boost::noncopyable, BaseHostDataSource {
+class HostMgr : public boost::noncopyable, public BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.

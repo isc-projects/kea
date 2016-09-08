@@ -214,6 +214,9 @@ public:
     /// separated by commas. The names get trimmed by this constructor.
     /// @param dhcp6_client_classes A string holding DHCPv6 client class names
     /// separated by commas. The names get trimmed by this constructor.
+    /// @param next_server IPv4 address of next server (siaddr).
+    /// @param server_host_name Server host name (a.k.a. sname).
+    /// @param boot_file_name Boot file name (a.k.a. file).
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
@@ -223,7 +226,10 @@ public:
          const asiolink::IOAddress& ipv4_reservation,
          const std::string& hostname = "",
          const std::string& dhcp4_client_classes = "",
-         const std::string& dhcp6_client_classes = "");
+         const std::string& dhcp6_client_classes = "",
+         const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
+         const std::string& server_host_name = "",
+         const std::string& boot_file_name = "");
 
     /// @brief Constructor.
     ///
@@ -258,6 +264,9 @@ public:
     /// separated by commas. The names get trimmed by this constructor.
     /// @param dhcp6_client_classes A string holding DHCPv6 client class names
     /// separated by commas. The names get trimmed by this constructor.
+    /// @param next_server IPv4 address of next server (siaddr).
+    /// @param server_host_name Server host name (a.k.a. sname).
+    /// @param boot_file_name Boot file name (a.k.a. file).
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
@@ -266,7 +275,10 @@ public:
          const asiolink::IOAddress& ipv4_reservation,
          const std::string& hostname = "",
          const std::string& dhcp4_client_classes = "",
-         const std::string& dhcp6_client_classes = "");
+         const std::string& dhcp6_client_classes = "",
+         const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
+         const std::string& server_host_name = "",
+         const std::string& boot_file_name = "");
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
@@ -449,6 +461,43 @@ public:
         return (dhcp6_client_classes_);
     }
 
+    /// @brief Sets new value for next server field (siaddr).
+    ///
+    /// @param next_server New address of a next server.
+    ///
+    /// @throw isc::BadValue if the provided address is not an IPv4 address,
+    /// is broadcast address.
+    void setNextServer(const asiolink::IOAddress& next_server);
+
+    /// @brief Returns value of next server field (siaddr).
+    const asiolink::IOAddress& getNextServer() const {
+        return (next_server_);
+    }
+
+    /// @brief Sets new value for server hostname (sname).
+    ///
+    /// @param server_host_name New value for server hostname.
+    ///
+    /// @throw BadValue if hostname is longer than 63 bytes.
+    void setServerHostname(const std::string& server_host_name);
+
+    /// @brief Returns value of server hostname (sname).
+    const std::string& getServerHostname() const {
+        return (server_host_name_);
+    }
+
+    /// @brief Sets new value for boot file name (file).
+    ///
+    /// @param boot_file_name New value of boot file name.
+    ///
+    /// @throw BadValue if boot file name is longer than 128 bytes.
+    void setBootFileName(const std::string& boot_file_name);
+
+    /// @brief Returns value of boot file name (file).
+    const std::string& getBootFileName() const {
+        return (boot_file_name_);
+    }
+
     /// @brief Returns pointer to the DHCPv4 option data configuration for
     /// this host.
     ///
@@ -527,6 +576,12 @@ private:
     ClientClasses dhcp4_client_classes_;
     /// @brief Collection of classes associated with a DHCPv6 client.
     ClientClasses dhcp6_client_classes_;
+    /// @brief Next server (a.k.a. siaddr, carried in DHCPv4 message).
+    asiolink::IOAddress next_server_;
+    /// @brief Server host name (a.k.a. sname, carried in DHCPv4 message).
+    std::string server_host_name_;
+    /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
+    std::string boot_file_name_;
 
     /// @brief HostID (a unique identifier assigned when the host is stored in
     ///                MySQL or Pgsql)

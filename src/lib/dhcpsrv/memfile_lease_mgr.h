@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,6 +91,7 @@ public:
     static const int MINOR_VERSION = 0;
 
     /// @}
+
 
     /// @brief Specifies universe (V4, V6)
     ///
@@ -594,6 +595,23 @@ public:
     int getLFCExitStatus() const;
     //@}
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery4 and then
+    /// invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery6 and then
+    /// invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery.
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
     /// @name Protected methods used for %Lease File Cleanup.
     /// The following methods are protected so as they can be accessed and
