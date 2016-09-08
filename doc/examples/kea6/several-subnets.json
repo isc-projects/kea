@@ -10,9 +10,10 @@
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify lease type. As of May 2014, three backends are supported:
-# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
-# any prior set up.
+# We need to specify the the database used to store leases. As of
+# September 2016, four database backends are supported: MySQL,
+# PostgreSQL, Cassandra, and the in-memory database, Memfile.
+# We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
@@ -30,19 +31,19 @@
 
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
-  "subnet6": [ 
+  "subnet6": [
   {    "pools": [ { "pool": "2001:db8:1::/80" } ],
        "subnet": "2001:db8:1::/64"  },
   {    "pools": [ { "pool": "2001:db8:2::/80" } ],
-       "subnet": "2001:db8:2::/64"  }, 
+       "subnet": "2001:db8:2::/64"  },
   {    "pools": [ { "pool": "2001:db8:3::/80" } ],
        "subnet": "2001:db8:3::/64"  },
   {    "pools": [ { "pool": "2001:db8:4::/80" } ],
        "subnet": "2001:db8:4::/64"  } ]
 },
 
-# The following configures logging. It assumes that warning messages
-# will be logged to stdout.
+# The following configures logging. It assumes that messages with at least
+# informational level (info, warn, error) will will be logged to stdout.
 "Logging": {
     "loggers": [
         {
@@ -52,7 +53,8 @@
                     "output": "stdout"
                 }
             ],
-            "severity": "WARN"
+            "debuglevel": 0,
+            "severity": "INFO"
         }
     ]
 }
