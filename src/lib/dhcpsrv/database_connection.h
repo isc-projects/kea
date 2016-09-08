@@ -54,6 +54,15 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid 'readonly' value specification.
+///
+/// Thrown when the value of the 'readonly' boolean parameter is invalid.
+class DbInvalidReadOnly : public Exception {
+public:
+    DbInvalidReadOnly(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 /// @brief Common database connection class.
 ///
@@ -111,6 +120,14 @@ public:
     ///
     /// @return Redacted database access string.
     static std::string redactedAccessString(const ParameterMap& parameters);
+
+    /// @brief Convenience method checking if database should be opened with
+    /// read only access.
+    ///
+    /// @return true if "readonly" parameter is specified and set to true;
+    /// false if "readonly" parameter is not specified or it is specified
+    /// and set to false.
+    bool configuredReadOnly() const;
 
 private:
 

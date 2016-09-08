@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,7 +50,8 @@ public:
     typedef std::map<std::string, std::string> Dictionary;
     typedef Dictionary::const_iterator  const_iterator;
 
-    // Default constructor and assignment operator are OK for this class
+    /// \brief Constructor
+    MessageDictionary();
 
     /// \brief Virtual Destructor
     virtual ~MessageDictionary();
@@ -198,6 +199,7 @@ public:
 
 private:
     Dictionary       dictionary_;   ///< Holds the ID to text lookups
+    const std::string empty_;       ///< Empty string
 };
 
 } // namespace log

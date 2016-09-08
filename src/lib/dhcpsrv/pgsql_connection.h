@@ -33,7 +33,6 @@ const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
 struct PgSqlTaggedStatement {
-
     /// Number of parameters for a given query
     int nbparams;
 
@@ -53,14 +52,16 @@ struct PgSqlTaggedStatement {
 
 /// @brief Constants for PostgreSQL data types
 /// This are defined by PostreSQL in <catalog/pg_type.h>, but including
-/// this file is extrordinarily convoluted, so we'll use these to fill-in.
+/// this file is extraordinarily convoluted, so we'll use these to fill-in.
 const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
 const size_t OID_INT8 = 20;  // 8 byte int
 const size_t OID_INT2 = 21;  // 2 byte int
-const size_t OID_TIMESTAMP = 1114;
+const size_t OID_INT4 = 23;  // 4 byte int
+const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
+const size_t OID_TIMESTAMP = 1114;
 
 
 //@}
@@ -86,19 +87,59 @@ class PgSqlResult : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
-    /// Store the pointer to the result set to being fetched.
+    /// Store the pointer to the result set to being fetched.  Set row
+    /// and column counts for convenience.
     ///
-    PgSqlResult(PGresult *result) : result_(result)
-    {}
+    PgSqlResult(PGresult *result);
 
     /// @brief Destructor
     ///
     /// Frees the result set
-    ~PgSqlResult() {
-        if (result_)  {
-            PQclear(result_);
-        }
+    ~PgSqlResult();
+
+    /// @brief Returns the number of rows in the result set.
+    int getRows() const {
+        return (rows_);
     }
+
+    /// @brief Returns the number of columns in the result set.
+    int getCols() const {
+        return (cols_);
+    }
+
+    /// @brief Determines if a row index is valid
+    ///
+    /// @param row index to range check
+    ///
+    /// @throw DbOperationError if the row index is out of range
+    void rowCheck(int row) const;
+
+    /// @brief Determines if a column index is valid
+    ///
+    /// @param col index to range check
+    ///
+    /// @throw DbOperationError if the column index is out of range
+    void colCheck(int col) const;
+
+    /// @brief Determines if both a row and column index are valid
+    ///
+    /// @param row index to range check
+    /// @param col index to range check
+    ///
+    /// @throw DbOperationError if either the row or column index
+    /// is out of range
+    void rowColCheck(int row, int col) const;
+
+    /// @brief Fetches the name of the column in a result set
+    ///
+    /// Returns the column name of the column from the result set.
+    /// If the column index is out of range it will return the
+    /// string "Unknown column:<index>"
+    ///
+    /// @param col index of the column name to fetch
+    /// @return string containing the name of the column
+    /// This method is exception safe.
+    std::string getColumnLabel(const int col) const;
 
     /// @brief Conversion Operator
     ///
@@ -117,6 +158,8 @@ public:
 
 private:
     PGresult*     result_;     ///< Result set to be freed
+    int rows_;   ///< Number of rows in the result set
+    int cols_;   ///< Number of columns in the result set
 };
 
 
@@ -182,6 +225,67 @@ private:
     PGconn* pgconn_;      ///< Postgresql connection
 };
 
+/// @brief Forward declaration to @ref PgSqlConnection.
+class PgSqlConnection;
+
+/// @brief RAII object representing a PostgreSQL transaction.
+///
+/// An instance of this class should be created in a scope where multiple
+/// INSERT statements should be executed within a single transaction. The
+/// transaction is started when the constructor of this class is invoked.
+/// The transaction is ended when the @ref PgSqlTransaction::commit is
+/// explicitly called or when the instance of this class is destroyed.
+/// The @ref PgSqlTransaction::commit commits changes to the database.
+/// If the class instance is destroyed before @ref PgSqlTransaction::commit
+/// has been called, the transaction is rolled back. The rollback on
+/// destruction guarantees that partial data is not stored in the database
+/// when an error occurs during any of the operations within a transaction.
+///
+/// By default PostgreSQL performs a commit following each statement which
+/// alters the database (i.e. "autocommit"). Starting a transaction
+/// stops autocommit for the connection until the transaction is ended by
+/// either commit or rollback. Other connections are unaffected.
+class PgSqlTransaction : public boost::noncopyable {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Starts transaction by executing the SQL statement: "START TRANSACTION"
+    ///
+    /// @param conn PostgreSQL connection to use for the transaction. This
+    /// connection will be later used to commit or rollback changes.
+    ///
+    /// @throw DbOperationError if statement execution fails
+    PgSqlTransaction(PgSqlConnection& conn);
+
+    /// @brief Destructor.
+    ///
+    /// If the transaction has not been committed, it is rolled back
+    /// by executing the SQL statement: "ROLLBACK"
+    ///
+    /// @throw DbOperationError if statement execution fails
+    ~PgSqlTransaction();
+
+    /// @brief Commits transaction.
+    ///
+    /// Commits all changes made during the transaction by executing the
+    /// SQL statement: "COMMIT"
+    ///
+    /// @throw DbOperationError if statement execution fails
+    void commit();
+
+private:
+
+    /// @brief Holds reference to the PostgreSQL database connection.
+    PgSqlConnection& conn_;
+
+    /// @brief Boolean flag indicating if the transaction has been committed.
+    ///
+    /// This flag is used in the class destructor to assess if the
+    /// transaction should be rolled back.
+    bool committed_;
+};
+
 /// @brief Common PgSql Connector Pool
 ///
 /// This class provides common operations for PgSql database connection
@@ -215,6 +319,21 @@ public:
     ///        failed.
     void prepareStatement(const PgSqlTaggedStatement& statement);
 
+    /// @brief Prepare statements
+    ///
+    /// Creates the prepared statements for all of the SQL statements used
+    /// by the PostgreSQL backend.
+    ///
+    /// @param start_statement Pointer to the first statement in range of the
+    /// statements to be compiled.
+    /// @param end_statement Pointer to the statement marking end of the
+    /// range of statements to be compiled. This last statement is not compiled.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    void prepareStatements(const PgSqlTaggedStatement* start_statement,
+                           const PgSqlTaggedStatement* end_statement);
+
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters
@@ -224,18 +343,23 @@ public:
     /// @throw DbOpenError Error opening the database
     void openDatabase();
 
+    /// @brief Start a transaction
+    ///
+    /// Starts a transaction.
+    ///
+    /// @throw DbOperationError If the transaction start failed.
+    void startTransaction();
+
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations. On databases that don't
-    /// support transactions, this is a no-op.
+    /// Commits all pending database operations.
     ///
     /// @throw DbOperationError If the commit failed.
     void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations. On databases that don't
-    /// support transactions, this is a no-op.
+    /// Rolls back all pending database operations.
     ///
     /// @throw DbOperationError If the rollback failed.
     void rollback();
@@ -294,8 +418,6 @@ public:
     }
 
 };
-
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

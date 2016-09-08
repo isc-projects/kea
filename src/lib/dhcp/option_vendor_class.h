@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,10 +69,13 @@ public:
     OptionVendorClass(Option::Universe u, OptionBufferConstIter begin,
                       OptionBufferConstIter end);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    OptionPtr clone() const;
+
     /// @brief Renders option into the buffer in the wire format.
     ///
     /// @param [out] buf Buffer to which the option is rendered.
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses buffer holding an option.
     ///
@@ -135,13 +138,13 @@ public:
     bool hasTuple(const std::string& tuple_str) const;
 
     /// @brief Returns the full length of the option, including option header.
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns text representation of the option.
     ///
     /// @param indent Number of space characters before text.
     /// @return Text representation of the option.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
 private:
 

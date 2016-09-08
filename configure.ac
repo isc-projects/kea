@@ -7,7 +7,7 @@ AC_PREREQ([2.59])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.0.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.1.0-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -182,7 +182,7 @@ KEA_CXXFLAGS="$KEA_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Wo
 # gcc 4.4 would emit warnings about breaking strict aliasing rules.
 # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41874
 CXX_DUMP_VERSION=`$CXX -dumpversion | cut -f1-2 -d.`
-if test "$CXX_DUMP_VERSION" \< "4.5"; then
+if expr "$CXX_DUMP_VERSION" \< "4.5" > /dev/null; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
@@ -202,10 +202,23 @@ case "$host" in
 esac
 KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
-# Don't use -Werror if configured not to
+# Disable -Werror by default. Only use it if specifically enabled.
+# The usage of this flag is:
+#
+# No flag:            -Werror is disabled
+# --with-werror:      -Werror is enabled
+# --with-werror=yes:  -Werror is enabled
+# --with-werror=no:   -Werror is disabled
+# --with-werror=value -Werror is enabled and "value" is included in the compiler flags
+#
+# In the last case, "value" may be one or more compiler flags, e.g.
+
+# --with-werror=-Wundef
+# --with-werror='-Wundef -Wconversion'
+
 werror_extras=
 AC_ARG_WITH(werror,
-    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=no)]),
     [
      case "${withval}" in
          yes) with_werror=1 ;;
@@ -213,7 +226,7 @@ AC_ARG_WITH(werror,
          -*)  with_werror=1; werror_extras=${withval} ;;
 	 *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
      esac],
-     [with_werror=1])
+     [with_werror=0])
 
 werror_ok=0
 
@@ -1557,6 +1570,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
+                 src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh

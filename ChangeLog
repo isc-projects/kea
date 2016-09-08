@@ -1,3 +1,120 @@
+1161.	[bug]		fdupont
+	Fixed interface manager receive methods which raise a bug on
+	Fedora 24 / gcc 6.1?
+	(Trac #4551, git 8d590e434062535e850a60a7892481df845ff390)
+
+Kea 1.1.0-beta released on August 31, 2016
+
+1160.	[build]		marcin
+	Bumped up version numbers of Kea libraries and KEA_HOOKS_VERSION
+	for the Kea 1.1.0 beta release.
+	(Trac #4632, git 93941523e039a1cc4bb34182a290f9d7b805df34)
+
+1159.	[func]		marcin
+	MySQL database schema updated to version 5.0.
+	(Trac #4562, git 0e40b35e280f0845686bcfdb2efb577c7878ede6)
+
+1158.	[func]		tomek
+	It is now possible to specify fixed fields (next-server,
+	server-hostname and boot-file-name parameters) for client classes.
+	(Trac #4626, git 89cf54524d8b55cc982ab2146915c0a90fc6efe2)
+
+1157.	[func]		marcin
+	Added support for static reservations for fixed fields in
+	DHCPv4 messages: siaddr, sname and file.
+	(Trac #4552, git 9b79fe005dd77328ea7c596fc6886f8fb838d1cf)
+
+1156.	[bug]		tmark
+	Lease statistics are now recalculated during server startup and
+	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
+	back ends.  This addresses issues caused by accumulated values being lost
+	across restarts and reconfigurations making rendering values incorrect.
+	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
+
+1155.	[func]		marcin
+	Kea can be configured to operate using read-only host database.
+	This is only supported for MySQL and PostgreSQL databases.
+	(Trac #4489 git 0d8dc7affb67ad8066b44c6f81532b79a641d50b)
+
+1154.	[bug]		stephen
+	Changes to logging to avoid premature destruction of some
+	objects during program exit.  On some systems this caused
+	one of the unit test programs to crash when it terminated.
+	(Trac #4494, git 023c2fc3688bcdbccb4b286bea873c8f9c06cd5f)
+
+1153.	[func]		tomek
+	Integers can now be used in client classification.
+	(Trac #4483, git e90cf0ee4007521b86177be6d5fbb970c02c1075)
+
+1152.	[doc]		marcin
+	Use of PostgreSQL as a storage for host reservations is now
+	documented in the Kea Administrator Reference Manual.
+	(Trac #4282, git f2879919772c10b1ae8c45d0e761ef199cf84061)
+
+1151.	[func]		tmark
+	Support for assigning client classes to host reservations has
+	been added to both the PostgreSQL and MySQL backends.
+	(Trac #4277, #4213 git 6990ab9d542e984c59ce5a11ff926c3c732a75fc)
+
+1150.	[bug]		tomek
+	Extended gcc bug workaround to work on all versions of gcc
+	from 5.2 up to, but not including 6.0. See ChangeLog entry
+	1103 or Trac ticket #4243 for details.
+	(Trac #4553, git 80243d9d246b982d86dd7e0d00597383cae01706)
+
+1149.	[bug]		marcin
+	Corrected a bug whereby clients were not assigned reserved
+	addresses from an external database, as a result of unexpected
+	closure of a connection to that database.
+	(Trac #4544, git 7f682112dd5ab9fcd6bfa4e10505c246775f353d)
+
+1148.	[func]		tomek
+	The vendor options (124, 125 in DHCPv4 and 16, 17 in DHCPv6) are
+	now accessible from client classification.
+	(Trac #4270, #4271, git ef676368f9036625d73f7f34e3fe9b5eeeaee7f1)
+
+1148.	[func]		fdupont
+	Added the pkt classification token to extract incoming packet
+	meta-data (receiving interface name, source and destination
+	address, length).
+	(Trac #4272, git 9a3bdfa43cf65ef56a8d63580dd5d7414fc41373)
+
+1147.	[func]		stephen
+	-Werror is no longer the default for compilation.  Promotion of all
+	compilation warnings to errors now requires the --with-werror switch
+	to be specified when running configure.
+	(Trac #4533, git 874e3a3f5cb10313856284646fcee7cf86e4fcce)
+
+1146.	[func]		sar
+	Add the forensic hook library documentation to the admin guide.
+	(Trac #4511, git 0bb39840a3cbdaf815819f846120c90d9ca038ff)
+
+1145.	[func]		tmark
+	The Postgresql backend now supports host reservations for both
+	DHCPv4 and DHCPv6, with options and IPv6 reservations.
+	(Trac #4277 git ac1eaa1026987c2d86d57b4aa0dc9a4d093787f0)
+
+1144.	[bug]		mihu
+	Response to DHCPINFORM is generally sent to port 68, rather
+	than port 67. Thanks to Michal Humpula for providing a patch.
+	(github #23, git 4216a4bedf8a884df087c68d48c88ee9ffa444dc)
+
+1143.	[doc]		fdupont
+	User's Guide has been updated with DHCPv4-over-DHCPv6 support
+	details.
+	(Trac #4273, git fe8cb64adeabe00d84ee390b579a8328717ae521)
+
+1142.	[doc]		sar
+	Uncomment the example columns in some rows in the table
+	listing the classification examples.
+	(None, git dee442a64f57c8d9dd87636f9e39084ed1b11e03)
+
+1141.	[func]		marcin
+	Pkt4, Pkt6 and Pkt4o6 objects passed to hooks libraries
+	return copies of DHCP options to avoid unintended modification
+	of the options stored in the server configuration.
+	(Trac #4497, git e50d2ebe998ec3faad8ade22b6971d6584c81044)
+
 1140.	[func]		marcin
 	DHCPv6 server supports assigning multiple reserved addresses
 	and/or prefixes to a single client.
@@ -40,7 +157,7 @@
 1132.	[func]		tmark
 	The Postgresql schema has been updated to support host
 	reservations and its version number has been bumped to 3.0.
-	This schema is content equivlent to the MySQL schema version 4.2.
+	This schema is content equivalent to the MySQL schema version 4.2.
 	(Trac #4275, git 6f8e646bee9de22c921ed26409f3d1856ebce9e6)
 
 1131.	[func]		fdupont

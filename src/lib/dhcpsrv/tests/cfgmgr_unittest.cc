@@ -10,6 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <stats/stats_mgr.h>
@@ -280,6 +281,23 @@ public:
     void clear() {
         CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().clear();
+        LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Creates instance of the backend.
+    ///
+    /// @param family AF_INET for v4, AF_INET6 for v6
+    void startBackend(int family = AF_INET) {
+        try {
+            std::ostringstream s;
+            s << "type=memfile persist=false " << (family == AF_INET6 ?
+                                     "universe=6" : "universe=4");
+            LeaseMgrFactory::create(s.str());
+        } catch (const std::exception& ex) {
+            std::cerr << "*** ERROR: unable to create instance of the Memfile\n"
+                " lease database backend: " << ex.what() << std::endl;
+            throw;
+        }
     }
 
     /// used in client classification (or just empty container for other tests)
@@ -575,6 +593,7 @@ TEST_F(CfgMgrTest, verbosity) {
 TEST_F(CfgMgrTest, commitStats4) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     StatsMgr& stats_mgr = StatsMgr::instance();
+    startBackend(AF_INET);
 
     // Let's prepare the "old" configuration: a subnet with id 123
     // and pretend there were addresses assigned, so statistics are non-zero.
@@ -641,6 +660,7 @@ TEST_F(CfgMgrTest, clearStats4) {
 TEST_F(CfgMgrTest, commitStats6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     StatsMgr& stats_mgr = StatsMgr::instance();
+    startBackend(AF_INET6);
 
     // Let's prepare the "old" configuration: a subnet with id 123
     // and pretend there were addresses assigned, so statistics are non-zero.

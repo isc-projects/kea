@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,25 +80,28 @@ public:
     Option4AddrLst(uint8_t type, OptionBufferConstIter first,
                    OptionBufferConstIter last);
 
+    /// @brief Copies this option and returns a pointer to the copy.
+    virtual OptionPtr clone() const;
+
     /// @brief Writes option in a wire-format to a buffer.
     ///
     /// Method will throw if option storing fails for some reason.
     ///
     /// @param buf output buffer (option will be stored there)
-    virtual void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string toText(int indent = 0);
+    virtual std::string toText(int indent = 0) const;
 
     /// Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len();
+    virtual uint16_t len() const;
 
     /// @brief Returns vector with addresses.
     ///

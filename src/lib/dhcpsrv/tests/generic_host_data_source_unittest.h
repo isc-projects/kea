@@ -137,7 +137,7 @@ public:
     /// @param classes1 first list of client classes
     /// @param classes2 second list of client classes
     void compareClientClasses(const ClientClasses& classes1,
-                              const ClientClasses& classes2);                           
+                              const ClientClasses& classes2);
 
     /// @brief Compares options within two configurations.
     ///
@@ -337,6 +337,23 @@ public:
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
 
+    /// @brief Test that backend can be started in read-only mode.
+    ///
+    /// Some backends can operate when the database is read only, e.g.
+    /// host reservation tables are read only, or the database user has
+    /// read only privileges on the entire database. In such cases, the
+    /// Kea server administrator can specify in the backend configuration
+    /// that the database should be opened in read only mode, i.e.
+    /// INSERT, UPDATE, DELETE statements can't be issued. If any of the
+    /// functions updating the database is called for the backend, the
+    /// error is reported. The database running in read only mode can
+    /// be merely used to retrieve existing host reservations from the
+    /// database. This test verifies that this is the case.
+    ///
+    /// @param valid_db_type Parameter specifying type of backend to
+    /// be used, e.g. type=mysql.
+    void testReadOnlyDatabase(const char* valid_db_type);
+
     /// @brief Test that checks that simple host with IPv4 reservation
     ///        can be inserted and later retrieved.
     ///
@@ -474,6 +491,34 @@ public:
     /// @param formatted Boolean value indicating if the option values
     /// should be stored in the textual format in the database.
     void testOptionsReservations46(const bool formatted);
+
+    /// @brief Test that multiple client classes for IPv4 can be inserted and
+    /// retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClasses4();
+
+    /// @brief Test that multiple client classes for IPv6 can be inserted and
+    /// retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClasses6();
+
+    /// @brief Test that multiple client classes for both IPv4 and IPv6 can
+    /// be inserted and retrieved for a given host reservation.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMultipleClientClassesBoth();
+
+    /// @brief Test that siaddr, sname, file fields can be retrieved
+    /// from a database for a host.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    void testMessageFields4();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

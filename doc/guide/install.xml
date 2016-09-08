@@ -459,6 +459,17 @@ Debian and Ubuntu:
         Kea is built.  This section covers the building of Kea with MySQL and/or PostgreSQL
         and the creation of the lease database.
       </para>
+
+      <note>
+        <simpara>
+          When unit tests are built with Kea (--with-gtest configuration option is specified),
+          the databases must be manually pre-configured for the unit tests to run.
+          The details of this configuration can be found in the
+          <ulink url="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
+          Guide</ulink>.
+        </simpara>
+      </note>
+
       <section>
         <title>Building with MySQL Support</title>
         <para>

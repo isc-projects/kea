@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,6 +60,172 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Used to map server data types with internal backend storage data
+/// types.
+enum ExchangeDataType {
+    EXCHANGE_DATA_TYPE_NONE,
+    EXCHANGE_DATA_TYPE_BOOL,
+    EXCHANGE_DATA_TYPE_INT32,
+    EXCHANGE_DATA_TYPE_INT64,
+    EXCHANGE_DATA_TYPE_TIMESTAMP,
+    EXCHANGE_DATA_TYPE_STRING,
+    EXCHANGE_DATA_TYPE_BYTES
+};
+
+/// @brief Used to specify the direction of the data exchange between the
+/// database and the server.
+enum ExchangeDataTypeIO {
+    EXCHANGE_DATA_TYPE_IO_IN,
+    EXCHANGE_DATA_TYPE_IO_OUT,
+    EXCHANGE_DATA_TYPE_IO_IN_OUT
+};
+
+/// @brief Used to map the column name with internal backend storage data types.
+struct ExchangeColumnInfo {
+    ExchangeColumnInfo () : name_(""), index_(0), type_io_(EXCHANGE_DATA_TYPE_IO_IN),
+                            type_(EXCHANGE_DATA_TYPE_NONE) {};
+    ExchangeColumnInfo (const char* name, const uint32_t index,
+        const ExchangeDataTypeIO type_io, const ExchangeDataType type) :
+        name_(name), index_(index), type_io_(type_io), type_(type) {};
+    std::string name_;
+    uint32_t index_;
+    ExchangeDataTypeIO type_io_;
+    ExchangeDataType type_;
+};
+
+typedef boost::shared_ptr<ExchangeColumnInfo> ExchangeColumnInfoPtr;
+
+typedef boost::multi_index_container<
+    // Container comprises elements of ExchangeColumnInfoPtr type.
+    ExchangeColumnInfoPtr,
+    // Here we start enumerating various indexes.
+    boost::multi_index::indexed_by<
+        // Sequenced index allows accessing elements in the same way as elements
+        // in std::list.
+        // Sequenced is an index #0.
+        boost::multi_index::sequenced<>,
+        // Start definition of index #1.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::member<
+                ExchangeColumnInfo,
+                std::string,
+                &ExchangeColumnInfo::name_
+             >
+        >,
+        // Start definition of index #2.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::member<
+                ExchangeColumnInfo,
+                uint32_t,
+                &ExchangeColumnInfo::index_
+            >
+        >
+    >
+> ExchangeColumnInfoContainer;
+
+/// Pointer to the ExchangeColumnInfoContainer object.
+typedef boost::shared_ptr<ExchangeColumnInfoContainer> ExchangeColumnInfoContainerPtr;
+/// Type of the index #1 - name.
+typedef ExchangeColumnInfoContainer::nth_index<1>::type ExchangeColumnInfoContainerName;
+/// Pair of iterators to represent the range of ExchangeColumnInfo having the
+/// same name value. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<ExchangeColumnInfoContainerName::const_iterator,
+                  ExchangeColumnInfoContainerName::const_iterator> ExchangeColumnInfoContainerNameRange;
+/// Type of the index #2 - index.
+typedef ExchangeColumnInfoContainer::nth_index<2>::type ExchangeColumnInfoContainerIndex;
+/// Pair of iterators to represent the range of ExchangeColumnInfo having the
+/// same index value. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<ExchangeColumnInfoContainerIndex::const_iterator,
+                  ExchangeColumnInfoContainerIndex::const_iterator> ExchangeColumnInfoContainerIndexRange;
+
+class SqlExchange {
+public:
+    SqlExchange () {};
+    virtual ~SqlExchange() {};
+    ExchangeColumnInfoContainer parameters_;   ///< Column names and types
+};
+
+/// @brief Contains a single row of lease statistical data
+///
+/// The contents of the row consist of a subnet ID, a lease
+/// type, a lease state, and the number of leases in that state
+/// for that type for that subnet ID.
+struct LeaseStatsRow {
+    /// @brief Default constructor
+    LeaseStatsRow() :
+        subnet_id_(0), lease_type_(Lease::TYPE_NA),
+        lease_state_(Lease::STATE_DEFAULT), state_count_(0) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// Constructor which defaults the type to TYPE_NA.
+    ///
+    /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_state The lease state counted
+    /// @param state_count The count of leases in the lease state
+    LeaseStatsRow(const SubnetID& subnet_id, const uint32_t lease_state,
+                  const int64_t state_count)
+        : subnet_id_(subnet_id), lease_type_(Lease::TYPE_NA),
+          lease_state_(lease_state), state_count_(state_count) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// @param subnet_id The subnet id to which this data applies
+    /// @param lease_type The lease type for this state count
+    /// @param lease_state The lease state counted
+    /// @param state_count The count of leases in the lease state
+    LeaseStatsRow(const SubnetID& subnet_id, const Lease::Type& lease_type,
+                  const uint32_t lease_state, const int64_t state_count)
+        : subnet_id_(subnet_id), lease_type_(lease_type),
+          lease_state_(lease_state), state_count_(state_count) {
+    }
+
+    /// @brief The subnet ID to which this data applies
+    SubnetID subnet_id_;
+    /// @brief The lease_type to which the count applies
+    Lease::Type lease_type_;
+    /// @brief The lease_state to which the count applies
+    uint32_t lease_state_;
+    /// @brief state_count The count of leases in the lease state
+    int64_t state_count_;
+};
+
+/// @brief Base class for fulfilling a statistical lease data query
+///
+/// LeaseMgr derivations implement this class such that it provides
+/// upto date statistical lease data organized as rows of LeaseStatsRow
+/// instances. The rows must be accessible in ascending order by subnet id.
+class LeaseStatsQuery {
+public:
+    /// @brief Default constructor
+    LeaseStatsQuery() {};
+
+    /// @brief virtual destructor
+    virtual ~LeaseStatsQuery() {};
+
+    /// @brief Executes the query
+    ///
+    /// This method should conduct whatever steps are required to
+    /// calculate the lease statistical data by examining the
+    /// lease data and making that results available row by row.
+    virtual void start() {};
+
+    /// @brief Fetches the next row of data
+    ///
+    /// @param[out] row Storage into which the row is fetched
+    ///
+    /// @return True if a row was fetched, false if there are no
+    /// more rows.
+    virtual bool getNextRow(LeaseStatsRow& row);
+};
+
+/// @brief Defines a pointer to an LeaseStatsQuery.
+typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 
 /// @brief Abstract Lease Manager
 ///
@@ -311,6 +477,68 @@ public:
     ///
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs) = 0;
+
+    /// @brief Recalculates per-subnet and global stats for IPv4 leases
+    ///
+    /// This method recalculates the following statistics:
+    /// per-subnet:
+    /// - assigned-addresses
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    /// global:
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    ///
+    /// It invokes the virtual method, startLeaseStatsQuery4(), which
+    /// returns an instance of an LeaseStatsQuery.  The query
+    /// query contains a "result set"  where each row is an LeaseStatRow
+    /// that contains a subnet id, a lease type (currently always TYPE_NA),
+    /// a lease state, and the number of leases of that type, in that state
+    /// and is ordered by subnet id.  The method iterates over the
+    /// result set rows, setting the appropriate statistic per subnet and
+    /// adding to the approporate global statistic.
+    void recountLeaseStats4();
+
+    /// @brief Virtual method which creates and runs the IPv4 lease stats query
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with upto date IPv4 lease statistical data.  Each row of the
+    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Recalculates per-subnet and global stats for IPv6 leases
+    ///
+    /// This method recalculates the following statistics:
+    /// per-subnet:
+    /// - assigned-addresses
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    /// - assigned-pds
+    /// global:
+    /// - declined-addresses
+    /// - declined-reclaimed-addresses (reset to zero)
+    ///
+    /// It invokes the virtual method, startLeaseStatsQuery6(), which
+    /// returns an instance of an LeaseStatsQuery.  The query contains
+    /// a "result set" where each row is an LeaseStatRow that contains
+    /// a subnet id, a lease type, a lease state, and the number of leases
+    /// of that type, in that state and is ordered by subnet id. The method
+    /// iterates over the result set rows, setting the appropriate statistic
+    /// per subnet and adding to the approporate global statistic.
+    void recountLeaseStats6();
+
+    /// @brief Virtual method which creates and runs the IPv6 lease stats query
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with upto date IPv6 lease statistical data.  Each row of the
+    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
     /// @brief Return backend type
     ///

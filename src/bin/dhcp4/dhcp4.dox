@@ -249,16 +249,9 @@ to evaluate the next class.
 
 @subsection dhcpv4ClassifierUsage How client classification information is used in DHCPv4
 
-Currently there is a short code section that alternates packet processing depending on
-which class it belongs to. (It is planned to move that capability to an external hook
-library, see ticket #3275.) The class specific behavior is:
-
-- docsis3.0 packets have siaddr (next server) field set
-- docsis3.0 packets have file field set to the content of the boot-file-name option
-- eRouter1.0 packets have siaddr (next server) field cleared
-
-Aforementioned modifications are conducted in
-@ref isc::dhcp::Dhcpv4Srv::vendorClassSpecificProcessing.
+The classification code has been revamped in Kea 1.1. The old code that did specific
+things for cable modems can now be achieved with the general classification code. Users
+can simply define the class with next-address and/or filename in it.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
 accessible to clients that belong to a given class. That is implemented as

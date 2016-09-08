@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,8 @@ Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
      remote_addr_(remote_addr),
      local_port_(local_port),
      remote_port_(remote_port),
-     buffer_out_(0)
+     buffer_out_(0),
+     copy_retrieved_options_(false)
 {
 }
 
@@ -38,7 +39,8 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
      remote_addr_(remote_addr),
      local_port_(local_port),
      remote_port_(remote_port),
-     buffer_out_(0)
+     buffer_out_(0),
+     copy_retrieved_options_(false)
 {
 
     if (len != 0) {
@@ -56,10 +58,23 @@ Pkt::addOption(const OptionPtr& opt) {
 }
 
 OptionPtr
-Pkt::getOption(uint16_t type) const {
+Pkt::getNonCopiedOption(const uint16_t type) const {
     OptionCollection::const_iterator x = options_.find(type);
     if (x != options_.end()) {
-        return (*x).second;
+        return (x->second);
+    }
+    return (OptionPtr());
+}
+
+OptionPtr
+Pkt::getOption(const uint16_t type) {
+    OptionCollection::iterator x = options_.find(type);
+    if (x != options_.end()) {
+        if (copy_retrieved_options_) {
+            OptionPtr option_copy = x->second->clone();
+            x->second = option_copy;
+        }
+        return (x->second);
     }
     return (OptionPtr()); // NULL
 }

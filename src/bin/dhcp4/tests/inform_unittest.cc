@@ -39,6 +39,16 @@ namespace {
 ///   - Domain Name Server option present: 192.0.2.202, 192.0.2.203.
 ///   - Log Servers option present: 192.0.2.200 and 192.0.2.201
 ///   - Quotes Servers option present: 192.0.2.202, 192.0.2.203.
+///
+/// - Configuration 2:
+///   - This configuration provides reservations for next-server,
+///     server-hostname and boot-file-name value.
+///   - 1 subnet: 192.0.2.0/24
+///   - 1 reservation for this subnet:
+///     - Client's HW address: aa:bb:cc:dd:ee:ff
+///     - next-server = 10.0.0.7
+///     - server name = "some-name.example.org"
+///     - boot-file-name = "bootfile.efi"
 const char* INFORM_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -91,7 +101,26 @@ const char* INFORM_CONFIGS[] = {
         "        \"data\": \"10.0.0.202,10.0.0.203\""
         "    } ]"
         " } ]"
-    "}"
+    "}",
+
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"next-server\": \"10.0.0.1\","
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"next-server\": \"10.0.0.7\","
+        "         \"server-hostname\": \"some-name.example.org\","
+        "         \"boot-file-name\": \"bootfile.efi\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
 };
 
 /// @brief Test fixture class for testing DHCPINFORM.
@@ -268,6 +297,8 @@ TEST_F(InformTest, directClientNoCiaddr) {
     EXPECT_EQ(IOAddress("10.0.0.56"), resp->getLocalAddr());
     // Response must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
@@ -303,6 +334,8 @@ TEST_F(InformTest, relayedClient) {
     EXPECT_EQ(IOAddress("192.0.2.56"), resp->getLocalAddr());
     // Response is unicast to the client, so it must not be relayed.
     EXPECT_FALSE(resp->isRelayed());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
@@ -342,6 +375,8 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getLocalAddr());
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getGiaddr());
     EXPECT_EQ(1, resp->getHops());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // In the case when the client didn't set the ciaddr and the message
     // was received via relay the server sets the Broadcast flag to help
     // the relay forwarding the message (without yiaddr) to the client.
@@ -356,6 +391,32 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     ASSERT_EQ(2, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
+}
+
+// This test verifies that the server assigns reserved values for the
+// siaddr, sname and file fields carried within DHCPv4 message.
+TEST_F(InformTest, messageFieldsReservations) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Message is relayed.
+    client.useRelay();
+    // Set explicit HW address so as it matches the reservation in the
+    // configuration used below.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(INFORM_CONFIGS[2], *client.getServer());
+    // Client sends DHCPINFORM and should receive reserved fields.
+    ASSERT_NO_THROW(client.doInform());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the reserved values have been assigned.
+    EXPECT_EQ("10.0.0.7", client.config_.siaddr_.toText());
+    EXPECT_EQ("some-name.example.org", client.config_.sname_);
+    EXPECT_EQ("bootfile.efi", client.config_.boot_file_name_);
 }
 
 /// This test verifies that after a client completes its INFORM exchange,

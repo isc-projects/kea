@@ -333,6 +333,27 @@ Dhcpv4Exchange::setHostIdentifiers() {
     }
 }
 
+void
+Dhcpv4Exchange::setReservedMessageFields() {
+    ConstHostPtr host = context_->host_;
+    // Nothing to do if host reservations not specified for this client.
+    if (host) {
+        if (!host->getNextServer().isV4Zero()) {
+            resp_->setSiaddr(host->getNextServer());
+        }
+
+        if (!host->getServerHostname().empty()) {
+            resp_->setSname(reinterpret_cast<
+                            const uint8_t*>(host->getServerHostname().c_str()));
+        }
+
+        if (!host->getBootFileName().empty()) {
+            resp_->setFile(reinterpret_cast<
+                           const uint8_t*>(host->getBootFileName().c_str()));
+        }
+    }
+}
+
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
@@ -466,6 +487,9 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 
         // We're reusing callout_handle from previous calls
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
         // Set new arguments
         callout_handle->setArgument("query4", query);
@@ -735,6 +759,9 @@ Dhcpv4Srv::run_one() {
             // Delete previously set arguments
             callout_handle->deleteAllArguments();
 
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
+
             // Pass incoming packet as argument
             callout_handle->setArgument("response4", rsp);
 
@@ -803,6 +830,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
+
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query4", query);
@@ -894,6 +924,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
         // Pass incoming packet as argument
         callout_handle->setArgument("query4", query);
 
@@ -982,6 +1015,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
         // Clear skip flag if it was set in previous callouts
         callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        // Enable copying options from the query and response packets within
+        // hook library.
+        ScopedEnableOptionsCopy<Pkt4> query_resp_options_copy(query, rsp);
 
         // Set our response
         callout_handle->setArgument("response4", rsp);
@@ -1499,12 +1536,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // Set up siaddr. Perhaps assignLease is not the best place to call this
-    // as siaddr has nothing to do with a lease, but otherwise we would have
-    // to select subnet twice (performance hit) or update too many functions
-    // at once.
-    /// @todo: move subnet selection to a common code
-    resp->setSiaddr(subnet->getSiaddr());
 
     // Get the server identifier. It will be used to determine the state
     // of the client.
@@ -1760,15 +1791,25 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     Pkt4Ptr query = ex.getQuery();
     Pkt4Ptr response = ex.getResponse();
 
-    // For the non-relayed message, the destination port is the client's port.
-    // For the relayed message, the server/relay port is a destination.
+    // The DHCPINFORM is generally unicast to the client. The only situation
+    // when the server is unable to unicast to the client is when the client
+    // doesn't include ciaddr and the message is relayed. In this case the
+    // server has to reply via relay agent. For other messages we send back
+    // through relay if message is relayed, and unicast to the client if the
+    // message is not relayed.
     // Note that the call to this function may throw if invalid combination
     // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
     // giaddr != 0). The exception will propagate down and eventually cause the
     // packet to be discarded.
-    response->setRemotePort(query->isRelayed() ? DHCP4_SERVER_PORT :
-                            DHCP4_CLIENT_PORT);
+    if (((query->getType() == DHCPINFORM) &&
+         ((!query->getCiaddr().isV4Zero()) ||
+          (!query->isRelayed() && !query->getRemoteAddr().isV4Zero()))) ||
+        ((query->getType() != DHCPINFORM) && !query->isRelayed())) {
+        response->setRemotePort(DHCP4_CLIENT_PORT);
 
+    } else {
+        response->setRemotePort(DHCP4_SERVER_PORT);
+    }
 
     IOAddress local_addr = query->getLocalAddr();
 
@@ -1901,6 +1942,76 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
     }
 }
 
+void
+Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr response = ex.getResponse();
+
+    // Step 1: Start with fixed fields defined on subnet level.
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    if (subnet) {
+        IOAddress subnet_next_server = subnet->getSiaddr();
+        if (!subnet_next_server.isV4Zero()) {
+            response->setSiaddr(subnet_next_server);
+        }
+    }
+
+    // Step 2: Try to set the values based on classes.
+    // Any values defined in classes will override those from subnet level.
+    const ClientClasses classes = query->getClasses();
+    if (!classes.empty()) {
+
+        // Let's get class definitions
+        const ClientClassDefMapPtr& defs = CfgMgr::instance().getCurrentCfg()->
+            getClientClassDictionary()->getClasses();
+
+        // Now we need to iterate over the classes assigned to the
+        // query packet and find corresponding class defintions for it.
+        for (ClientClasses::const_iterator name = classes.begin();
+             name != classes.end(); ++name) {
+
+            ClientClassDefMap::const_iterator cl = defs->find(*name);
+            if (cl == defs->end()) {
+                // Let's skip classes that don't have definitions. Currently
+                // these are automatic classes VENDOR_CLASS_something, but there
+                // may be other classes assigned under other circumstances, e.g.
+                // by hooks.
+                continue;
+            }
+
+            IOAddress next_server = cl->second->getNextServer();
+            if (!next_server.isV4Zero()) {
+                response->setSiaddr(next_server);
+            }
+
+            const string& sname = cl->second->getSname();
+            if (!sname.empty()) {
+                // Converting string to (const uint8_t*, size_t len) format is
+                // tricky. reineterpret_cast is not the most elegant solution,
+                // but it does avoid us making unnecessary copy. We will convert
+                // sname and file fields in Pkt4 to string one day and life
+                // will be easier.
+                response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                                   sname.size());
+            }
+            
+            const string& filename = cl->second->getFilename();
+            if (!filename.empty()) {
+                // Converting string to (const uint8_t*, size_t len) format is
+                // tricky. reineterpret_cast is not the most elegant solution,
+                // but it does avoid us making unnecessary copy. We will convert
+                // sname and file fields in Pkt4 to string one day and life
+                // will be easier.
+                response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
+                                  filename.size());
+            }
+        }
+    }
+
+    // Step 3: try to set values using HR. Any values coming from there will override
+    // the subnet or class values.
+    ex.setReservedMessageFields();
+}
 
 OptionPtr
 Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
@@ -1941,6 +2052,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         // them we append them for him.
         appendBasicOptions(ex);
 
+        // Set fixed fields (siaddr, sname, filename) if defined in
+        // the reservation, class or subnet specific configuration.
+        setFixedFields(ex);
+
     } else {
         // If the server can't offer an address, it drops the packet.
         return (Pkt4Ptr());
@@ -1952,14 +2067,6 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     adjustIfaceData(ex);
 
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        /// @todo add more verbosity here
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_DISCOVER_CLASS_PROCESSING_FAILED)
-            .arg(discover->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -1996,6 +2103,10 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         // include in the response. If client did not request
         // them we append them for him.
         appendBasicOptions(ex);
+
+        // Set fixed fields (siaddr, sname, filename) if defined in
+        // the reservation, class or subnet specific configuration.
+        setFixedFields(ex);
     }
 
     // Set the src/dest IP address, port and interface for the outgoing
@@ -2003,14 +2114,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     adjustIfaceData(ex);
 
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        /// @todo add more verbosity here
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST_CLASS_PROCESSING_FAILED)
-            .arg(ex.getQuery()->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -2063,6 +2166,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
             // Delete all previous arguments
             callout_handle->deleteAllArguments();
+
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> query4_options_copy(release);
 
             // Pass the original packet
             callout_handle->setArgument("query4", release);
@@ -2207,6 +2313,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
         // Delete previously set arguments
         callout_handle->deleteAllArguments();
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(decline);
+
         // Pass incoming Decline and the lease to be declined.
         callout_handle->setArgument("lease4", lease);
         callout_handle->setArgument("query4", decline);
@@ -2275,6 +2384,10 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     appendBasicOptions(ex);
     adjustIfaceData(ex);
 
+    // Set fixed fields (siaddr, sname, filename) if defined in
+    // the reservation, class or subnet specific configuration.
+    setFixedFields(ex);
+
     // There are cases for the DHCPINFORM that the server receives it via
     // relay but will send the response to the client's unicast address
     // carried in the ciaddr. In this case, the giaddr and hops field should
@@ -2292,14 +2405,6 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
     // The DHCPACK must contain server id.
     appendServerID(ex);
-
-    /// @todo: decide whether we want to add a new hook point for
-    /// doing class specific processing.
-    if (!vendorClassSpecificProcessing(ex)) {
-        LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
-                  DHCP4_INFORM_CLASS_PROCESSING_FAILED)
-            .arg(inform->getLabel());
-    }
 
     return (ex.getResponse());
 }
@@ -2508,33 +2613,8 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt, std::string& classes) {
         return;
     }
 
-    // DOCSIS specific section
-
-    // Let's keep this as a series of checks. So far we're supporting only
-    // docsis3.0, but there are also docsis2.0, docsis1.1 and docsis1.0. We
-    // may come up with adding several classes, e.g. for docsis2.0 we would
-    // add classes docsis2.0, docsis1.1 and docsis1.0.
-
-    // Also we are using find, because we have at least one traffic capture
-    // where the user class was followed by a space ("docsis3.0 ").
-
-    // For now, the code is very simple, but it is expected to get much more
-    // complex soon. One specific case is that the vendor class is an option
-    // sent by the client, so we should not trust it. To confirm that the device
-    // is indeed a modem, John B. suggested to check whether chaddr field
-    // quals subscriber-id option that was inserted by the relay (CMTS).
-    // This kind of logic will appear here soon.
-    if (vendor_class->getValue().find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
-        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM) + " ";
-    } else
-    if (vendor_class->getValue().find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
-        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
-        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
-    } else {
-        pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
-        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
-    }
+    pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
+    classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
@@ -2587,52 +2667,6 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
             .arg(pkt->getLabel())
             .arg(classes);
     }
-}
-
-bool
-Dhcpv4Srv::vendorClassSpecificProcessing(const Dhcpv4Exchange& ex) {
-
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
-    Pkt4Ptr query = ex.getQuery();
-    Pkt4Ptr rsp = ex.getResponse();
-
-    // If any of those is missing, there is nothing to do.
-    if (!subnet || !query || !rsp) {
-        return (true);
-    }
-
-    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
-
-        // Set next-server. This is TFTP server address. Cable modems will
-        // download their configuration from that server.
-        rsp->setSiaddr(subnet->getSiaddr());
-
-        // Now try to set up file field in DHCPv4 packet. We will just copy
-        // content of the boot-file option, which contains the same information.
-        const CfgOptionList& co_list = ex.getCfgOptionList();
-        for (CfgOptionList::const_iterator copts = co_list.begin();
-             copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get("dhcp4", DHO_BOOT_FILE_NAME);
-
-            if (desc.option_) {
-                boost::shared_ptr<OptionString> boot =
-                    boost::dynamic_pointer_cast<OptionString>(desc.option_);
-                if (boot) {
-                    std::string filename = boot->getValue();
-                    rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
-                    break;
-                }
-            }
-        }
-    }
-
-    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
-
-        // Do not set TFTP server address for eRouter devices.
-        rsp->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-    }
-
-    return (true);
 }
 
 void

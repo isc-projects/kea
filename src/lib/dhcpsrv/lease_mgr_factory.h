@@ -85,7 +85,10 @@ public:
     ///        create() to create one before calling this method.
     static LeaseMgr& instance();
 
-
+    /// @brief Indicates if the lease manager has been instantiated.
+    ///
+    /// @return True if the lease manager instance exists, false otherwise.
+    static bool haveInstance();
 
 private:
     /// @brief Hold pointer to lease manager

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <stats/stats_mgr.h>
 
@@ -176,25 +177,26 @@ void
 CfgSubnets6::removeStatistics() {
     using namespace isc::stats;
 
+    StatsMgr& stats_mgr = StatsMgr::instance();
     // For each v6 subnet currently configured, remove the statistics.
     for (Subnet6Collection::const_iterator subnet6 = subnets_.begin();
          subnet6 != subnets_.end(); ++subnet6) {
+        SubnetID subnet_id = (*subnet6)->getID();
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id, "total-nas"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet6)->getID(),
-                                                        "total-nas"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "assigned-nas"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet6)->getID(),
-                                                        "assigned-nas"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id, "total-pds"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet6)->getID(),
-                                                        "total-pds"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "assigned-pds"));
 
-        StatsMgr::instance().del(StatsMgr::generateName("subnet",
-                                                        (*subnet6)->getID(),
-                                                        "assigned-pds"));
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "declined-addresses"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "declined-reclaimed-addresses"));
     }
 }
 
@@ -202,16 +204,26 @@ void
 CfgSubnets6::updateStatistics() {
     using namespace isc::stats;
 
-    for (Subnet6Collection::const_iterator subnet = subnets_.begin();
-         subnet != subnets_.end(); ++subnet) {
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    // For each v6 subnet currently configured, calculate totals
+    for (Subnet6Collection::const_iterator subnet6 = subnets_.begin();
+         subnet6 != subnets_.end(); ++subnet6) {
+        SubnetID subnet_id = (*subnet6)->getID();
 
-        StatsMgr::instance().setValue(
-            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-nas"),
-            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_NA)));
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "total-nas"),
+                           static_cast<int64_t>
+                           ((*subnet6)->getPoolCapacity(Lease::TYPE_NA)));
 
-        StatsMgr::instance().setValue(
-            StatsMgr::generateName("subnet", (*subnet)->getID(), "total-pds"),
-            static_cast<int64_t>((*subnet)->getPoolCapacity(Lease::TYPE_PD)));
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "total-pds"),
+                            static_cast<int64_t>
+                            ((*subnet6)->getPoolCapacity(Lease::TYPE_PD)));
+    }
+
+    // Only recount the stats if we have subnets.
+    if (subnets_.begin() != subnets_.end()) {
+            LeaseMgrFactory::instance().recountLeaseStats6();
     }
 }
 

@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <eval/evaluate.h>
+#include <eval/eval_context.h>
 #include <eval/token.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -282,4 +283,161 @@ TEST_F(EvaluateTest, complex) {
     EXPECT_TRUE(result_);
 }
 
+/// @brief Generic class for parsing expressions and evaluating them.
+///
+/// The main purpose of this class is to provide a generic interface to the
+/// eval library, so everything (expression parsing and then evaluation for
+/// given packets) can be done in one simple call.
+///
+/// These tests may be somewhat redundant to other more specialized tests, but
+/// the idea here is to mass produce tests that are trivial to write.
+class ExpressionsTest : public EvaluateTest {
+public:
+
+    /// @brief Checks if expression can be parsed and evaluated
+    ///
+    /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
+    /// tweak them as needed before calling this method.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param expr expression to be parsed
+    /// @param exp_result expected result (true or false)
+    void testExpression(const Option::Universe& u, const std::string& expr,
+                        const bool exp_result) {
+
+        EvalContext eval(u);
+        bool result = false;
+        bool parsed = false;
+
+        EXPECT_NO_THROW(parsed = eval.parseString(expr))
+            << " while parsing expression " << expr;
+        EXPECT_TRUE(parsed) << " for expression " << expr;
+
+        switch (u) {
+        case Option::V4:
+            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt4_))
+                << " for expression " << expr;
+            break;
+        case Option::V6:
+            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt6_))
+                << " for expression " << expr;
+            break;
+        }
+
+        EXPECT_EQ(exp_result, result) << " for expression " << expr;
+    }
+
+    /// @brief Checks that specified expression throws expected exception.
+    ///
+    /// @tparam ex exception type expected to be thrown
+    /// @param expr expression to be evaluated
+    template<typename ex>
+    void testExpressionNegative(const std::string& expr,
+                                const Option::Universe& u = Option::V4) {
+        EvalContext eval(u);
+
+        EXPECT_THROW(eval.parseString(expr), ex) << "while parsing expression "
+                                                 << expr;
+    }
+};
+
+// This is a quick way to check if certain expressions are valid or not and
+// whether the whole expression makes sense. This particular test checks if
+// integers can be used properly in expressions. There are many places where
+// integers are used. This particular test checks if pkt6.msgtype returns
+// something that can be compared with integers.
+//
+// For basic things we can take advantage of the skeleton packets created in
+// EvaluateTest constructors: The packet type is DISCOVER in DHCPv4 and
+// SOLICIT in DHCPv6. There is one option added with code 100 and content
+// being either "hundred4" or "hundred6" depending on the universe.
+
+// Tests if pkt6.msgtype returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger1) {
+    testExpression(Option::V6, "pkt6.msgtype == 1", true);
+    testExpression(Option::V6, "pkt6.msgtype == 2", false);
+
+    testExpression(Option::V6, "pkt6.msgtype == 0x00000001", true);
+    testExpression(Option::V6, "pkt6.msgtype == 0x00000002", false);
+}
+
+// Tests if pkt6.transid returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger2) {
+    testExpression(Option::V6, "pkt6.transid == 0", false);
+    testExpression(Option::V6, "pkt6.transid == 12345", true);
+    testExpression(Option::V6, "pkt6.transid == 12346", false);
+}
+
+// Tests if pkt4.transid returns something that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger3) {
+    testExpression(Option::V4, "pkt4.transid == 0", false);
+    testExpression(Option::V4, "pkt4.transid == 12345", true);
+    testExpression(Option::V4, "pkt4.transid == 12346", false);
+}
+
+// Tests if integers can be compared with integers.
+TEST_F(ExpressionsTest, expressionsInteger4) {
+    testExpression(Option::V6, "0 == 0", true);
+    testExpression(Option::V6, "2 == 3", false);
+}
+
+// Tests if pkt4.hlen and pkt4.htype return values that can be compared with integers.
+TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
+
+    // By default there's no hardware set up. The default Pkt4 constructor
+    // creates HWAddr(), which has hlen=0 and htype set to HTYPE_ETHER.
+    testExpression(Option::V4, "pkt4.hlen == 0", true);
+    testExpression(Option::V4, "pkt4.htype == 1", true);
+
+    // Ok, let's initialize the hardware address to something plausible.
+    const size_t hwaddr_len = 6;
+    const uint16_t expected_htype = 123;
+    std::vector<uint8_t> hw(hwaddr_len,0);
+    for (int i = 0; i < hwaddr_len; i++) {
+        hw[i] = i + 1;
+    }
+    pkt4_->setHWAddr(expected_htype, hwaddr_len, hw);
+
+    testExpression(Option::V4, "pkt4.hlen == 0", false);
+    testExpression(Option::V4, "pkt4.hlen == 5", false);
+    testExpression(Option::V4, "pkt4.hlen == 6", true);
+    testExpression(Option::V4, "pkt4.hlen == 7", false);
+
+    testExpression(Option::V4, "pkt4.htype == 0", false);
+    testExpression(Option::V4, "pkt4.htype == 122", false);
+    testExpression(Option::V4, "pkt4.htype == 123", true);
+    testExpression(Option::V4, "pkt4.htype == 124", false);
+
+    testExpression(Option::V4, "pkt4.mac == 0x010203040506", true);
+}
+
+// Test if expressions message type can be detected in Pkt4.
+// It also doubles as a check for integer comparison here.
+TEST_F(ExpressionsTest, expressionsPkt4type) {
+
+    // We can inspect the option content directly, but
+    // it requires knowledge of the option type and its format.
+    testExpression(Option::V4, "option[53].hex == 0x0", false);
+    testExpression(Option::V4, "option[53].hex == 0x1", true);
+    testExpression(Option::V4, "option[53].hex == 0x2", false);
+
+    // It's easier to simply use the pkt4.msgtype
+    testExpression(Option::V4, "pkt4.msgtype == 0", false);
+    testExpression(Option::V4, "pkt4.msgtype == 1", true);
+    testExpression(Option::V4, "pkt4.msgtype == 2", false);
+}
+
+// This tests if inappropriate values (negative, too large) are
+// rejected, but extreme values still allowed for uint32_t are ok.
+TEST_F(ExpressionsTest, invalidIntegers) {
+
+    // These are the extreme uint32_t values that still should be accepted.
+    testExpression(Option::V4, "4294967295 == 0", false);
+
+    // Negative integers should be rejected.
+    testExpressionNegative<EvalParseError>("4294967295 == -1");
+
+    // Oops, one too much.
+    testExpressionNegative<EvalParseError>("4294967296 == 0");
+}
 };

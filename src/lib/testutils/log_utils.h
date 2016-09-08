@@ -63,6 +63,15 @@ public:
     /// @brief remove the test log file
     void remFile();
 
+    /// @brief Enables or disables verbose mode.
+    ///
+    /// See @ref verbose_ for details.
+    ///
+    /// @param talk_a_lot (true - as the name says, false - shut up)
+    void logCheckVerbose(bool talk_a_lot) {
+        verbose_ = talk_a_lot;
+    }
+
     /// @brief Add a string to the vector of expected strings
     ///
     /// @param new_string the string to add to the end of the vector
@@ -71,6 +80,14 @@ public:
 
     vector<string> exp_strings_;
     static const char* LOG_FILE;
+
+    /// @brief controls whether the checkFile() should print more details.
+    ///
+    /// If set to true, checkFile() will print each expected line, each
+    /// logged line and will print out a failure message if those two do
+    /// not match. Also, a final verdict is printed. Everything is printed
+    /// on stdout.
+    bool verbose_;
 };
 
 

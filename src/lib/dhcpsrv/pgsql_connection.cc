@@ -35,6 +35,77 @@ const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
+PgSqlResult::PgSqlResult(PGresult *result) 
+    : result_(result), rows_(0), cols_(0) {
+    if (!result) {
+        isc_throw (BadValue, "PgSqlResult result pointer cannot be null");
+    }
+
+    rows_ = PQntuples(result);
+    cols_ = PQnfields(result);
+}
+
+void 
+PgSqlResult::rowCheck(int row) const {
+    if (row < 0 || row >= rows_) {
+        isc_throw (DbOperationError, "row: " << row 
+                   << ", out of range: 0.." << rows_);
+    }
+}
+
+PgSqlResult::~PgSqlResult() {
+    if (result_)  {
+        PQclear(result_);
+    }
+}
+
+void
+PgSqlResult::colCheck(int col) const {
+    if (col < 0 || col >= cols_) {
+        isc_throw (DbOperationError, "col: " << col
+                   << ", out of range: 0.." << cols_);
+    }
+}
+
+void
+PgSqlResult::rowColCheck(int row, int col) const {
+    rowCheck(row);
+    colCheck(col);
+}
+
+std::string
+PgSqlResult::getColumnLabel(const int col) const {
+    const char* label = NULL;
+    try {
+        colCheck(col);
+        label = PQfname(result_, col);
+    } catch (...) {
+        std::ostringstream os;
+        os << "Unknown column:" << col;
+        return (os.str());
+    }
+
+    return (label);
+}
+
+PgSqlTransaction::PgSqlTransaction(PgSqlConnection& conn)
+    : conn_(conn), committed_(false) {
+    conn_.startTransaction();
+}
+
+PgSqlTransaction::~PgSqlTransaction() {
+    // If commit() wasn't explicitly called, rollback.
+    if (!committed_) {
+        conn_.rollback();
+    }
+}
+
+void
+PgSqlTransaction::commit() {
+    conn_.commit();
+    committed_ = true;
+}
+
 PgSqlConnection::~PgSqlConnection() {
     if (conn_) {
         // Deallocate the prepared queries.
@@ -55,6 +126,16 @@ PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
     if(PQresultStatus(r) != PGRES_COMMAND_OK) {
         isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
                   << statement.text << ", reason: " << PQerrorMessage(conn_));
+    }
+}
+
+void
+PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
+                                   const PgSqlTaggedStatement* end_statement) {
+    // Created the PostgreSQL prepared statements.
+    for (const PgSqlTaggedStatement* tagged_statement = start_statement;
+         tagged_statement != end_statement; ++tagged_statement) {
+        prepareStatement(*tagged_statement);
     }
 }
 
@@ -188,6 +269,18 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
                   << statement.name << ", reason: "
+                  << error_message);
+    }
+}
+
+void
+PgSqlConnection::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_START_TRANSACTION);
+    PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
+    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
+        const char* error_message = PQerrorMessage(conn_);
+        isc_throw(DbOperationError, "unable to start transaction"
                   << error_message);
     }
 }
