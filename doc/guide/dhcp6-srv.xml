@@ -2392,11 +2392,11 @@ should include options from the isc option space:
     client is greater than the number of reserved addresses or prefixes, the
     server will try to assign all reserved addresses or prefixes to the individual
     IAs and dynamically allocate addresses or prefixes to remaining IAs. If the
-    server cannot assign any of the reserved addresses or prefixes because of the
-    conflict, the server will pick next reserved address or prefix and try to
-    assign it to the client. If the server subsequently finds that there are no
-    more reservations that can be assigned to the client at the moment, the
-    server will try to assign leases dynamically.
+    server cannot assign a reserved address or prefix because it is in use,
+    the server will select next reserved address or prefix and try to assign it to
+    the client. If the server subsequently finds that there are no more reservations
+    that can be assigned to the client at the moment, the server will try to
+    assign leases dynamically.
     </para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
