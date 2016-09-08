@@ -1,3 +1,9 @@
+1164.	[bug]		marcin
+	Corrected an issue whereby DHCPv4 server did not correctly set a
+	server identifier in response message sent to a client on BSD
+	systems.
+	(Trac #5003, git 110c67325072a781d55cf0634f8f5f3385611f97)
+
 1163.	[bug]		marcin
 	Corrected swapped DHCPSRV_MEMFILE_GET_EXPIRED{4,6} messages
 	in the Memfile lease manager.
