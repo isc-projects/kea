@@ -490,7 +490,9 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
     // On local loopback interface the ethernet header is not present.
     // Instead, there is a 4-byte long pseudo header containing the
-    // address family in the host byte order.
+    // address family in the host byte order. Note that this header
+    // is present in the received messages on OSX, but should not be
+    // included in the sent messages on OSX.
     if (iface.flag_loopback_) {
         if (buf.getLength() < BPF_LOCAL_LOOPBACK_HEADER_LEN) {
             isc_throw(SocketReadError, "packet received on local loopback"
