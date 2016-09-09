@@ -162,14 +162,13 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(socket_info.port_);
 
-    struct cmsghdr* cmsg;
-    cmsg = CMSG_FIRSTHDR(&m);
-
 // Linux systems support IP_PKTINFO option which is used to retrieve the
 // destination address of the received packet. On BSD systems IP_RECVDSTADDR
 // is used instead.
 #if defined (IP_PKTINFO) && defined (OS_LINUX)
     struct in_pktinfo* pktinfo;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
             (cmsg->cmsg_type == IP_PKTINFO)) {
@@ -192,6 +191,7 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 
 #elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
     struct in_addr* to_addr;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
 
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
