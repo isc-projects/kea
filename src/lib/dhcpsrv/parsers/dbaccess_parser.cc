@@ -83,7 +83,8 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
-        isc_throw(TypeKeywordMissing, "lease database access parameters must "
+        isc_throw(TypeKeywordMissing, (type_ == LEASE_DB ? "lease" : "host")
+                  << " database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << config_value->getPosition() << ")");
     }
