@@ -451,6 +451,7 @@ void processFileContent(const std::string& filename,
                 char* word1 = strtok(NULL, " \t\r\n\t\v");
                 prefix = word1;
             }
+            delete[] line;
         } else if (l->at(0) == '%') {
             // Start of a message.  Add the message we were processing to the
             // dictionary and clear everything apart from the file name.
