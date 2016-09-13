@@ -1,3 +1,9 @@
+1165.	[func]		marcin
+	Hostname option is returned to the client when requested using
+	Parameter Request List option. Previously this option was only
+	returned when a client has sent Hostname option to the server.
+	(Trac #5005, git 96ab8ecaa3d5b2d6cd88d0b16406f433d2cdf841)
+
 1164.	[bug]		marcin
 	Corrected an issue whereby DHCPv4 server did not correctly set a
 	server identifier in response message sent to a client on BSD
