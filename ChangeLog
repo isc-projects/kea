@@ -1,3 +1,8 @@
+1166.	[bug]		marcin
+	Corrected error message produced by the host database access
+	parser when the database type was not specified.
+	(Trac #4261, git 028dd49f4fa4843e68e23d11c237e9f4683470ba)
+
 1165.	[func]		marcin
 	Hostname option is returned to the client when requested using
 	Parameter Request List option. Previously this option was only
