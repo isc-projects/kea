@@ -35,7 +35,7 @@
     "unwarned-reclaim-cycles": 10
   },
 
-# Addresses will be assigned with valid lifetimes being 4000.
+# Addresses will be assigned with a lifetime of 4000 seconds.
   "valid-lifetime": 4000,
 
 # The following list defines subnets. We have only one subnet
@@ -50,7 +50,7 @@
 },
 
 # The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error) will will be logged to stdout.
+# informational level (info, warn, error and fatal) should be logged to stdout.
 "Logging": {
     "loggers": [
         {
