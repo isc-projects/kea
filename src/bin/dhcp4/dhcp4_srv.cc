@@ -1410,8 +1410,6 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             .arg(opt_hostname->getValue());
     }
 
-    // Hold the pointer to the context. This makes calls to the members and
-    // functions shorter in terms of the number of characters.
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
     // Hostname reservations take precedence over any other configuration,
@@ -1430,9 +1428,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             OptionUint8ArrayPtr
                 option_prl = boost::dynamic_pointer_cast<OptionUint8Array>
                 (ex.getQuery()->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-            // PRL option exists, so check if the hostname option code is
-            // included in it.
             if (option_prl) {
+                // PRL option exists, so check if the hostname option code is
+                // included in it.
                 const std::vector<uint8_t>&
                     requested_opts = option_prl->getValues();
                 if (std::find(requested_opts.begin(), requested_opts.end(),
