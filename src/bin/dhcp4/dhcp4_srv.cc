@@ -1400,17 +1400,76 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // Fetch D2 configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
 
-    // Do nothing if the DNS updates are disabled.
-    if (!d2_mgr.ddnsEnabled()) {
-        return;
-    }
-
-    D2ClientConfig::ReplaceClientNameMode replace_name_mode =
-            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
-
     // Obtain the Hostname option from the client's message.
     OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
         (ex.getQuery()->getOption(DHO_HOST_NAME));
+
+    if (opt_hostname) {
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
+            .arg(ex.getQuery()->getLabel())
+            .arg(opt_hostname->getValue());
+    }
+
+    AllocEngine::ClientContext4Ptr ctx = ex.getContext();
+
+    // Hostname reservations take precedence over any other configuration,
+    // i.e. DDNS configuration.
+    if (ctx->host_ && !ctx->host_->getHostname().empty()) {
+        // In order to send a reserved hostname value we expect that at least
+        // one of the following is the case: the client has sent us a hostname
+        // option, or the client has sent Parameter Request List option with
+        // the hostname option code included.
+
+        // It is going to be less expensive to first check the presence of the
+        // hostname option.
+        bool should_send_hostname = static_cast<bool>(opt_hostname);
+        // Hostname option is not present, so we have to check PRL option.
+        if (!should_send_hostname) {
+            OptionUint8ArrayPtr
+                option_prl = boost::dynamic_pointer_cast<OptionUint8Array>
+                (ex.getQuery()->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+            if (option_prl) {
+                // PRL option exists, so check if the hostname option code is
+                // included in it.
+                const std::vector<uint8_t>&
+                    requested_opts = option_prl->getValues();
+                if (std::find(requested_opts.begin(), requested_opts.end(),
+                              DHO_HOST_NAME) != requested_opts.end()) {
+                    // Client has requested hostname via Parameter Request
+                    // List option.
+                    should_send_hostname = true;
+                }
+            }
+        }
+
+        // If the hostname or PRL option indicates that the server should
+        // send back a hostname option, send this option with a reserved
+        // name for this client.
+        if (should_send_hostname) {
+            const std::string& hostname = d2_mgr.qualifyName(ctx->host_->getHostname(),
+                                                             false);
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
+                      DHCP4_RESERVED_HOSTNAME_ASSIGNED)
+                .arg(ex.getQuery()->getLabel())
+                .arg(hostname);
+            OptionStringPtr opt_hostname_resp(new OptionString(Option::V4,
+                                                               DHO_HOST_NAME,
+                                                               hostname));
+            ex.getResponse()->addOption(opt_hostname_resp);
+
+            // We're done here.
+            return;
+        }
+    }
+
+    // There is no reservation for this client or the client hasn't requested
+    // hostname option. There is still a possibility that we'll have to send
+    // hostname option to this client if the client has included hostname option
+    // but there is no reservation, or the configuration of the server requires
+    // that we send the option regardless.
+
+    D2ClientConfig::ReplaceClientNameMode replace_name_mode =
+            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
 
     // If we don't have a hostname then either we'll supply it or do nothing.
     if (!opt_hostname) {
@@ -1459,14 +1518,10 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // By checking the number of labels present in the hostname we may infer
     // whether client has sent the fully qualified or unqualified hostname.
 
-    // If there is a hostname reservation for this client, use it.
-    if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
-                                                       false));
 
-    } else if ((replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
-               replace_name_mode == D2ClientConfig::RCM_WHEN_PRESENT)
-               || label_count < 2) {
+    if ((replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
+         replace_name_mode == D2ClientConfig::RCM_WHEN_PRESENT)
+        || label_count < 2) {
         // Set to root domain to signal later on that we should replace it.
         // DHO_HOST_NAME is a string option which cannot be empty.
         /// @todo We may want to reconsider whether it is appropriate for the
