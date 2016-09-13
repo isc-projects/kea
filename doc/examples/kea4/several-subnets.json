@@ -18,9 +18,9 @@
     "type": "memfile"
   },
 
-# Addresses will be assigned with the valid lifetimes being 4000.
-# Client is told to start renewing after 1000 seconds. If the server
-# does not respond after 2000 seconds since the lease was granted, client
+# Addresses will be assigned with a lifetime of 4000 seconds.
+# The client is told to start renewing after 1000 seconds. If the server
+# does not respond within 2000 seconds of the lease being granted, client
 # is supposed to start REBIND procedure (emergency renewal that allows
 # switching to a different server).
   "valid-lifetime": 4000,
@@ -39,7 +39,7 @@
 },
 
 # The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error) will will be logged to stdout.
+# informational level (info, warn, error and fatal) should be logged to stdout.
 "Logging": {
     "loggers": [
         {
