@@ -195,18 +195,16 @@ Debian and Ubuntu:
         </note>
 
         <para>
-          The latest development code (together with temporary experiments
-          and un-reviewed code) is available via the Kea code revision
-          control system. This is powered by Git and all the Kea
-          development is public.
-          The leading development is done in the <quote>master</quote>
+          The latest development code is available on Github (see
+          <ulink url="https://github.com/isc-projects/kea"/>). The Kea development
+          is public and the leading development is done in the <quote>master</quote>
           branch.
         </para>
         <para>
           The code can be checked out from
-          <filename>git://git.kea.isc.org/kea</filename>:
+          <filename>https://github.com/isc-projects/kea.git</filename>:
 
-        <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput></screen>
+        <screen>$ <userinput>git clone https://github.com/isc-projects/kea.git</userinput></screen>
         </para>
 
         <para>
@@ -221,6 +219,20 @@ Debian and Ubuntu:
           <command>autoheader</command>,
           <command>automake</command>,
           and related commands.
+        </para>
+
+        <para>
+          The write access to Kea repository is only granted to ISC staff. If you
+          are a developer planning to contribute to Kea, please fork our Github
+          repository and use the "pull request" mechanism to request integration of
+          your code into our repository. Please consult
+          <ulink url="https://help.github.com/articles/fork-a-repo/"/> for help
+          how to fork a Github repository.
+          <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">
+          Kea Developer's Guide</ulink> contains information and guidelines for
+          the contributors about the process of integrating the code via
+          pull requests. It also contains the requirements for the contributed
+          code to be accepted by ISC.
         </para>
 
       </section>
