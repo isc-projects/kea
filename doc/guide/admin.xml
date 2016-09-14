@@ -203,7 +203,7 @@
               <entry>Host Reservations</entry>
               <entry>no</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
               <entry>no</entry>
             </row>
 
@@ -211,7 +211,7 @@
               <entry>Options defined on per host basis</entry>
               <entry>no</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
               <entry>no</entry>
             </row>
 
