@@ -29,13 +29,12 @@
       <title>Supported Platforms</title>
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
-	CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	other platforms: builds have been tested on (in no particular order)
-        Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
-        Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
-        MacOS 10.6 and 10.7, and OpenBSD 5.1. Non supported systems
-	(especially non-Linux) are likely to have issues with directly
-	connected DHCPv4 clients.
+	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
+	    other platforms: builds have been tested on (in no particular order)
+        Red Hat Enteprise Linux 6.4, Debian GNU/Linux 7, Ubuntu 12.04,
+        Ubuntu 14.04, Ubuntu 16.04, Fedora Linux 19, Fedora 20, Fedora 22,
+        CentOS Linux 7, NetBSD 6, FreeBSD 10.3, OpenBSD 5.7, OpenBSD 6.0,
+        OS X 10.10, OS X 10.11.
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
@@ -59,9 +58,10 @@
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
         crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
-        version 1.8 or later. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>).
-        It requires a version with SHA-2 support.
+        version 1.8, 1.9 or 1.10. As an alternative to Botan, Kea can use the
+        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
+        version 1.0.*. Support for later versions of Botan and OpenSSL will
+        be added with later releases of Kea.
             </simpara>
         </listitem>
 
@@ -91,9 +91,9 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a CQL database, Kea requires CQL
-    headers and libraries. This is an optional dependency in that Kea can be
-    built without CQL support.
+	In order to store lease information in a Cassandra  database (CQL), Kea
+    requires Cassandra headers and libraries. This is an optional dependency
+    in that Kea can be built without Cassandra support.
             </simpara>
         </listitem>
       </itemizedlist>
