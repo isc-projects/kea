@@ -1,3 +1,10 @@
+1170.	[doc]		marcin
+	Updated Kea Administrator's Reference Manual sections
+	regarding host reservations. Added configuration examples
+	for using host reservations with MySQL and PostgreSQL
+	databases.
+	(Trac #3684, git 71d21eac51d20ff5d368b17c437abc45c955a04c)
+
 1169.	[doc]		marcin
 	Updated Kea Administrator Reference Manual to explain the
 	implications of using "kea_verbose" parameter in the keactrl
