@@ -1,3 +1,7 @@
+1167.	[func]		marcin
+	DHCP servers utilize client classes defined in host reservations.
+	(Trac #4765, git 242fbc47b31da404e57be458ac065f811084cca9)
+
 1166.	[bug]		marcin
 	Corrected error message produced by the host database access
 	parser when the database type was not specified.
