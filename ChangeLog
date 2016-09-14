@@ -1,3 +1,9 @@
+1169.	[doc]		marcin
+	Updated Kea Administrator Reference Manual to explain the
+	implications of using "kea_verbose" parameter in the keactrl
+	configuration.
+	(Trac #3950, git c5f4920fd1994882e1fae398ae29b455401296bd)
+
 1168.	[doc]		marcin
 	Corrected location of the Kea repository in the Kea Administrator
 	Reference Manual.
