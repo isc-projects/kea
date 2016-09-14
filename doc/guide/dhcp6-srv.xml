@@ -2634,8 +2634,8 @@ should include options from the isc option space:
             <userinput>
             "client-classes": [ "reserved-class1", "reserved-class2" ]
             </userinput>
-         } ]"
-     } ]"
+         } ]
+     } ]
  }
 
 </screen>
