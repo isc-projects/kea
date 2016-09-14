@@ -106,9 +106,7 @@
             <listitem>
                 <para>Boost build-time headers
           (<ulink url="http://www.boost.org/"/>).
-          At least Boost version 1.35 is required.
-  <!-- TODO: we don't check for this version -->
-  <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+          At least Boost version 1.41 is required.
           When header-only Boost error code is not available or wanted, the
           Boost system library is required too.
         </para>
@@ -116,7 +114,7 @@
 
             <listitem>
         <para>
-          Botan (at least version 1.8) or OpenSSL.</para>
+          Botan (version 1.8, 1.9 or 1.10) or OpenSSL (versions 1.0.*).</para>
           </listitem>
 
           <listitem>
@@ -134,18 +132,55 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          A C++ compiler and
-          standard development headers.
-          Kea builds have been tested with GCC g++ 3.4.3, 4.1.2,
-          4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
+          A C++ compiler and standard development headers.
+          Kea 1.1.0 builds have been tested with GCC g++ 4.2.1,
+          4.4.7, 4.6.3, 4.8.3, 4.8.4, 4.8.5, 5.4.0; Clang++ 3.4.1;
+          and Apple Clang++ 703.0.31.
 	  <!-- @todo update this list -->
         </para>
         </listitem>
 
         <listitem>
         <para>
-          The development tools "make".
+          The development tools: automake, libtool, pkg-config.
         </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          MySQL client development libraries, when using --with-dhcp-mysql
+          configuration flag to build the Kea MySQL database backend.
+          In this case an instance of the MySQL server running
+          locally or on some other machine, reachable over the network
+          from the machine running Kea, is required. Though, running
+          unit tests requires that the MySQL server is local.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          PostgreSQL client development libraries, when using
+          --with-dhcp-pgsql configuration flag to build the Kea PostgreSQL
+          database backend. In this case an instance of the PostgreSQL
+          server running locally or on some other machine, reachable over
+          the network from the machine running Kea, is required. Though,
+          running unit tests requires that the PostgreSQL server is
+          local.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          googletest (version 1.6 or later), when using --with-gtest configuration option.
+        </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            Documentation generating tools: elinks, docbook-xsl, libxslt and Doxygen,
+            when generating documentation using --enable-generate-docs configuration
+            option.
+          </para>
         </listitem>
 
         </itemizedlist>
