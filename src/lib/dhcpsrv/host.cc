@@ -347,6 +347,7 @@ Host::addClientClass4(const std::string& class_name) {
     addClientClassInternal(dhcp4_client_classes_, class_name);
 }
 
+
 void
 Host::addClientClass6(const std::string& class_name) {
     addClientClassInternal(dhcp6_client_classes_, class_name);

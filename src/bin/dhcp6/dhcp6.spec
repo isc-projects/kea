@@ -604,6 +604,21 @@
                             "item_optional": false,
                             "item_default": ""
                         }
+                      },
+                      {
+                        "item_name": "client-classes",
+                        "item_type": "list",
+                        "item_optional": true,
+                        "item_default": [],
+                        "item_description": "list of reserved classes for a client",
+                        "list_item_spec":
+                        {
+                          "item_name": "client-class",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": "",
+                          "item_description": "one of the classes reserved for a client"
+                        }
                       } ]
                   }
                 },
