@@ -73,10 +73,17 @@
     },
 # This one doesn't have any client-class specified, so everyone
 # is allowed in. The normal subnet selection rules still apply,
-# though.      
+# though. There is also a static class reservation for a client
+# using MAC address 1a:1b:1c:1d:1e:1f. This client will always
+# be assigned to this class.
     {
         "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
         "subnet": "192.0.3.0/24",
+        "reservations": [
+        {
+            "hw-address": "1a:1b:1c:1d:1e:1f",
+            "client-classes": [ "VoIP" ]
+        } ],
         "interface": "ethX"
     }
   ]

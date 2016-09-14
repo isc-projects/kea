@@ -67,6 +67,8 @@
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <stdlib.h>
 #include <time.h>
@@ -2273,6 +2275,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(solicit, ctx);
+    setReservedClientClasses(solicit, ctx);
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2318,6 +2321,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(request, ctx);
+    setReservedClientClasses(request, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
@@ -2344,6 +2348,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(renew, ctx);
+    setReservedClientClasses(renew, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
@@ -2370,6 +2375,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(rebind, ctx);
+    setReservedClientClasses(rebind, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
@@ -2396,6 +2402,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(confirm, ctx);
+    setReservedClientClasses(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
@@ -2488,6 +2495,7 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(release, ctx);
+    setReservedClientClasses(release, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
@@ -2516,6 +2524,7 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(decline, ctx);
+    setReservedClientClasses(decline, ctx);
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
@@ -2796,6 +2805,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(inf_request, ctx);
+    setReservedClientClasses(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
@@ -2907,11 +2917,24 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
                 .arg("get exception?");
         }
     }
+}
 
+void
+Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
+                                    const AllocEngine::ClientContext6& ctx) {
+    if (ctx.host_ && pkt) {
+        BOOST_FOREACH(const std::string& client_class,
+                      ctx.host_->getClientClasses6()) {
+            pkt->addClass(client_class);
+        }
+    }
+
+    const ClientClasses& classes = pkt->getClasses();
     if (!classes.empty()) {
+        std::string joined_classes = boost::algorithm::join(classes, ", ");
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
-            .arg(classes);
+            .arg(joined_classes);
     }
 }
 

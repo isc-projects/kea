@@ -154,6 +154,9 @@ private:
     /// host-reservation-identifiers
     void setHostIdentifiers();
 
+    /// @brief Assigns classes retrieved from host reservation database.
+    void setReservedClientClasses();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.
@@ -804,8 +807,7 @@ private:
     /// @note This is the first part of @ref classifyPacket
     ///
     /// @param pkt packet to be classified
-    /// @param classes a reference to added class names for logging
-    void classifyByVendor(const Pkt4Ptr& pkt, std::string& classes);
+    void classifyByVendor(const Pkt4Ptr& pkt);
 
     /// @private
     /// @brief Constructs netmask option based on subnet4

@@ -300,6 +300,29 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 }
 
+// This test verifies that it is possible to specify DHCPv4 client classes
+// within the host reservation.
+TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"client-classes\": [ \"foo\", \"bar\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
+
+    ASSERT_EQ(1, hosts.size());
+
+    const ClientClasses& classes = hosts[0]->getClientClasses4();
+    ASSERT_EQ(2, classes.size());
+    EXPECT_EQ(1, classes.count("foo"));
+    EXPECT_EQ(1, classes.count("bar"));
+}
+
 // This test verifies that the parser can parse reservation entry
 // containing next-server, server-hostname and boot-file-name values for
 // DHCPv4 message fields.
@@ -627,6 +650,29 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
 }
 
+// This test verifies that it is possible to specify DHCPv4 client classes
+// within the host reservation.
+TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"client-classes\": [ \"foo\", \"bar\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
+    ASSERT_EQ(1, hosts.size());
+
+    const ClientClasses& classes = hosts[0]->getClientClasses6();
+    ASSERT_EQ(2, classes.size());
+    EXPECT_EQ(1, classes.count("foo"));
+    EXPECT_EQ(1, classes.count("bar"));
+}
 
 // This test verifies that the configuration parser throws an exception
 // when IPv4 address is specified for IPv6 reservation.

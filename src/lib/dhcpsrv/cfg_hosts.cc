@@ -580,7 +580,9 @@ CfgHosts::add4(const HostPtr& host) {
         host->getServerHostname().empty() &&
         host->getBootFileName().empty() &&
         host->getCfgOption4()->empty() &&
-        host->getCfgOption6()->empty()) {
+        host->getCfgOption6()->empty() &&
+        host->getClientClasses4().empty() &&
+        host->getClientClasses6().empty()) {
         std::ostringstream s;
         if (hwaddr) {
             s << "for DUID: " << hwaddr->toText();

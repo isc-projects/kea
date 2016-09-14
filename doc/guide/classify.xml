@@ -94,6 +94,14 @@
       </note>
   </section>
 
+  <section id="classification-using-host-reservations">
+    <title>Using Static Host Reservations In Classification</title>
+    <para>Classes can be statically assigned to the clients using techniques described
+    in <xref linkend="reservation4-client-classes"/> and
+    <xref linkend="reservation6-client-classes"/>.
+    </para>
+  </section>
+
   <section id="classification-using-vendor">
     <title>Using Vendor Class Information In Classification</title>
       <para>

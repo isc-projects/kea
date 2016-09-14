@@ -561,7 +561,7 @@ Dhcp6Client::doConfirm() {
     // Set the global status code to default: success and not received.
     config_.resetGlobalStatusCode();
     if (context_.response_) {
-        config_.resetGlobalStatusCode();
+        config_.options_.clear();
         applyRcvdConfiguration(context_.response_);
     }
 }

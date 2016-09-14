@@ -58,9 +58,17 @@
         "client-class": "cable-modems",
         "interface": "ethX"
     },
+# The following subnet contains a class reservation for a client using
+# DUID 01:02:03:04:05:0A:0B:0C:0D:0E. This client will always be assigned
+# to this class.
     {
         "pools": [ { "pool": "2001:db8:2::/80" } ],
         "subnet": "2001:db8:2::/64",
+        "reservations": [
+        {
+            "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+            "client-classes": [ "cable-modems" ]
+        } ],
         "interface": "ethX"
     }
   ]

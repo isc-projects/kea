@@ -24,7 +24,7 @@ namespace {
 /// @brief Set of JSON configurations used throughout the classify tests.
 ///
 /// - Configuration 0:
-///   - Used for testing direct traffic
+///   - Used for testing dynamic assignment of client classes
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - the following classes defined:
@@ -32,6 +32,17 @@ namespace {
 ///     option[93].hex == 0x0007, set server-hostname to deneb
 ///     option[93].hex == 0x0006, set boot-file-name to pxelinux.0
 ///     option[93].hex == 0x0001, set boot-file-name to ipxe.efi
+///
+/// - Configuration 1:
+///   - Used for testing reservations of client classes for a client
+///   - The following classes are defined:
+///     - 'pxe', next-server set to 1.2.3.4, assigned dynamically
+///     - 'reserved-class1', routers set to 10.0.0.200, reserved for a
+///        host using HW address 'aa:bb:cc:dd:ee:ff'
+///     - 'reserved-class2', domain-name-servers set to 10.0.0.201,
+///        also reserved for the host using HW address
+///        'aa:bb:cc:dd:ee:ff'
+///   - Subnet of 10.0.0.0/24 with a single address pool
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -65,8 +76,50 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
         " } ]"
-    "}"
+    "}",
 
+    // Configuration 1
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"pxe\","
+        "   \"test\": \"option[93].hex == 0x0009\","
+        "   \"next-server\": \"1.2.3.4\""
+        "},"
+        "{"
+        "   \"name\": \"reserved-class1\","
+        "   \"option-data\": ["
+        "   {"
+        "       \"name\": \"routers\","
+        "       \"data\": \"10.0.0.200\""
+        "   }"
+        "   ]"
+        "},"
+        "{"
+        "   \"name\": \"reserved-class2\","
+        "   \"option-data\": ["
+        "   {"
+        "       \"name\": \"domain-name-servers\","
+        "       \"data\": \"10.0.0.201\""
+        "   }"
+        "   ]"
+        "}"
+        "],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "    {"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "        \"client-classes\": [ \"reserved-class1\", \"reserved-class2\" ]"
+        "    }"
+        "    ]"
+        " } ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing classification.
@@ -265,6 +318,63 @@ TEST_F(ClassifyTest, fixedFieldsInformFile2) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
     testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
+}
+
+// This test checks that it is possible to specify static reservations for
+// client classes.
+TEST_F(ClassifyTest, clientClassesInHostReservations) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Initially, the client uses hardware address for which there are
+    // no reservations.
+    client.setHWAddress("aa:bb:cc:dd:ee:fe");
+    // DNS servers have to be requested to be returned.
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Add option 93 that matches 'pxe' class in the configuration.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client.addExtraOption(pxe);
+
+    // Configure DHCP server.
+    configure(CONFIGS[1], *client.getServer());
+
+    // Perform 4-way exchange. The client's HW address doesn't match the
+    // reservations, so we expect that only 'pxe' class will be matched.
+    ASSERT_NO_THROW(client.doDORA());
+
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+
+    // 'pxe' class matches so the siaddr should be set appropriately.
+    EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
+    // This client has no reservations for the classes associated with
+    // DNS servers and Routers options.
+    EXPECT_EQ(0, client.config_.routers_.size());
+    EXPECT_EQ(0, client.config_.dns_servers_.size());
+
+    // Modify HW address to match the reservations.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    ASSERT_NO_THROW(client.doDORA());
+
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+
+    // This time, the client matches 3 classes (for two it has reservations).
+    EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
+    EXPECT_EQ(1, client.config_.routers_.size());
+    EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
+    EXPECT_EQ(1, client.config_.dns_servers_.size());
+    EXPECT_EQ("10.0.0.201", client.config_.dns_servers_[0].toText());
+
+    // This should also work for DHCPINFORM case.
+    ASSERT_NO_THROW(client.doInform());
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+
+    EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
+    EXPECT_EQ(1, client.config_.routers_.size());
+    EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
+    EXPECT_EQ(1, client.config_.dns_servers_.size());
+    EXPECT_EQ("10.0.0.201", client.config_.dns_servers_[0].toText());
 }
 
 
