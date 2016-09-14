@@ -450,6 +450,19 @@
 
         </para>
 
+        <note>
+          <para>
+            The keactrl tool, described in <xref linkend="keactrl"/>, can be
+            configured to start the servers in the verbose mode. If this is
+            the case, the settings of the logging severity in the configuration
+            file will have no effect, i.e. the servers will use logging severity
+            of DEBUG regardless of the logging settings specified in the configuration
+            file. If you need to control severity via configuration file, please
+            make sure that the <parameter>kea_verbose</parameter> value is set to
+            "no" within the keactrl configuration.
+          </para>
+        </note>
+
         </section>
 
         <section>
