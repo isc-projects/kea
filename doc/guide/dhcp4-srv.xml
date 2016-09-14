@@ -479,7 +479,7 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 
 <section>
-  <title id="hosts4-storage">Hosts Storage</title>
+  <title id="hosts-storage4">Hosts Storage</title>
 
     <para>Kea is also able to store information about host reservations in the
     database. The hosts database configuration uses the same syntax as the lease
@@ -2580,7 +2580,7 @@ It is merely echoed by the server
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
   <section id="host-reservation-v4">
-    <title>Host reservation in DHCPv4</title>
+    <title>Host Reservation in DHCPv4</title>
 
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve specific, static
@@ -2595,9 +2595,7 @@ It is merely echoed by the server
 
     <para>Another example when the host reservations are applicable is when a host
     that has specific requirements, e.g. a printer that needs additional DHCP options.
-    Yet another possible use case is to define unique names for hosts. Although not all
-    of the presented use cases are implemented yet, Kea software will support them in the
-    near future.</para>
+    Yet another possible use case is to define unique names for hosts.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
     has to be identified by an identifier, for example hardware/MAC address. There is an optional
@@ -2605,9 +2603,10 @@ It is merely echoed by the server
     element. Each element in that array is a structure, that holds information
     about reservations for a single host. In particular, such a structure has
     to have an identifier that uniquely identifies a host.  In DHCPv4 context, such an
-    identifier is a hardware or MAC address.  In most cases an address
-    will be specified. It is also possible to specify a hostname or host
-    specific options. Additional capabilities are planned.</para>
+    identifier is usually a hardware or MAC address.  In most cases an IP address
+    will be specified. It is also possible to specify a hostname, host
+    specific options or fields carried within DHCPv4 message such as siaddr,
+    sname or file.</para>
 
     <para>In Kea 1.0.0 it was only possible to create host reservations
     using client's hardware address. Host reservations by client
@@ -2677,7 +2676,7 @@ It is merely echoed by the server
     additional check incurs performance penalty.</para>
 
     <section id="reservation4-types">
-      <title>Address reservation types</title>
+      <title>Address Reservation Types</title>
 
       <para>In a typical scenario there is an IPv4 subnet defined,
       e.g. 192.0.2.0/24, with certain part of it dedicated for dynamic allocation
@@ -2696,7 +2695,7 @@ It is merely echoed by the server
     </section>
 
     <section id="reservation4-conflict">
-      <title>Conflicts in DHCPv4 reservations</title>
+      <title>Conflicts in DHCPv4 Reservations</title>
       <para>As the reservations and lease information are stored separately,
       conflicts may arise. Consider the following series of events. The server
       has configured the dynamic pool of addresses from the range of 192.0.2.10 to
@@ -2774,7 +2773,7 @@ It is merely echoed by the server
     </section>
 
     <section id="reservation4-hostname">
-      <title>Reserving a hostname</title>
+      <title>Reserving a Hostname</title>
       <para>When the reservation for a client includes the <command>hostname
       </command>, the server will return this hostname to the client in
       the Client FQDN or Hostname option. The server responds with the Client
@@ -2842,7 +2841,7 @@ It is merely echoed by the server
     </section>
 
     <section id="reservation4-options">
-      <title>Including specific DHCPv4 options in reservations</title>
+      <title>Including Specific DHCPv4 Options in Reservations</title>
       <para>Kea 1.1.0 introduced the ability to specify options on a
       per host basis. The options follow the same rules as any other
       options. These can be standard options (see <xref
@@ -2987,17 +2986,20 @@ It is merely echoed by the server
     </section>
 
     <section id="reservations4-mysql-pgsql">
-      <title>Storing host reservations in MySQL or PostgreSQL</title>
+      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
 
       <para>
-        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
-        linkend="hosts4-storage" /> for information on how to configure Kea to use
+        It is possible to store host reservations in MySQL or PostgreSQL database. See
+        <xref linkend="hosts-storage4"/> for information on how to configure Kea to use
         reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
         tools for managing reservations in a database. See Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> for detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
+
+      <note><simpara>In Kea 1.1.0 maximum length of an option specified per host is
+      arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
     <section id="reservations4-cql">
@@ -3042,7 +3044,7 @@ It is merely echoed by the server
       dynamic pool. Therefore it can skip the reservation checks when dealing
       with in-pool addresses, thus improving performance. Do not use this mode
       if any of your reservations use in-pool address. Caution is advised when
-      using this setting. Kea 0.9.1 does not sanity check the reservations against
+      using this setting. Kea 1.1.0 does not sanity check the reservations against
       <command>reservation-mode</command>. Misconfiguration may cause problems.
       </simpara></listitem>
 
@@ -3072,7 +3074,7 @@ It is merely echoed by the server
       </para>
 
       <para>Another aspect of the host reservations are different types of
-      identifiers. Currently (June 2016) Kea supports four types of identifiers
+      identifiers. Kea 1.1.0 supports four types of identifiers
       (hw-address, duid, client-id and circuit-id), but more identifier types
       are likely to be added in the future. This is beneficial from a
       usability perspective. However, there is a drawback. For each incoming
@@ -3108,7 +3110,7 @@ It is merely echoed by the server
 <para>If not specified, the default value is:
 
 <screen>
-<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id" ]</userinput>
+<userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id", "client-id" ]</userinput>
 </screen>
 <!-- see CfgHostOperations::createConfig4() in
 src/lib/dhcpsrv/cfg_host_operations.cc -->

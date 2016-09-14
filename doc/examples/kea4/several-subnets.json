@@ -10,16 +10,17 @@
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify lease type. As of May 2014, three backends are supported:
-# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
-# any prior set up.
+# We need to specify the the database used to store leases. As of
+# September 2016, four database backends are supported: MySQL,
+# PostgreSQL, Cassandra, and the in-memory database, Memfile.
+# We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
 
-# Addresses will be assigned with the valid lifetimes being 4000.
-# Client is told to start renewing after 1000 seconds. If the server
-# does not respond after 2000 seconds since the lease was granted, client
+# Addresses will be assigned with a lifetime of 4000 seconds.
+# The client is told to start renewing after 1000 seconds. If the server
+# does not respond within 2000 seconds of the lease being granted, client
 # is supposed to start REBIND procedure (emergency renewal that allows
 # switching to a different server).
   "valid-lifetime": 4000,
@@ -37,19 +38,18 @@
        "subnet": "192.0.4.0/24"  } ]
 },
 
-# The following configures logging. Kea will log all debug messages
-# to /var/log/kea-debug.log file.
+# The following configures logging. It assumes that messages with at least
+# informational level (info, warn, error and fatal) should be logged to stdout.
 "Logging": {
     "loggers": [
         {
             "name": "kea-dhcp4",
             "output_options": [
                 {
-                    "output": "/var/log/kea-debug.log"
+                    "output": "stdout"
                 }
             ],
-            "debuglevel": 99,
-            "severity": "DEBUG"
+            "severity": "INFO"
         }
     ]
 }

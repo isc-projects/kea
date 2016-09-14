@@ -2304,7 +2304,7 @@ should include options from the isc option space:
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
   <section id="host-reservation-v6">
-    <title>Host reservation in DHCPv6</title>
+    <title>Host Reservation in DHCPv6</title>
 
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve specific, static IPv6
@@ -2320,9 +2320,7 @@ should include options from the isc option space:
     <para>Another example when the host reservations are applicable is when a host
     that has specific requirements, e.g. a printer that needs additional DHCP options
     or a cable modem needs specific parameters. Yet another possible use case for
-    host reservation is to define unique names for hosts.  Although not all of
-    the presented use cases are implemented yet, Kea software will support them
-    in the near future.</para>
+    host reservation is to define unique names for hosts.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
     can be identified by either DUID or its hardware/MAC address. See
@@ -2332,9 +2330,9 @@ should include options from the isc option space:
     is a structure, that holds information about a single host. In
     particular, such a structure has to have an identifier that
     uniquely identifies a host.  In DHCPv6 context, such an identifier
-    is a hardware (MAC) address or a DUID.  Also, either one or more
-    addresses or prefixes should be specified. It is possible to
-    specify a hostname. Additional capabilities are planned.</para>
+    is usually a DUID, but can also be a hardware or MAC address.  Also,
+    either one or more addresses or prefixes may be specified. It is
+    possible to specify a hostname and DHCPv6 options for a given host.</para>
 
     <para>The following example shows how to reserve addresses and prefixes
     for specific hosts:
@@ -2358,11 +2356,11 @@ should include options from the isc option space:
             },
             {
                 "hw-address": "00:01:02:03:04:05",
-                "ip-addresses": [ "2001:db8:1::101" ]
+                "ip-addresses": [ "2001:db8:1::101, 2001:db8:1::102" ]
             },
             {
                 "duid": "01:02:03:04:05:06:07:08:09:0A",
-                "ip-addresses": [ "2001:db8:1::102" ],
+                "ip-addresses": [ "2001:db8:1::103" ],
                 "prefixes": [ "2001:db8:2:abcd::/64" ],
                 "hostname": "foo.example.com"
             }
@@ -2370,19 +2368,36 @@ should include options from the isc option space:
     }
 ]
 </screen>
-    This example makes 3 reservations. The first one reserves 2001:db8:1::100 address
-    for the client using DUID 01:02:03:04:05:0A:0B:0C:0D:0E. The second one
-    also reserves an address, but does so using MAC or hardware address, rather than
-    DUID. The third example is most advanced. It reserves an address, a prefix and
-    a hostname at the same time.
+
+    This example includes reservations for 3 different clients. First reservation
+    is made for the address 2001:db8:1::100 for a client using DUID
+    01:02:03:04:05:0A:0B:0C:0D:0E. Second reservation is made for two addresses
+    2001:db8:1::101 and 2001:db8:1::102 for a client using MAC address
+    00:01:02:03:04:05. Lastly, address 2001:db8:1::103 and prefix 2001:db8:2:abcd::/64
+    are reserved for a client using DUID 01:02:03:04:05:06:07:08:09:0A. This
+    last reservation also assigns a hostname to this client.
     </para>
 
     <para>Note that DHCPv6 allows for a single client to lease multiple addresses
-    and multiple prefixes at the same time. In the upcoming Kea releases, it will
-    be possible to have multiple addresses and prefixes reserved for a single
-    host. Therefore <command>ip-addresses</command> and <command>prefixes</command>
-    are plural and are actually arrays. As of 0.9.1 having more than one IPv6
-    address or prefix is only partially supported.</para>
+    and multiple prefixes at the same time. Therefore <command>ip-addresses</command>
+    and <command>prefixes</command> are plural and are actually arrays.
+    When the client sends multiple IA options (IA_NA or IA_PD), each reserved
+    address or prefix is assigned to individual IA of appropriate type. If
+    the number of IAs of specific type is lower than the number of reservations
+    of that type, the number of reserved addresses or prefixes assigned to the
+    client is equal to the number of IA_NAs or IA_PDs sent by the client, i.e.
+    some reserved addresses or prefixes are not assigned to the client. Though,
+    they still remain reserved for this client and the server will not assign
+    them to any other client. If the number of IAs of specific type sent by the
+    client is greater than the number of reserved addresses or prefixes, the
+    server will try to assign all reserved addresses or prefixes to the individual
+    IAs and dynamically allocate addresses or prefixes to remaining IAs. If the
+    server cannot assign a reserved address or prefix because it is in use,
+    the server will select next reserved address or prefix and try to assign it to
+    the client. If the server subsequently finds that there are no more reservations
+    that can be assigned to the client at the moment, the server will try to
+    assign leases dynamically.
+    </para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
     requires a separate host definition in each subnet it is expected to visit.
@@ -2390,8 +2405,8 @@ should include options from the isc option space:
     address in a single subnet. It is a valid configuration, if such definitions
     are specified in different subnets, though. The reservation for a given host
     should include only one identifier, either DUID or hardware address. Defining
-    both for the same host is considered a configuration error, but as of 0.9.1
-    beta, it is not rejected.
+    both for the same host is considered a configuration error, but as of 1.1.0,
+    it is not rejected.
     </para>
 
     <para>Adding host reservation incurs a performance penalty. In principle,
@@ -2416,7 +2431,7 @@ should include options from the isc option space:
       <command>in-pool reservations</command>. In contrast, those that do not
       belong to dynamic pools are called <command>out-of-pool
       reservations</command>. There is no formal difference in the reservation
-      syntax. As of 0.9.1, both reservation types are handled
+      syntax. As of Kea 1.1.0, both reservation types are handled
       uniformly. However, upcoming releases may offer improved performance if
       there are only out-of-pool reservations as the server will be able to skip
       reservation checks when dealing with existing leases. Therefore, system
@@ -2425,7 +2440,7 @@ should include options from the isc option space:
     </section>
 
     <section id="reservation6-conflict">
-      <title>Conflicts in DHCPv6 reservations</title>
+      <title>Conflicts in DHCPv6 Reservations</title>
       <para>As reservations and lease information are stored in different places,
       conflicts may arise. Consider the following series of events. The server
       has configured the dynamic pool of addresses from the range of 2001:db8::10
@@ -2655,6 +2670,9 @@ should include options from the isc option space:
         information and examples of how reservations can be inserted into the
         database.
       </para>
+
+      <note><simpara>In Kea 1.1.0 maximum length of an option specified per host is
+      arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
     <section id="reservations6-cql">
@@ -2697,7 +2715,7 @@ should include options from the isc option space:
       dynamic pool. Therefore it can skip the reservation checks when dealing
       with in-pool addresses, thus improving performance. Do not use this mode
       if any of your reservations use in-pool address. Caution is advised when
-      using this setting. Kea 0.9.1 does not sanity check the reservations against
+      using this setting. Kea 1.1.0 does not sanity check the reservations against
       <command>reservation-mode</command>. Misconfiguration may cause problems.
       </simpara></listitem>
 
@@ -2727,7 +2745,7 @@ should include options from the isc option space:
       </para>
 
       <para>Another aspect of the host reservations are different types of
-      identifiers. Currently (June 2016) Kea supports two types of identifiers
+      identifiers. Kea 1.1.0 supports two types of identifiers
       in DHCPv6: hw-address and duid, but more identifier types
       are likely to be added in the future. This is beneficial from a
       usability perspective. However, there is a drawback. For each incoming
