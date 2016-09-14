@@ -24,7 +24,7 @@ namespace {
 /// @brief Set of JSON configurations used throughout the classify tests.
 ///
 /// - Configuration 0:
-///   - Used for testing direct traffic
+///   - Used for testing dynamic assignment of client classes
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - the following classes defined:
@@ -32,6 +32,17 @@ namespace {
 ///     option[93].hex == 0x0007, set server-hostname to deneb
 ///     option[93].hex == 0x0006, set boot-file-name to pxelinux.0
 ///     option[93].hex == 0x0001, set boot-file-name to ipxe.efi
+///
+/// - Configuration 1:
+///   - Used for testing reservations of client classes for a client
+///   - The following classes are defined:
+///     - 'pxe', next-server set to 1.2.3.4, assigned dynamically
+///     - 'reserved-class1', routers set to 10.0.0.200, reserved for a
+///        host using HW address 'aa:bb:cc:dd:ee:ff'
+///     - 'reserved-class2', domain-name-servers set to 10.0.0.201,
+///        also reserved for the host using HW address
+///        'aa:bb:cc:dd:ee:ff'
+///   - Subnet of 10.0.0.0/24 with a single address pool
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"

@@ -2636,7 +2636,7 @@ should include options from the isc option space:
             </userinput>
          } ]"
      } ]"
- }"
+ }
 
 </screen>
     <para>Static class assignments, as shown above, can be used in conjuction
