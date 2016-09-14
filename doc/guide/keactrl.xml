@@ -118,7 +118,13 @@ kea_verbose=no
         The <parameter>kea_verbose</parameter> parameter specifies the verbosity
         of the servers being started. When <parameter>kea_verbose</parameter>
         is set to "yes" the logging level of the server is set to DEBUG.
-        Otherwise, the default logging level is used.
+        Modification of the logging severity in a configuration file, as
+        described in <xref linkend="logging"/>, will have no effect as long
+        as the <parameter>kea_verbose</parameter> is set to "yes". Setting
+        it to "no" will cause the server to use the logging levels specified
+        in the Kea configuration file for respective loggers. If no
+        logging configuration is specified, the default settings will be
+        used.
       </para>
 
       <note>
