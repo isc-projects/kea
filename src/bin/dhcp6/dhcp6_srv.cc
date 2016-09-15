@@ -1196,9 +1196,15 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
 }
 
 void
-Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
-    // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!CfgMgr::instance().ddnsEnabled()) {
+Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
+                                    AllocEngine::ClientContext6& ctx) {
+    // Don't create NameChangeRequests if DNS updates are disabled
+    // or if no requests are actually required.  The context flags may be
+    // different than the lease flags. Primarily when existing leases
+    // are being extended without FQDN changes in which case the context
+    // flags will both be false.
+    if ((!CfgMgr::instance().ddnsEnabled()) ||
+       (!ctx.fwd_dns_update_ && !ctx.rev_dns_update_)) {
         return;
     }
 
@@ -2304,7 +2310,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Only generate name change requests if sending a Reply as a result
     // of receiving Rapid Commit option.
     if (response->getType() == DHCPV6_REPLY) {
-        createNameChangeRequests(response);
+        createNameChangeRequests(response, ctx);
     }
 
     return (response);
@@ -2331,7 +2337,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(reply);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
@@ -2357,7 +2363,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(reply);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
@@ -2383,7 +2389,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(rebind);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
