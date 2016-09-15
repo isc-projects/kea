@@ -77,15 +77,15 @@ CREATE TABLE lease6_types (
     name VARCHAR(5)                             # Name of the lease type
     ) ENGINE = INNODB;
 START TRANSACTION;
-INSERT INTO lease6_types VALUES (0, "IA_NA");   # Non-temporary v6 addresses
-INSERT INTO lease6_types VALUES (1, "IA_TA");   # Temporary v6 addresses
-INSERT INTO lease6_types VALUES (2, "IA_PD");   # Prefix delegations
+INSERT INTO lease6_types VALUES (0, 'IA_NA');   # Non-temporary v6 addresses
+INSERT INTO lease6_types VALUES (1, 'IA_TA');   # Temporary v6 addresses
+INSERT INTO lease6_types VALUES (2, 'IA_PD');   # Prefix delegations
 COMMIT;
 
 # Finally, the version of the schema.  We start at 0.1 during development.
 # This table is only modified during schema upgrades.  For historical reasons
 # (related to the names of the columns in the BIND 10 DNS database file), the
-# first column is called "version" and not "major".
+# first column is called 'version' and not 'major'.
 # Note: This MUST be kept in step with src/share/database/scripts/mysql/dhcpdb_create.mysql,
 # which defines the schema for the unit tests.
 CREATE TABLE schema_version (
