@@ -364,8 +364,12 @@ public:
         }
 
         if (create_ncr_check) {
+            // Context flags are normally set during lease allocation. Since that
+            // hasn't occurred we'll set them here to match the expected values.
             // Call createNameChangeRequests
-            ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+            ctx.fwd_dns_update_ =  exp_fwd.value_;
+            ctx.rev_dns_update_ = exp_rev.value_;
+            ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
             if (exp_fwd.value_ || exp_rev.value_) {
                 // Should have created 1 NCR.
                 NameChangeRequestPtr ncr;
@@ -697,7 +701,9 @@ TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
     Pkt6Ptr answer;
 
-    EXPECT_THROW(srv_->createNameChangeRequests(answer),
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx),
                  isc::Unexpected);
 
 }
@@ -711,7 +717,9 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoDUID) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    EXPECT_THROW(srv_->createNameChangeRequests(answer), isc::Unexpected);
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx), isc::Unexpected);
 
 }
 
@@ -721,7 +729,9 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoFQDN) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 
     // There should be no new NameChangeRequests.
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
@@ -738,8 +748,9 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
                                                  "myhost.example.com",
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
-
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 
     // We didn't add any IAs, so there should be no NameChangeRequests in the
     // queue.
@@ -747,7 +758,9 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
 }
 
 // Test that exactly one NameChangeRequest is created as a result of processing
-// the answer message which holds 3 IAs and when FQDN is specified.
+// the answer message which holds 3 IAs and when FQDN is specified.  We also
+// verify that the context flags, fwd_dns_update_ and rev_dns_update_, gate
+// whether or not a NameChangeRequest is created.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
@@ -766,7 +779,9 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     answer->addOption(fqdn);
 
     // Create NameChangeRequest for the first allocated address.
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
     // Verify that NameChangeRequest is correct.
@@ -776,6 +791,32 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
 
+    // If context flags are false we should not create the NCR.
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = false;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+
+    // If only the forward flag is true, we create the NCR.
+    ctx.fwd_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 500);
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+
+    // If only the reverse flag is true, we create the NCR.
+    ctx.fwd_dns_update_ = false;
+    ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 500);
 }
 
 // Checks that NameChangeRequests to add entries are not
@@ -799,9 +840,10 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
     answer->addOption(fqdn);
 
     // An attempt to send a NCR would throw.
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+    AllocEngine::ClientContext6 ctx;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 }
-
 
 // Test creation of the NameChangeRequest to remove both forward and reverse
 // mapping for the given lease.
@@ -918,20 +960,26 @@ TEST_F(FqdnDhcpv6SrvTest, processSolicit) {
 // a different domain-name. Server should use existing lease for the second
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
-/// @todo: Fix will be available on trac3677
-TEST_F(FqdnDhcpv6SrvTest, DISABLED_processTwoRequests) {
+TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
+
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_ + lease_->valid_lft_, 4000);
+                            0, 4000);
+
 
     // Client may send another request message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
@@ -947,13 +995,45 @@ TEST_F(FqdnDhcpv6SrvTest, DISABLED_processTwoRequests) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, 4000);
 
+}
+
+// Test that client may send two requests, each carrying FQDN option with
+// the same domain-name. Server should use existing lease for the second
+// request and not modify the DNS entries.
+TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
+    // Create a Request message with FQDN option and generate server's
+    // response using processRequest function. This will result in the
+    // creation of a new lease and the appropriate NameChangeRequest
+    // to add both reverse and forward mapping to DNS.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.");
+
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+
+
+    // Client may send another request message with a same domain-name. In this
+    // case the same lease will be returned. The existing DNS entry should be
+    // left alone, so we expect no NameChangeRequests queued..
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequest is not generated when Solicit message is sent.
@@ -992,13 +1072,18 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
 // DNS entry added previously when Request was processed, another one to
 // add a new entry for the FQDN held in the Renew.
 /// @todo: Fix will be available on trac3677
-TEST_F(FqdnDhcpv6SrvTest, DISABLED_processRequestRenew) {
+TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -1020,13 +1105,42 @@ TEST_F(FqdnDhcpv6SrvTest, DISABLED_processRequestRenew) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, 4000);
 
+}
+
+// Test that client may send Request followed by the Renew, both holding
+// FQDN options, but each option holding different domain-name. The Renew
+// should result in generation of the two NameChangeRequests, one to remove
+// DNS entry added previously when Request was processed, another one to
+// add a new entry for the FQDN held in the Renew.
+TEST_F(FqdnDhcpv6SrvTest, processRequestRenewSameFqdn) {
+    // Create a Request message with FQDN option and generate server's
+    // response using processRequest function. This will result in the
+    // creation of a new lease and the appropriate NameChangeRequest
+    // to add both reverse and forward mapping to DNS.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+
+    // Client may send Renew message with a same domain-name. In this
+    // case the same lease will be returned. No DNS updates should be
+    // required, so the NCR queue should be empty.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "myhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {

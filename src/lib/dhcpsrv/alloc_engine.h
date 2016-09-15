@@ -856,6 +856,11 @@ private:
     /// - client's last transmission time (cltt), if the lease to be returned
     ///   to the client should have its lifetime extended,
     /// - FQDN data, when the client has negotiated new FQDN with the server.
+    /// - If the FQDN data has not changed, the DNS update flags in the
+    ///   context, fwd_dns_update_ and rev_dns_update_, are set false. This
+    ///   should indicate to callers that DDNS updates should not be done.
+    ///   The lease flags are left intact to indicate their state when the
+    ///   lease was assigned.
     ///
     /// @param ctx IPv6 client context (old versions of the leases that had
     ///            FQDN data changed will be stored in ctx.changed_leases_,
@@ -883,6 +888,11 @@ private:
     /// or lease6_rebind hooks (depending on the client's message specified in
     /// ctx.query). The lease will be extended in LeaseMgr, unless the hooks
     /// library will set the skip flag.
+    /// If the FQDN data has not changed, the DNS update flags in the
+    /// context, fwd_dns_update_ and rev_dns_update_, are set false. This
+    /// should indicate to callers that DDNS updates should not be done.
+    /// The lease flags are left intact to indicate their state when the
+    /// lease was assigned.
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
