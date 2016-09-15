@@ -109,6 +109,9 @@ We have received the following contributions:
  - Michal Humpula
    2016-07: Response to DHCPINFORM is sent to port 68
 
+ - Andreas Rammhold
+   2016-09: Compilation fixes for GCC 6, using C++14.
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
