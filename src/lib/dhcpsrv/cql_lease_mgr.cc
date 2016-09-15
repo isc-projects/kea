@@ -1954,7 +1954,7 @@ CqlLeaseMgr::getVersion() const {
     cass_future_free(future);
     cass_statement_free(statement);
 
-    return make_pair(version, minor);
+    return (make_pair(version, minor));
 }
 
 void
