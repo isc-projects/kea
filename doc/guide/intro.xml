@@ -61,7 +61,7 @@
         version 1.8, 1.9 or 1.10. As an alternative to Botan, Kea can use the
         OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
         version 1.0.*. Support for later versions of Botan and OpenSSL will
-        be added with later releases of Kea.
+        be added in future releases of Kea.
             </simpara>
         </listitem>
 
