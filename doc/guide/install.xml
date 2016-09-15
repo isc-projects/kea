@@ -148,24 +148,24 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          MySQL client development libraries, when using --with-dhcp-mysql
-          configuration flag to build the Kea MySQL database backend.
-          In this case an instance of the MySQL server running
-          locally or on some other machine, reachable over the network
-          from the machine running Kea, is required. Though, running
-          unit tests requires that the MySQL server is local.
+          The MySQL client and the client development libraries, when using
+          the --with-dhcp-mysql configuration flag to build the Kea MySQL
+          database backend. In this case an instance of the MySQL server
+          running locally or on some other machine, reachable over the
+          network from the machine running Kea, is required. Note that
+          running the unit tests requires a local MySQL server.
         </para>
         </listitem>
 
         <listitem>
         <para>
-          PostgreSQL client development libraries, when using
-          --with-dhcp-pgsql configuration flag to build the Kea PostgreSQL
-          database backend. In this case an instance of the PostgreSQL
-          server running locally or on some other machine, reachable over
-          the network from the machine running Kea, is required. Though,
-          running unit tests requires that the PostgreSQL server is
-          local.
+          The PostgreSQL client and the client development libraries, when
+          using the --with-dhcp-pgsql configuration flag to build the Kea
+          PostgreSQL database backend. In this case an instance of the
+          PostgreSQL server running locally or on some other machine,
+          reachable over the network from the machine running Kea, is
+          required. Note that running the unit tests requires a local
+          PostgreSQL server.
         </para>
         </listitem>
 
@@ -178,8 +178,8 @@ Debian and Ubuntu:
         <listitem>
           <para>
             Documentation generating tools: elinks, docbook-xsl, libxslt and Doxygen,
-            when generating documentation using --enable-generate-docs configuration
-            option.
+            when generating documentation using the --enable-generate-docs
+            configuration  option.
           </para>
         </listitem>
 
