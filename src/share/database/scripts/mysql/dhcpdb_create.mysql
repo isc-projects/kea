@@ -14,7 +14,7 @@
 #
 # mysql -u <user> -p <password> <database> < dhcpdb_create.mysql
 #
-# ... at the command prompt, or log in to the MySQL database and at the "mysql>"
+# ... at the command prompt, or log in to the MySQL database and at the 'mysql>'
 # prompt, issue the command:
 #
 # source dhcpdb_create.mysql
@@ -86,15 +86,15 @@ CREATE TABLE lease6_types (
     ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO lease6_types VALUES (0, "IA_NA");   # Non-temporary v6 addresses
-INSERT INTO lease6_types VALUES (1, "IA_TA");   # Temporary v6 addresses
-INSERT INTO lease6_types VALUES (2, "IA_PD");   # Prefix delegations
+INSERT INTO lease6_types VALUES (0, 'IA_NA');   # Non-temporary v6 addresses
+INSERT INTO lease6_types VALUES (1, 'IA_TA');   # Temporary v6 addresses
+INSERT INTO lease6_types VALUES (2, 'IA_PD');   # Prefix delegations
 COMMIT;
 
 # Finally, the version of the schema.  We start at 1.0 during development.
 # This table is only modified during schema upgrades.  For historical reasons
 # (related to the names of the columns in the BIND 10 DNS database file), the
-# first column is called "version" and not "major".
+# first column is called 'version' and not 'major'.
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       # Major version number
     minor INT                               # Minor version number
@@ -126,27 +126,27 @@ CREATE TABLE lease_hwaddr_source (
 ) ENGINE = INNODB;
 
 # Hardware address obtained from raw sockets
-INSERT INTO lease_hwaddr_source VALUES (1, "HWADDR_SOURCE_RAW");
+INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
 
 # Hardware address converted from IPv6 link-local address with EUI-64
-INSERT INTO lease_hwaddr_source VALUES (2, "HWADDR_SOURCE_IPV6_LINK_LOCAL");
+INSERT INTO lease_hwaddr_source VALUES (2, 'HWADDR_SOURCE_IPV6_LINK_LOCAL');
 
 # Hardware address extracted from client-id (duid)
-INSERT INTO lease_hwaddr_source VALUES (4, "HWADDR_SOURCE_DUID");
+INSERT INTO lease_hwaddr_source VALUES (4, 'HWADDR_SOURCE_DUID');
 
 # Hardware address extracted from client address relay option (RFC6939)
-INSERT INTO lease_hwaddr_source VALUES (8, "HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION");
+INSERT INTO lease_hwaddr_source VALUES (8, 'HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION');
 
 # Hardware address extracted from remote-id option (RFC4649)
-INSERT INTO lease_hwaddr_source VALUES (16, "HWADDR_SOURCE_REMOTE_ID");
+INSERT INTO lease_hwaddr_source VALUES (16, 'HWADDR_SOURCE_REMOTE_ID');
 
 # Hardware address extracted from subscriber-id option (RFC4580)
-INSERT INTO lease_hwaddr_source VALUES (32, "HWADDR_SOURCE_SUBSCRIBER_ID");
+INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
 
 # Hardware address extracted from docsis options
-INSERT INTO lease_hwaddr_source VALUES (64, "HWADDR_SOURCE_DOCSIS");
+INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS');
 
-UPDATE schema_version SET version="2", minor="0";
+UPDATE schema_version SET version='2', minor='0';
 
 # This line concludes database upgrade to version 2.0.
 
@@ -264,9 +264,9 @@ CREATE TABLE IF NOT EXISTS lease_state (
 ) ENGINE=INNODB;
 
 # Insert currently defined state names.
-INSERT INTO lease_state VALUES (0, "default");
-INSERT INTO lease_state VALUES (1, "declined");
-INSERT INTO lease_state VALUES (2, "expired-reclaimed");
+INSERT INTO lease_state VALUES (0, 'default');
+INSERT INTO lease_state VALUES (1, 'declined');
+INSERT INTO lease_state VALUES (2, 'expired-reclaimed');
 
 # Add a constraint that any state value added to the lease4 must
 # map to a value in the lease_state table.
@@ -382,7 +382,7 @@ SET version = '4', minor = '0';
 
 # In the event hardware address cannot be determined, we need to satisfy
 # foreign key constraint between lease6 and lease_hardware_source
-INSERT INTO lease_hwaddr_source VALUES (0, "HWADDR_SOURCE_UNKNOWN");
+INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 # Update the schema version number
 UPDATE schema_version
@@ -420,9 +420,9 @@ CREATE TABLE IF NOT EXISTS host_identifier_type (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO host_identifier_type VALUES (0, "hw-address"); # Non-temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (1, "duid");       # Temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (2, "circuit-id"); # Prefix delegations
+INSERT INTO host_identifier_type VALUES (0, 'hw-address'); # Non-temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (1, 'duid');       # Temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (2, 'circuit-id'); # Prefix delegations
 COMMIT;
 
 # Add a constraint that any identifier type value added to the hosts
@@ -447,10 +447,10 @@ CREATE TABLE IF NOT EXISTS dhcp_option_scope (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO dhcp_option_scope VALUES (0, "global");
-INSERT INTO dhcp_option_scope VALUES (1, "subnet");
-INSERT INTO dhcp_option_scope VALUES (2, "client-class");
-INSERT INTO dhcp_option_scope VALUES (3, "host");
+INSERT INTO dhcp_option_scope VALUES (0, 'global');
+INSERT INTO dhcp_option_scope VALUES (1, 'subnet');
+INSERT INTO dhcp_option_scope VALUES (2, 'client-class');
+INSERT INTO dhcp_option_scope VALUES (3, 'host');
 COMMIT;
 
 # Add scopes into table holding DHCPv4 options
@@ -504,7 +504,7 @@ SET version = '5', minor = '0';
 #
 # Portability
 # ===========
-# The "ENGINE = INNODB" on some tables is not portable to another database
+# The 'ENGINE = INNODB' on some tables is not portable to another database
 # and will need to be removed.
 #
 # Some columns contain binary data so are stored as VARBINARY instead of
