@@ -106,10 +106,10 @@ We have received the following contributions:
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
 
- - Michal Humpula
+ - Michal Humpula (mihu)
    2016-07: Response to DHCPINFORM is sent to port 68
 
- - Andreas Rammhold
+ - Andreas Rammhold (andir)
    2016-09: Compilation fixes for GCC 6, using C++14.
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
