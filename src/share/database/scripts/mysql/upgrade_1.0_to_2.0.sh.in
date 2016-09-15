@@ -27,15 +27,15 @@ CREATE TABLE lease_hwaddr_source (
 ) ENGINE = INNODB;
 
 -- See src/lib/dhcp/dhcp/pkt.h for detailed explanation
-INSERT INTO lease_hwaddr_source VALUES (1, "HWADDR_SOURCE_RAW");
-INSERT INTO lease_hwaddr_source VALUES (2, "HWADDR_SOURCE_IPV6_LINK_LOCAL");
-INSERT INTO lease_hwaddr_source VALUES (4, "HWADDR_SOURCE_DUID");
-INSERT INTO lease_hwaddr_source VALUES (8, "HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION");
-INSERT INTO lease_hwaddr_source VALUES (16, "HWADDR_SOURCE_REMOTE_ID");
-INSERT INTO lease_hwaddr_source VALUES (32, "HWADDR_SOURCE_SUBSCRIBER_ID");
-INSERT INTO lease_hwaddr_source VALUES (64, "HWADDR_SOURCE_DOCSIS");
+INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
+INSERT INTO lease_hwaddr_source VALUES (2, 'HWADDR_SOURCE_IPV6_LINK_LOCAL');
+INSERT INTO lease_hwaddr_source VALUES (4, 'HWADDR_SOURCE_DUID');
+INSERT INTO lease_hwaddr_source VALUES (8, 'HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION');
+INSERT INTO lease_hwaddr_source VALUES (16, 'HWADDR_SOURCE_REMOTE_ID');
+INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
+INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS');
 
-UPDATE schema_version SET version="2", minor="0";
+UPDATE schema_version SET version='2', minor='0';
 EOF
 
 RESULT=$?
