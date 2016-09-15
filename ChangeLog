@@ -1,3 +1,9 @@
+1171.	[doc]		marcin
+	Updated supported operating systems and the prerequisites for
+	installing and building Kea in the Kea Administrator
+	Reference Manual.
+	(Trac #4502, git af847837590ce5b37a300ebe15652fb172585b38)
+
 1170.	[doc]		marcin
 	Updated Kea Administrator's Reference Manual sections
 	regarding host reservations. Added configuration examples
