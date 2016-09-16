@@ -758,9 +758,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
 }
 
 // Test that exactly one NameChangeRequest is created as a result of processing
-// the answer message which holds 3 IAs and when FQDN is specified.  We also
-// verify that the context flags, fwd_dns_update_ and rev_dns_update_, gate
-// whether or not a NameChangeRequest is created.
+// the answer message which holds 3 IAs and when FQDN is specified.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
@@ -784,33 +782,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
-    // Verify that NameChangeRequest is correct.
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::1",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500);
-
-    // If context flags are false we should not create the NCR.
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = false;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
-    // If only the forward flag is true, we create the NCR.
-    ctx.fwd_dns_update_ = true;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    // Verify that NameChangeRequest is correct.
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::1",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500);
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
-    // If only the reverse flag is true, we create the NCR.
-    ctx.fwd_dns_update_ = false;
-    ctx.rev_dns_update_ = true;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     // Verify that NameChangeRequest is correct.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1::1",
