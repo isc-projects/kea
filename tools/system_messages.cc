@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -246,7 +246,7 @@ std::string replaceShell(const std::string& src, char c,
 
 /// @brief Replace blank lines
 /// Replaces blank lines in an array with the contents of the 'blank' section.
-LinesType replaceBlankLines(const LinesType lines)
+LinesType replaceBlankLines(const LinesType& lines)
 {
     LinesType result;
     for (LinesType::const_iterator l = lines.begin(); l != lines.end(); ++l) {
@@ -451,6 +451,7 @@ void processFileContent(const std::string& filename,
                 char* word1 = strtok(NULL, " \t\r\n\t\v");
                 prefix = word1;
             }
+            delete[] line;
         } else if (l->at(0) == '%') {
             // Start of a message.  Add the message we were processing to the
             // dictionary and clear everything apart from the file name.

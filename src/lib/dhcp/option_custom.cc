@@ -300,7 +300,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 unpackOptions(OptionBuffer(data, data_buf.end()));
             }
         }
-    } else if (data_type == OPT_EMPTY_TYPE) {
+    } else {
         // Unpack suboptions if any.
         if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
             unpackOptions(OptionBuffer(data, data_buf.end()));

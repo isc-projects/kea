@@ -1240,10 +1240,11 @@ public:
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),
-         fetch_type_(fetch_type),
-         // Set the number of columns in the bind array based on fetch_type
-         // This is the number of columns expected in the result set
-         bind_(fetch_type_ ? 4 : 3) {
+          fetch_type_(fetch_type),
+          // Set the number of columns in the bind array based on fetch_type
+          // This is the number of columns expected in the result set
+          bind_(fetch_type_ ? 4 : 3),
+          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
         if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
             isc_throw(BadValue, "MySqlLeaseStatsQuery"
                       " - invalid statement index" << statement_index_);
