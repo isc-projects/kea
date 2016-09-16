@@ -1,3 +1,9 @@
+1173.	[bug]		xxwolfsrainxx, marcin
+	MySQL database creation scripts use single quotes for
+	strings to avoid issues with creation of the database
+	when MySQL server operates in ANSI_QUOTES mode.
+	(github #30, git e40a54a8e24b5f6427edd4afcd5cdc15012b8866)
+
 1172.	[bug]		andir
 	Kea build fixes for gcc 6, which uses C++14 by default.
 	(github #29, git ad68c3942839618c26d7ff017fbac7df139b5d01)
