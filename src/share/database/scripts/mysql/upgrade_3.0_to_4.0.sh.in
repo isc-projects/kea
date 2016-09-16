@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS lease_state (
 ) ENGINE=INNODB;
 
 # Insert currently defined state names.
-INSERT INTO lease_state VALUES (0, "default");
-INSERT INTO lease_state VALUES (1, "declined");
-INSERT INTO lease_state VALUES (2, "expired-reclaimed");
+INSERT INTO lease_state VALUES (0, 'default');
+INSERT INTO lease_state VALUES (1, 'declined');
+INSERT INTO lease_state VALUES (2, 'expired-reclaimed');
 
 # Add a constraint that any state value added to the lease4 must
 # map to a value in the lease_state table.

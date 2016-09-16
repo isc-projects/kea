@@ -30,7 +30,7 @@ mysql_execute() {
 }
 
 mysql_version() {
-    mysql_execute "SELECT CONCAT(version,\".\",minor) FROM schema_version" "$@"
+    mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
     return $?
 }
 
