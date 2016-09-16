@@ -1386,15 +1386,9 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 // We're not reclaiming the lease but since the FQDN has changed
                 // we have to at least send NCR.
                 queueNCR(CHG_REMOVE, old_data);
-            } else {
-                // Callers should use the context flags to drive whether or
-                // not we do an update, not the lease flags.  Changing those
-                // would alter the flags in the database, which we want to
-                // preserve them as they were were when the lease was created.
-                ctx.fwd_dns_update_ = false;
-                ctx.rev_dns_update_ = false;
             }
         }
+
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
         LeaseMgrFactory::instance().updateLease6(lease);
@@ -1406,7 +1400,12 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = *old_data;
     }
+
+    // Add the old lease to the changed lease list. This allows the server
+    // to make decisions regarding DNS updates.
+    ctx.currentIA().changed_leases_.push_back(old_data);
 }
+
 
 Lease6Collection
 AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
@@ -1436,14 +1435,6 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         }
 
         updated_leases.push_back(lease);
-    }
-
-    // If we didn't do a remove, then the FQDN is unchanged so this amounts
-    // to renew.  Note this assumes this method is only called when client
-    // issues a request, rather than a renew or rebind.
-    if (!remove_queued) {
-        ctx.fwd_dns_update_ = false;
-        ctx.rev_dns_update_ = false;
     }
 
     return (updated_leases);

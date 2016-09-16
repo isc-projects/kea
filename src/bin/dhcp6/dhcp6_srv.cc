@@ -1198,13 +1198,8 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
 void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                     AllocEngine::ClientContext6& ctx) {
-    // Don't create NameChangeRequests if DNS updates are disabled
-    // or if no requests are actually required.  The context flags may be
-    // different than the lease flags. Primarily when existing leases
-    // are being extended without FQDN changes in which case the context
-    // flags will both be false.
-    if ((!CfgMgr::instance().ddnsEnabled()) ||
-       (!ctx.fwd_dns_update_ && !ctx.rev_dns_update_)) {
+    // Don't create NameChangeRequests if DNS updates are disabled.
+    if (!CfgMgr::instance().ddnsEnabled()) {
         return;
     }
 
@@ -1274,6 +1269,25 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         if (!iaaddr) {
             continue;
         }
+
+        // see if the lease for iaadr is in changed_leases, and if so
+        // if the FQDN is different, if not continue
+        bool extended_only = false;
+        for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
+             l != ctx.currentIA().changed_leases_.end(); ++l) {
+            if ((*l)->addr_ == iaaddr->getAddress()) {
+                if ((*l)->hostname_ == opt_fqdn->getDomainName()) {
+                    extended_only = true;
+                    break;
+                }
+            }
+        }
+
+        if (extended_only) {
+            continue;
+        }
+
+
         // Create new NameChangeRequest. Use the domain name from the FQDN.
         // This is an FQDN included in the response to the client, so it
         // holds a fully qualified domain-name already (not partial).
