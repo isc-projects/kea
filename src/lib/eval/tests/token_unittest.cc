@@ -352,7 +352,8 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorExists(Option::Universe u, uint32_t token_vendor_id,
-                          uint32_t option_vendor_id, std::string expected_result) {
+                          uint32_t option_vendor_id,
+                          const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -375,7 +376,7 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorEnterprise(Option::Universe u, uint32_t option_vendor_id,
-                              std::string expected_result) {
+                              const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -394,7 +395,7 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorClassEnterprise(Option::Universe u, uint32_t option_vendor_id,
-                                   std::string expected_result) {
+                                   const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -414,7 +415,8 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorClassExists(Option::Universe u, uint32_t token_vendor_id,
-                               uint32_t option_vendor_id, std::string expected_result) {
+                               uint32_t option_vendor_id,
+                               const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -441,7 +443,8 @@ public:
     void testVendorSuboption(Option::Universe u,
                              uint32_t token_vendor_id, uint16_t token_option_code,
                              uint32_t option_vendor_id, uint16_t option_code,
-                             TokenOption::RepresentationType repr, std::string expected) {
+                             TokenOption::RepresentationType repr,
+                             const std::string& expected) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -471,7 +474,7 @@ public:
     void testVendorClassData(Option::Universe u,
                              uint32_t token_vendor_id, uint16_t token_index,
                              uint32_t option_vendor_id, uint16_t data_tuples,
-                             std::string expected) {
+                             const std::string& expected) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 

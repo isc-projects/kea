@@ -453,7 +453,7 @@ public:
     /// reservation.
     void testReservationByIdentifier(Dhcp6Client& client,
                                      const unsigned int config_index,
-                                     const std::string exp_ip_address) {
+                                     const std::string& exp_ip_address) {
         configure(CONFIGS[config_index], *client.getServer());
 
         const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->

@@ -1020,7 +1020,8 @@ public:
 
     /// @brief Constructor.
     PgSqlOptionExchange()
-        : PgSqlExchange(OPTION_COLUMNS) {
+        : PgSqlExchange(OPTION_COLUMNS), value_(),
+          value_len_(0), option_() {
         columns_[OPTION_ID_COL] = "option_id";
         columns_[CODE_COL] = "code";
         columns_[VALUE_COL] = "value";

@@ -1030,7 +1030,6 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
     const string quote("\"");
     const string comma_space(", ");
     const string library("\"library\": ");
-    const string parameters("\"parameters\": ");
 
     string config = string("{ \"hooks-libraries\": [");
     if (lib1 != NULL) {
