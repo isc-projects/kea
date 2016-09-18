@@ -4,7 +4,7 @@
 <!ENTITY mdash  "&#x2014;" >
 ]>
 <chapter id="kea-config">
-  <title>Kea configuration</title>
+  <title>Kea Configuration</title>
 
   <para>Kea is designed to allow different methods by which it can be
     configured, each method being implemented by a component known as a
@@ -12,7 +12,7 @@
     available, that allowing configuration by means of a JSON file.</para>
 
   <section id="json-backend">
-    <title>JSON configuration backend</title>
+    <title>JSON Configuration Backend</title>
     <para>JSON is the default configuration backend.
     It assumes that the servers are started from the command line
     (either directly or using a script, e.g. <filename>keactrl</filename>).
@@ -20,11 +20,11 @@
     configuration file is specified upon startup using the -c parameter.</para>
 
     <section id="json-format">
-      <title>JSON syntax</title>
+      <title>JSON Syntax</title>
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
       in an extended JSON format. Basic JSON is defined in <ulink
       url="http://tools.ietf.org/html/rfc4627">RFC 4627</ulink>.  Kea components
-      use a slightly modified JSON, in that they allow shell-style
+      use a slightly modified form of JSON in that they allow shell-style
       comments in the file: lines with the hash (#) character in the first column
       are comment lines and are ignored.</para>
 
@@ -38,8 +38,8 @@
       Logging object to configure logging parameters; it will ignore the Dhcp6
       object.</para>
 
-      <para>For example, a very simple configuration for both DHCPv4 and DHCPv6
-      could look like this:
+      <para>A very simple configuration for both DHCPv4 and
+      DHCPv6 could look like this:
 <screen>
 # The whole configuration starts here.
 {
@@ -56,8 +56,7 @@
     "subnet4": [{
        "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
        "subnet": "192.0.2.0/24"
-    }],
-    ...
+    }]
 },
 # DHCPv4 specific configuration ends here.
 
@@ -73,8 +72,7 @@
     "subnet6": [{
        "pools": [ { "pool": "2001:db8::/80" } ],
        "subnet": "2001:db8::/64"
-    }],
-    ...
+    }]
 },
 # DHCPv6 specific configuration ends here.
 
@@ -84,8 +82,7 @@
    "loggers": [{
         "name": "*",
         "severity": "DEBUG"
-    }],
-    ...
+    }]
 }
 # Logger parameters end here.
 
@@ -103,7 +100,7 @@
         DHCPv6, only subnet6 parameters will be mentioned. It is implied that
         the remaining elements (the global map that holds Dhcp6, Logging and possibly
         DhcpDdns) are present, but they are omitted for clarity. Usually, locations
-        where extra parameters may appear are denoted with an ellipsis.</para>
+        where extra parameters may appear are denoted by an ellipsis.</para>
     </section>
 
     <section>

@@ -139,8 +139,7 @@ kea_verbose=no
 
     <section id="keactrl-commands">
       <title>Commands</title>
-      <para>The following commands are supported by <command>keactrl</command>
-      to perform specific operations on the Kea servers:
+      <para>The following commands are supported by <command>keactrl</command>:
       <itemizedlist>
         <listitem><simpara>
           <command>start</command> - starts selected servers.
