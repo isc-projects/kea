@@ -55,13 +55,13 @@
 
         <listitem>
             <simpara>
-        Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
-        is required to be installed during compilation. Kea uses the Botan
-        crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
-        version 1.8, 1.9 or 1.10. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
-        version 1.0.*. Support for later versions of Botan and OpenSSL will
-        be added in future releases of Kea.
+        Kea supports two cryptographic libraries: Botan and OpenSSL. Only one of
+        them is required to be installed during compilation. If using Botan, Kea
+        requires the Botan cryptographic library for C++ (<ulink
+        url="http://botan.randombit.net/"/>), version 1.8, 1.9 or 1.10. If
+        OpenSSL is used, (<ulink url="http://www.openssl.org/"/>), then Kea
+        requires the OpenSSL C++ library version 1.0.*. Support for later
+        versions of Botan and OpenSSL will be added in future releases of Kea.
             </simpara>
         </listitem>
 
@@ -69,7 +69,7 @@
             <simpara>
         Kea uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
-        It requires at least log4cplus version 1.0.3.
+        It requires log4cplus version 1.0.3 or later.
             </simpara>
         </listitem>
 
@@ -123,7 +123,7 @@
           <listitem>
             <simpara>
               <command>kea-dhcp4</command> &mdash;
-              DHCPv4 server process.
+              The DHCPv4 server process.
               This process responds to DHCPv4 queries from clients.
             </simpara>
           </listitem>
@@ -131,7 +131,7 @@
           <listitem>
             <simpara>
               <command>kea-dhcp6</command> &mdash;
-              DHCPv6 server process.
+              The DHCPv6 server process.
               This process responds to DHCPv6 queries from clients.
             </simpara>
           </listitem>
@@ -139,9 +139,9 @@
           <listitem>
             <simpara>
               <command>kea-dhcp-ddns</command> &mdash;
-              DHCP-DDNS process.
+              The DHCP Dynamic DNS process.
               This process acts as an intermediary between the DHCP servers
-              and DNS server. It receives name update requests from the DHCP
+              and DNS servers. It receives name update requests from the DHCP
               servers and sends DNS Update messages to the DNS servers.
             </simpara>
           </listitem>
@@ -149,7 +149,7 @@
           <listitem>
             <simpara>
               <command>kea-admin</command> &mdash;
-              A tool useful for database backend maintenance (creating new
+              A useful tool for database backend maintenance (creating a new
               database, checking versions, upgrading etc.)
             </simpara>
           </listitem>
@@ -159,17 +159,16 @@
               <command>kea-lfc</command> &mdash;
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
-              The service is written to run as a stand alone process.  While it
-              can be started externally it should be started by the Kea DHCP
-              servers.
+              While it can be run standalone, it is normally run as and when 
+              required by the Kea DHCP servers.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
               <command>perfdhcp</command> &mdash;
-              DHCP benchmarking tool which simulates multiple clients to
-              test both DHCPv4 and DHCPv6 servers performance.
+              A DHCP benchmarking tool which simulates multiple clients to
+              test both DHCPv4 and DHCPv6 server performance.
             </simpara>
           </listitem>
 
