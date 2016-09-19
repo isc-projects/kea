@@ -37,7 +37,7 @@
           <listitem>
             <simpara>
             <command>-p <replaceable>port</replaceable></command> -
-            specifies UDP port the server will listen on. This is only
+            specifies UDP port on which the server will listen. This is only
             useful during testing, as a DHCPv4 server listening on
             ports other than the standard ones will not be able to
             handle regular DHCPv4 queries.</simpara>
@@ -51,7 +51,7 @@
             <simpara>
               <command>-V</command> - prints out the Kea extended version with
               additional parameters and exits. The listing includes the versions
-              of the libraries dynamically linked to kea.
+              of the libraries dynamically linked to Kea.
             </simpara>
           </listitem>
           <listitem>
@@ -88,8 +88,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
 
       <para>
         During startup the server will attempt to create a PID file of the
-        form: <replaceable>localstatedir</replaceable>/<replaceable>conf name</replaceable>.kea-dhcp4.pid
-        where:
+        form: localstatedir]/[conf name].kea-dhcp6.pid where:
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
@@ -119,7 +118,6 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         pressing ctrl-c. It detects the key combination and shuts
         down gracefully.
       </para>
-
     </section>
 
     <section id="dhcp4-configuration">
@@ -159,12 +157,13 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         {
             "subnet": "192.0.2.0/24",
             "pools": [
-                { "pool": "192.0.2.1 - 192.0.2.200" }
+                {
+                     "pool": "192.0.2.1 - 192.0.2.200"
+                }
             ]
         }
     ]
-
-# DHCPv4 configuration ends with this line
+# DHCPv4 configuration ends with the next line
 }
 
 } </screen>
@@ -205,7 +204,8 @@ reasons to keep multiple copies of the same parameter in your configuration
 file.</para>
 
 <para>Moving onto the DHCPv4 configuration elements, the first few elements
-define some global parameters. <command>valid-lifetime</command> defines for how long the addresses (leases) given out by the
+define some global parameters. <command>valid-lifetime</command>
+defines for how long the addresses (leases) given out by the
 server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
@@ -234,7 +234,7 @@ by commas. Had we wanted to listen on two interfaces, the
 stores its lease information. This particular example tells the server to use
 <command>memfile</command>, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a CSV
-file. This is a very simple configuration. Usually, lease database configuration
+file. This is a very simple configuration. Usually the lease database configuration
 is more extensive and contains additional parameters.  Note that
 <command>lease-database</command>
 is an object and opens up a new scope, using an opening brace.
@@ -276,6 +276,8 @@ syntax would be used:
     }
 ]
 </screen>
+Note that indentation is optional and is used for aesthetic purposes only.
+In some cases in may be preferable to use more compact notation.
 </para>
 
 <para>After all the parameters have been specified, we have two contexts open:
@@ -289,7 +291,7 @@ be followed by a comma and another object definition.</para>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
-  default backend), MySQL, PostgreSQL and CQL.</para>
+  default backend), MySQL, PostgreSQL and Cassandra.</para>
 <section>
   <title>Memfile - Basic Storage for Leases</title>
 
@@ -467,9 +469,8 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 </section>
 
-<section>
-  <title id="hosts-storage4">Hosts Storage</title>
-
+<section id="hosts-storage4">
+  <title>Hosts Storage</title>
     <para>Kea is also able to store information about host reservations in the
     database. The hosts database configuration uses the same syntax as the lease
     database. In fact, a Kea server opens independent connections for each
@@ -597,7 +598,7 @@ for MySQL and PostgreSQL databases.</para></note>
 ... although is anticipated that this form of usage will only be used when it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
-  <para>Some deployments of the DHCP servers require that the servers listen
+  <para>Some deployments of DHCP servers require that the servers listen
   on the interfaces with multiple IPv4 addresses configured. In these situations,
   the address to use can be selected by appending an IPv4 address to the interface
   name in the following manner:
@@ -611,8 +612,8 @@ temporarily override a list of interface names and listen on all interfaces.
   </screen>
   </para>
 
-  <para>If it is desired that the server listens on multiple IPv4 addresses assigned
-  to the same interface, multiple addresses can be specified for this interface
+  <para>Should the server be required to listen on multiple IPv4 addresses assigned
+  to the same interface, multiple addresses can be specified for an interface
   as in the example below:
   <screen>
 "Dhcp4": {
@@ -806,16 +807,16 @@ temporarily override a list of interface names and listen on all interfaces.
     ]</userinput>
 }</screen>
 
-    Note that subnet is defined as a simple string, but the <command>pools</command> parameter is
-    actually a list of pools: for this reason, the pools definition is enclosed
-    in square brackets, even though only one range of addresses is
-    specified in this example.</para>
+    Note that <command>subnet</command> is defined as a simple string, but
+    the <command>pools</command> parameter is actually a list of pools: for
+    this reason, the pool definition is enclosed in square brackets, even
+    though only one range of addresses is specified.</para>
 
-    <para>Each pool is a structure that contains the parameters
-    that describe a single pool. Currently there is only one parameter,
-    <command>pool</command>, which gives the range of addresses
-    in the pool. Additional parameters will be added in future
-    releases of Kea.</para>
+    <para>Each <command>pool</command> is a structure that contains the
+    parameters that describe a single pool. Currently there is only one
+    parameter, <command>pool</command>, which gives the range of addresses
+    in the pool. Additional parameters will be added in future releases of
+    Kea.</para>
 
     <para>It is possible to define more than one pool in a subnet: continuing
     the previous example, further assume that 192.0.2.64/26 should be also be
@@ -838,9 +839,12 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
 </screen>
+    White space in pool definitions is ignored, so spaces before and after the hyphen are optional.
+    They can be used to improve readability.
+  </para>
+  <para>
     The number of pools is not limited, but for performance reasons it is recommended to
-    use as few as possible. White space in pool definitions is ignored, so
-    spaces before and after the hyphen are optional. They can be used to improve readability.
+    use as few as possible.
   </para>
   <para>
     The server may be configured to serve more than one subnet:
@@ -1227,7 +1231,7 @@ It is merely echoed by the server
       <title>Custom DHCPv4 options</title>
       <para>Kea supports custom (non-standard) DHCPv4 options. Assume
       that we want to define a new DHCPv4 option called "foo" which
-      will have a code of 222 and will convey a single unsigned 32 bit
+      will have a code 222 and will convey a single unsigned 32 bit
       integer value. We can define such an option by using the
       following entry in the configuration file:
 <screen>
@@ -1353,8 +1357,8 @@ It is merely echoed by the server
       "vendor-encapsulated-options-space", which is empty by default but
       in which options can be defined. Such options will be carried in the
       Vendor Specific Information option (code 43). The following examples
-      show how to define an option "foo" in that space that has a code of
-      1, and comprises an
+      show how to define an option "foo" in that space that has a code 1,
+      and comprises an
       IPv4 address, an unsigned 16 bit integer and a string. The "foo"
       option is conveyed in a Vendor Specific Information option.
       </para>
@@ -1434,7 +1438,7 @@ It is merely echoed by the server
       </para>
       <para>
       Assume that we want to have a DHCPv4 option called "container" with
-      code of 222 that conveys two sub-options with codes 1 and 2.
+      code 222 that conveys two sub-options with codes 1 and 2.
       First we need to define the new sub-options:
 <screen>
 "Dhcp4": {
@@ -1483,7 +1487,7 @@ It is merely echoed by the server
     ...
 }</screen>
     The name of the option space in which the sub-options are defined
-    is set in the "encapsulate" field. The "type" field is set to "empty"
+    is set in the <command>encapsulate</command> field. The <command>type</command> field is set to "empty"
     to indicate that this option does not carry any data other than
     sub-options.
     </para>
@@ -1517,10 +1521,10 @@ It is merely echoed by the server
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space.  For example,
     if the "container" option from the previous example was required to carry an uint16
-    value as well as the sub-options, the "type" value would have to be set to "uint16" in
+    value as well as the sub-options, the <command>type</command> value would have to be set to "uint16" in
     the option definition. (Such an option would then have the following
     data structure: DHCP header, uint16 value, sub-options.) The value specified
-    with the "data" parameter &mdash; which should be a valid integer enclosed in quotes,
+    with the <command>data</command> parameter &mdash; which should be a valid integer enclosed in quotes,
     e.g. "123" &mdash; would then be assigned to the uint16 field in the "container" option.
     </para>
     </section>
@@ -1768,7 +1772,7 @@ It is merely echoed by the server
 
         <note>
         <para>
-          Note: Kea 1.0 and earlier versions performed special actions for
+          Kea 1.0 and earlier versions performed special actions for
           clients that were in VENDOR_CLASS_docsis3.0. This is no longer the
           case in Kea 1.1 and later. In these versions the old behavior
           can be achieved by defining VENDOR_CLASS_docsis3.0 and setting
@@ -1806,9 +1810,8 @@ It is merely echoed by the server
         class named &quot;Client_foo&quot;.
         It is comprised of all clients who's client ids (option 61) start with the
         string &quot;foo&quot;. Members of this class will be given addresses from
-        192.0.2.10 to 192.0.2.20 and will the the address of their DNS servers
-        set to 192.0.2.1 and 192.0.2.2. For a deeper discussion of the classification process,
-        see <xref linkend="classify"/>.
+        192.0.2.10 to 192.0.2.20 and the addresses of their DNS servers
+        set to 192.0.2.1 and 192.0.2.2.
 
           <screen>
 "Dhcp4": {
@@ -1938,29 +1941,24 @@ It is merely echoed by the server
       generate NCRs.  By default, this value is false hence DDNS updates are
       disabled.  To enable DDNS updates set this value to true:
       </simpara></listitem>
-
       <listitem><simpara>
       <command>server-ip</command> - IP address on which D2 listens for requests. The default is
       the local loopback interface at address 127.0.0.1. You may specify
       either an IPv4 or IPv6 address.
       </simpara></listitem>
-
       <listitem><simpara>
       <command>server-port</command> - port on which D2 listens for requests.  The default value
       is 53001.
       </simpara></listitem>
-
       <listitem><simpara>
       <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to D2.
       The default value is blank which instructs kea-dhcp4 to select a suitable
       address.
       </simpara></listitem>
-
       <listitem><simpara>
       <command>sender-port</command> - port which kea-dhcp4 should use to send requests to D2. The
       default value of 0 instructs kea-dhcp4 to select a suitable port.
       </simpara></listitem>
-
       <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to D2. This value guards against requests accumulating
@@ -2009,7 +2007,7 @@ It is merely echoed by the server
       such things as conflict resolution are within the purview of D2 itself (<xref linkend="dhcp-ddns-server"/>).
       This section describes when kea-dhcp4 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
-      It assumes that the "enable-updates" parameter is true.
+      It assumes that the <command>enable-updates</command> parameter is true.
       </para>
       <para>
       In general, kea-dhcp4 will generate DDNS update requests when:
@@ -2030,7 +2028,8 @@ It is merely echoed by the server
       add entries for the new FQDN.  In the last case, a lease release, a
       single DDNS request to remove its entries will be made.
       </para>
-      <para>The decision making involved when granting a new lease (the first case) is more
+      <para>
+      The decision making involved when granting a new lease (the first case) is more
       involved.  When a new lease is granted, kea-dhcp4 will generate a DDNS
       update request if the DHCP REQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
@@ -2081,7 +2080,7 @@ It is merely echoed by the server
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
       the server should do the reverse updates.  By default, kea-dhcp4 will honor
-      the client's wishes and generate a DDNS request to the DHCP-DDNS server to update only
+      the client's wishes and generate a DDNS request to the D2 server to update only
       reverse DNS data.  The parameter <command>override-client-update</command> can be used
       to instruct the server to override client delegation requests.  When
       this parameter is true, kea-dhcp4 will disregard requests for client
@@ -2091,12 +2090,11 @@ It is merely echoed by the server
       </para>
       <para>
       (Note that the flag combination N=1, S=1 is prohibited according to
-      <ulink url="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>. If such a combination is received from the client, the packet
-      will be dropped by kea-dhcp4.)
+      <ulink url="http://tools.ietf.org/html/rfc4702">RFC 4702</ulink>. If such a
+      combination is received from the client, the packet will be dropped by kea-dhcp4.)
       </para>
       <para>
-      To override client delegation, set the following values in your configuration
-      file:
+      To override client delegation, set the following values in the configuration file:
       </para>
 <screen>
 "Dhcp4": {
@@ -2111,7 +2109,7 @@ It is merely echoed by the server
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, kea-dhcp4 will generate a DDNS update request to kea-dhcp-ddns
+      this parameter is true, kea-dhcp4 will generate DDNS update requests to kea-dhcp-ddns
       even if the client requests that no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -2207,7 +2205,7 @@ It is merely echoed by the server
       <para>
       The prefix used in the generation of a FQDN is specified by the
       <command>generated-prefix</command> parameter.  The default value is "myhost".  To alter
-      its value simply set it to the desired string:
+      its value, simply set it to the desired string:
       </para>
 <screen>
 "Dhcp4": {
@@ -2578,7 +2576,7 @@ It is merely echoed by the server
     receive the same address from the server every time, and other clients will
     generally not receive that address.
     Another example when the host reservations are applicable is when a host
-    that has specific requirements, e.g. a printer that needs additional DHCP options.
+    has specific requirements, e.g. a printer that needs additional DHCP options.
     Yet another possible use case is to define unique names for hosts.</para>
 
     <para>Note that there may be cases when the
@@ -2674,9 +2672,9 @@ It is merely echoed by the server
       by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
       simply a pool. In principle, a host reservation can reserve any address
       that belongs to the subnet. The reservations that specify addresses that
-      belong to configured pools are called <command>in-pool reservations</command>.
+      belong to configured pools are called "in-pool reservations".
       In contrast, those that do not belong to dynamic pools are called
-      <command>out-of-pool reservations</command>. There is no formal difference
+      "out-of-pool reservations". There is no formal difference
       in the reservation syntax and both reservation types are
       handled uniformly. However, upcoming releases may offer improved performance
       if there are only out-of-pool reservations as the server will be able
@@ -2697,9 +2695,9 @@ It is merely echoed by the server
       valid use cases where such an operation is warranted.</para>
 
       <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If the Host B boots up and requests an address, the server is
-      not able to assign the reserved address 192.0.2.10 for Host B. A naive
-      approach would to be immediately remove the existing lease for the Host A
+      situation here. If Host B boots up and requests an address, the server is
+      not able to assign the reserved address 192.0.2.10. A naive approach
+      would to be immediately remove the existing lease for the Host A
       and create a new one for the Host B. That would not solve the problem,
       though, because as soon as the Host B gets the address, it will detect
       that the address is already in use by the Host A and would send
@@ -3002,7 +3000,7 @@ It is merely echoed by the server
     <section id="reservations4-tuning">
       <title>Fine Tuning DHCPv4 Host Reservation</title>
 
-      <para>The Host reservation capability introduces additional restrictions for the
+      <para>The host reservation capability introduces additional restrictions for the
       allocation engine (the component of Kea that selects an address for a client)
       during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
@@ -3015,7 +3013,7 @@ It is merely echoed by the server
       used instead.
       </para>
       <para>Some of those checks may be unnecessary in certain deployments and not
-      carrying them out them may improve performance. The Kea server provides the
+      performing them may improve performance. The Kea server provides the
       <command>reservation-mode</command> configuration parameter to select the
       types of reservations allowed for the particular subnet. Each reservation
       type has different constraints for the checks to be performed by the
@@ -3071,7 +3069,7 @@ It is merely echoed by the server
       usability perspective. However, there is a drawback. For each incoming
       packet Kea has to to extract each identifier type and then query the
       database to see if there is a reservation done by this particular
-      identifier. If none is found, the next identifier is extracted and the next
+      identifier. If nothing is found, the next identifier is extracted and the next
       query is issued. This process continues until either a reservation is
       found or all identifier types have been checked. Over time with an increasing
       number of supported identifier types, Kea would become slower and
@@ -3098,8 +3096,8 @@ It is merely echoed by the server
 ]</screen>
 </para>
 
-<para>If not specified, the default value is:
-
+<para>
+If not specified, the default value is:
 <screen>
 <userinput>"host-reservation-identifiers": [ "hw-address", "duid", "circuit-id", "client-id" ]</userinput>
 </screen>
@@ -3664,7 +3662,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         See the Control Channel section in the Kea Developer's Guide for more details.
       </para>
 
-      <para>DHCPv4 server supports <command>statistic-get</command>,
+      <para>The DHCPv4 server supports <command>statistic-get</command>,
       <command>statistic-reset</command>, <command>statistic-remove</command>,
       <command>statistic-get-all</command>, <command>statistic-reset-all</command>
       and <command>statistic-remove-all</command>, specified in
