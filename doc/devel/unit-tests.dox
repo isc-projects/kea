@@ -11,11 +11,11 @@
 @section unitTestsIntroduction Introduction
 
 Kea uses the Google C++ Testing Framework (also called googletest or gtest) as a
-base for our C++ unit-tests. See http://code.google.com/p/googletest/ for
+base for our C++ unit-tests. See https://github.com/google/googletest for
 details. We used to have Python unit-tests inherited from BIND10
 days but have been removed, so please do not write any new Kea unit
-tests in Python. (If you want to write DHCP tests in Python, we encourage you to
-take a look at ISC Forge: http://kea.isc.org/wiki/IscForge.)
+tests in Python. If you want to write DHCP tests in Python, we encourage you to
+take a look at ISC Forge: http://kea.isc.org/wiki/IscForge .
 
 You must have \c gtest installed or at least extracted in a directory
 before compiling Kea unit-tests.  To enable unit-tests in Kea, use:
@@ -260,5 +260,10 @@ local   all             postgres                                trust
   section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
   Reference Manual</a>).
 
+
+ @subsection cqlUnitTestsPrerequisites Cassandra database
+
+ @todo: Describe steps necessary to set up Cassandra database suitable for running
+ unittests.
 
  */
