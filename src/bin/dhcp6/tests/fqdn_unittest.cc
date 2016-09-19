@@ -1114,6 +1114,83 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewSameFqdn) {
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
+// Tests that renewals using the same domain name but differing values for
+// the directional update flags result in NCRs or not, accordingly.
+// If the new leases's flags are the same as the previous lease's flags,
+// then no requests should be generated.  If at lease one of the new lease's
+// flags differ from the previous lease, then:
+// A: A removal NCR should be created based on the previous leases's flags
+// if at least one of those flags are true
+// B: An add NCR should be created based on the new lease's flags, if at
+// least one of those flags are true
+TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
+    // Create a Request message with FQDN option but with N flag = 1, which
+    // means no updates should be done. This should result in no NCRs.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.", Option6ClientFqdn::FLAG_N);
+    // Queue should be empty.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+
+    // Now renew with Both N and S = 0.  This means the server should only
+    // do reverse updates and should result in a reverse-only NCR.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "myhost.example.com.", 0);
+    // We should a only have reverse-only ADD, no remove.
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, false,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+
+    // Renew again with the same flags, this should not generate any NCRs.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "myhost.example.com.", 0);
+    // Queue should be empty.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+
+
+    // Renew with both N and S flags = 0. This tells the server to update
+    // both directions, which should change forward flag to true. This should
+    // generate a reverse only remove and a dual add.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "myhost.example.com.", Option6ClientFqdn::FLAG_S);
+
+    // We need the lease for the expiration value.
+    lease_ = LeaseMgrFactory::
+             instance().getLease6(Lease::TYPE_NA,
+                                  IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
+    // We should have two NCRs, one remove and one add.
+    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, false,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+
+    // Lastly, we renew with the N flag = 1 (which means no updates) so we
+    // should have a dual direction remove NCR but NO add NCR.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "myhost.example.com.", Option6ClientFqdn::FLAG_N);
+    // We should only have the removal NCR.
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            lease_->cltt_ + lease_->valid_lft_, 4000);
+
+}
+
+
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the

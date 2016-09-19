@@ -1270,13 +1270,16 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
             continue;
         }
 
-        // see if the lease for iaadr is in changed_leases, and if so
-        // if the FQDN is different, if not continue
+        // If the lease for iaaddr is in the list of changed leases, we need
+        // to determine if the changes included changes to the FQDN. If there
+        // were  changes to the FQDN then we need to update DNS, otherwise
+        // we do not.
         bool extended_only = false;
         for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
              l != ctx.currentIA().changed_leases_.end(); ++l) {
             if ((*l)->addr_ == iaaddr->getAddress()) {
-                if ((*l)->hostname_ == opt_fqdn->getDomainName()) {
+                if ((*l)->hostname_ == opt_fqdn->getDomainName() &&
+                    (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev) {
                     extended_only = true;
                     break;
                 }
@@ -1286,7 +1289,6 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         if (extended_only) {
             continue;
         }
-
 
         // Create new NameChangeRequest. Use the domain name from the FQDN.
         // This is an FQDN included in the response to the client, so it
