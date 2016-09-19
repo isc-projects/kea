@@ -7,17 +7,17 @@
 /**
  * @mainpage Kea Developer's Guide
  *
- * Welcome to Kea Developer's Guide. This documentation is addressed at
+ * Welcome to the Kea Developer's Guide. This documentation is addressed at
  * either existing or prospective Kea developers and contributors, and
- * provides information needed to extend and maintain Kea.
+ * provides information needed to extend and maintain Kea source code.
 
- * If you wish to write "hook" code - code that is loaded by Kea at
- * run-time and modifies its behavior,  you should read the section
+ * If you wish to write hook code - the code that is loaded by Kea at
+ * the run-time and modifies its behavior,  you should read the section
  * @ref hooksdgDevelopersGuide.
  *
- * Kea maintenance information is divided into a number of sections
- * depending on focus. Information on DHCP-specific topics can be found
- * in the @ref dhcpMaintenanceGuide.  General topics, are discussed in
+ * Kea maintenance information is divided into a number of sections.
+ * Information on DHCP-specific topics can be found
+ * in the @ref dhcpMaintenanceGuide.  General topics are discussed in
  * @ref miscellaneousTopics.
  *
  * If you are a user or system administrator, rather than software engineer,
@@ -32,7 +32,9 @@
  * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
  *
  * @section contrib Contributor's Guide
- * - @subpage contributorGuide
+ * - @subpage contributorGuide - This page describes the process of sending
+ * a patch to ISC and what happens next. Please read it if you are considering
+ * sending us any code.
  *
  * @section buildingKeaWithUnitTests Building Kea with Unit tests
  * - @subpage unitTests
@@ -108,9 +110,7 @@
  * - @subpage dhcpDatabaseBackends
  * - @subpage dhcpEval
  * - @subpage configBackend
- *   - @subpage configBackendMotivation
  *   - @subpage configBackendJSONDesign
- *   - @subpage configBackendAdding
  * - @subpage perfdhcpInternals
  *
  * @section miscellaneousTopics Miscellaneous Topics
