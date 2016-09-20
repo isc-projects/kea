@@ -102,7 +102,7 @@
             Dumps the contents of the lease database (for MySQL, PostgreSQL or
             CQL backends) to a CSV (comma separated values) text file. The first
             line of the file contains the column names.  This is meant to be
-            used as a diagnostic tool, so provides a portable, human-readable
+            used as a diagnostic tool, so it provides a portable, human-readable
             form of the lease data.
           </simpara>
         </listitem>
