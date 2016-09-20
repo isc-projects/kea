@@ -418,6 +418,11 @@ public:
     /// @param prefix true - reserve IPv6 prefix, false - reserve IPv6 address
     void testGetByIPv6(Host::IdentifierType id, bool prefix);
 
+    /// @brief Test inserts several hosts with unique prefixes and checks
+    ///        that the can be retrieved by subnet id and prefix value.
+    void testGetBySubnetIPv6();
+
+
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
     /// Uses gtest macros to report failures.

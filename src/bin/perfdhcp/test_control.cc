@@ -1797,7 +1797,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     OptionPtr opt_requested_address =
         OptionPtr(new Option(Option::V4, DHO_DHCP_REQUESTED_ADDRESS,
                              OptionBuffer()));
-    opt_requested_address->setUint32(static_cast<uint32_t>(yiaddr));
+    opt_requested_address->setUint32(yiaddr.toUint32());
     pkt4->addOption(opt_requested_address);
     OptionPtr opt_parameter_list =
         Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
@@ -1916,8 +1916,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                                              DHO_DHCP_REQUESTED_ADDRESS,
                                              OptionBuffer(),
                                              rip_offset));
-    // The IOAddress is castable to uint32_t and returns exactly what we need.
-    opt_requested_ip->setUint32(static_cast<uint32_t>(yiaddr));
+    // The IOAddress is convertible to uint32_t and returns exactly what we need.
+    opt_requested_ip->setUint32(yiaddr.toUint32());
     pkt4->addOption(opt_requested_ip);
 
     setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));

@@ -341,7 +341,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // Configure the BPF program to receive unicast packets sent to the
     // specified address. The program will also allow packets sent to the
     // 255.255.255.255 broadcast address.
-    prog.bf_insns[8].k = static_cast<uint32_t>(addr);
+    prog.bf_insns[8].k = addr.toUint32();
 
     // Configure the BPF program to receive packets on the specified port.
     prog.bf_insns[11].k = port;

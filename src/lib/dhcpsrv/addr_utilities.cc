@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
     // We don't check that it is a valid IPv4 address and thus has
     // a required length of 4 bytes because it has been already
     // checked by the calling function.
-    uint32_t addr = prefix;
+    uint32_t addr = prefix.toUint32();
     return (IOAddress(addr & (~bitMask4[len])));
 }
 
@@ -112,7 +112,7 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
 
-    uint32_t addr = prefix;
+    uint32_t addr = prefix.toUint32();
     return (IOAddress(addr | bitMask4[len]));
 }
 
@@ -215,8 +215,8 @@ addrsInRange(const isc::asiolink::IOAddress& min,
         // Let's explicitly cast last_ and first_ (IOAddress). This conversion is
         // automatic, but let's explicitly cast it show that we moved to integer
         // domain and addresses are now substractable.
-        uint64_t max_numeric = static_cast<uint32_t>(max);
-        uint64_t min_numeric = static_cast<uint32_t>(min);
+        uint64_t max_numeric = static_cast<uint64_t>(max.toUint32());
+        uint64_t min_numeric = static_cast<uint64_t>(min.toUint32());
 
         // We can simply subtract the values. We need to increase the result
         // by one, as both min and max are included in the range. So even if
