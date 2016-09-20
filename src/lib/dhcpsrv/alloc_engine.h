@@ -882,7 +882,9 @@ private:
     /// This method attempts to extend the lease. It will call the lease6_renew
     /// or lease6_rebind hooks (depending on the client's message specified in
     /// ctx.query). The lease will be extended in LeaseMgr, unless the hooks
-    /// library will set the skip flag.
+    /// library will set the skip flag.  The old lease is added to the
+    /// the context's changed_leases_ list which allows the server to make
+    /// decisions regarding DNS updates.
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.

@@ -410,7 +410,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
                                                    *ctx.duid_,
                                                    ctx.currentIA().iaid_,
                                                    ctx.subnet_->getID());
-
         // Now do the checks:
         // Case 1. if there are no leases, and there are reservations...
         //   1.1. are the reserved addresses are used by someone else?
@@ -1382,11 +1381,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         if (old_data->expired()) {
             reclaimExpiredLease(old_data, ctx.callout_handle_);
 
-        } else  if (!lease->hasIdenticalFqdn(*old_data)) {
-            // We're not reclaiming the lease but since the FQDN has changed
-            // we have to at least send NCR.
-            queueNCR(CHG_REMOVE, old_data);
+        } else {
+            if (!lease->hasIdenticalFqdn(*old_data)) {
+                // We're not reclaiming the lease but since the FQDN has changed
+                // we have to at least send NCR.
+                queueNCR(CHG_REMOVE, old_data);
+            }
         }
+
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
         LeaseMgrFactory::instance().updateLease6(lease);
@@ -1398,27 +1400,43 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = *old_data;
     }
+
+    // Add the old lease to the changed lease list. This allows the server
+    // to make decisions regarding DNS updates.
+    ctx.currentIA().changed_leases_.push_back(old_data);
 }
+
 
 Lease6Collection
 AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
+    bool remove_queued = false;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
-        if (!ctx.fake_allocation_ &&
-            (conditionalExtendLifetime(*lease) ||
-             (lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
-             (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
-             (lease->hostname_ != (*lease_it)->hostname_))) {
-            ctx.currentIA().changed_leases_.push_back(*lease_it);
-            LeaseMgrFactory::instance().updateLease6(lease);
+        if (!ctx.fake_allocation_) {
+            bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
+                                 !(lease->hasIdenticalFqdn(**lease_it)));
+
+            if (conditionalExtendLifetime(*lease) || fqdn_changed) {
+                ctx.currentIA().changed_leases_.push_back(*lease_it);
+                LeaseMgrFactory::instance().updateLease6(lease);
+
+                // If the FQDN differs, remove existing DNS entries.
+                // We only need one remove.
+                if (fqdn_changed && !remove_queued) {
+                    queueNCR(CHG_REMOVE, *lease_it);
+                    remove_queued = true;
+                }
+            }
         }
+
         updated_leases.push_back(lease);
     }
+
     return (updated_leases);
 }
 

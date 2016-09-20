@@ -567,8 +567,10 @@ protected:
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
     /// @param answer A message begins sent to the Client. If it holds the
+    /// @param ctx client context (contains subnet, duid and other parameters)
     /// Client FQDN option, this option is used to create NameChangeRequests.
-    void createNameChangeRequests(const Pkt6Ptr& answer);
+    void createNameChangeRequests(const Pkt6Ptr& answer,
+                                  AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to extend the lifetime of IAs.
     ///
