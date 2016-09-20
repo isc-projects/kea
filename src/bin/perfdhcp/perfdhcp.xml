@@ -886,13 +886,12 @@ see http://kea.isc.org/ticket/4077
         </para>
     </refsect1>
 
-<!--
+
     <refsect1>
         <title>HISTORY</title>
         <para>
             The <command>perfdhcp</command> tool was initially coded  by John DuBois, Francis Dupont and Marcin Siodelski of ISC.
         </para>
     </refsect1>
--->
 
 </refentry>
