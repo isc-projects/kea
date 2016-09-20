@@ -595,7 +595,7 @@ for MySQL and PostgreSQL databases.</para></note>
     ...
 }
   </screen>
-... although is anticipated that this form of usage will only be used when it is desired to
+It is anticipated that this form of usage will only be used when it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
   <para>Some deployments of DHCP servers require that the servers listen
@@ -1753,10 +1753,8 @@ It is merely echoed by the server
 
           <para>
             If there are multiple classes defined and an incoming packet is matched
-            to multiple classes, the classes are processed in the order in
-            which they are defined. In this case the last matching class
-            "overwrites" any values that may have been set by earlier matched
-            classes.
+            to multiple classes, the class whose name is alphabetically the first
+            is used.
           </para>
         </section>
 
