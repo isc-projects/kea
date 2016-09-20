@@ -301,6 +301,6 @@ specified at server startup. The location of this file is held in the
 
 For hooks API support in DHCPv4, see @ref dhcpv4Hooks.
 
-For description of how DHCPv4-over-DHCPv6 is implemented, see @subpage dhcpv4o6Dhcp4.
+For a description of how DHCPv4-over-DHCPv6 is implemented, see @subpage dhcpv4o6Dhcp4.
 
 */
