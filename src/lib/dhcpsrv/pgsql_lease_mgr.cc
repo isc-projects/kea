@@ -882,9 +882,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_ADDR4).arg(tagged_statements[stindex].name);
-
     PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
