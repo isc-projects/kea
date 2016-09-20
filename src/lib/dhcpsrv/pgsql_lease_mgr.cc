@@ -581,6 +581,15 @@ public:
     /// @throw DbOperationError if the lease cannot be created.
     Lease6Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
+
+            /// @todo In theory, an administrator could tweak lease
+            /// information in the database. In this case, some of the
+            /// values could be set to NULL. This is less likely than
+            /// in case of host reservations, but we may consider if
+            /// retrieved values should be checked for being NULL to
+            /// prevent cryptic errors during conversions from NULL
+            /// to actual values.
+
             isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
             convertFromBytea(r, row, DUID_COL, duid_buffer_,
