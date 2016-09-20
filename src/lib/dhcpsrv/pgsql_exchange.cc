@@ -66,7 +66,7 @@ void PsqlBindArray::add(const uint8_t& byte) {
 void PsqlBindArray::add(const isc::asiolink::IOAddress& addr) {
     if (addr.isV4()) {
         addTempString(boost::lexical_cast<std::string>
-                   (static_cast<uint32_t>(addr)));
+                   (addr.toUint32()));
     } else {
         addTempString(addr.toText());
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(addr4));
     addr4.sin_family = AF_INET;
-    addr4.sin_addr.s_addr = htonl(addr);
+    addr4.sin_addr.s_addr = htonl(addr.toUint32());
     addr4.sin_port = htons(port);
 
     if (bind(sock, reinterpret_cast<struct sockaddr*>(&addr4),

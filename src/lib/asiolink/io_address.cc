@@ -107,7 +107,8 @@ IOAddress::isV6Multicast() const {
     return (asio_address_.to_v6().is_multicast());
 }
 
-IOAddress::operator uint32_t() const {
+uint32_t
+IOAddress::toUint32() const {
     if (asio_address_.is_v4()) {
         return (asio_address_.to_v4().to_ulong());
     } else {
@@ -128,8 +129,8 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
         isc_throw(BadValue, "Both addresses have to be the same family");
     }
     if (a.isV4()) {
-        // Subtracting v4 is easy. We have uint32_t operator.
-        return (IOAddress(static_cast<uint32_t>(a) - static_cast<uint32_t>(b)));
+        // Subtracting v4 is easy. We have a conversion function to uint32_t.
+        return (IOAddress(a.toUint32() - b.toUint32()));
     } else {
         // v6 is more involved.
 

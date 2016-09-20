@@ -40,7 +40,7 @@ PktFilterInet::openSocket(Iface& iface,
     if (receive_bcast && iface.flag_broadcast_) {
         addr4.sin_addr.s_addr = INADDR_ANY;
     } else {
-        addr4.sin_addr.s_addr = htonl(addr);
+        addr4.sin_addr.s_addr = htonl(addr.toUint32());
     }
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -218,7 +218,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_port = htons(pkt->getRemotePort());
-    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr());
+    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr().toUint32());
 
     struct msghdr m;
     // Initialize our message header structure.
@@ -256,7 +256,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
-    pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr()); // set the source IP address
+    pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr().toUint32()); // set the source IP address
     m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 
