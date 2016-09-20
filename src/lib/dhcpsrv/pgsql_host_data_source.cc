@@ -287,43 +287,62 @@ public:
             static_cast<Host::IdentifierType>(type);
 
         // dhcp4_subnet_id : INT NULL
-        uint32_t subnet_id;
-        getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
+        uint32_t subnet_id(0);
+        if (!isColumnNull(r, row, DHCP4_SUBNET_ID_COL)) {
+            getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
+        }
         SubnetID dhcp4_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // dhcp6_subnet_id : INT NULL
-        getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
+        subnet_id = 0;
+        if (!isColumnNull(r, row, DHCP6_SUBNET_ID_COL)) {
+            getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
+        }
         SubnetID dhcp6_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // ipv4_address : BIGINT NULL
-        uint32_t addr4;
-        getColumnValue(r, row, IPV4_ADDRESS_COL, addr4);
+        uint32_t addr4(0);
+        if (!isColumnNull(r, row, IPV4_ADDRESS_COL)) {
+            getColumnValue(r, row, IPV4_ADDRESS_COL, addr4);
+        }
         isc::asiolink::IOAddress ipv4_reservation(addr4);
 
         // hostname : VARCHAR(255) NULL
         std::string hostname;
-        getColumnValue(r, row, HOSTNAME_COL, hostname);
+        if (!isColumnNull(r, row, HOSTNAME_COL)) {
+            getColumnValue(r, row, HOSTNAME_COL, hostname);
+        }
 
         // dhcp4_client_classes : VARCHAR(255) NULL
         std::string dhcp4_client_classes;
-        getColumnValue(r, row, DHCP4_CLIENT_CLASSES_COL, dhcp4_client_classes);
+        if (!isColumnNull(r, row, DHCP4_CLIENT_CLASSES_COL)) {
+            getColumnValue(r, row, DHCP4_CLIENT_CLASSES_COL, dhcp4_client_classes);
+        }
 
         // dhcp6_client_classes : VARCHAR(255) NULL
         std::string dhcp6_client_classes;
-        getColumnValue(r, row, DHCP6_CLIENT_CLASSES_COL, dhcp6_client_classes);
+        if (!isColumnNull(r, row, DHCP6_CLIENT_CLASSES_COL)) {
+            getColumnValue(r, row, DHCP6_CLIENT_CLASSES_COL, dhcp6_client_classes);
+        }
 
         // dhcp4_next_server : BIGINT NULL
-        uint32_t dhcp4_next_server_as_uint32;
-        getColumnValue(r, row, DHCP4_NEXT_SERVER_COL, dhcp4_next_server_as_uint32);
+        uint32_t dhcp4_next_server_as_uint32(0);
+        if (!isColumnNull(r, row, DHCP4_NEXT_SERVER_COL)) {
+            getColumnValue(r, row, DHCP4_NEXT_SERVER_COL, dhcp4_next_server_as_uint32);
+        }
         isc::asiolink::IOAddress dhcp4_next_server(dhcp4_next_server_as_uint32);
 
         // dhcp4_server_hostname : VARCHAR(64)
         std::string dhcp4_server_hostname;
-        getColumnValue(r, row, DHCP4_SERVER_HOSTNAME_COL, dhcp4_server_hostname);
+        if (!isColumnNull(r, row, DHCP4_SERVER_HOSTNAME_COL)) {
+            getColumnValue(r, row, DHCP4_SERVER_HOSTNAME_COL, dhcp4_server_hostname);
+        }
 
         // dhcp4_boot_file_name : VARCHAR(128)
         std::string dhcp4_boot_file_name;
-        getColumnValue(r, row, DHCP4_BOOT_FILE_NAME_COL, dhcp4_boot_file_name);
+        if (!isColumnNull(r, row, DHCP4_BOOT_FILE_NAME_COL)) {
+            getColumnValue(r, row, DHCP4_BOOT_FILE_NAME_COL, dhcp4_boot_file_name);
+        }
 
         // Finally, attempt to create the new host.
         HostPtr host;
@@ -468,18 +487,24 @@ private:
 
             // value: BYTEA
             uint8_t value[OPTION_VALUE_MAX_LEN];
-            size_t value_len;
-            PgSqlExchange::convertFromBytea(r, row, value_index_, value,
-                                            sizeof(value), value_len);
+            size_t value_len(0);
+            if (!isColumnNull(r, row, value_index_)) {
+                PgSqlExchange::convertFromBytea(r, row, value_index_, value,
+                                                sizeof(value), value_len);
+            }
 
             // formatted_value: TEXT
             std::string formatted_value;
-            PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
-                                          formatted_value);
+            if (!isColumnNull(r, row, formatted_value_index_)) {
+                PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
+                                              formatted_value);
+            }
 
             // space: VARCHAR(128)
             std::string space;
-            PgSqlExchange::getColumnValue(r, row, space_index_, space);
+            if (!isColumnNull(r, row, space_index_)) {
+                PgSqlExchange::getColumnValue(r, row, space_index_, space);
+            }
 
             // persistent: BOOL default false
             bool persistent;
