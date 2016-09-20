@@ -1,3 +1,8 @@
+1174.	[bug]		tmark
+	Modifed kea-dhcp6 to avoid requesting DNS updates when
+	existing leases are renewed without changes to the FQDN.
+	(Trac #5007, git 05ea3a5eb75c06cf9814c63a1a54261bf58a954b)
+
 1173.	[bug]		xxwolfsrainxx, marcin
 	MySQL database creation scripts use single quotes for
 	strings to avoid issues with creation of the database
