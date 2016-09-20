@@ -307,7 +307,7 @@ TEST(CfgOptionTest, encapsulate) {
     }
 
     // Create sub-options belonging to "bar-subs" option space.
-    for (uint16_t code = 500;  code < 510; ++code) {
+    for (uint16_t code = 501;  code < 510; ++code) {
         OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                code, 0x04));
         ASSERT_NO_THROW(cfg.add(option, false, "bar-subs"));
@@ -352,17 +352,18 @@ TEST(CfgOptionTest, encapsulate) {
                 EXPECT_EQ(2, value);
             }
 
-            // Each first level sub-option should include 10 second level
+            // Each first level sub-option should include 9 second level
             // sub options.
             const OptionCollection& second_level = first_level_uint8->getOptions();
-            ASSERT_EQ(10, second_level.size());
+            ASSERT_EQ(9, second_level.size());
 
             // Iterate over sub-options and make sure they include the expected
             // values.
             std::pair<unsigned int, OptionPtr> second_level_opt;
             BOOST_FOREACH(second_level_opt, second_level) {
                 OptionUint8Ptr second_level_uint8 = boost::dynamic_pointer_cast<
-                    OptionUint8>(second_level_uint8);
+                    OptionUint8>(second_level_opt.second);
+                ASSERT_TRUE(second_level_uint8);
                 const unsigned value = static_cast<
                     unsigned>(second_level_uint8->getValue());
                 // Certain sub-options should have a value of 3, other the values
