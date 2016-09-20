@@ -93,12 +93,12 @@
 
   @subsection dhcpdb-keywords-cql Cassandra (CQL) connection string keywords
 
-  - <b>contact_points</b> - a list of coma separate IP addresses of the
-    cluster contaict points>
-  - <b>port</b> - an integer specifying connection port. If not specified, the
+  - <b>contact_points</b> - a list of comma separate IP addresses of the
+    cluster contact points>
+  - <b>port</b> - an integer specifying a connection port. If not specified, the
     default port will be used.
   - <b>user</b> - a database user name under which the database is accessed. If
-    not specifed, no user name is used - the database is assumed to be open.
+    not specified, no user name is used - the database is assumed to be open.
   - <b>password</b> - an optional password if required for connection
   - <b>keyspace</b> - an optional keyspace. If not specified, the default value
     of 'keatest' will be used.

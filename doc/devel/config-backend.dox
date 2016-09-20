@@ -10,32 +10,35 @@
 
 @section configBackendIntro Introduction
 
-Kea started as a sub-project in BIND10 that used bindctl to deliver
-configuration to its modules. After BIND10 was cancelled, Kea project
-briefly tried to maintain backward compatibility with the BIND10 framework,
-but the idea has been promptly dropped due to lack interest.
+Kea started as a sub-project in BIND10 that used a program (called
+bindctl) to deliver configuration information to its modules. This
+potentially allowed for modules to get their configuration information
+in a variaty of ways using what were known as configuration backends.
+After BIND10 was cancelled, the Kea project briefly tried to maintain
+backward compatibility with the BIND10 framework, but the effort
+was discontinued due to lack of interest.
 
-Currently Kea team does not foresee any additional configuration
-backends to be developed. Instead, an effort is being made to enhance
-current control channel (see @ref ctrlSocket) to be as flexible as
-possible. If you are thinking about developing new ways to configure
-Kea, the recommendation is to write an external piece of software that
-will communicate with Kea using control channel.
+Currently the Kea team does not plan to develop any additional
+configuration backends. Instead, effort is being focused on enhancing
+the current control channel (see @ref ctrlSocket) to be as flexible
+as possible. If you are thinking about developing new ways to
+configure Kea, the recommendation is to write an external piece of
+software that will communicate with Kea using this channel.
 
 @section configBackendHistoric Historic Notes
 
-While this section currently has not practical value, it may become useful
+While this section currently has no practical value, it may become useful
 one day to develop a minimalistic, stripped down Kea version that does
 not have any command interface at all. This could prove useful for running
 Kea in embedded regime.
 
-The following steps are needed were conducted for the DHCPv4 server to
-be able to process configuration. (It is assumed that the modified
-component is DHCPv4. Similar approach applies to the other components:
-DHCPv6 or DHCP-DDNS):
+The following steps are needed for the DHCPv4 server to be able to
+process a new method of configuration. (It is assumed that the
+modified component is DHCPv4. Similar approach applies to the other
+components: DHCPv6 or DHCP-DDNS):
 
 -# Write your own implementation of isc::dhcp::ControlledDhcpv4Srv::init(),
-   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup()
+   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup(),
    and put it in the src/bin/dhcp4 directory (e.g. as foo_controller.cc).
 -# Modify src/bin/dhcp4/Makefile.am to include your file (e.g. foo_controller.cc) in
    the build.

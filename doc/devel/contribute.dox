@@ -94,10 +94,10 @@ on the multitude of systems we run Kea on. It is short-sighted, because
 even with your best intentions you will not be able to dedicate
 any significant amount of time for repeated testing of your improved
 code. The old ISC DHCP has two decades of history behind it and we
-hope to make Kea last similar time span. Over such large periods of
-time, code tends to be refactored several times. The change you
+hope to make Kea last similar time span. Over such long periods,
+code tends to be refactored several times. The change you
 made may be affected by some other change or by the code that
-does not even exist yet.
+hasn't been written yet.
 
 See @ref unitTests for instructions on how to run unit-tests. If you
 happen to touch any database related code, make sure you compile
@@ -135,56 +135,56 @@ There are several ways how you can send your changes. They are listed
 here from most to least preferred.
 
 - Send pull request (PR) on github. This is by far the most convenient way for
-everyone. See excellent documentation on github:
+everyone. See the excellent documentation on github:
 https://help.github.com/articles/creating-a-pull-request/ for details.  In
-essence, you need github account (spam/hassle free, takes 1 minute to set
-up). Then you can fork Kea repo, commit changes to your repo and ask us to pull
-your changes into official Kea repo. It has a number of advantages. First, it is
-made against specific code version, which can be easily checked with git log
+essence, you need github account (spam/hassle free, takes one minute to set
+up). Then you can fork the Kea repository, commit changes to your repo and ask us to pull
+your changes into official Kea repository. This has a number of advantages. First, it is
+made against a specific code version, which can be easily checked with git log
 command. Second, this request pops up instantly on our list of open pull
-requests and will stay there. Third benefit is that pull request mechanism is
+requests and will stay there. The third benefit is that the pull request mechanism is
 very flexible. Kea engineers (and other users, too) can comment on it, attach
 links, mention other users etc.  You as a submitter can augment the patch by
-commiting extra changes to your repo. Those extra commits will appear instantly
-in the PR. This is super useful during the review. Finally, ISC engineers can
-better assess all open PRs and add labels to them, like enhancement, bug, or
-unit-tests missing. This makes our life easier. Oh, and your commits will later
+commiting extra changes to your repository. Those extra commits will appear instantly
+in the pull request. This is really useful during the review. Finally, ISC engineers can
+better assess all open pull requests and add labels to them, such as "enhancement", "bug", or
+"unit-tests missing". This makes our life easier. Oh, and your commits will later
 be shown as yours in github history. If you care for that kind of things, once the
 patch is merged, you'll be automatically listed as contributor and Kea will be
-listed as project you contributed to.
+listed as project you have contributed to.
 
-- Create a ticket in Kea trac and attach your patch to it. Sending a patch has a
+- Create a ticket in the Kea trac and attach your patch to it. Sending a patch has a
 number of disadvantages. First, if you don't specify the base version against
 which it was created, one of ISC engineers will have to guess that or go through
 a series of trials and errors to find that out. If the code doesn't compile, the
 reviewer will not know if the patch is broken or maybe it was applied to
 incorrect base code. Another frequent problem is that it may be possible that
 the patch didn't include any new files you have added. If we happen to have any
-comments that you as submitter is expected to address (in overwhelming majority
-of cases we have), you will be asked to send an updated patch. It is not
+comments that you as submitter are expected to address (and in the overwhelming majority
+of cases, we have), you will be asked to send an updated patch. It is not
 uncommon to see several rounds of such reviews, so this can get very complicated
 very quickly. Please make sure your ticket is created in the default milestone
-kea-proposed. ISC engineers review new tickets once a week and assign them to
+"kea-proposed". ISC engineers review new tickets once a week and assign them to
 specific milestones. Please do not add tickets to working milestones directly.
 Having a ticket in trac ensures that the patch will never be forgotten and it
 will show up on our trac reports. It's not required, but much appreciated if
-you send a short note to the kea-dev explaining what you did with the code
+you send a short note to the kea-dev mailing list explaining what you did with the code
 and announce the ticket number.
 
 - Send a patch to the kea-dev list. This is the third preferred method, if you
-can't or don't want to use github and trac for whatever reason.  Finally, if you
+can't or don't want to use github and trac for whatever reason.  If you
 send a patch to a mailing list in a wrong time, e.g. shortly before a release,
 ISC engineers may miss it or perhaps they will see it and then forget about
 it. Nevertheless, it is still doable and we successfully accepted patches that
 way. It just takes more time from everyone involved, so it's a slower process in
 general.
 
-- Send the tarball with your modified code. This is really the worst way one
+- Send a tarball with your modified code. This is really the worst way one
 can contribute a patch. It has a number of disadvantages. In particular, someone
 will need to find out which version the code was based on and generate the
 patch. It's not a rocket science, but it may be a very mundane thing to do
 if the ISC engineer does not know the version in advance. The mailing list
-has a limit of message size (for good reasons), so you'll likely need to
+has a limit on the message size (for good reasons), so you'll likely need to
 upload it somewhere first. ISC engineers often don't pick up new tickets
 instantly, so it may have to wait weeks before the tarball is looked at.
 The tarball does not benefit from most of the advantages mentioned for github,
@@ -231,11 +231,11 @@ notes.
 Sadly, we sometimes see patches that are submitted and then the submitter never
 responds to our comments or requests for an updated patch. Depending on the
 nature of the patch, we may either fix the outstanding issues on our own and get
-another ISC engineer to review them or the ticket may end up in Outstanding
-tasks milestone. When a new release is started, we go through the tickets in
-Outstanding tasks and pick a small number of them and move them to whatever the
+another ISC engineer to review them or the ticket may end up in our "Outstanding
+Tasks" milestone. When a new release is started, we go through the tickets in
+Outstanding Tasks, select a small number of them and move them to whatever the
 current milestone is. Keep that in mind if you plan to submit a patch and forget
-about it. We may accept it eventually, but it's much, much after process if you
+about it. We may accept it eventually, but it's much, much faster process if you
 participate in it.
 
 @section contributorGuideExtra Extra steps

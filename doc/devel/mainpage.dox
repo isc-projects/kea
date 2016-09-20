@@ -12,7 +12,7 @@
  * provides information needed to extend and maintain Kea source code.
 
  * If you wish to write hook code - the code that is loaded by Kea at
- * the run-time and modifies its behavior,  you should read the section
+ * run-time and modifies its behavior,  you should read the section
  * @ref hooksdgDevelopersGuide.
  *
  * Kea maintenance information is divided into a number of sections.
