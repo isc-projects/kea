@@ -170,6 +170,44 @@
     </para>
   </refsect1>
 
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>perfdhcp</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-lfc</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator's Guide</citetitle>.
+
+    </para>
+  </refsect1>
+
 </refentry><!--
  - Local variables:
  - mode: sgml
