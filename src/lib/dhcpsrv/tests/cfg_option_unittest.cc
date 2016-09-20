@@ -10,6 +10,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
@@ -280,42 +281,97 @@ TEST(CfgOptionTest, encapsulate) {
         ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
     }
 
-    // Create sub-options belonging to "foo" option space.
+    // Create sub-options belonging to "foo" option space and encapsulating
+    // foo-subs option space.
     for (uint16_t code = 1; code < 20; ++code) {
         OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
                                                                0x01));
+        option->setEncapsulatedSpace("foo-subs");
         ASSERT_NO_THROW(cfg.add(option, false, "foo"));
     }
 
-    // Create sub-options belonging to "bar" option space.
-    for (uint16_t code = 100;  code < 130; ++code) {
+    // Create sub-options belonging to "bar" option space and encapsulating
+    // bar-subs option space.
+    for (uint16_t code = 100;  code < 119; ++code) {
         OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                code, 0x02));
+        option->setEncapsulatedSpace("bar-subs");
         ASSERT_NO_THROW(cfg.add(option, false, "bar"));
     }
 
-    // Append options from "foo" and "bar" space as sub-options.
+    // Create sub-options belonging to "foo-subs" option space.
+    for (uint16_t code = 1; code < 10; ++code) {
+        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
+                                                               0x03));
+        ASSERT_NO_THROW(cfg.add(option, false, "foo-subs"));
+    }
+
+    // Create sub-options belonging to "bar-subs" option space.
+    for (uint16_t code = 500;  code < 510; ++code) {
+        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
+                                                               code, 0x04));
+        ASSERT_NO_THROW(cfg.add(option, false, "bar-subs"));
+    }
+
+    // Append options from "foo" and "bar" space as sub-options and options
+    // from "foo-subs" and "bar-subs" as sub-options of "foo" and "bar"
+    // options.
     ASSERT_NO_THROW(cfg.encapsulate());
 
     // Verify that we have 40 top-level options.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(40, options->size());
 
+    // Iterate over top level options.
     for (uint16_t code = 1000; code < 1040; ++code) {
+
         OptionUint16Ptr option = boost::dynamic_pointer_cast<
             OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option_);
         ASSERT_TRUE(option) << "option with code " << code << " not found";
-        const OptionCollection& suboptions = option->getOptions();
-        for (OptionCollection::const_iterator suboption =
-                 suboptions.begin(); suboption != suboptions.end();
-             ++suboption) {
-            OptionUint8Ptr opt = boost::dynamic_pointer_cast<
-                OptionUint8>(suboption->second);
-            ASSERT_TRUE(opt);
-            if (code < 1020) {
-                EXPECT_EQ(0x01, opt->getValue());
+
+        // First level sub options. There are 19 sub-options for each top
+        // level option.
+        const OptionCollection& first_level = option->getOptions();
+        ASSERT_EQ(19, first_level.size());
+
+        // Iterate over all first level sub-options.
+        std::pair<unsigned int, OptionPtr> first_level_opt;
+        BOOST_FOREACH(first_level_opt, first_level) {
+            // Each option in this test comprises a single one byte field and
+            // should cast to OptionUint8 type.
+            OptionUint8Ptr first_level_uint8 = boost::dynamic_pointer_cast<
+                OptionUint8>(first_level_opt.second);
+            ASSERT_TRUE(first_level_uint8);
+
+            const unsigned value = static_cast<unsigned>(first_level_uint8->getValue());
+            // There are two sets of first level sub-options. Those that include
+            // a value of 1 and those that include a value of 2.
+            if (first_level_uint8->getType() < 20) {
+                EXPECT_EQ(1, value);
             } else {
-                EXPECT_EQ(0x02, opt->getValue());
+                EXPECT_EQ(2, value);
+            }
+
+            // Each first level sub-option should include 10 second level
+            // sub options.
+            const OptionCollection& second_level = first_level_uint8->getOptions();
+            ASSERT_EQ(10, second_level.size());
+
+            // Iterate over sub-options and make sure they include the expected
+            // values.
+            std::pair<unsigned int, OptionPtr> second_level_opt;
+            BOOST_FOREACH(second_level_opt, second_level) {
+                OptionUint8Ptr second_level_uint8 = boost::dynamic_pointer_cast<
+                    OptionUint8>(second_level_uint8);
+                const unsigned value = static_cast<
+                    unsigned>(second_level_uint8->getValue());
+                // Certain sub-options should have a value of 3, other the values
+                // of 4.
+                if (second_level_uint8->getType() < 20) {
+                    EXPECT_EQ(3, value);
+                } else {
+                    EXPECT_EQ(4, value);
+                }
             }
         }
     }
