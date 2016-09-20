@@ -49,11 +49,9 @@
     <title>DESCRIPTION</title>
     <para>
       The <command>kea-dhcp-ddns</command> service process requests to
-      update DNS mapping based on DHCP lease change events. The service
-      may run either as a Kea module (integrated mode) or as a individual
-      process (stand-alone mode) dependent upon command line arguments. The
-      default is integrated mode.  Stand alone operation is strictly for
-      development purposes and is not suited for production.
+      update DNS mapping based on DHCP lease change events. It runs as
+      a separate process that expects to receive Name Change Requests
+      from Kea DHCP servers.
     </para>
 
   </refsect1>
@@ -109,7 +107,7 @@
     <title>HISTORY</title>
     <para>
       The <command>b10-dhcp-ddns</command> process was first coded in
-      May 2013 by the ISC Kea/DHCP team.
+      May 2013 by Thomas Markwalder.
     </para>
     <para>
       Kea became a standalone server and the BIND10 framework was
