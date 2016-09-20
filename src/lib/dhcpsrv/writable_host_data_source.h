@@ -141,6 +141,15 @@ public:
     virtual HostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) = 0;
 
+    /// @brief Returns a host connected to the IPv6 subnet and having
+    /// a reservation for a specified IPv6 address or prefix.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return @c Host object using a specified IPv6 address/prefix.
+    virtual HostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) = 0;
 };
 
 }

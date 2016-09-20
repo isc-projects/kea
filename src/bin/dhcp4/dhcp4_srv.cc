@@ -2092,7 +2092,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
 OptionPtr
 Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
-    uint32_t netmask = getNetmask4(subnet->get().second);
+    uint32_t netmask = getNetmask4(subnet->get().second).toUint32();
 
     OptionPtr opt(new OptionInt<uint32_t>(Option::V4,
                   DHO_SUBNET_MASK, netmask));

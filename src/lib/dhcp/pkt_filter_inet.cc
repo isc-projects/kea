@@ -40,7 +40,7 @@ PktFilterInet::openSocket(Iface& iface,
     if (receive_bcast && iface.flag_broadcast_) {
         addr4.sin_addr.s_addr = INADDR_ANY;
     } else {
-        addr4.sin_addr.s_addr = htonl(addr);
+        addr4.sin_addr.s_addr = htonl(addr.toUint32());
     }
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -218,7 +218,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_port = htons(pkt->getRemotePort());
-    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr());
+    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr().toUint32());
 
     struct msghdr m;
     // Initialize our message header structure.
