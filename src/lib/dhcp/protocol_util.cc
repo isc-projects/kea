@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -168,8 +168,8 @@ writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
     out_buf.writeUint8(128); // TTL
     out_buf.writeUint8(IPPROTO_UDP); // Protocol UDP.
     out_buf.writeUint16(0); // Temporarily set checksum to 0.
-    out_buf.writeUint32(pkt->getLocalAddr()); // Source address.
-    out_buf.writeUint32(pkt->getRemoteAddr()); // Destination address.
+    out_buf.writeUint32(pkt->getLocalAddr().toUint32()); // Source address.
+    out_buf.writeUint32(pkt->getRemoteAddr().toUint32()); // Destination address.
 
     // Calculate pseudo header checksum. It will be necessary to compute
     // UDP checksum.

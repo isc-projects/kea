@@ -77,7 +77,7 @@ Option4AddrLst::pack(isc::util::OutputBuffer& buf) const {
     AddressContainer::const_iterator addr = addrs_.begin();
 
     while (addr != addrs_.end()) {
-        buf.writeUint32(*addr);
+        buf.writeUint32(addr->toUint32());
         ++addr;
     }
 }

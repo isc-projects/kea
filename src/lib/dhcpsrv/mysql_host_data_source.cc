@@ -294,7 +294,7 @@ public:
             // ipv4_address : INT UNSIGNED NULL
             // The address in the Host structure is an IOAddress object.  Convert
             // this to an integer for storage.
-            ipv4_address_ = static_cast<uint32_t>(host->getIPv4Reservation());
+            ipv4_address_ = host->getIPv4Reservation().toUint32();
             bind_[5].buffer_type = MYSQL_TYPE_LONG;
             bind_[5].buffer = reinterpret_cast<char*>(&ipv4_address_);
             bind_[5].is_unsigned = MLM_TRUE;
@@ -327,7 +327,7 @@ public:
             // ipv4_address : INT UNSIGNED NULL
             // The address in the Host structure is an IOAddress object.  Convert
             // this to an integer for storage.
-            dhcp4_next_server_ = static_cast<uint32_t>(host->getNextServer());
+            dhcp4_next_server_ = host->getNextServer().toUint32();
             bind_[9].buffer_type = MYSQL_TYPE_LONG;
             bind_[9].buffer = reinterpret_cast<char*>(&dhcp4_next_server_);
             bind_[9].is_unsigned = MLM_TRUE;
@@ -1757,6 +1757,7 @@ public:
         GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
+        GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
         GET_VERSION,            // Obtain version number
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
@@ -2044,6 +2045,30 @@ TaggedStatementArray tagged_statements = { {
             "WHERE h.host_id = "
                 "(SELECT host_id FROM ipv6_reservations "
                  "WHERE address = ? AND prefix_len = ?) "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
+
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using subnet id and prefix. This query
+    // returns host information for a single host. However, multiple rows
+    // are returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.dhcp6_subnet_id = ? AND r.address = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves MySQL schema version.
@@ -2441,7 +2466,7 @@ MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    uint32_t addr4 = static_cast<uint32_t>(address);
+    uint32_t addr4 = address.toUint32();
     inbind[0].buffer_type = MYSQL_TYPE_LONG;
     inbind[0].buffer = reinterpret_cast<char*>(&addr4);
     inbind[0].is_unsigned = MLM_TRUE;
@@ -2504,7 +2529,7 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
     inbind[0].buffer = reinterpret_cast<char*>(&subnet);
     inbind[0].is_unsigned = MLM_TRUE;
 
-    uint32_t addr4 = static_cast<uint32_t>(address);
+    uint32_t addr4 = address.toUint32();
     inbind[1].buffer_type = MYSQL_TYPE_LONG;
     inbind[1].buffer = reinterpret_cast<char*>(&addr4);
     inbind[1].is_unsigned = MLM_TRUE;
@@ -2596,6 +2621,42 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
     return (result);
 }
+
+ConstHostPtr
+MySqlHostDataSource::get6(const SubnetID& subnet_id,
+                          const asiolink::IOAddress& address) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    uint32_t subnet_buffer = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_buffer);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    std::string addr6 = address.toText();
+    unsigned long addr6_length = addr6.size();
+
+    inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[1].buffer = reinterpret_cast<char*>
+                        (const_cast<char*>(addr6.c_str()));
+    inbind[1].length = &addr6_length;
+    inbind[1].buffer_length = addr6_length;
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
+                             inbind, impl_->host_ipv6_exchange_,
+                             collection, true);
+
+    // Return single record if present, else clear the host.
+    ConstHostPtr result;
+    if (!collection.empty()) {
+        result = *collection.begin();
+    }
+
+    return (result);
+}
+
 
 // Miscellaneous database methods.
 

@@ -83,7 +83,7 @@ TEST_F(Lease4Test, constructor) {
                      current_time, SUBNET_ID, true, true,
                      "hostname.example.com.");
 
-        EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
+        EXPECT_EQ(ADDRESS[i], lease.addr_.toUint32());
         EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
         EXPECT_TRUE(util::equalValues(clientid_, lease.client_id_));
         EXPECT_EQ(0, lease.t1_);

@@ -105,7 +105,7 @@ PktFilterTest::sendMessage(const IOAddress& dest) {
     memset(&dest_addr4, 0, sizeof(sockaddr));
     dest_addr4.sin_family = AF_INET;
     dest_addr4.sin_port = htons(port_);
-    dest_addr4.sin_addr.s_addr = htonl(dest);
+    dest_addr4.sin_addr.s_addr = htonl(dest.toUint32());
     ASSERT_EQ(sendto(send_msg_sock_, test_message_->getBuffer().getData(),
                      test_message_->getBuffer().getLength(), 0,
                      reinterpret_cast<struct sockaddr*>(&dest_addr4),
