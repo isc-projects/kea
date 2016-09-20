@@ -506,6 +506,11 @@ private:
                 PgSqlExchange::getColumnValue(r, row, space_index_, space);
             }
 
+            // If empty or null space provided, use a default top level space.
+            if (space.empty()) {
+                space = (universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+            }
+
             // persistent: BOOL default false
             bool persistent;
             PgSqlExchange::getColumnValue(r, row, persistent_index_,

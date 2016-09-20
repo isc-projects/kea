@@ -822,6 +822,11 @@ private:
                 space.assign(space_);
             }
 
+            // If empty or null space provided, use a default top level space.
+            if (space.empty()) {
+                space = (universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+            }
+
             // Convert formatted_value to string as well.
             std::string formatted_value;
             if (formatted_value_null_ == MLM_FALSE) {
