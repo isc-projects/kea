@@ -1198,7 +1198,8 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
 }
 
 void
-Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
+Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
+                                    AllocEngine::ClientContext6& ctx) {
     // Don't create NameChangeRequests if DNS updates are disabled.
     if (!CfgMgr::instance().ddnsEnabled()) {
         return;
@@ -1270,6 +1271,27 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
         if (!iaaddr) {
             continue;
         }
+
+        // If the lease for iaaddr is in the list of changed leases, we need
+        // to determine if the changes included changes to the FQDN. If there
+        // were  changes to the FQDN then we need to update DNS, otherwise
+        // we do not.
+        bool extended_only = false;
+        for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
+             l != ctx.currentIA().changed_leases_.end(); ++l) {
+            if ((*l)->addr_ == iaaddr->getAddress()) {
+                if ((*l)->hostname_ == opt_fqdn->getDomainName() &&
+                    (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev) {
+                    extended_only = true;
+                    break;
+                }
+            }
+        }
+
+        if (extended_only) {
+            continue;
+        }
+
         // Create new NameChangeRequest. Use the domain name from the FQDN.
         // This is an FQDN included in the response to the client, so it
         // holds a fully qualified domain-name already (not partial).
@@ -2307,7 +2329,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Only generate name change requests if sending a Reply as a result
     // of receiving Rapid Commit option.
     if (response->getType() == DHCPV6_REPLY) {
-        createNameChangeRequests(response);
+        createNameChangeRequests(response, ctx);
     }
 
     return (response);
@@ -2335,7 +2357,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(reply);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
@@ -2362,7 +2384,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(reply);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
@@ -2389,7 +2411,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
     generateFqdn(reply);
-    createNameChangeRequests(rebind);
+    createNameChangeRequests(reply, ctx);
 
     return (reply);
 }
