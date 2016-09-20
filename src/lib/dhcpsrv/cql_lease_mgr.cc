@@ -563,7 +563,7 @@ public:
             // address: int
             // The address in the Lease structure is an IOAddress object.
             // Convert this to an integer for storage.
-            addr4_ = static_cast<uint32_t>(lease_->addr_);
+            addr4_ = lease_->addr_.toUint32();
             data.add(&addr4_);
 
             // hwaddr: blob
@@ -1387,7 +1387,7 @@ CqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     // Set up the WHERE clause value
     CqlDataArray data;
 
-    uint32_t addr4_data = static_cast<uint32_t>(addr);
+    uint32_t addr4_data = addr.toUint32();
     data.add(&addr4_data);
 
     // Get the data
@@ -1707,7 +1707,7 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     data.remove(0);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    uint32_t addr4_data = static_cast<uint32_t>(lease->addr_);
+    uint32_t addr4_data = lease->addr_.toUint32();
     data.add(&addr4_data);
 
     // Drop to common update code
@@ -1805,7 +1805,7 @@ CqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     CqlDataArray data;
 
     if (addr.isV4()) {
-        uint32_t addr4_data = static_cast<uint32_t>(addr);
+        uint32_t addr4_data = addr.toUint32();
         data.add(&addr4_data);
         return (deleteLeaseCommon(DELETE_LEASE4, data, *exchange4_));
     } else {
