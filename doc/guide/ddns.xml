@@ -8,7 +8,8 @@
     <title>The DHCP-DDNS Server</title>
     <para>
     The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts the client side of
-    the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
+    the DDNS protocol (defined in <ulink url="http://tools.ietf.org/html/rfc2136">RFC 2136</ulink>)
+    on behalf of the DHCPv4 and DHCPv6
     servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
     lease change events and then post these to D2. D2 attempts to match
@@ -87,8 +88,11 @@
           </listitem>
           <listitem>
             <simpara>
-              <command>-V</command> - prints out Kea extended version with
-              additional parameters and exits.
+              <command>-W</command> - prints out the Kea configuration report
+              and exits. The report is a copy of the
+              <filename>config.report</filename> file produced by
+              <userinput>./configure</userinput>: it is embedded in the
+              executable binary.
             </simpara>
           </listitem>
           <listitem>
@@ -98,19 +102,6 @@
             </simpara>
           </listitem>
       </itemizedlist>
-
-      <para>
-            The <command>-V</command> command returns the versions of the
-            external libraries dynamically linked.
-      </para>
-
-      <para>
-            The <command>-W</command> command describes the environment used
-            to build Kea.  This command displays a copy of the
-            <filename>config.report</filename> file produced by
-            <userinput>./configure</userinput> that is embedded in the
-            executable binary.
-      </para>
 
       <para>
             The <filename>config.report</filename> may also be accessed more
@@ -188,26 +179,22 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 	<itemizedlist>
 	  <listitem>
 	    <simpara>
-	      <command>Global Server Parameters</command> -
-	      values which control connectivity and global server behavior
+        <emphasis>Global Server Parameters</emphasis> - values which control connectivity and global server behavior
 	    </simpara>
 	  </listitem>
 	  <listitem>
 	    <simpara>
-	      <command>TSIG Key Info</command> -
-	      defines the TSIG keys used for secure traffic with DNS servers
+	      <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers
 	    </simpara>
 	  </listitem>
 	  <listitem>
 	    <simpara>
-	      <command>Forward DDNS</command> -
-	      defines the catalog of Forward DDNS Domains
+	      <emphasis>Forward DDNS</emphasis> - defines the catalog of Forward DDNS Domains
 	    </simpara>
 	  </listitem>
 	  <listitem>
 	    <simpara>
-	      <command>Reverse DDNS</command> -
-	      defines the catalog of Forward DDNS Domains
+	      <emphasis>Reverse DDNS</emphasis> - defines the catalog of Forward DDNS Domains
 	    </simpara>
 	  </listitem>
 	</itemizedlist>
@@ -234,8 +221,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 
       <listitem><simpara>
       <command>ncr-protocol</command> - Socket protocol to use when sending requests to D2.
-      Currently only UDP is supported.  TCP may be available in an upcoming
-      release.
+      Currently only UDP is supported.  TCP may be available in a future release.
       </simpara></listitem>
 
       <listitem><simpara>
@@ -347,7 +333,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	    <simpara>
 	      <command>digest-bits</command> -
 	      is used to specify the minimum truncated length in bits.
-	      The default value 0 means truncation is forbidden, not 0
+	      The default value 0 means truncation is forbidden, non-zero
 	      values must be an integral number of octets, be greater
 	      than 80 and the half of the full length. Note in BIND9
 	      this parameter is appended after a dash to the algorithm
