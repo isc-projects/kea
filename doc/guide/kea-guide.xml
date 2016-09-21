@@ -20,12 +20,12 @@
   <bookinfo>
 
     <title>
-    Kea Administrator Reference Manual
     <inlinemediaobject>
         <imageobject>
             <imagedata fileref="kea-logo-100x70.png" align="left"/>
         </imageobject>
     </inlinemediaobject>
+    Kea Administrator Reference Manual
     </title>
 
     <releaseinfo>This is the reference guide for Kea version
