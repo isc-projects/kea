@@ -25,7 +25,7 @@ as possible. If you are thinking about developing new ways to
 configure Kea, the recommendation is to write an external piece of
 software that will communicate with Kea using this channel.
 
-@section configBackendHistoric Historic Notes
+@section configBackendHistoric Alternate Configuration Backends
 
 While this section currently has no practical value, it may become useful
 one day to develop a minimalistic, stripped down Kea version that does

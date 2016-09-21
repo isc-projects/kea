@@ -1,3 +1,7 @@
+1176.	[doc]		tomek
+	Developer's Guide has been updated.
+	(trac #4299, git ed38076c183394feaef60e7123d0c488c9f6447d)
+
 1175.	[bug]		marcin
 	Corrected a bug whereby a client, for which there was no
 	host reservation specified, did not obtain an IPv6 lease
