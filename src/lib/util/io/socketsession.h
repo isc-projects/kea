@@ -21,6 +21,10 @@ namespace io {
 
 /// \page SocketSessionUtility Socket session utility
 ///
+/// \note This class is currently unused. Once we get to the implementation
+///       of the remote parts of the management API, we will evaluate whether
+///       this code is useful or not and either start using it or remove it.
+///
 /// This utility defines a set of classes that support forwarding a
 /// "socket session" from one process to another.  A socket session is a
 /// conceptual tuple of the following elements:

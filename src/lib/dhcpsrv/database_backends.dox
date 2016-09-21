@@ -55,9 +55,13 @@
 
   - <b>type</b> - specifies the type of database backend.  The following values
   for the type keyword are supported:
-     - <B>memfile</b> - In-memory database.  Nothing is written to any
-       external storage, so this should not be used in production.
-     - <b>mysql</b> - Use MySQL as the database
+     - <B>memfile</b> - In-memory database.
+     - <b>mysql</b> - Use MySQL as the database. Must be enabled at compilation
+       time.
+     - <b>postgresql</b> - Use PostgreSQL as the database. Must be enabled
+       at compilation time.
+     - <b>cql</b> - Use Cassandra (CQL) as the database. Must be enabled at
+       compilation time.
 
   The following sections list the database-specific keywords:
 
@@ -72,6 +76,8 @@
   - <b>user</b> - database user ID under which the database is accessed.  If not
     specified, no user ID is used - the database is assumed to be open.
 
+  For details, see @ref isc::dhcp::MySqlConnection::openDatabase().
+
   @subsection dhcpdb-keywords-pgsql PostgreSQL connection string keywords
 
   - <b>host</b> - host on which the selected database is running.  If not
@@ -83,5 +89,20 @@
   - <b>user</b> - database user ID under which the database is accessed.  If not
     specified, no user ID is used - the database is assumed to be open.
 
+  For details, see @ref isc::dhcp::PgSqlConnection::openDatabase().
+
+  @subsection dhcpdb-keywords-cql Cassandra (CQL) connection string keywords
+
+  - <b>contact_points</b> - a list of comma separated IP addresses of the
+    cluster contact points>
+  - <b>port</b> - an integer specifying a connection port. If not specified, the
+    default port will be used.
+  - <b>user</b> - a database user name under which the database is accessed. If
+    not specified, no user name is used - the database is assumed to be open.
+  - <b>password</b> - an optional password if required for connection
+  - <b>keyspace</b> - an optional keyspace. If not specified, the default value
+    of 'keatest' will be used.
+
+  For details, see @ref isc::dhcp::CqlConnection::openDatabase().
 
   */
