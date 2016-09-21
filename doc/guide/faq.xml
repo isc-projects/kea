@@ -18,7 +18,7 @@
     it in the known issues list. -->
 
   <section id="faq-generic">
-    <title>Generic Frequently Asked Questions</title>
+    <title>General Frequently Asked Questions</title>
 
     <section id="q1-generic">
       <title>Where did the Kea name came from?</title>
@@ -61,7 +61,8 @@
       Accepted contributions range from minor documentation corrections to
       significant new features, like support for a new database type. Before
       considering writing and submitting a patch, make sure you read
-      the Contributor's Guide in <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea Developer's Guide</ulink>.
+      the Contributor's Guide in the
+      <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea Developer's Guide</ulink>.
       </para>
 
       <para>Kea is developed by ISC, which is a non-profit organization.
