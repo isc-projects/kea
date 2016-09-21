@@ -10,14 +10,27 @@
 -->
 
 <refentry>
+
     <refentryinfo>
-        <date>August 31, 2016</date>
+      <productname>ISC Kea</productname>
+      <date>Sep. 28, 2016</date>
+      <edition>1.1.0</edition>
+      <author>
+        <contrib>The Kea software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
+        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
+        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+        chronological order in which the authors made their first
+        contribution. For a complete list of authors and
+        contributors, see AUTHORS file.</contrib>
+        <orgname>Internet Systems Consortium, Inc.</orgname>
+      </author>
     </refentryinfo>
 
     <refmeta>
         <refentrytitle>perfdhcp</refentrytitle>
         <manvolnum>8</manvolnum>
-        <refmiscinfo>Kea</refmiscinfo>
+        <refmiscinfo class="manual">Kea</refmiscinfo>
     </refmeta>
 
     <refnamediv>
@@ -871,28 +884,73 @@
 
     </refsect1>
 
-    <refsect1>
-        <title>SEE ALSO</title>
-        <para>
-            <citerefentry><refentrytitle>dhcpd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>kea-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>kea-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-            <citetitle>Kea Administrator Guide</citetitle>.
-<!--
-see http://kea.isc.org/ticket/4077
-            <citetitle>DHCP Performance Guide</citetitle>
--->
+    <!-- perfdhcp is not documented in the User's Guide at
+         all. There's one reference when we list binaries, but that's
+         it. Once it's documented, we can copy over the DOCUMENTATION
+         section from src/bin/dhcp4/kea-dhcp4.xml -->
 
-        </para>
-    </refsect1>
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
+    <para>
+      There are two mailing lists available for Kea project. kea-users
+      (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
+      (kea-dev at lists.isc.org) is intended for Kea developers, prospective
+      contributors and other advanced users.  Both lists are available at
+      http://lists.isc.org. The community provides best effort type of support
+      on both of those lists.
+    </para>
+    <para>
+      ISC provides professional support for Kea services. See
+      https://www.isc.org/kea/ for details.
+    </para>
+  </refsect1>
 
-<!--
     <refsect1>
         <title>HISTORY</title>
         <para>
-            The <command>perfdhcp</command> tool was initially coded  by John DuBois, Francis Dupont and Marcin Siodelski of ISC.
+            The <command>perfdhcp</command> tool was initially coded
+            in October 2011 by John DuBois, Francis Dupont and Marcin
+            Siodelski of ISC. Kea 1.0.0 that included perfdhcp was
+            released in December 2015.
         </para>
     </refsect1>
--->
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-lfc</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator's Guide</citetitle>.
+
+    </para>
+  </refsect1>
 
 </refentry>
