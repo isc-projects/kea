@@ -509,14 +509,14 @@
 
       <listitem><para>
       Vendor option means Vendor-Identifying Vendor-specific Information
-      option (code 125, see
-      <ulink url="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</ulink>) in DHCPv4 and
-      Vendor-specific Information Option (code 17, defined in
+      option in DHCPv4 (code 125, see
+      <ulink url="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</ulink>) and
+      Vendor-specific Information Option in DHCPv6 (code 17, defined in
       <ulink url="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
-      RFC 3315</ulink>) in DHCPv6. Vendor class option means Vendor-Identifying Vendor
-      Class Option (code 124, see
+      RFC 3315</ulink>). Vendor class option means Vendor-Identifying Vendor
+      Class Option in DHCPv4 (code 124, see
       <ulink url="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</ulink>) in DHCPv4 and
-      Class Option (code 16, see
+      Class Option in DHCPv6 (code 16, see
       <ulink url="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</ulink>).
       Vendor options may
       have sub-options that are referenced by their codes. Vendor class

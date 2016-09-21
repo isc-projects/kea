@@ -74,9 +74,10 @@
         configuration for zero or more loggers (including loggers used by the
         proprietary hooks libraries). If there are no loggers specified, the
         code will use default values: these cause Kea to log messages of INFO
-        severity or greater to standard output.
-        <!-- @todo: add reference to section about controlling default
-        behavior with env. variables, after #3591 is merged. -->
+        severity or greater to standard output. There's also a small
+	time window after Kea is started, but has not yet read its
+	configuration. Logging in this short period can be controlled
+	using environment variables. For details, see <xref linkend="logging-during-startup"></xref>.
       </para>
 
       <para>
@@ -779,7 +780,7 @@
       </para>
     </section>
 
-    <section>
+    <section id="logging-during-startup">
       <title>Logging During Kea Startup</title>
       <para>
         The logging configuration is specified in the configuration file.
