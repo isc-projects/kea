@@ -16,17 +16,19 @@
       the several supported databases. As future versions of Kea
       are released, the structure of those databases will change.
       For example, Kea currently only stores lease information
-      and host reservations: in the future, additional
-      data - such as subnet definitions - will also be stored.
+      and host reservations. Future versions of Kea will store
+      additional data such as subnet definitions: the database
+      structure will need to be updated to accomdate the extra
+      information.
     </para>
 
     <para>
       A given version of Kea expects a particular structure in
-      the database.  It ensures this by checking the version of the
+      the database and checks for this by examining the version of
       database it is using.  Separate version numbers are maintained for
       backend databases, independent of the version of Kea itself. It
       is possible that the backend database version will stay the same
-      through several Kea revisions. Likewise, it is possible that the
+      through several Kea revisions: similarly, it is possible that the
       version of backend database may go up several revisions during a
       Kea upgrade.  Versions for each database are independent, so an
       increment in the MySQL database version does not imply an increment
@@ -70,9 +72,10 @@
         <listitem>
           <simpara>
             <command>lease-init</command> &mdash;
-            Initializes a new lease database. Useful during first
+            Initializes a new lease database. This is useful during a new 
             Kea installation. The database is initialized to the
-            latest version supported by the version of the software.
+            latest version supported by the version of the software being
+            installed.
           </simpara>
         </listitem>
 
@@ -97,9 +100,10 @@
           <simpara>
             <command>lease-dump</command> &mdash;
             Dumps the contents of the lease database (for MySQL, PostgreSQL or
-            CQL backends) to CSV text file. The first line of the file contains
-            the column names.  This is meant to be used as a diagnostic tool
-            that provides a portable, human-readable form of lease data.
+            CQL backends) to a CSV (comma separated values) text file. The first
+            line of the file contains the column names.  This is meant to be
+            used as a diagnostic tool, so it provides a portable, human-readable
+            form of the lease data.
           </simpara>
         </listitem>
       </itemizedlist>
@@ -118,16 +122,14 @@
         <listitem>
           <simpara>
             <command>mysql</command> &mdash;
-            Lease information is stored in a MySQL relational
-            database.
+            Lease information is stored in a MySQL relational database.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
             <command>pgsql</command> &mdash;
-            Lease information is stored in a PostgreSQL relational
-            database.
+            Lease information is stored in a PostgreSQL relational database.
           </simpara>
         </listitem>
 
@@ -142,7 +144,7 @@
 
       Additional parameters may be needed, depending on your setup
       and specific operation: username, password and database name or
-      the directory where specific files are located. See appropriate
+      the directory where specific files are located. See the appropriate
       manual page for details (<command>man 8 kea-admin</command>).
     </para>
   </section>
@@ -185,7 +187,7 @@
 
             <row>
               <entry>Data format</entry>
-              <entry>coma separated file</entry>
+              <entry>CSV file</entry>
               <entry>SQL RMDB</entry>
               <entry>SQL RMDB</entry>
               <entry>NoSQL database (CQL)</entry>
@@ -224,14 +226,14 @@
       <title>memfile</title>
 
       <para>
-        Memfile backend is able to store lease information, but is not able to
-        store host reservation details. There are no plans to add the
-        reservations storage capability to memfile. Host reservations can be
-        defined in the configuration file.
+        The memfile backend is able to store lease information, but is not able to
+        store host reservation details: these must be stored in the configuration
+        file. (There are no plans to add a host reservations storage capability to
+        this backend.)
       </para>
 
       <para>
-        There are no special initialization steps necessary
+        No special initialization steps are necessary
         for the memfile backend.  During the first run, both
         <command>kea-dhcp4</command> and <command>kea-dhcp6</command>
         will create an empty lease file if one is not
@@ -267,17 +269,12 @@
 
       <para>
         MySQL is able to store leases, host reservations and options defined on
-        a per host basis.
-      </para>
-
-      <para>
-        The MySQL database must be properly set up if you want Kea to
-        store information in MySQL. This section can be safely ignored
+        a per host basis. This section can be safely ignored
         if you chose to store the data in other backends.
       </para>
 
       <section id="mysql-database-create">
-        <title>First Time Creation of Kea Database</title>
+        <title>First Time Creation of the MySQL Database</title>
 
         <para>
           If you are setting the MySQL database for the first time,
@@ -418,7 +415,7 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       </para>
 
       <section id="pgsql-database-create">
-        <title>Manually Create the PostgreSQL Database and the Kea User</title>
+        <title>First Time Creation of the PostgreSQL Database</title>
 
         <para>
           The first task is to create both the lease database and the
@@ -458,7 +455,6 @@ postgres=#
 <screen>
 postgres=#<userinput> CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD '<replaceable>password</replaceable>';</userinput>
 CREATE ROLE
-postgres=#
 postgres=#<userinput> GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput>
 GRANT
 postgres=#
@@ -594,8 +590,8 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental. Please use
-        with caution. CQL backend is currently able to store leases only. The
+        testing as other backends, it is considered experimental: please use
+        with caution. The CQL backend is currently able to store leases only. The
         ability to store host reservations will likely be added some time in the
         future.
       </para>
@@ -607,7 +603,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       </para>
 
     <section id="cql-database-create">
-      <title>First Time Creation of Kea Database</title>
+      <title>First Time Creation of the Cassandra Database</title>
 
       <para>
         If you are setting up the CQL database for the first time, you need to
@@ -713,19 +709,19 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
   </section> <!-- end of CQL sections -->
 
     <section>
-      <title>Using read only databases with host reservations</title>
-      <para>If read only database is used for storing host reservations,
+      <title>Using Read-Only Databases with Host Reservations</title>
+      <para>If a read-only database is used for storing host reservations,
       Kea must be explicitly configured to operate on the database in
-      the read only mode.
+      read-only mode.
       Sections <xref linkend="read-only-database-configuration4"/> and
       <xref linkend="read-only-database-configuration6"/> describe when
       such configuration may be reqired and how to configure Kea to
-      operate using read only host database.
+      operate using a read-only host database.
       </para>
     </section>
 
     <section>
-      <title>Limitations related to the use of the SQL databases</title>
+      <title>Limitations Related to the use of SQL Databases</title>
 
       <para>
         The lease expiration time is stored in the SQL database for each lease
@@ -738,6 +734,8 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
         maximum signed 32-bit number. This effectively means that the current
         Kea version can't store the leases which expiration time is later than
         2147483647 seconds since the beginning of the epoch (around year 2038).
+        This will be fixed when the database support for longer timestamps
+        is available.
       </para>
     </section>
 
