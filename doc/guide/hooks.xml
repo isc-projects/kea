@@ -102,8 +102,8 @@
         parameter), floor (integer parameter), debug (boolean parameter) and
         even lists (list of strings) and maps (containing strings). Nested
         parameters could be used if the library supports it. This topic is
-        explained in detail in the Hooks Developer's Guide in Configuring Hooks
-        Libraries section.
+        explained in detail in the Hooks Developer's Guide in the "Configuring
+        Hooks Libraries" section.
       </para>
 
       <para>
