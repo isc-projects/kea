@@ -11,13 +11,25 @@
 
 <refentry>
   <refentryinfo>
-    <date>Nov 5, 2014</date>
+    <productname>ISC Kea</productname>
+    <date>Sep. 28, 2016</date>
+    <edition>1.1.0</edition>
+    <author>
+      <contrib>The Kea software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
+        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
+        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+        chronological order in which the authors made their first
+        contribution. For a complete list of authors and
+        contributors, see AUTHORS file.</contrib>
+      <orgname>Internet Systems Consortium, Inc.</orgname>
+    </author>
   </refentryinfo>
 
   <refmeta>
     <refentrytitle>kea-admin</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo>Kea</refmiscinfo>
+    <refmiscinfo class="manual">Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
@@ -27,7 +39,7 @@
 
   <docinfo>
     <copyright>
-      <year>2014</year>
+      <year>2014-2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -208,6 +220,16 @@
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>perfdhcp</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 
