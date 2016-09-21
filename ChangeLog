@@ -1,3 +1,7 @@
+1177.	[build]	marcin
+	Updated Kea libraries version numbers for 1.1-final release.
+	(Trac #5012, git 6e9a224b46def357141a31386fcc912b29dfe16d)
+
 1176.	[doc]		tomek
 	Developer's Guide has been updated.
 	(trac #4299, git ed38076c183394feaef60e7123d0c488c9f6447d)
