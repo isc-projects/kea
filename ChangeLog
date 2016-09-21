@@ -1,3 +1,7 @@
+1178.  	[doc]           tomek
+	user_chk hook library is now documented in the User's Guide.
+	(Trac #3209, git 4a8534d968a21cff3851619fb22d0032a1202c87)
+
 1177.	[build]	marcin
 	Updated Kea libraries version numbers for 1.1-final release.
 	(Trac #5012, git 6e9a224b46def357141a31386fcc912b29dfe16d)
