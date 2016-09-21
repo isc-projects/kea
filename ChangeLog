@@ -1,3 +1,7 @@
+1179.	[doc]		tomek
+	Manual pages updated.
+	(Trac #3515, git 4cf0395e11e724786c4d2a1d48805f1c770f4c99)
+
 1178.  	[doc]           tomek
 	user_chk hook library is now documented in the User's Guide.
 	(Trac #3209, git 4a8534d968a21cff3851619fb22d0032a1202c87)
