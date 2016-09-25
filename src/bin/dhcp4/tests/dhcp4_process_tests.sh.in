@@ -318,7 +318,7 @@ lfc_timer_test() {
     sleep 1
 
     # Modify the interval.
-    LFC_CONFIG=$(printf "${CONFIG}" | sed -e 's/\"lfc-interval\": 1/\"lfc-interval\": 2/g')
+    LFC_CONFIG=$(printf "${LFC_CONFIG}" | sed -e 's/\"lfc-interval\": 1/\"lfc-interval\": 2/g')
     # Create new configuration file.
     create_config "${LFC_CONFIG}"
 
