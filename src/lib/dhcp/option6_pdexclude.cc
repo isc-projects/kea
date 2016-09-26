@@ -170,7 +170,7 @@ Option6PDExclude::unpack(OptionBufferConstIter begin,
     std::vector<uint8_t> delegated_prefix_bytes = delegated_prefix_.toBytes();
     //  We need to calculate how many bytes include the useful data and assign
     // zeros to remaining bytes (beyond the prefix length).
-    const uint8_t bytes_length = (delegated_prefix_length_ / 8) + 
+    const uint8_t bytes_length = (delegated_prefix_length_ / 8) +
         static_cast<uint8_t>(delegated_prefix_length_ % 8 != 0);
     std::fill(delegated_prefix_bytes.begin() + bytes_length,
               delegated_prefix_bytes.end(), 0);
