@@ -117,7 +117,9 @@ class OptionIntArray;
 /// - "uint16"
 /// - "uint32"
 /// - "ipv4-address" (IPv4 Address)
-/// - "ipv6-address" (IPV6 Address)
+/// - "ipv6-address" (IPv6 Address)
+/// - "ipv6-prefix" (IPv6 variable length prefix)
+/// - "psid" (PSID length / value)
 /// - "string"
 /// - "fqdn" (fully qualified name)
 /// - "record" (set of data fields of different types)

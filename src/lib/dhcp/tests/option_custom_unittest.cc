@@ -18,6 +18,11 @@ using namespace isc::dhcp;
 
 namespace {
 
+/// @brief Default (zero) prefix tuple.
+const PrefixTuple
+ZERO_PREFIX_TUPLE(std::make_pair(PrefixLen(0),
+                                 IOAddress(IOAddress::IPV6_ZERO_ADDRESS())));
+
 /// @brief OptionCustomTest test class.
 class OptionCustomTest : public ::testing::Test {
 public:
@@ -476,6 +481,82 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     );
 }
 
+// The purpose of this test is to verify that the option definition comprising
+// single variable length prefix can be used to create an instance of custom
+// option.
+TEST_F(OptionCustomTest, prefixData) {
+    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix",
+                             "option-foo-space");
+
+    // Initialize input buffer.
+    OptionBuffer buf;
+    writeInt<uint8_t>(32, buf);
+    writeInt<uint32_t>(0x30000001, buf);
+
+    // Append suboption.
+    appendV6Suboption(buf);
+
+    // Create custom option using input buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    // Custom option should comprise exactly one buffer that represents
+    // a prefix.
+    PrefixTuple prefix(ZERO_PREFIX_TUPLE);
+    // Read prefix from buffer #0.
+    ASSERT_NO_THROW(prefix = option->readPrefix(0));
+
+    // The prefix comprises a prefix length and prefix value.
+    EXPECT_EQ(32, prefix.first.asUnsigned());
+    EXPECT_EQ("3000:1::", prefix.second.toText());
+
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+}
+
+// The purpose of this test is to verify that the option definition comprising
+// single PSID can be used to create an instance of custom option.
+TEST_F(OptionCustomTest, psidData) {
+    OptionDefinition opt_def("option-foo", 1000, "psid",
+                             "option-foo-space");
+
+    // Initialize input buffer.
+    OptionBuffer buf;
+    writeInt<uint8_t>(4, buf);
+    writeInt<uint16_t>(0x8000, buf);
+
+    // Append suboption.
+    appendV6Suboption(buf);
+
+    // Create custom option using input buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    // Custom option should comprise exactly one buffer that represents
+    // a PSID length / PSID value tuple.
+    PSIDTuple psid;
+    // Read PSID length / PSID value from buffer #0.
+    ASSERT_NO_THROW(psid = option->readPsid(0));
+
+    // The PSID comprises a PSID length and PSID value.
+    EXPECT_EQ(4, psid.first.asUnsigned());
+    EXPECT_EQ(0x08, psid.second.asUint16());
+
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+}
 
 // The purpose of this test is to verify that the option definition comprising
 // string value can be used to create an instance of custom option.
@@ -768,6 +849,97 @@ TEST_F(OptionCustomTest, fqdnDataArray) {
     EXPECT_EQ("example.com.", domain1);
 }
 
+// The purpose of this test is to verify that the option definition comprising
+// an array of IPv6 prefixes can be used to create an instance of OptionCustom.
+TEST_F(OptionCustomTest, prefixDataArray) {
+    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix", true);
+
+    // The following buffer comprises three prefixes with different
+    // prefix lengths.
+    const char data[] = {
+        32, 0x30, 0x01, 0x00, 0x01,             // 3001:1::/32
+        16, 0x30, 0x00,                         // 3000::/16
+        48, 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x01  // 2001:db8:1::/48
+    };
+
+    // Initialize input buffer
+    OptionBuffer buf(data,
+                     data + static_cast<size_t>(sizeof(data) / sizeof(char)));
+
+    // Create custom option using input buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 3 data fields with 3 prefixes.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    PrefixTuple prefix0(ZERO_PREFIX_TUPLE);
+    PrefixTuple prefix1(ZERO_PREFIX_TUPLE);
+    PrefixTuple prefix2(ZERO_PREFIX_TUPLE);
+
+    ASSERT_NO_THROW(prefix0 = option->readPrefix(0));
+    ASSERT_NO_THROW(prefix1 = option->readPrefix(1));
+    ASSERT_NO_THROW(prefix2 = option->readPrefix(2));
+
+    EXPECT_EQ(32, prefix0.first.asUnsigned());
+    EXPECT_EQ("3001:1::", prefix0.second.toText());
+
+    EXPECT_EQ(16, prefix1.first.asUnsigned());
+    EXPECT_EQ("3000::", prefix1.second.toText());
+
+    EXPECT_EQ(48, prefix2.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", prefix2.second.toText());
+}
+
+// The purpose of this test is to verify that the option definition comprising
+// an array of PSIDs can be used to create an instance of OptionCustom.
+TEST_F(OptionCustomTest, psidDataArray) {
+    OptionDefinition opt_def("option-foo", 1000, "psid", true);
+
+    // The following buffer comprises three PSIDs.
+    const char data[] = {
+        4, 0x80, 0x00,    // PSID len = 4, PSID = '1000 000000000000b'
+        6, 0xD4, 0x00,    // PSID len = 6, PSID = '110101 0000000000b'
+        1, 0x80, 0x00     // PSID len = 1, PSID = '1 000000000000000b'
+    };
+    // Initialize input buffer.
+    OptionBuffer buf(data,
+                     data + static_cast<size_t>(sizeof(data) / sizeof(char)));
+
+    // Create custom option using input buffer.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 3 data fields with 3 PSIDs.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    PSIDTuple psid0;
+    PSIDTuple psid1;
+    PSIDTuple psid2;
+
+    ASSERT_NO_THROW(psid0 = option->readPsid(0));
+    ASSERT_NO_THROW(psid1 = option->readPsid(1));
+    ASSERT_NO_THROW(psid2 = option->readPsid(2));
+
+    // PSID value is equal to '1000b' (8).
+    EXPECT_EQ(4, psid0.first.asUnsigned());
+    EXPECT_EQ(0x08, psid0.second.asUint16());
+
+    // PSID value is equal to '110101b' (0x35)
+    EXPECT_EQ(6, psid1.first.asUnsigned());
+    EXPECT_EQ(0x35, psid1.second.asUint16());
+
+    // PSID value is equal to '1b' (1).
+    EXPECT_EQ(1, psid2.first.asUnsigned());
+    EXPECT_EQ(0x01, psid2.second.asUint16());
+}
+
 // The purpose of this test is to verify that the opton definition comprising
 // a record of fixed-size fields can be used to create an option with a
 // suboption.
@@ -821,6 +993,7 @@ TEST_F(OptionCustomTest, recordData) {
     ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("psid"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
 
     const char fqdn_data[] = {
@@ -841,6 +1014,9 @@ TEST_F(OptionCustomTest, recordData) {
     writeAddress(IOAddress("192.168.0.1"), buf);
     // Initialize field 4 to IPv6 address.
     writeAddress(IOAddress("2001:db8:1::1"), buf);
+    // Initialize PSID len and PSID value.
+    writeInt<uint8_t>(6, buf);
+    writeInt<uint16_t>(0xD400, buf);
     // Initialize field 5 to string value.
     writeString("ABCD", buf);
 
@@ -851,7 +1027,7 @@ TEST_F(OptionCustomTest, recordData) {
     ASSERT_TRUE(option);
 
     // We should have 6 data fields.
-    ASSERT_EQ(6, option->getDataFieldsNum());
+    ASSERT_EQ(7, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
@@ -879,9 +1055,15 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_EQ("2001:db8:1::1", value4.toText());
 
     // Verify value in the field 5.
-    std::string value5;
-    ASSERT_NO_THROW(value5 = option->readString(5));
-    EXPECT_EQ("ABCD", value5);
+    PSIDTuple value5;
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(6, value5.first.asUnsigned());
+    EXPECT_EQ(0x35, value5.second.asUint16());
+
+    // Verify value in the field 6.
+    std::string value6;
+    ASSERT_NO_THROW(value6 = option->readString(6));
+    EXPECT_EQ("ABCD", value6);
 }
 
 // The purpose of this test is to verify that truncated buffer
@@ -1071,6 +1253,64 @@ TEST_F(OptionCustomTest, setIpv6AddressData) {
 
     EXPECT_NO_THROW(address = option->readAddress());
     EXPECT_EQ("2001:db8:1::1", address.toText());
+}
+
+// The purpose of this test is to verify that an option comprising
+// a prefix can be created and that the prefix can be overriden by
+// a new value.
+TEST_F(OptionCustomTest, setPrefixData) {
+    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Make sure the default prefix is set.
+    PrefixTuple prefix(ZERO_PREFIX_TUPLE);
+    ASSERT_NO_THROW(prefix = option->readPrefix());
+    EXPECT_EQ(0, prefix.first.asUnsigned());
+    EXPECT_EQ("::", prefix.second.toText());
+
+    // Write prefix.
+    ASSERT_NO_THROW(option->writePrefix(PrefixLen(48), IOAddress("2001:db8:1::")));
+
+    // Read prefix back and make sure it is the one we just set.
+    ASSERT_NO_THROW(prefix = option->readPrefix());
+    EXPECT_EQ(48, prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", prefix.second.toText());
+}
+
+// The purpose of this test is to verify that an option comprising
+// a single PSID can be created and that the PSID can be overriden
+// by a new value.
+TEST_F(OptionCustomTest, setPsidData) {
+    OptionDefinition opt_def("option-foo", 1000, "psid");
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Make sure the default PSID is set.
+    PSIDTuple psid;
+    ASSERT_NO_THROW(psid = option->readPsid());
+    EXPECT_EQ(0, psid.first.asUnsigned());
+    EXPECT_EQ(0, psid.second.asUint16());
+
+    // Write PSID.
+    ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8)));
+
+    // Read PSID back and make sure it is the one we just set.
+    ASSERT_NO_THROW(psid = option->readPsid());
+    EXPECT_EQ(4, psid.first.asUnsigned());
+    EXPECT_EQ(8, psid.second.asUint16());
 }
 
 // The purpose of this test is to verify that an option comprising
@@ -1280,6 +1520,96 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
     );
 }
 
+/// The purpose of this test is to verify that an option comprising an
+/// array of PSIDs can be created with no PSIDs and that PSIDs can be
+/// later added after the option has been created.
+TEST_F(OptionCustomTest, setPSIDPrefixArray) {
+    OptionDefinition opt_def("option-foo", 1000, "psid", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new PSIDs
+    ASSERT_NO_THROW(option->addArrayDataField(PSIDLen(4), PSID(1)));
+    ASSERT_NO_THROW(option->addArrayDataField(PSIDLen(0), PSID(123)));
+    ASSERT_NO_THROW(option->addArrayDataField(PSIDLen(1), PSID(1)));
+
+    // Verify the stored values.
+    ASSERT_NO_THROW({
+         PSIDTuple psid0 = option->readPsid(0);
+         EXPECT_EQ(4, psid0.first.asUnsigned());
+         EXPECT_EQ(1, psid0.second.asUint16());
+    });
+
+    ASSERT_NO_THROW({
+         PSIDTuple psid1 = option->readPsid(1);
+         EXPECT_EQ(0, psid1.first.asUnsigned());
+         EXPECT_EQ(0, psid1.second.asUint16());
+    });
+
+    ASSERT_NO_THROW({
+         PSIDTuple psid2 = option->readPsid(2);
+         EXPECT_EQ(1, psid2.first.asUnsigned());
+         EXPECT_EQ(1, psid2.second.asUint16());
+    });
+}
+
+/// The purpose of this test is to verify that an option comprising an
+/// array of IPv6 prefixes can be created with no prefixes and that
+/// prefixes can be later added after the option has been created.
+TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
+    OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new IPv6 prefixes into the array.
+    ASSERT_NO_THROW(option->addArrayDataField(PrefixLen(64),
+                                              IOAddress("2001:db8:1::")));
+    ASSERT_NO_THROW(option->addArrayDataField(PrefixLen(32),
+                                              IOAddress("3001:1::")));
+    ASSERT_NO_THROW(option->addArrayDataField(PrefixLen(16),
+                                              IOAddress("3000::")));
+
+    // We should have now 3 addresses added.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Verify the stored values.
+    ASSERT_NO_THROW({
+         PrefixTuple prefix0 = option->readPrefix(0);
+         EXPECT_EQ(64, prefix0.first.asUnsigned());
+         EXPECT_EQ("2001:db8:1::", prefix0.second.toText());
+    });
+
+    ASSERT_NO_THROW({
+         PrefixTuple prefix1 = option->readPrefix(1);
+         EXPECT_EQ(32, prefix1.first.asUnsigned());
+         EXPECT_EQ("3001:1::", prefix1.second.toText());
+    });
+
+    ASSERT_NO_THROW({
+         PrefixTuple prefix2 = option->readPrefix(2);
+         EXPECT_EQ(16, prefix2.first.asUnsigned());
+         EXPECT_EQ("3000::", prefix2.second.toText());
+    });
+}
+
 TEST_F(OptionCustomTest, setRecordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
 
@@ -1288,6 +1618,8 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("psid"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-prefix"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
 
     // Create an option and let the data field be initialized
@@ -1300,7 +1632,7 @@ TEST_F(OptionCustomTest, setRecordData) {
 
     // The number of elements should be equal to number of elements
     // in the record.
-    ASSERT_EQ(6, option->getDataFieldsNum());
+    ASSERT_EQ(8, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
     uint16_t value0;
@@ -1318,9 +1650,17 @@ TEST_F(OptionCustomTest, setRecordData) {
     IOAddress value4("2001:db8:1::1");
     ASSERT_NO_THROW(value4 = option->readAddress(4));
     EXPECT_EQ("::", value4.toText());
-    std::string value5 = "xyz";
-    ASSERT_NO_THROW(value5 = option->readString(5));
-    EXPECT_TRUE(value5.empty());
+    PSIDTuple value5;
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(0, value5.first.asUnsigned());
+    EXPECT_EQ(0, value5.second.asUint16());
+    PrefixTuple value6(ZERO_PREFIX_TUPLE);
+    ASSERT_NO_THROW(value6 = option->readPrefix(6));
+    EXPECT_EQ(0, value6.first.asUnsigned());
+    EXPECT_EQ("::", value6.second.toText());
+    std::string value7 = "xyz";
+    ASSERT_NO_THROW(value7 = option->readString(7));
+    EXPECT_TRUE(value7.empty());
 
     // Override each value with a new value.
     ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
@@ -1328,7 +1668,10 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(option->writeFqdn("example.com", 2));
     ASSERT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1"), 3));
     ASSERT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::100"), 4));
-    ASSERT_NO_THROW(option->writeString("hello world", 5));
+    ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8), 5));
+    ASSERT_NO_THROW(option->writePrefix(PrefixLen(48),
+                                        IOAddress("2001:db8:1::"), 6));
+    ASSERT_NO_THROW(option->writeString("hello world", 7));
 
     // Check that the new values have been correctly set.
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
@@ -1341,8 +1684,14 @@ TEST_F(OptionCustomTest, setRecordData) {
     EXPECT_EQ("192.168.0.1", value3.toText());
     ASSERT_NO_THROW(value4 = option->readAddress(4));
     EXPECT_EQ("2001:db8:1::100", value4.toText());
-    ASSERT_NO_THROW(value5 = option->readString(5));
-    EXPECT_EQ(value5, "hello world");
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(4, value5.first.asUnsigned());
+    EXPECT_EQ(8, value5.second.asUint16());
+    ASSERT_NO_THROW(value6 = option->readPrefix(6));
+    EXPECT_EQ(48, value6.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", value6.second.toText());
+    ASSERT_NO_THROW(value7 = option->readString(7));
+    EXPECT_EQ(value7, "hello world");
 }
 
 // The purpose of this test is to verify that pack function for
