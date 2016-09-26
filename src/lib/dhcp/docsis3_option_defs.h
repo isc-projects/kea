@@ -58,7 +58,8 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
 };
 
 /// Number of option definitions defined.
-const int DOCSIS3_V6_DEFS_SIZE  = sizeof(DOCSIS3_V6_DEFS) / sizeof(OptionDefParams);
+const int DOCSIS3_V6_DEFS_SIZE =
+    sizeof(DOCSIS3_V6_DEFS) / sizeof(DOCSIS3_V6_DEFS[0]);
 
 /// The class as specified in vendor-class option by the devices
 extern const char* DOCSIS3_CLASS_EROUTER;
