@@ -525,7 +525,8 @@ OptionDataParser::extractCSVFormat() const {
 
 std::string
 OptionDataParser::extractSpace() const {
-    std::string space = address_family_ == AF_INET ? "dhcp4" : "dhcp6";
+    std::string space = address_family_ == AF_INET ?
+        DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
     try {
         space = string_values_->getParam("space");
 
@@ -838,7 +839,8 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
     std::string record_types =
         string_values_->getOptionalParam("record-types", "");
     std::string space = string_values_->getOptionalParam("space",
-              global_context_->universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+              global_context_->universe_ == Option::V4 ? DHCP4_OPTION_SPACE :
+                                                         DHCP6_OPTION_SPACE);
     std::string encapsulates =
         string_values_->getOptionalParam("encapsulate", "");
 
