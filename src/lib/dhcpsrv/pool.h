@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -197,9 +197,26 @@ public:
     /// @param type type of the pool (IA, TA or PD)
     /// @param prefix specifies prefix of the pool
     /// @param prefix_len specifies prefix length of the pool
-    /// @param delegated_len specifies lenght of the delegated prefixes
+    /// @param delegated_len specifies length of the delegated prefixes
     Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len, uint8_t delegated_len = 128);
+
+    /// @brief Constructor for DHCPv6 prefix pool with an excluded prefix.
+    ///
+    /// If @c excluded_prefix is equal to '::' and the @c excluded_prefix_len
+    /// is equal to 0, the excluded prefix is assumed to be unspecified for
+    /// the pool. In this case, the server will not send the Prefix Exclude
+    /// option to a client.
+    ///
+    /// @param prefix specified a prefix of the pool.
+    /// @param prefix_Leb specifies prefix length of the pool.
+    /// @param delegated_len specifies length of the delegated prefixes.
+    /// @param excluded_prefix specifies an excluded prefix as per RFC6603.
+    /// @param excluded_prefix_len specifies length of an excluded prefix.
+    Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
+          const uint8_t delegated_len,
+          const asiolink::IOAddress& excluded_prefix,
+          const uint8_t excluded_prefix_len);
 
     /// @brief returns pool type
     ///
@@ -217,14 +234,75 @@ public:
         return (prefix_len_);
     }
 
+    /// @brief Returns an excluded prefix.
+    ///
+    /// An excluded prefix can be specified for a prefix pool as specified
+    /// in RFC6603.
+    ///
+    /// @return Reference to an IOAddress object representing an excluded
+    /// prefix pool. A value of '::' if the excluded prefix is not specified.
+    const isc::asiolink::IOAddress& getExcludedPrefix() const{
+        return (excluded_prefix_);
+    }
+
+    /// @brief Returns an excluded prefix length.
+    ///
+    /// An excluded prefix can be specified for a prefix pool as specified
+    /// in RFC6603.
+    ///
+    /// @return Excluded prefix length in the range of 2 to 128, if the
+    /// excluded prefix is specified. A value of 0 if the excluded prefix
+    /// is not specified.
+    uint8_t getExcludedPrefixLength() const{
+        return (excluded_prefix_len_);
+    }
+
     /// @brief returns textual representation of the pool
     ///
     /// @return textual representation
     virtual std::string toText() const;
 
 private:
+
+    /// @brief Generic method initializing a DHCPv6 pool.
+    ///
+    /// This method should be called by the constructors to initialize
+    /// DHCPv6 pools.
+    ///
+    /// @param Lease/pool type.
+    /// @param prefix An address or delegated prefix (depending on the
+    /// pool type specified as @c type).
+    /// @param prefix_len Prefix length. If a pool is an address pool,
+    /// this value should be set to 128.
+    /// @param delegated_len Length of the delegated prefixes. If a pool
+    /// is an address pool, this value should be set to 128.
+    /// @param excluded_prefix An excluded prefix as per RFC6603. This
+    /// value should only be specified for prefix pools. The value of
+    /// '::' means "unspecified".
+    /// @param excluded_prefix_len Length of the excluded prefix. This
+    /// is only specified for prefix pools. The value of 0 should be
+    /// used when @c excluded_prefix is not specified.
+    void init(const Lease::Type& type,
+              const asiolink::IOAddress& prefix,
+              const uint8_t prefix_len,
+              const uint8_t delegated_len,
+              const asiolink::IOAddress& excluded_prefix,
+              const uint8_t excluded_prefix_len);
+
     /// @brief Defines prefix length (for TYPE_PD only)
     uint8_t prefix_len_;
+
+    /// @brief The excluded prefix (RFC6603).
+    ///
+    /// This prefix can only be specified for DHCPv6 prefix pools.
+    /// An "unspecified" prefix has a value of '::'.
+    isc::asiolink::IOAddress excluded_prefix_;
+
+    /// @brief The excluded prefix length (RFC6603).
+    ///
+    /// This value can only be specified for DHCPv6 prefix pool.
+    /// An "unspecified" prefix has a length of 0.
+    uint8_t excluded_prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool

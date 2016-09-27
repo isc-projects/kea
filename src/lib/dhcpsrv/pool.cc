@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,7 +76,9 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(type, first, last), prefix_len_(128) {
+    : Pool(type, first, last), prefix_len_(128),
+      excluded_prefix_(IOAddress::IPV6_ZERO_ADDRESS()),
+      excluded_prefix_len_(0) {
 
     // check if specified address boundaries are sane
     if (!first.isV6() || !last.isV6()) {
@@ -117,21 +119,91 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
 }
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
-             uint8_t prefix_len, uint8_t delegated_len /* = 128 */)
-    :Pool(type, prefix, IOAddress("::")), prefix_len_(delegated_len) {
+             const uint8_t prefix_len, const uint8_t delegated_len /* = 128 */)
+    : Pool(type, prefix, IOAddress::IPV6_ZERO_ADDRESS()),
+      prefix_len_(delegated_len),
+      excluded_prefix_(IOAddress::IPV6_ZERO_ADDRESS()),
+      excluded_prefix_len_(0) {
 
-    // check if the prefix is sane
+    init(type, prefix, prefix_len, delegated_len,
+         IOAddress::IPV6_ZERO_ADDRESS(), 0);
+}
+
+Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
+             const uint8_t delegated_len,
+             const asiolink::IOAddress& excluded_prefix,
+             const uint8_t excluded_prefix_len)
+    : Pool(Lease::TYPE_PD, prefix, IOAddress::IPV6_ZERO_ADDRESS()),
+      prefix_len_(delegated_len),
+      excluded_prefix_(excluded_prefix),
+      excluded_prefix_len_(excluded_prefix_len) {
+
+    init(Lease::TYPE_PD, prefix, prefix_len, delegated_len, excluded_prefix,
+         excluded_prefix_len);
+
+    // The excluded prefix can only be specified using this constructor.
+    // Therefore, the initialization of the excluded prefix is takes place
+    // here, rather than in the init(...) function.
+    if (!excluded_prefix_.isV6()) {
+        isc_throw(BadValue, "excluded prefix must be an IPv6 prefix");
+    }
+
+    // An "unspecified" prefix should have both value and length equal to 0.
+    if ((excluded_prefix_.isV6Zero() && (excluded_prefix_len_ != 0)) ||
+        (!excluded_prefix_.isV6Zero() && (excluded_prefix_len_ == 0))) {
+        isc_throw(BadValue, "invalid excluded prefix "
+                  << excluded_prefix_ << "/"
+                  << static_cast<unsigned>(excluded_prefix_len_));
+    }
+
+    // If excluded prefix has been specified.
+    if (!excluded_prefix_.isV6Zero() && (excluded_prefix_len_ != 0)) {
+
+        // Excluded prefix length must not be greater than 128.
+        if (excluded_prefix_len_ > 128) {
+            isc_throw(BadValue, "excluded prefix length "
+                      << static_cast<unsigned>(excluded_prefix_len_)
+                      << " must not be greater than 128");
+        }
+
+        // Excluded prefix must be a sub-prefix of a delegated prefix. First
+        // check the prefix length as it is less involved.
+        if (excluded_prefix_len_ <= prefix_len_) {
+            isc_throw(BadValue, "excluded prefix length "
+                      << static_cast<unsigned>(excluded_prefix_len_)
+                      << " must be lower than the delegated prefix length "
+                      << static_cast<unsigned>(prefix_len_));
+        }
+
+        /// @todo Check that the prefixes actually match. Theoretically, a
+        /// user could specify a prefix which sets insgnificant bits. We should
+        /// clear insignificant bits based on the prefix length but this
+        /// should be considered a part of the IOAddress class, perhaps and
+        /// requires a bit of work (mainly in terms of testing).
+    }
+}
+
+void
+Pool6::init(const Lease::Type& type,
+            const asiolink::IOAddress& prefix,
+            const uint8_t prefix_len,
+            const uint8_t delegated_len,
+            const asiolink::IOAddress& excluded_prefix,
+            const uint8_t excluded_prefix_len) {
+    // Check if the prefix is sane
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    // check if the prefix length is sane
+    // Check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 128) {
-        isc_throw(BadValue, "Invalid prefix length: " << static_cast<unsigned>(prefix_len));
+        isc_throw(BadValue, "Invalid prefix length: "
+                  << static_cast<unsigned>(prefix_len));
     }
 
     if (prefix_len > delegated_len) {
-        isc_throw(BadValue, "Delegated length (" << static_cast<int>(delegated_len)
+        isc_throw(BadValue, "Delegated length ("
+                  << static_cast<int>(delegated_len)
                   << ") must be longer than or equal to prefix length ("
                   << static_cast<int>(prefix_len) << ")");
     }
@@ -156,11 +228,17 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 
 std::string
 Pool6::toText() const {
-    std::stringstream tmp;
-    tmp << "type=" << Lease::typeToText(type_) << ", " << first_
-        << "-" << last_ << ", delegated_len="
-        << static_cast<int>(prefix_len_);
-    return (tmp.str());
+    std::ostringstream s;
+    s << "type=" << Lease::typeToText(type_) << ", " << first_
+      << "-" << last_ << ", delegated_len="
+      << static_cast<int>(prefix_len_);
+
+    if (excluded_prefix_len_ > 0) {
+       s << ", excluded_prefix=" << excluded_prefix_
+         << ", excluded_prefix_len="
+         << static_cast<unsigned>(excluded_prefix_len_);
+    }
+    return (s.str());
 }
 
 }; // end of isc::dhcp namespace
