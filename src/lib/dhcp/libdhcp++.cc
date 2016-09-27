@@ -45,8 +45,13 @@ OptionDefContainerPtr LibDHCP::v4option_defs_(new OptionDefContainer());
 // Static container with DHCPv6 option definitions.
 OptionDefContainerPtr LibDHCP::v6option_defs_(new OptionDefContainer());
 
+// Static container with option definitions grouped by option space.
+OptionDefContainers LibDHCP::option_defs_;
+
+// Static container with vendor option definitions for DHCPv4.
 VendorOptionDefContainers LibDHCP::vendor4_defs_;
 
+// Static container with vendor option definitions for DHCPv6.
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
 // Static container with option definitions created in runtime.
@@ -87,6 +92,22 @@ LibDHCP::getOptionDefs(const Option::Universe u) {
     default:
         isc_throw(isc::BadValue, "invalid universe " << u << " specified");
     }
+}
+
+const OptionDefContainerPtr&
+LibDHCP::getOptionDefs(const std::string& space) {
+    if (space == DHCP4_OPTION_SPACE) {
+        return (getOptionDefs(Option::V4));
+
+    } else if (space == DHCP6_OPTION_SPACE) {
+        return (getOptionDefs(Option::V6));
+    }
+
+    OptionDefContainers::const_iterator container = option_defs_.find(space);
+    if (container != option_defs_.end()) {
+        return (container->second);
+    }
+    return (null_option_def_container_);
 }
 
 const OptionDefContainerPtr&
@@ -832,27 +853,42 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    initOptionSpace(v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
+    initOptionSpace(v4option_defs_, STANDARD_V4_OPTION_DEFINITIONS,
+                    STANDARD_V4_OPTION_DEFINITIONS_SIZE);
 }
 
 void
 LibDHCP::initStdOptionDefs6() {
-    initOptionSpace(v6option_defs_, OPTION_DEF_PARAMS6, OPTION_DEF_PARAMS_SIZE6);
+    initOptionSpace(v6option_defs_, STANDARD_V6_OPTION_DEFINITIONS,
+                    STANDARD_V6_OPTION_DEFINITIONS_SIZE);
+    initOptionSpace(option_defs_[MAPE_V6_OPTION_SPACE], MAPE_V6_OPTION_DEFINITIONS,
+                    MAPE_V6_OPTION_DEFINITIONS_SIZE);
+    initOptionSpace(option_defs_[MAPT_V6_OPTION_SPACE], MAPT_V6_OPTION_DEFINITIONS,
+                    MAPT_V6_OPTION_DEFINITIONS_SIZE);
+    initOptionSpace(option_defs_[LW_V6_OPTION_SPACE], LW_V6_OPTION_DEFINITIONS,
+                    LW_V6_OPTION_DEFINITIONS_SIZE);
+    initOptionSpace(option_defs_[V4V6_RULE_OPTION_SPACE], V4V6_RULE_OPTION_DEFINITIONS,
+                    V4V6_RULE_OPTION_DEFINITIONS_SIZE);
+    initOptionSpace(option_defs_[V4V6_BIND_OPTION_SPACE], V4V6_BIND_OPTION_DEFINITIONS,
+                    V4V6_BIND_OPTION_DEFINITIONS_SIZE);
 }
 
 void
 LibDHCP::initVendorOptsDocsis4() {
-    initOptionSpace(vendor4_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V4_DEFS, DOCSIS3_V4_DEFS_SIZE);
+    initOptionSpace(vendor4_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V4_DEFS,
+                    DOCSIS3_V4_DEFS_SIZE);
 }
 
 void
 LibDHCP::initVendorOptsDocsis6() {
-    initOptionSpace(vendor6_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V6_DEFS, DOCSIS3_V6_DEFS_SIZE);
+    initOptionSpace(vendor6_defs_[VENDOR_ID_CABLE_LABS], DOCSIS3_V6_DEFS,
+                    DOCSIS3_V6_DEFS_SIZE);
 }
 
 void
 LibDHCP::initVendorOptsIsc6() {
-    initOptionSpace(vendor6_defs_[ENTERPRISE_ID_ISC], ISC_V6_DEFS, ISC_V6_DEFS_SIZE);
+    initOptionSpace(vendor6_defs_[ENTERPRISE_ID_ISC], ISC_V6_OPTION_DEFINITIONS,
+                    ISC_V6_OPTION_DEFINITIONS_SIZE);
 }
 
 uint32_t

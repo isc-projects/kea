@@ -17,6 +17,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -718,6 +719,9 @@ typedef boost::multi_index_container<
 
 /// Pointer to an option definition container.
 typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
+
+/// Container that holds option definitions for various option spaces.
+typedef std::map<std::string, OptionDefContainerPtr> OptionDefContainers;
 
 /// Container that holds various vendor option containers
 typedef std::map<uint32_t, OptionDefContainerPtr> VendorOptionDefContainers;

@@ -40,6 +40,16 @@ public:
     /// @return Pointer to a collection of option definitions.
     static const OptionDefContainerPtr& getOptionDefs(const Option::Universe u);
 
+    /// @brief Returns collection of option definitions.
+    ///
+    /// This method returns a collection of option definitions for a specified
+    /// option space.
+    ///
+    /// @param space Option space.
+    ///
+    /// @return Pointer to a collection of option definitions.
+    static const OptionDefContainerPtr& getOptionDefs(const std::string& space);
+
     /// @brief Return the first option definition matching a
     /// particular option code.
     ///
@@ -376,6 +386,9 @@ private:
 
     /// Container with DHCPv6 option definitions.
     static OptionDefContainerPtr v6option_defs_;
+
+    /// Container that holds option definitions for various option spaces.
+    static OptionDefContainers option_defs_;
 
     /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;

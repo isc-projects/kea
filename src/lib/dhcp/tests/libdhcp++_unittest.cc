@@ -101,8 +101,8 @@ public:
                                    const std::type_info& expected_type,
                                    const std::string& encapsulates = "") {
         // Use V4 universe.
-        testStdOptionDefs(Option::V4, code, begin, end, expected_type,
-                          encapsulates);
+        testStdOptionDefs(Option::V4, DHCP4_OPTION_SPACE, code, begin, end,
+                          expected_type, encapsulates);
     }
 
     /// @brief Test DHCPv6 option definition.
@@ -125,8 +125,33 @@ public:
                                    const std::type_info& expected_type,
                                    const std::string& encapsulates = "") {
         // Use V6 universe.
-        testStdOptionDefs(Option::V6, code, begin, end, expected_type,
-                          encapsulates);
+        testStdOptionDefs(Option::V6, DHCP6_OPTION_SPACE, code, begin,
+                          end, expected_type, encapsulates);
+    }
+
+    /// @brief Test DHCPv6 option definition in a given option space.
+    ///
+    /// This function tests if option definition for an option from a
+    /// given option space has been initialized correctly.
+    ///
+    /// @param option_space option space.
+    /// @param code option code.
+    /// @param begin iterator pointing at beginning of a buffer to
+    /// be used to create option instance.
+    /// @param end iterator pointing at end of a buffer to be
+    /// used to create option instance.
+    /// @param expected_type type of the option created by the
+    /// factory function returned by the option definition.
+    /// @param encapsulates name of the option space being encapsulated
+    /// by the option.
+    static void testOptionDefs6(const std::string& option_space,
+                                const uint16_t code,
+                                const OptionBufferConstIter begin,
+                                const OptionBufferConstIter end,
+                                const std::type_info& expected_type,
+                                const std::string& encapsulates = "") {
+        testStdOptionDefs(Option::V6, option_space, code, begin,
+                          end, expected_type, encapsulates);
     }
 
     /// @brief Create a sample DHCPv4 option 43 with suboptions.
@@ -216,6 +241,7 @@ private:
     /// This function tests if option definition for standard
     /// option has been initialized correctly.
     ///
+    /// @param option_space option space.
     /// @param code option code.
     /// @param begin iterator pointing at beginning of a buffer to
     /// be used to create option instance.
@@ -225,7 +251,8 @@ private:
     /// factory function returned by the option definition.
     /// @param encapsulates name of the option space being encapsulated
     /// by the option.
-    static void testStdOptionDefs(const Option::Universe u,
+    static void testStdOptionDefs(const Option::Universe& u,
+                                  const std::string& option_space,
                                   const uint16_t code,
                                   const OptionBufferConstIter begin,
                                   const OptionBufferConstIter end,
@@ -235,7 +262,7 @@ private:
         // the definition for a particular option code.
         // We don't have to initialize option definitions here because they
         // are initialized in the class's constructor.
-        OptionDefContainerPtr options = LibDHCP::getOptionDefs(u);
+        OptionDefContainerPtr options = LibDHCP::getOptionDefs(option_space);
         // Get the container index #1. This one allows for searching
         // option definitions using option code.
         const OptionDefContainerTypeIndex& idx = options->get<1>();
@@ -1619,6 +1646,33 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
                                     typeid(Option));
+
+    // RFC7598 options
+    LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
+                                 typeid(OptionCustom), "s46-rule-options");
+    LibDhcpTest::testOptionDefs6(MAPT_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
+                                 typeid(OptionCustom), "s46-rule-options");
+    LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_BR, begin, end,
+                                 typeid(OptionCustom));
+    LibDhcpTest::testOptionDefs6(LW_V6_OPTION_SPACE, D6O_S46_BR, begin, end,
+                                 typeid(OptionCustom));
+    LibDhcpTest::testOptionDefs6(MAPT_V6_OPTION_SPACE, D6O_S46_DMR, begin, end,
+                                 typeid(OptionCustom));
+    LibDhcpTest::testOptionDefs6(LW_V6_OPTION_SPACE, D6O_S46_V4V6BIND, begin,
+                                 end, typeid(OptionCustom),
+                                 "s46-v4v6bind-options");
+    LibDhcpTest::testOptionDefs6(V4V6_RULE_OPTION_SPACE, D6O_S46_PORTPARAMS,
+                                 begin, end, typeid(OptionCustom), "");
+    LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_MAPE, begin, end,
+                                    typeid(OptionCustom),
+                                    "s46-cont-mape-options");
+    LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_MAPT, begin, end,
+                                    typeid(OptionCustom),
+                                    "s46-cont-mapt-options");
+    LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_LW, begin, end,
+                                    typeid(OptionCustom),
+                                    "s46-cont-lw-options");
+
 }
 
 // This test checks if the DHCPv6 option definition can be searched by

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,11 +18,11 @@
 #define DOCSIS3_V4_OPTION_SPACE "docsis3_v4"
 #define DOCSIS3_V6_OPTION_SPACE "docsis3_v6"
 #define ISC_V6_OPTION_SPACE     "4o6"
-#define MAPE_V6_OPTION_SPACE    "4over6-mape"
-#define MAPT_V6_OPTION_SPACE    "4over6-mapt"
-#define LW_V6_OPTION_SPACE      "4over6-lw"
-#define V4V6_RULE_OPTION_SPACE  "v4v6rule"
-#define V4V6_BIND_OPTION_SPACE  "v4v6bind"
+#define MAPE_V6_OPTION_SPACE    "s46-cont-mape-options"
+#define MAPT_V6_OPTION_SPACE    "s46-cont-mapt-options"
+#define LW_V6_OPTION_SPACE      "s46-cont-lw-options"
+#define V4V6_RULE_OPTION_SPACE  "s46-rule-options"
+#define V4V6_BIND_OPTION_SPACE  "s46-v4v6bind-options"
 
 namespace isc {
 namespace dhcp {

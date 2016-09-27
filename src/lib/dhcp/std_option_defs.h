@@ -247,7 +247,7 @@ RECORD_DECL(LQ_RELAY_DATA_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_BINARY_TYPE);
 RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // s46-rule
 RECORD_DECL(S46_RULE, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
-    OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
+            OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
 // s46-v4v6bind
 RECORD_DECL(S46_V4V6BIND, OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
 // s46-portparams
@@ -419,7 +419,6 @@ const int ISC_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(ISC_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief MAPE option definitions
-/// @todo: Maybe move this to a separate file, e.g. mape_option_defs.h
 const OptionDefParams MAPE_V6_OPTION_DEFINITIONS[] = {
     OPTION_DEF_PARAMS_S46_BR,
     OPTION_DEF_PARAMS_S46_RULE
@@ -430,7 +429,6 @@ const int MAPE_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief MAPT option definitions
-/// @todo: Maybe move this to a separate file, e.g. mapt_option_defs.h
 const OptionDefParams MAPT_V6_OPTION_DEFINITIONS[] = {
     OPTION_DEF_PARAMS_S46_RULE,
     { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" }
@@ -441,7 +439,6 @@ const int MAPT_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief LW option definitions
-/// @todo: Maybe move this to a separate file, e.g. lw_option_defs.h
 const OptionDefParams LW_V6_OPTION_DEFINITIONS[] = {
     OPTION_DEF_PARAMS_S46_BR,
     { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false,
@@ -453,7 +450,6 @@ const int LW_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(LW_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief Rule option definitions
-/// @todo: Maybe move this to a separate file, e.g. rule_option_defs.h
 const OptionDefParams V4V6_RULE_OPTION_DEFINITIONS[] = {
     OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
@@ -463,7 +459,6 @@ const int V4V6_RULE_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
 
 /// @brief Bind option definitions
-/// @todo: Maybe move this to a separate file, e.g. bind_option_defs.h
 const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
     OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
