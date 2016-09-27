@@ -500,6 +500,18 @@
                            "item_type": "integer",
                            "item_optional": false,
                            "item_default": 128
+                       },
+                       {
+                          "item_name": "excluded-prefix",
+                          "item_type": "string",
+                          "item_optional": true,
+                          "item_default": ""
+                       },
+                       {
+                           "item_name": "excluded-prefix-len",
+                           "item_type": "integer",
+                           "item_optional": true,
+                           "item_default": 128
                        }]
                     }
                 },

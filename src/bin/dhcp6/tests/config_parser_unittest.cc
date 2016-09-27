@@ -1378,6 +1378,60 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
 }
 
+// This test verifies that it is possible to specify a prefix pool with an
+// excluded prefix (see RFC6603).
+TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"3000::\", "
+        "          \"prefix-len\": 48, "
+        "          \"delegated-len\": 64,"
+        "          \"excluded-prefix\": \"3000:1::\","
+        "          \"excluded-prefix-len\": 72"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("3000::", p6->getFirstAddress().toText());
+    EXPECT_EQ(64, p6->getLength());
+    EXPECT_EQ("3000:1::", p6->getExcludedPrefix().toText());
+    EXPECT_EQ(72, static_cast<unsigned>(p6->getExcludedPrefixLength()));
+}
+
 // Goal of this test is verify that a list of PD pools can be configured.
 // It also verifies that a subnet may be configured with both regular pools
 // and pd pools.
