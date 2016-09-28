@@ -30,6 +30,7 @@ nobase_dist_doc_DATA += examples/kea6/reservations.json
 nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/duid.json
 
 devel:
 	mkdir -p html
