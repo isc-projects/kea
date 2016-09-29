@@ -780,7 +780,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section>
-<!-- @todo: add real meat to the prefix delegation config this is just place holder stuff -->
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
@@ -814,6 +813,41 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
       </para>
+
+    </section>
+
+    <section id="pd-exclude-option">
+        <title>Prefix Exclude Option</title>
+        <para>
+            For each delegated prefix configured as above, the delegating router
+            may choose to exclude a subprefix (i.e. with greater prefix length)
+            as proposed in
+            <ulink url="http://tools.ietf.org/html/rfc6603"> RFC 6603</ulink>.
+            The IA PD option responsible for specifying IPv6 address prefixes
+            limits the amount of PD Exclude options that it can encapsulate to
+            at most one, thus it can only exclude one prefix from a given
+            delegated prefix. The configuration example below specifies an
+            excluded prefix.
+    </para>
+<screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/48",
+            "pools": [ { "pool": "2001:db8:1::/80" } ],
+            "pd-pools": [
+                {
+                    "prefix": "2001:db8:1:8000::",
+                    "prefix-len": 48,
+                    "delegated-len": 64,
+                    "excluded-prefix": "2001:db8:1:babe:cafe:80:",
+                    "excluded-prefix-len": 72
+                }
+            ]
+        }
+    ]
+}
+</screen>
     </section>
 
     <section id="dhcp6-std-options">
@@ -1045,11 +1079,21 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>bootfile-param</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>client-arch-type</entry><entry>61</entry><entry>uint16</entry><entry>true</entry></row>
 <row><entry>nii</entry><entry>62</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry></row>
+<row><entry>aftr-name</entry><entry>64</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>pd-exclude</entry><entry>67</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
 <!-- <row><entry>dhcpv4-message</entry><entry>87</entry><entry>binary</entry><entry>false</entry></row> -->
 <row><entry>dhcp4o6-server-addr</entry><entry>88</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>s46-rule</entry><entry>89</entry><entry>record(uint8, uint8, uint8, ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
+<row><entry>s46-br</entry><entry>90</entry><entry>ipv6-prefix</entry><entry>false</entry></row>
+<row><entry>s46-dmr</entry><entry>91</entry><entry>ipv6-prefix</entry><entry>false</entry></row>
+<row><entry>s46-v4v6bind</entry><entry>92</entry><entry>record(ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
+<row><entry>s46-portparams</entry><entry>93</entry><entry>record(uint8, psid)</entry><entry>false</entry></row>
+<row><entry>s46-cont-mape</entry><entry>94</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>s46-cont-mapt</entry><entry>95</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>s46-cont-lw</entry><entry>96</entry><entry>empty</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
       </table>
@@ -1075,6 +1119,129 @@ temporarily override a list of interface names and listen on all interfaces.
         </tgroup>
       </table>
     </para>
+    </section>
+
+    <section id="s46-options">
+        <title>Common Softwire46 Options</title>
+        <para>Softwire46 options are involved in IPv4 over IPv6 provisioning by
+            means of tunneling or translation. More is described in
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 7598</ulink>.
+        </para>
+        <section>
+            <title>S46 Rule</title>
+            The following option configuration specifies under data, the IPv6
+            prefix that it can use to map addresses from. Mapping is done using
+            Best Mapping Rule (BMR) and Forwarding Mapping Rule (FMR).
+<screen>
+{
+    "code": 92,
+    "csv-format": true,
+    "data": "2001:db8::cafe::/96",
+    "name": "s46-v4v6bind",
+    "space": "4over6-lw"
+}
+</screen>
+        </section>
+        <section>
+            <title>S46 BR</title>
+            <para>
+                @todo: Description
+            </para>
+<screen>
+{
+    "code": 90,
+    "csv-format": true,
+    "data": "2001:db8::cafe::/48",
+    "name": "s46-br",
+    "space": "4over6-lw"
+}
+</screen>
+        </section>
+        <section>
+            <title>S46 DMR. No config required</title>
+            <para>
+                    @todo: Description
+            </para>
+<screen>
+    @todo: Configuration example
+</screen>
+        </section>
+        <section>
+            <title>S46 IPv4/IPv6 Address Binding</title>
+            <para>
+                    @todo: Description
+            </para>
+<screen>
+    @todo: Configuration example
+</screen>
+        </section>
+        <section>
+            <title>S46 Port Parameters</title>
+            <para>
+                This option specifies a range of optional ports that may be used
+                in the form of <command>offset,psid-len,psid</command> which
+                means that ports that fill the area offseted by
+                <command>offset</command> and shortened to
+                <command>psid-len</command> length can be used.
+            </para>
+<screen>
+{
+    "code": 93,
+    "csv-format": true,
+    "data": "2,4,12288",
+    "name": "s46-portparams",
+    "space": "v4v6bind"
+}
+</screen>
+<screen>
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             PSID              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|&#x3c;-&#x3e;|&#x3c;-----&#x3e;|
+  |     └--- Identified PSID value of 4b
+  └--- Offset of 2b
+|&#x3c;-----------------------------&#x3e;|
+                └--- 16b
+</screen>
+        </section>
+    </section>
+    <section id="s46-containers">
+        <title>Softwire46 Containers</title>
+            <para>
+                S46 containers group rules and optional ports for a specified
+                domain.
+            </para>
+        <section>
+            <title>S46 MAP-E container</title>
+            <para>
+                    @todo: Description
+            </para>
+<screen>
+    @todo: Configuration example
+</screen>
+        </section>
+        <section>
+            <title>S46 MAP-T container</title>
+            <para>
+                    @todo: Description
+            </para>
+<screen>
+    @todo: Configuration example
+</screen>
+        </section>
+        <section>
+            <title>S46 Lightweight 4over6 container</title>
+	    <para>
+                @todo: Description
+            </para>
+<screen>
+{
+    "code": 96,
+    "name": "s46-cont-lw",
+    "space": "dhcp6"
+}
+</screen>
+        </section>
     </section>
 
     <section id="dhcp6-custom-options">
@@ -2316,8 +2483,8 @@ should include options from the isc option space:
         "pd-pools": [
             {
                 "prefix": "2001:db8:1:8000::",
-                "prefix-len": 56,
-                "delegated-len": 64
+                "prefix-len": 48,
+                "delegated-len": 64,
             }
         ],
         <userinput>"reservations": [

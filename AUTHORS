@@ -106,6 +106,13 @@ We have received the following contributions:
  - Michal Humpula
    2016-07: Response to DHCPINFORM is sent to port 68
 
+ - Cristian Secareanu, Qualitance
+   2016-09: Support for IPv6 prefix and PDEXCLUDE option
+
+ - Andrei Pavel, Qualitance
+   2016-09: Support for DHCPv6 options defined in RFC6334, RFC6603
+            and RFC7598
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
