@@ -478,8 +478,8 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 </section>
 
-<section>
-  <title id="hosts4-storage">Hosts Storage</title>
+<section id="hosts4-storage">
+  <title>Hosts Storage</title>
 
     <para>Kea is also able to store information about host reservations in the
     database. Hosts database configuration uses the same syntax as lease
