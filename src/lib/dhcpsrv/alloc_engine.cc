@@ -350,7 +350,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
       duid_(duid), hwaddr_(), host_identifiers_(), host_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
       hostname_(hostname), callout_handle_(callout_handle),
-      allocated_resources_(), ias_() {
+      allocated_resources_(), ias_(), pd_exclude_requested_(false) {
 
     // Initialize host identifiers.
     if (duid) {
@@ -360,7 +360,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
 
 AllocEngine::ClientContext6::IAContext::IAContext()
     : iaid_(0), type_(Lease::TYPE_NA), hints_(), old_leases_(),
-      changed_leases_(), ia_rsp_() {
+      changed_leases_(), ia_rsp_(), pool_() {
 }
 
 void
@@ -583,10 +583,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     // check if the hint is in pool and is available
     // This is equivalent of subnet->inPool(hint), but returns the pool
-    Pool6Ptr pool = boost::dynamic_pointer_cast<
+    ctx.currentIA().pool_ = boost::dynamic_pointer_cast<
         Pool6>(ctx.subnet_->getPool(ctx.currentIA().type_, hint, false));
 
-    if (pool) {
+    if (ctx.currentIA().pool_) {
 
         /// @todo: We support only one hint for now
         Lease6Ptr lease =
@@ -608,7 +608,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 // The hint is valid and not currently used, let's create a
                 // lease for it
-                lease = createLease6(ctx, hint, pool->getLength());
+                lease = createLease6(ctx, hint, ctx.currentIA().pool_->getLength());
 
                 // It can happen that the lease allocation failed (we could
                 // have lost the race condition. That means that the hint is
@@ -647,7 +647,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     ctx.currentIA().old_leases_.push_back(old_lease);
 
                     /// We found a lease and it is expired, so we can reuse it
-                    lease = reuseExpiredLease(lease, ctx, pool->getLength());
+                    lease = reuseExpiredLease(lease, ctx,
+                                              ctx.currentIA().pool_->getLength());
 
                     /// @todo: We support only one lease per ia for now
                     leases.push_back(lease);
@@ -662,6 +663,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             }
         }
     }
+
+    ctx.currentIA().pool_.reset();
 
     // The hint was useless (it was not provided at all, was used by someone else,
     // was out of pool or reserved for someone else). Search the pool until first
@@ -689,10 +692,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // non-PD leases.
         uint8_t prefix_len = 128;
         if (ctx.currentIA().type_ == Lease::TYPE_PD) {
-            Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+            ctx.currentIA().pool_ = boost::dynamic_pointer_cast<Pool6>(
                 ctx.subnet_->getPool(ctx.currentIA().type_, candidate, false));
             /// @todo: verify that the pool is non-null
-            prefix_len = pool->getLength();
+            prefix_len = ctx.currentIA().pool_->getLength();
         }
 
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,

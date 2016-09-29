@@ -20,6 +20,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -68,6 +69,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/erase.hpp>
 
+#include <algorithm>
 #include <stdlib.h>
 #include <time.h>
 #include <iomanip>
@@ -857,6 +859,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                  AllocEngine::ClientContext6& ctx,
                                   const CfgOptionList& co_list) {
 
     // Client requests some options using ORO option. Try to
@@ -865,18 +868,39 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
         (question->getOption(D6O_ORO));
 
-    // Option ORO not found? We're done here then.
-    if (!option_oro || co_list.empty()) {
+    // If there is no ORO option, there is nothing more to do.
+    if (!option_oro) {
         return;
+
     }
 
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+
+    if (co_list.empty()) {
+        // If there are no options configured, we at least have to check if
+        // the client has requested PD exclude, which is configured as
+        // part of the pool configuration.
+        ctx.pd_exclude_requested_ = (std::find(requested_opts.begin(),
+                                               requested_opts.end(),
+                                               D6O_PD_EXCLUDE) !=
+                                     requested_opts.end());
+        return;
+    }
+
     BOOST_FOREACH(uint16_t opt, requested_opts) {
+        // Prefix Exclude option requires special handling, as it can
+        // be configured as part of the pool configuration.
+        if (opt == D6O_PD_EXCLUDE) {
+            ctx.pd_exclude_requested_ = true;
+            // Prefix Exclude can only be included in the IA Prefix option
+            // of IA_PD. Thus there is nothing more to do here.
+            continue;
+        }
         // Iterate on the configured option list
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get("dhcp6", opt);
+            OptionDescriptor desc = (*copts)->get(DHCP6_OPTION_SPACE, opt);
             // Got it: add it and jump to the outer loop
             if (desc.option_) {
                 answer->addOption(desc.option_);
@@ -1531,6 +1555,19 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                          (*l)->prefixlen_, (*l)->preferred_lft_,
                                          (*l)->valid_lft_));
             ia_rsp->addOption(addr);
+
+            if (ctx.pd_exclude_requested_) {
+                // PD exclude option has been requested via ORO, thus we need to
+                // include it if the pool configuration specifies this option.
+                Pool6Ptr pool = ctx.currentIA().pool_;
+                if (pool && pool->getExcludedPrefixLength() > 0) {
+                    OptionPtr opt(new Option6PDExclude((*l)->addr_,
+                                                       (*l)->prefixlen_,
+                                                       pool->getExcludedPrefix(),
+                                                       pool->getExcludedPrefixLength()));
+                    addr->addOption(opt);
+                }
+            }
         }
 
         // It would be possible to insert status code=0(success) as well,
@@ -1801,10 +1838,26 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
+
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
                                (*l)->addr_, (*l)->prefixlen_,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
+
+        if (ctx.pd_exclude_requested_) {
+            // PD exclude option has been requested via ORO, thus we need to
+            // include it if the pool configuration specifies this option.
+            Pool6Ptr pool = ctx.currentIA().pool_;
+            if (pool && pool->getExcludedPrefixLength() > 0) {
+                OptionPtr opt(new Option6PDExclude((*l)->addr_,
+                                                   (*l)->prefixlen_,
+                                                   pool->getExcludedPrefix(),
+                                                   pool->getExcludedPrefixLength()));
+                prf->addOption(opt);
+            }
+        }
+
+
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
             .arg(query->getLabel())
             .arg((*l)->addr_.toText())
@@ -2295,7 +2348,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
     appendDefaultOptions(solicit, response, co_list);
-    appendRequestedOptions(solicit, response, co_list);
+    appendRequestedOptions(solicit, response, ctx, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
 
     processClientFqdn(solicit, response, ctx);
@@ -2325,7 +2378,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     CfgOptionList co_list;
     buildCfgOptionList(request, ctx, co_list);
     appendDefaultOptions(request, reply, co_list);
-    appendRequestedOptions(request, reply, co_list);
+    appendRequestedOptions(request, reply, ctx, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
     processClientFqdn(request, reply, ctx);
@@ -2351,7 +2404,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     CfgOptionList co_list;
     buildCfgOptionList(renew, ctx, co_list);
     appendDefaultOptions(renew, reply, co_list);
-    appendRequestedOptions(renew, reply, co_list);
+    appendRequestedOptions(renew, reply, ctx, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
     processClientFqdn(renew, reply, ctx);
@@ -2377,7 +2430,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     CfgOptionList co_list;
     buildCfgOptionList(rebind, ctx, co_list);
     appendDefaultOptions(rebind, reply, co_list);
-    appendRequestedOptions(rebind, reply, co_list);
+    appendRequestedOptions(rebind, reply, ctx, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
     processClientFqdn(rebind, reply, ctx);
@@ -2411,7 +2464,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     CfgOptionList co_list;
     buildCfgOptionList(confirm, ctx, co_list);
     appendDefaultOptions(confirm, reply, co_list);
-    appendRequestedOptions(confirm, reply, co_list);
+    appendRequestedOptions(confirm, reply, ctx, co_list);
     appendRequestedVendorOptions(confirm, reply, ctx, co_list);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
@@ -2813,7 +2866,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendDefaultOptions(inf_request, reply, co_list);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(inf_request, reply, co_list);
+    appendRequestedOptions(inf_request, reply, ctx, co_list);
 
     // Try to assigne vendor options that were requested by the client.
     appendRequestedVendorOptions(inf_request, reply, ctx, co_list);

@@ -381,6 +381,10 @@ public:
             /// response
             Option6IAPtr ia_rsp_;
 
+            /// @brief A pointer to a pool from which an address or prefix has
+            /// been assigned in this IA.
+            Pool6Ptr pool_;
+
             /// @brief Default constructor.
             ///
             /// Initializes @ref type_ to @c Lease::TYPE_NA and @ref iaid_ to 0.
@@ -396,6 +400,10 @@ public:
 
         /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
+
+        /// @brief Indicates if PD exclude option has been requested by a
+        /// client.
+        bool pd_exclude_requested_;
 
         /// @brief Convenience method adding allocated prefix or address.
         ///
