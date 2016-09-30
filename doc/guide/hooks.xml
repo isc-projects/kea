@@ -501,7 +501,7 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         {
             "library": "/usr/local/lib/libdhcp_legal_log.so",
             "parameters": {
-                "path": "/var/kea/var",
+                "path": "/var/kea",
                 "base-name": "kea-forensic4"
             }
         },
@@ -518,7 +518,7 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         {
             "library": "/usr/local/lib/libdhcp_legal_log.so",
             "parameters": {
-                "path": "/var/kea/var",
+                "path": "/var/kea",
                 "base-name": "kea-forensic6"
             }
         },
@@ -533,7 +533,7 @@ link address: 3001::1, hop count: 1, identified by remote-id:
             <listitem><para>
             path - the directory in which the forensic file(s) will be written.  The
             default value is
-            <filename>[prefix]/kea/var</filename>.  The directory must exist.
+            <filename>[prefix]/var/kea</filename>.  The directory must exist.
             </para></listitem>
             <listitem><para>
             base-name - an arbitrary value which is used in conjunction with

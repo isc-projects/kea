@@ -98,7 +98,8 @@ std::string genLease6Entry(const Pkt6Ptr& query, const Lease6Ptr& lease, const b
     if (lease->type_  != Lease::TYPE_PD) {
         stream <<  "Address:" << lease->addr_;
     } else {
-        stream <<  "Prefix:" << lease->addr_ << "/" << lease->prefixlen_;
+        stream <<  "Prefix:" << lease->addr_ << "/"
+               << static_cast<int>(lease->prefixlen_);
     }
 
     stream << " has been " << (renewal ? "renewed" : "assigned");
