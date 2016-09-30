@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <errno.h>
 #include <locale>
 #include <sys/stat.h>
 
@@ -151,7 +152,7 @@ public:
                         const std::string& now_string,
                         const std::vector<std::string>& expected_lines) {
         std::ifstream is;
-        is.open(file_name);
+        is.open(file_name.c_str());
         ASSERT_TRUE(is.good()) << "Could not open file: " << file_name;
 
         int i = 0;
