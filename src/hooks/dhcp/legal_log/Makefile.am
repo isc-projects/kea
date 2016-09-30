@@ -62,6 +62,7 @@ libdhcp_legal_log_la_LDFLAGS  += -avoid-version -export-dynamic -module
 # convenience archive, resulting in shared modules
 libdhcp_legal_log_la_LDFLAGS  += -rpath /nowhere
 libdhcp_legal_log_la_LIBADD  = liblegl.la
+libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_legal_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
