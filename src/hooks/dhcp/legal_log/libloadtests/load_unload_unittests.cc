@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <gtest/gtest.h>
+#include <errno.h>
 
 using namespace std;
 using namespace isc;
@@ -49,7 +50,7 @@ public:
     void reset() {
         std::ostringstream stream;
         stream << "rm " << TEST_DATA_BUILDDIR << "/" << "test-legal" << ".*.txt 2>/dev/null";
-        ::system(stream.str().c_str());
+        static_cast<void>(::system(stream.str().c_str()));
         HooksManager::unloadLibraries();
     }
 
