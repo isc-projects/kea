@@ -50,7 +50,12 @@ public:
     void reset() {
         std::ostringstream stream;
         stream << "rm " << TEST_DATA_BUILDDIR << "/" << "test-legal" << ".*.txt 2>/dev/null";
-        static_cast<void>(::system(stream.str().c_str()));
+        int result = ::system(stream.str().c_str());
+        if (result != 0) {
+            // Ignore the result, because it may well be non-zero value when
+            // files to be removed don't exist.
+            ;
+        }
         HooksManager::unloadLibraries();
     }
 
