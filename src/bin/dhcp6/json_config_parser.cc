@@ -206,6 +206,8 @@ public:
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),
                                   prefix_len, delegated_len));
+            // Merge options specified for a pool into pool configuration.
+            options_->copyTo(*pool_->getCfgOption());
         } catch (const std::exception& ex) {
             // Some parameters don't exist or are invalid. Since we are not
             // aware whether they don't exist or are invalid, let's append
