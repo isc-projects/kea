@@ -151,7 +151,8 @@ public:
     /// upon "commit"
     PdPoolParser(const std::string&,  PoolStoragePtr pools)
         : uint32_values_(new Uint32Storage()),
-          string_values_(new StringStorage()), pools_(pools) {
+          string_values_(new StringStorage()), pools_(pools),
+          options_(new CfgOption()) {
         if (!pools_) {
             isc_throw(isc::dhcp::DhcpConfigError,
                       "PdPoolParser context storage may not be NULL");
@@ -180,6 +181,12 @@ public:
                 Uint32ParserPtr code_parser(new Uint32Parser(entry,
                                                              uint32_values_));
                 parser = code_parser;
+            } else if (entry == "option-data") {
+                OptionDataListParserPtr option_parser(new OptionDataListParser(entry,
+                                                                               options_,
+                                                                               AF_INET6));
+                parser = option_parser;
+
             } else {
                 isc_throw(DhcpConfigError, "unsupported parameter: " << entry
                           << " (" << param.second->getPosition() << ")");
@@ -229,6 +236,9 @@ protected:
 
     /// Pointer to storage to which the local pool is written upon commit.
     isc::dhcp::PoolStoragePtr pools_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
 };
 
 /// @brief Parser for a list of prefix delegation pools.

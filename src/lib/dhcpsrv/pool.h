@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 
 #include <vector>
@@ -79,6 +80,18 @@ public:
     uint64_t getCapacity() const {
         return (capacity_);
     }
+
+    /// @brief Returns pointer to the option data configuration for this pool.
+    CfgOptionPtr getCfgOption() {
+        return (cfg_option_);
+    }
+
+    /// @brief Returns const pointer to the option data configuration for
+    /// this pool.
+    ConstCfgOptionPtr getCfgOption() const {
+        return (cfg_option_);
+    }
+
 protected:
 
     /// @brief protected constructor
@@ -128,6 +141,9 @@ protected:
     /// the result. Note that for very large pools, the number is capped at
     /// max value of uint64_t.
     uint64_t capacity_;
+
+    /// @brief Pointer to the option data configuration for this pool.
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief Pool information for IPv4 addresses
