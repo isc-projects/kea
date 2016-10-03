@@ -879,6 +879,9 @@ protected:
     /// A temporary storage for pools configuration. It is a
     /// storage where pools are stored by build function.
     PoolStorage local_pools_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
 };
 
 /// @brief Parser for a list of pools

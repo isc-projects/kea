@@ -820,6 +820,24 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
         co_list.push_back(ctx.host_->getCfgOption6());
     }
 
+    // Secondly, pool specific options. Pools are defined within a subnet, so
+    // if there is no subnet, there is nothing to do.
+    if (ctx.subnet_) {
+        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
+                      ctx.allocated_resources_) {
+            /// @todo This is has significant performance implications. We
+            /// are performing full scan of pools within this subnet to
+            /// find the one we're interested in. We need to implement the
+            /// Patricia trie based storage for pools.
+            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
+                                                Lease::TYPE_NA : Lease::TYPE_PD,
+                                                resource.first, false);
+            if (pool && !pool->getCfgOption()->empty()) {
+                co_list.push_back(pool->getCfgOption());
+            }
+        }
+    };
+
     // Next, subnet configured options.
     if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
         co_list.push_back(ctx.subnet_->getCfgOption());
@@ -2316,15 +2334,15 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
         }
     }
 
+    processClientFqdn(solicit, response, ctx);
+    assignLeases(solicit, response, ctx);
+
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
     appendDefaultOptions(solicit, response, co_list);
     appendRequestedOptions(solicit, response, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
-
-    processClientFqdn(solicit, response, ctx);
-    assignLeases(solicit, response, ctx);
 
     // Only generate name change requests if sending a Reply as a result
     // of receiving Rapid Commit option.
@@ -2347,6 +2365,9 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
+    processClientFqdn(request, reply, ctx);
+    assignLeases(request, reply, ctx);
+
     copyClientOptions(request, reply);
     CfgOptionList co_list;
     buildCfgOptionList(request, ctx, co_list);
@@ -2354,8 +2375,6 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedOptions(request, reply, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
-    processClientFqdn(request, reply, ctx);
-    assignLeases(request, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2374,6 +2393,9 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
+    processClientFqdn(renew, reply, ctx);
+    extendLeases(renew, reply, ctx);
+
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
     buildCfgOptionList(renew, ctx, co_list);
@@ -2381,8 +2403,6 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendRequestedOptions(renew, reply, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
-    processClientFqdn(renew, reply, ctx);
-    extendLeases(renew, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2401,6 +2421,9 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
+    processClientFqdn(rebind, reply, ctx);
+    extendLeases(rebind, reply, ctx);
+
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;
     buildCfgOptionList(rebind, ctx, co_list);
@@ -2408,8 +2431,6 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     appendRequestedOptions(rebind, reply, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
-    processClientFqdn(rebind, reply, ctx);
-    extendLeases(rebind, reply, ctx);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 

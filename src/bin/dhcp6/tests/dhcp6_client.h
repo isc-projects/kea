@@ -468,6 +468,19 @@ public:
     bool hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix,
                                            const uint8_t prefix_len) const;
 
+    /// @brief Checks that specified option exists and contains a desired
+    /// address.
+    ///
+    /// The option must cast to the @ref Option6AddrLst type. The function
+    /// expects that this option contains at least one address and checks
+    /// first address for equality with @ref expected_address.
+    ///
+    /// @param option_type Option type.
+    /// @param expected_address Desired address.
+    /// @param config Configuration obtained from the server.
+    bool hasOptionWithAddress(const uint16_t option_type,
+                              const std::string& expected_address) const;
+
     /// @brief Returns the value of the global status code for the last
     /// transaction.
     uint16_t getStatusCode() const {

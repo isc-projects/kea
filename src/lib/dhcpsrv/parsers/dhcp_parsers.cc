@@ -1039,8 +1039,8 @@ void PoolsListParser::commit() {
 }
 
 //****************************** PoolParser ********************************
-PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
-        :pools_(pools) {
+PoolParser::PoolParser(const std::string&, PoolStoragePtr pools)
+        :pools_(pools), options_(new CfgOption()) {
 
     if (!pools_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
@@ -1066,6 +1066,8 @@ PoolParser::build(ConstElementPtr pool_structure) {
     // first let's remove any whitespaces
     boost::erase_all(txt, " "); // space
     boost::erase_all(txt, "\t"); // tabulation
+
+    PoolPtr pool;
 
     // Is this prefix/len notation?
     size_t pos = txt.find("/");
@@ -1093,28 +1095,47 @@ PoolParser::build(ConstElementPtr pool_structure) {
                       << " (" << text_pool->getPosition() << ")");
         }
 
-        PoolPtr pool(poolMaker(addr, len));
+        pool = poolMaker(addr, len);
         local_pools_.push_back(pool);
-        return;
+
+    } else {
+
+        // Is this min-max notation?
+        pos = txt.find("-");
+        if (pos != string::npos) {
+            // using min-max notation
+            isc::asiolink::IOAddress min(txt.substr(0,pos));
+            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+
+            pool = poolMaker(min, max);
+            local_pools_.push_back(pool);
+        }
     }
 
-    // Is this min-max notation?
-    pos = txt.find("-");
-    if (pos != string::npos) {
-        // using min-max notation
-        isc::asiolink::IOAddress min(txt.substr(0,pos));
-        isc::asiolink::IOAddress max(txt.substr(pos + 1));
-
-        PoolPtr pool(poolMaker(min, max));
-        local_pools_.push_back(pool);
-        return;
+    if (!pool) {
+        isc_throw(DhcpConfigError, "invalid pool definition: "
+                  << text_pool->stringValue() <<
+                  ". There are two acceptable formats <min address-max address>"
+                  " or <prefix/len> ("
+                  << text_pool->getPosition() << ")");
     }
 
-    isc_throw(DhcpConfigError, "invalid pool definition: "
-              << text_pool->stringValue() <<
-              ". There are two acceptable formats <min address-max address>"
-              " or <prefix/len> ("
-              << text_pool->getPosition() << ")");
+    // Parser pool specific options.
+    ConstElementPtr option_data = pool_structure->get("option-data");
+    if (option_data) {
+        try {
+            OptionDataListParserPtr option_parser(new OptionDataListParser("option-data",
+                                                                           options_,
+                                                                           AF_INET6));
+            option_parser->build(option_data);
+            option_parser->commit();
+            options_->copyTo(*pool->getCfgOption());;
+
+        } catch (const std::exception& ex) {
+            isc_throw(isc::dhcp::DhcpConfigError, ex.what()
+                      << " (" << option_data->getPosition() << ")");
+        }
+    }
 }
 
 void

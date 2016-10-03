@@ -8,11 +8,12 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
-#include <dhcp/option_int_array.h>
-#include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
@@ -20,6 +21,7 @@
 #include <util/buffer.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
+#include <algorithm>
 #include <cstdlib>
 #include <time.h>
 
@@ -803,6 +805,20 @@ Dhcp6Client::hasLeaseWithZeroLifetimeForPrefix(const asiolink::IOAddress& prefix
     return (false);
 }
 
+bool
+Dhcp6Client::hasOptionWithAddress(const uint16_t option_type,
+                                  const std::string& expected_address) const {
+    Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
+        Option6AddrLst>(config_.findOption(option_type));
+    if (opt) {
+        Option6AddrLst::AddressContainer addrs = opt->getAddresses();
+        if (!addrs.empty()) {
+            return (std::find(addrs.begin(), addrs.end(),
+                              IOAddress(expected_address)) != addrs.end());
+        }
+    }
+    return (false);
+}
 
 uint16_t
 Dhcp6Client::getStatusCode(const uint32_t iaid) const {
