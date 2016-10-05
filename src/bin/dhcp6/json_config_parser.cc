@@ -43,6 +43,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <netinet/in.h>
 #include <vector>
 
 #include <stdint.h>
@@ -78,7 +79,7 @@ public:
     /// @param pools storage container in which to store the parsed pool
     /// upon "commit"
     Pool6Parser(const std::string& param_name,  PoolStoragePtr pools)
-        :PoolParser(param_name, pools) {
+        :PoolParser(param_name, pools, AF_INET6) {
     }
 
 protected:
