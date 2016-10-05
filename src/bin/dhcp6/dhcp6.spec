@@ -441,17 +441,63 @@
                   "item_optional": false,
                   "item_default": 7200
                 },
-                { "item_name": "pool",
-                  "item_type": "list",
-                  "item_optional": false,
-                  "item_default": [],
-                    "list_item_spec":
-                    {
-                        "item_name": "type",
-                        "item_type": "string",
+                { "item_name": "pools",
+                  "item_type": "map",
+                  "item_optional": true,
+                  "item_default" : {},
+                  "map_item_spec": [
+                      { "item_name": "pool",
+                        "item_type": "list",
                         "item_optional": false,
-                        "item_default": ""
-                    }
+                        "item_default": [],
+                        "list_item_spec":
+                        {
+                            "item_name": "type",
+                            "item_type": "string",
+                            "item_optional": false,
+                            "item_default": ""
+                        }
+                      },
+                      { "item_name": "option-data",
+                        "item_type": "list",
+                        "item_optional": false,
+                        "item_default": [],
+                        "list_item_spec":
+                        {
+                            "item_name": "single-option-data",
+                            "item_type": "map",
+                            "item_optional": false,
+                            "item_default": {},
+                            "map_item_spec": [
+                                {
+                                    "item_name": "name",
+                                    "item_type": "string",
+                                    "item_optional": false,
+                                    "item_default": ""
+                                },
+
+                                { "item_name": "code",
+                                  "item_type": "integer",
+                                  "item_optional": false,
+                                  "item_default": 0
+                                },
+                                { "item_name": "data",
+                                  "item_type": "string",
+                                  "item_optional": false,
+                                  "item_default": ""
+                                },
+                                { "item_name": "csv-format",
+                                  "item_type": "boolean",
+                                  "item_optional": false,
+                                  "item_default": false
+                                },
+                                { "item_name": "space",
+                                  "item_type": "string",
+                                  "item_optional": false,
+                                  "item_default": "dhcp6"
+                                } ]
+                        }
+                      } ]
                 },
 
                 { "item_name": "client-class",
@@ -506,7 +552,48 @@
                            "item_type": "integer",
                            "item_optional": false,
                            "item_default": 128
-                       }]
+                       },
+                       {
+                           "item_name": "option-data",
+                           "item_type": "list",
+                           "item_optional": false,
+                           "item_default": [],
+                           "list_item_spec":
+                           {
+                               "item_name": "single-option-data",
+                               "item_type": "map",
+                               "item_optional": false,
+                               "item_default": {},
+                               "map_item_spec": [
+                                {
+                                    "item_name": "name",
+                                    "item_type": "string",
+                                    "item_optional": false,
+                                    "item_default": ""
+                                },
+
+                                { "item_name": "code",
+                                  "item_type": "integer",
+                                  "item_optional": false,
+                                  "item_default": 0
+                                },
+                                { "item_name": "data",
+                                  "item_type": "string",
+                                  "item_optional": false,
+                                  "item_default": ""
+                                },
+                                { "item_name": "csv-format",
+                                  "item_type": "boolean",
+                                  "item_optional": false,
+                                  "item_default": false
+                                },
+                                { "item_name": "space",
+                                  "item_type": "string",
+                                  "item_optional": false,
+                                  "item_default": "dhcp6"
+                                } ]
+                           }
+                       } ]
                     }
                 },
                 { "item_name": "option-data",
