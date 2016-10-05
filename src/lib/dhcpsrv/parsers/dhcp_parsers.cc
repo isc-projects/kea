@@ -1039,8 +1039,10 @@ void PoolsListParser::commit() {
 }
 
 //****************************** PoolParser ********************************
-PoolParser::PoolParser(const std::string&, PoolStoragePtr pools)
-        :pools_(pools), options_(new CfgOption()) {
+PoolParser::PoolParser(const std::string&, PoolStoragePtr pools,
+                       const uint16_t address_family)
+        :pools_(pools), options_(new CfgOption()),
+         address_family_(address_family) {
 
     if (!pools_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
@@ -1124,9 +1126,15 @@ PoolParser::build(ConstElementPtr pool_structure) {
     ConstElementPtr option_data = pool_structure->get("option-data");
     if (option_data) {
         try {
+            // Currently we don't support specifying options for the DHCPv4 server.
+            if (address_family_ == AF_INET) {
+                isc_throw(DhcpConfigError, "option-data is not supported for DHCPv4"
+                          " address pools");
+            }
+
             OptionDataListParserPtr option_parser(new OptionDataListParser("option-data",
                                                                            options_,
-                                                                           AF_INET6));
+                                                                           address_family_));
             option_parser->build(option_data);
             option_parser->commit();
             options_->copyTo(*pool->getCfgOption());;
