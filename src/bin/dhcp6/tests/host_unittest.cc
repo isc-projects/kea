@@ -40,8 +40,8 @@ namespace {
 ///   in non-default order.
 ///
 /// - Configuration 3:
-///   - Used to test that host specific options override subnet specific
-///     options and global options.
+///   - Used to test that host specific options override pool specific,
+///     subnet specific and global options.
 ///
 /// - Configuration 4:
 ///   - Used to test that client receives options solely specified in a
@@ -150,7 +150,13 @@ const char* CONFIGS[] = {
         "\"subnet6\": [ "
         " { "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pools\": [ {"
+        "        \"pool\": \"2001:db8:1::/64\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3000:2::111\""
+        "        } ]"
+        "    } ],"
         "    \"interface\" : \"eth0\","
         "    \"option-data\": [ {"
         "        \"name\": \"dns-servers\","
