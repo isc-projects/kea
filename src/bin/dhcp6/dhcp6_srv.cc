@@ -1559,7 +1559,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             if (ctx.pd_exclude_requested_) {
                 // PD exclude option has been requested via ORO, thus we need to
                 // include it if the pool configuration specifies this option.
-                Pool6Ptr pool = ctx.currentIA().pool_;
+                Pool6Ptr pool = boost::dynamic_pointer_cast<
+                    Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
                 if (pool && pool->getExcludedPrefixLength() > 0) {
                     OptionPtr opt(new Option6PDExclude((*l)->addr_,
                                                        (*l)->prefixlen_,
@@ -1847,7 +1848,9 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         if (ctx.pd_exclude_requested_) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
-            Pool6Ptr pool = ctx.currentIA().pool_;
+            Pool6Ptr pool = boost::dynamic_pointer_cast<
+                Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
+
             if (pool && pool->getExcludedPrefixLength() > 0) {
                 OptionPtr opt(new Option6PDExclude((*l)->addr_,
                                                    (*l)->prefixlen_,

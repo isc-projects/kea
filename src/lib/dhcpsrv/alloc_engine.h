@@ -381,10 +381,6 @@ public:
             /// response
             Option6IAPtr ia_rsp_;
 
-            /// @brief A pointer to a pool from which an address or prefix has
-            /// been assigned in this IA.
-            Pool6Ptr pool_;
-
             /// @brief Default constructor.
             ///
             /// Initializes @ref type_ to @c Lease::TYPE_NA and @ref iaid_ to 0.
