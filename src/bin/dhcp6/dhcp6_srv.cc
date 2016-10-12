@@ -825,10 +825,6 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     if (ctx.subnet_) {
         BOOST_FOREACH(const AllocEngine::ResourceType& resource,
                       ctx.allocated_resources_) {
-            /// @todo This is has significant performance implications. We
-            /// are performing full scan of pools within this subnet to
-            /// find the one we're interested in. We need to implement the
-            /// Patricia trie based storage for pools.
             PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
                                                 Lease::TYPE_NA : Lease::TYPE_PD,
                                                 resource.first, false);
