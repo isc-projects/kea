@@ -462,39 +462,46 @@
                         "item_type": "list",
                         "item_optional": false,
                         "item_default": [],
+                        "item_description": "Holds a list of pool specific DHCP options.",
                         "list_item_spec":
                         {
                             "item_name": "single-option-data",
                             "item_type": "map",
                             "item_optional": false,
                             "item_default": {},
+                            "item_description": "One of the pool specific DHCP options.",
                             "map_item_spec": [
                                 {
                                     "item_name": "name",
                                     "item_type": "string",
                                     "item_optional": false,
-                                    "item_default": ""
+                                    "item_default": "",
+                                    "item_description": "Option name."
                                 },
 
                                 { "item_name": "code",
                                   "item_type": "integer",
                                   "item_optional": false,
-                                  "item_default": 0
+                                  "item_default": 0,
+                                  "item_description": "Option code."
                                 },
                                 { "item_name": "data",
                                   "item_type": "string",
                                   "item_optional": false,
-                                  "item_default": ""
+                                  "item_default": "",
+                                  "item_description": "Option value."
                                 },
                                 { "item_name": "csv-format",
                                   "item_type": "boolean",
                                   "item_optional": false,
-                                  "item_default": false
+                                  "item_default": false,
+                                  "item_description": "Indicates if option value is specified as comma separated values."
                                 },
                                 { "item_name": "space",
                                   "item_type": "string",
                                   "item_optional": false,
-                                  "item_default": "dhcp6"
+                                  "item_default": "dhcp6",
+                                  "item_description": "Option space."
                                 } ]
                         }
                       } ]
@@ -558,39 +565,47 @@
                            "item_type": "list",
                            "item_optional": false,
                            "item_default": [],
+                           "item_description": "Holds a list of the pd-pool specific DHCP options.",
                            "list_item_spec":
                            {
                                "item_name": "single-option-data",
                                "item_type": "map",
                                "item_optional": false,
                                "item_default": {},
+                               "item_description": "One of the pd-pool specific DHCP options.",
                                "map_item_spec": [
                                 {
                                     "item_name": "name",
                                     "item_type": "string",
                                     "item_optional": false,
-                                    "item_default": ""
+                                    "item_default": "",
+                                    "item_description": "Option name."
                                 },
 
                                 { "item_name": "code",
                                   "item_type": "integer",
                                   "item_optional": false,
-                                  "item_default": 0
+                                  "item_default": 0,
+                                  "item_description": "Option code."
+
                                 },
                                 { "item_name": "data",
                                   "item_type": "string",
                                   "item_optional": false,
-                                  "item_default": ""
+                                  "item_default": "",
+                                  "item_description": "Option value."
                                 },
                                 { "item_name": "csv-format",
                                   "item_type": "boolean",
                                   "item_optional": false,
-                                  "item_default": false
+                                  "item_default": false,
+                                  "item_description": "Indicates if option value is specified as comma separated values."
                                 },
                                 { "item_name": "space",
                                   "item_type": "string",
                                   "item_optional": false,
-                                  "item_default": "dhcp6"
+                                  "item_default": "dhcp6",
+                                  "item_description": "Option space."
                                 } ]
                            }
                        } ]
