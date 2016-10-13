@@ -932,6 +932,7 @@ temporarily override a list of interface names and listen on all interfaces.
       (Dhcp6/option-data), rather you should set only subnet-specific values
       (Dhcp6/subnet[X]/option-data[Y]).
      </para>
+
      <para>
       The following commands override the global
       DNS servers option for a particular subnet, setting a single DNS
@@ -958,6 +959,48 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
     </para>
+
+     <para>
+       In some cases it is useful to associate some options with an
+       address or prefix pool from which a client is assigned a lease. Pool
+       specific option values override subnet specific and global option
+       values. If the client is assigned multiple leases from different
+       pools, the server will assign options from all pools from which the
+       leases have been obtained. However, if the particular option is specified
+       in multiple pools from which the client obtains the leases, only one
+       instance of this option will be handed out to the client. The server's
+       administrator must not try to prioritize assignment of pool specific
+       options by trying to order pools declarations in the server
+       configuration. Future Kea releases may change the order in which
+       options are assigned from the pools without any notice.
+     </para>
+
+     <para>
+       The following configuration snippet demonstrates how to specify the
+       DNS servers option, which will be assigned to a client only if the
+       client obtains an address from the given pool:
+<screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            "pools": [
+                {
+                    "pool": "2001:db8:1::100-2001:db8:1::300",
+                    <userinput>"option-data": [
+                        {
+                            "name": "dns-servers",
+                            "data": "2001:db8:1::10"
+                        }
+                    ]</userinput>
+                }
+            ]
+        },
+        ...
+    ],
+    ...
+}
+</screen>
+     </para>
 
     <para>
       The currently supported standard DHCPv6 options are

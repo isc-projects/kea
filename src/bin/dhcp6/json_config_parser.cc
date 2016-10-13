@@ -43,6 +43,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <netinet/in.h>
 #include <vector>
 
 #include <stdint.h>
@@ -78,7 +79,7 @@ public:
     /// @param pools storage container in which to store the parsed pool
     /// upon "commit"
     Pool6Parser(const std::string& param_name,  PoolStoragePtr pools)
-        :PoolParser(param_name, pools) {
+        :PoolParser(param_name, pools, AF_INET6) {
     }
 
 protected:
@@ -151,7 +152,8 @@ public:
     /// upon "commit"
     PdPoolParser(const std::string&,  PoolStoragePtr pools)
         : uint32_values_(new Uint32Storage()),
-          string_values_(new StringStorage()), pools_(pools) {
+          string_values_(new StringStorage()), pools_(pools),
+          options_(new CfgOption()) {
         if (!pools_) {
             isc_throw(isc::dhcp::DhcpConfigError,
                       "PdPoolParser context storage may not be NULL");
@@ -180,6 +182,12 @@ public:
                 Uint32ParserPtr code_parser(new Uint32Parser(entry,
                                                              uint32_values_));
                 parser = code_parser;
+            } else if (entry == "option-data") {
+                OptionDataListParserPtr option_parser(new OptionDataListParser(entry,
+                                                                               options_,
+                                                                               AF_INET6));
+                parser = option_parser;
+
             } else {
                 isc_throw(DhcpConfigError, "unsupported parameter: " << entry
                           << " (" << param.second->getPosition() << ")");
@@ -199,6 +207,8 @@ public:
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),
                                   prefix_len, delegated_len));
+            // Merge options specified for a pool into pool configuration.
+            options_->copyTo(*pool_->getCfgOption());
         } catch (const std::exception& ex) {
             // Some parameters don't exist or are invalid. Since we are not
             // aware whether they don't exist or are invalid, let's append
@@ -229,6 +239,9 @@ protected:
 
     /// Pointer to storage to which the local pool is written upon commit.
     isc::dhcp::PoolStoragePtr pools_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
 };
 
 /// @brief Parser for a list of prefix delegation pools.

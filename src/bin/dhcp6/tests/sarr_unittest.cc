@@ -39,6 +39,15 @@ namespace {
 ///     one
 ///   - DNS updates enabled
 ///
+/// - Configuration 2:
+///   - single subnet 3000::/32,
+///   - two options specified in the subnet scope,
+///   - one option specified at the global scope,
+///   - two address pools: 3000::10-3000::20, 3000::40-3000::50,
+///   - two prefix pools: 2001:db8:3::/64 and 2001:db8:4::/64,
+///   - an option with unique value specified for each pool, so as it is
+///     possible to test that pool specific options can be assigned.
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -82,6 +91,68 @@ const char* CONFIGS[] = {
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : True, "
         "     \"qualifying-suffix\" : \"example.com\" }"
+    "}",
+
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "    \"name\": \"dns-servers\","
+        "    \"data\": \"3000:1::234\""
+        "},"
+        "{"
+        "    \"name\": \"sntp-servers\","
+        "    \"data\": \"3000:2::1\""
+        "} ],"
+        "\"subnet6\": [ { "
+        "    \"option-data\": [ {"
+        "        \"name\": \"dns-servers\","
+        "        \"data\": \"3000:1::567\""
+        "    },"
+        "    {"
+        "        \"name\": \"sntp-servers\","
+        "        \"data\": \"3000:2::1\""
+        "    } ],"
+        "    \"pools\": [ { "
+        "        \"pool\": \"3000::10 - 3000::20\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"sntp-servers\","
+        "            \"data\": \"3000:2::2\""
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"pool\": \"3000::40 - 3000::50\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"nisp-servers\","
+        "            \"data\": \"3000:2::3\""
+        "        } ]"
+        "    } ],"
+        "    \"pd-pools\": [ { "
+        "        \"prefix\": \"2001:db8:3::\","
+        "        \"prefix-len\": 64,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3000:1::678\""
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"prefix\": \"2001:db8:4::\","
+        "        \"prefix-len\": 64,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"nis-servers\","
+        "            \"data\": \"3000:1::789\""
+        "        } ]"
+        "    } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
     "}"
 };
 
@@ -171,6 +242,67 @@ TEST_F(SARRTest, directClientPrefixHint) {
     EXPECT_EQ(4000, lease_client.valid_lft_);
     lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
+}
+
+// This test verifies that the same options can be specified on the global
+// level, subnet level and pool level. The options associated with pools
+// are used when the lease is handed out from these pools.
+TEST_F(SARRTest, optionsInheritance) {
+    Dhcp6Client client;
+    // Request a single address and single prefix.
+    ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
+    ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));
+    // Request two options configured for the pools from which the client may get
+    // a lease.
+    client.requestOption(D6O_NAME_SERVERS);
+    client.requestOption(D6O_NIS_SERVERS);
+    client.requestOption(D6O_NISP_SERVERS);
+    client.requestOption(D6O_SNTP_SERVERS);
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[2], *client.getServer()));
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // We have provided hints so we should get leases appropriate
+    // for the hints we provided.
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:4::"), 64));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::45")));
+    // We shouldn't have leases for the prefix and address which we didn't
+    // request.
+    ASSERT_FALSE(client.hasLeaseForPrefix(IOAddress("2001:db8:3::"), 64));
+    ASSERT_FALSE(client.hasLeaseForAddress(IOAddress("3000::11")));
+
+    // We should have received options associated with a prefix pool and
+    // address pool from which we have requested the leases. We should not
+    // have received options associated with the remaining pools. Instead,
+    // we should have received options associated with a subnet.
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "3000:1::567"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NIS_SERVERS, "3000:1::789"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NISP_SERVERS, "3000:2::3"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::1"));
+
+    // Let's now also request a prefix and an address from the remaining pools.
+    ASSERT_NO_THROW(client.requestPrefix(0x6806, 64, IOAddress("2001:db8:3::")));
+    ASSERT_NO_THROW(client.requestAddress(0x6860, IOAddress("3000::11")));
+
+    // Perform 4-way exchange again.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // We should now have two prefixes from two distinct pools.
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:3::"), 64));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:4::"), 64));
+    //  We should also have two addresses from two distinct pools.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::45")));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::11")));
+
+    // This time, options from all pools should have been assigned.
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "3000:1::678"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NIS_SERVERS, "3000:1::789"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NISP_SERVERS, "3000:2::3"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
 }
 
 // Check that when the client includes the Rapid Commit option in its
