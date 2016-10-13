@@ -3960,6 +3960,12 @@ should include options from the isc option space:
             ability to mark additional options as RSOO-enabled.</simpara>
           </listitem>
           <listitem>
+            <simpara><emphasis>Prefix Exclude Option for DHCPv6-based Prefix
+            Delegation</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6603">RFC
+            6603</ulink>: Prefix Exclude option is supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><emphasis>Client Link-Layer Address Option in
             DHCPv6</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc6939">RFC
@@ -3972,6 +3978,13 @@ should include options from the isc option space:
             <ulink url="http://tools.ietf.org/html/rfc7550">RFC
             7550</ulink>: All recommendations related to the DHCPv6 server
             operation are supported.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>DHCPv6 Options for Configuration of Softwire
+            Address and Port-Mapped Clients</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc7598">RFC
+            7598</ulink>: All options specified in this specification are
+            supported by the DHCPv6 server.</simpara>
           </listitem>
       </itemizedlist>
     </section>
