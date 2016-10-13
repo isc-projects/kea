@@ -504,7 +504,8 @@ public:
     void testOverrideRequestedOptions(const uint16_t msg_type);
 
     /// @brief Verifies that client receives options when they are solely
-    /// defined in the host scope (and not in the global or subnet scope).
+    /// defined in the host scope (and not in the global, subnet or pool
+    /// scope).
     ///
     /// @param msg_type DHCPv6 message type to be sent to the server. If the
     /// message type is Renew or Rebind, the 4-way exchange is made prior to
