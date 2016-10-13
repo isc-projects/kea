@@ -1,4 +1,9 @@
-1180.   [doc]       stephen
+1181.	[func]		marcin
+	Extended DHCPv6 server to allow for specifying DHCP options
+	on address and prefix pool levels.
+	(Trac #5022, git e3b2785c79aedbb0c8af7468d61f6d61dafd2282)
+
+1180.	[doc]		stephen
 	Editing pass through the Kea guide.
 	(Trac #4484, git 63456fab1b978bd515198b9b9e604f293efd8217)
 	(Trac #5008, git f09cd12d5b1abc60ccef98df2abc6c41b482a404)
@@ -7,7 +12,7 @@
 	Manual pages updated.
 	(Trac #3515, git 4cf0395e11e724786c4d2a1d48805f1c770f4c99)
 
-1178.  	[doc]           tomek
+1178.	[doc]           tomek
 	user_chk hook library is now documented in the User's Guide.
 	(Trac #3209, git 4a8534d968a21cff3851619fb22d0032a1202c87)
 
