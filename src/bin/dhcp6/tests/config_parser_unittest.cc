@@ -2556,6 +2556,154 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(user_class_expected));
 }
 
+// This test verifies that it is possible to specify options on
+// pool levels.
+TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { "
+        "        \"pool\": \"2001:db8:1::10 - 2001:db8:1::100\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"subscriber-id\","
+        "            \"data\": \"0102030405060708090A\","
+        "            \"csv-format\": False"
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"pool\": \"2001:db8:1::300 - 2001:db8:1::400\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"user-class\","
+        "            \"data\": \"FFFEFDFCFB\","
+        "            \"csv-format\": False"
+        "        } ]"
+        "    } ],"
+        "    \"pd-pools\": [ { "
+        "        \"prefix\": \"3000::\","
+        "        \"prefix-len\": 48,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"subscriber-id\","
+        "            \"data\": \"112233445566\","
+        "            \"csv-format\": False"
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"prefix\": \"3001::\","
+        "        \"prefix-len\": 48,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"user-class\","
+        "            \"data\": \"aabbccddee\","
+        "            \"csv-format\": False"
+        "        } ]"
+        "    } ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ASSERT_TRUE(subnet);
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_PD, IOAddress("3000::"), false);
+    ASSERT_TRUE(pool);
+    Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+    ASSERT_TRUE(pool6);
+
+    OptionContainerPtr options1 = pool6->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(1, options1->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx1 = options1->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range1 =
+        idx1.equal_range(D6O_SUBSCRIBER_ID);
+    // Expect a single Subscriber ID option instance.
+    ASSERT_EQ(1, std::distance(range1.first, range1.second));
+    const uint8_t subscriber_id_expected[] = {
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range1.first, D6O_SUBSCRIBER_ID, subscriber_id_expected,
+               sizeof(subscriber_id_expected));
+
+    // Test another pool in the same way.
+    pool = subnet->getPool(Lease::TYPE_PD, IOAddress("3001::"), false);
+    ASSERT_TRUE(pool);
+    pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+    ASSERT_TRUE(pool6);
+
+    OptionContainerPtr options2 = pool6->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(1, options2->size());
+
+    const OptionContainerTypeIndex& idx2 = options2->get<1>();
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range2 =
+        idx2.equal_range(D6O_USER_CLASS);
+    ASSERT_EQ(1, std::distance(range2.first, range2.second));
+
+    const uint8_t user_class_expected[] = {
+        0xAA, 0xBB, 0xCC, 0xDD, 0xEE
+    };
+    testOption(*range2.first, D6O_USER_CLASS, user_class_expected,
+               sizeof(user_class_expected));
+
+    // Test options in NA pools.
+    pool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1::10"));
+    ASSERT_TRUE(pool);
+    pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+    ASSERT_TRUE(pool6);
+
+    OptionContainerPtr options3 = pool6->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(1, options3->size());
+
+    const OptionContainerTypeIndex& idx3 = options3->get<1>();
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range3 =
+        idx3.equal_range(D6O_SUBSCRIBER_ID);
+    ASSERT_EQ(1, std::distance(range3.first, range3.second));
+
+    const uint8_t subscriber_id_expected2[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A
+    };
+    testOption(*range3.first, D6O_SUBSCRIBER_ID, subscriber_id_expected2,
+               sizeof(subscriber_id_expected2));
+
+
+    pool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1::300"));
+    ASSERT_TRUE(pool);
+    pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+    ASSERT_TRUE(pool6);
+
+    OptionContainerPtr options4 = pool6->getCfgOption()->getAll("dhcp6");
+    ASSERT_EQ(1, options4->size());
+
+    const OptionContainerTypeIndex& idx4 = options4->get<1>();
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range4 =
+        idx4.equal_range(D6O_USER_CLASS);
+    ASSERT_EQ(1, std::distance(range4.first, range4.second));
+
+    const uint8_t user_class_expected2[] = {
+        0xFF, 0xFE, 0xFD, 0xFC, 0xFB
+    };
+    testOption(*range4.first, D6O_USER_CLASS, user_class_expected2,
+               sizeof(user_class_expected2));
+}
+
 // The goal of this test is to check that the option carrying a boolean
 // value can be configured using one of the values: "true", "false", "0"
 // or "1".
