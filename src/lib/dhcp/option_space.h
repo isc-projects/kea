@@ -15,9 +15,6 @@
 
 #define DHCP4_OPTION_SPACE      "dhcp4"
 #define DHCP6_OPTION_SPACE      "dhcp6"
-#define DOCSIS3_V4_OPTION_SPACE "docsis3_v4"
-#define DOCSIS3_V6_OPTION_SPACE "docsis3_v6"
-#define ISC_V6_OPTION_SPACE     "4o6"
 #define MAPE_V6_OPTION_SPACE    "s46-cont-mape-options"
 #define MAPT_V6_OPTION_SPACE    "s46-cont-mapt-options"
 #define LW_V6_OPTION_SPACE      "s46-cont-lw-options"
