@@ -1218,29 +1218,29 @@ TEST_F(HostTest, hostIdentifiersOrder) {
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Information-request case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Information-request case).
 TEST_F(HostTest, overrideRequestedOptionsInformationRequest) {
     testOverrideRequestedOptions(DHCPV6_INFORMATION_REQUEST);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Request case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Request case).
 TEST_F(HostTest, overrideRequestedOptionsRequest) {
     testOverrideRequestedOptions(DHCPV6_REQUEST);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Renew case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Renew case).
 TEST_F(HostTest, overrideRequestedOptionsRenew) {
     testOverrideRequestedOptions(DHCPV6_RENEW);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Rebind case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Rebind case).
 TEST_F(HostTest, overrideRequestedOptionsRebind) {
     testOverrideRequestedOptions(DHCPV6_REBIND);
 }
