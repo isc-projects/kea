@@ -23,6 +23,7 @@ nobase_dist_doc_DATA += examples/kea6/multiple-options.json
 nobase_dist_doc_DATA += examples/kea6/reservations.json
 nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
+nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
 
 devel:
