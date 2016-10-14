@@ -766,6 +766,28 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 }
 
+TEST_F(ParseConfigTest, encapsulatedOptionData) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"space\": \"s46-cont-mape-options\","
+        "    \"name\": \"s46-rule\","
+        "    \"data\": \"1, 0, 24, 192.0.2.0, 2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    // The default universe is V6. We need to change it to use dhcp4 option
+    // space.
+    parser_context_->universe_ = Option::V6;
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    OptionCustomPtr s46_rule = boost::dynamic_pointer_cast<OptionCustom>
+        (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
+    ASSERT_TRUE(s46_rule);
+}
+
 // This test checks behavior of the configuration parser for option data
 // for different values of csv-format parameter and when there is no
 // option definition.

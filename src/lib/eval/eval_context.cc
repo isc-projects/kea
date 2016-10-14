@@ -8,6 +8,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option_space.h>
 #include <eval/eval_context.h>
 #include <eval/parser.h>
 #include <exceptions/exceptions.h>
@@ -78,11 +79,12 @@ uint16_t
 EvalContext::convertOptionName(const std::string& option_name,
                                const isc::eval::location& loc)
 {
-    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(option_universe_,
+    const std::string global_space = (option_universe_ == Option::V4) ?
+        DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
+
+    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(global_space,
                                                            option_name);
     if (!option_def) {
-        const std::string global_space =
-            (option_universe_ == Option::V4) ? "dhcp4" : "dhcp6";
         option_def = LibDHCP::getRuntimeOptionDef(global_space, option_name);
     }
 

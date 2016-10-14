@@ -627,7 +627,7 @@ public:
                 }
 
                 if (!code) {
-                    const OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6,
+                    const OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE,
                                                                           option_str);
                     if (def) {
                         code = def->getCode();

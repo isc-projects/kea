@@ -566,21 +566,15 @@ template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
                                        const SearchKey& search_key) const {
-    const Option::Universe u = address_family_ == AF_INET ?
-        Option::V4 : Option::V6;
-    OptionDefinitionPtr def;
-
-    if ((option_space == DHCP4_OPTION_SPACE) ||
-        (option_space == DHCP6_OPTION_SPACE)) {
-        def = LibDHCP::getOptionDef(u, search_key);
-
-    }
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(option_space, search_key);
 
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
         // definition.
         uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
         if (vendor_id) {
+            const Option::Universe u = address_family_ == AF_INET ?
+                Option::V4 : Option::V6;
             def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }
     }

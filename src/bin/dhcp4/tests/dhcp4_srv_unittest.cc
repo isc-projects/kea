@@ -402,7 +402,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     // client-id echo is optional
     // rai echo is done in relayAgentInfoEcho
     // Do subnet selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
                                                            DHO_SUBNET_SELECTION);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
@@ -2165,7 +2165,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(clientid);
 
     // Let's create a Relay Agent Information option
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
                                                         DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_def);
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
@@ -2192,7 +2192,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
     // Subnet select option has a lower precedence
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
                                                            DHO_SUBNET_SELECTION);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
@@ -2275,7 +2275,7 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     dis->addOption(clientid);
 
     // Let's create a Subnet Selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(Option::V4,
+    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
                                                            DHO_SUBNET_SELECTION);
     ASSERT_TRUE(sbnsel_def);
     OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
