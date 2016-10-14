@@ -885,6 +885,9 @@ protected:
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
 
+    /// A storage for user context.
+    isc::data::ConstElementPtr user_context_;
+
     /// @brief Address family: AF_INET (for DHCPv4) or AF_INET6 for DHCPv6.
     uint16_t address_family_;
 };

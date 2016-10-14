@@ -187,7 +187,8 @@ public:
                                                                                options_,
                                                                                AF_INET6));
                 parser = option_parser;
-
+            } else if (entry == "user-context") {
+                user_context_ = param.second;
             } else {
                 isc_throw(DhcpConfigError, "unsupported parameter: " << entry
                           << " (" << param.second->getPosition() << ")");
@@ -216,6 +217,10 @@ public:
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << pd_pool_->getPosition() << ")");
         }
+
+        if (user_context_) {
+            pool_->setUserContext(user_context_);
+        }
     }
 
     // @brief Commits the constructed local pool to the pool storage.
@@ -242,6 +247,8 @@ protected:
 
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
+
+    isc::data::ConstElementPtr user_context_;
 };
 
 /// @brief Parser for a list of prefix delegation pools.
