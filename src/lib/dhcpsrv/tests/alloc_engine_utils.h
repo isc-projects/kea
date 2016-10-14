@@ -101,9 +101,18 @@ public:
     /// @param subnet Address of a subnet to be configured.
     /// @param pool_start First address in the address pool.
     /// @param pool_end Last address in the address pool.
+    /// @param pd_pool_prefix Prefix for the prefix delegation pool. It
+    /// defaults to 0 which means that PD pool is not specified.
+    /// @param pd_pool_length Length of the PD pool prefix.
+    /// @param pd_delegated_length Delegated prefix length.
     void initSubnet(const asiolink::IOAddress& subnet,
                     const asiolink::IOAddress& pool_start,
-                    const asiolink::IOAddress& pool_end);
+                    const asiolink::IOAddress& pool_end,
+                    const asiolink::IOAddress& pd_pool_prefix =
+                    asiolink::IOAddress::IPV6_ZERO_ADDRESS(),
+                    const uint8_t pd_pool_length = 0,
+                    const uint8_t pd_delegated_length = 0);
+
 
     /// @brief Initializes FQDN data for a test.
     ///

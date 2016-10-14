@@ -143,9 +143,9 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
 // in pool, but is currently used, can succeed
 TEST_F(AllocEngine6Test, pdAllocWithUsedHint6) {
     allocWithUsedHintTest(Lease::TYPE_PD,
-                          IOAddress("2001:db8:1::"), // allocate this prefix as used
-                          IOAddress("2001:db8:1::"), // request this prefix
-                          64);
+                          IOAddress("2001:db8:1:2::"), // allocate this prefix as used
+                          IOAddress("2001:db8:1:2::"), // request this prefix
+                          80);
 }
 
 // This test checks if the allocation with a hint that is out the blue
@@ -159,7 +159,7 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine6Test, pdAllocBogusHint6) {
 
-    allocBogusHint6(Lease::TYPE_PD, IOAddress("3000::abc"), 64);
+    allocBogusHint6(Lease::TYPE_PD, IOAddress("3000::abc"), 80);
 }
 
 // This test checks that NULL values are handled properly
@@ -1612,7 +1612,7 @@ TEST_F(AllocEngine6Test, largePDPool) {
 
     // Configure the PD pool with the prefix length of /64 and the delegated
     // length /96.
-    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 64, 96));
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
     subnet_->addPool(pool);
 
     // We should have got exactly one lease.
@@ -1649,6 +1649,7 @@ TEST_F(AllocEngine6Test, largePoolOver32bits) {
 TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
     // Remove the default NA pools.
     subnet_->delPools(Lease::TYPE_NA);
+    subnet_->delPools(Lease::TYPE_PD);
 
     // Add exactly one pool with many addresses.
     Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 56));
