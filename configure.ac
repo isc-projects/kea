@@ -116,6 +116,17 @@ if test $? -eq 0; then
   GNU_SED=yes
 fi
 
+# Display the C++ version
+AC_MSG_CHECKING([C++ version])
+cat > conftest.cpp << EOF
+long v = __cplusplus;
+EOF
+CXX_STANDARD=`$CXX $CXXFLAGS -E -o - conftest.cpp | grep '^long v = ' | $SED -e 's/^long v = //' -e 's/[[^0-9]]*$//' 2> /dev/null`
+if test -z "$CXX_STANDARD"; then
+	CXX_STANDARD="unknown"
+fi
+AC_MSG_RESULT([$CXX_STANDARD])
+
 # Linker options
 
 # check -R, "-Wl,-R" or -rpath
@@ -1622,6 +1633,7 @@ Package:
 C++ Compiler:
   CXX:             ${CXX}
   CXX_VERSION:     ${CXX_VERSION}
+  CXX_STANDARD:    ${CXX_STANDARD}
   DEFS:            ${DEFS}
   CPPFLAGS:        ${CPPFLAGS}
   CXXFLAGS:        ${CXXFLAGS}
