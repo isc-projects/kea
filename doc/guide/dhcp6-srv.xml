@@ -1199,7 +1199,7 @@ temporarily override a list of interface names and listen on all interfaces.
 {
     "space": "s46-cont-mape-options",
     "name": "s46-br",
-    "data": "2001:db8::cafe::1",
+    "data": "2001:db8:cafe::1",
 }
 </screen>
            Other possible "space" value is "s46-cont-lw-options".
@@ -1217,7 +1217,7 @@ temporarily override a list of interface names and listen on all interfaces.
 {
     "space": "s46-cont-mapt-options",
     "name": "s46-dmr",
-    "data": "2001:db8::cafe::/64",
+    "data": "2001:db8:cafe::/64",
 }
 </screen>
               This option must not be included in other containers.

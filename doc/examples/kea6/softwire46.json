@@ -55,7 +55,7 @@
               {
                 "space": "s46-cont-mape-options",
                 "name": "s46-br",
-                "data": "2001:db8::cafe::1"
+                "data": "2001:db8:cafe::1"
               },
 # This option will be included in the S46 Rule option.
               {
