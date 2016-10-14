@@ -140,7 +140,9 @@ AllocEngine6Test::AllocEngine6Test() {
     // Initialize a subnet and short address pool.
     initSubnet(IOAddress("2001:db8:1::"),
                IOAddress("2001:db8:1::10"),
-               IOAddress("2001:db8:1::20"));
+               IOAddress("2001:db8:1::20"),
+               IOAddress("2001:db8:1:2::"),
+               64, 80);
 
     initFqdn("", false, false);
 
@@ -148,8 +150,11 @@ AllocEngine6Test::AllocEngine6Test() {
 
 void
 AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
-                    const asiolink::IOAddress& pool_start,
-                    const asiolink::IOAddress& pool_end) {
+                             const asiolink::IOAddress& pool_start,
+                             const asiolink::IOAddress& pool_end,
+                             const asiolink::IOAddress& pd_pool_prefix,
+                             const uint8_t pd_pool_length,
+                             const uint8_t pd_delegated_length) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
     subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 100, 200, 300, 400));
@@ -157,7 +162,10 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
 
     subnet_->addPool(pool_);
 
-    pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, subnet, 56, 64));
+    if (!pd_pool_prefix.isV6Zero()) {
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, pd_pool_prefix,
+                                      pd_pool_length, pd_delegated_length));
+    }
     subnet_->addPool(pd_pool_);
 
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);

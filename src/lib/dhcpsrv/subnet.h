@@ -173,13 +173,20 @@ public:
     /// requesting router because the requesting router may use the
     /// delegated prefixes in different networks (using different subnets).
     ///
+    /// A DHCPv4 pool being added must not overlap with any existing DHCPv4
+    /// pool. A DHCPv6 pool being added must not overlap with any existing
+    /// DHCPv6 pool.
+    ///
+    /// Pools held within a subnet are sorted by first pool address/prefix
+    /// from the lowest to the highest.
+    ///
     /// @param pool pool to be added
     ///
-    /// @throw isc::BadValue if the pool type is invalid or the pool
+    /// @throw isc::BadValue if the pool type is invalid, the pool
     /// is not an IA_PD pool and the address range of this pool does not
-    /// match the subnet prefix.
+    /// match the subnet prefix, or the pool overlaps with an existing pool
+    /// within the subnet.
     void addPool(const PoolPtr& pool);
-
 
     /// @brief Deletes all pools of specified type
     ///
@@ -188,6 +195,10 @@ public:
     void delPools(Lease::Type type);
 
     /// @brief Returns a pool that specified address belongs to
+    ///
+    /// This method uses binary search to retrieve the pool. Thus, the number
+    /// of comparisons performed by this method is logarithmic in the number
+    /// of pools belonging to a subnet.
     ///
     /// If there is no pool that the address belongs to (hint is invalid), other
     /// pool of specified type will be returned.
@@ -412,6 +423,16 @@ protected:
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
+
+    /// @brief Checks if the specified pool overlaps with an existing pool.
+    ///
+    /// @param pool_type Pool type.
+    /// @param pool Pointer to a pool for which the method should check if
+    /// it overlaps with any existing pool within this subnet.
+    ///
+    /// @return true if pool overlaps with an existing pool of a specified
+    /// type.
+    bool poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const;
 
     /// @brief subnet-id
     ///
