@@ -31,6 +31,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -766,6 +767,8 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 }
 
+// This test verifies that definitions of standard encapsulated
+// options can be used.
 TEST_F(ParseConfigTest, encapsulatedOptionData) {
     std::string config =
         "{ \"option-data\": [ {"
@@ -775,8 +778,7 @@ TEST_F(ParseConfigTest, encapsulatedOptionData) {
         " } ]"
         "}";
 
-    // The default universe is V6. We need to change it to use dhcp4 option
-    // space.
+    // Make sure that we're using correct universe.
     parser_context_->universe_ = Option::V6;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
@@ -786,6 +788,27 @@ TEST_F(ParseConfigTest, encapsulatedOptionData) {
     OptionCustomPtr s46_rule = boost::dynamic_pointer_cast<OptionCustom>
         (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
     ASSERT_TRUE(s46_rule);
+
+    uint8_t flags;
+    uint8_t ea_len;
+    uint8_t prefix4_len;
+    IOAddress ipv4_prefix(IOAddress::IPV4_ZERO_ADDRESS());
+    PrefixTuple ipv6_prefix(PrefixLen(0), IOAddress::IPV6_ZERO_ADDRESS());;
+
+    ASSERT_NO_THROW({
+        flags = s46_rule->readInteger<uint8_t>(0);
+        ea_len = s46_rule->readInteger<uint8_t>(1);
+        prefix4_len = s46_rule->readInteger<uint8_t>(2);
+        ipv4_prefix = s46_rule->readAddress(3);
+        ipv6_prefix = s46_rule->readPrefix(4);
+    });
+
+    EXPECT_EQ(1, flags);
+    EXPECT_EQ(0, ea_len);
+    EXPECT_EQ(24, prefix4_len);
+    EXPECT_EQ("192.0.2.0", ipv4_prefix.toText());
+    EXPECT_EQ(64, ipv6_prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", ipv6_prefix.second.toText());
 }
 
 // This test checks behavior of the configuration parser for option data
