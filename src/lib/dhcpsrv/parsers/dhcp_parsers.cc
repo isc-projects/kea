@@ -1144,6 +1144,12 @@ PoolParser::build(ConstElementPtr pool_structure) {
                       << " (" << option_data->getPosition() << ")");
         }
     }
+
+    user_context_ = pool_structure->get("user-context");
+    if (user_context_ && user_context_->getType() != Element::map) {
+        isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                  << user_context_->getPosition() << ")");
+    }
 }
 
 void

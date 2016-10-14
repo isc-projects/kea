@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
+#include <cc/data.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 
@@ -92,6 +93,17 @@ public:
         return (cfg_option_);
     }
 
+    /// @brief Returns const pointer to the user context.
+    data::ConstElementPtr getContext() const {
+        return (user_context_);
+    }
+
+    /// @brief Sets user context.
+    /// @param ctx user context to be stored.
+    void setUserContext(const data::ConstElementPtr& ctx) {
+        user_context_ = ctx;
+    }
+
 protected:
 
     /// @brief protected constructor
@@ -144,6 +156,9 @@ protected:
 
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Pointer to the user context (may be NULL)
+    data::ConstElementPtr user_context_;
 };
 
 /// @brief Pool information for IPv4 addresses

@@ -55,6 +55,42 @@ using namespace std;
 
 namespace {
 
+const char* PARSER_CONFIGS[] = {
+    // CONFIGURATION 0:
+    // - basic timers, one subnet
+    "{"
+    "    \"inerfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"2001:db8::/64\" }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+    "{"
+    "    \"inerfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"2001:db8::/64\","
+    "                \"user-context\": {"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}"
+};
+
 std::string specfile(const std::string& name) {
     return (std::string(DHCP6_SRC_DIR) + "/" + name);
 }
@@ -4516,6 +4552,29 @@ TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+}
+
+TEST_F(Dhcp6ParserTest, PdPoolUserContextEmpty) {
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(string(PARSER_CONFIGS[0]));
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+
+    ConstCfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets6);
+
+    const Subnet6Collection* subnets = subnets6->getAll();
+    ASSERT_TRUE(subnets);
+
+    ASSERT_EQ(1, subnets->size());
+
+    const PoolCollection pools = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools.size());
+    
+        
 }
 
 };
