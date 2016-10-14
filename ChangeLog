@@ -1,3 +1,8 @@
+1182.	[func]		marcin
+	DHCP servers detect overlapping pool ranges during
+	configuration.
+	(Trac #2280, git c8f931e0189c9630f5fba5d2a5553bed4abf36f7)
+
 1181.	[func]		marcin
 	Extended DHCPv6 server to allow for specifying DHCP options
 	on address and prefix pool levels.
