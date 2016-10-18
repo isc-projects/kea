@@ -56,13 +56,13 @@ using namespace std;
 namespace {
 
 const char* PARSER_CONFIGS[] = {
-    // CONFIGURATION 0:
-    // - basic timers, one subnet
+    // CONFIGURATION 0: one subnet with one pool, no user contexts
     "{"
-    "    \"inerfaces-config\": {"
+    "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
     "    },"
     "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
     "    \"rebind-timer\": 2000,"
     "    \"renew-timer\": 1000,"
     "    \"subnet6\": [ {"
@@ -72,11 +72,14 @@ const char* PARSER_CONFIGS[] = {
     "        \"subnet\": \"2001:db8::/32\""
     "     } ]"
     "}",
+
+    // Configuration 1: one pool with empty user context
     "{"
-    "    \"inerfaces-config\": {"
+    "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
     "    },"
     "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
     "    \"rebind-timer\": 2000,"
     "    \"renew-timer\": 1000,"
     "    \"subnet6\": [ {"
@@ -84,6 +87,96 @@ const char* PARSER_CONFIGS[] = {
     "            { \"pool\":  \"2001:db8::/64\","
     "                \"user-context\": {"
     "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 2: one pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"2001:db8::/64\","
+    "                \"user-context\": {"
+    "                    \"lw4over6-sharing-ratio\": 64,"
+    "                    \"lw4over6-v4-pool\": \"192.0.2.0/24\","
+    "                    \"lw4over6-sysports-exclude\": true,"
+    "                    \"lw4over6-bind-prefix-len\": 56"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 3: pd-pool without any user-context
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pd-pools\": [ "
+    "            { \"prefix\": \"2001:db8::\","
+    "              \"prefix-len\": 56,"
+    "              \"delegated-len\": 64 }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 4: pd-pool with empty user-context
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pd-pools\": [ "
+    "            { \"prefix\":  \"2001:db8::\","
+    "              \"prefix-len\": 56,"
+    "              \"delegated-len\": 64,"
+    "              \"user-context\": { }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 5: pd-pool with user-context with lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pd-pools\": [ "
+    "            { \"prefix\":  \"2001:db8::\","
+    "              \"prefix-len\": 56,"
+    "              \"delegated-len\": 64,"
+    "              \"user-context\": {"
+    "                  \"lw4over6-sharing-ratio\": 64,"
+    "                  \"lw4over6-v4-pool\": \"192.0.2.0/24\","
+    "                  \"lw4over6-sysports-exclude\": true,"
+    "                  \"lw4over6-bind-prefix-len\": 56"
+    "              }"
     "            }"
     "        ],"
     "        \"subnet\": \"2001:db8::/32\""
@@ -596,6 +689,37 @@ public:
 
         // Clear any existing configuration.
         CfgMgr::instance().clear();
+    }
+
+    /// @brief This utility method attempts to configure using specified
+    ///        config and then returns requested pool from requested subnet
+    ///
+    /// @param config configuration to be applied
+    /// @param subnet_index index of the subnet to be returned (0 - the first subnet)
+    /// @param pool_index index of the pool within a subnet (0 - the first pool)
+    /// @param type Pool type (TYPE_NA or TYPE_PD)
+    /// @param pool [out] Pool pointer will be stored here (if found)
+    void getPool(const std::string& config, size_t subnet_index,
+                 size_t pool_index, Lease::Type type, PoolPtr& pool) {
+        ConstElementPtr status;
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(status);
+        checkResult(status, 0);
+
+        ConstCfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+        ASSERT_TRUE(subnets6);
+
+        const Subnet6Collection* subnets = subnets6->getAll();
+        ASSERT_TRUE(subnets);
+        ASSERT_GE(subnets->size(), subnet_index + 1);
+
+        const PoolCollection pools = subnets->at(subnet_index)->getPools(type);
+        ASSERT_GE(pools.size(), pool_index + 1);
+
+        pool = pools.at(pool_index);
+        EXPECT_TRUE(pool);
     }
 
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
@@ -4554,27 +4678,129 @@ TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
     checkResult(status, 1);
 }
 
-TEST_F(Dhcp6ParserTest, PdPoolUserContextEmpty) {
-
-    ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(string(PARSER_CONFIGS[0]));
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    ASSERT_TRUE(status);
-    checkResult(status, 1);
-
-    ConstCfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
-    ASSERT_TRUE(subnets6);
-
-    const Subnet6Collection* subnets = subnets6->getAll();
-    ASSERT_TRUE(subnets);
-
-    ASSERT_EQ(1, subnets->size());
-
-    const PoolCollection pools = subnets->at(0)->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(1, pools.size());
-    
-        
+// Test verifies that regular configuration does not provide any user context
+// in the address pool.
+TEST_F(Dhcp6ParserTest, poolUserContextMissing) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[0]), 0, 0, Lease::TYPE_NA, pool);
+    ASSERT_TRUE(pool);
+    EXPECT_FALSE(pool->getContext());
 }
+
+// Test verifies that it's possible to specify empty user context in the
+// address pool.
+TEST_F(Dhcp6ParserTest, poolUserContextEmpty) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[1]), 0, 0, Lease::TYPE_NA, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and not contain any parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(0, ctx->size());
+}
+
+// Test verifies that it's possible to specify parameters in the user context
+// in the address pool.
+TEST_F(Dhcp6ParserTest, poolUserContextlw4over6) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[2]), 0, 0, Lease::TYPE_NA, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(4, ctx->size());
+    ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
+    ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
+    ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
+    ConstElementPtr v6len   = ctx->get("lw4over6-bind-prefix-len");
+
+    ASSERT_TRUE(ratio);
+    ASSERT_EQ(Element::integer, ratio->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(ratio->getValue(int_value));
+    EXPECT_EQ(64L, int_value);
+
+    ASSERT_TRUE(v4pool);
+    ASSERT_EQ(Element::string, v4pool->getType());
+    EXPECT_EQ("192.0.2.0/24", v4pool->stringValue());
+
+    ASSERT_TRUE(exclude);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, exclude->getType());
+    EXPECT_NO_THROW(exclude->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+
+    ASSERT_TRUE(v6len);
+    ASSERT_EQ(Element::integer, v6len->getType());
+    EXPECT_NO_THROW(v6len->getValue(int_value));
+    EXPECT_EQ(56L, int_value);
+}
+
+// Test verifies that regular configuration does not provide any user context
+// in the address pool.
+TEST_F(Dhcp6ParserTest, pdPoolUserContextMissing) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[3]), 0, 0, Lease::TYPE_PD, pool);
+    ASSERT_TRUE(pool);
+    EXPECT_FALSE(pool->getContext());
+}
+
+// Test verifies that it's possible to specify empty user context in the
+// address pool.
+TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[4]), 0, 0, Lease::TYPE_PD, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and not contain any parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(0, ctx->size());
+}
+
+// Test verifies that it's possible to specify parameters in the user context
+// in the address pool.
+TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[5]), 0, 0, Lease::TYPE_PD, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(4, ctx->size());
+    ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
+    ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
+    ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
+    ConstElementPtr v6len   = ctx->get("lw4over6-bind-prefix-len");
+
+    ASSERT_TRUE(ratio);
+    ASSERT_EQ(Element::integer, ratio->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(ratio->getValue(int_value));
+    EXPECT_EQ(64L, int_value);
+
+    ASSERT_TRUE(v4pool);
+    ASSERT_EQ(Element::string, v4pool->getType());
+    EXPECT_EQ("192.0.2.0/24", v4pool->stringValue());
+
+    ASSERT_TRUE(exclude);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, exclude->getType());
+    EXPECT_NO_THROW(exclude->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+
+    ASSERT_TRUE(v6len);
+    ASSERT_EQ(Element::integer, v6len->getType());
+    EXPECT_NO_THROW(v6len->getValue(int_value));
+    EXPECT_EQ(56L, int_value);
+}
+
 
 };
