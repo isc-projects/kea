@@ -545,4 +545,23 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         </section>
       </section>
     </section>
+    <section id="user-context">
+      <title>User contexts</title>
+      <para>Hook libraries can have their own configuration parameters. That is
+      convenient if the parameter applies to the whole library. However,
+      sometimes it is very useful if certain configuration entities are extended
+      with additional configuration data. This is where the concept of user
+      contexts comes in. A sysadmin can define an arbitrary set of data and
+      attach it to Kea structures, as long as the data is specified as JSON map.
+      In particular, it is possible to define fields that are integers, strings,
+      boolean, lists and maps. It is possible to define nested structures of
+      arbitrary complexity. Kea does not use that data on its own, simply stores
+      and makes it available for the hook libraries.
+      </para>
+      <para>
+        As of Kea 1.2, the only structures that allow user contexts are address
+        and prefix pools, but it is expected to extend other structures with the
+        user context capability.
+      </para>
+    </section>
    </chapter> <!-- hooks-libraries -->
