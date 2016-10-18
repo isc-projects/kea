@@ -189,6 +189,7 @@ public:
                 parser = option_parser;
             } else if (entry == "user-context") {
                 user_context_ = param.second;
+                continue; // no parser to remember, simply store the value
             } else {
                 isc_throw(DhcpConfigError, "unsupported parameter: " << entry
                           << " (" << param.second->getPosition() << ")");

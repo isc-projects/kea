@@ -1100,6 +1100,16 @@ PoolParser::build(ConstElementPtr pool_structure) {
         pool = poolMaker(addr, len);
         local_pools_.push_back(pool);
 
+        // If there's user-context specified, store it.
+        ConstElementPtr user_context = pool_structure->get("user-context");
+        if (user_context) {
+            if (user_context->getType() != Element::map) {
+                isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                          << user_context->getPosition() << ")");
+            }
+            pool->setUserContext(user_context);
+        }
+
     } else {
 
         // Is this min-max notation?
@@ -1143,12 +1153,6 @@ PoolParser::build(ConstElementPtr pool_structure) {
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << option_data->getPosition() << ")");
         }
-    }
-
-    user_context_ = pool_structure->get("user-context");
-    if (user_context_ && user_context_->getType() != Element::map) {
-        isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
-                  << user_context_->getPosition() << ")");
     }
 }
 
