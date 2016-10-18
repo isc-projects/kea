@@ -3851,6 +3851,66 @@ If not specified, the default value is:
       <xref linkend="command-shutdown" />, respectively.</para>
     </section>
 
+
+      <section>
+        <title>User context in IPv6 pools</title>
+        <para>
+          Kea allows loading hook libraries that sometimes could benefit from
+          additional parameters. If such a parameter is specific to the whole
+          library, it is typically defined as a parameter for the hook library.
+          However, sometimes there is a need to specify parameters that are
+          different for each pool.
+        </para>
+        <para>
+          Let's consider a lightweight 4over6 deployment as an example. It is an
+          IPv6 transition technology that allows mapping IPv6 prefix into full
+          or parts of IPv4 addresses. In DHCP context, these are certain
+          parameters that are supposed to be delivered to clients in form of
+          additional options. Values of those options are correlated to
+          delegated prefixes, so it is reasonable to keep those parameters
+          together with the PD pool. On the other hand, lightweight 4over6 is
+          not a commonly used feature, so it is not a part of the base Kea
+          code. The solution to this problem is to use user context. For each PD
+          pool that is expected to be used for lightweight 4over6, user context
+          with extra parameters is defined. Those extra parameters will be used
+          by hook library that would be loaded only when dynamic calculation of
+          the lightweight 4over6 option is actually needed. An example
+          configuration looks as follows:
+          <screen>
+"Dhcp4": {
+    "subnet6": [ {
+        "pd-pools": [
+        {
+            "prefix":  "2001:db8::",
+            "prefix-len": 56,
+            "delegated-len": 64,
+            <userinput>"user-context": {
+                "lw4over6-sharing-ratio": 64,
+                "lw4over6-v4-pool": "192.0.2.0/24",
+                "lw4over6-sysports-exclude": true,
+                "lw4over6-bind-prefix-len": 56
+            }</userinput>
+        } ],
+        "subnet": "2001:db8::/32"
+    } ],
+    ...
+}</screen>
+        </para>
+
+        <para>
+          It should be noted that Kea will not use any information in the user
+          context, but will simply store and make it available to the hook
+          libraries. It is up to the hook library to extract that information
+          and make use of it.
+        </para>
+        <para>
+          Currently only address and prefix pools allow definition of user
+          contexts, but this concept is expected to be enhanced to other
+          structures in the future. For more background information, see <xref
+          linkend="user-context"/>
+        </para>
+    </section>
+
     <section id="dhcp6-std">
       <title>Supported DHCPv6 Standards</title>
       <para>The following standards are currently
