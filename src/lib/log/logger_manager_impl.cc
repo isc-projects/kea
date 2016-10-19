@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <log4cplus/fileappender.h>
 #include <log4cplus/syslogappender.h>
 #include <log4cplus/helpers/loglog.h>
+#include <log4cplus/version.h>
 
 #include <log/logger.h>
 #include <log/logger_support.h>
@@ -239,8 +240,13 @@ void LoggerManagerImpl::setConsoleAppenderLayout(
     string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
 
     // Finally the text of the message
-    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
-    appender->setLayout(layout);
+    appender->setLayout(
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
+                        auto_ptr<log4cplus::Layout>
+#else
+                        unique_ptr<log4cplus::Layout>
+#endif
+                        (new log4cplus::PatternLayout(pattern)));
 }
 
 // Set the the "syslog" layout for the given appenders.  This is the same
@@ -254,8 +260,13 @@ void LoggerManagerImpl::setSyslogAppenderLayout(
     string pattern = "%-5p [%c] %m\n";
 
     // Finally the text of the message
-    auto_ptr<log4cplus::Layout> layout(new log4cplus::PatternLayout(pattern));
-    appender->setLayout(layout);
+    appender->setLayout(
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
+                        auto_ptr<log4cplus::Layout>
+#else
+                        unique_ptr<log4cplus::Layout>
+#endif
+                        (new log4cplus::PatternLayout(pattern)));
 }
 
 void LoggerManagerImpl::storeBufferAppenders() {
