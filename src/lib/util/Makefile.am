@@ -42,4 +42,4 @@ libkea_util_la_LDFLAGS  = -no-undefined -version-info 2:0:0
 CLEANFILES = *.gcno *.gcda
 
 libkea_util_includedir = $(includedir)/$(PACKAGE_NAME)/util
-libkea_util_include_HEADERS = buffer.h io_utilities.h
+libkea_util_include_HEADERS = buffer.h io_utilities.h strutil.h staged_value.h
