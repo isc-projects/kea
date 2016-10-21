@@ -30,6 +30,7 @@
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
+#include <util/encode/hex.h>
 #include <stats/stats_mgr.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
