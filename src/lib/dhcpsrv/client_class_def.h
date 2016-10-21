@@ -8,7 +8,6 @@
 #define CLIENT_CLASS_DEF_H
 
 #include <dhcpsrv/cfg_option.h>
-#include <eval/token.h>
 #include <exceptions/exceptions.h>
 
 #include <string>

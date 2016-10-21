@@ -13,31 +13,15 @@
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
-#include <dhcpsrv/pool.h>
-#include <dhcpsrv/triplet.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet_id.h
+#include <dhcpsrv/triplet.h>
 
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief a base class for Subnet4 and Subnet6
-///
-/// This class presents a common base for IPv4 and IPv6 subnets.
-/// In a physical sense, a subnet defines a single network link with all devices
-/// attached to it. In most cases all devices attached to a single link can
-/// share the same parameters. Therefore Subnet holds several values that are
-/// typically shared by all hosts: renew timer (T1), rebind timer (T2) and
-/// leased addresses lifetime (valid-lifetime). It also holds the set
-/// of DHCP option instances configured for the subnet. These options are
-/// included in DHCP messages being sent to clients which are connected
-/// to the particular subnet.
-///
-/// @todo: Implement support for options here
-
-/// @brief Unique identifier for a subnet (both v4 and v6)
-typedef uint32_t SubnetID;
 
 class Subnet {
 public:
