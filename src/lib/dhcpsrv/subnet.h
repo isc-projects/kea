@@ -15,7 +15,7 @@
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
-#include <dhcpsrv/subnet_id.h
+#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
 
 #include <boost/shared_ptr.hpp>

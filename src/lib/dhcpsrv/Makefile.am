@@ -220,6 +220,7 @@ EXTRA_DIST += logging.spec
 
 # Specify the headers for copying into the installation directory tree. The
 # following headers are anticipated to be useful for the user libraries.
+libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \
     cfg_option.h \
     cfg_4o6.h \
@@ -231,7 +232,7 @@ libkea_dhcpsrv_include_HEADERS = \
     pool.h \
     subnet.h \
     subnet_id.h \
-    triplet.h \
+    triplet.h
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
