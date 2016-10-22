@@ -51,6 +51,8 @@ public:
     ~Hash();
 
     /// \brief Returns the HashAlgorithm of the object
+    ///
+    /// \return hash algorithm
     HashAlgorithm getHashAlgorithm() const;
 
     /// \brief Returns the output size of the digest

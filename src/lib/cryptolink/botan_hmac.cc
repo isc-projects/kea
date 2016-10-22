@@ -180,9 +180,9 @@ public:
     ///
     /// See @ref isc::cryptolink::HMAC::verify() for details.
     bool verify(const void* sig, size_t len) {
-        /// @todo Botan's verify_mac checks if len matches the output_length,
-        /// which causes it to fail for truncated signatures, so we do
-        /// the check ourselves
+        // Botan's verify_mac checks if len matches the output_length,
+        // which causes it to fail for truncated signatures, so we do
+        // the check ourselves
         try {
             size_t size = getOutputLength();
             if (len < 10 || len < size / 2) {
@@ -194,6 +194,8 @@ public:
             if (digest_.empty()) {
                 digest_ = hmac_->final();
             }
+            // digest_.size() == size by construction
+            // if you are not convinced, add an assert()
             return (Botan::same_mem(&digest_[0],
                                     static_cast<const unsigned char*>(sig),
                                     len));

@@ -61,6 +61,8 @@ public:
     ~HMAC();
 
     /// \brief Returns the HashAlgorithm of the object
+    ///
+    /// \return hash algorithm
     HashAlgorithm getHashAlgorithm() const;
 
     /// \brief Returns the output size of the digest
@@ -126,7 +128,9 @@ public:
     /// \param sig The signature to verify
     /// \param len The length of the signature. If this is smaller
     ///            than the output length of the algorithm,
-    ///            only len bytes will be checked
+    ///            only len bytes will be checked. If this is
+    ///            larger than the output length of the algorithm,
+    ///            only output size bytes will be checked
     /// \return true if the signature is correct, false otherwise
     ///
     /// \note verify() does not destroy its context so it can be
