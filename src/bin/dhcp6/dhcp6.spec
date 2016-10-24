@@ -564,13 +564,15 @@
                           "item_name": "excluded-prefix",
                           "item_type": "string",
                           "item_optional": true,
-                          "item_default": ""
+                          "item_default": "",
+                          "item_description": "excluded prefix as per RFC6603"
                        },
                        {
                            "item_name": "excluded-prefix-len",
                            "item_type": "integer",
                            "item_optional": true,
-                           "item_default": 128
+                           "item_default": 128,
+                           "item_description": "excluded prefix length"
                        },
                        {
                            "item_name": "option-data",

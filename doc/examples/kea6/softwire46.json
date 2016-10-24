@@ -1,6 +1,6 @@
 # This is an example configuration file for DHCPv6 server in Kea.
 # It demonstrates how user can specify values for Softwire options
-# defined in RFC 7598.
+# defined in RFC 7598 for Lightweight 4over6 architecture.
 
 { "Dhcp6":
 
@@ -10,9 +10,7 @@
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify lease type. As of May 2014, three backends are supported:
-# memfile, mysql and pgsql. We'll just use memfile, because it doesn't require
-# any prior set up.
+# We need to specify lease type.
   "lease-database": {
     "type": "memfile"
   },
@@ -57,7 +55,10 @@
                 "name": "s46-br",
                 "data": "2001:db8:cafe::1"
               },
-# This option will be included in the S46 Rule option.
+# This option will be included in the S46 Rule option. It includes
+# PSID/PSID length value in a user friendly form. The PSID length
+# specifies the number of bits on which PSID is coded. The PSID
+# value 3 is a 4th value that is coded on these 4 bits: "0011b".
               {
                 "space": "s46-rule-options",
                 "name": "s46-portparams",
