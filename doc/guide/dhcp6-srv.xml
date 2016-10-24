@@ -1246,12 +1246,50 @@ temporarily override a list of interface names and listen on all interfaces.
 {
     "space": "s46-cont-mape-options",
     "name": "s46-rule",
-    "data": "1, 0, 24, 192.0.2.0, 2001:db8:1::/64"
+    "data": "128, 0, 24, 192.0.2.0, 2001:db8:1::/64"
 }
 </screen>
          Other possible "space" value is "s46-cont-mapt-options".
         </para>
 
+        <para>
+          The S46 Rule option conveys a number of parameters:
+
+      <itemizedlist>
+        <listitem>
+          <simpara><command>flags</command>, an unsigned 8 bits integer, with
+          currently only the most significant bit specified. It denotes whether
+          the rule can be used for forwarding (128) or not (0).
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>ea-len</command>, an 8 bits long Embedded Address length. Allowed values
+          range from 0 to 48.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv4 prefix length</command>, 8 bits long; expresses the prefix length of the
+          Rule IPv4 prefix specified in the ipv4-prefix field.  Allowed
+          values range from 0 to 32.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv4 prefix</command>, a fixed-length 32-bit field that specifies the IPv4
+          prefix for the S46 rule.  The bits in the prefix after prefix4-len
+          number of bits are reserved and MUST be initialized to zero by the
+          sender and ignored by the receiver.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv6 prefix</command> in prefix/length notation that specifies the IPv6 domain
+          prefix for the S46 rule.  The field is padded on the right with zero
+          bits up to the nearest octet boundary when prefix6-len is not evenly
+          divisible by 8.</simpara>
+        </listitem>
+
+      </itemizedlist>
+        </para>
       </section>
         <section>
             <title>S46 BR Option</title>
@@ -2560,7 +2598,7 @@ should include options from the isc option space:
             {
                 "prefix": "2001:db8:1:8000::",
                 "prefix-len": 48,
-                "delegated-len": 64,
+                "delegated-len": 64
             }
         ],
         <userinput>"reservations": [
@@ -4075,6 +4113,12 @@ If not specified, the default value is:
             Fully Qualified Domain Name (FQDN) Option</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>:
             Supported option is CLIENT_FQDN.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+            Option for Dual-Stack Lite</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6334">RFC 6334</ulink>:
+            the AFTR-Name DHCPv6 Option is supported.</simpara>
           </listitem>
           <listitem>
             <simpara><emphasis>Relay-Supplied DHCP Options</emphasis>,
