@@ -228,7 +228,7 @@ public:
     /// can be logged directly. Note that the uint8_t value has to
     /// be cast to an integer value to be logged as a number. This
     /// is because the uint8_t is often implemented as char, in which
-    /// case directly loggingan uint8_t value prints a character rather
+    /// case directly logging an uint8_t value prints a character rather
     /// than a number.
     unsigned int asUnsigned() const {
         return (static_cast<unsigned>(psid_len_));
@@ -562,7 +562,7 @@ public:
     /// @param psid_len PSID length in the range of 0 to 16 holding the
     /// number of significant bits within the PSID value.
     /// @param psid PSID value, where the lowest value is 0, and the
-    /// highest value is 2^(PSID length).
+    /// highest value is 2^(PSID length)-1.
     /// @param [out] buf output buffer.
     ///
     /// @throw isc::dhcp::BadDataTypeCast if specified psid_len or
