@@ -47,9 +47,7 @@ public:
     ///
     /// @param begin Lower bound of the buffer to create option from.
     /// @param end Upper bound of the buffer to create option from.
-    Option6PDExclude(const isc::asiolink::IOAddress& delegated_prefix,
-                     const uint8_t delegated_prefix_length,
-                     OptionBufferConstIter begin, OptionBufferConstIter end);
+    Option6PDExclude(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
@@ -85,24 +83,26 @@ public:
     /// @param ident Number of spaces to be inserted before the text.
     virtual std::string toText(int indent = 0) const;
 
-    /// @brief Returns delegated prefix.
-    isc::asiolink::IOAddress getDelegatedPrefix() const {
-        return (delegated_prefix_);
-    }
-
-    /// @brief Returns delegated prefix length.
-    uint8_t getDelegatedPrefixLength() const {
-        return (delegated_prefix_length_);
-    }
-
     /// @brief Returns excluded prefix.
-    isc::asiolink::IOAddress getExcludedPrefix() const {
-        return (excluded_prefix_);
-    }
+    ///
+    /// Assembles excluded prefix from a delegated prefix and IPv6 subnet id
+    /// specified as in RFC6603, section 4.2.
+    ///
+    /// @param delegated_prefix Delegated prefix for which excluded prefix will
+    /// be returned.
+    /// @param delegated_prefix_length Delegated prefix length.
+    asiolink::IOAddress
+    getExcludedPrefix(const asiolink::IOAddress& delegated_prefix,
+                      const uint8_t delegated_prefix_length) const;
 
     /// @brief Returns excluded prefix length.
     uint8_t getExcludedPrefixLength() const {
         return (excluded_prefix_length_);
+    }
+
+    /// @brief Returns an excluded prefix in a binary format.
+    const std::vector<uint8_t>& getExcludedPrefixSubnetID() const {
+        return (subnet_id_);
     }
 
 private:
@@ -110,19 +110,14 @@ private:
     /// @brief Returns IPv6 subnet ID length in octets.
     ///
     /// The IPv6 subnet ID length is between 1 and 16 octets.
-    uint8_t getSubnetIDLength() const;
-
-    /// @brief Holds delegated prefix.
-    isc::asiolink::IOAddress delegated_prefix_;
-
-    /// @brief Holds delegated prefix length,
-    uint8_t delegated_prefix_length_;
-
-    /// @brief Holds excluded prefix.
-    isc::asiolink::IOAddress excluded_prefix_;
+    uint8_t getSubnetIDLength(const uint8_t delegated_prefix_length,
+                              const uint8_t excluded_prefix_length) const;
 
     /// @brief Holds excluded prefix length.
     uint8_t excluded_prefix_length_;
+
+    /// @brief Subnet identifier as described in RFC6603, section 4.2.
+    std::vector<uint8_t> subnet_id_;
 };
 
 /// @brief Pointer to the @ref Option6PDExclude object.

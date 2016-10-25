@@ -368,7 +368,8 @@ TEST_F(SARRTest, directClientExcludedPrefix) {
     ASSERT_TRUE(option);
     Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
     ASSERT_TRUE(pd_exclude);
-    EXPECT_EQ("2001:db8:3::1000", pd_exclude->getExcludedPrefix().toText());
+    EXPECT_EQ("2001:db8:3::1000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
+                                                                64).toText());
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
