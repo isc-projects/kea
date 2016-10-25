@@ -1600,6 +1600,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 Pool6Ptr pool = boost::dynamic_pointer_cast<
                     Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
                 if (pool && pool->getExcludedPrefixLength() > 0) {
+                    std::cout << pool->getExcludedPrefix() << "/"
+                        << (unsigned)pool->getExcludedPrefixLength() << std::endl;
                     OptionPtr opt(new Option6PDExclude((*l)->addr_,
                                                        (*l)->prefixlen_,
                                                        pool->getExcludedPrefix(),

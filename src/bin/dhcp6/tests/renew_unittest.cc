@@ -380,7 +380,8 @@ TEST_F(RenewTest, renewWithExcludedPrefix) {
     ASSERT_TRUE(option);
     Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
     ASSERT_TRUE(pd_exclude);
-    EXPECT_EQ("3000::1000", pd_exclude->getExcludedPrefix().toText());
+    EXPECT_EQ("3000::1000", pd_exclude->getExcludedPrefix(IOAddress("3000::"),
+                                                          80).toText());
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 

@@ -13,6 +13,7 @@
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
 #include <util/buffer.h>
+#include <util/encode/hex.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -32,10 +33,10 @@ const IOAddress beef01("2001:db8:dead:beef::01");
 TEST(Option6PDExcludeTest, constructor) {
     Option6PDExclude option = Option6PDExclude(beef, 56, beef01, 60);
 
-    EXPECT_EQ(beef, option.getDelegatedPrefix());
-    EXPECT_EQ(56, option.getDelegatedPrefixLength());
-    EXPECT_EQ(beef01, option.getExcludedPrefix());
+    EXPECT_EQ(bee0, option.getExcludedPrefix(beef, 56));
     EXPECT_EQ(60, option.getExcludedPrefixLength());
+    EXPECT_EQ("E0", util::encode::encodeHex(option.getExcludedPrefixSubnetID()));
+
     // Total length is a sum of option header length, excluded prefix
     // length (always 1 byte) and delegated prefix length - excluded prefix
     // length rounded to bytes.
@@ -94,19 +95,17 @@ TEST(Option6PDExcludeTest, unpack1ByteSubnetId) {
     // Parse option.
     Option6PDExcludePtr option;
     ASSERT_NO_THROW(
-        option.reset(new Option6PDExclude(IOAddress("2001:db8:dead:bee0::1"),
-                                          59, vec.begin() + 4, vec.end()))
+        option.reset(new Option6PDExclude(vec.begin() + 4, vec.end()))
     );
 
     // Make sure that the option has been parsed correctly.
-    EXPECT_EQ("2001:db8:dead:bee0::1", option->getDelegatedPrefix().toText());
-    EXPECT_EQ(59, static_cast<int>(option->getDelegatedPrefixLength()));
-    EXPECT_EQ("2001:db8:dead:beef::", option->getExcludedPrefix().toText());
+    EXPECT_EQ("2001:db8:dead:beef::",
+              option->getExcludedPrefix(IOAddress("2001:db8:dead:bee0::1"), 59).toText());
     EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
 }
 
 // This test verifies parsing option wire format with subnet id of
-// 1 bytes.
+// 2 bytes.
 TEST(Option6PDExcludeTest, unpack2ByteSubnetId) {
     const uint8_t data[] = {
         0x00, 0x43,       // option code 67
@@ -118,14 +117,12 @@ TEST(Option6PDExcludeTest, unpack2ByteSubnetId) {
     // Parse option.
     Option6PDExcludePtr option;
     ASSERT_NO_THROW(
-        option.reset(new Option6PDExclude(IOAddress("2001:db8:dead::"),
-                                          48, vec.begin() + 4, vec.end()))
+        option.reset(new Option6PDExclude(vec.begin() + 4, vec.end()))
     );
 
     // Make sure that the option has been parsed correctly.
-    EXPECT_EQ("2001:db8:dead::", option->getDelegatedPrefix().toText());
-    EXPECT_EQ(48, static_cast<int>(option->getDelegatedPrefixLength()));
-    EXPECT_EQ("2001:db8:dead:beef::", option->getExcludedPrefix().toText());
+    EXPECT_EQ("2001:db8:dead:beef::",
+              option->getExcludedPrefix(IOAddress("2001:db8:dead::"), 48).toText());
     EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
 }
 
@@ -140,13 +137,12 @@ TEST(Option6PDExcludeTest, unpackErrors) {
     std::vector<uint8_t> vec(data, data + sizeof(data));
 
     // Option has no IPv6 subnet id.
-    EXPECT_THROW(Option6PDExclude(IOAddress("2001:db8:dead:bee0::"),
-                                  59, vec.begin() + 4, vec.end() - 1),
+    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end() - 1),
                  BadValue);
 
-    // Option has IPv6 subnet id of 1 byte, but it should have 2 bytes.
-    EXPECT_THROW(Option6PDExclude(IOAddress("2001:db8:dead::"), 48,
-                                  vec.begin() + 4, vec.end()),
+    // IPv6 subnet id is 0.
+    vec[4] = 0x00;
+    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end()),
                  BadValue);
 }
 
@@ -154,7 +150,7 @@ TEST(Option6PDExcludeTest, unpackErrors) {
 // textual format.
 TEST(Option6PDExcludeTest, toText) {
     Option6PDExclude option(bee0, 59, beef, 64);
-    EXPECT_EQ("type=00067, len=00002: 2001:db8:dead:beef::/64",
+    EXPECT_EQ("type=00067, len=00002: excluded-prefix-len=64, subnet-id=0x78",
               option.toText());
 }
 

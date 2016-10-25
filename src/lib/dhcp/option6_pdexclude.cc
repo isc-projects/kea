@@ -11,6 +11,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_pdexclude.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <util/io_utilities.h>
 
 #include <boost/dynamic_bitset.hpp>
@@ -31,38 +32,36 @@ Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_pre
                                    const isc::asiolink::IOAddress& excluded_prefix,
                                    const uint8_t excluded_prefix_length)
     : Option(V6, D6O_PD_EXCLUDE),
-      delegated_prefix_(delegated_prefix),
-      delegated_prefix_length_(delegated_prefix_length),
-      excluded_prefix_(excluded_prefix),
-      excluded_prefix_length_(excluded_prefix_length) {
+      excluded_prefix_length_(excluded_prefix_length),
+      subnet_id_() {
 
     // Expecting v6 prefixes of sane length.
-    if (!delegated_prefix_.isV6() || !excluded_prefix_.isV6() ||
-        (delegated_prefix_length_ > 128) || (excluded_prefix_length_ > 128)) {
+    if (!delegated_prefix.isV6() || !excluded_prefix.isV6() ||
+        (delegated_prefix_length > 128) || (excluded_prefix_length_ > 128)) {
         isc_throw(BadValue, "invalid delegated or excluded prefix values specified: "
-                  << delegated_prefix_ << "/"
-                  << static_cast<int>(delegated_prefix_length_) << ", "
-                  << excluded_prefix_ << "/"
+                  << delegated_prefix << "/"
+                  << static_cast<int>(delegated_prefix_length) << ", "
+                  << excluded_prefix << "/"
                   << static_cast<int>(excluded_prefix_length_));
     }
 
     // Excluded prefix must be longer than the delegated prefix.
-    if (excluded_prefix_length_ <= delegated_prefix_length_) {
+    if (excluded_prefix_length_ <= delegated_prefix_length) {
         isc_throw(BadValue, "length of the excluded prefix "
-                  << excluded_prefix_ << "/"
+                  << excluded_prefix << "/"
                   << static_cast<int>(excluded_prefix_length_)
                   << " must be greater than the length of the"
-                  " delegated prefix " << delegated_prefix_ << "/"
-                  << static_cast<int>(delegated_prefix_length_));
+                  " delegated prefix " << delegated_prefix << "/"
+                  << static_cast<int>(delegated_prefix_length));
     }
 
     // Both prefixes must share common part with a length equal to the
     // delegated prefix length.
-    std::vector<uint8_t> delegated_prefix_bytes = delegated_prefix_.toBytes();
+    std::vector<uint8_t> delegated_prefix_bytes = delegated_prefix.toBytes();
     boost::dynamic_bitset<uint8_t> delegated_prefix_bits(delegated_prefix_bytes.rbegin(),
                                                          delegated_prefix_bytes.rend());
 
-    std::vector<uint8_t> excluded_prefix_bytes = excluded_prefix_.toBytes();
+    std::vector<uint8_t> excluded_prefix_bytes = excluded_prefix.toBytes();
     boost::dynamic_bitset<uint8_t> excluded_prefix_bits(excluded_prefix_bytes.rbegin(),
                                                         excluded_prefix_bytes.rend());
 
@@ -72,26 +71,53 @@ Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_pre
 
     if ((delegated_prefix_bits >> delta) != (excluded_prefix_bits >> delta)) {
         isc_throw(BadValue, "excluded prefix "
-                  << excluded_prefix_ << "/"
+                  << excluded_prefix << "/"
                   << static_cast<int>(excluded_prefix_length_)
                   << " must have the same common prefix part of "
                   << static_cast<int>(delegated_prefix_length)
                   << " as the delegated prefix "
-                  << delegated_prefix_ << "/"
-                  << static_cast<int>(delegated_prefix_length_));
+                  << delegated_prefix << "/"
+                  << static_cast<int>(delegated_prefix_length));
     }
 
+
+    // Shifting prefix by delegated prefix length leaves us with only a
+    // subnet id part of the excluded prefix.
+    excluded_prefix_bits <<= delegated_prefix_length;
+
+    // Calculate subnet id length.
+    const uint8_t subnet_id_length = getSubnetIDLength(delegated_prefix_length,
+                                                       excluded_prefix_length);
+    for (uint8_t i = 0; i < subnet_id_length; ++i) {
+        // Retrieve bit representation of the current byte.
+        const boost::dynamic_bitset<uint8_t> first_byte = excluded_prefix_bits >> 120;
+
+        // Convert it to a numeric value.
+        uint8_t val = static_cast<uint8_t>(first_byte.to_ulong());
+
+        // Zero padded excluded_prefix_bits follow when excluded_prefix_length_ is
+        // not divisible by 8.
+        if (i == subnet_id_length - 1) {
+            uint8_t length_delta = excluded_prefix_length_ - delegated_prefix_length;
+            if (length_delta % 8 != 0) {
+                uint8_t mask = 0xFF;
+                mask <<= (8 - (length_delta % 8));
+                val &= mask;
+            }
+        }
+        // Store calculated value in a buffer.
+        subnet_id_.push_back(val);
+
+        // Go to the next byte.
+        excluded_prefix_bits <<= 8;
+    }
 }
 
-Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_prefix,
-                                   const uint8_t delegated_prefix_length,
-                                   OptionBufferConstIter begin,
+Option6PDExclude::Option6PDExclude(OptionBufferConstIter begin,
                                    OptionBufferConstIter end)
     : Option(V6, D6O_PD_EXCLUDE),
-      delegated_prefix_(delegated_prefix),
-      delegated_prefix_length_(delegated_prefix_length),
-      excluded_prefix_(IOAddress::IPV6_ZERO_ADDRESS()),
-      excluded_prefix_length_(0) {
+      excluded_prefix_length_(0),
+      subnet_id_() {
     unpack(begin, end);
 }
 
@@ -102,42 +128,21 @@ Option6PDExclude::clone() const {
 
 void
 Option6PDExclude::pack(isc::util::OutputBuffer& buf) const {
+    // Make sure that the subnet identifier is valid. It should never
+    // be empty.
+    if ((excluded_prefix_length_ == 0) || subnet_id_.empty()) {
+        isc_throw(BadValue, "subnet identifier of a Prefix Exclude option"
+                  " must not be empty");
+    }
+
     // Header = option code and length.
     packHeader(buf);
 
     // Excluded prefix length is always 1 byte long field.
     buf.writeUint8(excluded_prefix_length_);
 
-    // Retrieve entire prefix and convert it to bit representation.
-    std::vector<uint8_t> excluded_prefix_bytes = excluded_prefix_.toBytes();
-    boost::dynamic_bitset<uint8_t> bits(excluded_prefix_bytes.rbegin(),
-                                        excluded_prefix_bytes.rend());
-
-    // Shifting prefix by delegated prefix length leaves us with only a
-    // subnet id part of the excluded prefix.
-    bits = bits << delegated_prefix_length_;
-
-    // Calculate subnet id length.
-    const uint8_t subnet_id_length = getSubnetIDLength();
-    for (uint8_t i = 0; i < subnet_id_length; ++i) {
-        // Retrieve bit representation of the current byte.
-        const boost::dynamic_bitset<uint8_t> first_byte = bits >> 120;
-        // Convert it to a numeric value.
-        uint8_t val = static_cast<uint8_t>(first_byte.to_ulong());
-
-        // Zero padded bits follow when excluded_prefix_length_ is not divisible by 8.
-        if (i == subnet_id_length - 1) {
-            uint8_t length_delta = excluded_prefix_length_ - delegated_prefix_length_;
-            uint8_t mask = 0xFF;
-            mask <<= (8 - (length_delta % 8));
-            val &= mask;
-        }
-        // Store calculated value in a buffer.
-        buf.writeUint8(val);
-
-        // Go to the next byte.
-        bits <<= 8;
-    }
+    // Write the subnet identifier.
+    buf.writeData(static_cast<const void*>(&subnet_id_[0]), subnet_id_.size());
 }
 
 void
@@ -152,24 +157,49 @@ Option6PDExclude::unpack(OptionBufferConstIter begin,
     }
 
     // We can safely read the excluded prefix length and move forward.
-    excluded_prefix_length_ = *begin++;
-
-    // We parsed the excluded prefix length so we can now determine the
-    // size of the IPv6 subnet id. The reminder of the option should
-    // include data of that size. If the option size is lower than the
-    // subnet id length we report an error.
-    const unsigned int subnet_id_length = getSubnetIDLength();
-    if (subnet_id_length > std::distance(begin, end)) {
-        isc_throw(BadValue, "truncated Prefix Exclude option, expected "
-                  "IPv6 subnet id length is " << subnet_id_length);
+    uint8_t excluded_prefix_length = *begin++;
+    if (excluded_prefix_length == 0) {
+        isc_throw(BadValue, "excluded prefix length must not be 0");
     }
 
+    std::vector<uint8_t> subnet_id_bytes(begin, end);
+
+    // Subnet id parsed, proceed to the end of the option.
+    begin = end;
+
+    uint8_t last_bits_num = excluded_prefix_length % 8;
+    if (last_bits_num > 0) {
+        *subnet_id_bytes.rbegin() = (*subnet_id_bytes.rbegin() >> (8 - last_bits_num)
+                                     << (8 - (last_bits_num)));
+    }
+
+    excluded_prefix_length_ = excluded_prefix_length;
+    subnet_id_.swap(subnet_id_bytes);
+}
+
+uint16_t
+Option6PDExclude::len() const {
+    return (getHeaderLen() + sizeof(excluded_prefix_length_) + subnet_id_.size());
+}
+
+std::string
+Option6PDExclude::toText(int indent) const {
+    std::ostringstream s;
+    s << headerToText(indent) << ": ";
+    s << "excluded-prefix-len=" << static_cast<unsigned>(excluded_prefix_length_)
+      << ", subnet-id=0x" << util::encode::encodeHex(subnet_id_);
+    return (s.str());
+}
+
+asiolink::IOAddress
+Option6PDExclude::getExcludedPrefix(const IOAddress& delegated_prefix,
+                                    const uint8_t delegated_prefix_length) const {
     // Get binary representation of the delegated prefix.
-    std::vector<uint8_t> delegated_prefix_bytes = delegated_prefix_.toBytes();
+    std::vector<uint8_t> delegated_prefix_bytes = delegated_prefix.toBytes();
     //  We need to calculate how many bytes include the useful data and assign
     // zeros to remaining bytes (beyond the prefix length).
-    const uint8_t bytes_length = (delegated_prefix_length_ / 8) +
-        static_cast<uint8_t>(delegated_prefix_length_ % 8 != 0);
+    const uint8_t bytes_length = (delegated_prefix_length / 8) +
+        static_cast<uint8_t>(delegated_prefix_length % 8 != 0);
     std::fill(delegated_prefix_bytes.begin() + bytes_length,
               delegated_prefix_bytes.end(), 0);
 
@@ -177,18 +207,13 @@ Option6PDExclude::unpack(OptionBufferConstIter begin,
     boost::dynamic_bitset<uint8_t> bits(delegated_prefix_bytes.rbegin(),
                                         delegated_prefix_bytes.rend());
 
-    // Convert subnet id to bit format.
-    std::vector<uint8_t> subnet_id_bytes(begin, end);
-    boost::dynamic_bitset<uint8_t> subnet_id_bits(subnet_id_bytes.rbegin(),
-                                                  subnet_id_bytes.rend());
-
-    // Subnet id parsed, proceed to the end of the option.
-    begin = end;
+    boost::dynamic_bitset<uint8_t> subnet_id_bits(subnet_id_.rbegin(),
+                                                  subnet_id_.rend());
 
     // Concatenate the delegated prefix with subnet id. The resulting prefix
     // is an excluded prefix in bit format.
     for (int i = subnet_id_bits.size() - 1; i >= 0; --i) {
-        bits.set(128 - delegated_prefix_length_ - subnet_id_bits.size() + i,
+        bits.set(128 - delegated_prefix_length - subnet_id_bits.size() + i,
                  subnet_id_bits.test(i));
     }
 
@@ -197,28 +222,14 @@ Option6PDExclude::unpack(OptionBufferConstIter begin,
     boost::to_block_range(bits, bytes.rbegin());
 
     // And create a prefix object from bytes.
-    excluded_prefix_ = IOAddress::fromBytes(AF_INET6, &bytes[0]);
-}
-
-uint16_t
-Option6PDExclude::len() const {
-    return (getHeaderLen() + sizeof(excluded_prefix_length_)
-            + getSubnetIDLength());
-}
-
-std::string
-Option6PDExclude::toText(int indent) const {
-    std::ostringstream s;
-    s << headerToText(indent) << ": ";
-    s << excluded_prefix_ << "/"
-      << static_cast<int>(excluded_prefix_length_);
-    return (s.str());
+    return (IOAddress::fromBytes(AF_INET6, &bytes[0]));
 }
 
 uint8_t
-Option6PDExclude::getSubnetIDLength() const {
-    uint8_t subnet_id_length_bits = excluded_prefix_length_ -
-        delegated_prefix_length_ - 1;
+Option6PDExclude::getSubnetIDLength(const uint8_t delegated_prefix_length,
+                                    const uint8_t excluded_prefix_length) const {
+    uint8_t subnet_id_length_bits = excluded_prefix_length -
+        delegated_prefix_length - 1;
     uint8_t subnet_id_length = (subnet_id_length_bits / 8) + 1;
     return (subnet_id_length);
 }
