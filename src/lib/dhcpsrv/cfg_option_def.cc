@@ -89,12 +89,7 @@ CfgOptionDef::add(const OptionDefinitionPtr& def,
                   " space '" << option_space << "'");
 
     // Must not override standard option definition.
-    } else if (((option_space == DHCP4_OPTION_SPACE) &&
-                LibDHCP::isStandardOption(Option::V4, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V4, def->getCode())) ||
-               ((option_space == DHCP6_OPTION_SPACE) &&
-                LibDHCP::isStandardOption(Option::V6, def->getCode()) &&
-                LibDHCP::getOptionDef(Option::V6, def->getCode()))) {
+    } else if (LibDHCP::getOptionDef(option_space, def->getCode())) {
         isc_throw(BadValue, "unable to override definition of option '"
                   << def->getCode() << "' in standard option space '"
                   << option_space << "'");

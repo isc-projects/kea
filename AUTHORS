@@ -117,6 +117,12 @@ We have received the following contributions:
             strings to avoid issues with creation of the database
             when MySQL server operates in ANSI_QUOTES mode.
 
+ - Cristian Secareanu, Qualitance
+   2016-10: Support for IPv6 prefix and PDEXCLUDE option
+
+ - Andrei Pavel, Qualitance
+   2016-10: Support for DHCPv6 options defined in RFC6603 and RFC7598
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for

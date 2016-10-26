@@ -174,11 +174,12 @@ public:
         BOOST_FOREACH(ConfigPair param, pd_pool_->mapValue()) {
             std::string entry(param.first);
             ParserPtr parser;
-            if (entry == "prefix") {
+            if (entry == "prefix" || entry =="excluded-prefix") {
                 StringParserPtr str_parser(new StringParser(entry,
                                                             string_values_));
                 parser = str_parser;
-            } else if (entry == "prefix-len" || entry == "delegated-len") {
+            } else if (entry == "prefix-len" || entry == "delegated-len" ||
+                       entry == "excluded-prefix-len") {
                 Uint32ParserPtr code_parser(new Uint32Parser(entry,
                                                              uint32_values_));
                 parser = code_parser;
@@ -200,13 +201,18 @@ public:
         // Try to obtain the pool parameters. It will throw an exception if any
         // of the required parameters are not present or invalid.
         try {
-            std::string addr_str = string_values_->getParam("prefix");
-            uint32_t prefix_len = uint32_values_->getParam("prefix-len");
-            uint32_t delegated_len = uint32_values_->getParam("delegated-len");
+            const std::string addr_str = string_values_->getParam("prefix");
+            const uint32_t prefix_len = uint32_values_->getParam("prefix-len");
+            const uint32_t delegated_len = uint32_values_->getParam("delegated-len");
+            const std::string excluded_prefix_str =
+                string_values_->getOptionalParam("excluded-prefix", "::");
+            const uint32_t excluded_prefix_len =
+                uint32_values_->getOptionalParam("excluded-prefix-len", 0);
 
             // Attempt to construct the local pool.
-            pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),
-                                  prefix_len, delegated_len));
+            pool_.reset(new Pool6(IOAddress(addr_str), prefix_len,
+                                  delegated_len, IOAddress(excluded_prefix_str),
+                                  excluded_prefix_len));
             // Merge options specified for a pool into pool configuration.
             options_->copyTo(*pool_->getCfgOption());
         } catch (const std::exception& ex) {
@@ -634,7 +640,8 @@ public:
                 }
 
                 if (!code) {
-                    OptionDefinitionPtr def = LibDHCP::getOptionDef(Option::V6, option_str);
+                    const OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE,
+                                                                          option_str);
                     if (def) {
                         code = def->getCode();
                     } else {

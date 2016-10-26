@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcpsrv/host.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <util/range_utilities.h>
 #include <boost/scoped_ptr.hpp>
@@ -769,7 +770,7 @@ TEST_F(HostTest, addOptions4) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, "dhcp4"));
+        ASSERT_NO_THROW(host.getCfgOption4()->add(option, false, DHCP4_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
@@ -780,20 +781,20 @@ TEST_F(HostTest, addOptions4) {
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = host.getCfgOption4()->getAll("dhcp4");
+    OptionContainerPtr options = host.getCfgOption4()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
     // It should be possible to retrieve DHCPv6 options but the container
     // should be empty.
-    OptionContainerPtr options6 = host.getCfgOption6()->getAll("dhcp6");
+    OptionContainerPtr options6 = host.getCfgOption6()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options6);
     EXPECT_TRUE(options6->empty());
 
     // Also make sure that for dhcp4 option space no DHCPv6 options are
     // returned. This is to check that containers for DHCPv4 and DHCPv6
     // options do not share information.
-    options6 = host.getCfgOption6()->getAll("dhcp4");
+    options6 = host.getCfgOption6()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options6);
     EXPECT_TRUE(options6->empty());
 
@@ -833,7 +834,7 @@ TEST_F(HostTest, addOptions6) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(host.getCfgOption6()->add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
@@ -844,20 +845,20 @@ TEST_F(HostTest, addOptions6) {
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = host.getCfgOption6()->getAll("dhcp6");
+    OptionContainerPtr options = host.getCfgOption6()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
     // It should be possible to retrieve DHCPv4 options but the container
     // should be empty.
-    OptionContainerPtr options4 = host.getCfgOption4()->getAll("dhcp4");
+    OptionContainerPtr options4 = host.getCfgOption4()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options4);
     EXPECT_TRUE(options4->empty());
 
     // Also make sure that for dhcp6 option space no DHCPv4 options are
     // returned. This is to check that containers for DHCPv4 and DHCPv6
     // options do not share information.
-    options4 = host.getCfgOption4()->getAll("dhcp6");
+    options4 = host.getCfgOption4()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options4);
     EXPECT_TRUE(options4->empty());
 

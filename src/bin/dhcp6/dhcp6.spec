@@ -561,6 +561,18 @@
                            "item_default": 128
                        },
                        {
+                          "item_name": "excluded-prefix",
+                          "item_type": "string",
+                          "item_optional": true,
+                          "item_default": ""
+                       },
+                       {
+                           "item_name": "excluded-prefix-len",
+                           "item_type": "integer",
+                           "item_optional": true,
+                           "item_default": 128
+                       },
+                       {
                            "item_name": "option-data",
                            "item_type": "list",
                            "item_optional": false,

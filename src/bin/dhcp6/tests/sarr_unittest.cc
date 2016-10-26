@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -47,6 +48,11 @@ namespace {
 ///   - two prefix pools: 2001:db8:3::/64 and 2001:db8:4::/64,
 ///   - an option with unique value specified for each pool, so as it is
 ///     possible to test that pool specific options can be assigned.
+///
+/// Configuration 3:
+///   - one subnet 3000::/32 used on eth0 interface
+///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - Excluded Prefix specified (RFC 6603).
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -153,7 +159,28 @@ const char* CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000"
-    "}"
+    "}",
+
+    // Configuration 3
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:3::\", "
+        "          \"prefix-len\": 48, "
+        "          \"delegated-len\": 64,"
+        "          \"excluded-prefix\": \"2001:db8:3::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -303,6 +330,46 @@ TEST_F(SARRTest, optionsInheritance) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_NIS_SERVERS, "3000:1::789"));
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_NISP_SERVERS, "3000:2::3"));
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
+}
+
+/// This test verifies that it is possible to specify an excluded prefix
+/// (RFC 6603) and send it back to the client requesting prefix delegation.
+TEST_F(SARRTest, directClientExcludedPrefix) {
+    Dhcp6Client client;
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    client.requestOption(D6O_PD_EXCLUDE);
+    configure(CONFIGS[2], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    OptionPtr option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option);
+    ASSERT_TRUE(ia);
+    option = ia->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
+    ASSERT_TRUE(pd_option);
+    option = pd_option->getOption(D6O_PD_EXCLUDE);
+    ASSERT_TRUE(option);
+    Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
+    ASSERT_TRUE(pd_exclude);
+    EXPECT_EQ("2001:db8:3::1000", pd_exclude->getExcludedPrefix().toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 // Check that when the client includes the Rapid Commit option in its

@@ -1209,7 +1209,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
             // Iterate on the configured option list
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
-                OptionDescriptor desc = (*copts)->get("dhcp4", *opt);
+                OptionDescriptor desc = (*copts)->get(DHCP4_OPTION_SPACE, *opt);
                 // Got it: add it and jump to the outer loop
                 if (desc.option_) {
                     resp->addOption(desc.option_);
@@ -1320,7 +1320,8 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
             // Check whether option has been configured.
             for (CfgOptionList::const_iterator copts = co_list.begin();
                  copts != co_list.end(); ++copts) {
-                OptionDescriptor desc = (*copts)->get("dhcp4", required_options[i]);
+                OptionDescriptor desc = (*copts)->get(DHCP4_OPTION_SPACE,
+                                                      required_options[i]);
                 if (desc.option_) {
                     resp->addOption(desc.option_);
                     break;

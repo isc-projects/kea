@@ -20,7 +20,6 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -28,6 +27,7 @@
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using namespace std;
 using namespace isc::util;
@@ -565,6 +565,87 @@ OptionDefinition::writeToBuffer(const std::string& value,
             OptionDataTypeUtil::writeAddress(address, buf);
             return;
         }
+    case OPT_IPV6_PREFIX_TYPE:
+        {
+            std::string txt = value;
+
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
+
+            // Is this prefix/len notation?
+            size_t pos = txt.find("/");
+
+            if (pos == string::npos) {
+                isc_throw(BadDataTypeCast, "provided address/prefix "
+                          << value
+                          << " is not valid.");
+            }
+
+            std::string txt_address = txt.substr(0, pos);
+            isc::asiolink::IOAddress address = isc::asiolink::IOAddress(txt_address);
+            if (!address.isV6()) {
+                isc_throw(BadDataTypeCast, "provided address "
+                          << txt_address
+                          << " is not a valid IPv4 or IPv6 address.");
+            }
+
+            std::string txt_prefix = txt.substr(pos + 1);
+            uint8_t len = 0;
+            try {
+                // start with the first character after /
+                len = lexicalCastWithRangeCheck<uint8_t>(txt_prefix);
+            } catch (...)  {
+                isc_throw(BadDataTypeCast, "provided prefix "
+                          << txt_prefix
+                          << " is not valid.");
+            }
+
+
+            // Write a prefix.
+            OptionDataTypeUtil::writePrefix(PrefixLen(len), address, buf);
+
+            return;
+    }
+    case OPT_PSID_TYPE:
+    {
+        std::string txt = value;
+
+        // first let's remove any whitespaces
+        boost::erase_all(txt, " "); // space
+        boost::erase_all(txt, "\t"); // tabulation
+
+        // Is this prefix/len notation?
+        size_t pos = txt.find("/");
+
+        if (pos == string::npos) {
+            isc_throw(BadDataTypeCast, "provided PSID value "
+                      << value << " is not valid");
+        }
+
+        const std::string txt_psid = txt.substr(0, pos);
+        const std::string txt_psid_len = txt.substr(pos + 1);
+
+        uint16_t psid = 0;
+        uint8_t psid_len = 0;
+
+        try {
+            psid = lexicalCastWithRangeCheck<uint16_t>(txt_psid);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided PSID "
+                      << txt_psid << " is not valid");
+        }
+
+        try {
+            psid_len = lexicalCastWithRangeCheck<uint8_t>(txt_psid_len);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided PSID length "
+                      << txt_psid_len << " is not valid");
+        }
+
+        OptionDataTypeUtil::writePsid(PSIDLen(psid_len), PSID(psid), buf);
+        return;
+    }
     case OPT_STRING_TYPE:
         OptionDataTypeUtil::writeString(value, buf);
         return;
