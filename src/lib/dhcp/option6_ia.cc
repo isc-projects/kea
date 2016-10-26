@@ -8,6 +8,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 
@@ -24,13 +25,13 @@ namespace dhcp {
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
     :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
 
-    // IA_TA has different layout than IA_NA and IA_PD. We can't sue this class
+    // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
     if (type == D6O_IA_TA) {
         isc_throw(BadValue, "Can't use Option6IA for IA_TA as it has "
                   "a different layout");
     }
 
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
 }
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
@@ -43,7 +44,7 @@ Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
                   "a different layout");
     }
 
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
 
     unpack(begin, end);
 }

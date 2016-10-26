@@ -7,6 +7,7 @@
 #ifndef OPTION_CUSTOM_H
 #define OPTION_CUSTOM_H
 
+#include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <util/io_utilities.h>
@@ -111,6 +112,19 @@ public:
         OptionDataTypeUtil::writeInt<T>(value, buf);
         buffers_.push_back(buf);
     }
+
+    /// @brief Create new buffer and store variable length prefix in it.
+    ///
+    /// @param prefix_len Prefix length.
+    /// @param prefix Prefix.
+    void addArrayDataField(const PrefixLen& prefix_len,
+                           const asiolink::IOAddress& prefix);
+
+    /// @brief Create new buffer and store PSID length / value in it.
+    ///
+    /// @param psid_len PSID length.
+    /// @param psid PSID.
+    void addArrayDataField(const PSIDLen& psid_len, const PSID& psid);
 
     /// @brief Return a number of the data fields.
     ///
@@ -227,6 +241,45 @@ public:
         // If successful, replace the old buffer with new one.
         std::swap(buffers_[index], buf);
     }
+
+    /// @brief Read a buffer as variable length prefix.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @return Prefix length / value tuple.
+    /// @throw isc::OutOfRange of index is out of range.
+    PrefixTuple readPrefix(const uint32_t index = 0) const;
+
+    /// @brief Write prefix length and value into a buffer.
+    ///
+    /// @param prefix_len Prefix length.
+    /// @param prefix Prefix value.
+    /// @param index Buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void writePrefix(const PrefixLen& prefix_len,
+                     const asiolink::IOAddress& prefix,
+                     const uint32_t index = 0);
+
+    /// @brief Read a buffer as a PSID length / value tuple.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @return PSID length / value tuple.
+    /// @throw isc::OutOfRange of index is out of range.
+    PSIDTuple readPsid(const uint32_t index = 0) const;
+
+    /// @brief Write PSID length / value into a buffer.
+    ///
+    /// @param psid_len PSID length value.
+    /// @param psid PSID value in the range of 0 .. 2^(PSID length).
+    /// @param index buffer index.
+    ///
+    /// @throw isc::dhcp::BadDataTypeCast if PSID length or value is
+    /// invalid.
+    /// @throw isc::OutOfRange if index is out of range.
+    void writePsid(const PSIDLen& psid_len, const PSID& psid,
+                   const uint32_t index = 0);
 
     /// @brief Read a buffer as string value.
     ///

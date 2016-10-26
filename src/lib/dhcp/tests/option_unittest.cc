@@ -10,6 +10,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
@@ -593,15 +594,14 @@ TEST_F(OptionTest, setEncapsulatedSpace) {
     Option optv6(Option::V6, 258);
     EXPECT_TRUE(optv6.getEncapsulatedSpace().empty());
 
-    optv6.setEncapsulatedSpace("dhcp6");
-    EXPECT_EQ("dhcp6", optv6.getEncapsulatedSpace());
+    optv6.setEncapsulatedSpace(DHCP6_OPTION_SPACE);
+    EXPECT_EQ(DHCP6_OPTION_SPACE, optv6.getEncapsulatedSpace());
 
     Option optv4(Option::V4, 125);
     EXPECT_TRUE(optv4.getEncapsulatedSpace().empty());
 
-    optv4.setEncapsulatedSpace("dhcp4");
-    EXPECT_EQ("dhcp4", optv4.getEncapsulatedSpace());
-
+    optv4.setEncapsulatedSpace(DHCP4_OPTION_SPACE);
+    EXPECT_EQ(DHCP4_OPTION_SPACE, optv4.getEncapsulatedSpace());
 }
 
 // This test verifies that cloneInternal returns NULL pointer if

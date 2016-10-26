@@ -17,6 +17,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -117,7 +118,9 @@ class OptionIntArray;
 /// - "uint16"
 /// - "uint32"
 /// - "ipv4-address" (IPv4 Address)
-/// - "ipv6-address" (IPV6 Address)
+/// - "ipv6-address" (IPv6 Address)
+/// - "ipv6-prefix" (IPv6 variable length prefix)
+/// - "psid" (PSID length / value)
 /// - "string"
 /// - "fqdn" (fully qualified name)
 /// - "record" (set of data fields of different types)
@@ -716,6 +719,9 @@ typedef boost::multi_index_container<
 
 /// Pointer to an option definition container.
 typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
+
+/// Container that holds option definitions for various option spaces.
+typedef std::map<std::string, OptionDefContainerPtr> OptionDefContainers;
 
 /// Container that holds various vendor option containers
 typedef std::map<uint32_t, OptionDefContainerPtr> VendorOptionDefContainers;

@@ -8,7 +8,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>

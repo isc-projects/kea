@@ -840,13 +840,8 @@ private:
             // class, using option definition. Thus, we need to find the
             // option definition for this option code and option space.
 
-            // If the option space is a standard DHCPv4 or DHCPv6 option space,
-            // this is most likely a standard option, for which we have a
-            // definition created within libdhcp++.
-            OptionDefinitionPtr def;
-            if ((space == DHCP4_OPTION_SPACE) || (space == DHCP6_OPTION_SPACE)) {
-                def = LibDHCP::getOptionDef(universe_, code_);
-            }
+            // Check if this is a standard option.
+            OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code_);
 
             // Otherwise, we may check if this an option encapsulated within the
             // vendor space.

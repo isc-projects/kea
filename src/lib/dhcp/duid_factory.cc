@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ const size_t DUID_TYPE_LEN = 2;
 /// @brief Minimal length of the MAC address.
 const size_t MIN_MAC_LEN = 6;
 
-/// @brief Length of the enterprise if field.
+/// @brief Length of the enterprise ID field.
 const size_t ENTERPRISE_ID_LEN = 4;
 
 /// @brief Default length of the variable length identifier in the DUID-EN.

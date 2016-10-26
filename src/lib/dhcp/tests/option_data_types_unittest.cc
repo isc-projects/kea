@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,11 +7,18 @@
 #include <config.h>
 #include <dhcp/option_data_types.h>
 #include <gtest/gtest.h>
+#include <utility>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
+
+/// @brief Default (zero) prefix tuple.
+const PrefixTuple
+ZERO_PREFIX_TUPLE(std::make_pair(PrefixLen(0),
+                                 IOAddress(IOAddress::IPV6_ZERO_ADDRESS())));
 
 /// @brief Test class for option data type utilities.
 class OptionDataTypesTest : public ::testing::Test {
@@ -454,6 +461,258 @@ TEST_F(OptionDataTypesTest, writeFqdn) {
         OptionDataTypeUtil::writeFqdn("example..com", buf),
         isc::dhcp::BadDataTypeCast
     );
+}
+
+// The purpose of this test is to verify that the variable length prefix
+// can be read from a buffer correctly.
+TEST_F(OptionDataTypesTest, readPrefix) {
+    std::vector<uint8_t> buf;
+
+    // Prefix 2001:db8::/64
+    writeInt<uint8_t>(64, buf);
+    writeInt<uint32_t>(0x20010db8, buf);
+    writeInt<uint32_t>(0, buf);
+
+    PrefixTuple prefix(ZERO_PREFIX_TUPLE);
+    ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
+    EXPECT_EQ(64, prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8::", prefix.second.toText());
+
+    buf.clear();
+
+    // Prefix 2001:db8::/63
+    writeInt<uint8_t>(63, buf);
+    writeInt<uint32_t>(0x20010db8, buf);
+    writeInt<uint32_t>(0, buf);
+
+    ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
+    EXPECT_EQ(63, prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8::", prefix.second.toText());
+
+    buf.clear();
+
+    // Prefix 2001:db8:c0000. Note that the last four bytes are filled with
+    // 0xFF (all bits set). When the prefix is read those non-significant
+    // bits (beyond prefix length) should be ignored (read as 0). Only first
+    // two bits of 0xFFFFFFFF should be read, thus 0xC000, rather than 0xFFFF.
+    writeInt<uint8_t>(34, buf);
+    writeInt<uint32_t>(0x20010db8, buf);
+    writeInt<uint32_t>(0xFFFFFFFF, buf);
+
+    ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
+    EXPECT_EQ(34, prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:c000::", prefix.second.toText());
+
+    buf.clear();
+
+    // Prefix having a length of 0.
+    writeInt<uint8_t>(0, buf);
+    writeInt<uint16_t>(0x2001, buf);
+
+    ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
+    EXPECT_EQ(0, prefix.first.asUnsigned());
+    EXPECT_EQ("::", prefix.second.toText());
+
+    buf.clear();
+
+    // Prefix having a maximum length of 128.
+    writeInt<uint8_t>(128, buf);
+    buf.insert(buf.end(), 16, 0x11);
+
+    ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
+    EXPECT_EQ(128, prefix.first.asUnsigned());
+    EXPECT_EQ("1111:1111:1111:1111:1111:1111:1111:1111",
+              prefix.second.toText());
+
+    buf.clear();
+
+    // Prefix length is greater than 128. This should result in an
+    // error.
+    writeInt<uint8_t>(129, buf);
+    writeInt<uint16_t>(0x3000, buf);
+    buf.resize(17);
+
+    EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPrefix(buf)),
+                 BadDataTypeCast);
+
+    buf.clear();
+
+    // Buffer truncated. Prefix length of 10 requires at least 2 bytes,
+    // but there is only one byte.
+    writeInt<uint8_t>(10, buf);
+    writeInt<uint8_t>(1, buf);
+
+    EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPrefix(buf)),
+                 BadDataTypeCast);
+}
+
+// The purpose of this test is to verify that the variable length prefix
+// is written to a buffer correctly.
+TEST_F(OptionDataTypesTest, writePrefix) {
+    // Initialize a buffer and store some value in it. We'll want to make
+    // sure that the prefix being written will not override this value, but
+    // will rather be appended.
+    std::vector<uint8_t> buf(1, 1);
+
+    // Prefix 2001:db8:FFFF::/34 is equal to 2001:db8:C000::/34 because
+    // there are only 34 significant bits. All other bits must be zeroed.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(34),
+                                                    IOAddress("2001:db8:FFFF::"),
+                                                    buf));
+    ASSERT_EQ(7, buf.size());
+
+    EXPECT_EQ(1, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(34, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0x20, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(0x01, static_cast<unsigned>(buf[3]));
+    EXPECT_EQ(0x0D, static_cast<unsigned>(buf[4]));
+    EXPECT_EQ(0xB8, static_cast<unsigned>(buf[5]));
+    EXPECT_EQ(0xC0, static_cast<unsigned>(buf[6]));
+
+    buf.clear();
+
+    // Prefix length is 0. The entire prefix should be ignored.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(0),
+                                                    IOAddress("2001:db8:FFFF::"),
+                                                    buf));
+    ASSERT_EQ(1, buf.size());
+    EXPECT_EQ(0, static_cast<unsigned>(buf[0]));
+
+    buf.clear();
+
+    // Prefix having a maximum length of 128.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(128),
+                                                    IOAddress("2001:db8::FF"),
+                                                    buf));
+
+    // We should now have a 17 bytes long buffer. 1 byte goes for a prefix
+    // length field, the remaining ones hold the prefix.
+    ASSERT_EQ(17, buf.size());
+    // Because the prefix is 16 bytes long, we can simply use the
+    // IOAddress convenience function to read it back and compare
+    // it with the textual representation. This is simpler than
+    // comparing each byte separately.
+    IOAddress prefix_read = IOAddress::fromBytes(AF_INET6, &buf[1]);
+    EXPECT_EQ("2001:db8::ff", prefix_read.toText());
+
+    buf.clear();
+
+    // It is illegal to use IPv4 address as prefix.
+    EXPECT_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(4),
+                                                 IOAddress("10.0.0.1"), buf),
+                 BadDataTypeCast);
+}
+
+// The purpose of this test is to verify that the
+// PSID-len/PSID tuple can be read from a buffer.
+TEST_F(OptionDataTypesTest, readPsid) {
+    std::vector<uint8_t> buf;
+
+    // PSID length is 6 (bits)
+    writeInt<uint8_t>(6, buf);
+    // 0xA400 is represented as 1010010000000000b, which is equivalent
+    // of portset 0x29 (101001b).
+    writeInt<uint16_t>(0xA400, buf);
+
+    PSIDTuple psid;
+    ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
+    EXPECT_EQ(6, psid.first.asUnsigned());
+    EXPECT_EQ(0x29, psid.second.asUint16());
+
+    buf.clear();
+
+    // PSID length is 0, in which case PSID should be ignored.
+    writeInt<uint8_t>(0, buf);
+    // Let's put some junk into the PSID field to make sure it will
+    // be ignored.
+    writeInt<uint16_t>(0x1234, buf);
+    ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
+    EXPECT_EQ(0, psid.first.asUnsigned());
+    EXPECT_EQ(0, psid.second.asUint16());
+
+    buf.clear();
+
+    // PSID length greater than 16 is not allowed.
+    writeInt<uint8_t>(17, buf);
+    writeInt<uint16_t>(0, buf);
+    EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPsid(buf)),
+                 BadDataTypeCast);
+
+    buf.clear();
+
+    // PSID length is 3 bits, but the PSID value is 11 (1011b), so it
+    // is encoded on 4 bits, rather than 3.
+    writeInt<uint8_t>(3, buf);
+    writeInt<uint16_t>(0xB000, buf);
+    EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPsid(buf)),
+                 BadDataTypeCast);
+
+    buf.clear();
+
+    // Buffer is truncated -  2 bytes instead of 3.
+    writeInt<uint8_t>(4, buf);
+    writeInt<uint8_t>(0xF0, buf);
+    EXPECT_THROW(static_cast<void>(OptionDataTypeUtil::readPsid(buf)),
+                 BadDataTypeCast);
+}
+
+// The purpose of this test is to verify that the PSID-len/PSID
+// tuple is written to a buffer correctly.
+TEST_F(OptionDataTypesTest, writePsid) {
+    // Let's create a buffer with some data in it. We want to make
+    // sure that the existing data remain untouched when we write
+    // PSID to the buffer.
+    std::vector<uint8_t> buf(1, 1);
+    // PSID length is 4 (bits), PSID value is 8.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(4), PSID(8), buf));
+    ASSERT_EQ(4, buf.size());
+    // The byte which existed in the buffer should still hold the
+    // same value.
+    EXPECT_EQ(1, static_cast<unsigned>(buf[0]));
+    // PSID length should be written as specified in the function call.
+    EXPECT_EQ(4, static_cast<unsigned>(buf[1]));
+    // The PSID structure is as follows:
+    // UUUUPPPPPPPPPPPP, where "U" are useful bits on which we code
+    // the PSID. "P" are zero padded bits. The PSID value 8 is coded
+    // on four useful bits as '1000b'. That means that the PSID value
+    // encoded in the PSID field is: '1000000000000000b', which is
+    // 0x8000. The next two EXPECT_EQ statements verify that.
+    EXPECT_EQ(0x80, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(0x00, static_cast<unsigned>(buf[3]));
+
+    // Clear the buffer to make sure we don't append to the
+    // existing data.
+    buf.clear();
+
+    // The PSID length of 0 causes the PSID value (of 6) to be ignored.
+    // As a result, the buffer should hold only zeros.
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(0), PSID(6), buf));
+    ASSERT_EQ(3, buf.size());
+    EXPECT_EQ(0, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(0, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0, static_cast<unsigned>(buf[2]));
+
+    buf.clear();
+
+    // Another test case, to verify that we can use the maximum length
+    // of PSID (16 bits).
+    ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(16), PSID(5), buf));
+    ASSERT_EQ(3, buf.size());
+    // PSID length should be written with no change.
+    EXPECT_EQ(16, static_cast<unsigned>(buf[0]));
+    // Check PSID value.
+    EXPECT_EQ(0x00, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0x05, static_cast<unsigned>(buf[2]));
+
+    // PSID length of 17 exceeds the maximum allowed value of 16.
+    EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(17), PSID(1), buf),
+                 OutOfRange);
+
+    // PSID length is 1, which allows for coding up to two (2^1)
+    // port sets. These are namely port set 0 and port set 1. The
+    // value of 2 is out of that range.
+    EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(1), PSID(2), buf),
+                 BadDataTypeCast);
 }
 
 // The purpose of this test is to verify that the string
