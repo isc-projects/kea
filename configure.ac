@@ -1278,7 +1278,7 @@ if test $enable_gtest != "no"; then
             }],
 	    [return 0;])],
 	[AC_MSG_RESULT(yes)],
-    	[AC_MSG_ERROR([XXX_TRUE() Gtest macros won't compile: please use a different version of Gtest, e.g., git one])])
+    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 	    
