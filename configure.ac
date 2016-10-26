@@ -1273,6 +1273,27 @@ AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
 #
+# Some Googletest versions bug with C++11 compilers
+#
+if test $enable_gtest != "no"; then
+   AC_MSG_CHECKING([if Google Test is compatible with the compiler])
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+   AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <boost/shared_ptr.hpp>
+	    #include <gtest/gtest.h>
+	    void foo() {
+	        boost::shared_ptr<int> bar;
+		ASSERT_TRUE(bar);
+            }],
+	    [return 0;])],
+	[AC_MSG_RESULT(yes)],
+    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
+    CPPFLAGS=$CPPFLAGS_SAVED
+fi
+	    
+#
 # ASIO: we extensively use it as the C++ event management module.
 #
 # Use our 'coroutine' header from ext
