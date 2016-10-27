@@ -893,26 +893,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
 
-    if (co_list.empty()) {
-        // If there are no options configured, we at least have to check if
-        // the client has requested PD exclude, which is configured as
-        // part of the pool configuration.
-        ctx.pd_exclude_requested_ = (std::find(requested_opts.begin(),
-                                               requested_opts.end(),
-                                               D6O_PD_EXCLUDE) !=
-                                     requested_opts.end());
-        return;
-    }
-
     BOOST_FOREACH(uint16_t opt, requested_opts) {
-        // Prefix Exclude option requires special handling, as it can
-        // be configured as part of the pool configuration.
-        if (opt == D6O_PD_EXCLUDE) {
-            ctx.pd_exclude_requested_ = true;
-            // Prefix Exclude can only be included in the IA Prefix option
-            // of IA_PD. Thus there is nothing more to do here.
-            continue;
-        }
         // Iterate on the configured option list
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
@@ -1576,6 +1557,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ia_rsp->setT1(subnet->getT1());
         ia_rsp->setT2(subnet->getT2());
 
+        const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
+
         for (Lease6Collection::iterator l = leases.begin();
              l != leases.end(); ++l) {
 
@@ -1594,14 +1577,12 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                          (*l)->valid_lft_));
             ia_rsp->addOption(addr);
 
-            if (ctx.pd_exclude_requested_) {
+            if (pd_exclude_requested) {
                 // PD exclude option has been requested via ORO, thus we need to
                 // include it if the pool configuration specifies this option.
                 Pool6Ptr pool = boost::dynamic_pointer_cast<
                     Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
                 if (pool && pool->getExcludedPrefixLength() > 0) {
-                    std::cout << pool->getExcludedPrefix() << "/"
-                        << (unsigned)pool->getExcludedPrefixLength() << std::endl;
                     OptionPtr opt(new Option6PDExclude((*l)->addr_,
                                                        (*l)->prefixlen_,
                                                        pool->getExcludedPrefix(),
@@ -1877,6 +1858,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // into temporary container.
     AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
+    const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
+
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
 
@@ -1885,7 +1868,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
 
-        if (ctx.pd_exclude_requested_) {
+
+        if (pd_exclude_requested) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
             Pool6Ptr pool = boost::dynamic_pointer_cast<
@@ -3287,6 +3271,20 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
 int Dhcpv6Srv::getHookIndexBuffer6Send() {
     return (Hooks.hook_index_buffer6_send_);
 }
+
+bool
+Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
+    OptionUint16ArrayPtr oro =
+        boost::dynamic_pointer_cast<OptionUint16Array>(query->getOption(D6O_ORO));
+
+    if (oro) {
+        const std::vector<uint16_t>& codes = oro->getValues();
+        return (std::find(codes.begin(), codes.end(), code) != codes.end());
+    }
+
+    return (false);
+}
+
 
 };
 };

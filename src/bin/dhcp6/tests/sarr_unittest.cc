@@ -339,7 +339,7 @@ TEST_F(SARRTest, directClientExcludedPrefix) {
     // Configure client to request IA_PD.
     client.requestPrefix();
     client.requestOption(D6O_PD_EXCLUDE);
-    configure(CONFIGS[2], *client.getServer());
+    configure(CONFIGS[3], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();

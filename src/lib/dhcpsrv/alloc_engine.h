@@ -397,10 +397,6 @@ public:
         /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
 
-        /// @brief Indicates if PD exclude option has been requested by a
-        /// client.
-        bool pd_exclude_requested_;
-
         /// @brief Convenience method adding allocated prefix or address.
         ///
         /// @param prefix Prefix or address.
