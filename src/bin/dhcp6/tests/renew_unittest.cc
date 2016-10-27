@@ -218,7 +218,7 @@ const char* RENEW_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing Renew.
@@ -352,7 +352,7 @@ TEST_F(RenewTest, renewWithExcludedPrefix) {
     ASSERT_FALSE(option);
 
     // Reconfigure the server to use the prefix pool with excluded prefix.
-    configure(RENEW_CONFIGS[4], *client.getServer());
+    configure(RENEW_CONFIGS[5], *client.getServer());
 
     // Send Renew message to the server, including IA_NA and IA_PD.
     ASSERT_NO_THROW(client.doRenew());

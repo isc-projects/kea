@@ -350,7 +350,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
       duid_(duid), hwaddr_(), host_identifiers_(), host_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
       hostname_(hostname), callout_handle_(callout_handle),
-      allocated_resources_(), ias_(), pd_exclude_requested_(false) {
+      allocated_resources_(), ias_() {
 
     // Initialize host identifiers.
     if (duid) {
