@@ -103,7 +103,7 @@ CSVLeaseFile4Test::writeSampleFile() const {
                   "fqdn_fwd,fqdn_rev,hostname,state\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
                   "host.example.com,0\n"
-                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,1\n"
+                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,0\n"
                   "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
                   "0,0,,1\n");
 }
@@ -145,7 +145,8 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
     }
 
-    // Second lease is malformed - HW address is empty.
+    // Second lease is malformed - HW address is empty when state 
+    // is not delcined.
     {
     SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf.next(lease));

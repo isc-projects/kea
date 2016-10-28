@@ -97,6 +97,12 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         // Get the HW address. It should never be empty and the readHWAddr checks
         // that.
         HWAddr hwaddr = readHWAddr(row);
+        uint32_t state = readState(row);
+        if (hwaddr.hwaddr_.empty() && state != Lease::STATE_DECLINED) {
+            isc_throw(isc::BadValue, "A blank hardware address is only"
+                      " valid for declined leases");
+        }
+
         lease.reset(new Lease4(readAddress(row),
                                HWAddrPtr(new HWAddr(hwaddr)),
                                client_id_vec.empty() ? NULL : &client_id_vec[0],
@@ -108,7 +114,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
                                readFqdnFwd(row),
                                readFqdnRev(row),
                                readHostname(row)));
-        lease->state_ = readState(row);
+        lease->state_ = state;
 
     } catch (std::exception& ex) {
         // bump the read error count
@@ -152,10 +158,6 @@ CSVLeaseFile4::readAddress(const CSVRow& row) {
 HWAddr
 CSVLeaseFile4::readHWAddr(const CSVRow& row) {
     HWAddr hwaddr = HWAddr::fromText(row.readAt(getColumnIndex("hwaddr")));
-    if (hwaddr.hwaddr_.empty()) {
-        isc_throw(isc::BadValue, "hardware address in the lease file"
-                  " must not be empty");
-    }
     return (hwaddr);
 }
 
