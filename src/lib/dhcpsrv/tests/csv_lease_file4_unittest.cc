@@ -385,6 +385,36 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
     }
 }
 
+// Verifies that leases with no hardware address or only permitted
+// if they are in the declined state.
+TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1\n");
+
+    // Lease file should open and report as needing downgrade.
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+    EXPECT_FALSE(lf.needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::CURRENT,
+              lf.getInputSchemaState());
+    Lease4Ptr lease;
+
+    {
+    SCOPED_TRACE("No hardware and not declined, invalid");
+    EXPECT_FALSE(lf.next(lease));
+    ASSERT_FALSE(lease);
+    EXPECT_EQ(lf.getReadErrs(),1);
+    }
+
+    {
+    SCOPED_TRACE("No hardware and declined, valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lf.getReadErrs(),1);
+    }
+}
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
