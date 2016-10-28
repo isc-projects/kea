@@ -93,6 +93,7 @@ dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 dhcp6_unittests_SOURCES += classify_unittests.cc
+dhcp6_unittests_SOURCES += parser_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
