@@ -60,7 +60,7 @@ TEST(Option6PDExcludeTest, pack) {
     const uint8_t expected_data[] = {
         0x00, 0x43, // option code 67
         0x00, 0x02, // option length 2
-        0x3F, 0x70  // excluded prefix length 59 + subnet id
+        0x3F, 0x70  // excluded prefix length 63 + subnet id
     };
     std::vector<uint8_t> expected_vec(expected_data,
                                       expected_data + sizeof(expected_data));
