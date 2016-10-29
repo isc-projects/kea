@@ -18,6 +18,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
@@ -1561,6 +1562,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
                                     typeid(OptionCustom),
                                     "rsoo-opts");
+
+    LibDhcpTest::testStdOptionDefs6(D6O_PD_EXCLUDE, begin, end,
+                                    typeid(Option6PDExclude));
 
     LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
                                     fqdn_buf.begin(), fqdn_buf.end(),
