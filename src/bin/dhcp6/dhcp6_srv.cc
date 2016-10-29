@@ -1582,12 +1582,11 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 // include it if the pool configuration specifies this option.
                 Pool6Ptr pool = boost::dynamic_pointer_cast<
                     Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
-                if (pool && pool->getExcludedPrefixLength() > 0) {
-                    OptionPtr opt(new Option6PDExclude((*l)->addr_,
-                                                       (*l)->prefixlen_,
-                                                       pool->getExcludedPrefix(),
-                                                       pool->getExcludedPrefixLength()));
-                    addr->addOption(opt);
+                if (pool) {
+                    Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+                    if (pd_exclude_option) {
+                        addr->addOption(pd_exclude_option);
+                    }
                 }
             }
         }
@@ -1875,12 +1874,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             Pool6Ptr pool = boost::dynamic_pointer_cast<
                 Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
 
-            if (pool && pool->getExcludedPrefixLength() > 0) {
-                OptionPtr opt(new Option6PDExclude((*l)->addr_,
-                                                   (*l)->prefixlen_,
-                                                   pool->getExcludedPrefix(),
-                                                   pool->getExcludedPrefixLength()));
-                prf->addOption(opt);
+            if (pool) {
+                Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+                if (pd_exclude_option) {
+                    prf->addOption(pd_exclude_option);
+                }
             }
         }
 

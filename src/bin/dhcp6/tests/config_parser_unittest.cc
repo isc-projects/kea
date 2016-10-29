@@ -1396,7 +1396,7 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
         "        { \"prefix\": \"3000::\", "
         "          \"prefix-len\": 48, "
         "          \"delegated-len\": 64,"
-        "          \"excluded-prefix\": \"3000:1::\","
+        "          \"excluded-prefix\": \"3000:0:0:0:1000::\","
         "          \"excluded-prefix-len\": 72"
         "        } ],"
         "\"valid-lifetime\": 4000 }"
@@ -1428,8 +1428,17 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
     ASSERT_TRUE(p6);
     EXPECT_EQ("3000::", p6->getFirstAddress().toText());
     EXPECT_EQ(64, p6->getLength());
-    EXPECT_EQ("3000:1::", p6->getExcludedPrefix().toText());
-    EXPECT_EQ(72, static_cast<unsigned>(p6->getExcludedPrefixLength()));
+
+    // This pool should have Prefix Exclude option associated.
+    Option6PDExcludePtr pd_exclude_option = p6->getPrefixExcludeOption();
+    ASSERT_TRUE(pd_exclude_option);
+
+    // Pick a delegated prefix of 3000:0:0:3:1000::/64 which belongs to our
+    // pool of 3000::/48. For this prefix obtain a Prefix Exclude option and
+    // verify that it is correct.
+    EXPECT_EQ("3000:0:0:3:1000::",
+              pd_exclude_option->getExcludedPrefix(IOAddress("3000:0:0:3::"), 64).toText());
+    EXPECT_EQ(72, static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
 }
 
 // Goal of this test is verify that a list of PD pools can be configured.
