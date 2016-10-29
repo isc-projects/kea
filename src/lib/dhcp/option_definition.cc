@@ -10,10 +10,11 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
-#include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
@@ -778,6 +779,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         } else if (getCode() == D6O_BOOTFILE_PARAM && haveOpaqueDataTuplesFormat()) {
             // Bootfile params (option code 60)
             return (OptionPtr(new OptionOpaqueDataTuples(Option::V6, getCode(), begin, end)));
+        } else if ((getCode() == D6O_PD_EXCLUDE) && haveType(OPT_IPV6_PREFIX_TYPE)) {
+            // Prefix Exclude (option code 67)
+            return (OptionPtr(new Option6PDExclude(begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {

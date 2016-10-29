@@ -361,7 +361,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
-    { "pd-exclude", D6O_PD_EXCLUDE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "pd-exclude", D6O_PD_EXCLUDE, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
