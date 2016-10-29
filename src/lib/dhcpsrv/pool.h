@@ -8,9 +8,10 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
-#include <boost/shared_ptr.hpp>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
+#include <boost/shared_ptr.hpp>
 
 #include <vector>
 
@@ -250,27 +251,12 @@ public:
         return (prefix_len_);
     }
 
-    /// @brief Returns an excluded prefix.
+    /// @brief Returns instance of the pool specific Prefix Exclude option.
     ///
-    /// An excluded prefix can be specified for a prefix pool as specified
-    /// in RFC6603.
-    ///
-    /// @return Reference to an IOAddress object representing an excluded
-    /// prefix pool. A value of '::' if the excluded prefix is not specified.
-    const isc::asiolink::IOAddress& getExcludedPrefix() const{
-        return (excluded_prefix_);
-    }
-
-    /// @brief Returns an excluded prefix length.
-    ///
-    /// An excluded prefix can be specified for a prefix pool as specified
-    /// in RFC6603.
-    ///
-    /// @return Excluded prefix length in the range of 2 to 128, if the
-    /// excluded prefix is specified. A value of 0 if the excluded prefix
-    /// is not specified.
-    uint8_t getExcludedPrefixLength() const{
-        return (excluded_prefix_len_);
+    /// @return An instance of the Prefix Exclude option (RFC 6603) or NULL
+    /// if such option hasn't been specified for the pool.
+    Option6PDExcludePtr getPrefixExcludeOption() const {
+        return (pd_exclude_option_);
     }
 
     /// @brief returns textual representation of the pool
@@ -308,17 +294,9 @@ private:
     /// @brief Defines prefix length (for TYPE_PD only)
     uint8_t prefix_len_;
 
-    /// @brief The excluded prefix (RFC6603).
-    ///
-    /// This prefix can only be specified for DHCPv6 prefix pools.
-    /// An "unspecified" prefix has a value of '::'.
-    isc::asiolink::IOAddress excluded_prefix_;
+    /// @brief A pointer to the Prefix Exclude option (RFC 6603).
+    Option6PDExcludePtr pd_exclude_option_;
 
-    /// @brief The excluded prefix length (RFC6603).
-    ///
-    /// This value can only be specified for DHCPv6 prefix pool.
-    /// An "unspecified" prefix has a length of 0.
-    uint8_t excluded_prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool

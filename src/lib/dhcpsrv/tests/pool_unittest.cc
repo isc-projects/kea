@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -213,15 +214,20 @@ TEST(Pool6Test, PDExclude) {
     // Create a pool with a good excluded prefix. The good excluded prefix
     // is the one for which is a sub-prefix of the main prefix.
     ASSERT_NO_THROW(pool.reset(new Pool6(IOAddress("2001:db8:1::"), 96, 112,
-                                         IOAddress("2001:db8:1:2::"), 120)));
+                                         IOAddress("2001:db8:1::2000"), 120)));
 
     // Verify pool properties.
     EXPECT_EQ(Lease::TYPE_PD, pool->getType());
     EXPECT_EQ(112, pool->getLength());
     EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
-    EXPECT_EQ("2001:db8:1:2::", pool->getExcludedPrefix().toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pool->getExcludedPrefixLength()));
+
+    // It should include Prefix Exclude option.
+    Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+    ASSERT_TRUE(pd_exclude_option);
+    EXPECT_EQ("2001:db8:1::2:2000", pd_exclude_option->
+              getExcludedPrefix(IOAddress("2001:db8:1:0:0:0:2::"), 112).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
 
     // Create another pool instance, but with the excluded prefix being
     // "unspecified".
@@ -232,8 +238,8 @@ TEST(Pool6Test, PDExclude) {
     EXPECT_EQ(112, pool->getLength());
     EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
-    EXPECT_TRUE(pool->getExcludedPrefix().isV6Zero());
-    EXPECT_EQ(0, static_cast<unsigned>(pool->getExcludedPrefixLength()));
+
+    ASSERT_FALSE(pool->getPrefixExcludeOption());
 
     // Excluded prefix length must be greater than the main prefix length.
     EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 96, 112,
@@ -336,7 +342,7 @@ TEST(Pool6Test,toText) {
     Pool6 pool3(IOAddress("2001:db8:1::"), 96, 112,
                 IOAddress("2001:db8:1::1000"), 120);
     EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112,"
-              " excluded_prefix=2001:db8:1::1000, excluded_prefix_len=120",
+              " excluded_prefix_len=120",
               pool3.toText());
 
 }
