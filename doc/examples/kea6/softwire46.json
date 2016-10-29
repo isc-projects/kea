@@ -10,7 +10,7 @@
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify lease type.
+# Let's use a Memfile backend to store leases.
   "lease-database": {
     "type": "memfile"
   },
