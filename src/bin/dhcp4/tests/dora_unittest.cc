@@ -13,6 +13,8 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/testutils/mysql_schema.h>
+#include <dhcpsrv/testutils/pgsql_schema.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>
@@ -80,6 +82,15 @@ namespace {
 ///     - next-server = 10.0.0.7
 ///     - server name = "some-name.example.org"
 ///     - boot-file-name = "bootfile.efi"
+///
+/// - Configuration 7:
+///   - Simple configuration with a single subnet and single pool
+///   - Using MySQL lease database backend to store leases
+///
+/// - Configuration 8:
+///   - Simple configuration with a single subnet and single pool
+///   - Using PostgreSQL lease database backend to store leases
+///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -262,6 +273,42 @@ const char* DORA_CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
+    "}",
+
+// Configuration 7
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+        "   \"type\": \"mysql\","
+        "   \"name\": \"keatest\","
+        "   \"user\": \"keatest\","
+        "   \"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        " } ]"
+    "}",
+
+// Configuration 8
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+        "   \"type\": \"postgresql\","
+        "   \"name\": \"keatest\","
+        "   \"user\": \"keatest\","
+        "   \"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        " } ]"
     "}"
 };
 
@@ -317,6 +364,18 @@ public:
     /// and then DHCPREQUEST to renew lease.
     void oneAllocationOverlapTest(const std::string& clientid_a,
                                   const std::string& clientid_b);
+
+    /// @brief Test that the client using the same hardware address but
+    /// multiple client identifiers will obtain multiple leases.
+    ///
+    /// This reflects the scenario of the OS installation over the network
+    /// when BIOS, installer and the host request DHCPv4 lease assignment
+    /// using the same MAC address/interface but generating different
+    /// client identifiers.
+    ///
+    /// @param config_index Index of the configuration within the
+    /// @c DORA_CONFIGS array.
+    void testMultiStageBoot(const unsigned int config_index);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -1373,5 +1432,157 @@ TEST_F(DORATest, statisticsNAK) {
     EXPECT_EQ(1, pkt4_nak_sent->getInteger().first);
     EXPECT_EQ(1, pkt4_sent->getInteger().first);
 }
+
+void
+DORATest::testMultiStageBoot(const unsigned int config_index) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(DORA_CONFIGS[config_index],
+                              *client.getServer()));
+
+    // Stage 1: get the first lease for our client. In PXE boot, it would be
+    // a stage when the BIOS requests a lease.
+
+    // Include client id apart from the MAC address.
+    client.includeClientId("10:21:32:AB:CD:EF");
+
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Make sure that the client has got the lease which belongs
+    // to a pool.
+    IOAddress leased_address1 = client.config_.lease_.addr_;
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+        selectSubnet(leased_address1);
+    ASSERT_TRUE(subnet);
+    // Make sure that the address has been allocated from the dynamic pool.
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, leased_address1));
+
+    // Stage 2: the client with a given MAC address has a lease in the
+    // lease database. The installer comes up and uses the same MAC address
+    // but generates a different client id. The server should treat the
+    // client with modified client identifier as a different client and
+    // create a new lease for it.
+
+    // Modify client identifier.
+    client.includeClientId("11:54:45:AB:AA:FE");
+
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Make sure that the client has got the lease which belongs
+    // to a pool.
+    IOAddress leased_address2 = client.config_.lease_.addr_;
+    // Make sure that the address has been allocated from the dynamic pool.
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, leased_address2));
+
+    // The client should have got a new lease.
+    ASSERT_NE(leased_address1, leased_address2);
+
+    // Modify client identifier again.
+    client.includeClientId("22:34:AC:BE:44:54");
+
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Make sure that the client has got the lease which belongs
+    // to a pool.
+    IOAddress leased_address3 = client.config_.lease_.addr_;
+    // Make sure that the address has been allocated from the dynamic pool.
+    ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, leased_address3));
+
+    // The client should have got a new lease.
+    ASSERT_NE(leased_address1, leased_address3);
+    ASSERT_NE(leased_address2, leased_address3);
+}
+
+
+// Test that the client using the same hardware address but multiple
+// client identifiers will obtain multiple leases.
+TEST_F(DORATest, multiStageBoot) {
+    // DORA_CONFIGS[0] to be used for server configuration.
+    testMultiStageBoot(0);
+}
+
+// Starting tests which require MySQL backend availability. Those tests
+// will not be executed if Kea has been compiled without the
+// --with-dhcp-mysql.
+#ifdef HAVE_MYSQL
+
+/// @brief Test fixture class for the test utilizing MySQL database backend.
+class DORAMySQLTest : public DORATest {
+public:
+    /// @brief Constructor.
+    ///
+    /// Recreats MySQL schema for a test.
+    DORAMySQLTest() : DORATest() {
+        destroyMySQLSchema();
+        createMySQLSchema();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Destroys MySQL schema.
+    virtual ~DORAMySQLTest() {
+        destroyMySQLSchema();
+    }
+};
+
+// Test that the client using the same hardware address but multiple
+// client identifiers will obtain multiple leases (MySQL lease database).
+TEST_F(DORAMySQLTest, multiStageBoot) {
+    // DORA_CONFIGS[7] to be used for server configuration.
+    testMultiStageBoot(7);
+}
+
+#endif
+
+// Starting tests which require MySQL backend availability. Those tests
+// will not be executed if Kea has been compiled without the
+// --with-dhcp-pgsql.
+#ifdef HAVE_PGSQL
+
+/// @brief Test fixture class for the test utilizing MySQL database backend.
+class DORAPgSQLTest : public DORATest {
+public:
+    /// @brief Constructor.
+    ///
+    /// Recreats MySQL schema for a test.
+    DORAPgSQLTest() : DORATest() {
+        destroyPgSQLSchema();
+        createPgSQLSchema();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Destroys MySQL schema.
+    virtual ~DORAPgSQLTest() {
+        destroyPgSQLSchema();
+    }
+};
+
+// Test that the client using the same hardware address but multiple
+// client identifiers will obtain multiple leases (PostgreSQL lease database).
+TEST_F(DORAPgSQLTest, multiStageBoot) {
+    // DORA_CONFIGS[8] to be used for server configuration.
+    testMultiStageBoot(8);
+}
+
+#endif
 
 } // end of anonymous namespace
