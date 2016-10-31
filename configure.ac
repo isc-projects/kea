@@ -1278,7 +1278,7 @@ AC_SUBST(GTEST_SOURCE)
 if test $enable_gtest != "no"; then
    AC_MSG_CHECKING([if Google Test is compatible with the compiler])
    CPPFLAGS_SAVED=$CPPFLAGS
-   CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+   CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
            [#include <boost/shared_ptr.hpp>
