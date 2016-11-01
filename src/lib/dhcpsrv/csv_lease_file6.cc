@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,7 +94,11 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
         lease->fqdn_rev_ = readFqdnRev(row);
         lease->hostname_ = readHostname(row);
         lease->state_ = readState(row);
-
+        if ((*lease->duid_ == DUID::EMPTY())
+            && lease->state_ != Lease::STATE_DECLINED) {
+            isc_throw(isc::BadValue, "The Empty DUID is"
+                      "only valid for declined leases");
+        }
     } catch (std::exception& ex) {
         // bump the read error count
         ++read_errs_;

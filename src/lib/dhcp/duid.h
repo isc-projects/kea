@@ -61,17 +61,16 @@ class DUID {
     /// @return A reference to a vector holding a DUID.
     const std::vector<uint8_t>& getDuid() const;
 
-
-    /// @brief Returns an instance of empty DUID
+    /// @brief Defines the constant "empty" DUID
     ///
     /// In general, empty DUID is not allowed. The only case where it is really
     /// valid is to designate declined IPv6 Leases. We have a broad assumption
     /// that the Lease->duid_ must always be set. However, declined lease
     /// doesn't have any DUID associated with it. Hence we need a way to
     /// indicate that fact.
-    ///
-    /// @return a smart pointer to an empty DUID
-    static DuidPtr generateEmpty();
+    //
+    /// @return reference to the static constant empty DUID
+    static const DUID& EMPTY();
 
     /// @brief Returns the DUID type
     DUIDType getType() const;
