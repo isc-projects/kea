@@ -10,6 +10,24 @@
 
 /* %if-c-only */
 /* %if-not-reentrant */
+#define yy_create_buffer eval_create_buffer
+#define yy_delete_buffer eval_delete_buffer
+#define yy_flex_debug eval_flex_debug
+#define yy_init_buffer eval_init_buffer
+#define yy_flush_buffer eval_flush_buffer
+#define yy_load_buffer_state eval_load_buffer_state
+#define yy_switch_to_buffer eval_switch_to_buffer
+#define yyin evalin
+#define yyleng evalleng
+#define yylex evallex
+#define yylineno evallineno
+#define yyout evalout
+#define yyrestart evalrestart
+#define yytext evaltext
+#define yywrap evalwrap
+#define yyalloc evalalloc
+#define yyrealloc evalrealloc
+#define yyfree evalfree
 
 /* %endif */
 /* %endif */
@@ -179,7 +197,7 @@ typedef unsigned int flex_uint32_t;
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE yyrestart(yyin  )
+#define YY_NEW_FILE evalrestart(evalin  )
 
 #define YY_END_OF_BUFFER_CHAR 0
 
@@ -203,12 +221,12 @@ typedef size_t yy_size_t;
 #endif
 
 /* %if-not-reentrant */
-extern yy_size_t yyleng;
+extern yy_size_t evalleng;
 /* %endif */
 
 /* %if-c-only */
 /* %if-not-reentrant */
-extern FILE *yyin, *yyout;
+extern FILE *evalin, *evalout;
 /* %endif */
 /* %endif */
 
@@ -218,30 +236,30 @@ extern FILE *yyin, *yyout;
 
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE yylex. 
+     *       existing scanners that call yyless() from OUTSIDE evallex. 
      *       One obvious solution it to make yy_act a global. I tried that, and saw
-     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
+     *       a 5% performance hit in a non-evallineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
      */
     #define  YY_LESS_LINENO(n) \
             do { \
                 yy_size_t yyl;\
-                for ( yyl = n; yyl < yyleng; ++yyl )\
-                    if ( yytext[yyl] == '\n' )\
-                        --yylineno;\
+                for ( yyl = n; yyl < evalleng; ++yyl )\
+                    if ( evaltext[yyl] == '\n' )\
+                        --evallineno;\
             }while(0)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up yytext. */ \
+		/* Undo effects of setting up evaltext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		*yy_cp = (yy_hold_char); \
 		YY_RESTORE_YY_MORE_OFFSET \
 		(yy_c_buf_p) = yy_cp = yy_bp + yyless_macro_arg - YY_MORE_ADJ; \
-		YY_DO_BEFORE_ACTION; /* set up yytext again */ \
+		YY_DO_BEFORE_ACTION; /* set up evaltext again */ \
 		} \
 	while ( 0 )
 
@@ -309,8 +327,8 @@ struct yy_buffer_state
 	 * possible backing-up.
 	 *
 	 * When we actually see the EOF, we change the status to "new"
-	 * (via yyrestart()), so that the user can continue scanning by
-	 * just pointing yyin at a new input file.
+	 * (via evalrestart()), so that the user can continue scanning by
+	 * just pointing evalin at a new input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -351,56 +369,56 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 /* %if-not-reentrant */
 /* %not-for-header */
 
-/* yy_hold_char holds the character lost when yytext is formed. */
+/* yy_hold_char holds the character lost when evaltext is formed. */
 static char yy_hold_char;
 static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+yy_size_t evalleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
 static int yy_init = 0;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
-/* Flag which is used to allow yywrap()'s to do buffer switches
- * instead of setting up a fresh yyin.  A bit of a hack ...
+/* Flag which is used to allow evalwrap()'s to do buffer switches
+ * instead of setting up a fresh evalin.  A bit of a hack ...
  */
 static int yy_did_buffer_switch_on_eof;
 /* %ok-for-header */
 
 /* %endif */
 
-void yyrestart (FILE *input_file  );
-void yy_switch_to_buffer (YY_BUFFER_STATE new_buffer  );
-YY_BUFFER_STATE yy_create_buffer (FILE *file,int size  );
-void yy_delete_buffer (YY_BUFFER_STATE b  );
-void yy_flush_buffer (YY_BUFFER_STATE b  );
-void yypush_buffer_state (YY_BUFFER_STATE new_buffer  );
-void yypop_buffer_state (void );
+void evalrestart (FILE *input_file  );
+void eval_switch_to_buffer (YY_BUFFER_STATE new_buffer  );
+YY_BUFFER_STATE eval_create_buffer (FILE *file,int size  );
+void eval_delete_buffer (YY_BUFFER_STATE b  );
+void eval_flush_buffer (YY_BUFFER_STATE b  );
+void evalpush_buffer_state (YY_BUFFER_STATE new_buffer  );
+void evalpop_buffer_state (void );
 
-static void yyensure_buffer_stack (void );
-static void yy_load_buffer_state (void );
-static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
+static void evalensure_buffer_stack (void );
+static void eval_load_buffer_state (void );
+static void eval_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
-#define YY_FLUSH_BUFFER yy_flush_buffer(YY_CURRENT_BUFFER )
+#define YY_FLUSH_BUFFER eval_flush_buffer(YY_CURRENT_BUFFER )
 
-YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
-YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE eval_scan_buffer (char *base,yy_size_t size  );
+YY_BUFFER_STATE eval_scan_string (yyconst char *yy_str  );
+YY_BUFFER_STATE eval_scan_bytes (yyconst char *bytes,yy_size_t len  );
 
 /* %endif */
 
-void *yyalloc (yy_size_t  );
-void *yyrealloc (void *,yy_size_t  );
-void yyfree (void *  );
+void *evalalloc (yy_size_t  );
+void *evalrealloc (void *,yy_size_t  );
+void evalfree (void *  );
 
-#define yy_new_buffer yy_create_buffer
+#define yy_new_buffer eval_create_buffer
 
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
-        yyensure_buffer_stack (); \
+        evalensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yy_create_buffer(yyin,YY_BUF_SIZE ); \
+            eval_create_buffer(evalin,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
@@ -408,35 +426,35 @@ void yyfree (void *  );
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
-        yyensure_buffer_stack (); \
+        evalensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yy_create_buffer(yyin,YY_BUF_SIZE ); \
+            eval_create_buffer(evalin,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
 
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
-/* %% [1.0] yytext/yyin/yyout/yy_state_type/yylineno etc. def's & init go here */
+/* %% [1.0] evaltext/evalin/evalout/yy_state_type/evallineno etc. def's & init go here */
 /* Begin user sect3 */
 
-#define yywrap(n) 1
+#define evalwrap(n) 1
 #define YY_SKIP_YYWRAP
 
 #define FLEX_DEBUG
 
 typedef unsigned char YY_CHAR;
 
-FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;
+FILE *evalin = (FILE *) 0, *evalout = (FILE *) 0;
 
 typedef int yy_state_type;
 
-extern int yylineno;
+extern int evallineno;
 
-int yylineno = 1;
+int evallineno = 1;
 
-extern char *yytext;
-#define yytext_ptr yytext
+extern char *evaltext;
+#define yytext_ptr evaltext
 
 /* %if-c-only Standard (non-C++) definition */
 
@@ -448,15 +466,15 @@ static void yy_fatal_error (yyconst char msg[]  );
 /* %endif */
 
 /* Done after the current pattern has been matched and before the
- * corresponding action - sets up yytext.
+ * corresponding action - sets up evaltext.
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-/* %% [2.0] code to fiddle yytext and yyleng for yymore() goes here \ */\
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+/* %% [2.0] code to fiddle evaltext and evalleng for yymore() goes here \ */\
+	evalleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
-/* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
+/* %% [3.0] code to copy yytext_ptr to evaltext[] goes here, if %array \ */\
 	(yy_c_buf_p) = yy_cp;
 
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
@@ -717,8 +735,8 @@ static yyconst flex_int32_t yy_rule_can_match_eol[52] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
 
-extern int yy_flex_debug;
-int yy_flex_debug = 1;
+extern int eval_flex_debug;
+int eval_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[51] =
     {   0,
@@ -739,7 +757,7 @@ static int *yy_full_state;
 #define YY_TRAILING_HEAD_MASK 0x4000
 #define REJECT \
 { \
-*yy_cp = (yy_hold_char); /* undo effects of setting up yytext */ \
+*yy_cp = (yy_hold_char); /* undo effects of setting up evaltext */ \
 yy_cp = (yy_full_match); /* restore poss. backed-over text */ \
 (yy_lp) = (yy_full_lp); /* restore orig. accepting pos. */ \
 (yy_state_ptr) = (yy_full_state); /* restore orig. state */ \
@@ -751,7 +769,7 @@ goto find_rule; \
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-char *yytext;
+char *evaltext;
 #line 1 "lexer.ll"
 /* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 
@@ -772,8 +790,8 @@ char *yytext;
 // 2.5.31 through 2.5.33): it generates code that does
 // not conform to C89.  See Debian bug 333231
 // <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
-# undef yywrap
-# define yywrap() 1
+# undef evalwrap
+# define evalwrap() 1
 
 // The location of the current token. The lexer will keep updating it. This
 // variable will be useful for logging errors.
@@ -783,13 +801,13 @@ static isc::eval::location loc;
 #define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
-   using yywrap requires linking with -lfl, which provides the default yywrap
+   using evalwrap requires linking with -lfl, which provides the default evalwrap
    implementation that always returns 1 anyway. */
 /* nounput simplifies the lexer, by removing support for putting a character
    back into the input stream. We never use such capability anyway. */
 /* batch means that we'll never use the generated lexer interactively. */
 /* Enables debug mode. To see the debug messages, one needs to also set
-   yy_flex_debug to 1, then the debug messages will be printed on stderr. */
+   eval_flex_debug to 1, then the debug messages will be printed on stderr. */
 /* I have no idea what this option does, except it was specified in the bison
    examples and Postgres folks added it to remove gcc 4.3 warnings. Let's
    be on the safe side and keep it. */
@@ -802,10 +820,10 @@ static isc::eval::location loc;
    incorrect inputs (e.g., IP addresses) which must be checked. */
 #line 69 "lexer.ll"
 // This code run each time a pattern is matched. It updates the location
-// by moving it ahead by yyleng bytes. yyleng specifies the length of the
+// by moving it ahead by evalleng bytes. evalleng specifies the length of the
 // currently matched token.
-#define YY_USER_ACTION  loc.columns(yyleng);
-#line 809 "lexer.cc"
+#define YY_USER_ACTION  loc.columns(evalleng);
+#line 827 "lexer.cc"
 
 #define INITIAL 0
 
@@ -839,31 +857,31 @@ static int yy_init_globals (void );
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int yylex_destroy (void );
+int evallex_destroy (void );
 
-int yyget_debug (void );
+int evalget_debug (void );
 
-void yyset_debug (int debug_flag  );
+void evalset_debug (int debug_flag  );
 
-YY_EXTRA_TYPE yyget_extra (void );
+YY_EXTRA_TYPE evalget_extra (void );
 
-void yyset_extra (YY_EXTRA_TYPE user_defined  );
+void evalset_extra (YY_EXTRA_TYPE user_defined  );
 
-FILE *yyget_in (void );
+FILE *evalget_in (void );
 
-void yyset_in  (FILE * in_str  );
+void evalset_in  (FILE * in_str  );
 
-FILE *yyget_out (void );
+FILE *evalget_out (void );
 
-void yyset_out  (FILE * out_str  );
+void evalset_out  (FILE * out_str  );
 
-yy_size_t yyget_leng (void );
+yy_size_t evalget_leng (void );
 
-char *yyget_text (void );
+char *evalget_text (void );
 
-int yyget_lineno (void );
+int evalget_lineno (void );
 
-void yyset_lineno (int line_number  );
+void evalset_lineno (int line_number  );
 
 /* %if-bison-bridge */
 /* %endif */
@@ -874,9 +892,9 @@ void yyset_lineno (int line_number  );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int yywrap (void );
+extern "C" int evalwrap (void );
 #else
-extern int yywrap (void );
+extern int evalwrap (void );
 #endif
 #endif
 
@@ -923,7 +941,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO fwrite( evaltext, evalleng, 1, evalout )
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
@@ -940,18 +958,18 @@ static int input (void );
 		int c = '*'; \
 		yy_size_t n; \
 		for ( n = 0; n < max_size && \
-			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
+			     (c = getc( evalin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
 		if ( c == '\n' ) \
 			buf[n++] = (char) c; \
-		if ( c == EOF && ferror( yyin ) ) \
+		if ( c == EOF && ferror( evalin ) ) \
 			YY_FATAL_ERROR( "input in flex scanner failed" ); \
 		result = n; \
 		} \
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
+		while ( (result = fread(buf, 1, max_size, evalin))==0 && ferror(evalin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -959,7 +977,7 @@ static int input (void );
 				break; \
 				} \
 			errno=0; \
-			clearerr(yyin); \
+			clearerr(evalin); \
 			} \
 		}\
 \
@@ -1010,15 +1028,15 @@ static int input (void );
 #define YY_DECL_IS_OURS 1
 /* %if-c-only Standard (non-C++) definition */
 
-extern int yylex (void);
+extern int evallex (void);
 
-#define YY_DECL int yylex (void)
+#define YY_DECL int evallex (void)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
 #endif /* !YY_DECL */
 
-/* Code executed at the beginning of each rule, after yytext and yyleng
+/* Code executed at the beginning of each rule, after evaltext and evalleng
  * have been set up.
  */
 #ifndef YY_USER_ACTION
@@ -1049,11 +1067,11 @@ YY_DECL
 
 
 
-    // Code run each time yylex is called.
+    // Code run each time evallex is called.
     loc.step();
 
 
-#line 1057 "lexer.cc"
+#line 1075 "lexer.cc"
 
 	if ( !(yy_init) )
 		{
@@ -1065,34 +1083,34 @@ YY_DECL
 
         /* Create the reject buffer large enough to save one state per allowed character. */
         if ( ! (yy_state_buf) )
-            (yy_state_buf) = (yy_state_type *)yyalloc(YY_STATE_BUF_SIZE  );
+            (yy_state_buf) = (yy_state_type *)evalalloc(YY_STATE_BUF_SIZE  );
             if ( ! (yy_state_buf) )
-                YY_FATAL_ERROR( "out of dynamic memory in yylex()" );
+                YY_FATAL_ERROR( "out of dynamic memory in evallex()" );
 
 		if ( ! (yy_start) )
 			(yy_start) = 1;	/* first start state */
 
-		if ( ! yyin )
+		if ( ! evalin )
 /* %if-c-only */
-			yyin = stdin;
+			evalin = stdin;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
-		if ( ! yyout )
+		if ( ! evalout )
 /* %if-c-only */
-			yyout = stdout;
+			evalout = stdout;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
 		if ( ! YY_CURRENT_BUFFER ) {
-			yyensure_buffer_stack ();
+			evalensure_buffer_stack ();
 			YY_CURRENT_BUFFER_LVALUE =
-				yy_create_buffer(yyin,YY_BUF_SIZE );
+				eval_create_buffer(evalin,YY_BUF_SIZE );
 		}
 
-		yy_load_buffer_state( );
+		eval_load_buffer_state( );
 		}
 
 	while ( 1 )		/* loops until end-of-file is reached */
@@ -1100,7 +1118,7 @@ YY_DECL
 /* %% [8.0] yymore()-related code goes here */
 		yy_cp = (yy_c_buf_p);
 
-		/* Support of yytext. */
+		/* Support of evaltext. */
 		*yy_cp = (yy_hold_char);
 
 		/* yy_bp points to the position in yy_ch_buf of the start of
@@ -1173,31 +1191,31 @@ find_rule: /* we branch to this label when backing up */
 
 		YY_DO_BEFORE_ACTION;
 
-/* %% [11.0] code for yylineno update goes here */
+/* %% [11.0] code for evallineno update goes here */
 
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
 			yy_size_t yyl;
-			for ( yyl = 0; yyl < yyleng; ++yyl )
-				if ( yytext[yyl] == '\n' )
+			for ( yyl = 0; yyl < evalleng; ++yyl )
+				if ( evaltext[yyl] == '\n' )
 					   
-    yylineno++;
+    evallineno++;
 ;
 			}
 
 do_action:	/* This label is used only to access EOF actions. */
 
 /* %% [12.0] debug code goes here */
-		if ( yy_flex_debug )
+		if ( eval_flex_debug )
 			{
 			if ( yy_act == 0 )
 				fprintf( stderr, "--scanner backing up\n" );
 			else if ( yy_act < 51 )
 				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
-				         (long)yy_rule_linenum[yy_act], yytext );
+				         (long)yy_rule_linenum[yy_act], evaltext );
 			else if ( yy_act == 51 )
 				fprintf( stderr, "--accepting default rule (\"%s\")\n",
-				         yytext );
+				         evaltext );
 			else if ( yy_act == 52 )
 				fprintf( stderr, "--(end of buffer or a NUL)\n" );
 			else
@@ -1221,7 +1239,7 @@ YY_RULE_SETUP
 #line 86 "lexer.ll"
 {
     // Newline found. Let's update the location and continue.
-    loc.lines(yyleng);
+    loc.lines(evalleng);
     loc.step();
 }
 	YY_BREAK
@@ -1232,7 +1250,7 @@ YY_RULE_SETUP
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
     // for 'foo' we should get foo
-    std::string tmp(yytext+1);
+    std::string tmp(evaltext+1);
     tmp.resize(tmp.size() - 1);
 
     return isc::eval::EvalParser::make_STRING(tmp, loc);
@@ -1244,7 +1262,7 @@ YY_RULE_SETUP
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
-    return isc::eval::EvalParser::make_HEXSTRING(yytext, loc);
+    return isc::eval::EvalParser::make_HEXSTRING(evaltext, loc);
 }
 	YY_BREAK
 case 5:
@@ -1252,7 +1270,7 @@ YY_RULE_SETUP
 #line 108 "lexer.ll"
 {
     // An integer was found.
-    std::string tmp(yytext);
+    std::string tmp(evaltext);
 
     try {
         // In substring we want to use negative values (e.g. -1).
@@ -1276,7 +1294,7 @@ YY_RULE_SETUP
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
     // underscores and finishing by letters or digits.
-    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+    return isc::eval::EvalParser::make_OPTION_NAME(evaltext, loc);
 }
 	YY_BREAK
 case 7:
@@ -1284,7 +1302,7 @@ YY_RULE_SETUP
 #line 133 "lexer.ll"
 {
     // IPv4 or IPv6 address
-    std::string tmp(yytext);
+    std::string tmp(evaltext);
 
     // Some incorrect addresses can match so we have to check.
     try {
@@ -1293,7 +1311,7 @@ YY_RULE_SETUP
         driver.error(loc, "Failed to convert " + tmp + " to an IP address.");
     }
 
-    return isc::eval::EvalParser::make_IP_ADDRESS(yytext, loc);
+    return isc::eval::EvalParser::make_IP_ADDRESS(evaltext, loc);
 }
 	YY_BREAK
 case 8:
@@ -1509,7 +1527,7 @@ return isc::eval::EvalParser::make_ANY(loc);
 case 50:
 YY_RULE_SETUP
 #line 189 "lexer.ll"
-driver.error (loc, "Invalid character: " + std::string(yytext));
+driver.error (loc, "Invalid character: " + std::string(evaltext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 190 "lexer.ll"
@@ -1520,7 +1538,7 @@ YY_RULE_SETUP
 #line 191 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1524 "lexer.cc"
+#line 1542 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1535,15 +1553,15 @@ ECHO;
 			{
 			/* We're scanning a new file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed yyin at a new source and called
-			 * yylex().  If so, then we have to assure
+			 * just pointed evalin at a new source and called
+			 * evallex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
 			 * back-up) that will match for the new input source.
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
-			YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin;
+			YY_CURRENT_BUFFER_LVALUE->yy_input_file = evalin;
 			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
 			}
 
@@ -1597,11 +1615,11 @@ ECHO;
 				{
 				(yy_did_buffer_switch_on_eof) = 0;
 
-				if ( yywrap( ) )
+				if ( evalwrap( ) )
 					{
 					/* Note: because we've taken care in
 					 * yy_get_next_buffer() to have set up
-					 * yytext, we can now set up
+					 * evaltext, we can now set up
 					 * yy_c_buf_p so that if some total
 					 * hoser (like flex itself) wants to
 					 * call the scanner after we return the
@@ -1650,7 +1668,7 @@ ECHO;
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
-} /* end of yylex */
+} /* end of evallex */
 /* %ok-for-header */
 
 /* %if-c++-only */
@@ -1743,7 +1761,7 @@ static int yy_get_next_buffer (void)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			yyrestart(yyin  );
+			evalrestart(evalin  );
 			}
 
 		else
@@ -1760,7 +1778,7 @@ static int yy_get_next_buffer (void)
 	if ((yy_size_t) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		yy_size_t new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) evalrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
 	}
@@ -1888,13 +1906,13 @@ static int yy_get_next_buffer (void)
 					 */
 
 					/* Reset buffer status. */
-					yyrestart(yyin );
+					evalrestart(evalin );
 
 					/*FALLTHROUGH*/
 
 				case EOB_ACT_END_OF_FILE:
 					{
-					if ( yywrap( ) )
+					if ( evalwrap( ) )
 						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
@@ -1914,13 +1932,13 @@ static int yy_get_next_buffer (void)
 		}
 
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
-	*(yy_c_buf_p) = '\0';	/* preserve yytext */
+	*(yy_c_buf_p) = '\0';	/* preserve evaltext */
 	(yy_hold_char) = *++(yy_c_buf_p);
 
-/* %% [19.0] update BOL and yylineno */
+/* %% [19.0] update BOL and evallineno */
 	if ( c == '\n' )
 		   
-    yylineno++;
+    evallineno++;
 ;
 
 	return c;
@@ -1935,20 +1953,20 @@ static int yy_get_next_buffer (void)
  * @note This function does not reset the start condition to @c INITIAL .
  */
 /* %if-c-only */
-    void yyrestart  (FILE * input_file )
+    void evalrestart  (FILE * input_file )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
     
 	if ( ! YY_CURRENT_BUFFER ){
-        yyensure_buffer_stack ();
+        evalensure_buffer_stack ();
 		YY_CURRENT_BUFFER_LVALUE =
-            yy_create_buffer(yyin,YY_BUF_SIZE );
+            eval_create_buffer(evalin,YY_BUF_SIZE );
 	}
 
-	yy_init_buffer(YY_CURRENT_BUFFER,input_file );
-	yy_load_buffer_state( );
+	eval_init_buffer(YY_CURRENT_BUFFER,input_file );
+	eval_load_buffer_state( );
 }
 
 /** Switch to a different input buffer.
@@ -1956,7 +1974,7 @@ static int yy_get_next_buffer (void)
  * 
  */
 /* %if-c-only */
-    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
+    void eval_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -1964,10 +1982,10 @@ static int yy_get_next_buffer (void)
     
 	/* TODO. We should be able to replace this entire function body
 	 * with
-	 *		yypop_buffer_state();
-	 *		yypush_buffer_state(new_buffer);
+	 *		evalpop_buffer_state();
+	 *		evalpush_buffer_state(new_buffer);
      */
-	yyensure_buffer_stack ();
+	evalensure_buffer_stack ();
 	if ( YY_CURRENT_BUFFER == new_buffer )
 		return;
 
@@ -1980,25 +1998,25 @@ static int yy_get_next_buffer (void)
 		}
 
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
-	yy_load_buffer_state( );
+	eval_load_buffer_state( );
 
 	/* We don't actually know whether we did this switch during
-	 * EOF (yywrap()) processing, but the only time this flag
-	 * is looked at is after yywrap() is called, so it's safe
+	 * EOF (evalwrap()) processing, but the only time this flag
+	 * is looked at is after evalwrap() is called, so it's safe
 	 * to go ahead and always set it.
 	 */
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 
 /* %if-c-only */
-static void yy_load_buffer_state  (void)
+static void eval_load_buffer_state  (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
     	(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 	(yytext_ptr) = (yy_c_buf_p) = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
-	yyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
+	evalin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
 	(yy_hold_char) = *(yy_c_buf_p);
 }
 
@@ -2009,39 +2027,39 @@ static void yy_load_buffer_state  (void)
  * @return the allocated buffer state.
  */
 /* %if-c-only */
-    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size )
+    YY_BUFFER_STATE eval_create_buffer  (FILE * file, int  size )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
 	YY_BUFFER_STATE b;
     
-	b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) evalalloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in eval_create_buffer()" );
 
 	b->yy_buf_size = size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) yyalloc(b->yy_buf_size + 2  );
+	b->yy_ch_buf = (char *) evalalloc(b->yy_buf_size + 2  );
 	if ( ! b->yy_ch_buf )
-		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in eval_create_buffer()" );
 
 	b->yy_is_our_buffer = 1;
 
-	yy_init_buffer(b,file );
+	eval_init_buffer(b,file );
 
 	return b;
 }
 
 /** Destroy the buffer.
- * @param b a buffer created with yy_create_buffer()
+ * @param b a buffer created with eval_create_buffer()
  * 
  */
 /* %if-c-only */
-    void yy_delete_buffer (YY_BUFFER_STATE  b )
+    void eval_delete_buffer (YY_BUFFER_STATE  b )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2054,9 +2072,9 @@ static void yy_load_buffer_state  (void)
 		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
-		yyfree((void *) b->yy_ch_buf  );
+		evalfree((void *) b->yy_ch_buf  );
 
-	yyfree((void *) b  );
+	evalfree((void *) b  );
 }
 
 /* %if-c-only */
@@ -2072,10 +2090,10 @@ extern int isatty (int );
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
- * such as during a yyrestart() or at EOF.
+ * such as during a evalrestart() or at EOF.
  */
 /* %if-c-only */
-    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )
+    static void eval_init_buffer  (YY_BUFFER_STATE  b, FILE * file )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2083,13 +2101,13 @@ extern int isatty (int );
 {
 	int oerrno = errno;
     
-	yy_flush_buffer(b );
+	eval_flush_buffer(b );
 
 	b->yy_input_file = file;
 	b->yy_fill_buffer = 1;
 
-    /* If b is the current buffer, then yy_init_buffer was _probably_
-     * called from yyrestart() or through yy_get_next_buffer.
+    /* If b is the current buffer, then eval_init_buffer was _probably_
+     * called from evalrestart() or through yy_get_next_buffer.
      * In that case, we don't want to reset the lineno or column.
      */
     if (b != YY_CURRENT_BUFFER){
@@ -2112,7 +2130,7 @@ extern int isatty (int );
  * 
  */
 /* %if-c-only */
-    void yy_flush_buffer (YY_BUFFER_STATE  b )
+    void eval_flush_buffer (YY_BUFFER_STATE  b )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2135,7 +2153,7 @@ extern int isatty (int );
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
 	if ( b == YY_CURRENT_BUFFER )
-		yy_load_buffer_state( );
+		eval_load_buffer_state( );
 }
 
 /* %if-c-or-c++ */
@@ -2146,7 +2164,7 @@ extern int isatty (int );
  *  
  */
 /* %if-c-only */
-void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
+void evalpush_buffer_state (YY_BUFFER_STATE new_buffer )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2154,9 +2172,9 @@ void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
     	if (new_buffer == NULL)
 		return;
 
-	yyensure_buffer_stack();
+	evalensure_buffer_stack();
 
-	/* This block is copied from yy_switch_to_buffer. */
+	/* This block is copied from eval_switch_to_buffer. */
 	if ( YY_CURRENT_BUFFER )
 		{
 		/* Flush out information for old buffer. */
@@ -2170,8 +2188,8 @@ void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
 		(yy_buffer_stack_top)++;
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-	/* copied from yy_switch_to_buffer. */
-	yy_load_buffer_state( );
+	/* copied from eval_switch_to_buffer. */
+	eval_load_buffer_state( );
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 /* %endif */
@@ -2182,7 +2200,7 @@ void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
  *  
  */
 /* %if-c-only */
-void yypop_buffer_state (void)
+void evalpop_buffer_state (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2190,13 +2208,13 @@ void yypop_buffer_state (void)
     	if (!YY_CURRENT_BUFFER)
 		return;
 
-	yy_delete_buffer(YY_CURRENT_BUFFER );
+	eval_delete_buffer(YY_CURRENT_BUFFER );
 	YY_CURRENT_BUFFER_LVALUE = NULL;
 	if ((yy_buffer_stack_top) > 0)
 		--(yy_buffer_stack_top);
 
 	if (YY_CURRENT_BUFFER) {
-		yy_load_buffer_state( );
+		eval_load_buffer_state( );
 		(yy_did_buffer_switch_on_eof) = 1;
 	}
 }
@@ -2207,7 +2225,7 @@ void yypop_buffer_state (void)
  *  Guarantees space for at least one push.
  */
 /* %if-c-only */
-static void yyensure_buffer_stack (void)
+static void evalensure_buffer_stack (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2221,11 +2239,11 @@ static void yyensure_buffer_stack (void)
 		 * immediate realloc on the next call.
          */
 		num_to_alloc = 1;
-		(yy_buffer_stack) = (struct yy_buffer_state**)yyalloc
+		(yy_buffer_stack) = (struct yy_buffer_state**)evalalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in evalensure_buffer_stack()" );
 								  
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
 				
@@ -2240,12 +2258,12 @@ static void yyensure_buffer_stack (void)
 		int grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = (yy_buffer_stack_max) + grow_size;
-		(yy_buffer_stack) = (struct yy_buffer_state**)yyrealloc
+		(yy_buffer_stack) = (struct yy_buffer_state**)evalrealloc
 								((yy_buffer_stack),
 								num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in evalensure_buffer_stack()" );
 
 		/* zero only the new slots.*/
 		memset((yy_buffer_stack) + (yy_buffer_stack_max), 0, grow_size * sizeof(struct yy_buffer_state*));
@@ -2261,7 +2279,7 @@ static void yyensure_buffer_stack (void)
  * 
  * @return the newly allocated buffer state object. 
  */
-YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
+YY_BUFFER_STATE eval_scan_buffer  (char * base, yy_size_t  size )
 {
 	YY_BUFFER_STATE b;
     
@@ -2271,9 +2289,9 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 		/* They forgot to leave room for the EOB's. */
 		return 0;
 
-	b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) evalalloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in eval_scan_buffer()" );
 
 	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
@@ -2285,37 +2303,37 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 	b->yy_fill_buffer = 0;
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
-	yy_switch_to_buffer(b  );
+	eval_switch_to_buffer(b  );
 
 	return b;
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan a string. The next call to yylex() will
+/** Setup the input buffer state to scan a string. The next call to evallex() will
  * scan from a @e copy of @a str.
  * @param yystr a NUL-terminated string to scan
  * 
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
- *       yy_scan_bytes() instead.
+ *       eval_scan_bytes() instead.
  */
-YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
+YY_BUFFER_STATE eval_scan_string (yyconst char * yystr )
 {
     
-	return yy_scan_bytes(yystr,strlen(yystr) );
+	return eval_scan_bytes(yystr,strlen(yystr) );
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan the given bytes. The next call to yylex() will
+/** Setup the input buffer state to scan the given bytes. The next call to evallex() will
  * scan from a @e copy of @a bytes.
  * @param bytes the byte buffer to scan
  * @param len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE eval_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
@@ -2323,18 +2341,18 @@ YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len 
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
-	buf = (char *) yyalloc(n  );
+	buf = (char *) evalalloc(n  );
 	if ( ! buf )
-		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_bytes()" );
+		YY_FATAL_ERROR( "out of dynamic memory in eval_scan_bytes()" );
 
 	for ( i = 0; i < _yybytes_len; ++i )
 		buf[i] = yybytes[i];
 
 	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-	b = yy_scan_buffer(buf,n );
+	b = eval_scan_buffer(buf,n );
 	if ( ! b )
-		YY_FATAL_ERROR( "bad buffer in yy_scan_bytes()" );
+		YY_FATAL_ERROR( "bad buffer in eval_scan_bytes()" );
 
 	/* It's okay to grow etc. this buffer, and we should throw it
 	 * away when we're done.
@@ -2365,14 +2383,14 @@ static void yy_fatal_error (yyconst char* msg )
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up yytext. */ \
+		/* Undo effects of setting up evaltext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
-		yytext[yyleng] = (yy_hold_char); \
-		(yy_c_buf_p) = yytext + yyless_macro_arg; \
+		evaltext[evalleng] = (yy_hold_char); \
+		(yy_c_buf_p) = evaltext + yyless_macro_arg; \
 		(yy_hold_char) = *(yy_c_buf_p); \
 		*(yy_c_buf_p) = '\0'; \
-		yyleng = yyless_macro_arg; \
+		evalleng = yyless_macro_arg; \
 		} \
 	while ( 0 )
 
@@ -2385,43 +2403,43 @@ static void yy_fatal_error (yyconst char* msg )
 /** Get the current line number.
  * 
  */
-int yyget_lineno  (void)
+int evalget_lineno  (void)
 {
         
-    return yylineno;
+    return evallineno;
 }
 
 /** Get the input stream.
  * 
  */
-FILE *yyget_in  (void)
+FILE *evalget_in  (void)
 {
-        return yyin;
+        return evalin;
 }
 
 /** Get the output stream.
  * 
  */
-FILE *yyget_out  (void)
+FILE *evalget_out  (void)
 {
-        return yyout;
+        return evalout;
 }
 
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+yy_size_t evalget_leng  (void)
 {
-        return yyleng;
+        return evalleng;
 }
 
 /** Get the current token.
  * 
  */
 
-char *yyget_text  (void)
+char *evalget_text  (void)
 {
-        return yytext;
+        return evaltext;
 }
 
 /* %if-reentrant */
@@ -2431,36 +2449,36 @@ char *yyget_text  (void)
  * @param line_number
  * 
  */
-void yyset_lineno (int  line_number )
+void evalset_lineno (int  line_number )
 {
     
-    yylineno = line_number;
+    evallineno = line_number;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
  * @param in_str A readable stream.
  * 
- * @see yy_switch_to_buffer
+ * @see eval_switch_to_buffer
  */
-void yyset_in (FILE *  in_str )
+void evalset_in (FILE *  in_str )
 {
-        yyin = in_str ;
+        evalin = in_str ;
 }
 
-void yyset_out (FILE *  out_str )
+void evalset_out (FILE *  out_str )
 {
-        yyout = out_str ;
+        evalout = out_str ;
 }
 
-int yyget_debug  (void)
+int evalget_debug  (void)
 {
-        return yy_flex_debug;
+        return eval_flex_debug;
 }
 
-void yyset_debug (int  bdebug )
+void evalset_debug (int  bdebug )
 {
-        yy_flex_debug = bdebug ;
+        eval_flex_debug = bdebug ;
 }
 
 /* %endif */
@@ -2474,11 +2492,11 @@ void yyset_debug (int  bdebug )
 static int yy_init_globals (void)
 {
         /* Initialization is the same as for the non-reentrant scanner.
-     * This function is called from yylex_destroy(), so don't allocate here.
+     * This function is called from evallex_destroy(), so don't allocate here.
      */
 
-    /* We do not touch yylineno unless the option is enabled. */
-    yylineno =  1;
+    /* We do not touch evallineno unless the option is enabled. */
+    evallineno =  1;
     
     (yy_buffer_stack) = 0;
     (yy_buffer_stack_top) = 0;
@@ -2494,41 +2512,41 @@ static int yy_init_globals (void)
 
 /* Defined in main.c */
 #ifdef YY_STDINIT
-    yyin = stdin;
-    yyout = stdout;
+    evalin = stdin;
+    evalout = stdout;
 #else
-    yyin = (FILE *) 0;
-    yyout = (FILE *) 0;
+    evalin = (FILE *) 0;
+    evalout = (FILE *) 0;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
-     * yylex_init()
+     * evallex_init()
      */
     return 0;
 }
 /* %endif */
 
 /* %if-c-only SNIP! this currently causes conflicts with the c++ scanner */
-/* yylex_destroy is for both reentrant and non-reentrant scanners. */
-int yylex_destroy  (void)
+/* evallex_destroy is for both reentrant and non-reentrant scanners. */
+int evallex_destroy  (void)
 {
     
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
-		yy_delete_buffer(YY_CURRENT_BUFFER  );
+		eval_delete_buffer(YY_CURRENT_BUFFER  );
 		YY_CURRENT_BUFFER_LVALUE = NULL;
-		yypop_buffer_state();
+		evalpop_buffer_state();
 	}
 
 	/* Destroy the stack itself. */
-	yyfree((yy_buffer_stack) );
+	evalfree((yy_buffer_stack) );
 	(yy_buffer_stack) = NULL;
 
-    yyfree ( (yy_state_buf) );
+    evalfree ( (yy_state_buf) );
     (yy_state_buf)  = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
-     * yylex() is called, initialization will occur. */
+     * evallex() is called, initialization will occur. */
     yy_init_globals( );
 
 /* %if-reentrant */
@@ -2561,12 +2579,12 @@ static int yy_flex_strlen (yyconst char * s )
 }
 #endif
 
-void *yyalloc (yy_size_t  size )
+void *evalalloc (yy_size_t  size )
 {
 	return (void *) malloc( size );
 }
 
-void *yyrealloc  (void * ptr, yy_size_t  size )
+void *evalrealloc  (void * ptr, yy_size_t  size )
 {
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
@@ -2578,9 +2596,9 @@ void *yyrealloc  (void * ptr, yy_size_t  size )
 	return (void *) realloc( (char *) ptr, size );
 }
 
-void yyfree (void * ptr )
+void evalfree (void * ptr )
 {
-	free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
+	free( (char *) ptr );	/* see evalrealloc() for (char *) cast */
 }
 
 /* %if-tables-serialization definitions */
@@ -2600,9 +2618,9 @@ void
 EvalContext::scanStringBegin()
 {
     loc.initialize(&file_);
-    yy_flex_debug = trace_scanning_;
+    eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = yy_scan_bytes(string_.c_str(),string_.size());
+    buffer = eval_scan_bytes(string_.c_str(),string_.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
@@ -2612,7 +2630,7 @@ EvalContext::scanStringBegin()
 void
 EvalContext::scanStringEnd()
 {
-    yy_delete_buffer(YY_CURRENT_BUFFER);
+    eval_delete_buffer(YY_CURRENT_BUFFER);
 }
 
 namespace {

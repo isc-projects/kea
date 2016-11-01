@@ -13,7 +13,8 @@
 #include <exceptions/exceptions.h>
 
 // Tell Flex the lexer's prototype ...
-#define YY_DECL isc::eval::EvalParser::symbol_type yylex (EvalContext& driver)
+#define YY_DECL \
+    isc::eval::EvalParser::symbol_type evallex (EvalContext& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;

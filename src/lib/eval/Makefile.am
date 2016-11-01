@@ -94,7 +94,7 @@ location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 	$(YACC) --defines=parser.h -o parser.cc parser.yy
 
 lexer.cc: lexer.ll
-	$(LEX) -o lexer.cc lexer.ll
+	$(LEX) --prefix eval -o lexer.cc lexer.ll
 
 else
 
