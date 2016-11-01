@@ -40,7 +40,7 @@
 #ifndef YY_EVAL_PARSER_H_INCLUDED
 # define YY_EVAL_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "parser.yy" // lalr1.cc:392
+#line 17 "parser.yy" // lalr1.cc:377
 
 #include <string>
 #include <eval/token.h>
@@ -51,7 +51,7 @@
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 55 "parser.h" // lalr1.cc:392
+#line 55 "parser.h" // lalr1.cc:377
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -134,9 +134,9 @@ using namespace isc::eval;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined EVALDEBUG */
 
-#line 14 "parser.yy" // lalr1.cc:392
+#line 14 "parser.yy" // lalr1.cc:377
 namespace isc { namespace eval {
-#line 140 "parser.h" // lalr1.cc:392
+#line 140 "parser.h" // lalr1.cc:377
 
 
 
@@ -1671,9 +1671,9 @@ namespace isc { namespace eval {
   }
 
 
-#line 14 "parser.yy" // lalr1.cc:392
+#line 14 "parser.yy" // lalr1.cc:377
 } } // isc::eval
-#line 1677 "parser.h" // lalr1.cc:392
+#line 1677 "parser.h" // lalr1.cc:377
 
 
 
