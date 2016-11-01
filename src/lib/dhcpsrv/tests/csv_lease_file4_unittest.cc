@@ -146,7 +146,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     }
 
     // Second lease is malformed - HW address is empty when state 
-    // is not delcined.
+    // is not declined.
     {
     SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf.next(lease));
@@ -386,7 +386,7 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
     }
 }
 
-// Verifies that leases with no hardware address or only permitted
+// Verifies that leases with no hardware address are only permitted
 // if they are in the declined state.
 TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
@@ -394,12 +394,10 @@ TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
                   "192.0.2.1,,,200,200,8,1,1,host.example.com,0\n"
                   "192.0.2.1,,,200,200,8,1,1,host.example.com,1\n");
 
-    // Lease file should open and report as needing downgrade.
     CSVLeaseFile4 lf(filename_);
     ASSERT_NO_THROW(lf.open());
     EXPECT_FALSE(lf.needsConversion());
-    EXPECT_EQ(util::VersionedCSVFile::CURRENT,
-              lf.getInputSchemaState());
+    EXPECT_EQ(util::VersionedCSVFile::CURRENT, lf.getInputSchemaState());
     Lease4Ptr lease;
 
     {
