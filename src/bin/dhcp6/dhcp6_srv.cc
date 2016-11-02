@@ -2590,7 +2590,7 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
                          AllocEngine::ClientContext6& ctx) {
 
     // We need to decline addresses for all IA_NA options in the client's
-    // RELEASE message.
+    // DECLINE message.
 
     // Let's set the status to be success by default. We can override it with
     // error status if needed. The important thing to understand here is that
