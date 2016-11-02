@@ -72,6 +72,14 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
+PREMIUM_DIR =
+if test -d "${srcdir}/premium"; then
+   PREMIUM_DIR=premium
+   AC_CONFIG_SUBDIRS([premium])
+fi
+
+AC_SUBST(PREMIUM_DIR)
+
 # Libtool configuration
 #
 
@@ -1629,6 +1637,21 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x tools/path_replacer.sh
 ])
 
+AM_CONDITIONAL(PREMIUM, test -d "$srcdir/premium/src")
+
+AC_MSG_CHECKING([if premium package is available])
+if test -d "$srcdir/premium/src"; then
+
+    # Define it in the config.h, so C++ code could use it.
+    AC_DEFINE([PREMIUM], [1], [Kea-premium package found])
+
+    # Export it here, so code in configure could use it.
+    PREMIUM=1
+    AC_MSG_RESULT(found!)
+else
+    AC_MSG_RESULT(not found)
+fi
+
 AC_OUTPUT
 
 dnl Print the results
@@ -1650,6 +1673,17 @@ Package:
   Extended version:${EXTENDED_VERSION}
   OS Family:       ${OS_TYPE}
   Using GNU sed:   ${GNU_SED}
+END
+if test "$PREMIUM" != ""; then
+cat >> config.report << END
+  Premium package: Found
+END
+else
+cat >> config.report << END
+  Premium package: Not found
+END
+fi
+cat >> config.report << END
 
 C++ Compiler:
   CXX:             ${CXX}
