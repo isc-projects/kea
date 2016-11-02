@@ -103,7 +103,7 @@ CSVLeaseFile4Test::writeSampleFile() const {
                   "fqdn_fwd,fqdn_rev,hostname,state\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
                   "host.example.com,0\n"
-                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,1\n"
+                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,0\n"
                   "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
                   "0,0,,1\n");
 }
@@ -145,7 +145,8 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
     }
 
-    // Second lease is malformed - HW address is empty.
+    // Second lease is malformed - HW address is empty when state 
+    // is not declined.
     {
     SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf.next(lease));
@@ -385,6 +386,34 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
     }
 }
 
+// Verifies that leases with no hardware address are only permitted
+// if they are in the declined state.
+TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1\n");
+
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.open());
+    EXPECT_FALSE(lf.needsConversion());
+    EXPECT_EQ(util::VersionedCSVFile::CURRENT, lf.getInputSchemaState());
+    Lease4Ptr lease;
+
+    {
+    SCOPED_TRACE("No hardware and not declined, invalid");
+    EXPECT_FALSE(lf.next(lease));
+    ASSERT_FALSE(lease);
+    EXPECT_EQ(lf.getReadErrs(),1);
+    }
+
+    {
+    SCOPED_TRACE("No hardware and declined, valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(lf.getReadErrs(),1);
+    }
+}
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6

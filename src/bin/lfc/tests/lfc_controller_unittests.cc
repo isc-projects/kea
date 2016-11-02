@@ -407,8 +407,9 @@ TEST_F(LFCControllerTest, launch4) {
     string b_3 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
                  "100,150,7,0,0,,1\n";
 
+    // This one should be invalid, no hardware address and state is not declined
     string c_1 = "192.0.2.3,,a:11:01:04,"
-                 "200,200,8,1,1,host.example.com,1\n";
+                 "200,200,8,1,1,host.example.com,0\n";
 
     string d_1 = "192.0.2.5,16:17:18:19:1a:bc,,"
                  "200,200,8,1,1,host.example.com,1\n";
