@@ -1,3 +1,12 @@
+1183.	[bug]		tmark
+	kea-dhcp4 now correctly loads declined leases from CSV
+	lease files. Prior to this, declined leases were being
+	incorrectly and silently discarded.  In addition, both
+	kea-dhcp4 and kea-dhcp6 will now emit an error log for
+	each invalid row encountered when loading leases from
+	CSV files.
+	(Trac #5058, git 29b088079bed3c5059fdf8a43a4e79cd7f9a4207)
+
 1182.	[func]		marcin
 	DHCP servers detect overlapping pool ranges during
 	configuration.
