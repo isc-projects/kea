@@ -1,3 +1,8 @@
+1184.	[bug]		eest
+	Fixes in the occasionally failing LFC unit test. This
+	fix was provided by Patrik Lundin.
+	(Github #31, git 69a5722bf3b41bf3b2bc0c2bcac966c23c08f62d)
+
 1183.	[bug]		tmark
 	kea-dhcp4 now correctly loads declined leases from CSV
 	lease files. Prior to this, declined leases were being
