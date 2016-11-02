@@ -105,6 +105,7 @@ We have received the following contributions:
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
+   2016-11: Fixes in Lease File Cleanup unit test
 
  - Michal Humpula (mihu)
    2016-07: Response to DHCPINFORM is sent to port 68
