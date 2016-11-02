@@ -72,7 +72,7 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
-PREMIUM_DIR =
+PREMIUM_DIR=
 if test -d "${srcdir}/premium"; then
    PREMIUM_DIR=premium
    AC_CONFIG_SUBDIRS([premium])
