@@ -83,6 +83,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
 }
+
 [\n]+      {
     // Newline found. Let's update the location and continue.
     loc.lines(evalleng);
