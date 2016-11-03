@@ -36,7 +36,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 0
+#define YY_FLEX_SUBMINOR_VERSION 1
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -136,25 +136,13 @@ typedef unsigned int flex_uint32_t;
 /* %if-c++-only */
 /* %endif */
 
-#ifdef __cplusplus
-
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* %not-for-header */
@@ -229,7 +217,7 @@ typedef size_t yy_size_t;
 #endif
 
 /* %if-not-reentrant */
-extern yy_size_t evalleng;
+extern int evalleng;
 /* %endif */
 
 /* %if-c-only */
@@ -297,12 +285,12 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -358,7 +346,7 @@ struct yy_buffer_state
 /* Stack of input buffers. */
 static size_t yy_buffer_stack_top = 0; /**< index of top of stack. */
 static size_t yy_buffer_stack_max = 0; /**< capacity of stack. */
-static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
+static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 /* %endif */
 /* %ok-for-header */
 
@@ -386,11 +374,11 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when evaltext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t evalleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int evalleng;
 
 /* Points to current character in buffer. */
-static char *yy_c_buf_p = (char *) 0;
+static char *yy_c_buf_p = NULL;
 static int yy_init = 0;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
@@ -418,7 +406,7 @@ static void eval_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE eval_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE eval_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE eval_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE eval_scan_bytes (yyconst char *bytes,int len  );
 
 /* %endif */
 
@@ -460,7 +448,7 @@ void evalfree (void *  );
 
 typedef unsigned char YY_CHAR;
 
-FILE *evalin = (FILE *) 0, *evalout = (FILE *) 0;
+FILE *evalin = NULL, *evalout = NULL;
 
 typedef int yy_state_type;
 
@@ -481,10 +469,7 @@ extern char *evaltext;
 static yy_state_type yy_get_previous_state (void );
 static yy_state_type yy_try_NUL_trans (yy_state_type current_state  );
 static int yy_get_next_buffer (void );
-#if defined(__GNUC__) && __GNUC__ >= 3
-__attribute__((__noreturn__))
-#endif
-static void yy_fatal_error (yyconst char msg[]  );
+static void yynoreturn yy_fatal_error (yyconst char* msg  );
 
 /* %endif */
 
@@ -494,7 +479,7 @@ static void yy_fatal_error (yyconst char msg[]  );
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
 /* %% [2.0] code to fiddle evaltext and evalleng for yymore() goes here \ */\
-	evalleng = (size_t) (yy_cp - yy_bp); \
+	evalleng = (int) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 /* %% [3.0] code to copy yytext_ptr to evaltext[] goes here, if %array \ */\
@@ -763,11 +748,11 @@ int eval_flex_debug = 1;
 
 static yyconst flex_int16_t yy_rule_linenum[51] =
     {   0,
-       82,   86,   92,  102,  108,  126,  133,  147,  148,  149,
-      150,  151,  152,  153,  154,  155,  156,  157,  158,  159,
-      160,  161,  162,  163,  164,  165,  166,  167,  168,  169,
-      170,  171,  172,  173,  174,  175,  176,  177,  178,  179,
-      180,  181,  182,  183,  184,  185,  186,  187,  188,  189
+       82,   87,   93,  103,  109,  127,  134,  148,  149,  150,
+      151,  152,  153,  154,  155,  156,  157,  158,  159,  160,
+      161,  162,  163,  164,  165,  166,  167,  168,  169,  170,
+      171,  172,  173,  174,  175,  176,  177,  178,  179,  180,
+      181,  182,  183,  184,  185,  186,  187,  188,  189,  190
     } ;
 
 static yy_state_type *yy_state_buf=0, *yy_state_ptr=0;
@@ -846,7 +831,7 @@ static isc::eval::location loc;
 // by moving it ahead by evalleng bytes. evalleng specifies the length of the
 // currently matched token.
 #define YY_USER_ACTION  loc.columns(evalleng);
-#line 850 "lexer.cc"
+#line 835 "lexer.cc"
 
 #define INITIAL 0
 
@@ -898,7 +883,7 @@ FILE *evalget_out (void );
 
 void evalset_out  (FILE * _out_str  );
 
-yy_size_t evalget_leng (void );
+			int evalget_leng (void );
 
 char *evalget_text (void );
 
@@ -972,7 +957,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( evaltext, evalleng, 1, evalout )) {} } while (0)
+#define ECHO do { if (fwrite( evaltext, (size_t) evalleng, 1, evalout )) {} } while (0)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
@@ -1000,7 +985,7 @@ static int input (void );
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, evalin))==0 && ferror(evalin)) \
+		while ( (result = (int) fread(buf, 1, max_size, evalin))==0 && ferror(evalin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -1143,7 +1128,7 @@ YY_DECL
     loc.step();
 
 
-#line 1147 "lexer.cc"
+#line 1132 "lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1174,7 +1159,7 @@ yy_match:
 				if ( yy_current_state >= 198 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
-			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+			yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
 			*(yy_state_ptr)++ = yy_current_state;
 			++yy_cp;
 			}
@@ -1267,7 +1252,7 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 86 "lexer.ll"
+#line 87 "lexer.ll"
 {
     // Newline found. Let's update the location and continue.
     loc.lines(evalleng);
@@ -1276,7 +1261,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 92 "lexer.ll"
+#line 93 "lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -1289,7 +1274,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 102 "lexer.ll"
+#line 103 "lexer.ll"
 {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
@@ -1298,7 +1283,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 108 "lexer.ll"
+#line 109 "lexer.ll"
 {
     // An integer was found.
     std::string tmp(evaltext);
@@ -1320,7 +1305,7 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 126 "lexer.ll"
+#line 127 "lexer.ll"
 {
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
@@ -1330,7 +1315,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 133 "lexer.ll"
+#line 134 "lexer.ll"
 {
     // IPv4 or IPv6 address
     std::string tmp(evaltext);
@@ -1347,229 +1332,229 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 147 "lexer.ll"
+#line 148 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 148 "lexer.ll"
+#line 149 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 149 "lexer.ll"
+#line 150 "lexer.ll"
 return isc::eval::EvalParser::make_RELAY4(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 150 "lexer.ll"
+#line 151 "lexer.ll"
 return isc::eval::EvalParser::make_RELAY6(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 151 "lexer.ll"
+#line 152 "lexer.ll"
 return isc::eval::EvalParser::make_PEERADDR(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 152 "lexer.ll"
+#line 153 "lexer.ll"
 return isc::eval::EvalParser::make_LINKADDR(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 153 "lexer.ll"
+#line 154 "lexer.ll"
 return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 154 "lexer.ll"
+#line 155 "lexer.ll"
 return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 155 "lexer.ll"
+#line 156 "lexer.ll"
 return isc::eval::EvalParser::make_EXISTS(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 156 "lexer.ll"
+#line 157 "lexer.ll"
 return isc::eval::EvalParser::make_PKT(loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 157 "lexer.ll"
+#line 158 "lexer.ll"
 return isc::eval::EvalParser::make_IFACE(loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 158 "lexer.ll"
+#line 159 "lexer.ll"
 return isc::eval::EvalParser::make_SRC(loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 159 "lexer.ll"
+#line 160 "lexer.ll"
 return isc::eval::EvalParser::make_DST(loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 160 "lexer.ll"
+#line 161 "lexer.ll"
 return isc::eval::EvalParser::make_LEN(loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 161 "lexer.ll"
+#line 162 "lexer.ll"
 return isc::eval::EvalParser::make_PKT4(loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 162 "lexer.ll"
+#line 163 "lexer.ll"
 return isc::eval::EvalParser::make_CHADDR(loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 163 "lexer.ll"
+#line 164 "lexer.ll"
 return isc::eval::EvalParser::make_HLEN(loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 164 "lexer.ll"
+#line 165 "lexer.ll"
 return isc::eval::EvalParser::make_HTYPE(loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 165 "lexer.ll"
+#line 166 "lexer.ll"
 return isc::eval::EvalParser::make_CIADDR(loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 166 "lexer.ll"
+#line 167 "lexer.ll"
 return isc::eval::EvalParser::make_GIADDR(loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 167 "lexer.ll"
+#line 168 "lexer.ll"
 return isc::eval::EvalParser::make_YIADDR(loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 168 "lexer.ll"
+#line 169 "lexer.ll"
 return isc::eval::EvalParser::make_SIADDR(loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 169 "lexer.ll"
+#line 170 "lexer.ll"
 return isc::eval::EvalParser::make_PKT6(loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 170 "lexer.ll"
+#line 171 "lexer.ll"
 return isc::eval::EvalParser::make_MSGTYPE(loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 171 "lexer.ll"
+#line 172 "lexer.ll"
 return isc::eval::EvalParser::make_TRANSID(loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 172 "lexer.ll"
+#line 173 "lexer.ll"
 return isc::eval::EvalParser::make_VENDOR(loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 173 "lexer.ll"
+#line 174 "lexer.ll"
 return isc::eval::EvalParser::make_VENDOR_CLASS(loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 174 "lexer.ll"
+#line 175 "lexer.ll"
 return isc::eval::EvalParser::make_DATA(loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 175 "lexer.ll"
+#line 176 "lexer.ll"
 return isc::eval::EvalParser::make_ENTERPRISE(loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 176 "lexer.ll"
+#line 177 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 177 "lexer.ll"
+#line 178 "lexer.ll"
 return isc::eval::EvalParser::make_ALL(loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 178 "lexer.ll"
+#line 179 "lexer.ll"
 return isc::eval::EvalParser::make_CONCAT(loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 179 "lexer.ll"
+#line 180 "lexer.ll"
 return isc::eval::EvalParser::make_NOT(loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 180 "lexer.ll"
+#line 181 "lexer.ll"
 return isc::eval::EvalParser::make_AND(loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 181 "lexer.ll"
+#line 182 "lexer.ll"
 return isc::eval::EvalParser::make_OR(loc);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 182 "lexer.ll"
+#line 183 "lexer.ll"
 return isc::eval::EvalParser::make_DOT(loc);
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 183 "lexer.ll"
+#line 184 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 184 "lexer.ll"
+#line 185 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 185 "lexer.ll"
+#line 186 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 186 "lexer.ll"
+#line 187 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 187 "lexer.ll"
+#line 188 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 188 "lexer.ll"
+#line 189 "lexer.ll"
 return isc::eval::EvalParser::make_ANY(loc);
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 189 "lexer.ll"
+#line 190 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(evaltext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 190 "lexer.ll"
+#line 191 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 191 "lexer.ll"
+#line 192 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1573 "lexer.cc"
+#line 1558 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1771,7 +1756,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1811,9 +1796,9 @@ static int yy_get_next_buffer (void)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((yy_size_t) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		yy_size_t new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
+		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) evalrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
@@ -1857,7 +1842,7 @@ static int yy_get_next_buffer (void)
 			if ( yy_current_state >= 198 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
-		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+		yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
 		*(yy_state_ptr)++ = yy_current_state;
 		}
 
@@ -1885,7 +1870,7 @@ static int yy_get_next_buffer (void)
 		if ( yy_current_state >= 198 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
 	yy_is_jam = (yy_current_state == 197);
 	if ( ! yy_is_jam )
 		*(yy_state_ptr)++ = yy_current_state;
@@ -1927,7 +1912,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1951,7 +1936,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( evalwrap( ) )
-						return EOF;
+						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -2271,7 +2256,7 @@ static void evalensure_buffer_stack (void)
 /* %if-c++-only */
 /* %endif */
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -2279,7 +2264,7 @@ static void evalensure_buffer_stack (void)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1; // After all that talk, this was set to 1 anyways...
+      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
 		(yy_buffer_stack) = (struct yy_buffer_state**)evalalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
@@ -2328,7 +2313,7 @@ YY_BUFFER_STATE eval_scan_buffer  (char * base, yy_size_t  size )
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return 0;
+		return NULL;
 
 	b = (YY_BUFFER_STATE) evalalloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
@@ -2337,7 +2322,7 @@ YY_BUFFER_STATE eval_scan_buffer  (char * base, yy_size_t  size )
 	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = 0;
+	b->yy_input_file = NULL;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
@@ -2362,7 +2347,7 @@ YY_BUFFER_STATE eval_scan_buffer  (char * base, yy_size_t  size )
 YY_BUFFER_STATE eval_scan_string (yyconst char * yystr )
 {
     
-	return eval_scan_bytes(yystr,strlen(yystr) );
+	return eval_scan_bytes(yystr,(int) strlen(yystr) );
 }
 /* %endif */
 
@@ -2374,7 +2359,7 @@ YY_BUFFER_STATE eval_scan_string (yyconst char * yystr )
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE eval_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE eval_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
@@ -2382,7 +2367,7 @@ YY_BUFFER_STATE eval_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_le
 	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = _yybytes_len + 2;
+	n = (yy_size_t) _yybytes_len + 2;
 	buf = (char *) evalalloc(n  );
 	if ( ! buf )
 		YY_FATAL_ERROR( "out of dynamic memory in eval_scan_bytes()" );
@@ -2410,7 +2395,7 @@ YY_BUFFER_STATE eval_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_le
 #endif
 
 /* %if-c-only */
-static void yy_fatal_error (yyconst char* msg )
+static void yynoreturn yy_fatal_error (yyconst char* msg )
 {
 			(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
@@ -2470,7 +2455,7 @@ FILE *evalget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t evalget_leng  (void)
+int evalget_leng  (void)
 {
         return evalleng;
 }
@@ -2540,10 +2525,10 @@ static int yy_init_globals (void)
     /* We do not touch evallineno unless the option is enabled. */
     evallineno =  1;
     
-    (yy_buffer_stack) = 0;
+    (yy_buffer_stack) = NULL;
     (yy_buffer_stack_top) = 0;
     (yy_buffer_stack_max) = 0;
-    (yy_c_buf_p) = (char *) 0;
+    (yy_c_buf_p) = NULL;
     (yy_init) = 0;
     (yy_start) = 0;
 
@@ -2557,8 +2542,8 @@ static int yy_init_globals (void)
     evalin = stdin;
     evalout = stdout;
 #else
-    evalin = (FILE *) 0;
-    evalout = (FILE *) 0;
+    evalin = NULL;
+    evalout = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
@@ -2624,7 +2609,7 @@ static int yy_flex_strlen (yyconst char * s )
 
 void *evalalloc (yy_size_t  size )
 {
-			return (void *) malloc( size );
+			return malloc(size);
 }
 
 void *evalrealloc  (void * ptr, yy_size_t  size )
@@ -2637,7 +2622,7 @@ void *evalrealloc  (void * ptr, yy_size_t  size )
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-	return (void *) realloc( (char *) ptr, size );
+	return realloc(ptr, size);
 }
 
 void evalfree (void * ptr )
@@ -2652,7 +2637,7 @@ void evalfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 191 "lexer.ll"
+#line 192 "lexer.ll"
 
 
 
