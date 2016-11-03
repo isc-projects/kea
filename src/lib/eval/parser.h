@@ -37,10 +37,10 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
-#ifndef YY_YY_PARSER_H_INCLUDED
-# define YY_YY_PARSER_H_INCLUDED
+#ifndef YY_EVAL_PARSER_H_INCLUDED
+# define YY_EVAL_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 16 "parser.yy" // lalr1.cc:377
+#line 17 "parser.yy" // lalr1.cc:377
 
 #include <string>
 #include <eval/token.h>
@@ -122,13 +122,21 @@ using namespace isc::eval;
 #endif
 
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 1
-#endif
+#ifndef EVALDEBUG
+# if defined YYDEBUG
+#if YYDEBUG
+#   define EVALDEBUG 1
+#  else
+#   define EVALDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define EVALDEBUG 1
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined EVALDEBUG */
 
-#line 13 "parser.yy" // lalr1.cc:377
+#line 14 "parser.yy" // lalr1.cc:377
 namespace isc { namespace eval {
-#line 132 "parser.h" // lalr1.cc:377
+#line 140 "parser.h" // lalr1.cc:377
 
 
 
@@ -291,7 +299,7 @@ namespace isc { namespace eval {
   class EvalParser
   {
   public:
-#ifndef YYSTYPE
+#ifndef EVALSTYPE
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
@@ -331,7 +339,7 @@ namespace isc { namespace eval {
     /// Symbol semantic values.
     typedef variant<sizeof(union_type)> semantic_type;
 #else
-    typedef YYSTYPE semantic_type;
+    typedef EVALSTYPE semantic_type;
 #endif
     /// Symbol locations.
     typedef location location_type;
@@ -719,7 +727,7 @@ namespace isc { namespace eval {
     /// \returns  0 iff parsing succeeded.
     virtual int parse ();
 
-#if YYDEBUG
+#if EVALDEBUG
     /// The current debugging stream.
     std::ostream& debug_stream () const YY_ATTRIBUTE_PURE;
     /// Set the current debugging stream.
@@ -814,7 +822,7 @@ namespace isc { namespace eval {
 
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
-#if YYDEBUG
+#if EVALDEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
   static const unsigned short int yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
@@ -1663,11 +1671,11 @@ namespace isc { namespace eval {
   }
 
 
-#line 13 "parser.yy" // lalr1.cc:377
+#line 14 "parser.yy" // lalr1.cc:377
 } } // isc::eval
-#line 1669 "parser.h" // lalr1.cc:377
+#line 1677 "parser.h" // lalr1.cc:377
 
 
 
 
-#endif // !YY_YY_PARSER_H_INCLUDED
+#endif // !YY_EVAL_PARSER_H_INCLUDED
