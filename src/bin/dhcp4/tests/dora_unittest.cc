@@ -13,6 +13,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/testutils/cql_schema.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -91,6 +92,9 @@ namespace {
 ///   - Simple configuration with a single subnet and single pool
 ///   - Using PostgreSQL lease database backend to store leases
 ///
+/// - Configuration 9:
+///   - Simple configuration with a single subnet and single pool
+///   - Using Cassandra lease database backend to store leases
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -299,6 +303,24 @@ const char* DORA_CONFIGS[] = {
         "},"
         "\"lease-database\": {"
         "   \"type\": \"postgresql\","
+        "   \"name\": \"keatest\","
+        "   \"user\": \"keatest\","
+        "   \"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        " } ]"
+    "}",
+
+// Configuration 9
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+        "   \"type\": \"cql\","
         "   \"name\": \"keatest\","
         "   \"user\": \"keatest\","
         "   \"password\": \"keatest\""
@@ -1557,12 +1579,12 @@ TEST_F(DORAMySQLTest, multiStageBoot) {
 // --with-dhcp-pgsql.
 #ifdef HAVE_PGSQL
 
-/// @brief Test fixture class for the test utilizing MySQL database backend.
+/// @brief Test fixture class for the test utilizing PostgreSQL database backend.
 class DORAPgSQLTest : public DORATest {
 public:
     /// @brief Constructor.
     ///
-    /// Recreats MySQL schema for a test.
+    /// Recreates PgSQL schema for a test.
     DORAPgSQLTest() : DORATest() {
         destroyPgSQLSchema();
         createPgSQLSchema();
@@ -1570,7 +1592,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Destroys MySQL schema.
+    /// Destroys PgSQL schema.
     virtual ~DORAPgSQLTest() {
         destroyPgSQLSchema();
     }
@@ -1581,6 +1603,36 @@ public:
 TEST_F(DORAPgSQLTest, multiStageBoot) {
     // DORA_CONFIGS[8] to be used for server configuration.
     testMultiStageBoot(8);
+}
+
+#endif
+
+#ifdef HAVE_CQL
+
+/// @brief Test fixture class for the test utilizing Cassandra database backend.
+class DORACQLTest : public DORATest {
+public:
+    /// @brief Constructor.
+    ///
+    /// Recreates CQL schema for a test.
+    DORACQLTest() : DORATest() {
+        destroyCqlSchema(false, true);
+        createCqlSchema(false, true);
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Destroys CQL schema.
+    virtual ~DORACQLTest() {
+        destroyCqlSchema(false, true);
+    }
+};
+
+// Test that the client using the same hardware address but multiple
+// client identifiers will obtain multiple leases (CQL lease database).
+TEST_F(DORACQLTest, multiStageBoot) {
+    // DORA_CONFIGS[9] to be used for server configuration.
+    testMultiStageBoot(9);
 }
 
 #endif
