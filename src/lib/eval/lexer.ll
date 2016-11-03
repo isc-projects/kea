@@ -43,7 +43,7 @@ static isc::eval::location loc;
 %option batch
 
 /* Enables debug mode. To see the debug messages, one needs to also set
-   yy_flex_debug to 1, then the debug messages will be printed on stderr. */
+   eval_flex_debug to 1, then the debug messages will be printed on stderr. */
 %option debug
 
 /* I have no idea what this option does, except it was specified in the bison
@@ -69,13 +69,13 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 // This code run each time a pattern is matched. It updates the location
 // by moving it ahead by yyleng bytes. yyleng specifies the length of the
 // currently matched token.
-#define YY_USER_ACTION  loc.columns(yyleng);
+#define YY_USER_ACTION  loc.columns(evalleng);
 %}
 
 %%
 
 %{
-    // Code run each time yylex is called.
+    // Code run each time evallex is called.
     loc.step();
 %}
 
@@ -85,7 +85,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 }
 [\n]+      {
     // Newline found. Let's update the location and continue.
-    loc.lines(yyleng);
+    loc.lines(evalleng);
     loc.step();
 }
 
@@ -93,7 +93,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
     // for 'foo' we should get foo
-    std::string tmp(yytext+1);
+    std::string tmp(evaltext+1);
     tmp.resize(tmp.size() - 1);
 
     return isc::eval::EvalParser::make_STRING(tmp, loc);
@@ -102,12 +102,12 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 0[xX]{hex} {
     // A hex string has been matched. It contains the '0x' or '0X' header
     // followed by at least one hexadecimal digit.
-    return isc::eval::EvalParser::make_HEXSTRING(yytext, loc);
+    return isc::eval::EvalParser::make_HEXSTRING(evaltext, loc);
 }
 
 {int} {
     // An integer was found.
-    std::string tmp(yytext);
+    std::string tmp(evaltext);
 
     try {
         // In substring we want to use negative values (e.g. -1).
@@ -127,12 +127,12 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     // This string specifies option name starting with a letter
     // and further containing letters, digits, hyphens and
     // underscores and finishing by letters or digits.
-    return isc::eval::EvalParser::make_OPTION_NAME(yytext, loc);
+    return isc::eval::EvalParser::make_OPTION_NAME(evaltext, loc);
 }
 
 {addr4}|{addr6} {
     // IPv4 or IPv6 address
-    std::string tmp(yytext);
+    std::string tmp(evaltext);
 
     // Some incorrect addresses can match so we have to check.
     try {
@@ -141,7 +141,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
         driver.error(loc, "Failed to convert " + tmp + " to an IP address.");
     }
 
-    return isc::eval::EvalParser::make_IP_ADDRESS(yytext, loc);
+    return isc::eval::EvalParser::make_IP_ADDRESS(evaltext, loc);
 }
 
 "=="           return isc::eval::EvalParser::make_EQUAL(loc);
@@ -186,7 +186,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "]"            return isc::eval::EvalParser::make_RBRACKET(loc);
 ","            return isc::eval::EvalParser::make_COMA(loc);
 "*"            return isc::eval::EvalParser::make_ANY(loc);
-.          driver.error (loc, "Invalid character: " + std::string(yytext));
+.          driver.error (loc, "Invalid character: " + std::string(evaltext));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 
@@ -196,9 +196,9 @@ void
 EvalContext::scanStringBegin()
 {
     loc.initialize(&file_);
-    yy_flex_debug = trace_scanning_;
+    eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = yy_scan_bytes(string_.c_str(), string_.size());
+    buffer = eval_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
@@ -208,7 +208,7 @@ EvalContext::scanStringBegin()
 void
 EvalContext::scanStringEnd()
 {
-    yy_delete_buffer(YY_CURRENT_BUFFER);
+    eval_delete_buffer(YY_CURRENT_BUFFER);
 }
 
 namespace {
