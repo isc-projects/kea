@@ -198,7 +198,7 @@ EvalContext::scanStringBegin()
     loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = yy_scan_bytes(string_.c_str(), string_.size());
+    buffer = eval_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
