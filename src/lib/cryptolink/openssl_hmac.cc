@@ -163,8 +163,6 @@ public:
         if (len > size) {
             len = size;
         }
-        // digest.size() == size by construction
-        // if you are not convinced, add an assert()
         return (digest.same(sig, len));
     }
 

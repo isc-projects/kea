@@ -194,8 +194,6 @@ public:
             if (digest_.empty()) {
                 digest_ = hmac_->final();
             }
-            // digest_.size() == size by construction
-            // if you are not convinced, add an assert()
             return (Botan::same_mem(&digest_[0],
                                     static_cast<const unsigned char*>(sig),
                                     len));
