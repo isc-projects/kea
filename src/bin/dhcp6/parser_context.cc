@@ -31,13 +31,20 @@ Parser6Context::parseString(const std::string& str)
     string_ = str;
     scanStringBegin();
     isc::dhcp::Dhcp6Parser parser(*this);
+    // Uncomment this to get detailed parser logs.
+    // trace_parsing_ = true;
     parser.set_debug_level(trace_parsing_);
     int res = parser.parse();
     if (res != 0) {
-
+        // @todo: handle exception here
     }
     scanStringEnd();
-    return (*stack_.end());
+    if (stack_.size() == 1) {
+        return (stack_[0]);
+    } else {
+        isc_throw(BadValue, "Expected exactly one terminal Element, found "
+                  << stack_.size());
+    }
 }
 
 void

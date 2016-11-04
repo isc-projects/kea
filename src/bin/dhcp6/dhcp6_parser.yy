@@ -8,6 +8,7 @@
 %require "3.0.0"
 %defines
 %define parser_class_name {Dhcp6Parser}
+%define api.prefix {parser6_}
 %define api.token.constructor
 %define api.value.type variant
 %define api.namespace {isc::dhcp}
@@ -55,7 +56,6 @@ using namespace std;
 
 %type <ElementPtr> value
 
-
 %printer { yyoutput << $$; } <*>;
 
 %%
@@ -69,37 +69,50 @@ value : INTEGER { $$ = ElementPtr(new IntElement($1)); }
      | BOOLEAN { $$ = ElementPtr(new BoolElement($1)); }
      | STRING { $$ = ElementPtr(new StringElement($1)); }
      | NULL_TYPE { $$ = ElementPtr(new NullElement()); }
-     | map { $$ = ElementPtr(new MapElement()); }
-     | list { $$ = ElementPtr(new ListElement()); }
+     | map { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
+     | list { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
     ;
 
 
 map: LCURLY_BRACKET {
-    ctx.stack_.push_back(ElementPtr(new MapElement()));
- } map_content RCURLY_BRACKET {
-     ctx.stack_.pop_back();
- };
+    // This code is executed when we're about to start parsing
+    // the content of the map
+    ElementPtr m(new MapElement());
+    ctx.stack_.push_back(m);
+} map_content RCURLY_BRACKET {
+    // map parsing completed. If we ever want to do any wrap up
+    // (maybe some sanity checking), this would be the best place
+    // for it.
+};
 
 // Assignments rule
 map_content:  { /* do nothing, it's an empty map */ }
     | STRING COLON value {
-        (*ctx.stack_.end())->set($1, $3);
+        // map containing a single entry
+        ctx.stack_.back()->set($1, $3);
     }
-    | map COMMA STRING COLON value {
-        (*ctx.stack_.end())->set($3, $5);
+    | map_content COMMA STRING COLON value {
+        // map consisting of a shorter map followed by comma and string:value
+        ctx.stack_.back()->set($3, $5);
     }
     ;
 
-list: LSQUARE_BRACKET list_content RSQUARE_BRACKET { };
+list: LSQUARE_BRACKET {
+    // List parsing about to start
+    ElementPtr l(new ListElement());
+    ctx.stack_.push_back(l);
+} list_content RSQUARE_BRACKET {
+    // list parsing complete. Put any sanity checking here
+};
 
 list_content: { /* do nothing, it's an empty list */ }
     | value {
         // List consisting of a single element.
-        (*ctx.stack_.end())->add($1);
+        ctx.stack_.back()->add($1);
     }
-    | list COMMA value {
+    | list_content COMMA value {
         // List ending with , and a value.
-        (*ctx.stack_.end())->add($3);
+        ctx.stack_.back()->add($3);
     }
     ;
 
