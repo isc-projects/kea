@@ -8,5 +8,5 @@ libkea_exceptions_la_SOURCES = exceptions.h exceptions.cc
 
 CLEANFILES = *.gcno *.gcda
 
-libkea_exceptions_includedir = $(includedir)/$(PACKAGE_NAME)/exceptions
+libkea_exceptions_includedir = $(pkgincludedir)/exceptions
 libkea_exceptions_include_HEADERS = exceptions.h
