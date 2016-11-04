@@ -36,17 +36,11 @@ public:
 
     explicit SecBuf() : vec_(std::vector<T>()) {}
 
-    explicit SecBuf(size_t n, const T& value = T()) :
-        vec_(std::vector<T>(n, value))
-    {}
+    explicit SecBuf(size_t n, const T& value = T()) : vec_(n, value) {}
 
-    SecBuf(iterator first, iterator last) :
-        vec_(std::vector<T>(first, last))
-    {}
+    SecBuf(iterator first, iterator last) : vec_(first, last) {}
 
-    SecBuf(const_iterator first, const_iterator last) :
-        vec_(std::vector<T>(first, last))
-    {}
+    SecBuf(const_iterator first, const_iterator last) : vec_(first, last) {}
 
     SecBuf(const std::vector<T>& x) : vec_(x) {}
 
