@@ -14,7 +14,7 @@
 #include <exceptions/exceptions.h>
 
 // Tell Flex the lexer's prototype ...
-#define YY_DECL isc::dhcp::Dhcp6Parser::symbol_type yylex (Parser6Context& driver)
+#define YY_DECL isc::dhcp::Dhcp6Parser::symbol_type parser6_lex (Parser6Context& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;
@@ -45,7 +45,7 @@ public:
     virtual ~Parser6Context();
 
     /// @brief JSON elements being parsed.
-    std::vector<ElementPtr> stack_;
+    std::vector<isc::data::ElementPtr> stack_;
 
     /// @brief Method called before scanning starts on a string.
     void scanStringBegin();

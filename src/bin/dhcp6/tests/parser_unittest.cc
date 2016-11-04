@@ -13,15 +13,67 @@ using namespace std;
 
 namespace {
 
-TEST(ParserTest, basic) {
+void compareJSON(ConstElementPtr a, ConstElementPtr b) {
+    std::cout << a->str() << std::endl;
+    std::cout << b->str() << std::endl;
+    EXPECT_EQ(a->str(), b->str());
+}
 
-    Parser6Context ctx;
+void testParser(const std::string& txt) {
+    ElementPtr reference_json;
+    ConstElementPtr test_json;
 
-    string txt = "{ \"Dhcp6\": { } }";
+    EXPECT_NO_THROW(reference_json = Element::fromJSON(txt, true));
+    EXPECT_NO_THROW({
+        Parser6Context ctx;
+        test_json = ctx.parseString(txt);
+    });
 
-    ConstElementPtr json = ctx.parseString(txt);
+    // Now compare if both representations are the same.
+    compareJSON(reference_json, test_json);
+}
 
-    ASSERT_TRUE(json);
+TEST(ParserTest, mapInMap) {
+    string txt = "{ \"Dhcp6\": { \"foo\": 123, \"baz\": 456 } }";
+    testParser(txt);
+}
+
+TEST(ParserTest, listInList) {
+    string txt = "{ \"countries\": [ [ \"Britain\", \"Wales\", \"Scotland\" ], "
+                                    "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ] }";
+    testParser(txt);
+}
+
+TEST(ParserTest, nestedMaps) {
+    string txt = "{ \"europe\": { \"UK\": { \"London\": { \"street\": \"221B Baker\" }}}}";
+    testParser(txt);
+}
+
+TEST(ParserTest, nestedLists) {
+    string txt = "{ \"unity\": [ \"half\", [ \"quarter\", [ \"eighth\", [ \"sixteenth\" ]]]] }";
+    testParser(txt);
+}
+
+TEST(ParserTest, listsInMaps) {
+    string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelguese\" ], "
+                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+    testParser(txt);
+}
+
+TEST(ParserTest, mapsInLists) {
+    string txt = "{ \"solar-system\": [ { \"name\": \"earth\", \"gravity\": 1.0 },"
+                                      " { \"name\": \"mars\", \"gravity\": 0.376 } ] }";
+    testParser(txt);
+}
+
+TEST(ParserTest, types) {
+    string txt = "{ \"string\": \"foo\","
+                   "\"integer\": 42,"
+                   "\"boolean\": true,"
+                   "\"map\": { \"foo\": \"bar\" },"
+                   "\"list\": [ 1, 2, 3 ],"
+                   "\"null\": null }";
+    testParser(txt);
 }
 
 };
