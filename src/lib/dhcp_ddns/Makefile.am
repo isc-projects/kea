@@ -48,3 +48,10 @@ libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-thread
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp_ddns_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+
+# Specify the headers for copying into the installation directory tree.
+libkea_dhcp_ddns_includedir = $(pkgincludedir)/dhcp_ddns
+libkea_dhcp_ddns_include_HEADERS = \
+   ncr_io.h \
+   ncr_msg.h \
+   ncr_udp.h
