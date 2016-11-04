@@ -14,6 +14,8 @@ using namespace std;
 namespace {
 
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
     std::cout << a->str() << std::endl;
     std::cout << b->str() << std::endl;
     EXPECT_EQ(a->str(), b->str());
@@ -31,6 +33,20 @@ void testParser(const std::string& txt) {
 
     // Now compare if both representations are the same.
     compareJSON(reference_json, test_json);
+}
+
+void testParser2(const std::string& txt) {
+    ConstElementPtr test_json;
+
+    EXPECT_NO_THROW({
+        Parser6Context ctx;
+        test_json = ctx.parseString(txt);
+    });
+    /// @todo: Implement actual validation here. since the original
+    /// Element::fromJSON does not support several comment types, we don't
+    /// have anything to compare with.
+    std::cout << "Original text:" << txt << endl;
+    std::cout << "Parsed text  :" << test_json->str() << endl;
 }
 
 TEST(ParserTest, mapInMap) {
@@ -74,6 +90,78 @@ TEST(ParserTest, types) {
                    "\"list\": [ 1, 2, 3 ],"
                    "\"null\": null }";
     testParser(txt);
+}
+
+TEST(ParserTest, bashComments) {
+    string txt= "{ \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"preferred-lifetime\": 3000,\n"
+                "# this is a comment\n"
+                "\"rebind-timer\": 2000, \n"
+                "# lots of comments here\n"
+                "# and here\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet6\": [ { "
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface-id\": \"\","
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"valid-lifetime\": 4000 }";
+    testParser(txt);
+}
+
+TEST(ParserTest, cComments) {
+    string txt= "{ \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"preferred-lifetime\": 3000, // this is a comment \n"
+                "\"rebind-timer\": 2000, // everything after // is ignored\n"
+                "\"renew-timer\": 1000, // this will be ignored, too\n"
+                "\"subnet6\": [ { "
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface-id\": \"\","
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"valid-lifetime\": 4000 }";
+    testParser2(txt);
+}
+
+TEST(ParserTest, bashComments2) {
+    string txt= "{ \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"preferred-lifetime\": 3000, # this is a comment \n"
+                "\"rebind-timer\": 2000, # everything after # is ignored\n"
+                "\"renew-timer\": 1000, # this will be ignored, too\n"
+                "\"subnet6\": [ { "
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface-id\": \"\","
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"valid-lifetime\": 4000 }";
+    testParser2(txt);
+}
+
+TEST(ParserTest, multilineComments) {
+    string txt= "{ \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
+                "that\n can \n span \n multiple \n lines */ \n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet6\": [ { "
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface-id\": \"\","
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"valid-lifetime\": 4000 }";
+    testParser2(txt);
 }
 
 };
