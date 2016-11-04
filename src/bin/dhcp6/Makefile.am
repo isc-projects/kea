@@ -125,7 +125,7 @@ location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
 	$(YACC) --defines=dhcp6_parser.h -o dhcp6_parser.cc dhcp6_parser.yy
 
 dhcp6_lexer.cc: dhcp6_lexer.ll
-	$(LEX) -o dhcp6_lexer.cc dhcp6_lexer.ll
+	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll
 
 else
 
