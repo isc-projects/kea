@@ -1,3 +1,9 @@
+1186.	[func]		marcin
+	Support for DHCPv6 options defined in RFC6603 and RFC7598. Thanks
+	to Andrei Pavel and Cristian Secareanu of Qualitance for submitting
+	initial implementation.
+	(Trac #github24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
+
 1185.	[build]		marcin
 	Install Kea headers to be used for building external libraries.
 	Before this change some required headers were not installed.
