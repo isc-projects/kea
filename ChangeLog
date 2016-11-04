@@ -1,3 +1,8 @@
+1185.	[build]		marcin
+	Install Kea headers to be used for building external libraries.
+	Before this change some required headers were not installed.
+	(Trac #5055, git a46087b7b7face4a1318658bbdcbf7602c1bb729)
+
 1184.	[bug]		eest
 	Fixes in the occasionally failing LFC unit test. This
 	fix was provided by Patrik Lundin.
