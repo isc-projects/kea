@@ -218,6 +218,22 @@ EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 # Specification file
 EXTRA_DIST += logging.spec
 
+# Specify the headers for copying into the installation directory tree. The
+# following headers are anticipated to be useful for the user libraries.
+libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
+libkea_dhcpsrv_include_HEADERS = \
+    cfg_option.h \
+    cfg_4o6.h \
+    d2_client_cfg.h \
+    d2_client_mgr.h \
+    key_from_key.h \
+    lease.h \
+    ncr_generator.h \
+    pool.h \
+    subnet.h \
+    subnet_id.h \
+    triplet.h
+
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
 

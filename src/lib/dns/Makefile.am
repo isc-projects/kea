@@ -176,7 +176,7 @@ s-rdatacode: Makefile $(EXTRA_DIST)
 
 #rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: s-rdatacode
 
-libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
+libdns___includedir = $(pkgincludedir)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \

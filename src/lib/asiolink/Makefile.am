@@ -41,4 +41,17 @@ libkea_asiolink_la_LIBADD += $(BOOST_LIBS)
 
 # IOAddress is sometimes used in user-library code
 libkea_asiolink_includedir = $(pkgincludedir)/asiolink
-libkea_asiolink_include_HEADERS = io_address.h
+libkea_asiolink_include_HEADERS = \
+    asiolink.h \
+    asio_wrapper.h \
+	interval_timer.h \
+    io_address.h \
+	io_asio_socket.h \
+	io_endpoint.h \
+	io_error.h \
+	io_service.h \
+	io_socket.h \
+	tcp_endpoint.h \
+    tcp_socket.h \
+	udp_endpoint.h \
+    udp_socket.h
