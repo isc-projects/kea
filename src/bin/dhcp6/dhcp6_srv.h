@@ -475,8 +475,13 @@ protected:
     ///
     /// @param question client's message
     /// @param answer server's message (options will be added here)
+    /// @param [out] ctx client context. This method sets the
+    /// ctx.pd_exclude_requested_ field to 'true' if the Prefix Exclude
+    /// option has been requested.
+    ///
     /// @param co_list configured option list
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                AllocEngine::ClientContext6& ctx,
                                 const CfgOptionList& co_list);
 
     /// @brief Appends requested vendor options to server's answer.
@@ -799,6 +804,15 @@ private:
     /// @brief Updates statistics for received packets
     /// @param query packet received
     static void processStatsReceived(const Pkt6Ptr& query);
+
+    /// @brief Checks if the specified option code has been requested using
+    /// the Option Request option.
+    ///
+    /// @param query Pointer to the client's query.
+    /// @parma code Option code.
+    ///
+    /// @return true if option has been requested in the ORO.
+    bool requestedInORO(const Pkt6Ptr& query, const uint16_t code) const;
 
     /// UDP port number on which server listens.
     uint16_t port_;

@@ -10,17 +10,17 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
-#include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -28,6 +28,7 @@
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using namespace std;
 using namespace isc::util;
@@ -565,6 +566,87 @@ OptionDefinition::writeToBuffer(const std::string& value,
             OptionDataTypeUtil::writeAddress(address, buf);
             return;
         }
+    case OPT_IPV6_PREFIX_TYPE:
+        {
+            std::string txt = value;
+
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
+
+            // Is this prefix/len notation?
+            size_t pos = txt.find("/");
+
+            if (pos == string::npos) {
+                isc_throw(BadDataTypeCast, "provided address/prefix "
+                          << value
+                          << " is not valid.");
+            }
+
+            std::string txt_address = txt.substr(0, pos);
+            isc::asiolink::IOAddress address = isc::asiolink::IOAddress(txt_address);
+            if (!address.isV6()) {
+                isc_throw(BadDataTypeCast, "provided address "
+                          << txt_address
+                          << " is not a valid IPv4 or IPv6 address.");
+            }
+
+            std::string txt_prefix = txt.substr(pos + 1);
+            uint8_t len = 0;
+            try {
+                // start with the first character after /
+                len = lexicalCastWithRangeCheck<uint8_t>(txt_prefix);
+            } catch (...)  {
+                isc_throw(BadDataTypeCast, "provided prefix "
+                          << txt_prefix
+                          << " is not valid.");
+            }
+
+
+            // Write a prefix.
+            OptionDataTypeUtil::writePrefix(PrefixLen(len), address, buf);
+
+            return;
+    }
+    case OPT_PSID_TYPE:
+    {
+        std::string txt = value;
+
+        // first let's remove any whitespaces
+        boost::erase_all(txt, " "); // space
+        boost::erase_all(txt, "\t"); // tabulation
+
+        // Is this prefix/len notation?
+        size_t pos = txt.find("/");
+
+        if (pos == string::npos) {
+            isc_throw(BadDataTypeCast, "provided PSID value "
+                      << value << " is not valid");
+        }
+
+        const std::string txt_psid = txt.substr(0, pos);
+        const std::string txt_psid_len = txt.substr(pos + 1);
+
+        uint16_t psid = 0;
+        uint8_t psid_len = 0;
+
+        try {
+            psid = lexicalCastWithRangeCheck<uint16_t>(txt_psid);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided PSID "
+                      << txt_psid << " is not valid");
+        }
+
+        try {
+            psid_len = lexicalCastWithRangeCheck<uint8_t>(txt_psid_len);
+        } catch (...)  {
+            isc_throw(BadDataTypeCast, "provided PSID length "
+                      << txt_psid_len << " is not valid");
+        }
+
+        OptionDataTypeUtil::writePsid(PSIDLen(psid_len), PSID(psid), buf);
+        return;
+    }
     case OPT_STRING_TYPE:
         OptionDataTypeUtil::writeString(value, buf);
         return;
@@ -697,6 +779,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         } else if (getCode() == D6O_BOOTFILE_PARAM && haveOpaqueDataTuplesFormat()) {
             // Bootfile params (option code 60)
             return (OptionPtr(new OptionOpaqueDataTuples(Option::V6, getCode(), begin, end)));
+        } else if ((getCode() == D6O_PD_EXCLUDE) && haveType(OPT_IPV6_PREFIX_TYPE)) {
+            // Prefix Exclude (option code 67)
+            return (OptionPtr(new Option6PDExclude(begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {

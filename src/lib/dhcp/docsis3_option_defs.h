@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,8 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
 };
 
 /// Number of option definitions defined.
-const int DOCSIS3_V6_DEFS_SIZE  = sizeof(DOCSIS3_V6_DEFS) / sizeof(OptionDefParams);
+const int DOCSIS3_V6_DEFS_SIZE =
+    sizeof(DOCSIS3_V6_DEFS) / sizeof(DOCSIS3_V6_DEFS[0]);
 
 /// The class as specified in vendor-class option by the devices
 extern const char* DOCSIS3_CLASS_EROUTER;

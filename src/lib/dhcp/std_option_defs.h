@@ -10,6 +10,7 @@
 #include <dhcp/option_data_types.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 
 namespace isc {
 namespace dhcp {
@@ -36,18 +37,6 @@ namespace {
 #define NO_RECORD_DEF 0, 0
 #endif
 
-/// @brief Parameters being used to make up an option definition.
-struct OptionDefParams {
-    const char* name;              // option name
-    uint16_t code;                 // option code
-    OptionDataType type;           // data type
-    bool array;                    // is array
-    const OptionDataType* records; // record fields
-    size_t records_size;           // number of fields in a record
-    const char* encapsulates;      // option space encapsulated by
-                                   // the particular option.
-};
-
 // fqdn option record fields.
 //
 // Note that the flags field indicates the type of domain
@@ -72,7 +61,7 @@ RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
-const OptionDefParams OPTION_DEF_PARAMS4[] = {
+const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "time-offset", DHO_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
@@ -230,9 +219,8 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
 };
 
 /// Number of option definitions defined.
-const int OPTION_DEF_PARAMS_SIZE4  =
-    sizeof(OPTION_DEF_PARAMS4) / sizeof(OPTION_DEF_PARAMS4[0]);
-
+const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
+    sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
 
 /// Start Definition of DHCPv6 options
 
@@ -257,6 +245,13 @@ RECORD_DECL(LQ_QUERY_RECORDS, OPT_UINT8_TYPE, OPT_IPV6_ADDRESS_TYPE);
 RECORD_DECL(LQ_RELAY_DATA_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_BINARY_TYPE);
 // remote-id
 RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+// s46-rule
+RECORD_DECL(S46_RULE, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
+// s46-v4v6bind
+RECORD_DECL(S46_V4V6BIND, OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
+// s46-portparams
+RECORD_DECL(S46_PORTPARAMS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 // status-code
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
@@ -280,7 +275,7 @@ RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 /// This however does not work on Solaris (GCC) which issues a
 /// warning about lack of initializers for some struct members
 /// causing build to fail.
-const OptionDefParams OPTION_DEF_PARAMS6[] = {
+const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "clientid", D6O_CLIENTID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "serverid", D6O_SERVERID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "ia-na", D6O_IA_NA, OPT_RECORD_TYPE, false, RECORD_DEF(IA_NA_RECORDS), "" },
@@ -366,6 +361,7 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
+    { "pd-exclude", D6O_PD_EXCLUDE, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
@@ -378,7 +374,14 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
     { "signature", D6O_SIGNATURE, OPT_RECORD_TYPE, false,
       RECORD_DEF(SIGNATURE_RECORDS), "" },
     { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" }
+      NO_RECORD_DEF, "" },
+    { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPE_V6_OPTION_SPACE },
+    { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPT_V6_OPTION_SPACE },
+    { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        LW_V6_OPTION_SPACE }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
@@ -386,8 +389,17 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
 };
 
 /// Number of option definitions defined.
-const int OPTION_DEF_PARAMS_SIZE6  =
-    sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
+const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(STANDARD_V6_OPTION_DEFINITIONS) /
+    sizeof(STANDARD_V6_OPTION_DEFINITIONS[0]);
+
+// Option definitions that belong to two or more option spaces are defined here.
+const OptionDefParams OPTION_DEF_PARAMS_S46_BR = { "s46-br", D6O_S46_BR,
+    OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" };
+const OptionDefParams OPTION_DEF_PARAMS_S46_RULE = { "s46-rule", D6O_S46_RULE,
+    OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE };
+const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
+    D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" };
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
@@ -395,12 +407,65 @@ const int OPTION_DEF_PARAMS_SIZE6  =
 ///
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h
-const OptionDefParams ISC_V6_DEFS[] = {
-    { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" }
+const OptionDefParams ISC_V6_OPTION_DEFINITIONS[] = {
+    { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false,
+        NO_RECORD_DEF, "" },
+    { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE,
+        false, NO_RECORD_DEF, "" }
 };
 
-const int ISC_V6_DEFS_SIZE = sizeof(ISC_V6_DEFS) / sizeof(OptionDefParams);
+const int ISC_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(ISC_V6_OPTION_DEFINITIONS) /
+    sizeof(ISC_V6_OPTION_DEFINITIONS[0]);
+
+/// @brief MAPE option definitions
+const OptionDefParams MAPE_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_BR,
+    OPTION_DEF_PARAMS_S46_RULE
+};
+
+const int MAPE_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(MAPE_V6_OPTION_DEFINITIONS) /
+    sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
+
+/// @brief MAPT option definitions
+const OptionDefParams MAPT_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_RULE,
+    { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" }
+};
+
+const int MAPT_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(MAPT_V6_OPTION_DEFINITIONS) /
+    sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
+
+/// @brief LW option definitions
+const OptionDefParams LW_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_BR,
+    { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false,
+        RECORD_DEF(S46_V4V6BIND), V4V6_BIND_OPTION_SPACE }
+};
+
+const int LW_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(LW_V6_OPTION_DEFINITIONS) /
+    sizeof(LW_V6_OPTION_DEFINITIONS[0]);
+
+/// @brief Rule option definitions
+const OptionDefParams V4V6_RULE_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
+};
+
+const int V4V6_RULE_OPTION_DEFINITIONS_SIZE =
+    sizeof(V4V6_RULE_OPTION_DEFINITIONS) /
+    sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
+
+/// @brief Bind option definitions
+const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
+};
+
+const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
+    sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
+    sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
 
 } // unnamed namespace
 

@@ -182,7 +182,7 @@ TEST(CfgOptionDefTest, get) {
     // Check that an option definition can be added to the standard
     // (dhcp4 and dhcp6) option spaces when the option code is not
     // reserved by the standard option.
-    OptionDefinitionPtr def6(new OptionDefinition("option-foo", 79, "uint16"));
+    OptionDefinitionPtr def6(new OptionDefinition("option-foo", 1000, "uint16"));
     EXPECT_NO_THROW(cfg.add(def6, DHCP6_OPTION_SPACE));
 
     OptionDefinitionPtr def4(new OptionDefinition("option-foo", 222, "uint16"));

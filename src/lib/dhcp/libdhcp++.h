@@ -27,38 +27,35 @@ public:
     /// Map of factory functions.
     typedef std::map<unsigned short, Option::Factory*>  FactoryMap;
 
-    /// @brief Return collection of option definitions.
+    /// @brief Returns collection of option definitions.
     ///
-    /// Method returns the collection of DHCP standard DHCP
-    /// option definitions.
-    /// @todo DHCPv4 option definitions are not implemented. For now
-    /// this function will throw isc::NotImplemented in case of attempt
-    /// to get option definitions for V4 universe.
+    /// This method returns a collection of option definitions for a specified
+    /// option space.
     ///
-    /// @param u universe of the options (V4 or V6).
+    /// @param space Option space.
     ///
     /// @return Pointer to a collection of option definitions.
-    static const OptionDefContainerPtr& getOptionDefs(const Option::Universe u);
+    static const OptionDefContainerPtr& getOptionDefs(const std::string& space);
 
     /// @brief Return the first option definition matching a
     /// particular option code.
     ///
-    /// @param u universe (V4 or V6)
+    /// @param space option space.
     /// @param code option code.
     ///
     /// @return reference to an option definition being requested
     /// or NULL pointer if option definition has not been found.
-    static OptionDefinitionPtr getOptionDef(const Option::Universe u,
+    static OptionDefinitionPtr getOptionDef(const std::string& space,
                                             const uint16_t code);
 
     /// @brief Return the definition of option having a specified name.
     ///
-    /// @param u universe (v4 or V6)
+    /// @param space option space.
     /// @param name Option name.
     ///
     /// @return Pointer to the option definition or NULL pointer if option
     /// definition has not been found.
-    static OptionDefinitionPtr getOptionDef(const Option::Universe u,
+    static OptionDefinitionPtr getOptionDef(const std::string& option_space,
                                             const std::string& name);
 
     /// @brief Returns vendor option definition for a given vendor-id and code
@@ -114,21 +111,6 @@ public:
     /// @return Pointer to the container holding option definitions or NULL.
     static OptionDefContainerPtr
     getRuntimeOptionDefs(const std::string& space);
-
-    /// @brief Check if the specified option is a standard option.
-    ///
-    /// @param u universe (V4 or V6)
-    /// @param code option code.
-    ///
-    /// @return true if the specified option is a standard option.
-    /// @todo We already create option definitions for the subset if
-    /// standard options. We are aiming that this function checks
-    /// the presence of the standard option definition and if it finds
-    /// it, then the true value is returned. However, at this point
-    /// this is not doable because some of the definitions (for less
-    /// important options) are not created yet.
-    static bool isStandardOption(const Option::Universe u,
-                                 const uint16_t code);
 
     /// @brief Factory function to create instance of option.
     ///
@@ -376,6 +358,9 @@ private:
 
     /// Container with DHCPv6 option definitions.
     static OptionDefContainerPtr v6option_defs_;
+
+    /// Container that holds option definitions for various option spaces.
+    static OptionDefContainers option_defs_;
 
     /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;
