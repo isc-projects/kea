@@ -799,7 +799,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section>
-<!-- @todo: add real meat to the prefix delegation config this is just place holder stuff -->
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
@@ -833,6 +832,42 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
       </para>
+
+    </section>
+
+    <section id="pd-exclude-option">
+        <title>Prefix Exclude Option</title>
+        <para>
+          For each delegated prefix the delegating router may choose to exclude
+          a single prefix out of the delegated prefix as specified in the
+          <ulink url="http://tools.ietf.org/html/rfc6603"> RFC 6603</ulink>.
+          The requesting router must not assign the excluded prefix to any
+          of its downstream interfaces and it is intended to be used on a
+          link through which the delegating router exchanges DHCPv6 messages with
+          the requesting router. The configuration example below demonstrates how
+          to specify an excluded prefix within a prefix pool definition. The
+          excluded prefix "2001:db8:1:babe:cafe:80::/72" will be sent to a
+          requesting router which includes Prefix Exclude option in the ORO, and
+          which is delegated a prefix from this pool.
+        </para>
+<screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/48",
+            "pd-pools": [
+                {
+                    "prefix": "2001:db8:1:8000::",
+                    "prefix-len": 48,
+                    "delegated-len": 64,
+                    "excluded-prefix": "2001:db8:1:babe:cafe:80::",
+                    "excluded-prefix-len": 72
+                }
+            ]
+        }
+    ]
+}
+</screen>
     </section>
 
     <section id="dhcp6-std-options">
@@ -1110,11 +1145,21 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>bootfile-param</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>client-arch-type</entry><entry>61</entry><entry>uint16</entry><entry>true</entry></row>
 <row><entry>nii</entry><entry>62</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry></row>
+<row><entry>aftr-name</entry><entry>64</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>pd-exclude</entry><entry>67</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
 <!-- <row><entry>dhcpv4-message</entry><entry>87</entry><entry>binary</entry><entry>false</entry></row> -->
 <row><entry>dhcp4o6-server-addr</entry><entry>88</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>s46-rule</entry><entry>89</entry><entry>record (uint8, uint8, uint8, ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
+<row><entry>s46-br</entry><entry>90</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<row><entry>s46-dmr</entry><entry>91</entry><entry>ipv6-prefix</entry><entry>false</entry></row>
+<row><entry>s46-v4v6bind</entry><entry>92</entry><entry>record (ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
+<row><entry>s46-portparams</entry><entry>93</entry><entry>record(uint8, psid)</entry><entry>false</entry></row>
+<row><entry>s46-cont-mape</entry><entry>94</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>s46-cont-mapt</entry><entry>95</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>s46-cont-lw</entry><entry>96</entry><entry>empty</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
       </table>
@@ -1140,6 +1185,187 @@ temporarily override a list of interface names and listen on all interfaces.
         </tgroup>
       </table>
     </para>
+    </section>
+
+    <section id="s46-options">
+      <title>Common Softwire46 Options</title>
+      <para>
+        Softwire46 options are involved in IPv4 over IPv6 provisioning by
+        means of tunneling or translation as specified in the
+        <ulink url="http://tools.ietf.org/html/rfc7598">RFC 7598</ulink>.
+        The following sections provide configuration examples of these
+        options.
+      </para>
+
+      <section id="s46-containers">
+      <title>Softwire46 Container Options</title>
+      <para>
+        S46 container options group rules and optional port parameters
+        for a specified domain. There are three container options specified
+        in the "dhcp6" (top level) option space: MAP-E Container option,
+        MAP-T Container option and S46 Lieghtweight 4over6 Container option.
+        These options only contain encapsulated options specified below.
+        They do not include any data fields.
+      </para>
+
+      <para>
+        In order to configure the server to send specific container option
+        along with all encapsulated options, the container option must be
+        included in the server configuration as shown below:
+<screen>
+"Dhcp6": {
+    ...
+    "option-data": [
+        {
+            "name": "s46-cont-mape"
+        } ],
+    ...
+}
+</screen>
+
+        This configuration will cause the server to include MAP-E Container
+        option to the client. Use "s46-cont-mapt" or "s46-cont-lw" for the
+        MAP-T Container and S46 Lightweight 4over6 Container options
+        respectively.
+      </para>
+
+      <para>
+        All remaining softwire options described below are included in one
+        of the container options. Thus, they have to be included in appropriate
+        option spaces by selecting a "space" name, which specifies in which
+        option they are supposed to be included.
+      </para>
+    </section>
+
+      <section>
+        <title>S46 Rule Option</title>
+        <para>
+          The S46 Rule option is used for conveying the Basic Mapping Rule (BMR)
+          and Forwarding Mapping Rule (FMR).
+<screen>
+{
+    "space": "s46-cont-mape-options",
+    "name": "s46-rule",
+    "data": "128, 0, 24, 192.0.2.0, 2001:db8:1::/64"
+}
+</screen>
+         Other possible "space" value is "s46-cont-mapt-options".
+        </para>
+
+        <para>
+          The S46 Rule option conveys a number of parameters:
+
+      <itemizedlist>
+        <listitem>
+          <simpara><command>flags</command>, an unsigned 8 bits integer, with
+          currently only the most significant bit specified. It denotes whether
+          the rule can be used for forwarding (128) or not (0).
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>ea-len</command>, an 8 bits long Embedded Address length. Allowed values
+          range from 0 to 48.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv4 prefix length</command>, 8 bits long; expresses the prefix length of the
+          Rule IPv4 prefix specified in the ipv4-prefix field.  Allowed
+          values range from 0 to 32.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv4 prefix</command>, a fixed-length 32-bit field that specifies the IPv4
+          prefix for the S46 rule.  The bits in the prefix after prefix4-len
+          number of bits are reserved and MUST be initialized to zero by the
+          sender and ignored by the receiver.</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>IPv6 prefix</command> in prefix/length notation that specifies the IPv6 domain
+          prefix for the S46 rule.  The field is padded on the right with zero
+          bits up to the nearest octet boundary when prefix6-len is not evenly
+          divisible by 8.</simpara>
+        </listitem>
+
+      </itemizedlist>
+        </para>
+      </section>
+        <section>
+            <title>S46 BR Option</title>
+            <para>
+              The S46 BR option is used to convey the IPv6 address of the
+              Border Relay. This option is mandatory in the MAP-E
+              Container option and not permitted in the MAP-T and
+              S46 Lightweight 4over6 Container options.
+<screen>
+{
+    "space": "s46-cont-mape-options",
+    "name": "s46-br",
+    "data": "2001:db8:cafe::1",
+}
+</screen>
+           Other possible "space" value is "s46-cont-lw-options".
+          </para>
+        </section>
+
+        <section>
+            <title>S46 DMR Option</title>
+            <para>
+              The S46 DMR option is used to convey values for the Default
+              Mapping Rule (DMR). This option is mandatory in the MAP-T
+              container option and not permitted in the MAP-E and S46
+              Lightweight 4over6 Container options.
+<screen>
+{
+    "space": "s46-cont-mapt-options",
+    "name": "s46-dmr",
+    "data": "2001:db8:cafe::/64",
+}
+</screen>
+              This option must not be included in other containers.
+            </para>
+        </section>
+
+        <section>
+            <title>S46 IPv4/IPv6 Address Binding option.</title>
+            <para>
+              The S46 IPv4/IPv6 Address Binding option may be used to specify
+              the full or shared IPv4 address of the Customer Edge (CE).
+              The IPv6 prefix field is used by the CE to identify the
+              correct prefix to use for the tunnel source.
+<screen>
+{
+    "space": "s46-cont-lw",
+    "name": "s46-v4v6bind",
+    "data": "192.0.2.3, 2001:db8:1:cafe::/64"
+}
+</screen>
+            This option must not be included in other containers.
+          </para>
+        </section>
+        <section>
+            <title>S46 Port Parameters</title>
+            <para>
+              The S46 Port Parameters option specifies optional port set
+              information that MAY be provided to CEs
+<screen>
+{
+    "space": "s46-rule-options",
+    "name": "s46-portparams",
+    "data": "2, 3/4",
+}
+</screen>
+              Other possible "space" value is "s46-v4v6bind" to include
+              this option in the S46 IPv4/IPv6 Address Binding option.
+            </para>
+            <para>
+              Note that the second value in the example above specifies the
+              PSID and PSID length fields in the format of PSID/PSID length.
+              This is equivalent to the values of PSID-len=4 and
+              PSID=12288 conveyed in the S46 Port Parameters option.
+            </para>
+        </section>
     </section>
 
     <section id="dhcp6-custom-options">
@@ -2371,7 +2597,7 @@ should include options from the isc option space:
         "pd-pools": [
             {
                 "prefix": "2001:db8:1:8000::",
-                "prefix-len": 56,
+                "prefix-len": 48,
                 "delegated-len": 64
             }
         ],
@@ -3889,11 +4115,23 @@ If not specified, the default value is:
             Supported option is CLIENT_FQDN.</simpara>
           </listitem>
           <listitem>
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+            Option for Dual-Stack Lite</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6334">RFC 6334</ulink>:
+            the AFTR-Name DHCPv6 Option is supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><emphasis>Relay-Supplied DHCP Options</emphasis>,
             <ulink url="http://tools.ietf.org/html/rfc6422">RFC 6422</ulink>:
             Full functionality is supported: OPTION_RSOO, ability of the server
             to echo back the options, checks whether an option is RSOO-enabled,
             ability to mark additional options as RSOO-enabled.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>Prefix Exclude Option for DHCPv6-based Prefix
+            Delegation</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc6603">RFC
+            6603</ulink>: Prefix Exclude option is supported.</simpara>
           </listitem>
           <listitem>
             <simpara><emphasis>Client Link-Layer Address Option in
@@ -3908,6 +4146,13 @@ If not specified, the default value is:
             <ulink url="http://tools.ietf.org/html/rfc7550">RFC
             7550</ulink>: All recommendations related to the DHCPv6 server
             operation are supported.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><emphasis>DHCPv6 Options for Configuration of Softwire
+            Address and Port-Mapped Clients</emphasis>,
+            <ulink url="http://tools.ietf.org/html/rfc7598">RFC
+            7598</ulink>: All options specified in this specification are
+            supported by the DHCPv6 server.</simpara>
           </listitem>
       </itemizedlist>
     </section>

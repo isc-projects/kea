@@ -20,6 +20,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -70,6 +71,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <algorithm>
 #include <stdlib.h>
 #include <time.h>
 #include <iomanip>
@@ -873,6 +875,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                  AllocEngine::ClientContext6& ctx,
                                   const CfgOptionList& co_list) {
 
     // Client requests some options using ORO option. Try to
@@ -881,18 +884,20 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
         (question->getOption(D6O_ORO));
 
-    // Option ORO not found? We're done here then.
-    if (!option_oro || co_list.empty()) {
+    // If there is no ORO option, there is nothing more to do.
+    if (!option_oro) {
         return;
+
     }
 
     // Get the list of options that client requested.
     const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         // Iterate on the configured option list
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
-            OptionDescriptor desc = (*copts)->get("dhcp6", opt);
+            OptionDescriptor desc = (*copts)->get(DHCP6_OPTION_SPACE, opt);
             // Got it: add it and jump to the outer loop
             if (desc.option_) {
                 answer->addOption(desc.option_);
@@ -1552,6 +1557,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ia_rsp->setT1(subnet->getT1());
         ia_rsp->setT2(subnet->getT2());
 
+        const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
+
         for (Lease6Collection::iterator l = leases.begin();
              l != leases.end(); ++l) {
 
@@ -1569,6 +1576,19 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                          (*l)->prefixlen_, (*l)->preferred_lft_,
                                          (*l)->valid_lft_));
             ia_rsp->addOption(addr);
+
+            if (pd_exclude_requested) {
+                // PD exclude option has been requested via ORO, thus we need to
+                // include it if the pool configuration specifies this option.
+                Pool6Ptr pool = boost::dynamic_pointer_cast<
+                    Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
+                if (pool) {
+                    Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+                    if (pd_exclude_option) {
+                        addr->addOption(pd_exclude_option);
+                    }
+                }
+            }
         }
 
         // It would be possible to insert status code=0(success) as well,
@@ -1837,12 +1857,32 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // into temporary container.
     AllocEngine::HintContainer hints = ctx.currentIA().hints_;
 
+    const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
+
     // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
+
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
                                (*l)->addr_, (*l)->prefixlen_,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
+
+
+        if (pd_exclude_requested) {
+            // PD exclude option has been requested via ORO, thus we need to
+            // include it if the pool configuration specifies this option.
+            Pool6Ptr pool = boost::dynamic_pointer_cast<
+                Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
+
+            if (pool) {
+                Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+                if (pd_exclude_option) {
+                    prf->addOption(pd_exclude_option);
+                }
+            }
+        }
+
+
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
             .arg(query->getLabel())
             .arg((*l)->addr_.toText())
@@ -2337,7 +2377,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
     appendDefaultOptions(solicit, response, co_list);
-    appendRequestedOptions(solicit, response, co_list);
+    appendRequestedOptions(solicit, response, ctx, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
 
     // Only generate name change requests if sending a Reply as a result
@@ -2368,7 +2408,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     CfgOptionList co_list;
     buildCfgOptionList(request, ctx, co_list);
     appendDefaultOptions(request, reply, co_list);
-    appendRequestedOptions(request, reply, co_list);
+    appendRequestedOptions(request, reply, ctx, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2396,7 +2436,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     CfgOptionList co_list;
     buildCfgOptionList(renew, ctx, co_list);
     appendDefaultOptions(renew, reply, co_list);
-    appendRequestedOptions(renew, reply, co_list);
+    appendRequestedOptions(renew, reply, ctx, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2424,7 +2464,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     CfgOptionList co_list;
     buildCfgOptionList(rebind, ctx, co_list);
     appendDefaultOptions(rebind, reply, co_list);
-    appendRequestedOptions(rebind, reply, co_list);
+    appendRequestedOptions(rebind, reply, ctx, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2457,7 +2497,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     CfgOptionList co_list;
     buildCfgOptionList(confirm, ctx, co_list);
     appendDefaultOptions(confirm, reply, co_list);
-    appendRequestedOptions(confirm, reply, co_list);
+    appendRequestedOptions(confirm, reply, ctx, co_list);
     appendRequestedVendorOptions(confirm, reply, ctx, co_list);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
@@ -2862,7 +2902,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendDefaultOptions(inf_request, reply, co_list);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(inf_request, reply, co_list);
+    appendRequestedOptions(inf_request, reply, ctx, co_list);
 
     // Try to assigne vendor options that were requested by the client.
     appendRequestedVendorOptions(inf_request, reply, ctx, co_list);
@@ -3229,6 +3269,20 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
 int Dhcpv6Srv::getHookIndexBuffer6Send() {
     return (Hooks.hook_index_buffer6_send_);
 }
+
+bool
+Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
+    OptionUint16ArrayPtr oro =
+        boost::dynamic_pointer_cast<OptionUint16Array>(query->getOption(D6O_ORO));
+
+    if (oro) {
+        const std::vector<uint16_t>& codes = oro->getValues();
+        return (std::find(codes.begin(), codes.end(), code) != codes.end());
+    }
+
+    return (false);
+}
+
 
 };
 };

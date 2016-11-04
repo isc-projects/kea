@@ -525,11 +525,7 @@ private:
             // If the option space is a standard DHCPv4 or DHCPv6 option space,
             // this is most likely a standard option, for which we have a
             // definition created within libdhcp++.
-            OptionDefinitionPtr def;
-            if ((space == DHCP4_OPTION_SPACE) ||
-                (space == DHCP6_OPTION_SPACE)) {
-                def = LibDHCP::getOptionDef(universe_, code);
-            }
+            OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
 
             // Otherwise, we may check if this an option encapsulated within the
             // vendor space.

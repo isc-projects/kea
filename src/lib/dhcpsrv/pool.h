@@ -8,9 +8,10 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
-#include <boost/shared_ptr.hpp>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
+#include <boost/shared_ptr.hpp>
 
 #include <vector>
 
@@ -213,9 +214,26 @@ public:
     /// @param type type of the pool (IA, TA or PD)
     /// @param prefix specifies prefix of the pool
     /// @param prefix_len specifies prefix length of the pool
-    /// @param delegated_len specifies lenght of the delegated prefixes
+    /// @param delegated_len specifies length of the delegated prefixes
     Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len, uint8_t delegated_len = 128);
+
+    /// @brief Constructor for DHCPv6 prefix pool with an excluded prefix.
+    ///
+    /// If @c excluded_prefix is equal to '::' and the @c excluded_prefix_len
+    /// is equal to 0, the excluded prefix is assumed to be unspecified for
+    /// the pool. In this case, the server will not send the Prefix Exclude
+    /// option to a client.
+    ///
+    /// @param prefix specified a prefix of the pool.
+    /// @param prefix_Leb specifies prefix length of the pool.
+    /// @param delegated_len specifies length of the delegated prefixes.
+    /// @param excluded_prefix specifies an excluded prefix as per RFC6603.
+    /// @param excluded_prefix_len specifies length of an excluded prefix.
+    Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
+          const uint8_t delegated_len,
+          const asiolink::IOAddress& excluded_prefix,
+          const uint8_t excluded_prefix_len);
 
     /// @brief returns pool type
     ///
@@ -233,14 +251,52 @@ public:
         return (prefix_len_);
     }
 
+    /// @brief Returns instance of the pool specific Prefix Exclude option.
+    ///
+    /// @return An instance of the Prefix Exclude option (RFC 6603) or NULL
+    /// if such option hasn't been specified for the pool.
+    Option6PDExcludePtr getPrefixExcludeOption() const {
+        return (pd_exclude_option_);
+    }
+
     /// @brief returns textual representation of the pool
     ///
     /// @return textual representation
     virtual std::string toText() const;
 
 private:
+
+    /// @brief Generic method initializing a DHCPv6 pool.
+    ///
+    /// This method should be called by the constructors to initialize
+    /// DHCPv6 pools.
+    ///
+    /// @param Lease/pool type.
+    /// @param prefix An address or delegated prefix (depending on the
+    /// pool type specified as @c type).
+    /// @param prefix_len Prefix length. If a pool is an address pool,
+    /// this value should be set to 128.
+    /// @param delegated_len Length of the delegated prefixes. If a pool
+    /// is an address pool, this value should be set to 128.
+    /// @param excluded_prefix An excluded prefix as per RFC6603. This
+    /// value should only be specified for prefix pools. The value of
+    /// '::' means "unspecified".
+    /// @param excluded_prefix_len Length of the excluded prefix. This
+    /// is only specified for prefix pools. The value of 0 should be
+    /// used when @c excluded_prefix is not specified.
+    void init(const Lease::Type& type,
+              const asiolink::IOAddress& prefix,
+              const uint8_t prefix_len,
+              const uint8_t delegated_len,
+              const asiolink::IOAddress& excluded_prefix,
+              const uint8_t excluded_prefix_len);
+
     /// @brief Defines prefix length (for TYPE_PD only)
     uint8_t prefix_len_;
+
+    /// @brief A pointer to the Prefix Exclude option (RFC 6603).
+    Option6PDExcludePtr pd_exclude_option_;
+
 };
 
 /// @brief a pointer an IPv6 Pool

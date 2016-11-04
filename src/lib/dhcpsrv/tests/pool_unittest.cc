@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -206,6 +207,73 @@ TEST(Pool6Test, PD) {
                                 77, 77));
 }
 
+// Checks that prefix pools with excluded prefixes are handled properly.
+TEST(Pool6Test, PDExclude) {
+    Pool6Ptr pool;
+
+    // Create a pool with a good excluded prefix. The good excluded prefix
+    // is the one for which is a sub-prefix of the main prefix.
+    ASSERT_NO_THROW(pool.reset(new Pool6(IOAddress("2001:db8:1::"), 96, 112,
+                                         IOAddress("2001:db8:1::2000"), 120)));
+
+    // Verify pool properties.
+    EXPECT_EQ(Lease::TYPE_PD, pool->getType());
+    EXPECT_EQ(112, pool->getLength());
+    EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
+
+    // It should include Prefix Exclude option.
+    Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
+    ASSERT_TRUE(pd_exclude_option);
+    EXPECT_EQ("2001:db8:1::2:2000", pd_exclude_option->
+              getExcludedPrefix(IOAddress("2001:db8:1:0:0:0:2::"), 112).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
+
+    // Create another pool instance, but with the excluded prefix being
+    // "unspecified".
+    ASSERT_NO_THROW(pool.reset(new Pool6(IOAddress("2001:db8:1::"), 96, 112,
+                                         IOAddress::IPV6_ZERO_ADDRESS(), 0)));
+
+    EXPECT_EQ(Lease::TYPE_PD, pool->getType());
+    EXPECT_EQ(112, pool->getLength());
+    EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
+
+    ASSERT_FALSE(pool->getPrefixExcludeOption());
+
+    // Excluded prefix length must be greater than the main prefix length.
+    EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 96, 112,
+                       IOAddress("2001:db8:1::"), 112),
+                 BadValue);
+
+    // Again, the excluded prefix length must be greater than main prefix
+    // length.
+    EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 96, 112,
+                       IOAddress("2001:db8:1::"), 104),
+                 BadValue);
+
+    // The "unspecified" excluded prefix must have both values set to 0.
+    EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 48, 64,
+                       IOAddress("2001:db8:1::"), 0),
+                 BadValue);
+
+    // Similar case as above, but the prefix value is 0 and the length
+    // is non zero.
+    EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 48, 64,
+                       IOAddress::IPV6_ZERO_ADDRESS(), 72),
+                 BadValue);
+
+    // Excluded prefix must be an IPv6 prefix.
+    EXPECT_THROW(Pool6(IOAddress("10::"), 8, 16,
+                       IOAddress("10.0.0.0"), 24),
+                 BadValue);
+
+    // Excluded prefix length must not be greater than 128.
+    EXPECT_THROW(Pool6(IOAddress("2001:db8:1::"), 48, 64,
+                       IOAddress("2001:db8:1::"), 129),
+                 BadValue);
+}
+
 // Checks that temporary address pools are handled properly
 TEST(Pool6Test, TA) {
     // Note: since we defined TA pool types during PD work, we can test it
@@ -261,7 +329,7 @@ TEST(Pool6Test, unique_id) {
 }
 
 // Simple check if toText returns reasonable values
-TEST(Poo6Test,toText) {
+TEST(Pool6Test,toText) {
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                 IOAddress("2001:db8::2"));
     EXPECT_EQ("type=IA_NA, 2001:db8::1-2001:db8::2, delegated_len=128",
@@ -270,6 +338,13 @@ TEST(Poo6Test,toText) {
     Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
     EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112",
               pool2.toText());
+
+    Pool6 pool3(IOAddress("2001:db8:1::"), 96, 112,
+                IOAddress("2001:db8:1::1000"), 120);
+    EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112,"
+              " excluded_prefix_len=120",
+              pool3.toText());
+
 }
 
 // Checks if the number of possible leases in range is reported correctly.

@@ -688,10 +688,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // non-PD leases.
         uint8_t prefix_len = 128;
         if (ctx.currentIA().type_ == Lease::TYPE_PD) {
-            Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+            pool = boost::dynamic_pointer_cast<Pool6>(
                 ctx.subnet_->getPool(ctx.currentIA().type_, candidate, false));
-            /// @todo: verify that the pool is non-null
-            prefix_len = pool->getLength();
+            if (pool) {
+                prefix_len = pool->getLength();
+            }
         }
 
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
