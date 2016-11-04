@@ -12,6 +12,7 @@
 #include <dhcp6/parser_context.h>
 #include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
+#include <exceptions/exceptions.h>
 
 // Work around an incompatibility in flex (at least versions
 // 2.5.31 through 2.5.33): it generates code that does
@@ -55,6 +56,8 @@ static isc::dhcp::location loc;
    useful in more complex cases. */
 %option yylineno
 
+%x COMMENT
+
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
@@ -80,7 +83,24 @@ JSONString                              \"{JSONStringCharacter}*\"
 %{
     // Code run each time yylex is called.
     loc.step();
+
+    int comment_start_line = 0;
 %}
+
+#.* ;
+
+"//"(.*) ;
+
+"/*" {
+  BEGIN(COMMENT);
+  comment_start_line = yylineno;
+}
+
+<COMMENT>"*/" BEGIN(INITIAL);
+<COMMENT>.|"\n" ;
+<COMMENT><<EOF>> {
+    isc_throw(isc::BadValue, "Comment not closed. (/* in line " << comment_start_line);
+}
 
 {blank}+   {
     // Ok, we found a with space. Let's ignore it and update loc variable.
