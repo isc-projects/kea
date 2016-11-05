@@ -34,7 +34,7 @@ AC_PROG_CXX
 # Check for exact Kea version.
 AC_MSG_CHECKING(whether this is a tarball or git source)
 if test -d "${srcdir}/.git"; then
-	KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
+        KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
         AC_MSG_RESULT("git")
 else
         KEA_SRCID="tarball"
@@ -46,15 +46,15 @@ AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
-	if `pwd | grep -q $sep`; then continue; fi
-	if `echo ${prefix} | grep -q $sep`; then continue; fi
-	if `echo ${sysconfdir} | grep -q $sep`; then continue; fi
-	if `echo ${localstatedir} | grep -q $sep`; then continue; fi
-	SEP=$sep
-	break
+        if `pwd | grep -q $sep`; then continue; fi
+        if `echo ${prefix} | grep -q $sep`; then continue; fi
+        if `echo ${sysconfdir} | grep -q $sep`; then continue; fi
+        if `echo ${localstatedir} | grep -q $sep`; then continue; fi
+        SEP=$sep
+        break
 done
 if test "$sep" = "__NONE__"; then
-	AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
+        AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
 fi
 AC_SUBST(SEP)
 
@@ -123,7 +123,7 @@ long v = __cplusplus;
 EOF
 CXX_STANDARD=`$CXX $CXXFLAGS -E -o - conftest.cpp | grep '^long v = ' | $SED -e 's/^long v = //' -e 's/[[^0-9]]*$//' 2> /dev/null`
 if test -z "$CXX_STANDARD"; then
-	CXX_STANDARD="unknown"
+        CXX_STANDARD="unknown"
 fi
 AC_MSG_RESULT([$CXX_STANDARD])
 
@@ -200,16 +200,16 @@ AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 
 case "$host" in
 *-solaris*)
-	MULTITHREADING_FLAG=-pthreads
-	# In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
-	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-braces"
-	;;
+        MULTITHREADING_FLAG=-pthreads
+        # In Solaris, IN6ADDR_ANY_INIT and IN6ADDR_LOOPBACK_INIT need -Wno-missing-braces
+        KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-braces"
+        ;;
 *-apple-darwin*)
-	MULTITHREADING_FLAG=
-	;;
+        MULTITHREADING_FLAG=
+        ;;
 *)
-	MULTITHREADING_FLAG=-pthread
-	;;
+        MULTITHREADING_FLAG=-pthread
+        ;;
 esac
 KEA_CXXFLAGS="$KEA_CXXFLAGS $MULTITHREADING_FLAG"
 
@@ -235,7 +235,7 @@ AC_ARG_WITH(werror,
          yes) with_werror=1 ;;
          no)  with_werror=0 ;;
          -*)  with_werror=1; werror_extras=${withval} ;;
-	 *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
      esac],
      [with_werror=0])
 
@@ -252,10 +252,10 @@ if test $with_werror = 1; then
    # "unused private members", causing a false positive.
    AC_TRY_COMPILE([namespace { struct Foo {}; }
    namespace isc {struct Bar {Foo foo_;};} ],,
-	[AC_MSG_RESULT(no)
-	 werror_ok=1
-	 KEA_CXXFLAGS="$KEA_CXXFLAGS -Werror"],
-	[AC_MSG_RESULT(yes)])
+        [AC_MSG_RESULT(no)
+         werror_ok=1
+         KEA_CXXFLAGS="$KEA_CXXFLAGS -Werror"],
+        [AC_MSG_RESULT(yes)])
    CXXFLAGS="$CXXFLAGS_SAVED"
 fi
 
@@ -266,24 +266,24 @@ fi
 # https://svn.boost.org/trac/boost/ticket/3477
 # But older GCC compilers don't have the flag.
 KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
-	[KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-field-initializers"])
+        [KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-field-initializers"])
 
 if test "X$CLANGPP" = "Xyes"; then
-	# This is to workaround unused variables tcout and tcerr in
-	# log4cplus's streams.h and unused parameters from some of the
-	# Boost headers.
-	KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-unused-variable -Wno-unused-parameter"
+        # This is to workaround unused variables tcout and tcerr in
+        # log4cplus's streams.h and unused parameters from some of the
+        # Boost headers.
+        KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-unused-variable -Wno-unused-parameter"
 fi
 
 # Add the extras at the very last
 # Note it can be used to re-enable a (fatal) warning
 for extra in $werror_extras; do
-	KEA_CXX_TRY_FLAG([$extra],
-		[KEA_CXXFLAGS="$KEA_CXXFLAGS $extra"],
-		[AC_MSG_ERROR([$CXX does not support $extra"])])
+        KEA_CXX_TRY_FLAG([$extra],
+                [KEA_CXXFLAGS="$KEA_CXXFLAGS $extra"],
+                [AC_MSG_ERROR([$CXX does not support $extra"])])
 done
 
-fi				dnl GXX = yes
+fi                              dnl GXX = yes
 
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
@@ -296,10 +296,10 @@ AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [Was Kea static
 
 # Check validity about some libtool options
 if test $enable_static_link = yes -a $enable_static = no; then
-	AC_MSG_ERROR([--enable-static-link requires --enable-static])
+        AC_MSG_ERROR([--enable-static-link requires --enable-static])
 fi
 if test $enable_static_link = no -a $enable_shared = no; then
-	AC_MSG_ERROR([--disable-static-link requires --enable-shared])
+        AC_MSG_ERROR([--disable-static-link requires --enable-shared])
 fi
 
 # OS dependent configuration
@@ -307,48 +307,48 @@ kea_undefined_pthread_behavior=no
 
 case "$host" in
 *-solaris*)
-	# Solaris requires special definitions to get some standard libraries
-	# (e.g. getopt(3)) available with common used header files.
-	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
-	# "now" binding is necessary to prevent deadlocks in C++ static initialization code
-	LDFLAGS="$LDFLAGS -z now"
-	# Destroying locked mutexes, condition variables being waited
-	# on, etc. are undefined behavior on Solaris, so we set it as
-	# such here.
-	kea_undefined_pthread_behavior=yes
-	;;
+        # Solaris requires special definitions to get some standard libraries
+        # (e.g. getopt(3)) available with common used header files.
+        CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+        # "now" binding is necessary to prevent deadlocks in C++ static initialization code
+        LDFLAGS="$LDFLAGS -z now"
+        # Destroying locked mutexes, condition variables being waited
+        # on, etc. are undefined behavior on Solaris, so we set it as
+        # such here.
+        kea_undefined_pthread_behavior=yes
+        ;;
 *-apple-darwin*)
-	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
-	# (RFC2292 or RFC3542).
-	CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
+        # Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
+        # (RFC2292 or RFC3542).
+        CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
 
-	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
-	# doesn't work as documented, which makes some of unit tests fail.
-	AC_MSG_CHECKING([OS X versions where destroying locked locks do not fail])
-	AC_TRY_COMPILE(
-	[#include <Availability.h>],
-	[#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
-	 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
-	 #error " OS X >= 10.9"
-	 #endif
-	 #endif
-	 return 1;],
-	[AC_MSG_RESULT([OS X < 10.9])],
-	[AC_MSG_RESULT([OS X >= 10.9])
-	 kea_undefined_pthread_behavior=yes])
-	;;
+        # In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
+        # doesn't work as documented, which makes some of unit tests fail.
+        AC_MSG_CHECKING([OS X versions where destroying locked locks do not fail])
+        AC_TRY_COMPILE(
+        [#include <Availability.h>],
+        [#ifdef __MAC_OS_X_VERSION_MIN_REQUIRED
+         #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
+         #error " OS X >= 10.9"
+         #endif
+         #endif
+         return 1;],
+        [AC_MSG_RESULT([OS X < 10.9])],
+        [AC_MSG_RESULT([OS X >= 10.9])
+         kea_undefined_pthread_behavior=yes])
+        ;;
 *-freebsd*)
-	# On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
-	# causes the CondVarTest.destroyWhileWait test to fail. According to the
-	# pthread_cond_destroy documentation for FreeBSD, this function should
-	# return EBUSY error when there is a thread waiting for the conditional
-	# variable, whereas this function returned success code. We treat it here
-	# as an undefined behavior. Also note that this issue was only visible
-	# when gtest 1.7 was in use, because the previous versions of gtest
-	# didn't seem to have support for the death tests on FreeBSD. As a
-	# result, the test was not executed and the error didn't occur.
-	kea_undefined_pthread_behavior=yes
-	;;
+        # On FreeBSD10.1 pthread_cond_destroy doesn't work as documented, which
+        # causes the CondVarTest.destroyWhileWait test to fail. According to the
+        # pthread_cond_destroy documentation for FreeBSD, this function should
+        # return EBUSY error when there is a thread waiting for the conditional
+        # variable, whereas this function returned success code. We treat it here
+        # as an undefined behavior. Also note that this issue was only visible
+        # when gtest 1.7 was in use, because the previous versions of gtest
+        # didn't seem to have support for the death tests on FreeBSD. As a
+        # result, the test was not executed and the error didn't occur.
+        kea_undefined_pthread_behavior=yes
+        ;;
 esac
 if [ test $kea_undefined_pthread_behavior = "yes" ]; then
    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
@@ -364,9 +364,9 @@ fi
 # of that version of Solaris.
 case "$host" in
 *-solaris2.10)
-	AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
-	[Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
-	;;
+        AC_DEFINE([HAVE_BROKEN_GET_IPV6_USE_MIN_MTU], [1],
+        [Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
+        ;;
 esac
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.4 python3.3 python3.2 python3.1 python3])
@@ -375,31 +375,31 @@ AC_HELP_STRING([--with-pythonpath=PATH],
   [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
   [python_path="$withval"], [python_path="auto"])
 if test "$python_path" = auto; then
-	AM_PATH_PYTHON([3.1],,[PYTHON=no])
+        AM_PATH_PYTHON([3.1],,[PYTHON=no])
 else
-	# Older versions of automake can't handle python3 well.  This is an
-	# in-house workaround for them.
-	PYTHON=$python_path
-	AC_SUBST(PYTHON)
-	PYTHON_PREFIX='${prefix}'
-	AC_SUBST(PYTHON_PREFIX)
-	PYTHON_EXEC_PREFIX='$(exec_prefix)'
-	AC_SUBST(PYTHON_EXEC_PREFIX)
-	PYTHON_VERSION=[`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`]
-	if test `echo "$PYTHON_VERSION >= 3.1" | bc` != 1 ; then
-		AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])
-	fi
-	AC_SUBST(PYTHON_VERSION)
-	PYTHON_PLATFORM=`$PYTHON -c "import sys; print(sys.platform)"`
-	AC_SUBST(PYTHON_PLATFORM)
-	pythondir='${prefix}/lib/python'$PYTHON_VERSION'/site-packages'
-	AC_SUBST(pythondir)
-	pkgpythondir='${pythondir}/'$PACKAGE
-	AC_SUBST(pkgpythondir)
-	pyexecdir='${exec_prefix}/lib/python'$PYTHON_VERSION'/site-packages'
-	AC_SUBST(pyexecdir)
-	pkgpyexecdir='${pyexecdir}/'$PACKAGE
-	AC_SUBST(pkgpyexecdir)
+        # Older versions of automake can't handle python3 well.  This is an
+        # in-house workaround for them.
+        PYTHON=$python_path
+        AC_SUBST(PYTHON)
+        PYTHON_PREFIX='${prefix}'
+        AC_SUBST(PYTHON_PREFIX)
+        PYTHON_EXEC_PREFIX='$(exec_prefix)'
+        AC_SUBST(PYTHON_EXEC_PREFIX)
+        PYTHON_VERSION=[`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`]
+        if test `echo "$PYTHON_VERSION >= 3.1" | bc` != 1 ; then
+                AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])
+        fi
+        AC_SUBST(PYTHON_VERSION)
+        PYTHON_PLATFORM=`$PYTHON -c "import sys; print(sys.platform)"`
+        AC_SUBST(PYTHON_PLATFORM)
+        pythondir='${prefix}/lib/python'$PYTHON_VERSION'/site-packages'
+        AC_SUBST(pythondir)
+        pkgpythondir='${pythondir}/'$PACKAGE
+        AC_SUBST(pkgpythondir)
+        pyexecdir='${exec_prefix}/lib/python'$PYTHON_VERSION'/site-packages'
+        AC_SUBST(pyexecdir)
+        pkgpyexecdir='${pyexecdir}/'$PACKAGE
+        AC_SUBST(pkgpyexecdir)
 fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
@@ -501,43 +501,43 @@ AC_ARG_WITH([gtest-source],
             [enable_gtest="yes" ; GTEST_SOURCE="$withval"])
 
 AC_ARG_WITH([gtest],
-	    [AS_HELP_STRING([--with-gtest=PATH],
-			    [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
-	[gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
+            [AS_HELP_STRING([--with-gtest=PATH],
+                            [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
+        [gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
 
 AC_ARG_WITH(lcov,
 [  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
-	# force gtest if not set
-	if test "$enable_gtest" = "no"; then
-#		AC_MSG_ERROR("lcov needs gtest for test coverage report")
-		AC_MSG_NOTICE([gtest support is now enabled, because used by coverage tests])
-		enable_gtest="yes"
-	fi
-	if test "$lcov" != "yes"; then
-		LCOV=$lcov
-	else
-		AC_PATH_PROG([LCOV], [lcov])
-	fi
-	if test -x "${LCOV}"; then
-		USE_LCOV="yes"
-	else
-		AC_MSG_ERROR([Cannot find lcov.])
-	fi
-	# is genhtml always in the same directory?
-	GENHTML=`echo "$LCOV" | ${SED} s/lcov$/genhtml/`
-	if test ! -x $GENHTML; then
-		AC_MSG_ERROR([genhtml not found, needed for lcov])
-	fi
-	# GCC specific?
-	CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
-	LIBS=" $LIBS -lgcov"
-	AC_SUBST(CPPFLAGS)
-	AC_SUBST(LIBS)
-	AC_SUBST(LCOV)
-	AC_SUBST(GENHTML)
+        # force gtest if not set
+        if test "$enable_gtest" = "no"; then
+#               AC_MSG_ERROR("lcov needs gtest for test coverage report")
+                AC_MSG_NOTICE([gtest support is now enabled, because used by coverage tests])
+                enable_gtest="yes"
+        fi
+        if test "$lcov" != "yes"; then
+                LCOV=$lcov
+        else
+                AC_PATH_PROG([LCOV], [lcov])
+        fi
+        if test -x "${LCOV}"; then
+                USE_LCOV="yes"
+        else
+                AC_MSG_ERROR([Cannot find lcov.])
+        fi
+        # is genhtml always in the same directory?
+        GENHTML=`echo "$LCOV" | ${SED} s/lcov$/genhtml/`
+        if test ! -x $GENHTML; then
+                AC_MSG_ERROR([genhtml not found, needed for lcov])
+        fi
+        # GCC specific?
+        CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+        LIBS=" $LIBS -lgcov"
+        AC_SUBST(CPPFLAGS)
+        AC_SUBST(LIBS)
+        AC_SUBST(LCOV)
+        AC_SUBST(GENHTML)
 fi
 AC_SUBST(USE_LCOV)
 
@@ -720,7 +720,7 @@ then
 AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
 EOF
 
-   CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+   CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[     ]]//g' -e 's/"//g' 2> /dev/null`
    if test -z "$CRYPTO_VERSION"; then
       CRYPTO_VERSION="unknown"
    fi
@@ -769,16 +769,16 @@ EOF
         CRYPTO_LIBS=""
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
-	if test "x$ac_header_preproc" = "xyes"; then
-		AC_MSG_RESULT([
+        if test "x$ac_header_preproc" = "xyes"; then
+                AC_MSG_RESULT([
 botan/botan.h was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
 your C++ compiler we highly recommend that you use support libraries such as
 Boost and Botan that were compiled with the same compiler version.])
-	else
-		AC_MSG_RESULT([Missing required header files.])
-	fi]
+        else
+                AC_MSG_RESULT([Missing required header files.])
+        fi]
    )
    CPPFLAGS=$CPPFLAGS_SAVED
    LIBS=$LIBS_SAVED
@@ -1105,15 +1105,15 @@ elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-	log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
-	for d in $log4cplusdirs
-	do
-		if test -f $d/include/log4cplus/logger.h; then
-			LOG4CPLUS_INCLUDES="-I$d/include"
-			LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
-			break
-		fi
-	done
+        log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
+        for d in $log4cplusdirs
+        do
+                if test -f $d/include/log4cplus/logger.h; then
+                        LOG4CPLUS_INCLUDES="-I$d/include"
+                        LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
+                        break
+                fi
+        done
 fi
 
 LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
@@ -1145,7 +1145,7 @@ cat > conftest.cpp << EOF
 AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
 EOF
 
-LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[      ]]//g' -e 's/"//g' 2> /dev/null`
 if test -z "$LOG4CPLUS_VERSION"; then
   LOG4CPLUS_VERSION="unknown"
 fi
@@ -1250,6 +1250,10 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
+                    if ! test -f "$dir/lib/libgtests.a"; then
+                        AC_MSG_WARN([Found Google Test include but not the library in $dir.])
+                        continue
+                    fi
                     GTEST_INCLUDES="-I$dir/include"
                     GTEST_LDFLAGS="-L$dir/lib"
                     GTEST_LDADD="-lgtest"
