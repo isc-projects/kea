@@ -536,7 +536,7 @@ public:
     ///
     /// @param prefix_len Prefix length in bits (0 to 128).
     /// @param prefix Prefix value.
-    /// @param [out] Output buffer.
+    /// @param [out] buf Output buffer.
     static void writePrefix(const PrefixLen& prefix_len,
                             const asiolink::IOAddress& prefix,
                             std::vector<uint8_t>& buf);

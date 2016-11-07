@@ -226,7 +226,7 @@ public:
     /// option to a client.
     ///
     /// @param prefix specified a prefix of the pool.
-    /// @param prefix_Leb specifies prefix length of the pool.
+    /// @param prefix_len specifies prefix length of the pool.
     /// @param delegated_len specifies length of the delegated prefixes.
     /// @param excluded_prefix specifies an excluded prefix as per RFC6603.
     /// @param excluded_prefix_len specifies length of an excluded prefix.
