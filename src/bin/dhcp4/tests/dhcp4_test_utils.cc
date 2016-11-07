@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -607,6 +608,13 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
+
+    // Use specified lease database backend.
+    ASSERT_NO_THROW( {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=4");
+        cfg_db->createManagers();
+    } );
 
     if (commit) {
         CfgMgr::instance().commit();

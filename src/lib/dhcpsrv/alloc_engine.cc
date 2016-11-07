@@ -2150,13 +2150,21 @@ void findClientLease(const AllocEngine::ClientContext4& ctx, Lease4Ptr& client_l
     // If no lease found using the client identifier, try the lookup using
     // the HW address.
     if (!client_lease && ctx.hwaddr_) {
-        client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-        // This lookup may return the lease which has conflicting client
-        // identifier and thus is considered to belong to someone else.
-        // If this is the case, we need to toss the result and force the
-        // Allocation Engine to allocate another lease.
-        if (client_lease && !client_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
-            client_lease.reset();
+
+        // There may be cases when there is a lease for the same MAC address
+        // (even within the same subnet). Such situation may occur for PXE
+        // boot clients using the same MAC address but different client
+        // identifiers.
+        Lease4Collection client_leases = lease_mgr.getLease4(*ctx.hwaddr_);
+        for (Lease4Collection::const_iterator client_lease_it = client_leases.begin();
+             client_lease_it != client_leases.end(); ++client_lease_it) {
+            Lease4Ptr existing_lease = *client_lease_it;
+            if ((existing_lease->subnet_id_ == ctx.subnet_->getID()) &&
+                existing_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
+                // Found the lease of this client, so return it.
+                client_lease = existing_lease;
+                break;
+            }
         }
     }
 }
