@@ -1,3 +1,10 @@
+1187.	[bug]		marcin
+	DHCPv4 server allows for allocating multiple leases for the
+	same hardware address if a different client identifier is
+	used for each lease. This facilitates the PXE boot use cases
+	where a booted machine may request a lease multiple times.
+	(Trac #5029, git 03defed4d8bb9a997d31dbfcf30ae3f866bd3353)
+
 1186.	[func]		marcin
 	Support for DHCPv6 options defined in RFC6603 and RFC7598. Thanks
 	to Andrei Pavel and Cristian Secareanu of Qualitance for submitting
