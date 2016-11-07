@@ -434,7 +434,7 @@ Kea 1.1.0-beta released on August 31, 2016
 	to list of modes, which provides greater flexibility in when the Kea
 	servers replace or supply DNS names for clients.  This is supported both
 	kea-dhcp4 and kea-dhcp6.
-	(Trac #4529, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
+	(Trac #4259, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
 
 1106.	[func]		marcin
 	"circuit-id" can be specified as host identifier in host
