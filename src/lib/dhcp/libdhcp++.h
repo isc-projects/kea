@@ -55,7 +55,7 @@ public:
     ///
     /// @return Pointer to the option definition or NULL pointer if option
     /// definition has not been found.
-    static OptionDefinitionPtr getOptionDef(const std::string& option_space,
+    static OptionDefinitionPtr getOptionDef(const std::string& space,
                                             const std::string& name);
 
     /// @brief Returns vendor option definition for a given vendor-id and code

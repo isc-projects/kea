@@ -80,7 +80,7 @@ public:
 
     /// @brief Returns Prefix Exclude option in textual format.
     ///
-    /// @param ident Number of spaces to be inserted before the text.
+    /// @param indent Number of spaces to be inserted before the text.
     virtual std::string toText(int indent = 0) const;
 
     /// @brief Returns excluded prefix.
