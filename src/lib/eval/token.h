@@ -635,7 +635,7 @@ public:
     /// str is the string to extract a substring from.  If it is empty, an empty
     /// string is pushed onto the value stack.
     ///
-    /// start is the postion from which the code starts extracting the substring.
+    /// start is the position from which the code starts extracting the substring.
     /// 0 is the first character and a negative number starts from the end, with
     /// -1 being the last character.  If the starting point is outside of the
     /// original string an empty string is pushed onto the value stack.

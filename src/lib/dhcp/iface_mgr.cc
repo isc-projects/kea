@@ -432,7 +432,7 @@ void IfaceMgr::stubDetectIfaces() {
     iface->flag_running_ = true;
 
     // Note that we claim that this is not a loopback. iface_mgr tries to open a
-    // socket on all interaces that are up, running and not loopback. As this is
+    // socket on all interfaces that are up, running and not loopback. As this is
     // the only interface we were able to detect, let's pretend this is a normal
     // interface.
     iface->flag_loopback_ = false;

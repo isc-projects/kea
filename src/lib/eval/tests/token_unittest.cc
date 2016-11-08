@@ -221,7 +221,7 @@ public:
     /// stack then executes the eval and checks the results.
     ///
     /// @param test_string The string to operate on
-    /// @param test_start The postion to start when getting a substring
+    /// @param test_start The position to start when getting a substring
     /// @param test_length The length of the substring to get
     /// @param result_string The expected result of the eval
     /// @param should_throw The eval will throw
@@ -1748,7 +1748,7 @@ TEST_F(TokenTest, substringLength) {
     EXPECT_TRUE(checkFile());
 }
 
-// Test that we get nothing if the starting postion is out of the string
+// Test that we get nothing if the starting position is out of the string
 TEST_F(TokenTest, substringStartingPosition) {
     // Off the front
     verifySubstringEval("foobar", "-7", "1", "");
