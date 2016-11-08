@@ -199,7 +199,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate("Foward Add");
+        sendUpdate("Forward Add");
         break;
 
     case IO_COMPLETED_EVT: {

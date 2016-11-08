@@ -119,7 +119,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     if (rcode != 0) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
                   .arg(app_name_).arg(comment->stringValue());
-        isc_throw (ProcessInitError, "Could Not load configration file: "
+        isc_throw (ProcessInitError, "Could Not load configuration file: "
                    << comment->stringValue());
     }
 
@@ -369,7 +369,7 @@ DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    return (isc::config::createAnswer(0, "Process has not been initialzed."));
+    return (isc::config::createAnswer(0, "Process has not been initialized."));
 }
 
 void
