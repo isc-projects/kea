@@ -60,7 +60,7 @@ Parser6Context::parseFile(const std::string& filename) {
     std::string line;
     while (!f.eof()) {
         std::getline(f, line);
-        string_ = string_ + line;
+        string_ = string_ + line + "\n";
     }
     f.close();
 
