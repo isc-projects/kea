@@ -164,4 +164,23 @@ TEST(ParserTest, multilineComments) {
     testParser2(txt);
 }
 
+TEST(ParserTest, file) {
+
+    ElementPtr reference_json;
+    ConstElementPtr test_json;
+
+    std::string fname = "test.json";
+
+    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(fname, true));
+    EXPECT_NO_THROW({
+        Parser6Context ctx;
+        test_json = ctx.parseFile(fname);
+    });
+
+    ASSERT_TRUE(reference_json);
+    ASSERT_TRUE(test_json);
+
+    compareJSON(reference_json, test_json);
+}
+
 };

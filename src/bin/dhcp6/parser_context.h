@@ -53,11 +53,16 @@ public:
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
 
+    void scanFileBegin(FILE * f);
+    void scanFileEnd(FILE * f);
+
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
     /// @return true on success.
     isc::data::ConstElementPtr parseString(const std::string& str);
+
+    isc::data::ConstElementPtr parseFile(const std::string& filename);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.

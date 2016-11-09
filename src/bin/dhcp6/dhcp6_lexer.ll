@@ -198,6 +198,25 @@ Parser6Context::scanStringEnd()
     yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 
+void
+Parser6Context::scanFileBegin(FILE * f) {
+    loc.initialize(&file_);
+    yy_flex_debug = trace_scanning_;
+    YY_BUFFER_STATE buffer;
+
+    // See dhcp6_lexer.cc header for available definitions
+    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    if (!buffer) {
+        fatal("cannot scan file " + file_);
+    }
+}
+
+void
+Parser6Context::scanFileEnd(FILE * f) {
+    fclose(f);
+    yy_delete_buffer(YY_CURRENT_BUFFER);
+}
+
 namespace {
 /// To avoid unused function error
 class Dummy {
