@@ -44,7 +44,7 @@
   {
       "name": "cable-modems",
       "test": "vendor.enterprise == 4491"
-  },
+  }
 
   ],
     
