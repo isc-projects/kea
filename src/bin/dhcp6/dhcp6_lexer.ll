@@ -134,7 +134,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"Logging\" { return isc::dhcp::Dhcp6Parser::make_LOGGING(loc); }
 \"loggers\" { return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc); }
 \"output_options\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc); }
-\"output\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc); }
+\"output\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT(loc); }
 \"debuglevel\" { return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc); }
 \"severity\" { return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc); }
 
