@@ -112,6 +112,31 @@ JSONString                              \"{JSONStringCharacter}*\"
     loc.step();
 }
 
+\"Dhcp6\"  { return isc::dhcp::Dhcp6Parser::make_DHCP6(loc); }
+\"interfaces-config\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(loc); }
+\"interfaces\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES(loc); }
+\"lease-database\" { return  isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(loc); }
+\"preferred-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc); }
+\"valid-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc); }
+\"renew-timer\" { return  isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(loc); }
+\"rebind-timer\" { return  isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(loc); }
+\"subnet6\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET6(loc); }
+\"option-data\" { return  isc::dhcp::Dhcp6Parser::make_OPTION_DATA(loc); }
+\"name\" { return  isc::dhcp::Dhcp6Parser::make_NAME(loc); }
+\"data\" { return  isc::dhcp::Dhcp6Parser::make_DATA(loc); }
+\"pools\" { return  isc::dhcp::Dhcp6Parser::make_POOLS(loc); }
+\"pool\" { return  isc::dhcp::Dhcp6Parser::make_POOL(loc); }
+\"subnet\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET(loc); }
+\"interface\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACE(loc); }
+\"type\" { return isc::dhcp::Dhcp6Parser::make_TYPE(loc); }
+\"code\" { return isc::dhcp::Dhcp6Parser::make_CODE(loc); }
+
+\"Logging\" { return isc::dhcp::Dhcp6Parser::make_LOGGING(loc); }
+\"loggers\" { return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc); }
+\"output_options\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc); }
+\"output\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc); }
+\"debuglevel\" { return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc); }
+\"severity\" { return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc); }
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
@@ -123,12 +148,12 @@ JSONString                              \"{JSONStringCharacter}*\"
     return isc::dhcp::Dhcp6Parser::make_STRING(tmp, loc);
 }
 
-"["                                     { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
-"]"                                     { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(loc); }
-"{"                                     { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(loc); }
-"}"                                     { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(loc); }
-","                                     { return isc::dhcp::Dhcp6Parser::make_COMMA(loc); }
-":"                                     { return isc::dhcp::Dhcp6Parser::make_COLON(loc); }
+"["                  { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
+"]"                 { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(loc); }
+"{"                  { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(loc); }
+"}"                     { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(loc); }
+","                   { return isc::dhcp::Dhcp6Parser::make_COMMA(loc); }
+":"                     { return isc::dhcp::Dhcp6Parser::make_COLON(loc); }
 
 {int} {
     // An integer was found.
