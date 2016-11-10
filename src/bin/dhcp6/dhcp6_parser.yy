@@ -258,6 +258,8 @@ pool_params: pool_param
 pool_param: POOL COLON STRING
 | option_data_list;
 
+// --- end of pools definition -------------------------------
+
 dhcp6_object: DHCP6 COLON LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -269,7 +271,61 @@ dhcp6_object: DHCP6 COLON LCURLY_BRACKET {
     // for it.
 };
 
-logging_object: LOGGING COLON map;
+// --- logging entry -----------------------------------------
+
+// This defines the top level "Logging" object. It parses
+// the following "Logging": { ... }. The ... is defined
+// by logging_params
+logging_object: LOGGING COLON LCURLY_BRACKET {
+
+} logging_params RCURLY_BRACKET {
+
+};
+
+// This defines the list of allowed parameters that may appear
+// in the top-level Logging object. It can either be a single
+// parameter or several parameters separated by commas.
+logging_params: logging_param
+| logging_params COMMA logging_param;
+
+// There's currently only one parameter defined, which is "loggers".
+logging_param: loggers;
+
+// "loggers", the only parameter currently defined in "Logging" object,
+// is "Loggers": [ ... ].
+loggers: LOGGERS COLON LSQUARE_BRACKET loggers_entries RSQUARE_BRACKET;
+
+// These are the parameters allowed in loggers: either one logger
+// entry or multiple entries separate by commas.
+loggers_entries: logger_entry
+| loggers_entries COMMA logger_entry;
+
+// This defines a single entry defined in loggers in Logging.
+logger_entry: LCURLY_BRACKET logger_params RCURLY_BRACKET;
+
+logger_params: logger_param
+| logger_params COMMA logger_param;
+
+logger_param: NAME COLON STRING
+| output_options_list
+| debuglevel
+| severity
+;
+
+debuglevel: DEBUGLEVEL COLON INTEGER;
+severity: SEVERITY COLON STRING;
+
+output_options_list: OUTPUT_OPTIONS COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET;
+
+output_options_list_content: output_entry
+| output_options_list_content COMMA output_entry;
+
+output_entry: LCURLY_BRACKET output_params RCURLY_BRACKET;
+
+output_params: output_param
+| output_params COMMA output_param;
+
+output_param: OUTPUT COLON STRING;
 
 // This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
 global_object: dhcp6_object
