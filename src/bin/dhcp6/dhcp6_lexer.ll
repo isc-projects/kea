@@ -130,6 +130,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"interface\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACE(loc); }
 \"type\" { return isc::dhcp::Dhcp6Parser::make_TYPE(loc); }
 \"code\" { return isc::dhcp::Dhcp6Parser::make_CODE(loc); }
+\"mac-sources\" { return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc); }
+\"relay-supplied-options\" { return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc); }
 
 \"Logging\" { return isc::dhcp::Dhcp6Parser::make_LOGGING(loc); }
 \"loggers\" { return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc); }
