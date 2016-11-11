@@ -66,6 +66,8 @@ using namespace std;
   POOL "pool"
   SUBNET "subnet"
   INTERFACE "interface"
+  MAC_SOURCES "mac-sources"
+  RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -196,6 +198,8 @@ global_param
 | subnet6_list
 | interfaces_config
 | lease_database
+| mac_sources
+| relay_supplied_options
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -251,6 +255,22 @@ lease_database_map_param: lease_database_type;
 lease_database_type: TYPE COLON STRING {
     ElementPtr prf(new StringElement($3));
     ctx.stack_.back()->set("type", prf);
+};
+
+mac_sources: MAC_SOURCES {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("mac-sources", l);
+    ctx.stack_.push_back(l);
+} COLON list {
+    ctx.stack_.pop_back();
+};
+
+relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("relay-supplied-options", l);
+    ctx.stack_.push_back(l);
+} COLON list {
+    ctx.stack_.pop_back();
 };
 
 // This defines subnet6 as a list of maps.
