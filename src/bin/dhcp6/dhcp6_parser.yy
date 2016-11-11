@@ -66,8 +66,16 @@ using namespace std;
   POOL "pool"
   SUBNET "subnet"
   INTERFACE "interface"
+
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
+
+  CLIENT_CLASSES "client-classes"
+  TEST "test"
+  CLIENT_CLASS "client-class"
+
+  RESERVATIONS "reservations"
+  DUID "duid"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -200,6 +208,8 @@ global_param
 | lease_database
 | mac_sources
 | relay_supplied_options
+| client_classes
+| option_data_list
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -291,6 +301,8 @@ subnet6_list_content: { /* no subnets defined at all */ }
 | subnet6_list_content COMMA subnet6
 ;
 
+// --- Subnet definitions -------------------------------
+
 // This defines a single subnet, i.e. a single map with
 // subnet6 array.
 subnet6: LCURLY_BRACKET {
@@ -301,20 +313,31 @@ subnet6: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 } RCURLY_BRACKET;
 
+// This defines that subnet can have one or more parameters.
 subnet6_params: subnet6_param
 | subnet6_params COMMA subnet6_param;
 
-subnet6_param: { /* empty list */ }
-| option_data_list
+// This defines a list of allowed parameters for each subnet.
+subnet6_param: option_data_list
 | pools_list
-| SUBNET COLON STRING {
-    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("subnet", name);
-
- }
-| INTERFACE COLON STRING {
-    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("interface", name);
- }
+| subnet
+| interface
+| client_class
+| reservations
 ;
+
+subnet: SUBNET COLON STRING {
+    ElementPtr subnet(new StringElement($3)); ctx.stack_.back()->set("subnet", subnet);
+};
+
+interface: INTERFACE COLON STRING {
+    ElementPtr iface(new StringElement($3)); ctx.stack_.back()->set("interface", iface);
+};
+
+subnet: CLIENT_CLASS COLON STRING {
+    ElementPtr cls(new StringElement($3)); ctx.stack_.back()->set("client-class", cls);
+};
+
 
 // ---- option-data --------------------------
 
@@ -395,6 +418,92 @@ pool_param: POOL COLON STRING {
 | option_data_list;
 
 // --- end of pools definition -------------------------------
+
+// --- reservations ------------------------------------------
+reservations: RESERVATIONS COLON LSQUARE_BRACKET {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("reservations", l);
+    ctx.stack_.push_back(l);
+} reservations_list {
+    ctx.stack_.pop_back();
+} RSQUARE_BRACKET;
+
+reservations_list: { }
+| reservation
+| reservations_list COMMA reservation;
+
+reservation: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} reservation_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+reservation_params: reservation_param
+| reservation_params COMMA reservation_param;
+
+// @todo probably need to add mac-address as well here
+reservation_param:
+| duid
+| reservation_client_classes
+;
+
+duid: DUID COLON STRING {
+    ElementPtr d(new StringElement($3)); ctx.stack_.back()->set("duid", d);
+};
+
+reservation_client_classes: CLIENT_CLASSES COLON {
+    ElementPtr c(new ListElement());
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+} list {
+    ctx.stack_.pop_back();
+  };
+
+// --- end of reservations definitions -----------------------
+
+// --- client classes ----------------------------------------
+client_classes: CLIENT_CLASSES COLON LSQUARE_BRACKET {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("client-classes", l);
+    ctx.stack_.push_back(l);
+} client_classes_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+client_classes_list: client_class
+| client_classes_list COMMA client_class;
+
+client_class: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} client_class_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+client_class_params: client_class_param
+| client_class_params COMMA client_class_param;
+
+client_class_param:
+| client_class_name
+| client_class_test
+| option_data_list
+;
+
+client_class_name: NAME COLON STRING {
+    ElementPtr name(new StringElement($3));
+    ctx.stack_.back()->set("name", name);
+};
+
+client_class_test: TEST COLON STRING {
+    ElementPtr test(new StringElement($3));
+    ctx.stack_.back()->set("test", test);
+}
+
+
+// --- end of client classes ---------------------------------
 
 // --- logging entry -----------------------------------------
 

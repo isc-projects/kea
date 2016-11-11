@@ -140,6 +140,14 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"debuglevel\" { return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc); }
 \"severity\" { return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc); }
 
+\"client-classes\" { return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(loc); }
+\"client-class\" { return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(loc); }
+\"test\" { return isc::dhcp::Dhcp6Parser::make_TEST(loc); }
+
+\"reservations\" { return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(loc); }
+\"duid\" { return isc::dhcp::Dhcp6Parser::make_DUID(loc); }
+
+
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
