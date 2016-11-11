@@ -370,7 +370,7 @@ pool_params: pool_param
 | pool_params COMMA pool_param;
 
 pool_param: POOL COLON STRING {
-    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("pool", name);
+    ElementPtr pool(new StringElement($3)); ctx.stack_.back()->set("pool", pool);
 }
 | option_data_list;
 
@@ -382,9 +382,11 @@ pool_param: POOL COLON STRING {
 // the following "Logging": { ... }. The ... is defined
 // by logging_params
 logging_object: LOGGING COLON LCURLY_BRACKET {
-
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("Logging", m);
+    ctx.stack_.push_back(m);
 } logging_params RCURLY_BRACKET {
-
+    ctx.stack_.pop_back();
 };
 
 // This defines the list of allowed parameters that may appear
@@ -398,7 +400,13 @@ logging_param: loggers;
 
 // "loggers", the only parameter currently defined in "Logging" object,
 // is "Loggers": [ ... ].
-loggers: LOGGERS COLON LSQUARE_BRACKET loggers_entries RSQUARE_BRACKET;
+loggers: LOGGERS COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("loggers", l);
+    ctx.stack_.push_back(l);
+} LSQUARE_BRACKET loggers_entries RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 // These are the parameters allowed in loggers: either one logger
 // entry or multiple entries separate by commas.
@@ -406,32 +414,59 @@ loggers_entries: logger_entry
 | loggers_entries COMMA logger_entry;
 
 // This defines a single entry defined in loggers in Logging.
-logger_entry: LCURLY_BRACKET logger_params RCURLY_BRACKET;
+logger_entry: LCURLY_BRACKET {
+    ElementPtr l(new MapElement());
+    ctx.stack_.back()->add(l);
+    ctx.stack_.push_back(l);
+} logger_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 logger_params: logger_param
 | logger_params COMMA logger_param;
 
-logger_param: NAME COLON STRING
+logger_param: logger_name
 | output_options_list
 | debuglevel
 | severity
 ;
 
-debuglevel: DEBUGLEVEL COLON INTEGER;
-severity: SEVERITY COLON STRING;
+logger_name: NAME COLON STRING {
+    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("name", name);
+};
 
-output_options_list: OUTPUT_OPTIONS COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET;
+debuglevel: DEBUGLEVEL COLON INTEGER {
+    ElementPtr dl(new IntElement($3)); ctx.stack_.back()->set("debuglevel", dl);
+};
+severity: SEVERITY COLON STRING {
+    ElementPtr sev(new StringElement($3)); ctx.stack_.back()->set("severity", sev);
+};
+
+output_options_list: OUTPUT_OPTIONS COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.push_back(l);
+} LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 output_options_list_content: output_entry
 | output_options_list_content COMMA output_entry;
 
-output_entry: LCURLY_BRACKET output_params RCURLY_BRACKET;
+output_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} output_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 output_params: output_param
 | output_params COMMA output_param;
 
-output_param: OUTPUT COLON STRING;
-
+output_param: OUTPUT COLON STRING {
+    ElementPtr sev(new StringElement($3)); ctx.stack_.back()->set("output", sev);
+};
 
 
 
