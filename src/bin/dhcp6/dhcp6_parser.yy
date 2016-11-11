@@ -62,20 +62,32 @@ using namespace std;
   NAME "name"
   DATA "data"
   CODE "code"
+  SPACE "space"
+
   POOLS "pools"
   POOL "pool"
+  PD_POOLS "pd-pools"
+  PREFIX "prefix"
+  PREFIX_LEN "prefix-len"
+  DELEGATED_LEN "delegated-len"
+
   SUBNET "subnet"
   INTERFACE "interface"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
+  HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
   TEST "test"
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
+  IP_ADDRESSES "ip-addresses"
+  PREFIXES "prefixes"
   DUID "duid"
+  HW_ADDRESS "hw-address"
+  HOSTNAME "hostname"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -208,6 +220,7 @@ global_param
 | lease_database
 | mac_sources
 | relay_supplied_options
+| host_reservation_identifiers
 | client_classes
 | option_data_list
 ;
@@ -275,6 +288,24 @@ mac_sources: MAC_SOURCES {
     ctx.stack_.pop_back();
 };
 
+host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS COLON LSQUARE_BRACKET {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("host-reservation-identifiers", l);
+    ctx.stack_.push_back(l);
+} host_reservation_identifiers_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+host_reservation_identifiers_list: host_reservation_identifier
+| host_reservation_identifiers_list COMMA host_reservation_identifier;
+
+host_reservation_identifier: DUID {
+    ElementPtr duid(new StringElement("duid")); ctx.stack_.back()->add(duid);
+}
+| HW_ADDRESS {
+    ElementPtr hwaddr(new StringElement("hw-address")); ctx.stack_.back()->add(hwaddr);
+}
+
 relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("relay-supplied-options", l);
@@ -320,6 +351,7 @@ subnet6_params: subnet6_param
 // This defines a list of allowed parameters for each subnet.
 subnet6_param: option_data_list
 | pools_list
+| pd_pools_list
 | subnet
 | interface
 | client_class
@@ -374,14 +406,27 @@ option_data_params: {}
 | option_data_params COMMA option_data_param;
 
 option_data_param:
-NAME COLON STRING {
+| option_data_name
+| option_data_data
+| option_data_code
+| option_data_space
+;
+
+
+option_data_name: NAME COLON STRING {
     ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("name", name);
-}
-| DATA COLON STRING {
+};
+
+option_data_data: DATA COLON STRING {
     ElementPtr data(new StringElement($3)); ctx.stack_.back()->set("data", data);
-}
-| CODE COLON INTEGER {
+};
+
+option_data_code: CODE COLON INTEGER {
     ElementPtr code(new IntElement($3)); ctx.stack_.back()->set("code", code);
+};
+
+option_data_space: SPACE COLON STRING {
+    ElementPtr space(new StringElement($3)); ctx.stack_.back()->set("space", space);
 };
 
 // ---- pools ------------------------------------
@@ -416,8 +461,55 @@ pool_param: POOL COLON STRING {
     ElementPtr pool(new StringElement($3)); ctx.stack_.back()->set("pool", pool);
 }
 | option_data_list;
-
 // --- end of pools definition -------------------------------
+
+// --- pd-pools ----------------------------------------------
+pd_pools_list: PD_POOLS COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("pd-pools", l);
+    ctx.stack_.push_back(l);
+} LSQUARE_BRACKET pd_pools_list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+// Pools may be empty, contain a single pool entry or multiple entries
+// separate by commas.
+pd_pools_list_content: { }
+| pd_pool_entry
+| pd_pools_list_content COMMA pd_pool_entry;
+
+pd_pool_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} pd_pool_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+pd_pool_params: pd_pool_param
+| pd_pool_params COMMA pd_pool_param;
+
+pd_pool_param: pd_prefix
+| pd_prefix_len
+| pd_delegated_len
+| option_data_list
+;
+
+pd_prefix: PREFIX COLON STRING {
+    ElementPtr prf(new StringElement($3)); ctx.stack_.back()->set("prefix", prf);
+}
+
+pd_prefix_len: PREFIX_LEN COLON INTEGER {
+    ElementPtr prf(new IntElement($3)); ctx.stack_.back()->set("prefix-len", prf);
+}
+
+pd_delegated_len: DELEGATED_LEN COLON INTEGER {
+    ElementPtr deleg(new IntElement($3)); ctx.stack_.back()->set("delegated-len", deleg);
+}
+
+
+
+// --- end of pd-pools ---------------------------------------
 
 // --- reservations ------------------------------------------
 reservations: RESERVATIONS COLON LSQUARE_BRACKET {
@@ -447,11 +539,40 @@ reservation_params: reservation_param
 reservation_param:
 | duid
 | reservation_client_classes
+| ip_addresses
+| prefixes
+| hw_address
+| hostname
+| option_data_list
 ;
+
+ip_addresses: IP_ADDRESSES COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("ip-addresses", l);
+    ctx.stack_.push_back(l);
+} list { 
+    ctx.stack_.pop_back();
+};
+
+prefixes: PREFIXES COLON  {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("prefixes", l);
+    ctx.stack_.push_back(l);
+} list { 
+    ctx.stack_.pop_back();
+};
 
 duid: DUID COLON STRING {
     ElementPtr d(new StringElement($3)); ctx.stack_.back()->set("duid", d);
 };
+
+hw_address: HW_ADDRESS COLON STRING {
+    ElementPtr hw(new StringElement($3)); ctx.stack_.back()->set("hw-address", hw);
+};
+
+hostname: HOSTNAME COLON STRING {
+    ElementPtr host(new StringElement($3)); ctx.stack_.back()->set("hostname", host);
+}
 
 reservation_client_classes: CLIENT_CLASSES COLON {
     ElementPtr c(new ListElement());
