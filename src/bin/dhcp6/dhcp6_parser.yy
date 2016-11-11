@@ -91,6 +91,8 @@ using namespace std;
 // %start dhcp6_map - this will parse everything with Dhcp6 syntax checking
 %start syntax_map;
 
+// ---- generic JSON parser ---------------------------------
+
 // Values rule
 value : INTEGER { $$ = ElementPtr(new IntElement($1)); }
      | FLOAT { $$ = ElementPtr(new DoubleElement($1)); }
@@ -115,39 +117,77 @@ map: LCURLY_BRACKET {
 // Assignments rule
 map_content:  { /* do nothing, it's an empty map */ }
     | STRING COLON value {
-	// map containing a single entry
-	ctx.stack_.back()->set($1, $3);
+        // map containing a single entry
+        ctx.stack_.back()->set($1, $3);
     }
     | map_content COMMA STRING COLON value {
-	// map consisting of a shorter map followed by comma and string:value
-	ctx.stack_.back()->set($3, $5);
+        // map consisting of a shorter map followed by comma and string:value
+        ctx.stack_.back()->set($3, $5);
     }
     ;
 
 list: LSQUARE_BRACKET {
     // List parsing about to start
-    ElementPtr l(new ListElement());
-    ctx.stack_.push_back(l);
 } list_content RSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
 };
 
 list_content: { /* do nothing, it's an empty list */ }
     | value {
-	// List consisting of a single element.
-	ctx.stack_.back()->add($1);
+        // List consisting of a single element.
+        ctx.stack_.back()->add($1);
     }
     | list_content COMMA value {
-	// List ending with , and a value.
-	ctx.stack_.back()->add($3);
+        // List ending with , and a value.
+        ctx.stack_.back()->add($3);
     }
     ;
+
+// ---- generic JSON parser ends here ----------------------------------
+
+// ---- syntax checking parser starts here -----------------------------
+
+// This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
+// objects.
+syntax_map: LCURLY_BRACKET {
+    // This code is executed when we're about to start parsing
+    // the content of the map
+    ElementPtr m(new MapElement());
+    ctx.stack_.push_back(m);
+} global_objects RCURLY_BRACKET {
+    // map parsing completed. If we ever want to do any wrap up
+    // (maybe some sanity checking), this would be the best place
+    // for it.
+};
+
+// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
+global_object: dhcp6_object
+| logging_object;
+
+// This represents top-level entries: Dhcp6, Dhcp4, DhcpDdns, Logging
+global_objects
+: global_object
+| global_objects COMMA global_object
+;
+
+dhcp6_object: DHCP6 COLON LCURLY_BRACKET {
+    // This code is executed when we're about to start parsing
+    // the content of the map
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("Dhcp6", m);
+    ctx.stack_.push_back(m);
+} global_params RCURLY_BRACKET {
+    // map parsing completed. If we ever want to do any wrap up
+    // (maybe some sanity checking), this would be the best place
+    // for it.
+    ctx.stack_.pop_back();
+};
 
 global_params: global_param
 | global_params COMMA global_param;
 
 // These are the parameters that are allowed in the top-level for
-// Dhcp6. 
+// Dhcp6.
 global_param
 : preferred_lifetime
 | valid_lifetime
@@ -159,36 +199,68 @@ global_param
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
-
+    ElementPtr prf(new IntElement($3));
+    ctx.stack_.back()->set("preferred-lifetime", prf);
 };
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
-
+    ElementPtr prf(new IntElement($3));
+    ctx.stack_.back()->set("valid-lifetime", prf);
 };
 
 renew_timer: RENEW_TIMER COLON INTEGER {
-
+    ElementPtr prf(new IntElement($3));
+    ctx.stack_.back()->set("renew-timer", prf);
 };
 
-interfaces_config: INTERFACES_CONFIG COLON LCURLY_BRACKET interface_config_map RCURLY_BRACKET;
-
-interface_config_map: INTERFACES COLON list;
-
-lease_database: LEASE_DATABASE COLON LCURLY_BRACKET lease_database_map RCURLY_BRACKET;
-
-lease_database_map: TYPE COLON STRING;
-
 rebind_timer: REBIND_TIMER COLON INTEGER {
+    ElementPtr prf(new IntElement($3));
+    ctx.stack_.back()->set("rebind-timer", prf);
+};
 
+interfaces_config: INTERFACES_CONFIG COLON {
+    ElementPtr i(new MapElement());
+    ctx.stack_.back()->set("interfaces-config", i);
+    ctx.stack_.push_back(i);
+ } LCURLY_BRACKET interface_config_map RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+interface_config_map: INTERFACES {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("interfaces", l);
+    ctx.stack_.push_back(l);
+ } COLON list {
+     ctx.stack_.pop_back();
+ }
+
+lease_database: LEASE_DATABASE {
+    ElementPtr i(new MapElement());
+    ctx.stack_.back()->set("lease-database", i);
+    ctx.stack_.push_back(i);
+}
+COLON LCURLY_BRACKET lease_database_map_params {
+     ctx.stack_.pop_back();
+} RCURLY_BRACKET;
+
+lease_database_map_params: lease_database_map_param
+| lease_database_map_params COMMA lease_database_map_param;
+
+lease_database_map_param: lease_database_type;
+
+lease_database_type: TYPE COLON STRING {
+    ElementPtr prf(new StringElement($3));
+    ctx.stack_.back()->set("type", prf);
 };
 
 // This defines subnet6 as a list of maps.
 // "subnet6": [ ... ]
 subnet6_list: SUBNET6 COLON LSQUARE_BRACKET {
     ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("subnet6", l);
     ctx.stack_.push_back(l);
 } subnet6_list_content RSQUARE_BRACKET {
-
+    ctx.stack_.pop_back();
 };
 
 // This defines the ... in "subnet6": [ ... ]
@@ -201,23 +273,40 @@ subnet6_list_content: { /* no subnets defined at all */ }
 
 // This defines a single subnet, i.e. a single map with
 // subnet6 array.
-subnet6: LCURLY_BRACKET subnet6_params RCURLY_BRACKET;
+subnet6: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} subnet6_params {
+    ctx.stack_.pop_back();
+} RCURLY_BRACKET;
 
-subnet6_params: subnet6_param 
+subnet6_params: subnet6_param
 | subnet6_params COMMA subnet6_param;
 
 subnet6_param: { /* empty list */ }
 | option_data_list
 | pools_list
-| SUBNET COLON STRING { }
-| INTERFACE COLON STRING { }
+| SUBNET COLON STRING {
+    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("subnet", name);
+
+ }
+| INTERFACE COLON STRING {
+    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("interface", name);
+ }
 ;
 
 // ---- option-data --------------------------
 
 // This defines the "option-data": [ ... ] entry that may appear
 // in several places, but most notably in subnet6 entries.
-option_data_list: OPTION_DATA COLON LSQUARE_BRACKET option_data_list_content RSQUARE_BRACKET;
+option_data_list: OPTION_DATA {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("option-data", l);
+    ctx.stack_.push_back(l);
+} COLON LSQUARE_BRACKET option_data_list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 // This defines the content of option-data. It may be empty,
 // have one entry or multiple entries separated by comma.
@@ -227,7 +316,13 @@ option_data_list_content: { }
 
 // This defines th content of a single entry { ... } within
 // option-data list.
-option_data_entry: LCURLY_BRACKET option_data_params RCURLY_BRACKET;
+option_data_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} option_data_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 // This defines parameters specified inside the map that itself
 // is an entry in option-data list.
@@ -235,14 +330,27 @@ option_data_params: {}
 | option_data_param
 | option_data_params COMMA option_data_param;
 
-option_data_param: NAME COLON STRING {}
-| DATA COLON STRING
-| CODE COLON INTEGER;
+option_data_param:
+NAME COLON STRING {
+    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("name", name);
+}
+| DATA COLON STRING {
+    ElementPtr data(new StringElement($3)); ctx.stack_.back()->set("data", data);
+}
+| CODE COLON INTEGER {
+    ElementPtr code(new IntElement($3)); ctx.stack_.back()->set("code", code);
+};
 
 // ---- pools ------------------------------------
 
 // This defines the "pools": [ ... ] entry that may appear in subnet6.
-pools_list: POOLS COLON LSQUARE_BRACKET pools_list_content RSQUARE_BRACKET;
+pools_list: POOLS COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("pools", l);
+    ctx.stack_.push_back(l);
+} LSQUARE_BRACKET pools_list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 // Pools may be empty, contain a single pool entry or multiple entries
 // separate by commas.
@@ -250,26 +358,23 @@ pools_list_content: { }
 | pool_entry
 | pools_list_content COMMA pool_entry;
 
-pool_entry: LCURLY_BRACKET pool_params RCURLY_BRACKET;
+pool_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} pool_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
 
 pool_params: pool_param
 | pool_params COMMA pool_param;
 
-pool_param: POOL COLON STRING
+pool_param: POOL COLON STRING {
+    ElementPtr name(new StringElement($3)); ctx.stack_.back()->set("pool", name);
+}
 | option_data_list;
 
 // --- end of pools definition -------------------------------
-
-dhcp6_object: DHCP6 COLON LCURLY_BRACKET {
-    // This code is executed when we're about to start parsing
-    // the content of the map
-    ElementPtr m(new MapElement());
-    ctx.stack_.push_back(m);
-} global_params RCURLY_BRACKET {
-    // map parsing completed. If we ever want to do any wrap up
-    // (maybe some sanity checking), this would be the best place
-    // for it.
-};
 
 // --- logging entry -----------------------------------------
 
@@ -327,28 +432,6 @@ output_params: output_param
 
 output_param: OUTPUT COLON STRING;
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
-global_object: dhcp6_object
-| logging_object;
-
-// This represents top-level entries: Dhcp6, Dhcp4, DhcpDdns, Logging
-global_objects
-: global_object
-| global_objects COMMA global_object
-;
-
-// This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
-// objects.
-syntax_map: LCURLY_BRACKET {
-    // This code is executed when we're about to start parsing
-    // the content of the map
-    ElementPtr m(new MapElement());
-    ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
-    // map parsing completed. If we ever want to do any wrap up
-    // (maybe some sanity checking), this would be the best place
-    // for it.
-};
 
 
 
@@ -356,7 +439,7 @@ syntax_map: LCURLY_BRACKET {
 
 void
 isc::dhcp::Dhcp6Parser::error(const location_type& loc,
-			      const std::string& what)
+                              const std::string& what)
 {
     ctx.error(loc, what);
 }
