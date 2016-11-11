@@ -125,6 +125,12 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"name\" { return  isc::dhcp::Dhcp6Parser::make_NAME(loc); }
 \"data\" { return  isc::dhcp::Dhcp6Parser::make_DATA(loc); }
 \"pools\" { return  isc::dhcp::Dhcp6Parser::make_POOLS(loc); }
+
+\"pd-pools\" { return  isc::dhcp::Dhcp6Parser::make_PD_POOLS(loc); }
+\"prefix\" { return  isc::dhcp::Dhcp6Parser::make_PREFIX(loc); }
+\"prefix-len\" { return  isc::dhcp::Dhcp6Parser::make_PREFIX_LEN(loc); }
+\"delegated-len\" { return  isc::dhcp::Dhcp6Parser::make_DELEGATED_LEN(loc); }
+
 \"pool\" { return  isc::dhcp::Dhcp6Parser::make_POOL(loc); }
 \"subnet\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET(loc); }
 \"interface\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACE(loc); }
@@ -132,6 +138,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"code\" { return isc::dhcp::Dhcp6Parser::make_CODE(loc); }
 \"mac-sources\" { return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc); }
 \"relay-supplied-options\" { return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc); }
+\"host-reservation-identifiers\" { return isc::dhcp::Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS(loc); }
 
 \"Logging\" { return isc::dhcp::Dhcp6Parser::make_LOGGING(loc); }
 \"loggers\" { return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc); }
@@ -145,8 +152,12 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"test\" { return isc::dhcp::Dhcp6Parser::make_TEST(loc); }
 
 \"reservations\" { return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(loc); }
+\"ip-addresses\" { return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(loc); }
+\"prefixes\" { return isc::dhcp::Dhcp6Parser::make_PREFIXES(loc); }
 \"duid\" { return isc::dhcp::Dhcp6Parser::make_DUID(loc); }
-
+\"hw-address\" { return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(loc); }
+\"hostname\" { return isc::dhcp::Dhcp6Parser::make_HOSTNAME(loc); }
+\"space\" { return isc::dhcp::Dhcp6Parser::make_SPACE(loc); }
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
