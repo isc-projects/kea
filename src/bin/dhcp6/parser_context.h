@@ -34,6 +34,10 @@ public:
 class Parser6Context
 {
 public:
+
+    typedef enum { PARSER_DHCP6,
+           PARSER_GENERIC_JSON } ParserType;
+
     /// @brief Default constructor.
     ///
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
@@ -48,21 +52,23 @@ public:
     std::vector<isc::data::ElementPtr> stack_;
 
     /// @brief Method called before scanning starts on a string.
-    void scanStringBegin();
+    void scanStringBegin(ParserType type);
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
 
-    void scanFileBegin(FILE * f);
+    void scanFileBegin(FILE * f, ParserType type);
     void scanFileEnd(FILE * f);
 
     /// @brief Run the parser on the string specified.
     ///
     /// @param str string to be written
     /// @return true on success.
-    isc::data::ConstElementPtr parseString(const std::string& str);
+    isc::data::ConstElementPtr parseString(const std::string& str,
+                                           ParserType parser_type);
 
-    isc::data::ConstElementPtr parseFile(const std::string& filename);
+    isc::data::ConstElementPtr parseFile(const std::string& filename,
+                                         ParserType parser_type);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.

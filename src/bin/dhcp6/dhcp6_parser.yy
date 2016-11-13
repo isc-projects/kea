@@ -115,6 +115,11 @@ using namespace std;
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
+
+ // Not real tokens, just a way to signal what the parser is expected to
+ // parse.
+  TOPLEVEL_DHCP6
+  TOPLEVEL_GENERIC_JSON
 ;
 
 %token <std::string> STRING "constant string"
@@ -127,11 +132,15 @@ using namespace std;
 %printer { yyoutput << $$; } <*>;
 
 %%
+
 // The whole grammar starts with a map, because the config file
 // constists of Dhcp, Logger and DhcpDdns entries in one big { }.
 // %start map - this will parse everything as generic JSON
 // %start dhcp6_map - this will parse everything with Dhcp6 syntax checking
-%start syntax_map;
+%start start;
+
+start: TOPLEVEL_DHCP6 syntax_map
+| TOPLEVEL_GENERIC_JSON map;
 
 // ---- generic JSON parser ---------------------------------
 

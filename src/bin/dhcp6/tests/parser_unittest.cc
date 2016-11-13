@@ -17,32 +17,33 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b, bool print = true) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
     if (print) {
-        std::cout << a->str() << std::endl;
-        std::cout << b->str() << std::endl;
+        std::cout << "JSON A: -----" << endl << a->str() << std::endl;
+        std::cout << "JSON B: -----" << endl << b->str() << std::endl;
+        cout << "---------" << endl << endl;
     }
     EXPECT_EQ(a->str(), b->str());
 }
 
-void testParser(const std::string& txt) {
+void testParser(const std::string& txt, Parser6Context::ParserType parser_type) {
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
     EXPECT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     EXPECT_NO_THROW({
         Parser6Context ctx;
-        test_json = ctx.parseString(txt);
+        test_json = ctx.parseString(txt, parser_type);
     });
 
     // Now compare if both representations are the same.
     compareJSON(reference_json, test_json);
 }
 
-void testParser2(const std::string& txt) {
+void testParser2(const std::string& txt, Parser6Context::ParserType parser_type) {
     ConstElementPtr test_json;
 
     EXPECT_NO_THROW({
         Parser6Context ctx;
-        test_json = ctx.parseString(txt);
+        test_json = ctx.parseString(txt, parser_type);
     });
     /// @todo: Implement actual validation here. since the original
     /// Element::fromJSON does not support several comment types, we don't
@@ -53,35 +54,35 @@ void testParser2(const std::string& txt) {
 
 TEST(ParserTest, mapInMap) {
     string txt = "{ \"Dhcp6\": { \"foo\": 123, \"baz\": 456 } }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, listInList) {
     string txt = "{ \"countries\": [ [ \"Britain\", \"Wales\", \"Scotland\" ], "
                                     "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ] }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, nestedMaps) {
     string txt = "{ \"europe\": { \"UK\": { \"London\": { \"street\": \"221B Baker\" }}}}";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, nestedLists) {
     string txt = "{ \"unity\": [ \"half\", [ \"quarter\", [ \"eighth\", [ \"sixteenth\" ]]]] }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelguese\" ], "
                     "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
     string txt = "{ \"solar-system\": [ { \"name\": \"earth\", \"gravity\": 1.0 },"
                                       " { \"name\": \"mars\", \"gravity\": 0.376 } ] }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, types) {
@@ -91,7 +92,7 @@ TEST(ParserTest, types) {
                    "\"map\": { \"foo\": \"bar\" },"
                    "\"list\": [ 1, 2, 3 ],"
                    "\"null\": null }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, bashComments) {
@@ -111,7 +112,7 @@ TEST(ParserTest, bashComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 }";
-    testParser(txt);
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, cComments) {
@@ -128,7 +129,7 @@ TEST(ParserTest, cComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 }";
-    testParser2(txt);
+    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, bashComments2) {
@@ -145,7 +146,7 @@ TEST(ParserTest, bashComments2) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 }";
-    testParser2(txt);
+    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 TEST(ParserTest, multilineComments) {
@@ -163,7 +164,7 @@ TEST(ParserTest, multilineComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 }";
-    testParser2(txt);
+    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
 
@@ -177,7 +178,7 @@ void testFile(const std::string& fname, bool print) {
 
     try {
         Parser6Context ctx;
-        test_json = ctx.parseFile(fname);
+        test_json = ctx.parseFile(fname, Parser6Context::PARSER_DHCP6);
     } catch (const std::exception &x) {
         cout << "EXCEPTION: " << x.what() << endl;
     }

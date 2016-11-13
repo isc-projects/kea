@@ -25,6 +25,10 @@
 // variable will be useful for logging errors.
 static isc::dhcp::location loc;
 
+static bool start_token_flag = false;
+
+static isc::dhcp::Parser6Context::ParserType start_token_value;
+
 // To avoid the call to exit... oops!
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
 %}
@@ -81,10 +85,24 @@ JSONString                              \"{JSONStringCharacter}*\"
 %%
 
 %{
+    // This part of the code is copied over to the verbatim to the top
+    // of the generated yylex function. Explanation:
+    // http://www.gnu.org/software/bison/manual/html_node/Multiple-start_002dsymbols.html
+
     // Code run each time yylex is called.
     loc.step();
 
     int comment_start_line = 0;
+
+    if (start_token_flag) {
+        start_token_flag = false;
+        switch (start_token_value) {
+        case Parser6Context::PARSER_DHCP6:
+            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(loc);
+        case Parser6Context::PARSER_GENERIC_JSON:
+            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(loc);
+        }
+    }
 %}
 
 #.* ;
@@ -247,8 +265,11 @@ null {
 using namespace isc::dhcp;
 
 void
-Parser6Context::scanStringBegin()
+Parser6Context::scanStringBegin(ParserType parser_type)
 {
+    start_token_flag = true;
+    start_token_value = parser_type;
+
     loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
@@ -266,7 +287,11 @@ Parser6Context::scanStringEnd()
 }
 
 void
-Parser6Context::scanFileBegin(FILE * f) {
+Parser6Context::scanFileBegin(FILE * f, ParserType parser_type) {
+
+    start_token_flag = true;
+    start_token_value = parser_type;
+
     loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
