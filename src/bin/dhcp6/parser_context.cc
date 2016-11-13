@@ -25,11 +25,11 @@ Parser6Context::~Parser6Context()
 }
 
 isc::data::ConstElementPtr
-Parser6Context::parseString(const std::string& str)
+Parser6Context::parseString(const std::string& str, ParserType parser_type)
 {
     file_ = "<string>";
     string_ = str;
-    scanStringBegin();
+    scanStringBegin(parser_type);
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
     // trace_parsing_ = true;
@@ -48,7 +48,7 @@ Parser6Context::parseString(const std::string& str)
 }
 
 isc::data::ConstElementPtr
-Parser6Context::parseFile(const std::string& filename) {
+Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
 
     ifstream f;
     f.open(filename);
@@ -66,7 +66,7 @@ Parser6Context::parseFile(const std::string& filename) {
 
     file_ = filename;
 
-    scanStringBegin();
+    scanStringBegin(parser_type);
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
     // trace_parsing_ = true;
