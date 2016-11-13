@@ -115,7 +115,14 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"Dhcp6\"  { return isc::dhcp::Dhcp6Parser::make_DHCP6(loc); }
 \"interfaces-config\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(loc); }
 \"interfaces\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES(loc); }
+
 \"lease-database\" { return  isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(loc); }
+\"hosts-database\" { return  isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(loc); }
+\"type\" { return isc::dhcp::Dhcp6Parser::make_TYPE(loc); }
+\"user\" { return isc::dhcp::Dhcp6Parser::make_USER(loc); }
+\"password\" { return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc); }
+\"host\" { return isc::dhcp::Dhcp6Parser::make_HOST(loc); }
+
 \"preferred-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc); }
 \"valid-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc); }
 \"renew-timer\" { return  isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(loc); }
@@ -134,7 +141,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"pool\" { return  isc::dhcp::Dhcp6Parser::make_POOL(loc); }
 \"subnet\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET(loc); }
 \"interface\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACE(loc); }
-\"type\" { return isc::dhcp::Dhcp6Parser::make_TYPE(loc); }
+\"id\" { return  isc::dhcp::Dhcp6Parser::make_ID(loc); }
+
 \"code\" { return isc::dhcp::Dhcp6Parser::make_CODE(loc); }
 \"mac-sources\" { return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc); }
 \"relay-supplied-options\" { return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc); }
