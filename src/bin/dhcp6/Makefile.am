@@ -122,7 +122,7 @@ parser: dhcp6_lexer.cc location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_pa
 # This is especially useful if yydebug_ is set to 1 as that variable
 # will cause parser to print out its internal state.
 location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
-	$(YACC) --defines=dhcp6_parser.h -o dhcp6_parser.cc dhcp6_parser.yy
+	$(YACC) --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
 
 dhcp6_lexer.cc: dhcp6_lexer.ll
 	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll
