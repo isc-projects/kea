@@ -58,6 +58,7 @@ using namespace std;
   USER "user"
   PASSWORD "password"
   HOST "host"
+  PERSIST "persist"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -106,6 +107,7 @@ using namespace std;
   IDENTIFIER "identifier"
   HTYPE "htype"
   TIME "time"
+  ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
 
@@ -329,7 +331,8 @@ lease_database_map_param: type
 | user
 | password
 | host
-| name;
+| name
+| persist;
 
 type: TYPE COLON STRING {
     ElementPtr prf(new StringElement($3));
@@ -354,6 +357,11 @@ host: HOST COLON STRING {
 name: NAME COLON STRING {
     ElementPtr n(new StringElement($3));
     ctx.stack_.back()->set("name", n);
+};
+
+persist: PERSIST COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3));
+    ctx.stack_.back()->set("persist", n);
 };
 
 mac_sources: MAC_SOURCES {
@@ -782,7 +790,8 @@ server_id_params: server_id_param
 server_id_param: type
 | identifier
 | time
-| htype;
+| htype
+| enterprise_id;
 
 htype: HTYPE COLON INTEGER {
     ElementPtr htype(new IntElement($3));
@@ -798,6 +807,12 @@ time: TIME COLON INTEGER {
     ElementPtr time(new IntElement($3));
     ctx.stack_.back()->set("time", time);
 };
+
+enterprise_id: ENTERPRISE_ID COLON INTEGER {
+    ElementPtr time(new IntElement($3));
+    ctx.stack_.back()->set("enterprise-id", time);
+};
+
 // --- end of server-id --------------------------------------
 
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
