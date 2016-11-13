@@ -11,6 +11,7 @@
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <dhcp6/dhcp6_log.h>
 #include <exceptions/exceptions.h>
 
@@ -56,7 +57,12 @@ void configure(const std::string& file_name) {
         }
 
         // Read contents of the file and parse it as JSON
+#if 0
         json = isc::data::Element::fromJSONFile(file_name, true);
+#else
+        Parser6Context parser;
+        json = parser.parseFile(file_name, Parser6Context::PARSER_DHCP6);
+#endif
         if (!json) {
             isc_throw(isc::BadValue, "no configuration found");
         }
