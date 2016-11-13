@@ -69,6 +69,7 @@ using namespace std;
   DATA "data"
   CODE "code"
   SPACE "space"
+  CSV_FORMAT "csv-format"
 
   POOLS "pools"
   POOL "pool"
@@ -105,6 +106,8 @@ using namespace std;
   IDENTIFIER "identifier"
   HTYPE "htype"
   TIME "time"
+
+  DHCP4O6_PORT "dhcp4o6-port"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -244,6 +247,7 @@ global_param
 | hooks_libraries
 | expired_leases_processing
 | server_id
+| dhcp4o6_port
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -524,6 +528,7 @@ option_data_param:
 | option_data_data
 | option_data_code
 | option_data_space
+| option_data_csv_format
 ;
 
 
@@ -541,6 +546,10 @@ option_data_code: CODE COLON INTEGER {
 
 option_data_space: SPACE COLON STRING {
     ElementPtr space(new StringElement($3)); ctx.stack_.back()->set("space", space);
+};
+
+option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
+    ElementPtr space(new BoolElement($3)); ctx.stack_.back()->set("csv-format", space);
 };
 
 // ---- pools ------------------------------------
@@ -771,11 +780,12 @@ time: TIME COLON INTEGER {
     ElementPtr time(new IntElement($3));
     ctx.stack_.back()->set("time", time);
 };
-
-
-
-
 // --- end of server-id --------------------------------------
+
+dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
+    ElementPtr time(new IntElement($3));
+    ctx.stack_.back()->set("dhcp4o6-port", time);
+};
 
 // --- logging entry -----------------------------------------
 

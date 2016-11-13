@@ -166,6 +166,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"hw-address\" { return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(loc); }
 \"hostname\" { return isc::dhcp::Dhcp6Parser::make_HOSTNAME(loc); }
 \"space\" { return isc::dhcp::Dhcp6Parser::make_SPACE(loc); }
+\"csv-format\" { return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(loc); }
 
 \"hooks-libraries\" { return isc::dhcp::Dhcp6Parser::make_HOOKS_LIBRARIES(loc); }
 \"library\" { return isc::dhcp::Dhcp6Parser::make_LIBRARY(loc); }
@@ -177,6 +178,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"expired-leases-processing\" { return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(loc); }
 
+\"dhcp4o6-port\" { return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(loc); }
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
