@@ -141,6 +141,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"user\" { return isc::dhcp::Dhcp6Parser::make_USER(loc); }
 \"password\" { return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc); }
 \"host\" { return isc::dhcp::Dhcp6Parser::make_HOST(loc); }
+\"persist\" { return isc::dhcp::Dhcp6Parser::make_PERSIST(loc); }
 
 \"preferred-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc); }
 \"valid-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc); }
@@ -194,6 +195,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"identifier\" { return isc::dhcp::Dhcp6Parser::make_IDENTIFIER(loc); }
 \"htype\" { return isc::dhcp::Dhcp6Parser::make_HTYPE(loc); }
 \"time\" { return isc::dhcp::Dhcp6Parser::make_TIME(loc); }
+\"enterprise-id\" { return isc::dhcp::Dhcp6Parser::make_ENTERPRISE_ID(loc); }
 
 \"expired-leases-processing\" { return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(loc); }
 
