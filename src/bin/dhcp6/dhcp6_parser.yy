@@ -140,7 +140,7 @@ using namespace std;
 %start start;
 
 start: TOPLEVEL_DHCP6 syntax_map
-| TOPLEVEL_GENERIC_JSON map;
+| TOPLEVEL_GENERIC_JSON map2;
 
 // ---- generic JSON parser ---------------------------------
 
@@ -150,11 +150,11 @@ value : INTEGER { $$ = ElementPtr(new IntElement($1)); }
      | BOOLEAN { $$ = ElementPtr(new BoolElement($1)); }
      | STRING { $$ = ElementPtr(new StringElement($1)); }
      | NULL_TYPE { $$ = ElementPtr(new NullElement()); }
-     | map { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
-     | list { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
+     | map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
+     | list_generic { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
     ;
 
-map: LCURLY_BRACKET {
+map2: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement());
@@ -177,10 +177,19 @@ map_content:  { /* do nothing, it's an empty map */ }
     }
     ;
 
-list: LSQUARE_BRACKET {
+list_generic: LSQUARE_BRACKET {
+    ElementPtr l(new ListElement());
+    ctx.stack_.push_back(l);
+ } list_content RSQUARE_BRACKET {
+
+ }
+
+// This one is used in syntax parser.
+list2: LSQUARE_BRACKET {
     // List parsing about to start
 } list_content RSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
+    //ctx.stack_.pop_back();
 };
 
 list_content: { /* do nothing, it's an empty list */ }
@@ -291,7 +300,7 @@ interface_config_map: INTERFACES {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
- } COLON list {
+ } COLON list2 {
      ctx.stack_.pop_back();
  }
 
@@ -386,7 +395,7 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("relay-supplied-options", l);
     ctx.stack_.push_back(l);
-} COLON list {
+} COLON list2 {
     ctx.stack_.pop_back();
 };
 
@@ -398,7 +407,7 @@ hooks_libraries: HOOKS_LIBRARIES COLON {
     ctx.stack_.pop_back();
 };
 
-hooks_libraries_list: { } 
+hooks_libraries_list: { }
 | hooks_library
 | hooks_libraries_list COMMA hooks_library;
 
@@ -682,7 +691,7 @@ ip_addresses: IP_ADDRESSES COLON {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
-} list {
+} list2 {
     ctx.stack_.pop_back();
 };
 
@@ -690,7 +699,7 @@ prefixes: PREFIXES COLON  {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);
-} list {
+} list2 {
     ctx.stack_.pop_back();
 };
 
@@ -710,7 +719,7 @@ reservation_client_classes: CLIENT_CLASSES COLON {
     ElementPtr c(new ListElement());
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
-} list {
+} list2 {
     ctx.stack_.pop_back();
   };
 
