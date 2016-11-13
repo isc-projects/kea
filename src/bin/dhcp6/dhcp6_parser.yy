@@ -96,6 +96,16 @@ using namespace std;
   HW_ADDRESS "hw-address"
   HOSTNAME "hostname"
 
+  HOOKS_LIBRARIES "hooks-libraries"
+  LIBRARY "library"
+
+  EXPIRED_LEASES_PROCESSING "expired-leases-processing"
+
+  SERVER_ID "server-id"
+  IDENTIFIER "identifier"
+  HTYPE "htype"
+  TIME "time"
+
   LOGGING "Logging"
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -231,6 +241,9 @@ global_param
 | host_reservation_identifiers
 | client_classes
 | option_data_list
+| hooks_libraries
+| expired_leases_processing
+| server_id
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -364,6 +377,53 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ctx.stack_.pop_back();
 };
 
+hooks_libraries: HOOKS_LIBRARIES COLON {
+    ElementPtr l(new ListElement());
+    ctx.stack_.back()->set("hooks-libraries", l);
+    ctx.stack_.push_back(l);
+} LSQUARE_BRACKET hooks_libraries_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+hooks_libraries_list: { } 
+| hooks_library
+| hooks_libraries_list COMMA hooks_library;
+
+hooks_library: LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} hooks_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+hooks_params: hooks_param
+| hooks_params hooks_param;
+
+hooks_param: LIBRARY COLON STRING {
+    ElementPtr lib(new StringElement($3)); ctx.stack_.back()->set("library", lib);
+};
+
+// --- expired-leases-processing ------------------------
+expired_leases_processing: EXPIRED_LEASES_PROCESSING COLON LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("expired-leases-processing", m);
+    ctx.stack_.push_back(m);
+} expired_leases_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+expired_leases_params: expired_leases_param
+| expired_leases_params COMMA expired_leases_param;
+
+// This is a bit of a simplification. But it can also serve as an example.
+// Instead of explicitly listing all allowed expired leases parameters, we
+// simply say that all of them as integers.
+expired_leases_param: STRING COLON INTEGER {
+    ElementPtr value(new IntElement($3)); ctx.stack_.back()->set($1, value);
+}
+
+// --- subnet6 ------------------------------------------
 // This defines subnet6 as a list of maps.
 // "subnet6": [ ... ]
 subnet6_list: SUBNET6 COLON LSQUARE_BRACKET {
@@ -679,6 +739,43 @@ client_class_test: TEST COLON STRING {
 
 
 // --- end of client classes ---------------------------------
+
+// --- server-id ---------------------------------------------
+server_id: SERVER_ID COLON LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("server-id", m);
+    ctx.stack_.push_back(m);
+} server_id_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+server_id_params: server_id_param
+| server_id_params COMMA server_id_param;
+
+server_id_param: type
+| identifier
+| time
+| htype;
+
+htype: HTYPE COLON INTEGER {
+    ElementPtr htype(new IntElement($3));
+    ctx.stack_.back()->set("htype", htype);
+};
+
+identifier: IDENTIFIER COLON STRING {
+    ElementPtr id(new StringElement($3));
+    ctx.stack_.back()->set("identifier", id);
+};
+
+time: TIME COLON INTEGER {
+    ElementPtr time(new IntElement($3));
+    ctx.stack_.back()->set("time", time);
+};
+
+
+
+
+// --- end of server-id --------------------------------------
 
 // --- logging entry -----------------------------------------
 
