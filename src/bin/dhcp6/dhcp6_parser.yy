@@ -284,8 +284,17 @@ mac_sources: MAC_SOURCES {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("mac-sources", l);
     ctx.stack_.push_back(l);
-} COLON list {
+} COLON LSQUARE_BRACKET mac_sources_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
+};
+
+mac_sources_list: mac_sources_value
+| mac_sources_list COMMA mac_sources_value;
+
+mac_sources_value: DUID {
+    ElementPtr duid(new StringElement("duid")); ctx.stack_.back()->add(duid);
+}| STRING {
+    ElementPtr duid(new StringElement($1)); ctx.stack_.back()->add(duid);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS COLON LSQUARE_BRACKET {
@@ -401,8 +410,7 @@ option_data_entry: LCURLY_BRACKET {
 
 // This defines parameters specified inside the map that itself
 // is an entry in option-data list.
-option_data_params: {}
-| option_data_param
+option_data_params: option_data_param
 | option_data_params COMMA option_data_param;
 
 option_data_param:
@@ -550,7 +558,7 @@ ip_addresses: IP_ADDRESSES COLON {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
-} list { 
+} list {
     ctx.stack_.pop_back();
 };
 
@@ -558,7 +566,7 @@ prefixes: PREFIXES COLON  {
     ElementPtr l(new ListElement());
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);
-} list { 
+} list {
     ctx.stack_.pop_back();
 };
 
