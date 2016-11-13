@@ -17,9 +17,9 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b, bool print = true) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
     if (print) {
-        std::cout << "JSON A: -----" << endl << a->str() << std::endl;
-        std::cout << "JSON B: -----" << endl << b->str() << std::endl;
-        cout << "---------" << endl << endl;
+        // std::cout << "JSON A: -----" << endl << a->str() << std::endl;
+        // std::cout << "JSON B: -----" << endl << b->str() << std::endl;
+        // cout << "---------" << endl << endl;
     }
     EXPECT_EQ(a->str(), b->str());
 }
@@ -28,10 +28,16 @@ void testParser(const std::string& txt, Parser6Context::ParserType parser_type) 
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSON(txt, true));
-    EXPECT_NO_THROW({
+    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
+    ASSERT_NO_THROW({
+            try {
         Parser6Context ctx;
         test_json = ctx.parseString(txt, parser_type);
+            } catch (const std::exception &e) {
+                cout << "EXCEPTION: " << e.what() << endl;
+                throw;
+            }
+
     });
 
     // Now compare if both representations are the same.
@@ -41,19 +47,24 @@ void testParser(const std::string& txt, Parser6Context::ParserType parser_type) 
 void testParser2(const std::string& txt, Parser6Context::ParserType parser_type) {
     ConstElementPtr test_json;
 
-    EXPECT_NO_THROW({
+    ASSERT_NO_THROW({
+            try {
         Parser6Context ctx;
         test_json = ctx.parseString(txt, parser_type);
+            } catch (const std::exception &e) {
+                cout << "EXCEPTION: " << e.what() << endl;
+                throw;
+            }
     });
     /// @todo: Implement actual validation here. since the original
     /// Element::fromJSON does not support several comment types, we don't
     /// have anything to compare with.
-    std::cout << "Original text:" << txt << endl;
-    std::cout << "Parsed text  :" << test_json->str() << endl;
+    /// std::cout << "Original text:" << txt << endl;
+    /// std::cout << "Parsed text  :" << test_json->str() << endl;
 }
 
 TEST(ParserTest, mapInMap) {
-    string txt = "{ \"Dhcp6\": { \"foo\": 123, \"baz\": 456 } }";
+    string txt = "{ \"xyzzy\": { \"foo\": 123, \"baz\": 456 } }";
     testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
@@ -80,8 +91,8 @@ TEST(ParserTest, listsInMaps) {
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "{ \"solar-system\": [ { \"name\": \"earth\", \"gravity\": 1.0 },"
-                                      " { \"name\": \"mars\", \"gravity\": 0.376 } ] }";
+    string txt = "{ \"solar-system\": [ { \"body\": \"earth\", \"gravity\": 1.0 },"
+                                      " { \"body\": \"mars\", \"gravity\": 0.376 } ] }";
     testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
@@ -96,7 +107,7 @@ TEST(ParserTest, types) {
 }
 
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"interfaces-config\": {"
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
                 "\"preferred-lifetime\": 3000,\n"
@@ -108,15 +119,14 @@ TEST(ParserTest, bashComments) {
                 "\"subnet6\": [ { "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface-id\": \"\","
                 "    \"interface\": \"eth0\""
                 " } ],"
-                "\"valid-lifetime\": 4000 }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+                "\"valid-lifetime\": 4000 } }";
+    testParser2(txt, Parser6Context::PARSER_DHCP6);
 }
 
 TEST(ParserTest, cComments) {
-    string txt= "{ \"interfaces-config\": {"
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
                 "\"preferred-lifetime\": 3000, // this is a comment \n"
@@ -125,15 +135,14 @@ TEST(ParserTest, cComments) {
                 "\"subnet6\": [ { "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface-id\": \"\","
                 "    \"interface\": \"eth0\""
                 " } ],"
-                "\"valid-lifetime\": 4000 }";
-    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
+                "\"valid-lifetime\": 4000 } }";
+    testParser2(txt, Parser6Context::PARSER_DHCP6);
 }
 
-TEST(ParserTest, bashComments2) {
-    string txt= "{ \"interfaces-config\": {"
+TEST(ParserTest, bashCommentsInline) {
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
                 "\"preferred-lifetime\": 3000, # this is a comment \n"
@@ -142,15 +151,14 @@ TEST(ParserTest, bashComments2) {
                 "\"subnet6\": [ { "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface-id\": \"\","
                 "    \"interface\": \"eth0\""
                 " } ],"
-                "\"valid-lifetime\": 4000 }";
-    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
+                "\"valid-lifetime\": 4000 } }";
+    testParser2(txt, Parser6Context::PARSER_DHCP6);
 }
 
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"interfaces-config\": {"
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
                 "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
@@ -160,11 +168,10 @@ TEST(ParserTest, multilineComments) {
                 "\"subnet6\": [ { "
                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                 "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface-id\": \"\","
                 "    \"interface\": \"eth0\""
                 " } ],"
-                "\"valid-lifetime\": 4000 }";
-    testParser2(txt, Parser6Context::PARSER_GENERIC_JSON);
+                "\"valid-lifetime\": 4000 } }";
+    testParser2(txt, Parser6Context::PARSER_DHCP6);
 }
 
 
@@ -176,12 +183,14 @@ void testFile(const std::string& fname, bool print) {
 
     EXPECT_NO_THROW(reference_json = Element::fromJSONFile(fname, true));
 
+    EXPECT_NO_THROW(
     try {
         Parser6Context ctx;
         test_json = ctx.parseFile(fname, Parser6Context::PARSER_DHCP6);
     } catch (const std::exception &x) {
         cout << "EXCEPTION: " << x.what() << endl;
-    }
+        throw;
+    });
 
     ASSERT_TRUE(reference_json);
     ASSERT_TRUE(test_json);

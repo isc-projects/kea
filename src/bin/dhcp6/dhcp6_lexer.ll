@@ -100,6 +100,7 @@ JSONString                              \"{JSONStringCharacter}*\"
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(loc);
         case Parser6Context::PARSER_GENERIC_JSON:
+        default:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(loc);
         }
     }
