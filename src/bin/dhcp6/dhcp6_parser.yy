@@ -51,8 +51,14 @@ using namespace std;
   DHCP6 "Dhcp6"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
+
   LEASE_DATABASE "lease-database"
+  HOSTS_DATABASE "hosts-database"
   TYPE "type"
+  USER "user"
+  PASSWORD "password"
+  HOST "host"
+
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -73,6 +79,7 @@ using namespace std;
 
   SUBNET "subnet"
   INTERFACE "interface"
+  ID "id"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
@@ -218,6 +225,7 @@ global_param
 | subnet6_list
 | interfaces_config
 | lease_database
+| hosts_database
 | mac_sources
 | relay_supplied_options
 | host_reservation_identifiers
@@ -266,18 +274,51 @@ lease_database: LEASE_DATABASE {
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
 }
-COLON LCURLY_BRACKET lease_database_map_params {
+COLON LCURLY_BRACKET database_map_params {
      ctx.stack_.pop_back();
 } RCURLY_BRACKET;
 
-lease_database_map_params: lease_database_map_param
-| lease_database_map_params COMMA lease_database_map_param;
+hosts_database: HOSTS_DATABASE {
+    ElementPtr i(new MapElement());
+    ctx.stack_.back()->set("hosts-database", i);
+    ctx.stack_.push_back(i);
+}
+COLON LCURLY_BRACKET database_map_params {
+     ctx.stack_.pop_back();
+} RCURLY_BRACKET;
 
-lease_database_map_param: lease_database_type;
+database_map_params: lease_database_map_param
+| database_map_params COMMA lease_database_map_param;
 
-lease_database_type: TYPE COLON STRING {
+lease_database_map_param: type
+| user
+| password
+| host
+| name;
+
+type: TYPE COLON STRING {
     ElementPtr prf(new StringElement($3));
     ctx.stack_.back()->set("type", prf);
+};
+
+user: USER COLON STRING {
+    ElementPtr user(new StringElement($3));
+    ctx.stack_.back()->set("user", user);
+};
+
+password: PASSWORD COLON STRING {
+    ElementPtr pwd(new StringElement($3));
+    ctx.stack_.back()->set("password", pwd);
+};
+
+host: HOST COLON STRING {
+    ElementPtr h(new StringElement($3));
+    ctx.stack_.back()->set("host", h);
+};
+
+name: NAME COLON STRING {
+    ElementPtr n(new StringElement($3));
+    ctx.stack_.back()->set("name", n);
 };
 
 mac_sources: MAC_SOURCES {
@@ -363,6 +404,7 @@ subnet6_param: option_data_list
 | pd_pools_list
 | subnet
 | interface
+| id
 | client_class
 | reservations
 ;
@@ -379,6 +421,10 @@ subnet: CLIENT_CLASS COLON STRING {
     ElementPtr cls(new StringElement($3)); ctx.stack_.back()->set("client-class", cls);
 };
 
+id: ID COLON INTEGER {
+    ElementPtr id(new IntElement($3)); ctx.stack_.back()->set("id", id);
+
+};
 
 // ---- option-data --------------------------
 
