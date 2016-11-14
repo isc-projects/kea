@@ -1043,7 +1043,7 @@ CommandOptions::usage() const {
         "-L<local-port>: Specify the local port to use\n"
         "    (the value 0 means to use the default).\n"
         "-M<mac-list-file>: A text file containing a list of MAC addresses,\n"
-        "   one per line. If provided, a MAC address will be choosen randomly\n"
+        "   one per line. If provided, a MAC address will be chosen randomly\n"
         "   from this list for every new exchange. In the DHCPv6 case, MAC\n"
         "   addresses are used to generate DUID-LLs. This parameter must not be\n"
         "   used in conjunction with the -b parameter.\n"

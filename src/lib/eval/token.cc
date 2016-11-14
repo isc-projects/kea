@@ -489,7 +489,7 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         start_pos = boost::lexical_cast<int>(start_str);
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(EvalTypeError, "the parameter '" << start_str
-                  << "' for the starting postion of the substring "
+                  << "' for the starting position of the substring "
                   << "couldn't be converted to an integer.");
     }
     try {
@@ -505,7 +505,7 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     const int string_length = string_str.length();
-    // If the starting postion is outside of the string push an
+    // If the starting position is outside of the string push an
     // empty string and leave
     if ((start_pos < -string_length) || (start_pos >= string_length)) {
         values.push("");
@@ -520,7 +520,7 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     // Adjust the values to be something for substr.  We first figure out
-    // the starting postion, then update it and the length to get the
+    // the starting position, then update it and the length to get the
     // characters before or after it depending on the sign of length
     if (start_pos < 0) {
         start_pos = string_length + start_pos;
