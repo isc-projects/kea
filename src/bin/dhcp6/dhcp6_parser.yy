@@ -481,6 +481,21 @@ subnet6: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } subnet6_params {
+    // Once we reached this place, the subnet parsing is now complete.
+    // If we want to, we can implement default values here.
+    // In particular we can do things like this:
+    // if (!ctx.stack_.back()->get("interface")) {
+    //     ctx.stack_.back()->set("interface", StringElement("loopback"));
+    // }
+    //
+    // We can also stack up one level (Dhcp6) and copy over whatever
+    // global parameters we want to:
+    // if (!ctx.stack_.back()->get("renew-timer")) {
+    //     ElementPtr renew = ctx_stack_[...].get("renew-timer");
+    //     if (renew) {
+    //         ctx.stack_.back()->set("renew-timer", renew);
+    //     }
+    // }
     ctx.stack_.pop_back();
 } RCURLY_BRACKET;
 
