@@ -41,6 +41,229 @@ all configuration parsers. All DHCPv6 parsers deriving from this class
 directly have their entire implementation in the
 src/bin/dhcp6/json_config_parser.cc.
 
+@section dhcpv6ConfigParserBison Configuration Parser for DHCPv6 (bison)
+
+During 1.2 milestone it has been decided to significantly refactor the
+parsers as their old implementation became unsustainable. For the brief overview
+of the problems, see ticket 5014 (http://kea.isc.org/ticket/5014). In
+general, the following issues of the existing code were noted:
+
+-# parsers are overwhelmingly complex. Even though each parser is relatively
+   simple class, the complexity comes from too large number of interacting parsers.
+-# the code is disorganized, i.e. spread out between multiple directories
+   (src/bin/dhcp6 and src/lib/dhcpsrv/parsers).
+-# The split into build/commit never worked well. In particular, it is not
+   trivial to revert configuration change. This split originates from BIND10
+   days and was inherited from DNS auth that did receive only changes in
+   the configuration, rather than the full configuration. As a result,
+   the split was abused and many of the parsers have commit() being a
+   no-op operation.
+-# There is no way to generate a list of all directives. We do have .spec files,
+   but they're not actually used by the code. The code has the directives
+   spread out in multiple places in multiple files in mutliple directories.
+   Answering a simple question ("can I do X in the scope Y?") requires
+   a short session of reverse engineering. What's worse, we have the .spec
+   files that are kinda kept up to date. This is actually more damaging that
+   way, because there's no strict correlation between the code and .spec file.
+   So there may be parameters that are supported, but are not in .spec files.
+   The opposite is also true - .spec files can be buggy and have different
+   parameters. This is particularly true for default values.
+-# It's exceedingly complex to add comments that don't start at the first
+   column or span several lines. Both Tomek and Marcin tried to implement
+   it, but failed miserably. The same is true for including files (have
+   include statement in the config that includes other files)
+-# The current parsers don't handle the default values, i.e. if there's no
+   directive, the parser is not created at all. We have kludgy workarounds
+   for that, but the code for it is in different place than the parser,
+   which leads to the logic being spread out in different places.
+-# syntax checking is poor. The existing JSON parser allowed things like
+   empty option-data entries:
+   @code
+      "option-data": [ {} ]
+   @endcode
+   having trailing commas:
+   @code
+      "option-data": [
+	{
+	    "code": 12,
+	    "data": "2001:db8:1:0:ff00::1"
+	},
+      ]
+   @endcode
+   or having incorrect types, e.g. specifying timer values as strings.
+
+To solve those issues a two phase approach was proposed:
+
+PHASE 1: replace isc::data::fromJSON with bison-based parser. This will allow
+   to have a single file that defines the actual syntax, much better syntax
+   checking, and provide more flexibility, like various comment types and
+   file inclusions. As a result, the parser still returns JSON structures,
+   but those are guaranteed to be correct from the grammar perspective.
+   Furthermore, it is possible to implement default values at this level
+   as simply inserting extra JSON structures in places that are necessary.
+
+PHASE 2: simplify existing parsers by getting rid of the build/commit split.
+   Get rid of the inheritance contexts. Essentially the parser should
+   take JSON structure as a parameter and return the configuration structure
+   For example, for options this should essentially look like this:
+   @code
+   CfgOptionPtr parse(ConstElementPtr options)
+   @endcode
+   The whole complexity behind inheriting parsers should be removed
+   and implemented in the parser. It should return extra JSON elements.
+   The details are TBD, but there is one example for setting up an
+   renew-timer value on the subnet level that is ihnerited from the
+   global ("Dhcp6") level. This phase is still a bit loosely defined.
+
+There is now a fully working prototype for phase 1. It introduces bison
+based parser. It is essentially defined in two files: dhcp6_lexer.ll,
+which defines regular expressions that are used on the input (be it
+a file or a string in memory). In essence, this code is being called
+repetively and each time it returns a token. This repeats until
+either the parsing is complete or syntax error is encountered. For
+example, for the following text:
+@code
+{
+   "Dhcp6":
+   {
+       "renew-timer": 100
+   }
+}
+@endcode
+this code would return the following sentence of tokens: LCURLY_BRACKET,
+DHCP6, LCURLY_BRACKET, COLON, LCURLY_BRACKET, RENEW_TIMER, COLON,
+INTEGER(a token with a value of 100), RCURLY_BRACKET, RCURLY_BRACKET, END
+
+This stream of tokens is being consumed by the parser that is defined
+in dhcp6_parser.yy. This file defines a grammar. Here's very simplified
+version of the Dhcp6 grammar:
+
+@code
+dhcp6_object: DHCP6 COLON LCURLY_BRACKET global_params RCURLY_BRACKET;
+
+global_params: global_param
+| global_params COMMA global_param;
+
+// These are the parameters that are allowed in the top-level for
+// Dhcp6.
+global_param
+: preferred_lifetime
+| valid_lifetime
+| renew_timer
+| rebind_timer
+| subnet6_list
+| interfaces_config
+| lease_database
+| hosts_database
+| mac_sources
+| relay_supplied_options
+| host_reservation_identifiers
+| client_classes
+| option_data_list
+| hooks_libraries
+| expired_leases_processing
+| server_id
+| dhcp4o6_port
+;
+
+renew_timer: RENEW_TIMER COLON INTEGER;
+@endcode
+
+This may be slightly difficult to read at the beginning, but after getting used
+to the notation, it's very powerful and easy to extend. The first line defines
+that dhcp6_object consists of certain tokens (DHCP6, COLON and LCURLY_BRACKET)
+followed by 'global_params' expression, followed by RCURLY_BRACKET.
+
+The global_params is defined recursively. It can either be a single 'global_param'
+expression, or (a shorter) global_params followed by a comma and global_param.
+Bison will apply this and will be able to parse comma separated lists of
+arbitrary lengths.
+
+A single parameter is defined by 'global_param' expression. This represents
+any paramter that may appear in the global scope of Dhcp6 object. The
+complete definition for all of them is complex, but the example above includes
+renew_timer definition. It is defined as a series of RENEW_TIMER, COLON, INTEGER
+tokens.
+
+The above is a simplified version of the actual grammar. If used in the version
+above, it would parse the whole file, but would do nothing with that information.
+To build actual structures, bison allows to inject C++ code at any phase of
+the parsing. For example, when the parser detects Dhcp6 object, it wants to
+create a new MapElement. When the whole object is parsed, we can perform
+some sanity checks, inject defaults for parameters that were not defined,
+log and do other stuff.
+
+@code
+dhcp6_object: DHCP6 COLON LCURLY_BRACKET {
+    // This code is executed when we're about to start parsing
+    // the content of the map
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("Dhcp6", m);
+    ctx.stack_.push_back(m);
+} global_params RCURLY_BRACKET {
+    // Whole Dhcp6 parsing completed. If we ever want to do any wrap up
+    // (maybe some sanity checking, insert defaults if not specified),
+    // this would be the best place for it.
+    ctx.stack_.pop_back();
+};
+@endcode
+
+The above will do the following in order: consume DHCP6 token, consume COLON token,
+consume LCURLY_BRACKET, execute the code in first { ... }, parse global_params
+and do whatever the code for it tells, parser RCURLY_BRACKET, execute the code
+in the second { ... }.
+
+There is a simple stack defined in ctx.stack_, which is isc::dhcp::Parser6Context
+defined in src/bin/dhcp6/parser_context.h. When walking through the config file, each
+new context (e.g. entering into Dhcp6, Subnet6, Pool), a new Element is added
+to the end of the stack. Once the parsing of a given context is complete, it
+is removed from the stack. At the end of parsing, there should be a single
+element on the stack as the top-level parsing (syntax_map) only inserts the
+MapElement object, but does not remove it.
+
+One another important capability required is the ability to parse not only the
+whole configuration, but a subset of it. This is done by introducing articifical
+tokens (TOPLEVEL_DHCP6 and TOPLEVEL_GENERIC_JSON). The Parse6Context::parse() method
+takes one parameter that specifies, whether the data to be parsed is expected
+to have the whole configuration (DHCP6) or a generic JSON. This is only a
+proof-of-concept, but similar approach can be implemented to parse only subnets,
+host reservations, options or basically any other elements. For example, to add
+the ability to parse only pools, the following could be added:
+
+@code
+start: TOPLEVEL_DHCP6 syntax_map
+| TOPLEVEL_GENERIC_JSON map2
+| TOPLEVEL_POOL pool_entry;
+@endcode
+
+The code on branch trac5014 contains the code defintion and the Kea-dhcp6 updated
+to use that new parser. I'm sure that parser does not cover 100% of all parameters,
+but so far it is able to load all examples from doc/example/kea6. It is also
+able to parser # comments (bash style, starting at the beginning or middle of
+the line), // comments (C++ style, can start anywhere) or /* */ comments (C style,
+can span multiple lines).
+
+This parser is currently used. See configure() method in kea_controller.cc.
+
+There are several new unit-tests written. They're not super-extensive, but
+they do cover the essentials: basic types, maps and lists encapsulating
+each other in various combinations, bash, C, C++ comments. There's one
+particularly useful unit-test called ParserTest.file. It loads all the
+examples we have.
+
+The parser currently does not support file includes, but that's easy to
+implement in bison-based parsers.
+
+The parser's ability to parse generic JSON is somewhat fragile, because
+it's more of a proof of concept rather than a solid capability. The issue
+comes from the fact that if the generic json contains specific tokens that
+are defined in DHCP6 nomenclature (e.g. "renew-timer"), it will interpret
+it as RENEW_TIMER token rather than as STRING token. This can be solved
+by having separate grammar for generic JSON if we need it. It's way
+beyond the scope of proof-of-concept, though.
+
+Details of the refactor of the classes derived from DhcpConfigParser is TBD.
+
 @section dhcpv6ConfigInherit DHCPv6 Configuration Inheritance
 
 One notable useful feature of DHCP configuration is its parameter inheritance.
@@ -70,17 +293,17 @@ isc::dhcp::Triplet<uint32_t>
 SubnetConfigParser::getParam(const std::string& name) {
     uint32_t value = 0;
     try {
-        // look for local value
-         value = uint32_values_->getParam(name);
+	// look for local value
+	 value = uint32_values_->getParam(name);
     } catch (const DhcpConfigError &) {
-        try {
-            // no local, use global value
-            value = global_context_->uint32_values_->getParam(name);
-        } catch (const DhcpConfigError &) {
-            isc_throw(DhcpConfigError, "Mandatory parameter " << name
-                      << " missing (no global default and no subnet-"
-                      << "specific value)");
-        }
+	try {
+	    // no local, use global value
+	    value = global_context_->uint32_values_->getParam(name);
+	} catch (const DhcpConfigError &) {
+	    isc_throw(DhcpConfigError, "Mandatory parameter " << name
+		      << " missing (no global default and no subnet-"
+		      << "specific value)");
+	}
     }
 
     return (Triplet<uint32_t>(value));
