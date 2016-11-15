@@ -35,14 +35,13 @@ class Parser6Context
 {
 public:
 
-    typedef enum { PARSER_DHCP6,
-           PARSER_GENERIC_JSON } ParserType;
+    /// @brief Defines currently support the content supported
+    typedef enum {
+        PARSER_DHCP6, // This will parse the content as DHCP6 config
+        PARSER_GENERIC_JSON // This will parse the content as generic JSON
+    } ParserType;
 
     /// @brief Default constructor.
-    ///
-    /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
-    /// by the parser to determine which option definitions set should be used
-    /// to map option names to option codes.
     Parser6Context();
 
     /// @brief destructor
@@ -62,7 +61,8 @@ public:
 
     /// @brief Run the parser on the string specified.
     ///
-    /// @param str string to be written
+    /// @param str string to be parsed
+    /// @param parser_type specifies expected content (either DHCP6 or generic JSON)
     /// @return true on success.
     isc::data::ConstElementPtr parseString(const std::string& str,
                                            ParserType parser_type);
