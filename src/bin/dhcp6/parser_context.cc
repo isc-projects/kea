@@ -51,7 +51,7 @@ isc::data::ConstElementPtr
 Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
 
     ifstream f;
-    f.open(filename);
+    f.open(filename.c_str());
     if (!f.is_open()) {
         isc_throw(BadValue, "Can't open file " << filename);
     }
