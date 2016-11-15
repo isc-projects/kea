@@ -97,23 +97,25 @@ To solve those issues a two phase approach was proposed:
 PHASE 1: replace isc::data::fromJSON with bison-based parser. This will allow
    to have a single file that defines the actual syntax, much better syntax
    checking, and provide more flexibility, like various comment types and
-   file inclusions. As a result, the parser still returns JSON structures,
-   but those are guaranteed to be correct from the grammar perspective.
+   file inclusions. As a result, the parser still returns JSON structures that
+   are guaranteed to be correct from the grammar perspective. Sticking with
+   the JSON structures also allows us to continue using existing parsers.
    Furthermore, it is possible to implement default values at this level
    as simply inserting extra JSON structures in places that are necessary.
 
 PHASE 2: simplify existing parsers by getting rid of the build/commit split.
    Get rid of the inheritance contexts. Essentially the parser should
-   take JSON structure as a parameter and return the configuration structure
+   take JSON structure as a parameter and return the configuration structure.
    For example, for options this should essentially look like this:
    @code
    CfgOptionPtr parse(ConstElementPtr options)
    @endcode
-   The whole complexity behind inheriting parsers should be removed
-   and implemented in the parser. It should return extra JSON elements.
-   The details are TBD, but there is one example for setting up an
-   renew-timer value on the subnet level that is ihnerited from the
-   global ("Dhcp6") level. This phase is still a bit loosely defined.
+   The whole complexity behind inheriting contexts should be removed
+   from the existing parsers  and implemented in the bison parser.
+   It should return extra JSON elements. The details are TBD, but there is
+   one example for setting up an renew-timer value on the subnet level that
+   is ihnerited from the global ("Dhcp6") level. This phase is still a bit
+   loosely defined.
 
 There is now a fully working prototype for phase 1. It introduces bison
 based parser. It is essentially defined in two files: dhcp6_lexer.ll,
