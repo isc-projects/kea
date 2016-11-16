@@ -1,7 +1,7 @@
 1189.	[func]		fdupont
 	Owing to API changes, crypto code now requires OpenSSL 1.0.1 or
 	later.
-	(Trac #3908, git ....)
+	(Trac #3908, git 4c14fdfd4187a4c8f7b775432082b76782e47663)
 
 1188.	[doc]		vlegout
 	Fixed several spelling mistakes.
