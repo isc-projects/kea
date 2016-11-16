@@ -120,9 +120,10 @@
         </para>
         </listitem>
 
-            <listitem>
+          <listitem>
         <para>
-          Botan (version 1.8, 1.9 or 1.10) or OpenSSL (versions 1.0.*).</para>
+          Botan (at least version 1.8) or OpenSSL (at least version 1.0.1).
+        </para>
           </listitem>
 
           <listitem>
