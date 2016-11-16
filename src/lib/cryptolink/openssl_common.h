@@ -34,7 +34,7 @@ public:
 
     typedef typename std::vector<T>::const_iterator const_iterator;
 
-    explicit SecBuf() : vec_(std::vector<T>()) {}
+    explicit SecBuf() : vec_() {}
 
     explicit SecBuf(size_t n, const T& value = T()) : vec_(n, value) {}
 
