@@ -1,6 +1,11 @@
+1189.	[func]		fdupont
+	Owing to API changes, crypto code now requires OpenSSL 1.0.1 or
+	later.
+	(Trac #3908, git ....)
+
 1188.	[doc]		vlegout
 	Fixed several spelling mistakes.
-	(Github #32, d51c005519c4add6fd0c37bcd68b0fbe94941b2d)
+	(Github #32, git d51c005519c4add6fd0c37bcd68b0fbe94941b2d)
 
 1187.	[bug]		marcin
 	DHCPv4 server allows for allocating multiple leases for the

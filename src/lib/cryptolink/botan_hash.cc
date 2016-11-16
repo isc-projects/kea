@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,8 @@ public:
     /// @brief Constructor for specific hash algorithm
     ///
     /// @param hash_algorithm The hash algorithm
-    explicit HashImpl(const HashAlgorithm hash_algorithm) {
+    explicit HashImpl(const HashAlgorithm hash_algorithm)
+    : hash_algorithm_(hash_algorithm), hash_() {
         Botan::HashFunction* hash;
         try {
             hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
@@ -73,6 +74,11 @@ public:
 
     /// @brief Destructor
     ~HashImpl() { }
+
+    /// @brief Returns the HashAlgorithm of the object
+    HashAlgorithm getHashAlgorithm() const {
+        return (hash_algorithm_);
+    }
 
     /// @brief Returns the output size of the digest
     ///
@@ -149,7 +155,10 @@ public:
     }
 
 private:
-    /// \brief The protected pointer to the Botan HashFunction object
+    /// @brief The hash algorithm
+    HashAlgorithm hash_algorithm_;
+
+    /// @brief The protected pointer to the Botan HashFunction object
     boost::scoped_ptr<Botan::HashFunction> hash_;
 };
 
@@ -160,6 +169,11 @@ Hash::Hash(const HashAlgorithm hash_algorithm)
 
 Hash::~Hash() {
     delete impl_;
+}
+
+HashAlgorithm
+Hash::getHashAlgorithm() const {
+    return (impl_->getHashAlgorithm());
 }
 
 size_t
