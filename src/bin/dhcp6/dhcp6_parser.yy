@@ -169,7 +169,7 @@ map2: LCURLY_BRACKET {
 };
 
 // Assignments rule
-map_content:  { /* do nothing, it's an empty map */ }
+map_content: %empty // empty map
     | STRING COLON value {
         // map containing a single entry
         ctx.stack_.back()->set($1, $3);
@@ -195,7 +195,7 @@ list2: LSQUARE_BRACKET {
     //ctx.stack_.pop_back();
 };
 
-list_content: { /* do nothing, it's an empty list */ }
+list_content: %empty // Empty list
     | value {
         // List consisting of a single element.
         ctx.stack_.back()->add($1);
@@ -423,7 +423,7 @@ hooks_libraries: HOOKS_LIBRARIES COLON {
     ctx.stack_.pop_back();
 };
 
-hooks_libraries_list: { }
+hooks_libraries_list: %empty
 | hooks_library
 | hooks_libraries_list COMMA hooks_library;
 
@@ -475,7 +475,7 @@ subnet6_list: SUBNET6 COLON LSQUARE_BRACKET {
 // This defines the ... in "subnet6": [ ... ]
 // It can either be empty (no subnets defined), have one subnet
 // or have multiple subnets separate by comma.
-subnet6_list_content: { /* no subnets defined at all */ }
+subnet6_list_content: %empty
 | subnet6
 | subnet6_list_content COMMA subnet6
 ;
@@ -553,7 +553,7 @@ option_data_list: OPTION_DATA {
 
 // This defines the content of option-data. It may be empty,
 // have one entry or multiple entries separated by comma.
-option_data_list_content: { }
+option_data_list_content: %empty
 | option_data_entry
 | option_data_list_content COMMA option_data_entry;
 
@@ -572,7 +572,7 @@ option_data_entry: LCURLY_BRACKET {
 option_data_params: option_data_param
 | option_data_params COMMA option_data_param;
 
-option_data_param:
+option_data_param: %empty
 | option_data_name
 | option_data_data
 | option_data_code
@@ -614,7 +614,7 @@ pools_list: POOLS COLON {
 
 // Pools may be empty, contain a single pool entry or multiple entries
 // separate by commas.
-pools_list_content: { }
+pools_list_content: %empty
 | pool_entry
 | pools_list_content COMMA pool_entry;
 
@@ -646,7 +646,7 @@ pd_pools_list: PD_POOLS COLON {
 
 // Pools may be empty, contain a single pool entry or multiple entries
 // separate by commas.
-pd_pools_list_content: { }
+pd_pools_list_content: %empty
 | pd_pool_entry
 | pd_pools_list_content COMMA pd_pool_entry;
 
@@ -692,7 +692,7 @@ reservations: RESERVATIONS COLON LSQUARE_BRACKET {
     ctx.stack_.pop_back();
 } RSQUARE_BRACKET;
 
-reservations_list: { }
+reservations_list: %empty
 | reservation
 | reservations_list COMMA reservation;
 
@@ -708,7 +708,7 @@ reservation_params: reservation_param
 | reservation_params COMMA reservation_param;
 
 // @todo probably need to add mac-address as well here
-reservation_param:
+reservation_param: %empty
 | duid
 | reservation_client_classes
 | ip_addresses
@@ -779,7 +779,7 @@ client_class: LCURLY_BRACKET {
 client_class_params: client_class_param
 | client_class_params COMMA client_class_param;
 
-client_class_param:
+client_class_param: %empty
 | client_class_name
 | client_class_test
 | option_data_list
