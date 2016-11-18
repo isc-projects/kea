@@ -27,7 +27,6 @@ Parser6Context::~Parser6Context()
 isc::data::ConstElementPtr
 Parser6Context::parseString(const std::string& str, ParserType parser_type)
 {
-    file_ = "<string>";
     scanStringBegin(str, parser_type);
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
@@ -52,8 +51,7 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     if (!f) {
         isc_throw(BadValue, "Unable to open file " << filename);
     }
-    file_ = filename;
-    scanFileBegin(f, parser_type);
+    scanFileBegin(f, filename, parser_type);
 
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
