@@ -142,6 +142,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 \"password\" { return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc); }
 \"host\" { return isc::dhcp::Dhcp6Parser::make_HOST(loc); }
 \"persist\" { return isc::dhcp::Dhcp6Parser::make_PERSIST(loc); }
+\"lfc-interval\" { return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(loc); }
 
 \"preferred-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc); }
 \"valid-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc); }
