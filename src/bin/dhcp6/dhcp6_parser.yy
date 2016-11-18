@@ -59,6 +59,7 @@ using namespace std;
   PASSWORD "password"
   HOST "host"
   PERSIST "persist"
+  LFC_INTERVAL "lfc-interval"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -332,7 +333,9 @@ lease_database_map_param: type
 | password
 | host
 | name
-| persist;
+| persist
+| lfc_interval;
+;
 
 type: TYPE COLON STRING {
     ElementPtr prf(new StringElement($3));
@@ -362,6 +365,11 @@ name: NAME COLON STRING {
 persist: PERSIST COLON BOOLEAN {
     ElementPtr n(new BoolElement($3));
     ctx.stack_.back()->set("persist", n);
+};
+
+lfc_interval: LFC_INTERVAL COLON INTEGER {
+    ElementPtr n(new IntElement($3));
+    ctx.stack_.back()->set("lfc-interval", n);
 };
 
 mac_sources: MAC_SOURCES {
@@ -806,7 +814,8 @@ server_id_param: type
 | identifier
 | time
 | htype
-| enterprise_id;
+| enterprise_id
+| persist;
 
 htype: HTYPE COLON INTEGER {
     ElementPtr htype(new IntElement($3));
