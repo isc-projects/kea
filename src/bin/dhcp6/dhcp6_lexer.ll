@@ -21,13 +21,29 @@
 # undef yywrap
 # define yywrap() 1
 
+namespace {
+
 // The location of the current token. The lexer will keep updating it. This
 // variable will be useful for logging errors.
-static isc::dhcp::location loc;
+isc::dhcp::location loc;
 
-static bool start_token_flag = false;
+/// @brief Location stack.
+std::vector<isc::dhcp::location> locs;
 
-static isc::dhcp::Parser6Context::ParserType start_token_value;
+/// @brief File name.
+std::string file;
+
+/// @brief File name stack.
+std::vector<std::string> files;
+
+/// @brief State stack.
+std::vector<struct yy_buffer_state*> states;
+
+bool start_token_flag = false;
+
+isc::dhcp::Parser6Context::ParserType start_token_value;
+
+};
 
 // To avoid the call to exit... oops!
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
@@ -61,6 +77,7 @@ static isc::dhcp::Parser6Context::ParserType start_token_value;
 %option yylineno
 
 %x COMMENT
+%x DIR_ENTER DIR_INCLUDE DIR_EXIT
 
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. Note some can match
@@ -120,6 +137,20 @@ JSONString                              \"{JSONStringCharacter}*\"
 <COMMENT><<EOF>> {
     isc_throw(isc::BadValue, "Comment not closed. (/* in line " << comment_start_line);
 }
+
+"<?" BEGIN(DIR_ENTER);
+<DIR_ENTER>"include" BEGIN(DIR_INCLUDE);
+<DIR_INCLUDE>\"([^\"\n])+\" {
+    // Include directive.
+
+    // Extract the filename.
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+
+    Parser6Context::includeFile(tmp);
+}
+<DIR_EXIT>"?>" BEGIN(INITIAL);
+    
 
 {blank}+   {
     // Ok, we found a with space. Let's ignore it and update loc variable.
@@ -269,7 +300,21 @@ null {
 }
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
-<<EOF>>    return isc::dhcp::Dhcp6Parser::make_END(loc);
+<<EOF>>    {
+    if (states.empty()) {
+        return isc::dhcp::Dhcp6Parser::make_END(loc);
+    }
+    loc = locs.back();
+    locs.pop_back();
+    file = files.back();
+    files.pop_back();
+    parser6__delete_buffer(YY_CURRENT_BUFFER);
+    parser6__switch_to_buffer(states.back());
+    states.pop_back();
+
+    BEGIN(DIR_EXIT);
+}
+
 %%
 
 using namespace isc::dhcp;
@@ -280,7 +325,8 @@ Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
     start_token_flag = true;
     start_token_value = parser_type;
 
-    loc.initialize(&file_);
+    file = "<string>";
+    loc.initialize(&file);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
     buffer = yy_scan_bytes(str.c_str(), str.size());
@@ -297,19 +343,22 @@ Parser6Context::scanStringEnd()
 }
 
 void
-Parser6Context::scanFileBegin(FILE * f, ParserType parser_type) {
+Parser6Context::scanFileBegin(FILE * f,
+                              const std::string& filename,
+                              ParserType parser_type) {
 
     start_token_flag = true;
     start_token_value = parser_type;
 
-    loc.initialize(&file_);
+    file = filename;
+    loc.initialize(&file);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
 
     // See dhcp6_lexer.cc header for available definitions
     buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
-        fatal("cannot scan file " + file_);
+        fatal("cannot scan file " + filename);
     }
     parser6__switch_to_buffer(buffer);
 }
@@ -322,7 +371,27 @@ Parser6Context::scanFileEnd(FILE * f) {
 
 void
 Parser6Context::includeFile(const std::string& filename) {
-    fprintf(stderr, "includeFile(\"%s\")\n", filename.c_str());
+    if (states.size() > 10) {
+        fatal("Too many nested include.");
+    }
+
+    FILE* f = fopen(filename.c_str(), "r");
+    if (!f) {
+        fatal("Can't open include file " + filename);
+    }
+    states.push_back(YY_CURRENT_BUFFER);
+    YY_BUFFER_STATE buffer;
+    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    if (!buffer) {
+        fatal( "Can't scan include file " + filename);
+    }
+    parser6__switch_to_buffer(buffer);
+    files.push_back(file);
+    file = filename;
+    locs.push_back(loc);
+    loc.initialize(&file);
+
+    BEGIN(INITIAL);
 }
 
 namespace {
