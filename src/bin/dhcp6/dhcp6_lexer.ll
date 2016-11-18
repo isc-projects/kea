@@ -203,6 +203,11 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"dhcp4o6-port\" { return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(loc); }
 
+\"dhcp-ddns\" { return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(loc); }
+\"enable-updates\" { return isc::dhcp::Dhcp6Parser::make_ENABLE_UPDATES(loc); }
+\"qualifying-suffix\" { return isc::dhcp::Dhcp6Parser::make_QUALIFYING_SUFFIX(loc); }
+
+
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -270,7 +275,7 @@ null {
 using namespace isc::dhcp;
 
 void
-Parser6Context::scanStringBegin(ParserType parser_type)
+Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
 {
     start_token_flag = true;
     start_token_value = parser_type;
@@ -278,7 +283,7 @@ Parser6Context::scanStringBegin(ParserType parser_type)
     loc.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = yy_scan_bytes(string_.c_str(), string_.size());
+    buffer = yy_scan_bytes(str.c_str(), str.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
@@ -306,12 +311,18 @@ Parser6Context::scanFileBegin(FILE * f, ParserType parser_type) {
     if (!buffer) {
         fatal("cannot scan file " + file_);
     }
+    parser6__switch_to_buffer(buffer);
 }
 
 void
 Parser6Context::scanFileEnd(FILE * f) {
     fclose(f);
     yy_delete_buffer(YY_CURRENT_BUFFER);
+}
+
+void
+Parser6Context::includeFile(const std::string& filename) {
+    fprintf(stderr, "includeFile(\"%s\")\n", filename.c_str());
 }
 
 namespace {
