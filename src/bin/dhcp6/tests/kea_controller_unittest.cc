@@ -59,6 +59,7 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
+        static_cast<void>(remove(TEST_INCLUDE));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
@@ -86,9 +87,11 @@ public:
     }
 
     static const char* TEST_FILE;
+    static const char* TEST_INCLUDE;
 };
 
 const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
+const char* JSONFileBackendTest::TEST_INCLUDE = "test-include.json";
 
 // This test checks if configuration can be read from a JSON file.
 TEST_F(JSONFileBackendTest, jsonFile) {
@@ -167,8 +170,9 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
 }
 
-// This test checks if configuration can be read from a JSON file.
-TEST_F(JSONFileBackendTest, comments) {
+// This test checks if configuration can be read from a JSON file
+// using hash (#) line comments
+TEST_F(JSONFileBackendTest, hashComments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
@@ -186,9 +190,6 @@ TEST_F(JSONFileBackendTest, comments) {
         " } ],"
         "\"valid-lifetime\": 4000 }"
         "}";
-
-    /// @todo: Implement C++-style (// ...) comments
-    /// @todo: Implement C-style (/* ... */) comments
 
     writeFile(TEST_FILE, config_hash_comments);
 
@@ -219,6 +220,157 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
 }
 
+// This test checks if configuration can be read from a JSON file
+// using C++ line (//) comments.
+TEST_F(JSONFileBackendTest, cppLineComments) {
+
+    string config_cpp_line_comments = "// This is a comment. It should be \n"
+        "//ignored. Real config starts in line below\n"
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "// comments in the middle should be ignored, too\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+    writeFile(TEST_FILE, config_cpp_line_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using C block (/* */) comments
+TEST_F(JSONFileBackendTest, cBlockComments) {
+
+    string config_c_block_comments = "/* This is a comment. It should be \n"
+        "ignored. Real config starts in line below*/\n"
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "/* comments in the middle should be ignored, too*/\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+      writeFile(TEST_FILE, config_c_block_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using an include file.
+TEST_F(JSONFileBackendTest, include) {
+
+    string config = "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "<?include \"" + string(TEST_INCLUDE) + "\"?>,"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ]\n";
+
+    writeFile(TEST_FILE, config);
+    writeFile(TEST_INCLUDE, include);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file.
 // This test checks if configuration detects failure when trying:
 // - empty file
 // - empty filename

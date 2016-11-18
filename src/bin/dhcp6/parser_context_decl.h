@@ -7,14 +7,14 @@
 #ifndef PARSER6_CONTEXT_DECL_H
 #define PARSER6_CONTEXT_DECL_H
 
-/// @file eval_context_decl.h Forward declaration of the EvalContext class
+/// @file parser_context_decl.h Forward declaration of the ParserContext class
 
 namespace isc {
 namespace dhcp {
 
 class Parser6Context;
 
-}; // end of isc::eval namespace
+}; // end of isc::dhcp namespace
 }; // end of isc namespace
 
 #endif
