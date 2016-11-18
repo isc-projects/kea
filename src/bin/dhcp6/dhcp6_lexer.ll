@@ -116,7 +116,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 }
 
 <COMMENT>"*/" BEGIN(INITIAL);
-<COMMENT>.|"\n" ;
+<COMMENT>. ;
 <COMMENT><<EOF>> {
     isc_throw(isc::BadValue, "Comment not closed. (/* in line " << comment_start_line);
 }
@@ -125,6 +125,7 @@ JSONString                              \"{JSONStringCharacter}*\"
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
 }
+
 [\n]+      {
     // Newline found. Let's update the location and continue.
     loc.lines(yyleng);
