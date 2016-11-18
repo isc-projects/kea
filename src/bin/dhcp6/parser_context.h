@@ -51,12 +51,15 @@ public:
     std::vector<isc::data::ElementPtr> stack_;
 
     /// @brief Method called before scanning starts on a string.
-    void scanStringBegin(ParserType type);
+    void scanStringBegin(const std::string& str, ParserType type);
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
 
+    /// @brief Method called before scanning starts on a file.
     void scanFileBegin(FILE * f, ParserType type);
+
+    /// @brief Method called after the last tokens are scanned from a file.
     void scanFileEnd(FILE * f);
 
     /// @brief Run the parser on the string specified.
@@ -67,15 +70,13 @@ public:
     isc::data::ConstElementPtr parseString(const std::string& str,
                                            ParserType parser_type);
 
+    /// @brief Run the parser on the file specified.
     isc::data::ConstElementPtr parseFile(const std::string& filename,
                                          ParserType parser_type);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.
     std::string file_;
-
-    /// @brief The string being parsed.
-    std::string string_;
 
     /// @brief Error handler
     ///
@@ -95,6 +96,18 @@ public:
     static void fatal(const std::string& what);
 
  private:
+    /// @brief Divert input to an include file.
+    void includeFile(const std::string& filename);
+
+    /// @brief File name stack.
+    std::vector<std::string> files_;
+
+    /// @brief Location stack.
+    std::vector<isc::dhcp::location> locs_;
+
+    /// @brief State stack.
+    std::vector<struct yy_buffer_state*> states_;
+
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
