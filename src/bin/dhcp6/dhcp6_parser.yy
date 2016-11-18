@@ -119,6 +119,10 @@ using namespace std;
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
 
+  DHCP_DDNS "dhcp-ddns"
+  ENABLE_UPDATES "enable-updates"
+  QUALIFYING_SUFFIX "qualifying-suffix"
+
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
   TOPLEVEL_DHCP6
@@ -269,6 +273,7 @@ global_param
 | expired_leases_processing
 | server_id
 | dhcp4o6_port
+| dhcp_ddns
 ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -936,7 +941,31 @@ output_param: OUTPUT COLON STRING {
     ElementPtr sev(new StringElement($3)); ctx.stack_.back()->set("output", sev);
 };
 
+dhcp_ddns: DHCP_DDNS COLON LCURLY_BRACKET {
+    ElementPtr m(new MapElement());
+    ctx.stack_.back()->set("dhcp-ddns", m);
+    ctx.stack_.push_back(m);
+} dhcp_ddns_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
 
+dhcp_ddns_params: dhcp_ddns_param
+| dhcp_ddns_params COMMA dhcp_ddns_param
+;
+
+dhcp_ddns_param: enable_updates
+| qualifying_suffix
+;
+
+enable_updates: ENABLE_UPDATES COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3));
+    ctx.stack_.back()->set("enable-updates", b);
+};
+
+qualifying_suffix: QUALIFYING_SUFFIX COLON STRING {
+    ElementPtr qs(new StringElement($3));
+    ctx.stack_.back()->set("qualifying-suffix", qs);
+};
 
 %%
 

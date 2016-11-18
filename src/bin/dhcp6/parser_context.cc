@@ -28,8 +28,7 @@ isc::data::ConstElementPtr
 Parser6Context::parseString(const std::string& str, ParserType parser_type)
 {
     file_ = "<string>";
-    string_ = str;
-    scanStringBegin(parser_type);
+    scanStringBegin(str, parser_type);
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
     // trace_parsing_ = true;
@@ -49,47 +48,12 @@ Parser6Context::parseString(const std::string& str, ParserType parser_type)
 
 isc::data::ConstElementPtr
 Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
-
-    ifstream f;
-    f.open(filename.c_str());
-    if (!f.is_open()) {
-        isc_throw(BadValue, "Can't open file " << filename);
-    }
-
-    string_ = "";
-    std::string line;
-    while (!f.eof()) {
-        std::getline(f, line);
-        string_ = string_ + line + "\n";
-    }
-    f.close();
-
-    file_ = filename;
-
-    scanStringBegin(parser_type);
-    isc::dhcp::Dhcp6Parser parser(*this);
-    // Uncomment this to get detailed parser logs.
-    // trace_parsing_ = true;
-    parser.set_debug_level(trace_parsing_);
-    int res = parser.parse();
-    if (res != 0) {
-        // @todo: handle exception here
-    }
-    scanStringEnd();
-    if (stack_.size() == 1) {
-        return (stack_[0]);
-    } else {
-        isc_throw(BadValue, "Expected exactly one terminal Element expected, found "
-                  << stack_.size());
-    }
-
-#if 0
     FILE* f = fopen(filename.c_str(), "r");
     if (!f) {
         isc_throw(BadValue, "Unable to open file " << filename);
     }
     file_ = filename;
-    scanFileBegin(f);
+    scanFileBegin(f, parser_type);
 
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
@@ -106,7 +70,6 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
         isc_throw(BadValue, "Expected exactly one terminal Element expected, found "
                   << stack_.size());
     }
-#endif
 }
 
 
