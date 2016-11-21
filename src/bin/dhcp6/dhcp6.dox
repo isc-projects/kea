@@ -305,7 +305,7 @@ SubnetConfigParser::getParam(const std::string& name) {
             isc_throw(DhcpConfigError, "Mandatory parameter " << name
                       << " missing (no global default and no subnet-"
                       << "specific value)");
-	}
+        }
     }
 
     return (Triplet<uint32_t>(value));
