@@ -37,8 +37,8 @@ public:
 
     /// @brief Defines currently support the content supported
     typedef enum {
-        PARSER_DHCP6, // This will parse the content as DHCP6 config
-        PARSER_GENERIC_JSON // This will parse the content as generic JSON
+        PARSER_GENERIC_JSON, // This will parse the content as generic JSON
+        PARSER_DHCP6 // This will parse the content as DHCP6 config
     } ParserType;
 
     /// @brief Default constructor.
@@ -95,12 +95,58 @@ public:
     /// Used by YY_FATAL_ERROR macro so required to be static.
     static void fatal(const std::string& what);
 
+    /// @brief Defines syntactic contexts for lexical tie-ins
+    typedef enum {
+        /// at toplevel
+        NO_KEYWORD,
+        CONFIG,
+        /// in config
+        DHCP6,
+        // not yet DHCP4,
+        // not yet DHCP_DDNS,
+        LOGGING,
+        /// Dhcp6
+        INTERFACES_CONFIG,
+        DATABASE,
+        MAC_SOURCES,
+        HOST_RESERVATION_IDENTIFIERS,
+        HOOKS_LIBRARIES,
+        SUBNET6,
+        OPTION_DATA,
+        CLIENT_CLASSES,
+        SERVER_ID,
+        DHCP_DDNS,
+        /// subnet6
+        POOLS,
+        PD_POOLS,
+        RESERVATIONS,
+	/// client-classes
+	CLIENT_CLASS,
+        /// Logging
+        LOGGERS,
+        /// loggers
+        OUTPUT_OPTIONS
+    } ParserContext;    
+
+    /// @brief Current syntactic context
+    ParserContext ctx_;
+
+    /// @brief Enter a new syntactic context
+    void enter(const ParserContext& ctx);
+
+    /// @brief Leave a syntactic context
+    /// @throw isc::Unexpected if unbalanced
+    void leave();
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
     /// @brief Flag determing parser debugging.
     bool trace_parsing_;
+
+    /// @brief Syntactic context stack
+    std::vector<ParserContext> cstack_;
 };
 
 }; // end of isc::eval namespace

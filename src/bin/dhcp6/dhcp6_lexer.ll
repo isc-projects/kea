@@ -42,6 +42,7 @@ std::vector<struct yy_buffer_state*> states;
 bool start_token_flag = false;
 
 isc::dhcp::Parser6Context::ParserType start_token_value;
+int comment_start_line = 0;
 
 };
 
@@ -109,8 +110,6 @@ JSONString                              \"{JSONStringCharacter}*\"
     // Code run each time yylex is called.
     loc.step();
 
-    int comment_start_line = 0;
-
     if (start_token_flag) {
         start_token_flag = false;
         switch (start_token_value) {
@@ -163,80 +162,572 @@ JSONString                              \"{JSONStringCharacter}*\"
     loc.step();
 }
 
-\"Dhcp6\"  { return isc::dhcp::Dhcp6Parser::make_DHCP6(loc); }
-\"interfaces-config\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(loc); }
-\"interfaces\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACES(loc); }
+\"Dhcp6\"  {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG:
+        return isc::dhcp::Dhcp6Parser::make_DHCP6(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp6", loc);
+    }
+}
 
-\"lease-database\" { return  isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(loc); }
-\"hosts-database\" { return  isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(loc); }
-\"type\" { return isc::dhcp::Dhcp6Parser::make_TYPE(loc); }
-\"user\" { return isc::dhcp::Dhcp6Parser::make_USER(loc); }
-\"password\" { return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc); }
-\"host\" { return isc::dhcp::Dhcp6Parser::make_HOST(loc); }
-\"persist\" { return isc::dhcp::Dhcp6Parser::make_PERSIST(loc); }
-\"lfc-interval\" { return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(loc); }
+\"interfaces-config\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces-config", loc);
+    }
+}
 
-\"preferred-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc); }
-\"valid-lifetime\" { return  isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc); }
-\"renew-timer\" { return  isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(loc); }
-\"rebind-timer\" { return  isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(loc); }
-\"subnet6\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET6(loc); }
-\"option-data\" { return  isc::dhcp::Dhcp6Parser::make_OPTION_DATA(loc); }
-\"name\" { return  isc::dhcp::Dhcp6Parser::make_NAME(loc); }
-\"data\" { return  isc::dhcp::Dhcp6Parser::make_DATA(loc); }
-\"pools\" { return  isc::dhcp::Dhcp6Parser::make_POOLS(loc); }
+\"interfaces\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp6Parser::make_INTERFACES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces", loc);
+    }
+}
 
-\"pd-pools\" { return  isc::dhcp::Dhcp6Parser::make_PD_POOLS(loc); }
-\"prefix\" { return  isc::dhcp::Dhcp6Parser::make_PREFIX(loc); }
-\"prefix-len\" { return  isc::dhcp::Dhcp6Parser::make_PREFIX_LEN(loc); }
-\"delegated-len\" { return  isc::dhcp::Dhcp6Parser::make_DELEGATED_LEN(loc); }
+\"lease-database\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("lease-database", loc);
+    }
+}
 
-\"pool\" { return  isc::dhcp::Dhcp6Parser::make_POOL(loc); }
-\"subnet\" { return  isc::dhcp::Dhcp6Parser::make_SUBNET(loc); }
-\"interface\" { return  isc::dhcp::Dhcp6Parser::make_INTERFACE(loc); }
-\"id\" { return  isc::dhcp::Dhcp6Parser::make_ID(loc); }
+\"hosts-database\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hosts-database", loc);
+    }
+}
 
-\"code\" { return isc::dhcp::Dhcp6Parser::make_CODE(loc); }
-\"mac-sources\" { return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc); }
-\"relay-supplied-options\" { return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc); }
-\"host-reservation-identifiers\" { return isc::dhcp::Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS(loc); }
+\"type\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_TYPE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("type", loc);
+    }
+}
 
-\"Logging\" { return isc::dhcp::Dhcp6Parser::make_LOGGING(loc); }
-\"loggers\" { return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc); }
-\"output_options\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc); }
-\"output\" { return isc::dhcp::Dhcp6Parser::make_OUTPUT(loc); }
-\"debuglevel\" { return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc); }
-\"severity\" { return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc); }
+\"user\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_USER(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("user", loc);
+    }
+}
 
-\"client-classes\" { return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(loc); }
-\"client-class\" { return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(loc); }
-\"test\" { return isc::dhcp::Dhcp6Parser::make_TEST(loc); }
+\"password\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("password", loc);
+    }
+}
 
-\"reservations\" { return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(loc); }
-\"ip-addresses\" { return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(loc); }
-\"prefixes\" { return isc::dhcp::Dhcp6Parser::make_PREFIXES(loc); }
-\"duid\" { return isc::dhcp::Dhcp6Parser::make_DUID(loc); }
-\"hw-address\" { return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(loc); }
-\"hostname\" { return isc::dhcp::Dhcp6Parser::make_HOSTNAME(loc); }
-\"space\" { return isc::dhcp::Dhcp6Parser::make_SPACE(loc); }
-\"csv-format\" { return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(loc); }
+\"host\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_HOST(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("host", loc);
+    }
+}
 
-\"hooks-libraries\" { return isc::dhcp::Dhcp6Parser::make_HOOKS_LIBRARIES(loc); }
-\"library\" { return isc::dhcp::Dhcp6Parser::make_LIBRARY(loc); }
+\"persist\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_PERSIST(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("persist", loc);
+    }
+}
 
-\"server-id\" { return isc::dhcp::Dhcp6Parser::make_SERVER_ID(loc); }
-\"identifier\" { return isc::dhcp::Dhcp6Parser::make_IDENTIFIER(loc); }
-\"htype\" { return isc::dhcp::Dhcp6Parser::make_HTYPE(loc); }
-\"time\" { return isc::dhcp::Dhcp6Parser::make_TIME(loc); }
-\"enterprise-id\" { return isc::dhcp::Dhcp6Parser::make_ENTERPRISE_ID(loc); }
+\"lfc-interval\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", loc);
+    }
+}
 
-\"expired-leases-processing\" { return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(loc); }
+\"preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("preferred-lifetime", loc);
+    }
+}
 
-\"dhcp4o6-port\" { return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(loc); }
+\"valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", loc);
+    }
+}
 
-\"dhcp-ddns\" { return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(loc); }
-\"enable-updates\" { return isc::dhcp::Dhcp6Parser::make_ENABLE_UPDATES(loc); }
-\"qualifying-suffix\" { return isc::dhcp::Dhcp6Parser::make_QUALIFYING_SUFFIX(loc); }
+\"renew-timer\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("renew-timer", loc);
+    }
+}
+
+\"rebind-timer\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("rebind-timer", loc);
+    }
+}
+
+\"subnet6\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_SUBNET6(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("subnet6", loc);
+    }
+}
+
+\"option-data\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser6Context::CLIENT_CLASS:
+        return isc::dhcp::Dhcp6Parser::make_OPTION_DATA(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("option-data", loc);
+    }
+}
+
+\"name\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser6Context::CLIENT_CLASS:
+    case isc::dhcp::Parser6Context::LOGGERS:
+        return isc::dhcp::Dhcp6Parser::make_NAME(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("name", loc);
+    }
+}
+
+\"data\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_DATA(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("data", loc);
+    }
+}
+
+\"pools\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_POOLS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pools", loc);
+    }
+}
+
+\"pd-pools\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_PD_POOLS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pd-pools", loc);
+    }
+}
+
+\"prefix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::PD_POOLS:
+        return isc::dhcp::Dhcp6Parser::make_PREFIX(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefix", loc);
+    }
+}
+
+\"prefix-len\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::PD_POOLS:
+        return isc::dhcp::Dhcp6Parser::make_PREFIX_LEN(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefix-len", loc);
+    }
+}
+
+\"delegated-len\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::PD_POOLS:
+        return isc::dhcp::Dhcp6Parser::make_DELEGATED_LEN(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("delegated-len", loc);
+    }
+}
+
+\"pool\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::POOLS:
+        return isc::dhcp::Dhcp6Parser::make_POOL(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pool", loc);
+    }
+}
+
+\"subnet\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_SUBNET(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("subnet", loc);
+    }
+}
+
+\"interface\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_INTERFACE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("interface", loc);
+    }
+}
+
+\"id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_ID(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("id", loc);
+    }
+}
+
+\"code\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_CODE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("code", loc);
+    }
+}
+
+\"mac-sources\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("mac-sources", loc);
+    }
+}
+
+\"relay-supplied-options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("relay-supplied-options", loc);
+    }
+}
+
+\"host-reservation-identifiers\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("host-reservation-identifiers", loc);
+    }
+}
+
+\"Logging\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG:
+        return isc::dhcp::Dhcp6Parser::make_LOGGING(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("Logging", loc);
+    }
+}
+
+\"loggers\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LOGGING:
+        return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("loggers", loc);
+    }
+}
+
+\"output_options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LOGGERS:
+        return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("output_options", loc);
+    }
+}
+
+\"output\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp6Parser::make_OUTPUT(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("output", loc);
+    }
+}
+
+\"debuglevel\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LOGGERS:
+        return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("debuglevel", loc);
+    }
+}
+
+\"severity\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LOGGERS:
+        return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("severity", loc);
+    }
+}
+
+\"client-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("client-classes", loc);
+    }
+}
+
+\"client-class\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("client-class", loc);
+    }
+}
+
+\"test\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser6Context::CLIENT_CLASS:
+        return isc::dhcp::Dhcp6Parser::make_TEST(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("test", loc);
+    }
+}
+
+\"reservations\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservations", loc);
+    }
+}
+
+\"ip-addresses\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ip-addresses", loc);
+    }
+}
+
+\"prefixes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_PREFIXES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefixes", loc);
+    }
+}
+
+\"duid\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::MAC_SOURCES:
+    case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_DUID(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("duid", loc);
+    }
+}
+
+\"hw-address\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hw-address", loc);
+    }
+}
+
+\"hostname\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname", loc);
+    }
+}
+
+\"space\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_SPACE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("space", loc);
+    }
+}
+
+\"csv-format\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("csv-format", loc);
+    }
+}
+
+\"hooks-libraries\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_HOOKS_LIBRARIES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hooks-libraries", loc);
+    }
+}
+
+\"library\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
+        return isc::dhcp::Dhcp6Parser::make_LIBRARY(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("library", loc);
+    }
+}
+
+\"server-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_SERVER_ID(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("server-id", loc);
+    }
+}
+
+\"identifier\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_IDENTIFIER(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("identifier", loc);
+    }
+}
+
+\"htype\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_HTYPE(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("htype", loc);
+    }
+}
+
+\"time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_TIME(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("time", loc);
+    }
+}
+
+\"enterprise-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SERVER_ID:
+        return isc::dhcp::Dhcp6Parser::make_ENTERPRISE_ID(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("enterprise-id", loc);
+    }
+}
+
+\"expired-leases-processing\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("expired-leases-processing", loc);
+    }
+}
+
+\"dhcp4o6-port\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp4o6-port", loc);
+    }
+}
+
+\"dhcp-ddns\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-ddns", loc);
+    }
+}
+
+\"enable-updates\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_ENABLE_UPDATES(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("enable-updates", loc);
+    }
+}
+
+\"qualifying-suffix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_QUALIFYING_SUFFIX(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("qualifying-suffix", loc);
+    }
+}
 
 
 {JSONString} {
@@ -300,6 +791,7 @@ null {
 }
 
 .          driver.error (loc, "Invalid character: " + std::string(yytext));
+
 <<EOF>>    {
     if (states.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(loc);

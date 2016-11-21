@@ -89,5 +89,24 @@ Parser6Context::fatal (const std::string& what)
     isc_throw(Unexpected, what);
 }
 
+void
+Parser6Context::enter(const ParserContext& ctx)
+{
+    cstack_.push_back(ctx_);
+    ctx_ = ctx;
+}
+
+void
+Parser6Context::leave()
+{
+#if 1
+    if (cstack_.empty()) {
+        fatal("unbalanced syntactic context");
+    }
+#endif
+    ctx_ = cstack_.back();
+    cstack_.pop_back();
+}
+
 };
 };

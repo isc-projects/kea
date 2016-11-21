@@ -225,16 +225,16 @@ MapElement object, but does not remove it.
 
 One another important capability required is the ability to parse not only the
 whole configuration, but a subset of it. This is done by introducing articifical
-tokens (TOPLEVEL_DHCP6 and TOPLEVEL_GENERIC_JSON). The Parse6Context::parse() method
+tokens (TOPLEVEL_GENERIC_JSON and TOPLEVEL_DHCP6). The Parse6Context::parse() method
 takes one parameter that specifies, whether the data to be parsed is expected
-to have the whole configuration (DHCP6) or a generic JSON. This is only a
+to have a generic JSON or the whole configuration (DHCP6). This is only a
 proof-of-concept, but similar approach can be implemented to parse only subnets,
 host reservations, options or basically any other elements. For example, to add
 the ability to parse only pools, the following could be added:
 
 @code
-start: TOPLEVEL_DHCP6 syntax_map
-| TOPLEVEL_GENERIC_JSON map2
+start: TOPLEVEL_GENERIC_JSON map2
+| TOPLEVEL_DHCP6 syntax_map
 | TOPLEVEL_POOL pool_entry;
 @endcode
 
