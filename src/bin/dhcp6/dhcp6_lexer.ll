@@ -147,7 +147,7 @@ JSONString                              \"{JSONStringCharacter}*\"
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
 
-    Parser6Context::includeFile(tmp);
+    driver.includeFile(tmp);
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
     
