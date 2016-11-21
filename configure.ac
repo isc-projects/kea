@@ -1212,6 +1212,9 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest source but it was selected])
             fi
         else
+	    if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
+		GTEST_SOURCE=$GTEST_SOURCE/googletest
+	    fi
             AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                 [$GTEST_SOURCE/src/gtest_main.cc],
                 [have_gtest_source=yes],
