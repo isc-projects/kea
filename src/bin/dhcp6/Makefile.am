@@ -55,7 +55,7 @@ libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
 libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libdhcp6_la_SOURCES += dhcp6_messages.h dhcp6_messages.cc
-EXTRA_DIST += dhcp6_messages.mes
+libdhcp6_la_SOURCES += fuzz.cc
 
 sbin_PROGRAMS = kea-dhcp6
 
