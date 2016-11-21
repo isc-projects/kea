@@ -65,6 +65,8 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
+#include <dhcp6/fuzz.h>
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -442,6 +444,19 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 }
 
 bool Dhcpv6Srv::run() {
+
+#ifdef FUZZ
+    // AFL fuzzing setup initiated here. At this stage, Kea has loaded its
+    // config, opened sockets, established DB connections, etc. It is truly
+    // ready to process packets. Now it's time to initialize AFL. It will
+    // set up a separate thread that will receive data from fuzzing engine
+    // and will send it as packets to Kea. Kea is supposed to process them
+    // and hopefully not crash in the process. Once the packet processing
+    // is done, Kea should let the AFL know that it's ready for the next
+    // packet. This is done further down in this loop (see kea_fuzz_notify()).
+    kea_fuzz_setup();
+#endif /* FUZZ */
+
     while (!shutdown_) {
         try {
             run_one();
@@ -451,11 +466,18 @@ bool Dhcpv6Srv::run() {
             // specific catches.
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
                 .arg(e.what());
+
         } catch (...) {
             // General catch-all non-standard exception that are not caught
             // by more specific catches.
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
         }
+
+#ifdef FUZZ
+        // Ok, this particular packet processing is done.
+        // Let the AFL know about it.
+        kea_fuzz_notify();
+#endif
     }
 
     return (true);

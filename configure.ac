@@ -1595,6 +1595,17 @@ if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
 fi
 
+AC_ARG_ENABLE(fuzz, [AC_HELP_STRING([--enable-fuzz],
+  [indicates that the code will be built with AFL (American Fuzzy Lop) support.
+   Code built this way is unusable as a regular server. [default=no]])],
+   enable_fuzz=$enableval, enable_fuzz=no)
+AM_CONDITIONAL(FUZZ, test x$enable_fuzz != xno)
+
+if test "x$enable_fuzz" != "xno" ; then
+    AC_DEFINE([FUZZ], [1], [AFL fuzzing was enabled.])
+fi
+
+
 # Check for optreset in unistd.h. On BSD systems the optreset is
 # used to reset the state of getopt() function. Resetting its state
 # is required if command line arguments are parsed multiple times
@@ -2094,6 +2105,7 @@ Developer:
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
   Kea-shell:                 $shell_report
+  Enable fuzz:               $enable_fuzz
 
 END
 
