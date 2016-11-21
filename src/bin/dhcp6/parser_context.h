@@ -120,8 +120,8 @@ public:
         POOLS,
         PD_POOLS,
         RESERVATIONS,
-	/// client-classes
-	CLIENT_CLASS,
+        /// client-classes
+        CLIENT_CLASS,
         /// Logging
         LOGGERS,
         /// loggers
