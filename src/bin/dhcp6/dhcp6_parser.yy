@@ -156,14 +156,14 @@ start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
 // Note that ctx_ is NO_KEYWORD here
 
 // Values rule
-value : INTEGER { $$ = ElementPtr(new IntElement($1)); }
-      | FLOAT { $$ = ElementPtr(new DoubleElement($1)); }
-      | BOOLEAN { $$ = ElementPtr(new BoolElement($1)); }
-      | STRING { $$ = ElementPtr(new StringElement($1)); }
-      | NULL_TYPE { $$ = ElementPtr(new NullElement()); }
-      | map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
-      | list_generic { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
-      ;
+value: INTEGER { $$ = ElementPtr(new IntElement($1)); }
+     | FLOAT { $$ = ElementPtr(new DoubleElement($1)); }
+     | BOOLEAN { $$ = ElementPtr(new BoolElement($1)); }
+     | STRING { $$ = ElementPtr(new StringElement($1)); }
+     | NULL_TYPE { $$ = ElementPtr(new NullElement()); }
+     | map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
+     | list_generic { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
+     ;
 
 map2: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
@@ -392,8 +392,8 @@ host: HOST {
 name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr n(new StringElement($4));
-    ctx.stack_.back()->set("name", n);
+    ElementPtr name(new StringElement($4));
+    ctx.stack_.back()->set("name", name);
     ctx.leave();
 };
 
@@ -421,15 +421,19 @@ mac_sources_list: mac_sources_value
                 | mac_sources_list COMMA mac_sources_value
 ;
 
-mac_sources_value: DUID {
-                       ElementPtr duid(new StringElement("duid"));
-                       ctx.stack_.back()->add(duid);
-                       }
-                 | STRING {
-                       ElementPtr duid(new StringElement($1));
-                       ctx.stack_.back()->add(duid);
-                       }
+mac_sources_value: duid_id
+                 | string_id
                  ;
+
+duid_id : DUID {
+    ElementPtr duid(new StringElement("duid"));
+    ctx.stack_.back()->add(duid);
+};
+
+string_id : STRING {
+    ElementPtr duid(new StringElement($1));
+    ctx.stack_.back()->add(duid);
+};
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement());
@@ -445,15 +449,14 @@ host_reservation_identifiers_list: host_reservation_identifier
     | host_reservation_identifiers_list COMMA host_reservation_identifier
     ;
 
-host_reservation_identifier: DUID {
-                                 ElementPtr duid(new StringElement("duid"));
-                                 ctx.stack_.back()->add(duid);
-                                 }
-                           | HW_ADDRESS {
-                                 ElementPtr hwaddr(new StringElement("hw-address"));
-                                 ctx.stack_.back()->add(hwaddr);
-                                 }
+host_reservation_identifier: duid_id
+                           | hw_address_id
                            ;
+
+hw_address_id : HW_ADDRESS {
+    ElementPtr hwaddr(new StringElement("hw-address"));
+    ctx.stack_.back()->add(hwaddr);
+};
 
 relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ElementPtr l(new ListElement());
@@ -662,13 +665,7 @@ option_data_param: %empty
                  ;
 
 
-option_data_name: NAME {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr name(new StringElement($4));
-    ctx.stack_.back()->set("name", name);
-    ctx.leave(); 
-};
+option_data_name: name;
 
 option_data_data: DATA {
     ctx.enter(ctx.NO_KEYWORD);
@@ -926,13 +923,7 @@ client_class_param: %empty
                   | option_data_list
                   ;
 
-client_class_name: NAME {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr name(new StringElement($4));
-    ctx.stack_.back()->set("name", name);
-    ctx.leave();
-};
+client_class_name: name;
 
 client_class_test: TEST {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1054,19 +1045,11 @@ logger_params: logger_param
              | logger_params COMMA logger_param
              ;
 
-logger_param: logger_name
+logger_param: name
             | output_options_list
             | debuglevel
             | severity
             ;
-
-logger_name: NAME {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr name(new StringElement($4));
-    ctx.stack_.back()->set("name", name);
-    ctx.leave();
-};
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
     ElementPtr dl(new IntElement($3));
