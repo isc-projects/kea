@@ -1,3 +1,11 @@
+This file documents the process of initial trial runs for running
+AFL fuzzer for Kea. Currently only Kea-dhcp6 is extended with this
+capability. Once we get more experience with it, we should implement
+this capability for Kea-dhcp4.
+
+I have used Ubuntu 16.04 for this. I read somewhere that FreeBSD is
+ok for fuzzing, but Mac OS is not.
+
 1. Download AFL
   Homepage: http://lcamtuf.coredump.cx/afl/
   Version used: 2.35b (afl-latest.tgz)
@@ -44,6 +52,8 @@ Ubuntu 16.04 I had to do this:
 
  E.g.
  export KEA_AFL_INTERFACE=eth1
+
+ Overriding the parameters with variables has not been tested.
 
 6. Run fuzzer
 
