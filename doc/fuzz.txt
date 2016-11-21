@@ -15,8 +15,8 @@ Ubuntu 16.04 I had to do this:
 
 3. Set up path to AFL binaries
 
- EXPORT AFL_PATH=/home/thomson/devel/afl-2.35b
- EXPORT PATH=$PATH:/home/thomson/devel/afl-2.35b
+ export AFL_PATH=/home/thomson/devel/afl-2.35b
+ export PATH=$PATH:/home/thomson/devel/afl-2.35b
 
 4. Build Kea using AFL
 
@@ -24,13 +24,13 @@ Ubuntu 16.04 I had to do this:
  git pull
  git checkout experiments/fuzz
  autoreconf -i
- CXX=afl-clang-fast++ ./configure --enable-fuzz
+ CXX=afl-clang-fast++ ./configure --enable-fuzz --enable-static-link
  make
 
  Note: no unit-tests needed. We will be fuzzing the
  production code only.
 
-5. Run fuzzer
+5. Configure destination address
 
  The defaults (see src/bin/dhcp6/fuzz.cc) are:
  interface: eth0
@@ -45,4 +45,31 @@ Ubuntu 16.04 I had to do this:
  E.g.
  export KEA_AFL_INTERFACE=eth1
 
- 
+6. Run fuzzer
+
+ Set up max size of a virtual memory allowed to 4GB:
+ ulimit -v 4096000
+
+ Instruct AFL to allow 4096MB of virtual memory and run AFL:
+ afl-fuzz -m 4096 -i tests/fuzz-data -o fuzz-out ./kea-dhcp6 -c fuzz.json
+
+ Here's what the switches do:
+ -m 4096 - allow Kea to take up to 4GB memory
+ -i tests/fuzz-data - Input seeds. These are the packet files used
+    to initiate the packet randomization. Several examples are in
+    src/bin/dhcp6/tests/fuzz-data. You can extract them using wireshark,
+    right click on a packet, then export as binary data. Make sure you
+    export the payload of UDP content. the first exported byte should
+    by message-type.
+ -o dir - that's the output directory. It doesn't have to exist.
+
+7. Checking that the fuzzer is really working
+
+ a) the harness prints out a line to /tmp/kea-fuzz-harness.txt every
+ time a new packet is sent. This generated 4,5MB of entries in 20
+ minutes. Obviously, this has to be disabled for production fuzzing,
+ but it's good for initial trials.
+
+ b) I have my fuzz.json (which is renamed doc/examples/kea6/simple.json)
+ that tell Kea to use logging on level INFO and write output to a
+ file. This file keeps growing. That's around 3,8MB after 20 minutes.
