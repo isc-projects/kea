@@ -133,6 +133,9 @@ kea_main_client(void *arg) {
 
         ssize_t sent;
 
+        cout << "Sending " << length << " bytes to " << dst << "/" << port
+             << " over " << iface << "/" << iface_id << endl;
+
         sent = sendto(sockfd, buf, length, 0,
                       (struct sockaddr *) &servaddr, sizeof(servaddr));
         if (sent != length) {
