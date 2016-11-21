@@ -18,6 +18,7 @@
 #include <dhcp/dhcp6.h>
 
 #include <iostream>
+#include <fstream>
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,7 @@
 #include <net/if.h>
 #include <unistd.h>
 #include <pthread.h>
+
 
 #ifndef __AFL_LOOP
 #error To use American Fuzzy Lop you have to set CC to afl-clang-fast!!!
@@ -59,6 +61,8 @@ kea_main_client(void *arg) {
     string dst(ALL_DHCP_RELAY_AGENTS_AND_SERVERS);
     string port("547");
 
+    ofstream f("/tmp/kea-fuzz-harness.txt", ios::ate);
+
     const char *iface_ptr = getenv("KEA_AFL_INTERFACE");
     if (iface_ptr) {
         iface = string(iface_ptr);
@@ -76,17 +80,17 @@ kea_main_client(void *arg) {
 
     unsigned int iface_id = if_nametoindex(iface.c_str());
     
-    cout << "Kea AFL setup:" << endl;
-    cout << "Interface: " << iface << endl;
-    cout << "Interface index: " << iface_id << endl;
-    cout << "UDP destination addr: " << dst << endl;
-    cout << "UDP destination port: " << port << endl;
+    f << "Kea AFL setup:" << endl;
+    f << "Interface: " << iface << endl;
+    f << "Interface index: " << iface_id << endl;
+    f << "UDP destination addr: " << dst << endl;
+    f << "UDP destination port: " << port << endl;
 
     memset(&servaddr, 0, sizeof (servaddr));
     servaddr.sin6_family = AF_INET6;
     if (inet_pton(AF_INET6, dst.c_str(), &servaddr.sin6_addr) != 1) {
-        cout << "Error: inet_pton() failed: can't convert " << dst
-             << " to address." << endl;
+        f << "Error: inet_pton() failed: can't convert " << dst
+          << " to address." << endl;
         exit(EXIT_FAILURE);
     }
     servaddr.sin6_port = htons(547);
@@ -94,13 +98,13 @@ kea_main_client(void *arg) {
 
     sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sockfd < 0) {
-        cout << "Failed to create UDP6 socket" << endl;
+        f << "Failed to create UDP6 socket" << endl;
         exit(EXIT_FAILURE);
     }
 
     buf = malloc(65536);
     if (!buf) {
-        cout << "Failed to allocate a buffer" << endl;
+        f << "Failed to allocate a buffer" << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -126,21 +130,21 @@ kea_main_client(void *arg) {
             } */
 
         if (pthread_mutex_lock(&mutex) != 0) {
-            cout << "#### Failed to lock mutex" << endl;
+            f << "#### Failed to lock mutex" << endl;
         }
 
         ready = false;
 
         ssize_t sent;
 
-        cout << "Sending " << length << " bytes to " << dst << "/" << port
-             << " over " << iface << "/" << iface_id << endl;
+        f << "Sending " << length << " bytes to " << dst << "/" << port
+          << " over " << iface << "/" << iface_id << endl;
 
         sent = sendto(sockfd, buf, length, 0,
                       (struct sockaddr *) &servaddr, sizeof(servaddr));
         if (sent != length) {
-            cout << "#### Error: expected to send " << length
-                 << ", but really sent " << sent << endl;
+            f << "#### Error: expected to send " << length
+              << ", but really sent " << sent << endl;
         }
 
         /* unclog */
@@ -150,7 +154,7 @@ kea_main_client(void *arg) {
             pthread_cond_wait(&cond, &mutex);
 
         if (pthread_mutex_unlock(&mutex) != 0) {
-            cout << "#### Failed to unlock mutex" << endl;
+            f << "#### Failed to unlock mutex" << endl;
         }
     }
 
