@@ -63,7 +63,7 @@ public:
     void scanFileEnd(FILE * f);
 
     /// @brief Divert input to an include file.
-    static void includeFile(const std::string& filename);
+    void includeFile(const std::string& filename);
 
     /// @brief Run the parser on the string specified.
     ///
@@ -81,17 +81,18 @@ public:
     ///
     /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
-    static void error(const isc::dhcp::location& loc, const std::string& what);
+    void error(const isc::dhcp::location& loc, const std::string& what);
 
     /// @brief Error handler
     ///
     /// This is a simplified error reporting tool for possible future
     /// cases when the EvalParser is not able to handle the packet.
-    static void error(const std::string& what);
+    void error(const std::string& what);
 
     /// @brief Fatal error handler
     ///
-    /// This is for should not happen but fatal errors
+    /// This is for should not happen but fatal errors.
+    /// Used by YY_FATAL_ERROR macro so required to be static.
     static void fatal(const std::string& what);
 
  private:
