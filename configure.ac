@@ -913,7 +913,7 @@ EOF
                            #endif
                            ])],
          [AC_MSG_RESULT([yes])],
-         [AC_MSG_ERROR([HMAC functions return void: the OpenSSL version should be too old, please change for >= 1.0.1])])
+         [AC_MSG_ERROR([HMAC functions return void: please use OpenSSL version 1.0.1 or later])])
     LIBS=${LIBS_SAVED}
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
