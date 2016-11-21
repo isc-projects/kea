@@ -106,6 +106,28 @@ TEST(ParserTest, types) {
     testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
 }
 
+TEST(ParserTest, keywordJSON) {
+    string txt = "{ \"name\": \"user\","
+                   "\"type\": \"password\","
+                   "\"user\": \"name\","
+                   "\"password\": \"type\" }";
+    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+}
+
+TEST(ParserTest, keywordDhcp6) {
+     string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
+                  "\"preferred-lifetime\": 3000,\n"
+                  "\"rebind-timer\": 2000, \n"
+                  "\"renew-timer\": 1000, \n"
+                  "\"subnet6\": [ { "
+                  "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                  "    \"subnet\": \"2001:db8:1::/48\", "
+                  "    \"interface\": \"test\" } ],\n"
+                   "\"valid-lifetime\": 4000 } }";
+     testParser2(txt, Parser6Context::PARSER_DHCP6);
+}
+
 TEST(ParserTest, bashComments) {
     string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"

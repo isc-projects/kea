@@ -84,10 +84,10 @@ general, the following issues of the existing code were noted:
    having trailing commas:
    @code
       "option-data": [
-	{
-	    "code": 12,
-	    "data": "2001:db8:1:0:ff00::1"
-	},
+        {
+            "code": 12,
+            "data": "2001:db8:1:0:ff00::1"
+        },
       ]
    @endcode
    or having incorrect types, e.g. specifying timer values as strings.
@@ -295,16 +295,16 @@ isc::dhcp::Triplet<uint32_t>
 SubnetConfigParser::getParam(const std::string& name) {
     uint32_t value = 0;
     try {
-	// look for local value
-	 value = uint32_values_->getParam(name);
+        // look for local value
+         value = uint32_values_->getParam(name);
     } catch (const DhcpConfigError &) {
-	try {
-	    // no local, use global value
-	    value = global_context_->uint32_values_->getParam(name);
-	} catch (const DhcpConfigError &) {
-	    isc_throw(DhcpConfigError, "Mandatory parameter " << name
-		      << " missing (no global default and no subnet-"
-		      << "specific value)");
+        try {
+            // no local, use global value
+            value = global_context_->uint32_values_->getParam(name);
+        } catch (const DhcpConfigError &) {
+            isc_throw(DhcpConfigError, "Mandatory parameter " << name
+                      << " missing (no global default and no subnet-"
+                      << "specific value)");
 	}
     }
 
