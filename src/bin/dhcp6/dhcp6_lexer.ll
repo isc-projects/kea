@@ -162,6 +162,7 @@ JSONString                              \"{JSONStringCharacter}*\"
     loc.step();
 }
 
+
 \"Dhcp6\"  {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
@@ -740,12 +741,12 @@ JSONString                              \"{JSONStringCharacter}*\"
     return isc::dhcp::Dhcp6Parser::make_STRING(tmp, loc);
 }
 
-"["                  { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
-"]"                 { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(loc); }
-"{"                  { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(loc); }
-"}"                     { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(loc); }
-","                   { return isc::dhcp::Dhcp6Parser::make_COMMA(loc); }
-":"                     { return isc::dhcp::Dhcp6Parser::make_COLON(loc); }
+"["    { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
+"]"    { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(loc); }
+"{"    { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(loc); }
+"}"    { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(loc); }
+","    { return isc::dhcp::Dhcp6Parser::make_COMMA(loc); }
+":"    { return isc::dhcp::Dhcp6Parser::make_COLON(loc); }
 
 {int} {
     // An integer was found.
@@ -764,6 +765,7 @@ JSONString                              \"{JSONStringCharacter}*\"
     // The parser needs the string form as double conversion is no lossless
     return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, loc);
 }
+
 [-+]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)? {
     // A floating point was found.
     std::string tmp(yytext);
@@ -790,9 +792,9 @@ null {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(loc);
 }
 
-.          driver.error (loc, "Invalid character: " + std::string(yytext));
+.   driver.error (loc, "Invalid character: " + std::string(yytext));
 
-<<EOF>>    {
+<<EOF>> {
     if (states.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(loc);
     }
