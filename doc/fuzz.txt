@@ -1,0 +1,48 @@
+1. Download AFL
+  Homepage: http://lcamtuf.coredump.cx/afl/
+  Version used: 2.35b (afl-latest.tgz)
+
+2. Compile AFL
+  cd afl-2.35b
+  make
+  cd llvm_mode
+  make
+
+the last step requires to have LLVM installed. On
+Ubuntu 16.04 I had to do this:
+ 
+  sudo apt-get install llvm
+
+3. Set up path to AFL binaries
+
+ EXPORT AFL_PATH=/home/thomson/devel/afl-2.35b
+ EXPORT PATH=$PATH:/home/thomson/devel/afl-2.35b
+
+4. Build Kea using AFL
+
+ cd kea
+ git pull
+ git checkout experiments/fuzz
+ autoreconf -i
+ CXX=afl-clang-fast++ ./configure --enable-fuzz
+ make
+
+ Note: no unit-tests needed. We will be fuzzing the
+ production code only.
+
+5. Run fuzzer
+
+ The defaults (see src/bin/dhcp6/fuzz.cc) are:
+ interface: eth0
+ dest address: ff02::1:2
+ dest port: 547
+
+ Those can be changed with the following env. variables:
+ KEA_AFL_INTERFACE
+ KEA_AFL_ADDR
+ KEA_AFL_PORT
+
+ E.g.
+ export KEA_AFL_INTERFACE=eth1
+
+ 
