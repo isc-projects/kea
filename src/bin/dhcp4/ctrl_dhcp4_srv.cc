@@ -253,7 +253,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
-    /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
+
+    CommandMgr::instance().registerCommand("libreload",
+        boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
@@ -297,6 +299,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
