@@ -3713,6 +3713,51 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       </itemizedlist>
     </section>
 
+      <section>
+        <title>User context in IPv4 pools</title>
+        <para>
+          Kea allows loading hook libraries that sometimes could benefit from
+          additional parameters. If such a parameter is specific to the whole
+          library, it is typically defined as a parameter for the hook library.
+          However, sometimes there is a need to specify parameters that are
+          different for each pool.
+        </para>
+        <para>
+          Let's consider an imaginary case of devices that have color LED
+          lights. Depending on their location, they should glow red, blue or
+          green. It would be easy to write a hook library that would send
+          specific values as maybe vendor option. However, the server has to
+          have some way to specify that value for each pool. This need is
+          addressed by user contexts. In essence, any user data can specified
+          in the user context as long as it is a valid JSON map. For example,
+          the forementioned case of LED devices could be configured in the
+          following way:
+
+          <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
+            <userinput>"user-context": { "colour": "red" }</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+        </para>
+
+        <para>
+          It should be noted that Kea will not use that information, but will
+          simply store and make it available to hook libraries. It is up to the
+        hook library to extract that information and make use of it.</para>
+        <para>
+          Currently only pools allow definition of user contexts, but this
+          concept is expected to be enhanced to other structures in the future.
+          For more background information, see <xref linkend="user-context"/>
+        </para>
+    </section>
+
     <section id="dhcp4-limit">
       <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
