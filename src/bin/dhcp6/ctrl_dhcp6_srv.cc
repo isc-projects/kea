@@ -280,7 +280,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
-    /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
+
+    CommandMgr::instance().registerCommand("libreload",
+        boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
@@ -324,6 +326,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
