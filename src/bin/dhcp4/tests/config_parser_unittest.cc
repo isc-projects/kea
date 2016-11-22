@@ -50,6 +50,64 @@ using namespace isc::hooks;
 using namespace std;
 
 namespace {
+const char* PARSER_CONFIGS[] = {
+    // CONFIGURATION 0: one subnet with one pool, no user contexts
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"192.0.2.0/28\" }"
+    "        ],"
+    "        \"subnet\": \"192.0.2.0/24\""
+    "     } ]"
+    "}",
+
+    // Configuration 1: one pool with empty user context
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"192.0.2.0/28\","
+    "                \"user-context\": {"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"192.0.2.0/24\""
+    "     } ]"
+    "}",
+
+    // Configuration 2: one pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"192.0.2.0/28\","
+    "                \"user-context\": {"
+    "                    \"integer-param\": 42,"
+    "                    \"string-param\": \"Sagittarius\","
+    "                    \"bool-param\": true"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"192.0.2.0/24\""
+    "     } ]"
+    "}"
+};
 
 /// @brief Prepends the given name with the DHCP4 source directory
 ///
@@ -499,6 +557,37 @@ public:
             }
         }
         return (ReturnType());
+    }
+
+
+    /// @brief This utility method attempts to configure using specified
+    ///        config and then returns requested pool from requested subnet
+    ///
+    /// @param config configuration to be applied
+    /// @param subnet_index index of the subnet to be returned (0 - the first subnet)
+    /// @param pool_index index of the pool within a subnet (0 - the first pool)
+    /// @param pool [out] Pool pointer will be stored here (if found)
+    void getPool(const std::string& config, size_t subnet_index,
+                 size_t pool_index, PoolPtr& pool) {
+        ConstElementPtr status;
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(status);
+        checkResult(status, 0);
+
+        ConstCfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+        ASSERT_TRUE(subnets4);
+
+        const Subnet4Collection* subnets = subnets4->getAll();
+        ASSERT_TRUE(subnets);
+        ASSERT_GE(subnets->size(), subnet_index + 1);
+
+        const PoolCollection pools = subnets->at(subnet_index)->getPools(Lease::TYPE_V4);
+        ASSERT_GE(pools.size(), pool_index + 1);
+
+        pool = pools.at(pool_index);
+        EXPECT_TRUE(pool);
     }
 
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
@@ -4275,6 +4364,62 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+}
+
+// Test verifies that regular configuration does not provide any user context
+// in the address pool.
+TEST_F(Dhcp4ParserTest, poolUserContextMissing) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[0]), 0, 0, pool);
+    ASSERT_TRUE(pool);
+    EXPECT_FALSE(pool->getContext());
+}
+
+// Test verifies that it's possible to specify empty user context in the
+// address pool.
+TEST_F(Dhcp4ParserTest, poolUserContextEmpty) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[1]), 0, 0, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and not contain any parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(0, ctx->size());
+}
+
+// Test verifies that it's possible to specify parameters in the user context
+// in the address pool.
+TEST_F(Dhcp4ParserTest, poolUserContextData) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[2]), 0, 0, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(3, ctx->size());
+    ConstElementPtr int_param  = ctx->get("integer-param");
+    ConstElementPtr str_param  = ctx->get("string-param");
+    ConstElementPtr bool_param = ctx->get("bool-param");
+
+    ASSERT_TRUE(int_param);
+    ASSERT_EQ(Element::integer, int_param->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(int_param->getValue(int_value));
+    EXPECT_EQ(42L, int_value);
+
+    ASSERT_TRUE(str_param);
+    ASSERT_EQ(Element::string, str_param->getType());
+    EXPECT_EQ("Sagittarius", str_param->stringValue());
+
+    ASSERT_TRUE(bool_param);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, bool_param->getType());
+    EXPECT_NO_THROW(bool_param->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
 }
 
 
