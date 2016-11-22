@@ -1,3 +1,8 @@
+1190.	[func]		tomek
+	User context implemented: an arbitrary user information can
+	now be defined for address and prefix pools.
+	(Trac #5023, git 4f81789e19b72c933bcf86e402b417c63bd7bd3f)
+
 1189.	[func]		fdupont
 	Owing to API changes, crypto code now requires OpenSSL 1.0.1 or
 	later.
