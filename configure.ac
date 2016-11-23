@@ -1647,9 +1647,9 @@ if test -d "$srcdir/premium/src"; then
 
     # Export it here, so code in configure could use it.
     PREMIUM=1
-    AC_MSG_RESULT(found!)
+    AC_MSG_RESULT(yes)
 else
-    AC_MSG_RESULT(not found)
+    AC_MSG_RESULT(no)
 fi
 
 AC_OUTPUT
@@ -1676,11 +1676,11 @@ Package:
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package: Found
+  Premium package: yes
 END
 else
 cat >> config.report << END
-  Premium package: Not found
+  Premium package: no
 END
 fi
 cat >> config.report << END
