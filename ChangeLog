@@ -1,3 +1,7 @@
+1191.	[build]		tomek
+	Optional support for premium package added.
+	(Trac #5027, git 5ff51f28a1f05d941bb117986922a6f410f23c6c)
+
 1190.	[func]		tomek
 	User context implemented: an arbitrary user information can
 	now be defined for address and prefix pools.
