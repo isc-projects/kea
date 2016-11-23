@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,18 @@
 #error To use American Fuzzy Lop you have to set CC to afl-clang-fast!!!
 #endif
 
+/// This is how many packets Kea will process until shutting itself down.
+/// AFL should restart it. This safety switch is here for eliminating cases
+/// where Kea goes into a weird state and stops processing packets properly.
+const unsigned int LOOP_COUNT = 100000;
+
+/// This mechanism limits down the number of logs this harness prints.
+/// E.g. when set to 100, it will print a message every 100 packets.
+const unsigned int PRINT_EVERY = 5;
+
+/// This is the place where the harness log message will be printed.
+const std::string PRINT_LOG("/tmp/kea-fuzz-harness.txt");
+
 /*
  * We are using pthreads directly because we might be using it with unthreaded
  * version of BIND, where all thread functions are mocks. Since AFL for now only
@@ -44,6 +57,22 @@ static pthread_mutex_t mutex;
 static bool ready;
 
 using namespace std;
+
+bool * shutdown_reference = NULL;
+
+
+void kea_shutdown() {
+    if (shutdown_reference) {
+        // do we have the reference to shutdown flag from Dhcp6Srv?
+        // If yes, then let's set it to true. Kea will shutdown on
+        // its own.
+        *shutdown_reference = true;
+    } else {
+        // We don't have the pointer yet. Let's terminate abruptly.
+        exit(EXIT_SUCCESS);
+    }
+}
+
 
 // This is the main fuzzing function. It receives data from fuzzing engine.
 // That data is received to stdin and then sent over the configured UDP socket.
@@ -61,7 +90,7 @@ kea_main_client(void *arg) {
     string dst(ALL_DHCP_RELAY_AGENTS_AND_SERVERS);
     string port("547");
 
-    ofstream f("/tmp/kea-fuzz-harness.txt", ios::ate);
+    ofstream f(PRINT_LOG.c_str(), ios::ate);
 
     const char *iface_ptr = getenv("KEA_AFL_INTERFACE");
     if (iface_ptr) {
@@ -79,7 +108,7 @@ kea_main_client(void *arg) {
     }
 
     unsigned int iface_id = if_nametoindex(iface.c_str());
-    
+
     f << "Kea AFL setup:" << endl;
     f << "Interface: " << iface << endl;
     f << "Interface index: " << iface_id << endl;
@@ -108,7 +137,9 @@ kea_main_client(void *arg) {
         exit(EXIT_FAILURE);
     }
 
-    loop = 100000;
+    time_t t;
+
+    loop = LOOP_COUNT;
     while (loop--) {
         ssize_t length;
 
@@ -137,8 +168,16 @@ kea_main_client(void *arg) {
 
         ssize_t sent;
 
-        f << "Sending " << length << " bytes to " << dst << "/" << port
-          << " over " << iface << "/" << iface_id << endl;
+        t = time(0);
+        struct tm * now = localtime(&t);
+
+        if (! (loop%PRINT_EVERY)) {
+            f << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << (now->tm_mday)
+              << " " << (now->tm_hour) << ":" << (now->tm_min) << ":" << (now->tm_sec)
+              << " Sending " << length << " bytes to " << dst << "/" << port
+              << " over " << iface << "/" << iface_id << ", loop iteration << "
+              << loop << endl;
+        }
 
         sent = sendto(sockfd, buf, length, 0,
                       (struct sockaddr *) &servaddr, sizeof(servaddr));
@@ -158,12 +197,16 @@ kea_main_client(void *arg) {
         }
     }
 
+    f << LOOP_COUNT << " packets processed, terminating." << endl;
+    f.close();
+
     free(buf);
     close(sockfd);
 
     // @todo: shutdown kea
     // ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
     // isc_app_shutdown();
+    kea_shutdown();
 
     /*
      * It's here just for the signature, that's how AFL detects if it's
@@ -179,25 +222,26 @@ kea_main_client(void *arg) {
 void
 kea_fuzz_notify(void) {
 #ifdef ENABLE_AFL
-    /// @todo: What does this piece of code do?
-    /* if (getenv("AFL_CMIN")) {
-        ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
-        isc_app_shutdown();
+    if (getenv("AFL_CMIN")) {
+        kea_shutdown();
+        /// @todo: What does this piece of code do?
+        /* ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
+           isc_app_shutdown(); */
         return;
-        } */
+    }
 
     raise(SIGSTOP);
-    
+
     if (pthread_mutex_lock(&mutex) != 0) {
         cout << "#### unable to lock mutex" << endl;
     }
-    
+
     ready = true;
-    
+
     if (pthread_cond_signal(&cond) != 0) {
 
     }
-    
+
     if (pthread_mutex_unlock(&mutex) != 0) {
         cout << "Unable to unlock mutex" << endl;
     }
@@ -205,24 +249,24 @@ kea_fuzz_notify(void) {
 }
 
 void
-kea_fuzz_setup(void) {
+kea_fuzz_setup(volatile bool* shutdown) {
 #ifdef ENABLE_AFL
 
     /// @todo: What are those variables? What do they do?
     if (getenv("__AFL_PERSISTENT") || getenv("AFL_CMIN")) {
         pthread_t thread;
-        
+
         if (pthread_mutex_init(&mutex, NULL) != 0) {
-            
+
         }
-        
+
         if (pthread_cond_init(&cond, NULL) == 0) {
 
         }
 
-        
-        if (pthread_create(&thread, NULL, kea_main_client, NULL) != 0) {
-            
+
+        if (pthread_create(&thread, NULL, kea_main_client, (void*)shutdown) != 0) {
+
         }
     }
 

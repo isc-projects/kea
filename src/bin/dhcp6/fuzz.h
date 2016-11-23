@@ -13,7 +13,16 @@ extern "C" {
 
 void kea_fuzz_notify(void);
 
-void kea_fuzz_setup(void);
+/// @brief Sets up Kea fuzzing
+///
+/// @param shutdown pointer to boolean flag that will be set to true to
+///        trigger shutdown procedure
+///
+/// This takes one parameter, which is a pointer to shutdown flag,
+/// which should point to instance of Dhcp6Srv::shutdown_. Kea runs
+/// until something sets this flag to true, which is an indication to
+/// start shutdown procedure.
+void kea_fuzz_setup(volatile bool * shutdown);
 
 };
 

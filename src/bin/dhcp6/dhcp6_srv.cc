@@ -454,7 +454,7 @@ bool Dhcpv6Srv::run() {
     // and hopefully not crash in the process. Once the packet processing
     // is done, Kea should let the AFL know that it's ready for the next
     // packet. This is done further down in this loop (see kea_fuzz_notify()).
-    kea_fuzz_setup();
+    kea_fuzz_setup(&shutdown_);
 #endif /* FUZZ */
 
     while (!shutdown_) {
