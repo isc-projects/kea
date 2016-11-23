@@ -60,8 +60,12 @@ Ubuntu 16.04 I had to do this:
  Set up max size of a virtual memory allowed to 4GB:
  ulimit -v 4096000
 
+ You may be asked by AFL to tweak your kernel. In my case (ubuntu
+ 16.04), I had to tweak the scaling_governor. The instructions AFL
+ gives are very easy to follow.
+
  Instruct AFL to allow 4096MB of virtual memory and run AFL:
- afl-fuzz -m 4096 -i tests/fuzz-data -o fuzz-out ./kea-dhcp6 -c fuzz.json
+ afl-fuzz -m 4096 -i tests/fuzz-data -o fuzz-out ./kea-dhcp6 -c tests/fuzz-config/fuzz.json
 
  Here's what the switches do:
  -m 4096 - allow Kea to take up to 4GB memory
@@ -83,3 +87,12 @@ Ubuntu 16.04 I had to do this:
  b) I have my fuzz.json (which is renamed doc/examples/kea6/simple.json)
  that tell Kea to use logging on level INFO and write output to a
  file. This file keeps growing. That's around 3,8MB after 20 minutes.
+
+8. Tweak Kea harness if needed
+
+ There are several variables in src/bin/dhcp6/fuzz.cc that you can
+ tweak. By default, it will write the log to /tmp/kea-fuzz-harness.txt
+ every 5 packets and will terminate after 100.000 packets processed.
+ That mechanism is to avoid cases when Kea gets stuck and technically
+ running, but not processing packets. AFL should be able to restart
+ Kea and continue running.
