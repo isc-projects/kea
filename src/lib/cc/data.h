@@ -216,7 +216,7 @@ public:
     { throwTypeError("boolValue() called on non-Bool Element"); };
     virtual std::string stringValue() const
     { throwTypeError("stringValue() called on non-string Element"); };
-    virtual const std::vector<ConstElementPtr>& listValue() const {
+    virtual const std::vector<ElementPtr>& listValue() const {
         // replace with real exception or empty vector?
         throwTypeError("listValue() called on non-list Element");
     };
@@ -239,7 +239,7 @@ public:
     virtual bool getValue(double& t) const;
     virtual bool getValue(bool& t) const;
     virtual bool getValue(std::string& t) const;
-    virtual bool getValue(std::vector<ConstElementPtr>& t) const;
+    virtual bool getValue(std::vector<ElementPtr>& t) const;
     virtual bool getValue(std::map<std::string, ConstElementPtr>& t) const;
     //@}
 
@@ -259,7 +259,7 @@ public:
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
-    virtual bool setValue(const std::vector<ConstElementPtr>& v);
+    virtual bool setValue(const std::vector<ElementPtr>& v);
     virtual bool setValue(const std::map<std::string, ConstElementPtr>& v);
     //@}
 
@@ -277,15 +277,17 @@ public:
     /// \param i The position of the ElementPtr to return
     virtual ConstElementPtr get(const int i) const;
 
+    virtual ElementPtr getNonConst(const int i);
+
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i, ConstElementPtr element);
+    virtual void set(const size_t i, ElementPtr element);
 
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
-    virtual void add(ConstElementPtr element);
+    virtual void add(ElementPtr element);
 
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
@@ -603,29 +605,30 @@ public:
 };
 
 class ListElement : public Element {
-    std::vector<ConstElementPtr> l;
+    std::vector<ElementPtr> l;
 
 public:
     ListElement(const Position& pos = ZERO_POSITION())
         : Element(list, pos) {}
-    const std::vector<ConstElementPtr>& listValue() const { return (l); }
+    const std::vector<ElementPtr>& listValue() const { return (l); }
     using Element::getValue;
-    bool getValue(std::vector<ConstElementPtr>& t) const {
+    bool getValue(std::vector<ElementPtr>& t) const {
         t = l;
         return (true);
     }
     using Element::setValue;
-    bool setValue(const std::vector<ConstElementPtr>& v) {
+    bool setValue(const std::vector<ElementPtr>& v) {
         l = v;
         return (true);
     }
     using Element::get;
     ConstElementPtr get(int i) const { return (l.at(i)); }
+    ElementPtr getNonConst(int i)  { return (l.at(i)); }
     using Element::set;
-    void set(size_t i, ConstElementPtr e) {
+    void set(size_t i, ElementPtr e) {
         l.at(i) = e;
     }
-    void add(ConstElementPtr e) { l.push_back(e); };
+    void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
     void toJSON(std::ostream& ss) const;
