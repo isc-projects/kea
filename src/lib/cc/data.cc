@@ -86,7 +86,7 @@ Element::getValue(std::string&) const {
 }
 
 bool
-Element::getValue(std::vector<ConstElementPtr>&) const {
+Element::getValue(std::vector<ElementPtr>&) const {
     return (false);
 }
 
@@ -116,7 +116,7 @@ Element::setValue(const std::string&) {
 }
 
 bool
-Element::setValue(const std::vector<ConstElementPtr>&) {
+Element::setValue(const std::vector<ElementPtr>&) {
     return (false);
 }
 
@@ -130,13 +130,18 @@ Element::get(const int) const {
     throwTypeError("get(int) called on a non-list Element");
 }
 
+ElementPtr
+Element::getNonConst(const int) {
+    throwTypeError("get(int) called on a non-list Element");
+}
+
 void
-Element::set(const size_t, ConstElementPtr) {
+Element::set(const size_t, ElementPtr) {
     throwTypeError("set(int, element) called on a non-list Element");
 }
 
 void
-Element::add(ConstElementPtr) {
+Element::add(ElementPtr) {
     throwTypeError("add() called on a non-list Element");
 }
 
@@ -507,7 +512,7 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
 {
     int c = 0;
     ElementPtr list = Element::createList(Element::Position(file, line, pos));
-    ConstElementPtr cur_list_element;
+    ElementPtr cur_list_element;
 
     skipChars(in, WHITESPACE, line, pos);
     while (c != EOF && c != ']') {
@@ -805,8 +810,8 @@ void
 ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
-    const std::vector<ConstElementPtr>& v = listValue();
-    for (std::vector<ConstElementPtr>::const_iterator it = v.begin();
+    const std::vector<ElementPtr>& v = listValue();
+    for (std::vector<ElementPtr>::const_iterator it = v.begin();
          it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
