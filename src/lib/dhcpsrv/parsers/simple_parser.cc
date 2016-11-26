@@ -11,7 +11,7 @@ namespace isc {
 namespace dhcp {
 
 /// This table defines default values for option definitions in DHCPv4
-const SimpleDefaults OPTION4_DEF_DEFAULTS{
+const SimpleDefaults OPTION4_DEF_DEFAULTS = {
     { "record-types", Element::string,  ""},
     { "space",        Element::string,  "dhcp4"},
     { "array",        Element::boolean, "false"},
@@ -19,7 +19,7 @@ const SimpleDefaults OPTION4_DEF_DEFAULTS{
 };
 
 /// This table defines default values for option definitions in DHCPv6
-const SimpleDefaults OPTION6_DEF_DEFAULTS{
+const SimpleDefaults OPTION6_DEF_DEFAULTS = {
     { "record-types", Element::string,  ""},
     { "space",        Element::string,  "dhcp6"},
     { "array",        Element::boolean, "false"},
@@ -27,18 +27,18 @@ const SimpleDefaults OPTION6_DEF_DEFAULTS{
 };
 
 /// This table defines default values for options in DHCPv4
-const SimpleDefaults OPTION4_DEFAULTS({
+const SimpleDefaults OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"},
     { "csv-format",   Element::boolean, "true"},
     { "encapsulate",  Element::string,  "" }
-});
+};
 
 /// This table defines default values for options in DHCPv6
-const SimpleDefaults OPTION6_DEFAULTS({
+const SimpleDefaults OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
     { "csv-format",   Element::boolean, "true"},
     { "encapsulate",  Element::string,  "" }
-});
+};
 
 /// This table defines default values for both DHCPv4 and DHCPv6
 const SimpleDefaults GLOBAL_DEFAULTS = {
