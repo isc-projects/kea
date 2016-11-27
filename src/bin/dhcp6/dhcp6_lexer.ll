@@ -110,7 +110,6 @@ JSONString                              \"{JSONStringCharacter}*\"
 
     if (start_token_flag) {
         start_token_flag = false;
-        BEGIN(0);
         switch (start_token_value) {
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(loc);
@@ -780,10 +779,6 @@ JSONString                              \"{JSONStringCharacter}*\"
     std::string tmp(yytext);
     double fp = 0.0;
     try {
-        // In substring we want to use negative values (e.g. -1).
-        // In enterprise-id we need to use values up to 0xffffffff.
-        // To cover both of those use cases, we need at least
-        // int64_t.
         fp = boost::lexical_cast<double>(tmp);
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert " + tmp + " to a floating point.");
@@ -825,6 +820,10 @@ using namespace isc::dhcp;
 void
 Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
 {
+    locs.clear();
+    files.clear();
+    states.clear();
+    static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
@@ -848,8 +847,12 @@ Parser6Context::scanStringEnd()
 void
 Parser6Context::scanFileBegin(FILE * f,
                               const std::string& filename,
-                              ParserType parser_type) {
-
+                              ParserType parser_type)
+{
+    locs.clear();
+    files.clear();
+    states.clear();
+    static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
