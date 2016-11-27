@@ -148,15 +148,18 @@ JSONString                              \"{JSONStringCharacter}*\"
 
     driver.includeFile(tmp);
 }
+<DIR_ENTER,DIR_INCLUDE,DIR_EXIT><<EOF>> {
+    isc_throw(isc::BadValue, "Directive not closed.");
+}
 <DIR_EXIT>"?>" BEGIN(INITIAL);
     
 
-{blank}+   {
+<*>{blank}+   {
     // Ok, we found a with space. Let's ignore it and update loc variable.
     loc.step();
 }
 
-[\n]+      {
+<*>[\n]+      {
     // Newline found. Let's update the location and continue.
     loc.lines(yyleng);
     loc.step();
@@ -792,7 +795,7 @@ null {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(loc);
 }
 
-.   driver.error (loc, "Invalid character: " + std::string(yytext));
+<*>.   driver.error (loc, "Invalid character: " + std::string(yytext));
 
 <<EOF>> {
     if (states.empty()) {
