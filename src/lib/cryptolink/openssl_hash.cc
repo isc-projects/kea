@@ -7,7 +7,7 @@
 #include <cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/move/unique_ptr.hpp>
 
 #include <openssl/evp.h>
 
@@ -63,18 +63,11 @@ public:
                       static_cast<int>(hash_algorithm));
         }
 
-        md_.reset(new EVP_MD_CTX);
+        md_.reset(EVP_MD_CTX_new());
 
         EVP_MD_CTX_init(md_.get());
 
         EVP_DigestInit_ex(md_.get(), algo, NULL);
-    }
-
-    /// @brief Destructor
-    ~HashImpl() {
-        if (md_) {
-            EVP_MD_CTX_cleanup(md_.get());
-        }
     }
 
     /// @brief Returns the HashAlgorithm of the object
@@ -136,11 +129,24 @@ public:
     }
 
 private:
+    class EvpDeleter {
+    public:
+        void operator()(EVP_MD_CTX *ptr) {EVP_MD_CTX_free(ptr);}
+    };
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    static EVP_MD_CTX* EVP_MD_CTX_new() { return new EVP_MD_CTX; }
+    static void EVP_MD_CTX_free(EVP_MD_CTX *ptr) {
+        EVP_MD_CTX_cleanup(ptr);
+        delete ptr;
+    }
+#endif
+
     /// @brief The hash algorithm
     HashAlgorithm hash_algorithm_;
 
     /// @brief The protected pointer to the OpenSSL EVP_MD_CTX structure
-    boost::scoped_ptr<EVP_MD_CTX> md_;
+    boost::movelib::unique_ptr<EVP_MD_CTX, EvpDeleter> md_;
 };
 
 Hash::Hash(const HashAlgorithm hash_algorithm)
