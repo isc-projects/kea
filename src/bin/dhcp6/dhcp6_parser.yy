@@ -225,6 +225,15 @@ not_empty_list: value {
 
 // ---- syntax checking parser starts here -----------------------------
 
+// Unknown keyword in a map
+unknown_map_entry: STRING COLON {
+    const std::string& where = ctx.context_name();
+    const std::string& keyword = $1;
+    error(@1,
+          "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
+}
+
+
 // This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
 // objects.
 // ctx_ = CONFIG
@@ -288,6 +297,7 @@ global_param: preferred_lifetime
             | server_id
             | dhcp4o6_port
             | dhcp_ddns
+            | unknown_map_entry
             ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -334,7 +344,7 @@ lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement());
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
-    ctx.enter(ctx.DATABASE);
+    ctx.enter(ctx.LEASE_DATABASE);
 } COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -344,7 +354,7 @@ hosts_database: HOSTS_DATABASE {
     ElementPtr i(new MapElement());
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
-    ctx.enter(ctx.DATABASE);
+    ctx.enter(ctx.HOSTS_DATABASE);
 } COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -360,7 +370,8 @@ database_map_param: type
                   | host
                   | name
                   | persist
-                  | lfc_interval;
+                  | lfc_interval
+                  | unknown_map_entry
 ;
 
 type: TYPE {
@@ -501,7 +512,7 @@ hooks_library: LCURLY_BRACKET {
 };
 
 hooks_params: hooks_param
-            | hooks_params hooks_param
+            | hooks_params COMMA hooks_param
             ;
 
 hooks_param: LIBRARY {
@@ -600,6 +611,7 @@ subnet6_param: option_data_list
              | id
              | client_class
              | reservations
+             | unknown_map_entry
              ;
 
 subnet: SUBNET {
@@ -680,6 +692,7 @@ option_data_param: option_data_name
                  | option_data_code
                  | option_data_space
                  | option_data_csv_format
+                 | unknown_map_entry
                  ;
 
 
@@ -748,6 +761,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
+          | unknown_map_entry
           ;
 
 pool_entry: POOL {
@@ -797,6 +811,7 @@ pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
              | option_data_list
+             | unknown_map_entry
              ;
 
 pd_prefix: PREFIX {
@@ -862,6 +877,7 @@ reservation_param: duid
                  | hw_address
                  | hostname
                  | option_data_list
+                 | unknown_map_entry
                  ;
 
 ip_addresses: IP_ADDRESSES {
@@ -954,6 +970,7 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
+                  | unknown_map_entry
                   ;
 
 client_class_name: name;
@@ -990,6 +1007,7 @@ server_id_param: type
                | htype
                | enterprise_id
                | persist
+               | unknown_map_entry
                ;
 
 htype: HTYPE COLON INTEGER {
@@ -1082,6 +1100,7 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | unknown_map_entry
             ;
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
@@ -1146,6 +1165,7 @@ dhcp_ddns_params: dhcp_ddns_param
 
 dhcp_ddns_param: enable_updates
                | qualifying_suffix
+               | unknown_map_entry
                ;
 
 enable_updates: ENABLE_UPDATES COLON BOOLEAN {

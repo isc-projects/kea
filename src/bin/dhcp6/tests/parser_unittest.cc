@@ -247,4 +247,79 @@ TEST(ParserTest, file) {
     }
 }
 
+void testError(const std::string& txt,
+               Parser6Context::ParserType parser_type,
+               const std::string& msg)
+{
+    try {
+        Parser6Context ctx;
+        ConstElementPtr parsed = ctx.parseString(txt, parser_type);
+        FAIL() << "Expected Dhcp6ParseError but nothing was raised";
+    }
+    catch (const Dhcp6ParseError& ex) {
+        EXPECT_EQ(msg, ex.what());
+    }
+    catch (...) {
+        FAIL() << "Expected Dhcp6ParseError but something else was raised";
+    }
+}
+
+// Check lexer errors
+TEST(ParserTest, lexerErrors) {
+    testError("",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError(" ",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.2: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("# nothing\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError(" #\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("// nothing\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("/* nothing */\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("/* no\nthing */\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:3.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("/* no\nthing */\n\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:4.1: syntax error, unexpected end of file, "
+              "expecting {");
+    testError("/* nothing\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "Comment not closed. (/* in line 1");
+    fprintf(stderr, "got 124?\n");
+    testError("/**/\n\n\n/* nothing\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "Comment not closed. (/* in line 4");
+    testError("<?\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "Directive not closed.");
+    testError("<?include\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "Directive not closed.");
+    string file = string(CFG_EXAMPLES) + "/" + "stateless.json";
+    fprintf(stderr, "doing include\n");
+    testError("<?include \"" + file + "\"\n",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "Directive not closed.");
+}
+
 };
