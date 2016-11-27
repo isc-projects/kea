@@ -22,10 +22,10 @@ YY_DECL;
 namespace isc {
 namespace dhcp {
 
-/// @brief Evaluation error exception raised when trying to parse an axceptions.
-class EvalParseError : public isc::Exception {
+/// @brief Evaluation error exception raised when trying to parse.
+class Dhcp6ParseError : public isc::Exception {
 public:
-    EvalParseError(const char* file, size_t line, const char* what) :
+    Dhcp6ParseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -86,7 +86,7 @@ public:
     /// @brief Error handler
     ///
     /// This is a simplified error reporting tool for possible future
-    /// cases when the EvalParser is not able to handle the packet.
+    /// cases when the Dhcp6Parser is not able to handle the packet.
     void error(const std::string& what);
 
     /// @brief Fatal error handler
@@ -107,7 +107,8 @@ public:
         LOGGING,
         /// Dhcp6
         INTERFACES_CONFIG,
-        DATABASE,
+        LEASE_DATABASE,
+        HOSTS_DATABASE,
         MAC_SOURCES,
         HOST_RESERVATION_IDENTIFIERS,
         HOOKS_LIBRARIES,
@@ -137,6 +138,9 @@ public:
     /// @brief Leave a syntactic context
     /// @throw isc::Unexpected if unbalanced
     void leave();
+
+    /// @brief Get the syntactix context name
+    const std::string context_name();
 
  private:
     /// @brief Flag determining scanner debugging.

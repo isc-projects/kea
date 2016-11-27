@@ -40,7 +40,7 @@ Parser6Context::parseString(const std::string& str, ParserType parser_type)
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(BadValue, "Expected exactly one terminal Element expected, found "
+        isc_throw(Dhcp6ParseError, "Expected exactly one terminal Element expected, found "
                   << stack_.size());
     }
 }
@@ -49,7 +49,7 @@ isc::data::ConstElementPtr
 Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     FILE* f = fopen(filename.c_str(), "r");
     if (!f) {
-        isc_throw(BadValue, "Unable to open file " << filename);
+        isc_throw(Dhcp6ParseError, "Unable to open file " << filename);
     }
     scanFileBegin(f, filename, parser_type);
 
@@ -65,7 +65,7 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(BadValue, "Expected exactly one terminal Element expected, found "
+        isc_throw(Dhcp6ParseError, "Expected exactly one terminal Element expected, found "
                   << stack_.size());
     }
 }
@@ -74,19 +74,19 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
 void
 Parser6Context::error(const isc::dhcp::location& loc, const std::string& what)
 {
-    isc_throw(EvalParseError, loc << ": " << what);
+    isc_throw(Dhcp6ParseError, loc << ": " << what);
 }
 
 void
 Parser6Context::error (const std::string& what)
 {
-    isc_throw(EvalParseError, what);
+    isc_throw(Dhcp6ParseError, what);
 }
 
 void
 Parser6Context::fatal (const std::string& what)
 {
-    isc_throw(Unexpected, what);
+    isc_throw(Dhcp6ParseError, what);
 }
 
 void
@@ -106,6 +106,57 @@ Parser6Context::leave()
 #endif
     ctx_ = cstack_.back();
     cstack_.pop_back();
+}
+
+const std::string
+Parser6Context::context_name()
+{
+    switch (ctx_) {
+    case NO_KEYWORD:
+        return ("__no keyword__");
+    case CONFIG:
+        return ("__config__");
+    case DHCP6:
+        return ("Dhcp6");
+    case LOGGING:
+        return ("Logging");
+    case INTERFACES_CONFIG:
+        return ("interfaces-config");
+    case LEASE_DATABASE:
+        return ("lease-database");
+    case HOSTS_DATABASE:
+        return ("hosts-database");
+    case MAC_SOURCES:
+        return ("mac-sources");
+    case HOST_RESERVATION_IDENTIFIERS:
+        return ("host-reservation-identifiers");
+    case HOOKS_LIBRARIES:
+        return ("hooks-librairies");
+    case SUBNET6:
+        return ("subnet6");
+    case OPTION_DATA:
+        return ("option-data");
+    case CLIENT_CLASSES:
+        return ("client-classes");
+    case SERVER_ID:
+        return ("server-id");
+    case DHCP_DDNS:
+        return ("dhcp-ddns");
+    case POOLS:
+        return ("pools");
+    case PD_POOLS:
+        return ("pd-pools");
+    case RESERVATIONS:
+        return ("reservations");
+    case CLIENT_CLASS:
+        return ("client-class");
+    case LOGGERS:
+        return ("loggers");
+    case OUTPUT_OPTIONS:
+        return ("output-options");
+    default:
+        return ("__unknown__");
+    }
 }
 
 };

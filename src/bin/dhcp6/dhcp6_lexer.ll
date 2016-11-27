@@ -42,7 +42,7 @@ std::vector<struct yy_buffer_state*> states;
 bool start_token_flag = false;
 
 isc::dhcp::Parser6Context::ParserType start_token_value;
-int comment_start_line = 0;
+unsigned int comment_start_line = 0;
 
 };
 
@@ -63,6 +63,9 @@ int comment_start_line = 0;
 /* batch means that we'll never use the generated lexer interactively. */
 %option batch
 
+/* avoid to get static global variables to remain with C++. */
+/* in last resort %option reentrant */
+
 /* Enables debug mode. To see the debug messages, one needs to also set
    yy_flex_debug to 1, then the debug messages will be printed on stderr. */
 %option debug
@@ -71,11 +74,6 @@ int comment_start_line = 0;
    examples and Postgres folks added it to remove gcc 4.3 warnings. Let's
    be on the safe side and keep it. */
 %option noinput
-
-/* This line tells flex to track the line numbers. It's not really that
-   useful for client classes, which typically are one-liners, but it may be
-   useful in more complex cases. */
-%option yylineno
 
 %x COMMENT
 %x DIR_ENTER DIR_INCLUDE DIR_EXIT
@@ -112,6 +110,7 @@ JSONString                              \"{JSONStringCharacter}*\"
 
     if (start_token_flag) {
         start_token_flag = false;
+        BEGIN(0);
         switch (start_token_value) {
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(loc);
@@ -128,13 +127,13 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 "/*" {
   BEGIN(COMMENT);
-  comment_start_line = yylineno;
+  comment_start_line = loc.end.line;;
 }
 
 <COMMENT>"*/" BEGIN(INITIAL);
 <COMMENT>. ;
 <COMMENT><<EOF>> {
-    isc_throw(isc::BadValue, "Comment not closed. (/* in line " << comment_start_line);
+    isc_throw(Dhcp6ParseError, "Comment not closed. (/* in line " << comment_start_line);
 }
 
 "<?" BEGIN(DIR_ENTER);
@@ -149,7 +148,7 @@ JSONString                              \"{JSONStringCharacter}*\"
     driver.includeFile(tmp);
 }
 <DIR_ENTER,DIR_INCLUDE,DIR_EXIT><<EOF>> {
-    isc_throw(isc::BadValue, "Directive not closed.");
+    isc_throw(Dhcp6ParseError, "Directive not closed.");
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
     
@@ -213,7 +212,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"type\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::SERVER_ID:
         return isc::dhcp::Dhcp6Parser::make_TYPE(loc);
     default:
@@ -223,7 +223,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"user\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_USER(loc);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user", loc);
@@ -232,7 +233,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"password\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("password", loc);
@@ -241,7 +243,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"host\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_HOST(loc);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("host", loc);
@@ -250,7 +253,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"persist\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::SERVER_ID:
         return isc::dhcp::Dhcp6Parser::make_PERSIST(loc);
     default:
@@ -260,7 +264,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"lfc-interval\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(loc);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", loc);
@@ -329,7 +334,8 @@ JSONString                              \"{JSONStringCharacter}*\"
 
 \"name\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::OPTION_DATA:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
