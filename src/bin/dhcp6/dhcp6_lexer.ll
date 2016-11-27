@@ -738,6 +738,23 @@ JSONString                              \"{JSONStringCharacter}*\"
     }
 }
 
+\"Dhcp4\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG:
+        return isc::dhcp::Dhcp6Parser::make_DHCP4(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp4", loc);
+    }
+}
+
+\"DhcpDdns\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG:
+        return isc::dhcp::Dhcp6Parser::make_DHCPDDNS(loc);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("DhcpDdns", loc);
+    }
+}
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.

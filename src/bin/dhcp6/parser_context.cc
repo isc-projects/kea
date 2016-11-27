@@ -115,7 +115,7 @@ Parser6Context::context_name()
     case NO_KEYWORD:
         return ("__no keyword__");
     case CONFIG:
-        return ("__config__");
+        return ("toplevel");
     case DHCP6:
         return ("Dhcp6");
     case LOGGING:
