@@ -178,16 +178,19 @@ map2: LCURLY_BRACKET {
 
 // Assignments rule
 map_content: %empty // empty map
-           | STRING COLON value {
-               // map containing a single entry
-               ctx.stack_.back()->set($1, $3);
-               }
-           | map_content COMMA STRING COLON value {
-               // map consisting of a shorter map followed by
-               // comma and string:value
-               ctx.stack_.back()->set($3, $5);
-               }
+           | not_empty_map
            ;
+
+not_empty_map: STRING COLON value {
+                  // map containing a single entry
+                  ctx.stack_.back()->set($1, $3);
+                  }
+             | not_empty_map COMMA STRING COLON value {
+                  // map consisting of a shorter map followed by
+                  // comma and string:value
+                  ctx.stack_.back()->set($3, $5);
+                  }
+             ;
 
 list_generic: LSQUARE_BRACKET {
     ElementPtr l(new ListElement());
@@ -205,15 +208,18 @@ list2: LSQUARE_BRACKET {
 };
 
 list_content: %empty // Empty list
-            | value {
-                // List consisting of a single element.
-                ctx.stack_.back()->add($1);
-                }
-            | list_content COMMA value {
-                // List ending with , and a value.
-                ctx.stack_.back()->add($3);
-                }
+            | not_empty_list
             ;
+
+not_empty_list: value {
+                  // List consisting of a single element.
+                  ctx.stack_.back()->add($1);
+                  }
+              | not_empty_list COMMA value {
+                  // List ending with , and a value.
+                  ctx.stack_.back()->add($3);
+                  }
+              ;
 
 // ---- generic JSON parser ends here ----------------------------------
 
@@ -233,15 +239,15 @@ syntax_map: LCURLY_BRACKET {
     // for it.
 };
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
-global_object: dhcp6_object
-             | logging_object
-             ;
-
 // This represents top-level entries: Dhcp6, Dhcp4, DhcpDdns, Logging
 global_objects: global_object
               | global_objects COMMA global_object
               ;
+
+// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
+global_object: dhcp6_object
+             | logging_object
+             ;
 
 dhcp6_object: DHCP6 {
     // This code is executed when we're about to start parsing
@@ -479,9 +485,12 @@ hooks_libraries: HOOKS_LIBRARIES {
 };
 
 hooks_libraries_list: %empty
-                    | hooks_library
-                    | hooks_libraries_list COMMA hooks_library
+                    | not_empty_hooks_libraries_list
                     ;
+
+not_empty_hooks_libraries_list: hooks_library
+    | not_empty_hooks_libraries_list COMMA hooks_library
+    ;
 
 hooks_library: LCURLY_BRACKET {
     ElementPtr m(new MapElement());
@@ -543,9 +552,12 @@ subnet6_list: SUBNET6 {
 // It can either be empty (no subnets defined), have one subnet
 // or have multiple subnets separate by comma.
 subnet6_list_content: %empty
-                    | subnet6
-                    | subnet6_list_content COMMA subnet6
+                    | not_empty_subnet6_list
                     ;
+
+not_empty_subnet6_list: subnet6
+                      | not_empty_subnet6_list COMMA subnet6
+                      ;
 
 // --- Subnet definitions -------------------------------
 
@@ -636,9 +648,12 @@ option_data_list: OPTION_DATA {
 // This defines the content of option-data. It may be empty,
 // have one entry or multiple entries separated by comma.
 option_data_list_content: %empty
-                        | option_data_entry
-                        | option_data_list_content COMMA option_data_entry
+                        | not_empty_option_data_list
                         ;
+
+not_empty_option_data_list: option_data_entry
+                          | not_empty_option_data_list COMMA option_data_entry
+                          ;
 
 // This defines th content of a single entry { ... } within
 // option-data list.
@@ -652,12 +667,15 @@ option_data_entry: LCURLY_BRACKET {
 
 // This defines parameters specified inside the map that itself
 // is an entry in option-data list.
-option_data_params: option_data_param
-                  | option_data_params COMMA option_data_param
+option_data_params: %empty
+                  | not_empty_option_data_params
                   ;
 
-option_data_param: %empty
-                 | option_data_name
+not_empty_option_data_params: option_data_param
+    | not_empty_option_data_params COMMA option_data_param
+    ;
+
+option_data_param: option_data_name
                  | option_data_data
                  | option_data_code
                  | option_data_space
@@ -709,9 +727,12 @@ pools_list: POOLS {
 // Pools may be empty, contain a single pool entry or multiple entries
 // separate by commas.
 pools_list_content: %empty
-                  | pool_list_entry
-                  | pools_list_content COMMA pool_list_entry
+                  | not_empty_pools_list
                   ;
+
+not_empty_pools_list: pool_list_entry
+                    | not_empty_pools_list COMMA pool_list_entry
+                    ;
 
 pool_list_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement());
@@ -753,9 +774,12 @@ pd_pools_list: PD_POOLS {
 // Pools may be empty, contain a single pool entry or multiple entries
 // separate by commas.
 pd_pools_list_content: %empty
-                     | pd_pool_entry
-                     | pd_pools_list_content COMMA pd_pool_entry
+                     | not_empty_pd_pools_list
                      ;
+
+not_empty_pd_pools_list: pd_pool_entry
+                       | not_empty_pd_pools_list COMMA pd_pool_entry
+                       ;
 
 pd_pool_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement());
@@ -807,9 +831,12 @@ reservations: RESERVATIONS {
 };
 
 reservations_list: %empty
-                 | reservation
-                 | reservations_list COMMA reservation
+                 | not_empty_reservations_list
                  ;
+
+not_empty_reservations_list: reservation
+                           | not_empty_reservations_list COMMA reservation
+                           ;
 
 reservation: LCURLY_BRACKET {
     ElementPtr m(new MapElement());
@@ -819,13 +846,16 @@ reservation: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-reservation_params: reservation_param
-                  | reservation_params COMMA reservation_param
+reservation_params: %empty
+                  | not_empty_reservation_params
                   ;
 
+not_empty_reservation_params: reservation_param
+    | not_empty_reservation_params COMMA reservation_param
+    ;
+
 // @todo probably need to add mac-address as well here
-reservation_param: %empty
-                 | duid
+reservation_param: duid
                  | reservation_client_classes
                  | ip_addresses
                  | prefixes
@@ -913,12 +943,15 @@ client_class: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-client_class_params: client_class_param
-                   | client_class_params COMMA client_class_param
+client_class_params: %empty
+                   | not_empty_client_class_params
                    ;
 
-client_class_param: %empty
-                  | client_class_name
+not_empty_client_class_params: client_class_param
+    | not_empty_client_class_params COMMA client_class_param
+    ;
+
+client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
                   ;
