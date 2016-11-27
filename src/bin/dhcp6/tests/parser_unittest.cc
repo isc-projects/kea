@@ -409,21 +409,27 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:1.3-5: syntax error, unexpected integer, "
-              "expecting Dhcp6 or Logging");
+              "<string>:1.3-5: syntax error, unexpected integer");
     testError("{ \"foo\" }\n",
               Parser6Context::PARSER_GENERIC_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
               Parser6Context::PARSER_DHCP6,
-              "<string>:1.3-7: syntax error, unexpected constant string, "
-              "expecting Dhcp6 or Logging");
+              "<string>:1.9: syntax error, unexpected }, expecting :");
+    testError("{ \"foo\":null }\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:1.3-7: got unexpected keyword "
+              "\"foo\" in toplevel map.");
     testError("{ \"Dhcp6\" }\n",
               Parser6Context::PARSER_DHCP6,
               "<string>:1.11: syntax error, unexpected }, "
               "expecting :");
-    testError("{}{}",
+    testError("{ \"Dhcp4\":[]\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:2.1: syntax error, unexpected end of file, "
+              "expecting \",\" or }");
+    testError("{}{}\n",
               Parser6Context::PARSER_GENERIC_JSON,
               "<string>:1.3: syntax error, unexpected {, "
               "expecting end of file");

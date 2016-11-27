@@ -124,6 +124,9 @@ using namespace std;
   ENABLE_UPDATES "enable-updates"
   QUALIFYING_SUFFIX "qualifying-suffix"
 
+  DHCP4 "Dhcp4"
+  DHCPDDNS "DhcpDdns"
+
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
   TOPLEVEL_GENERIC_JSON
@@ -256,6 +259,9 @@ global_objects: global_object
 // This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
 global_object: dhcp6_object
              | logging_object
+	     | dhcp4_object
+	     | dhcpddns_object
+	     | unknown_map_entry
              ;
 
 dhcp6_object: DHCP6 {
@@ -1178,6 +1184,20 @@ qualifying_suffix: QUALIFYING_SUFFIX {
 } COLON STRING {
     ElementPtr qs(new StringElement($4));
     ctx.stack_.back()->set("qualifying-suffix", qs);
+    ctx.leave();
+};
+
+dhcp4_object: DHCP4 {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("Dhcp4", $4);
+    ctx.leave();
+};
+
+dhcpddns_object: DHCPDDNS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("DhcpDdns", $4);
     ctx.leave();
 };
 
