@@ -53,14 +53,11 @@ public:
     /// @brief Method called before scanning starts on a string.
     void scanStringBegin(const std::string& str, ParserType type);
 
-    /// @brief Method called after the last tokens are scanned from a string.
-    void scanStringEnd();
-
     /// @brief Method called before scanning starts on a file.
     void scanFileBegin(FILE * f, const std::string& filename, ParserType type);
 
-    /// @brief Method called after the last tokens are scanned from a file.
-    void scanFileEnd(FILE * f);
+    /// @brief Method called after the last tokens are scanned.
+    void scanEnd();
 
     /// @brief Divert input to an include file.
     void includeFile(const std::string& filename);
@@ -144,8 +141,14 @@ public:
     /// @brief Location stack
     std::vector<isc::dhcp::location> locs_;
 
-    /// @brief State stack
+    /// @brief Lexer state stack
     std::vector<struct yy_buffer_state*> states_;;
+
+    /// @brief sFile (aka FILE)
+    FILE* sfile_;
+
+    /// @brief sFile (aka FILE) stack
+    std::vector<FILE*> sfiles_;
 
     /// @brief Current syntactic context
     ParserContext ctx_;
@@ -169,6 +172,9 @@ public:
 
     /// @brief Syntactic context stack
     std::vector<ParserContext> cstack_;
+
+    /// @brief Common part of parseXXX
+    isc::data::ConstElementPtr parseCommon();
 };
 
 }; // end of isc::eval namespace

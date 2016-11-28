@@ -259,9 +259,9 @@ global_objects: global_object
 // This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
 global_object: dhcp6_object
              | logging_object
-	     | dhcp4_json_object
-	     | dhcpddns_json_object
-	     | unknown_map_entry
+             | dhcp4_json_object
+             | dhcpddns_json_object
+             | unknown_map_entry
              ;
 
 dhcp6_object: DHCP6 {

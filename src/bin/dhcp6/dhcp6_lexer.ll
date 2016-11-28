@@ -882,6 +882,14 @@ null {
     driver.locs_.pop_back();
     driver.file_ = driver.files_.back();
     driver.files_.pop_back();
+    if (driver.sfile_) {
+        fclose(driver.sfile_);
+        driver.sfile_ = 0;
+    }
+    if (!driver.sfiles_.empty()) {
+        driver.sfile_ = driver.sfiles_.back();
+        driver.sfiles_.pop_back();
+    }
     parser6__delete_buffer(YY_CURRENT_BUFFER);
     parser6__switch_to_buffer(driver.states_.back());
     driver.states_.pop_back();
@@ -896,11 +904,11 @@ using namespace isc::dhcp;
 void
 Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
 {
-    static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
     file_ = "<string>";
+    sfile_ = 0;
     loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
@@ -912,21 +920,15 @@ Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
 }
 
 void
-Parser6Context::scanStringEnd()
-{
-    yy_delete_buffer(YY_CURRENT_BUFFER);
-}
-
-void
 Parser6Context::scanFileBegin(FILE * f,
                               const std::string& filename,
                               ParserType parser_type)
 {
-    static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
     file_ = filename;
+    sfile_ = f;
     loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
@@ -940,9 +942,24 @@ Parser6Context::scanFileBegin(FILE * f,
 }
 
 void
-Parser6Context::scanFileEnd(FILE * f) {
-    fclose(f);
-    yy_delete_buffer(YY_CURRENT_BUFFER);
+Parser6Context::scanEnd() {
+    if (sfile_)
+        fclose(sfile_);
+    sfile_ = 0;
+    static_cast<void>(parser6_lex_destroy());
+    // Close files
+    while (!sfiles_.empty()) {
+        FILE* f = sfiles_.back();
+        if (f) {
+            fclose(f);
+        }
+        sfiles_.pop_back();
+    }
+    // Delete states
+    while (!states_.empty()) {
+        parser6__delete_buffer(states_.back());
+        states_.pop_back();
+    }
 }
 
 void
@@ -955,6 +972,10 @@ Parser6Context::includeFile(const std::string& filename) {
     if (!f) {
         fatal("Can't open include file " + filename);
     }
+    if (sfile_) {
+        sfiles_.push_back(sfile_);
+    }
+    sfile_ = f;
     states_.push_back(YY_CURRENT_BUFFER);
     YY_BUFFER_STATE buffer;
     buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
