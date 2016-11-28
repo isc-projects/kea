@@ -259,8 +259,8 @@ global_objects: global_object
 // This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
 global_object: dhcp6_object
              | logging_object
-	     | dhcp4_object
-	     | dhcpddns_object
+	     | dhcp4_json_object
+	     | dhcpddns_json_object
 	     | unknown_map_entry
              ;
 
@@ -1187,14 +1187,14 @@ qualifying_suffix: QUALIFYING_SUFFIX {
     ctx.leave();
 };
 
-dhcp4_object: DHCP4 {
+dhcp4_json_object: DHCP4 {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
     ctx.stack_.back()->set("Dhcp4", $4);
     ctx.leave();
 };
 
-dhcpddns_object: DHCPDDNS {
+dhcpddns_json_object: DHCPDDNS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
     ctx.stack_.back()->set("DhcpDdns", $4);
