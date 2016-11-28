@@ -159,11 +159,11 @@ start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
 // Note that ctx_ is NO_KEYWORD here
 
 // Values rule
-value: INTEGER { $$ = ElementPtr(new IntElement($1)); }
-     | FLOAT { $$ = ElementPtr(new DoubleElement($1)); }
-     | BOOLEAN { $$ = ElementPtr(new BoolElement($1)); }
-     | STRING { $$ = ElementPtr(new StringElement($1)); }
-     | NULL_TYPE { $$ = ElementPtr(new NullElement()); }
+value: INTEGER { $$ = ElementPtr(new IntElement($1, ctx.loc2pos(@1))); }
+     | FLOAT { $$ = ElementPtr(new DoubleElement($1, ctx.loc2pos(@1))); }
+     | BOOLEAN { $$ = ElementPtr(new BoolElement($1, ctx.loc2pos(@1))); }
+     | STRING { $$ = ElementPtr(new StringElement($1, ctx.loc2pos(@1))); }
+     | NULL_TYPE { $$ = ElementPtr(new NullElement(ctx.loc2pos(@1))); }
      | map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
      | list_generic { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
      ;
@@ -171,7 +171,7 @@ value: INTEGER { $$ = ElementPtr(new IntElement($1)); }
 map2: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } map_content RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
@@ -196,7 +196,7 @@ not_empty_map: STRING COLON value {
              ;
 
 list_generic: LSQUARE_BRACKET {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(l);
 } list_content RSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
@@ -243,7 +243,7 @@ unknown_map_entry: STRING COLON {
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } global_objects RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
@@ -267,7 +267,7 @@ global_object: dhcp6_object
 dhcp6_object: DHCP6 {
     // This code is executed when we're about to start parsing
     // the content of the map
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Dhcp6", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP6);
@@ -307,27 +307,27 @@ global_param: preferred_lifetime
             ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
-    ElementPtr prf(new IntElement($3));
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("preferred-lifetime", prf);
 };
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
-    ElementPtr prf(new IntElement($3));
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 };
 
 renew_timer: RENEW_TIMER COLON INTEGER {
-    ElementPtr prf(new IntElement($3));
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("renew-timer", prf);
 };
 
 rebind_timer: REBIND_TIMER COLON INTEGER {
-    ElementPtr prf(new IntElement($3));
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rebind-timer", prf);
 };
 
 interfaces_config: INTERFACES_CONFIG {
-    ElementPtr i(new MapElement());
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
@@ -337,7 +337,7 @@ interfaces_config: INTERFACES_CONFIG {
 };
 
 interface_config_map: INTERFACES {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
@@ -347,7 +347,7 @@ interface_config_map: INTERFACES {
 };
 
 lease_database: LEASE_DATABASE {
-    ElementPtr i(new MapElement());
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
@@ -357,7 +357,7 @@ lease_database: LEASE_DATABASE {
 };
 
 hosts_database: HOSTS_DATABASE {
-    ElementPtr i(new MapElement());
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
@@ -383,7 +383,7 @@ database_map_param: type
 type: TYPE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr prf(new StringElement($4));
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("type", prf);
     ctx.leave();
 };
@@ -391,7 +391,7 @@ type: TYPE {
 user: USER {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr user(new StringElement($4));
+    ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 };
@@ -399,7 +399,7 @@ user: USER {
 password: PASSWORD {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr pwd(new StringElement($4));
+    ElementPtr pwd(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("password", pwd);
     ctx.leave();
 };
@@ -407,7 +407,7 @@ password: PASSWORD {
 host: HOST {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr h(new StringElement($4));
+    ElementPtr h(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
 };
@@ -415,23 +415,23 @@ host: HOST {
 name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr name(new StringElement($4));
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 };
 
 persist: PERSIST COLON BOOLEAN {
-    ElementPtr n(new BoolElement($3));
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("persist", n);
 };
 
 lfc_interval: LFC_INTERVAL COLON INTEGER {
-    ElementPtr n(new IntElement($3));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("lfc-interval", n);
 };
 
 mac_sources: MAC_SOURCES {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("mac-sources", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.MAC_SOURCES);
@@ -449,17 +449,17 @@ mac_sources_value: duid_id
                  ;
 
 duid_id : DUID {
-    ElementPtr duid(new StringElement("duid"));
+    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
 
 string_id : STRING {
-    ElementPtr duid(new StringElement($1));
+    ElementPtr duid(new StringElement($1, ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);    
@@ -477,12 +477,12 @@ host_reservation_identifier: duid_id
                            ;
 
 hw_address_id : HW_ADDRESS {
-    ElementPtr hwaddr(new StringElement("hw-address"));
+    ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(hwaddr);
 };
 
 relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("relay-supplied-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
@@ -492,7 +492,7 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
 };
 
 hooks_libraries: HOOKS_LIBRARIES {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
@@ -510,7 +510,7 @@ not_empty_hooks_libraries_list: hooks_library
     ;
 
 hooks_library: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } hooks_params RCURLY_BRACKET {
@@ -524,14 +524,14 @@ hooks_params: hooks_param
 hooks_param: LIBRARY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr lib(new StringElement($4));
+    ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave(); 
 };
 
 // --- expired-leases-processing ------------------------
 expired_leases_processing: EXPIRED_LEASES_PROCESSING {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.NO_KEYWORD);
@@ -548,7 +548,7 @@ expired_leases_params: expired_leases_param
 // Instead of explicitly listing all allowed expired leases parameters, we
 // simply say that all of them as integers.
 expired_leases_param: STRING COLON INTEGER {
-    ElementPtr value(new IntElement($3));
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set($1, value);
 }
 
@@ -556,7 +556,7 @@ expired_leases_param: STRING COLON INTEGER {
 // This defines subnet6 as a list of maps.
 // "subnet6": [ ... ]
 subnet6_list: SUBNET6 {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("subnet6", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SUBNET6);
@@ -581,7 +581,7 @@ not_empty_subnet6_list: subnet6
 // This defines a single subnet, i.e. a single map with
 // subnet6 array.
 subnet6: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } subnet6_params RCURLY_BRACKET {
@@ -623,7 +623,7 @@ subnet6_param: option_data_list
 subnet: SUBNET {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr subnet(new StringElement($4));
+    ElementPtr subnet(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("subnet", subnet);
     ctx.leave();
 };
@@ -631,7 +631,7 @@ subnet: SUBNET {
 interface: INTERFACE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr iface(new StringElement($4));
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("interface", iface);
     ctx.leave();
 };
@@ -639,13 +639,13 @@ interface: INTERFACE {
 client_class: CLIENT_CLASS {
     ctx.enter(ctx.CLIENT_CLASS);
 } COLON STRING {
-    ElementPtr cls(new StringElement($4));
+    ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("client-class", cls);
     ctx.leave();
 };
 
 id: ID COLON INTEGER {
-    ElementPtr id(new IntElement($3));
+    ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("id", id);
 };
 
@@ -654,7 +654,7 @@ id: ID COLON INTEGER {
 // This defines the "option-data": [ ... ] entry that may appear
 // in several places, but most notably in subnet6 entries.
 option_data_list: OPTION_DATA {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("option-data", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DATA);
@@ -676,7 +676,7 @@ not_empty_option_data_list: option_data_entry
 // This defines th content of a single entry { ... } within
 // option-data list.
 option_data_entry: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } option_data_params RCURLY_BRACKET {
@@ -707,26 +707,26 @@ option_data_name: name;
 option_data_data: DATA {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr data(new StringElement($4));
+    ElementPtr data(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("data", data);
     ctx.leave();
 };
 
 option_data_code: CODE COLON INTEGER {
-    ElementPtr code(new IntElement($3));
+    ElementPtr code(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("code", code);
 };
 
 option_data_space: SPACE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr space(new StringElement($4));
+    ElementPtr space(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("space", space);
     ctx.leave();
 };
 
 option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
-    ElementPtr space(new BoolElement($3));
+    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("csv-format", space);
 };
 
@@ -734,7 +734,7 @@ option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
 
 // This defines the "pools": [ ... ] entry that may appear in subnet6.
 pools_list: POOLS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("pools", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.POOLS);
@@ -754,7 +754,7 @@ not_empty_pools_list: pool_list_entry
                     ;
 
 pool_list_entry: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } pool_params RCURLY_BRACKET {
@@ -773,7 +773,7 @@ pool_param: pool_entry
 pool_entry: POOL {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr pool(new StringElement($4));
+    ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
 };
@@ -782,7 +782,7 @@ pool_entry: POOL {
 
 // --- pd-pools ----------------------------------------------
 pd_pools_list: PD_POOLS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("pd-pools", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.PD_POOLS);
@@ -802,7 +802,7 @@ not_empty_pd_pools_list: pd_pool_entry
                        ;
 
 pd_pool_entry: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } pd_pool_params RCURLY_BRACKET {
@@ -823,18 +823,18 @@ pd_pool_param: pd_prefix
 pd_prefix: PREFIX {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr prf(new StringElement($4));
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("prefix", prf);
     ctx.leave();
 }
 
 pd_prefix_len: PREFIX_LEN COLON INTEGER {
-    ElementPtr prf(new IntElement($3));
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("prefix-len", prf);
 }
 
 pd_delegated_len: DELEGATED_LEN COLON INTEGER {
-    ElementPtr deleg(new IntElement($3));
+    ElementPtr deleg(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("delegated-len", deleg);
 }
 
@@ -842,7 +842,7 @@ pd_delegated_len: DELEGATED_LEN COLON INTEGER {
 
 // --- reservations ------------------------------------------
 reservations: RESERVATIONS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("reservations", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.RESERVATIONS);
@@ -860,7 +860,7 @@ not_empty_reservations_list: reservation
                            ;
 
 reservation: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } reservation_params RCURLY_BRACKET {
@@ -887,7 +887,7 @@ reservation_param: duid
                  ;
 
 ip_addresses: IP_ADDRESSES {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
@@ -897,7 +897,7 @@ ip_addresses: IP_ADDRESSES {
 };
 
 prefixes: PREFIXES  {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
@@ -909,7 +909,7 @@ prefixes: PREFIXES  {
 duid: DUID {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr d(new StringElement($4));
+    ElementPtr d(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("duid", d);
     ctx.leave();
 };
@@ -917,7 +917,7 @@ duid: DUID {
 hw_address: HW_ADDRESS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr hw(new StringElement($4));
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 };
@@ -925,13 +925,13 @@ hw_address: HW_ADDRESS {
 hostname: HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr host(new StringElement($4));
+    ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
 }
 
 reservation_client_classes: CLIENT_CLASSES {
-    ElementPtr c(new ListElement());
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
@@ -944,7 +944,7 @@ reservation_client_classes: CLIENT_CLASSES {
 
 // --- client classes ----------------------------------------
 client_classes: CLIENT_CLASSES {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENT_CLASSES);
@@ -958,7 +958,7 @@ client_classes_list: client_class
                    ;
 
 client_class: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } client_class_params RCURLY_BRACKET {
@@ -984,7 +984,7 @@ client_class_name: name;
 client_class_test: TEST {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr test(new StringElement($4));
+    ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
@@ -994,7 +994,7 @@ client_class_test: TEST {
 
 // --- server-id ---------------------------------------------
 server_id: SERVER_ID {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("server-id", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER_ID);
@@ -1017,32 +1017,32 @@ server_id_param: type
                ;
 
 htype: HTYPE COLON INTEGER {
-    ElementPtr htype(new IntElement($3));
+    ElementPtr htype(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("htype", htype);
 };
 
 identifier: IDENTIFIER {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr id(new StringElement($4));
+    ElementPtr id(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("identifier", id);
     ctx.leave();
 };
 
 time: TIME COLON INTEGER {
-    ElementPtr time(new IntElement($3));
+    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("time", time);
 };
 
 enterprise_id: ENTERPRISE_ID COLON INTEGER {
-    ElementPtr time(new IntElement($3));
+    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enterprise-id", time);
 };
 
 // --- end of server-id --------------------------------------
 
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
-    ElementPtr time(new IntElement($3));
+    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 };
 
@@ -1052,7 +1052,7 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
 // the following "Logging": { ... }. The ... is defined
 // by logging_params
 logging_object: LOGGING {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
@@ -1074,7 +1074,7 @@ logging_param: loggers;
 // "loggers", the only parameter currently defined in "Logging" object,
 // is "Loggers": [ ... ].
 loggers: LOGGERS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
@@ -1091,7 +1091,7 @@ loggers_entries: logger_entry
 
 // This defines a single entry defined in loggers in Logging.
 logger_entry: LCURLY_BRACKET {
-    ElementPtr l(new MapElement());
+    ElementPtr l(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 } logger_params RCURLY_BRACKET {
@@ -1110,19 +1110,19 @@ logger_param: name
             ;
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
-    ElementPtr dl(new IntElement($3));
+    ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
 severity: SEVERITY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr sev(new StringElement($4));
+    ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 };
 
 output_options_list: OUTPUT_OPTIONS {
-    ElementPtr l(new ListElement());
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
@@ -1136,7 +1136,7 @@ output_options_list_content: output_entry
                            ;
 
 output_entry: LCURLY_BRACKET {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } output_params RCURLY_BRACKET {
@@ -1150,13 +1150,13 @@ output_params: output_param
 output_param: OUTPUT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr sev(new StringElement($4));
+    ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 };
 
 dhcp_ddns: DHCP_DDNS {
-    ElementPtr m(new MapElement());
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
@@ -1175,14 +1175,14 @@ dhcp_ddns_param: enable_updates
                ;
 
 enable_updates: ENABLE_UPDATES COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("enable-updates", b);
 };
 
 qualifying_suffix: QUALIFYING_SUFFIX {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr qs(new StringElement($4));
+    ElementPtr qs(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("qualifying-suffix", qs);
     ctx.leave();
 };

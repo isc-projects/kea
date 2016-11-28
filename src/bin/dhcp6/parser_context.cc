@@ -85,6 +85,15 @@ Parser6Context::fatal (const std::string& what)
     isc_throw(Dhcp6ParseError, what);
 }
 
+isc::data::Element::Position
+Parser6Context::loc2pos(isc::dhcp::location& loc)
+{
+    const std::string& file = *loc.begin.filename;
+    const uint32_t line = loc.begin.line;
+    const uint32_t pos = loc.begin.column;
+    return (isc::data::Element::Position(file, line, pos));
+}
+
 void
 Parser6Context::enter(const ParserContext& ctx)
 {
