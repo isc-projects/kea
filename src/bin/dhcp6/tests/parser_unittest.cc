@@ -377,22 +377,34 @@ TEST(ParserTest, errors) {
               "<string>:1.3: Invalid character: e");
     testError("\"a\n\tb\"",
               Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.1-6: syntax error, unexpected constant string, "
-              "expecting {");
+              "<string>:1.1-6: Invalid control in \"a\n\tb\"");
     testError("\"a\\n\\tb\"",
               Parser6Context::PARSER_GENERIC_JSON,
               "<string>:1.1-8: syntax error, unexpected constant string, "
               "expecting {");
     testError("\"a\\x01b\"",
               Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.1: Invalid character: \"");
+              "<string>:1.1-8: Bad escape in \"a\\x01b\"");
     testError("\"a\\u0062\"",
               Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.1-9: syntax error, unexpected constant string, "
-              "expecting {");
+              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0062\"");
     testError("\"a\\u062z\"",
               Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.1: Invalid character: \"");
+              "<string>:1.1-9: Bad escape in \"a\\u062z\"");
+    testError("\"abc\\\"",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.1-6: Overflow escape in \"abc\\\"");
+
+    // from data_unittest.c
+    testError("\\a",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.1: Invalid character: \\");
+    testError("\\",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.1: Invalid character: \\");
+    testError("\\\"\\\"",
+              Parser6Context::PARSER_GENERIC_JSON,
+              "<string>:1.1: Invalid character: \\");
 
     // want a map
     testError("[]\n",

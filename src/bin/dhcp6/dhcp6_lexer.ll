@@ -84,12 +84,19 @@ unsigned int comment_start_line = 0;
 int   \-?[0-9]+
 blank [ \t]
 
-UnicodeEscapeSequence                   u[0-9A-Fa-f]{4}
-JSONEscapeCharacter                     ["\\/bfnrt]
-JSONEscapeSequence                      {JSONEscapeCharacter}|{UnicodeEscapeSequence}
-JSONStringCharacter                     [^"\\]|\\{JSONEscapeSequence}
-JSONString                              \"{JSONStringCharacter}*\"
+UnicodeEscapeSequence           u[0-9A-Fa-f]{4}
+JSONEscapeCharacter             ["\\/bfnrt]
+JSONEscapeSequence              {JSONEscapeCharacter}|{UnicodeEscapeSequence}
+JSONStandardCharacter           [^\x00-\x1f"\\]
+JSONStringCharacter             {JSONStandardCharacter}|\\{JSONEscapeSequence}
+JSONString                      \"{JSONStringCharacter}*\"
 
+/* for errors */
+
+BadUnicodeEscapeSequence        u[0-9A-Fa-f]{0,3}[^0-9A-Fa-f]
+BadJSONEscapeSequence           [^"\\/bfnrtu]|{BadUnicodeEscapeSequence}
+ControlCharacter                [\x00-\x1f]
+ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 %{
 // This code run each time a pattern is matched. It updates the location
@@ -760,10 +767,78 @@ JSONString                              \"{JSONStringCharacter}*\"
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
     // for 'foo' we should get foo
-    std::string tmp(yytext+1);
-    tmp.resize(tmp.size() - 1);
+    std::string raw(yytext+1);
+    size_t len = raw.size() - 1;
+    raw.resize(len);
+    std::string decoded;
+    decoded.reserve(len);
+    for (size_t pos = 0; pos < len; ++pos) {
+        char c = raw[pos];
+        switch (c) {
+        case '"':
+            // impossible condition
+            driver.error(loc, "Bad quote in \"" + raw + "\"");
+        case '\\':
+            ++pos;
+            if (pos >= len) {
+                // impossible condition
+                driver.error(loc, "Overflow escape in \"" + raw + "\"");
+            }
+            c = raw[pos];
+            switch (c) {
+            case '"':
+            case '\\':
+            case '/':
+                decoded.push_back(c);
+                break;
+            case 'b':
+                decoded.push_back('\b');
+                break;
+            case 'f':
+                decoded.push_back('\f');
+                break;
+            case 'n':
+                decoded.push_back('\n');
+                break;
+            case 'r':
+                decoded.push_back('\r');
+                break;
+            case 't':
+                decoded.push_back('\t');
+                break;
+            case 'u':
+                // not yet implemented
+                driver.error(loc, "Unsupported unicode escape in \"" + raw + "\"");
+            default:
+                // impossible condition
+                driver.error(loc, "Bad escape in \"" + raw + "\"");
+            }
+            break;
+        default:
+            if (c < 0x20) {
+                // impossible condition
+                driver.error(loc, "Invalid control in \"" + raw + "\"");
+            }
+            decoded.push_back(c);
+        }
+    }
 
-    return isc::dhcp::Dhcp6Parser::make_STRING(tmp, loc);
+    return isc::dhcp::Dhcp6Parser::make_STRING(decoded, loc);
+}
+
+\"{JSONStringCharacter}*{ControlCharacter}{ControlCharacterFill}*\" {
+    // Bad string with a forbidden control character inside
+    driver.error(loc, "Invalid control in " + std::string(yytext));
+}
+
+\"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^\x00-\x1f"]*\" {
+    // Bad string with a bad escape inside
+    driver.error(loc, "Bad escape in " + std::string(yytext));
+}
+    
+\"{JSONStringCharacter}*\\\" {
+    // Bad string with an open escape at the end
+    driver.error(loc, "Overflow escape in " + std::string(yytext));
 }
 
 "["    { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
