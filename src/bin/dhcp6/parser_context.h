@@ -92,6 +92,12 @@ public:
     /// Used by YY_FATAL_ERROR macro so required to be static.
     static void fatal(const std::string& what);
 
+    /// @brief Convert position
+    ///
+    /// Convert a bison location into an element position
+    /// (take the begin, the end is lost)
+    isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         /// at toplevel

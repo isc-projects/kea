@@ -389,7 +389,7 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
         "}";
     string include = "\"eth\", <?include \"" + string(TEST_INCLUDE) + "\"?>";
     string msg = "configuration error using file '" + string(TEST_FILE) +
-	"': Too many nested include.";
+        "': Too many nested include.";
 
     writeFile(TEST_FILE, config_recursive_include);
     writeFile(TEST_INCLUDE, include);
