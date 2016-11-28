@@ -129,6 +129,24 @@ public:
         OUTPUT_OPTIONS
     } ParserContext;    
 
+    /// @brief File name
+    std::string file_;
+
+    /// @brief File name stack
+    std::vector<std::string> files_;
+
+    /// @brief Location of the current token
+    ///
+    /// The lexer will keep updating it. This variable will be useful
+    /// for logging errors.
+    isc::dhcp::location loc_;
+
+    /// @brief Location stack
+    std::vector<isc::dhcp::location> locs_;
+
+    /// @brief State stack
+    std::vector<struct yy_buffer_state*> states_;;
+
     /// @brief Current syntactic context
     ParserContext ctx_;
 
