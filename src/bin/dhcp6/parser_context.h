@@ -38,7 +38,20 @@ public:
     /// @brief Defines currently support the content supported
     typedef enum {
         PARSER_GENERIC_JSON, // This will parse the content as generic JSON
-        PARSER_DHCP6 // This will parse the content as DHCP6 config
+        PARSER_DHCP6,        // This will parse the content as DHCP6 config
+        // DHCP6 config subparsers
+        SUBPARSER_INTERFACES6,
+        SUBPARSER_SUBNET6,
+        SUBPARSER_POOL6,
+        SUBPARSER_PD_POOL,
+        SUBPARSER_HOST_RESERVATION6,
+        // Common DHCP subparsers
+        // SUBPARSER_OPTION_DEF,
+        SUBPARSER_OPTION_DATA,
+        SUBPARSER_HOOKS_LIBRARY,
+        // SUBPARSER_CONTROL_SOCKET,
+        // SUBPARSER_D2_CLIENT,
+        // SUBPARSER_LEASE_EXPIRATION
     } ParserType;
 
     /// @brief Default constructor.

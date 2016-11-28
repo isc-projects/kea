@@ -131,6 +131,13 @@ using namespace std;
  // parse.
   TOPLEVEL_GENERIC_JSON
   TOPLEVEL_DHCP6
+  SUB_INTERFACES6
+  SUB_SUBNET6
+  SUB_POOL6
+  SUB_PD_POOL
+  SUB_RESERVATION
+  SUB_OPTION_DATA
+  SUB_HOOKS_LIBRARY
 ;
 
 %token <std::string> STRING "constant string"
@@ -146,12 +153,18 @@ using namespace std;
 
 // The whole grammar starts with a map, because the config file
 // constists of Dhcp, Logger and DhcpDdns entries in one big { }.
-// %start map - this will parse everything as generic JSON
-// %start dhcp6_map - this will parse everything with Dhcp6 syntax checking
+// We made the same for subparsers.
 %start start;
 
 start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
      | TOPLEVEL_DHCP6 { ctx.ctx_ = ctx.CONFIG; } syntax_map
+     | SUB_INTERFACES6 { ctx.ctx_ = ctx.INTERFACES_CONFIG; } sub_interfaces6
+     | SUB_SUBNET6 { ctx.ctx_ = ctx.SUBNET6; } sub_subnet6
+     | SUB_POOL6 { ctx.ctx_ = ctx.POOLS; } sub_pool6
+     | SUB_PD_POOL { ctx.ctx_ = ctx.PD_POOLS; } sub_pd_pool
+     | SUB_RESERVATION { ctx.ctx_ = ctx.RESERVATIONS; } sub_reservation
+     | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
+     | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -336,6 +349,14 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.leave();
 };
 
+sub_interfaces6: LCURLY_BRACKET {
+    // Parse the interfaces-config map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} interface_config_map RCURLY_BRACKET {
+    // parsing completed
+};
+
 interface_config_map: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
@@ -517,6 +538,14 @@ hooks_library: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+sub_hooks_library: LCURLY_BRACKET {
+    // Parse the hooks-libraries list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} hooks_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             ;
@@ -603,6 +632,14 @@ subnet6: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+sub_subnet6: LCURLY_BRACKET {
+    // Parse the subnet6 list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} subnet6_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 // This defines that subnet can have one or more parameters.
 subnet6_params: subnet6_param
               | subnet6_params COMMA subnet6_param
@@ -683,6 +720,14 @@ option_data_entry: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+sub_option_data: LCURLY_BRACKET {
+    // Parse the option-data list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} option_data_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 // This defines parameters specified inside the map that itself
 // is an entry in option-data list.
 option_data_params: %empty
@@ -761,6 +806,14 @@ pool_list_entry: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+sub_pool6: LCURLY_BRACKET {
+    // Parse the pool list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} pool_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 pool_params: pool_param
            | pool_params COMMA pool_param
            ;
@@ -807,6 +860,14 @@ pd_pool_entry: LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } pd_pool_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+};
+
+sub_pd_pool: LCURLY_BRACKET {
+    // Parse the pd-pool list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} pd_pool_params RCURLY_BRACKET {
+    // parsing completed
 };
 
 pd_pool_params: pd_pool_param
@@ -865,6 +926,14 @@ reservation: LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } reservation_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+};
+
+sub_reservation: LCURLY_BRACKET {
+    // Parse the reservations list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} reservation_params RCURLY_BRACKET {
+    // parsing completed
 };
 
 reservation_params: %empty
