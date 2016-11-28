@@ -12,6 +12,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
@@ -368,6 +369,46 @@ TEST_F(JSONFileBackendTest, include) {
     EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if recursive include of a file is detected
+TEST_F(JSONFileBackendTest, recursiveInclude) {
+
+    string config_recursive_include = "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ <?include \"" + string(TEST_INCLUDE) + "\"?> ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\"eth\", <?include \"" + string(TEST_INCLUDE) + "\"?>";
+    string msg = "configuration error using file '" + string(TEST_FILE) +
+	"': Too many nested include.";
+
+    writeFile(TEST_FILE, config_recursive_include);
+    writeFile(TEST_INCLUDE, include);
+    
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config
+    try {
+        srv->init(TEST_FILE);
+        FAIL() << "Expected Dhcp6ParseError but nothing was raised";
+    }
+    catch (const Exception& ex) {
+        EXPECT_EQ(msg, ex.what());
+    }
 }
 
 // This test checks if configuration can be read from a JSON file.
