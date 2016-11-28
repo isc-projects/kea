@@ -23,22 +23,6 @@
 
 namespace {
 
-// The location of the current token. The lexer will keep updating it. This
-// variable will be useful for logging errors.
-isc::dhcp::location loc;
-
-/// @brief Location stack.
-std::vector<isc::dhcp::location> locs;
-
-/// @brief File name.
-std::string file;
-
-/// @brief File name stack.
-std::vector<std::string> files;
-
-/// @brief State stack.
-std::vector<struct yy_buffer_state*> states;
-
 bool start_token_flag = false;
 
 isc::dhcp::Parser6Context::ParserType start_token_value;
@@ -102,7 +86,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 // This code run each time a pattern is matched. It updates the location
 // by moving it ahead by yyleng bytes. yyleng specifies the length of the
 // currently matched token.
-#define YY_USER_ACTION  loc.columns(yyleng);
+#define YY_USER_ACTION  driver.loc_.columns(yyleng);
 %}
 
 %%
@@ -113,16 +97,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     // http://www.gnu.org/software/bison/manual/html_node/Multiple-start_002dsymbols.html
 
     // Code run each time yylex is called.
-    loc.step();
+    driver.loc_.step();
 
     if (start_token_flag) {
         start_token_flag = false;
         switch (start_token_value) {
         case Parser6Context::PARSER_DHCP6:
-            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(loc);
+            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(driver.loc_);
         case Parser6Context::PARSER_GENERIC_JSON:
         default:
-            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(loc);
+            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(driver.loc_);
         }
     }
 %}
@@ -133,7 +117,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 "/*" {
   BEGIN(COMMENT);
-  comment_start_line = loc.end.line;;
+  comment_start_line = driver.loc_.end.line;;
 }
 
 <COMMENT>"*/" BEGIN(INITIAL);
@@ -161,58 +145,58 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 <*>{blank}+   {
     // Ok, we found a with space. Let's ignore it and update loc variable.
-    loc.step();
+    driver.loc_.step();
 }
 
 <*>[\n]+      {
     // Newline found. Let's update the location and continue.
-    loc.lines(yyleng);
-    loc.step();
+    driver.loc_.lines(yyleng);
+    driver.loc_.step();
 }
 
 
 \"Dhcp6\"  {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_DHCP6(loc);
+        return isc::dhcp::Dhcp6Parser::make_DHCP6(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp6", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp6", driver.loc_);
     }
 }
 
 \"interfaces-config\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(loc);
+        return  isc::dhcp::Dhcp6Parser::make_INTERFACES_CONFIG(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces-config", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces-config", driver.loc_);
     }
 }
 
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
-        return  isc::dhcp::Dhcp6Parser::make_INTERFACES(loc);
+        return  isc::dhcp::Dhcp6Parser::make_INTERFACES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("interfaces", driver.loc_);
     }
 }
 
 \"lease-database\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(loc);
+        return isc::dhcp::Dhcp6Parser::make_LEASE_DATABASE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("lease-database", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("lease-database", driver.loc_);
     }
 }
 
 \"hosts-database\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(loc);
+        return isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("hosts-database", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("hosts-database", driver.loc_);
     }
 }
 
@@ -221,9 +205,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_TYPE(loc);
+        return isc::dhcp::Dhcp6Parser::make_TYPE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("type", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("type", driver.loc_);
     }
 }
 
@@ -231,9 +215,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_USER(loc);
+        return isc::dhcp::Dhcp6Parser::make_USER(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("user", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("user", driver.loc_);
     }
 }
 
@@ -241,9 +225,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_PASSWORD(loc);
+        return isc::dhcp::Dhcp6Parser::make_PASSWORD(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("password", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("password", driver.loc_);
     }
 }
 
@@ -251,9 +235,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_HOST(loc);
+        return isc::dhcp::Dhcp6Parser::make_HOST(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("host", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("host", driver.loc_);
     }
 }
 
@@ -262,9 +246,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_PERSIST(loc);
+        return isc::dhcp::Dhcp6Parser::make_PERSIST(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("persist", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("persist", driver.loc_);
     }
 }
 
@@ -272,54 +256,54 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(loc);
+        return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", driver.loc_);
     }
 }
 
 \"preferred-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(loc);
+        return isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("preferred-lifetime", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("preferred-lifetime", driver.loc_);
     }
 }
 
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(loc);
+        return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", driver.loc_);
     }
 }
 
 \"renew-timer\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(loc);
+        return isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("renew-timer", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("renew-timer", driver.loc_);
     }
 }
 
 \"rebind-timer\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(loc);
+        return isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("rebind-timer", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("rebind-timer", driver.loc_);
     }
 }
 
 \"subnet6\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_SUBNET6(loc);
+        return isc::dhcp::Dhcp6Parser::make_SUBNET6(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("subnet6", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("subnet6", driver.loc_);
     }
 }
 
@@ -332,9 +316,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
-        return isc::dhcp::Dhcp6Parser::make_OPTION_DATA(loc);
+        return isc::dhcp::Dhcp6Parser::make_OPTION_DATA(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("option-data", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("option-data", driver.loc_);
     }
 }
 
@@ -346,189 +330,189 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
     case isc::dhcp::Parser6Context::LOGGERS:
-        return isc::dhcp::Dhcp6Parser::make_NAME(loc);
+        return isc::dhcp::Dhcp6Parser::make_NAME(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("name", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("name", driver.loc_);
     }
 }
 
 \"data\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
-        return isc::dhcp::Dhcp6Parser::make_DATA(loc);
+        return isc::dhcp::Dhcp6Parser::make_DATA(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("data", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("data", driver.loc_);
     }
 }
 
 \"pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_POOLS(loc);
+        return isc::dhcp::Dhcp6Parser::make_POOLS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("pools", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("pools", driver.loc_);
     }
 }
 
 \"pd-pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_PD_POOLS(loc);
+        return isc::dhcp::Dhcp6Parser::make_PD_POOLS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("pd-pools", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("pd-pools", driver.loc_);
     }
 }
 
 \"prefix\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
-        return isc::dhcp::Dhcp6Parser::make_PREFIX(loc);
+        return isc::dhcp::Dhcp6Parser::make_PREFIX(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("prefix", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefix", driver.loc_);
     }
 }
 
 \"prefix-len\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
-        return isc::dhcp::Dhcp6Parser::make_PREFIX_LEN(loc);
+        return isc::dhcp::Dhcp6Parser::make_PREFIX_LEN(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("prefix-len", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefix-len", driver.loc_);
     }
 }
 
 \"delegated-len\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
-        return isc::dhcp::Dhcp6Parser::make_DELEGATED_LEN(loc);
+        return isc::dhcp::Dhcp6Parser::make_DELEGATED_LEN(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("delegated-len", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("delegated-len", driver.loc_);
     }
 }
 
 \"pool\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
-        return isc::dhcp::Dhcp6Parser::make_POOL(loc);
+        return isc::dhcp::Dhcp6Parser::make_POOL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("pool", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("pool", driver.loc_);
     }
 }
 
 \"subnet\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_SUBNET(loc);
+        return isc::dhcp::Dhcp6Parser::make_SUBNET(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("subnet", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("subnet", driver.loc_);
     }
 }
 
 \"interface\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_INTERFACE(loc);
+        return isc::dhcp::Dhcp6Parser::make_INTERFACE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("interface", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("interface", driver.loc_);
     }
 }
 
 \"id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_ID(loc);
+        return isc::dhcp::Dhcp6Parser::make_ID(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("id", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("id", driver.loc_);
     }
 }
 
 \"code\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
-        return isc::dhcp::Dhcp6Parser::make_CODE(loc);
+        return isc::dhcp::Dhcp6Parser::make_CODE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("code", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("code", driver.loc_);
     }
 }
 
 \"mac-sources\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(loc);
+        return isc::dhcp::Dhcp6Parser::make_MAC_SOURCES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("mac-sources", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("mac-sources", driver.loc_);
     }
 }
 
 \"relay-supplied-options\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(loc);
+        return isc::dhcp::Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("relay-supplied-options", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("relay-supplied-options", driver.loc_);
     }
 }
 
 \"host-reservation-identifiers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS(loc);
+        return isc::dhcp::Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("host-reservation-identifiers", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("host-reservation-identifiers", driver.loc_);
     }
 }
 
 \"Logging\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_LOGGING(loc);
+        return isc::dhcp::Dhcp6Parser::make_LOGGING(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Logging", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("Logging", driver.loc_);
     }
 }
 
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGING:
-        return isc::dhcp::Dhcp6Parser::make_LOGGERS(loc);
+        return isc::dhcp::Dhcp6Parser::make_LOGGERS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("loggers", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("loggers", driver.loc_);
     }
 }
 
 \"output_options\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
-        return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(loc);
+        return isc::dhcp::Dhcp6Parser::make_OUTPUT_OPTIONS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("output_options", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("output_options", driver.loc_);
     }
 }
 
 \"output\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
-        return isc::dhcp::Dhcp6Parser::make_OUTPUT(loc);
+        return isc::dhcp::Dhcp6Parser::make_OUTPUT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("output", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("output", driver.loc_);
     }
 }
 
 \"debuglevel\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
-        return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(loc);
+        return isc::dhcp::Dhcp6Parser::make_DEBUGLEVEL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("debuglevel", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("debuglevel", driver.loc_);
     }
 }
 
 \"severity\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
-        return isc::dhcp::Dhcp6Parser::make_SEVERITY(loc);
+        return isc::dhcp::Dhcp6Parser::make_SEVERITY(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("severity", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("severity", driver.loc_);
     }
 }
 
@@ -536,9 +520,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(loc);
+        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("client-classes", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("client-classes", driver.loc_);
     }
 }
 
@@ -546,9 +530,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
-        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(loc);
+        return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("client-class", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("client-class", driver.loc_);
     }
 }
 
@@ -556,36 +540,36 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
-        return isc::dhcp::Dhcp6Parser::make_TEST(loc);
+        return isc::dhcp::Dhcp6Parser::make_TEST(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("test", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("test", driver.loc_);
     }
 }
 
 \"reservations\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(loc);
+        return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reservations", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("reservations", driver.loc_);
     }
 }
 
 \"ip-addresses\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(loc);
+        return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ip-addresses", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("ip-addresses", driver.loc_);
     }
 }
 
 \"prefixes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_PREFIXES(loc);
+        return isc::dhcp::Dhcp6Parser::make_PREFIXES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("prefixes", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("prefixes", driver.loc_);
     }
 }
 
@@ -594,9 +578,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::MAC_SOURCES:
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_DUID(loc);
+        return isc::dhcp::Dhcp6Parser::make_DUID(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("duid", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("duid", driver.loc_);
     }
 }
 
@@ -604,162 +588,162 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(loc);
+        return isc::dhcp::Dhcp6Parser::make_HW_ADDRESS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("hw-address", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("hw-address", driver.loc_);
     }
 }
 
 \"hostname\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
-        return isc::dhcp::Dhcp6Parser::make_HOSTNAME(loc);
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("hostname", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname", driver.loc_);
     }
 }
 
 \"space\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
-        return isc::dhcp::Dhcp6Parser::make_SPACE(loc);
+        return isc::dhcp::Dhcp6Parser::make_SPACE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("space", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("space", driver.loc_);
     }
 }
 
 \"csv-format\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
-        return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(loc);
+        return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("csv-format", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("csv-format", driver.loc_);
     }
 }
 
 \"hooks-libraries\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_HOOKS_LIBRARIES(loc);
+        return isc::dhcp::Dhcp6Parser::make_HOOKS_LIBRARIES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("hooks-libraries", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("hooks-libraries", driver.loc_);
     }
 }
 
 \"library\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
-        return isc::dhcp::Dhcp6Parser::make_LIBRARY(loc);
+        return isc::dhcp::Dhcp6Parser::make_LIBRARY(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("library", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("library", driver.loc_);
     }
 }
 
 \"server-id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_SERVER_ID(loc);
+        return isc::dhcp::Dhcp6Parser::make_SERVER_ID(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("server-id", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("server-id", driver.loc_);
     }
 }
 
 \"identifier\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_IDENTIFIER(loc);
+        return isc::dhcp::Dhcp6Parser::make_IDENTIFIER(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("identifier", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("identifier", driver.loc_);
     }
 }
 
 \"htype\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_HTYPE(loc);
+        return isc::dhcp::Dhcp6Parser::make_HTYPE(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("htype", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("htype", driver.loc_);
     }
 }
 
 \"time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_TIME(loc);
+        return isc::dhcp::Dhcp6Parser::make_TIME(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("time", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("time", driver.loc_);
     }
 }
 
 \"enterprise-id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
-        return isc::dhcp::Dhcp6Parser::make_ENTERPRISE_ID(loc);
+        return isc::dhcp::Dhcp6Parser::make_ENTERPRISE_ID(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("enterprise-id", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("enterprise-id", driver.loc_);
     }
 }
 
 \"expired-leases-processing\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(loc);
+        return isc::dhcp::Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("expired-leases-processing", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("expired-leases-processing", driver.loc_);
     }
 }
 
 \"dhcp4o6-port\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(loc);
+        return isc::dhcp::Dhcp6Parser::make_DHCP4O6_PORT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp4o6-port", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp4o6-port", driver.loc_);
     }
 }
 
 \"dhcp-ddns\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(loc);
+        return isc::dhcp::Dhcp6Parser::make_DHCP_DDNS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-ddns", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-ddns", driver.loc_);
     }
 }
 
 \"enable-updates\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp6Parser::make_ENABLE_UPDATES(loc);
+        return isc::dhcp::Dhcp6Parser::make_ENABLE_UPDATES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("enable-updates", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("enable-updates", driver.loc_);
     }
 }
 
 \"qualifying-suffix\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp6Parser::make_QUALIFYING_SUFFIX(loc);
+        return isc::dhcp::Dhcp6Parser::make_QUALIFYING_SUFFIX(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("qualifying-suffix", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("qualifying-suffix", driver.loc_);
     }
 }
 
 \"Dhcp4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_DHCP4(loc);
+        return isc::dhcp::Dhcp6Parser::make_DHCP4(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp4", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp4", driver.loc_);
     }
 }
 
 \"DhcpDdns\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
-        return isc::dhcp::Dhcp6Parser::make_DHCPDDNS(loc);
+        return isc::dhcp::Dhcp6Parser::make_DHCPDDNS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("DhcpDdns", loc);
+        return isc::dhcp::Dhcp6Parser::make_STRING("DhcpDdns", driver.loc_);
     }
 }
 
@@ -777,12 +761,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         switch (c) {
         case '"':
             // impossible condition
-            driver.error(loc, "Bad quote in \"" + raw + "\"");
+            driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
         case '\\':
             ++pos;
             if (pos >= len) {
                 // impossible condition
-                driver.error(loc, "Overflow escape in \"" + raw + "\"");
+                driver.error(driver.loc_, "Overflow escape in \"" + raw + "\"");
             }
             c = raw[pos];
             switch (c) {
@@ -808,45 +792,45 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
                 break;
             case 'u':
                 // not yet implemented
-                driver.error(loc, "Unsupported unicode escape in \"" + raw + "\"");
+                driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
             default:
                 // impossible condition
-                driver.error(loc, "Bad escape in \"" + raw + "\"");
+                driver.error(driver.loc_, "Bad escape in \"" + raw + "\"");
             }
             break;
         default:
             if (c < 0x20) {
                 // impossible condition
-                driver.error(loc, "Invalid control in \"" + raw + "\"");
+                driver.error(driver.loc_, "Invalid control in \"" + raw + "\"");
             }
             decoded.push_back(c);
         }
     }
 
-    return isc::dhcp::Dhcp6Parser::make_STRING(decoded, loc);
+    return isc::dhcp::Dhcp6Parser::make_STRING(decoded, driver.loc_);
 }
 
 \"{JSONStringCharacter}*{ControlCharacter}{ControlCharacterFill}*\" {
     // Bad string with a forbidden control character inside
-    driver.error(loc, "Invalid control in " + std::string(yytext));
+    driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
 }
 
 \"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^\x00-\x1f"]*\" {
     // Bad string with a bad escape inside
-    driver.error(loc, "Bad escape in " + std::string(yytext));
+    driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
 }
     
 \"{JSONStringCharacter}*\\\" {
     // Bad string with an open escape at the end
-    driver.error(loc, "Overflow escape in " + std::string(yytext));
+    driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
 }
 
-"["    { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(loc); }
-"]"    { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(loc); }
-"{"    { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(loc); }
-"}"    { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(loc); }
-","    { return isc::dhcp::Dhcp6Parser::make_COMMA(loc); }
-":"    { return isc::dhcp::Dhcp6Parser::make_COLON(loc); }
+"["    { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
+"]"    { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
+"{"    { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
+"}"    { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
+","    { return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
+":"    { return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
 
 {int} {
     // An integer was found.
@@ -859,11 +843,11 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         // int64_t.
         integer = boost::lexical_cast<int64_t>(tmp);
     } catch (const boost::bad_lexical_cast &) {
-        driver.error(loc, "Failed to convert " + tmp + " to an integer.");
+        driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
     }
 
     // The parser needs the string form as double conversion is no lossless
-    return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, loc);
+    return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, driver.loc_);
 }
 
 [-+]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)? {
@@ -873,34 +857,34 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     try {
         fp = boost::lexical_cast<double>(tmp);
     } catch (const boost::bad_lexical_cast &) {
-        driver.error(loc, "Failed to convert " + tmp + " to a floating point.");
+        driver.error(driver.loc_, "Failed to convert " + tmp + " to a floating point.");
     }
 
-    return isc::dhcp::Dhcp6Parser::make_FLOAT(fp, loc);
+    return isc::dhcp::Dhcp6Parser::make_FLOAT(fp, driver.loc_);
 }
 
 true|false {
     string tmp(yytext);
-    return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", loc);
+    return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
 }
 
 null {
-   return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(loc);
+   return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 
-<*>.   driver.error (loc, "Invalid character: " + std::string(yytext));
+<*>.   driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 
 <<EOF>> {
-    if (states.empty()) {
-        return isc::dhcp::Dhcp6Parser::make_END(loc);
+    if (driver.states_.empty()) {
+        return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
     }
-    loc = locs.back();
-    locs.pop_back();
-    file = files.back();
-    files.pop_back();
+    driver.loc_ = driver.locs_.back();
+    driver.locs_.pop_back();
+    driver.file_ = driver.files_.back();
+    driver.files_.pop_back();
     parser6__delete_buffer(YY_CURRENT_BUFFER);
-    parser6__switch_to_buffer(states.back());
-    states.pop_back();
+    parser6__switch_to_buffer(driver.states_.back());
+    driver.states_.pop_back();
 
     BEGIN(DIR_EXIT);
 }
@@ -912,15 +896,12 @@ using namespace isc::dhcp;
 void
 Parser6Context::scanStringBegin(const std::string& str, ParserType parser_type)
 {
-    locs.clear();
-    files.clear();
-    states.clear();
     static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
-    file = "<string>";
-    loc.initialize(&file);
+    file_ = "<string>";
+    loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
     buffer = yy_scan_bytes(str.c_str(), str.size());
@@ -941,15 +922,12 @@ Parser6Context::scanFileBegin(FILE * f,
                               const std::string& filename,
                               ParserType parser_type)
 {
-    locs.clear();
-    files.clear();
-    states.clear();
     static_cast<void>(parser6_lex_destroy());
     start_token_flag = true;
     start_token_value = parser_type;
 
-    file = filename;
-    loc.initialize(&file);
+    file_ = filename;
+    loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
 
@@ -969,7 +947,7 @@ Parser6Context::scanFileEnd(FILE * f) {
 
 void
 Parser6Context::includeFile(const std::string& filename) {
-    if (states.size() > 10) {
+    if (states_.size() > 10) {
         fatal("Too many nested include.");
     }
 
@@ -977,17 +955,17 @@ Parser6Context::includeFile(const std::string& filename) {
     if (!f) {
         fatal("Can't open include file " + filename);
     }
-    states.push_back(YY_CURRENT_BUFFER);
+    states_.push_back(YY_CURRENT_BUFFER);
     YY_BUFFER_STATE buffer;
     buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal( "Can't scan include file " + filename);
     }
     parser6__switch_to_buffer(buffer);
-    files.push_back(file);
-    file = filename;
-    locs.push_back(loc);
-    loc.initialize(&file);
+    files_.push_back(file_);
+    file_ = filename;
+    locs_.push_back(loc_);
+    loc_.initialize(&file_);
 
     BEGIN(INITIAL);
 }
