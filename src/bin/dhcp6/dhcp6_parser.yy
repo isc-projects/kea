@@ -66,6 +66,7 @@ using namespace std;
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
+  DECLINE_PROBATION_PERIOD "decline-probation-period"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -74,6 +75,9 @@ using namespace std;
   CODE "code"
   SPACE "space"
   CSV_FORMAT "csv-format"
+  RECORD_TYPES "record-types"
+  ENCAPSULATE "encapsulate"
+  ARRAY "array"
 
   POOLS "pools"
   POOL "pool"
@@ -84,7 +88,10 @@ using namespace std;
 
   SUBNET "subnet"
   INTERFACE "interface"
+  INTERFACE_ID "interface-id"
   ID "id"
+  RAPID_COMMIT "rapid-commit"
+  RESERVATION_MODE "reservation-mode"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
@@ -101,6 +108,9 @@ using namespace std;
   HW_ADDRESS "hw-address"
   HOSTNAME "hostname"
 
+  RELAY "relay"
+  IP_ADDRESS "ip-address"
+
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
 
@@ -113,6 +123,13 @@ using namespace std;
   ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
+  VERSION "version"
+
+  CONTROL_SOCKET "control-socket"
+  SOCKET_TYPE "socket-type"
+  SOCKET_NAME "socket-name"
+
+  DHCP_DDNS "dhcp-ddns"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -120,10 +137,6 @@ using namespace std;
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
-
-  DHCP_DDNS "dhcp-ddns"
-  ENABLE_UPDATES "enable-updates"
-  QUALIFYING_SUFFIX "qualifying-suffix"
 
   DHCP4 "Dhcp4"
   DHCPDDNS "DhcpDdns"
@@ -150,6 +163,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> version_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -324,6 +338,7 @@ global_param: preferred_lifetime
             | valid_lifetime
             | renew_timer
             | rebind_timer
+            | decline_probation_period
             | subnet6_list
             | interfaces_config
             | lease_database
@@ -338,6 +353,8 @@ global_param: preferred_lifetime
             | expired_leases_processing
             | server_id
             | dhcp4o6_port
+            | version
+            | control_socket
             | dhcp_ddns
             | unknown_map_entry
             ;
@@ -360,6 +377,11 @@ renew_timer: RENEW_TIMER COLON INTEGER {
 rebind_timer: REBIND_TIMER COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rebind-timer", prf);
+};
+
+decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
+    ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("decline-probation-period", dpp);
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -669,14 +691,22 @@ subnet6_params: subnet6_param
               ;
 
 // This defines a list of allowed parameters for each subnet.
-subnet6_param: option_data_list
+subnet6_param: preferred_lifetime
+             | valid_lifetime
+             | renew_timer
+             | rebind_timer
+             | option_data_list
              | pools_list
              | pd_pools_list
              | subnet
              | interface
+             | interface_id
              | id
+             | rapid_commit
              | client_class
              | reservations
+             | reservation_mode
+             | relay
              | unknown_map_entry
              ;
 
@@ -696,6 +726,14 @@ interface: INTERFACE {
     ctx.leave();
 };
 
+interface_id: INTERFACE_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("interface-id", iface);
+    ctx.leave();
+};
+
 client_class: CLIENT_CLASS {
     ctx.enter(ctx.CLIENT_CLASS);
 } COLON STRING {
@@ -704,9 +742,22 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
+reservation_mode: RESERVATION_MODE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr rm(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("reservation-mode", rm);
+    ctx.leave();
+};
+
 id: ID COLON INTEGER {
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("id", id);
+};
+
+rapid_commit: RAPID_COMMIT COLON BOOLEAN {
+    ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("rapid-commit", rc);
 };
 
 // ---- option-def --------------------------
@@ -764,11 +815,12 @@ not_empty_option_def_params: option_def_param
 option_def_param: option_def_name
                 | option_def_code
                 | option_def_type
+                | option_def_record_types
                 | option_def_space
-                | option_def_csv_format
+                | option_def_encapsulate
+                | option_def_array
                 | unknown_map_entry
                 ;
-
 
 option_def_name: name;
 
@@ -781,6 +833,14 @@ option_def_code: code;
 
 option_def_type: type;
 
+option_def_record_types: RECORD_TYPES {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr rtypes(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("record-types", rtypes);
+    ctx.leave();
+};
+
 space: SPACE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -791,12 +851,18 @@ space: SPACE {
 
 option_def_space: space;
 
-csv_format: CSV_FORMAT COLON BOOLEAN {
-    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("csv-format", space);
+option_def_encapsulate: ENCAPSULATE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr encap(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("encapsulate", encap);
+    ctx.leave();
 };
 
-option_def_csv_format: csv_format;
+option_def_array: ARRAY COLON BOOLEAN {
+    ElementPtr array(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("array", array);
+};
 
 // ---- option-data --------------------------
 
@@ -858,7 +924,6 @@ option_data_param: option_data_name
                  | unknown_map_entry
                  ;
 
-
 option_data_name: name;
 
 option_data_data: DATA {
@@ -873,7 +938,10 @@ option_data_code: code;
 
 option_data_space: space;
 
-option_data_csv_format: csv_format;
+option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
+    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("csv-format", space);
+};
 
 // ---- pools ------------------------------------
 
@@ -1111,6 +1179,27 @@ reservation_client_classes: CLIENT_CLASSES {
 
 // --- end of reservations definitions -----------------------
 
+// --- relay -------------------------------------------------
+relay: RELAY {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("relay", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.RELAY);
+} COLON LCURLY_BRACKET relay_map RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+relay_map: IP_ADDRESS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr ip(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ip-address", ip);
+    ctx.leave();
+};
+
+// --- end of relay definitions ------------------------------
+
 // --- client classes ----------------------------------------
 client_classes: CLIENT_CLASSES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1157,7 +1246,6 @@ client_class_test: TEST {
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
-
 
 // --- end of client classes ---------------------------------
 
@@ -1213,6 +1301,84 @@ enterprise_id: ENTERPRISE_ID COLON INTEGER {
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
+};
+
+// code says it is a string, unit test a number
+version: VERSION {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON version_value {
+    ctx.stack_.back()->set("version", $4);
+    ctx.leave();
+};
+
+version_value:
+    INTEGER { $$ = ElementPtr(new IntElement($1, ctx.loc2pos(@1))); }
+  | FLOAT { $$ = ElementPtr(new DoubleElement($1, ctx.loc2pos(@1))); }
+  | STRING { $$ = ElementPtr(new StringElement($1, ctx.loc2pos(@1))); }
+  ;
+
+// --- control socket ----------------------------------------
+
+control_socket: CONTROL_SOCKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("control-socket", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.CONTROL_SOCKET);
+} COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+control_socket_params: control_socket_param
+                     | control_socket_params COMMA control_socket_param
+                     ;
+
+control_socket_param: socket_type
+                    | socket_name
+                    ;
+
+socket_type: SOCKET_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("socket-type", stype);
+    ctx.leave();
+};
+
+socket_name: SOCKET_NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+};
+
+// --- dhcp ddns ---------------------------------------------
+
+dhcp_ddns: DHCP_DDNS {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("dhcp-ddns", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON LCURLY_BRACKET not_empty_map RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// JSON entries for Dhcp4 and DhcpDdns
+
+dhcp4_json_object: DHCP4 {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("Dhcp4", $4);
+    ctx.leave();
+};
+
+dhcpddns_json_object: DHCPDDNS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("DhcpDdns", $4);
+    ctx.leave();
 };
 
 // --- logging entry -----------------------------------------
@@ -1321,52 +1487,6 @@ output_param: OUTPUT {
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("output", sev);
-    ctx.leave();
-};
-
-dhcp_ddns: DHCP_DDNS {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("dhcp-ddns", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.DHCP_DDNS);
-} COLON LCURLY_BRACKET dhcp_ddns_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-dhcp_ddns_params: dhcp_ddns_param
-                | dhcp_ddns_params COMMA dhcp_ddns_param
-                ;
-
-dhcp_ddns_param: enable_updates
-               | qualifying_suffix
-               | unknown_map_entry
-               ;
-
-enable_updates: ENABLE_UPDATES COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enable-updates", b);
-};
-
-qualifying_suffix: QUALIFYING_SUFFIX {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr qs(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("qualifying-suffix", qs);
-    ctx.leave();
-};
-
-dhcp4_json_object: DHCP4 {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
-    ctx.leave();
-};
-
-dhcpddns_json_object: DHCPDDNS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("DhcpDdns", $4);
     ctx.leave();
 };
 

@@ -656,7 +656,9 @@ parseDHCP6(const std::string& in)
         return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
     }
     catch (const std::exception& ex) {
+#ifdef ENABLE_DEBUG
         std::cout << "EXCEPTION: " << ex.what() << std::endl;
+#endif // ENABLE_DEBUG
         throw;
     }
 }
@@ -670,7 +672,9 @@ parseOPTION_DEF(const std::string& in)
         return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_OPTION_DEF));
     }
     catch (const std::exception& ex) {
+#ifdef ENABLE_DEBUG
         std::cout << "EXCEPTION: " << ex.what() << std::endl;
+#endif // ENABLE_DEBUG
         throw;
     }
 }

@@ -146,7 +146,7 @@ public:
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
 
         ConstElementPtr config;
-        ASSERT_NO_THROW(config = parseJSON(config_txt));
+        ASSERT_NO_THROW(config = parseDHCP6(config_txt));
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
 

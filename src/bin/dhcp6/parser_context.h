@@ -136,11 +136,12 @@ public:
         OPTION_DATA,
         CLIENT_CLASSES,
         SERVER_ID,
-        DHCP_DDNS,
+        CONTROL_SOCKET,
         /// subnet6
         POOLS,
         PD_POOLS,
         RESERVATIONS,
+        RELAY,
         /// client-classes
         CLIENT_CLASS,
         /// Logging
