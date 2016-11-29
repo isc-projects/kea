@@ -1705,9 +1705,9 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     string config_bogus = config_prefix + "99" + config_postfix;
 
     ConstElementPtr json_bogus;
-    ASSERT_NO_THROW(json_bogus = parseJSON(config_bogus));
+    ASSERT_NO_THROW(json_bogus = parseDHCP6(config_bogus));
     ConstElementPtr json_valid;
-    ASSERT_NO_THROW(json_valid = parseJSON(config_valid));
+    ASSERT_NO_THROW(json_valid = parseDHCP6(config_valid));
 
     NakedDhcpv6Srv srv(0);
 

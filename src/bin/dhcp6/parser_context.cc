@@ -147,14 +147,16 @@ Parser6Context::context_name()
         return ("client-classes");
     case SERVER_ID:
         return ("server-id");
-    case DHCP_DDNS:
-        return ("dhcp-ddns");
+    case CONTROL_SOCKET:
+        return ("control-socket");
     case POOLS:
         return ("pools");
     case PD_POOLS:
         return ("pd-pools");
     case RESERVATIONS:
         return ("reservations");
+    case RELAY:
+        return ("relay");
     case CLIENT_CLASS:
         return ("client-class");
     case LOGGERS:
