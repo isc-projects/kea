@@ -69,9 +69,9 @@ TEST(ParserTest, mapInMap) {
 }
 
 TEST(ParserTest, listInList) {
-    string txt = "{ \"countries\": [ [ \"Britain\", \"Wales\", \"Scotland\" ], "
-                                    "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ] }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    string txt = "[ [ \"Britain\", \"Wales\", \"Scotland\" ], "
+                 "[ \"Pomorze\", \"Wielkopolska\", \"Tatry\"] ]";
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, nestedMaps) {
@@ -80,8 +80,8 @@ TEST(ParserTest, nestedMaps) {
 }
 
 TEST(ParserTest, nestedLists) {
-    string txt = "{ \"unity\": [ \"half\", [ \"quarter\", [ \"eighth\", [ \"sixteenth\" ]]]] }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    string txt = "[ \"half\", [ \"quarter\", [ \"eighth\", [ \"sixteenth\" ]]]]";
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, listsInMaps) {
@@ -91,9 +91,9 @@ TEST(ParserTest, listsInMaps) {
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "{ \"solar-system\": [ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                                      " { \"body\": \"mars\", \"gravity\": 0.376 } ] }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
+                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, types) {

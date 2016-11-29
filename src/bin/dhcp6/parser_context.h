@@ -46,12 +46,14 @@ public:
         SUBPARSER_PD_POOL,
         SUBPARSER_HOST_RESERVATION6,
         // Common DHCP subparsers
-        // SUBPARSER_OPTION_DEF,
+          // SUBPARSER_OPTION_DEF,
         SUBPARSER_OPTION_DATA,
         SUBPARSER_HOOKS_LIBRARY,
-        // SUBPARSER_CONTROL_SOCKET,
-        // SUBPARSER_D2_CLIENT,
-        // SUBPARSER_LEASE_EXPIRATION
+          // SUBPARSER_CONTROL_SOCKET,
+          // SUBPARSER_D2_CLIENT,
+          // SUBPARSER_LEASE_EXPIRATION,
+        // JSON value subparser
+        SUBPARSER_JSON
     } ParserType;
 
     /// @brief Default constructor.
