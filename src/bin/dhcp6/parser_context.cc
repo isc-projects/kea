@@ -139,6 +139,8 @@ Parser6Context::context_name()
         return ("hooks-librairies");
     case SUBNET6:
         return ("subnet6");
+    case OPTION_DEF:
+        return ("option-def");
     case OPTION_DATA:
         return ("option-data");
     case CLIENT_CLASSES:

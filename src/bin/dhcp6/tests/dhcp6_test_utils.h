@@ -26,6 +26,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <hooks/hooks_manager.h>
 
 #include <list>
@@ -637,6 +638,42 @@ public:
     /// @brief Server object under test.
     NakedDhcpv6Srv srv_;
 };
+
+// For parser testing (JSON map, no exception expected)
+inline isc::data::ConstElementPtr
+parseJSON(const std::string& in)
+{
+    isc::dhcp::Parser6Context ctx;
+    return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_GENERIC_JSON));
+}
+
+// For parser testing (DHCP6)
+inline isc::data::ConstElementPtr
+parseDHCP6(const std::string& in)
+{
+    try {
+        isc::dhcp::Parser6Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
+    }
+    catch (const std::exception& ex) {
+        std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        throw;
+    }
+}
+
+// For parser testing (OPTION_DEF)
+inline isc::data::ConstElementPtr
+parseOPTION_DEF(const std::string& in)
+{
+    try {
+        isc::dhcp::Parser6Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_OPTION_DEF));
+    }
+    catch (const std::exception& ex) {
+        std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        throw;
+    }
+}
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

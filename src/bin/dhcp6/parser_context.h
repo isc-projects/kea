@@ -40,13 +40,14 @@ public:
         PARSER_GENERIC_JSON, // This will parse the content as generic JSON
         PARSER_DHCP6,        // This will parse the content as DHCP6 config
         // DHCP6 config subparsers
+        SUBPARSER_DHCP6,
         SUBPARSER_INTERFACES6,
         SUBPARSER_SUBNET6,
         SUBPARSER_POOL6,
         SUBPARSER_PD_POOL,
         SUBPARSER_HOST_RESERVATION6,
         // Common DHCP subparsers
-          // SUBPARSER_OPTION_DEF,
+        SUBPARSER_OPTION_DEF,
         SUBPARSER_OPTION_DATA,
         SUBPARSER_HOOKS_LIBRARY,
           // SUBPARSER_CONTROL_SOCKET,
@@ -131,6 +132,7 @@ public:
         HOST_RESERVATION_IDENTIFIERS,
         HOOKS_LIBRARIES,
         SUBNET6,
+        OPTION_DEF,
         OPTION_DATA,
         CLIENT_CLASSES,
         SERVER_ID,

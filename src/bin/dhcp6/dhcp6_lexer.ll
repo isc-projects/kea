@@ -107,6 +107,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(driver.loc_);
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(driver.loc_);
+        case Parser6Context::SUBPARSER_DHCP6:
+            return isc::dhcp::Dhcp6Parser::make_SUB_DHCP6(driver.loc_);
         case Parser6Context::SUBPARSER_INTERFACES6:
             return isc::dhcp::Dhcp6Parser::make_SUB_INTERFACES6(driver.loc_);
         case Parser6Context::SUBPARSER_SUBNET6:
@@ -220,6 +222,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::SERVER_ID:
         return isc::dhcp::Dhcp6Parser::make_TYPE(driver.loc_);
     default:
@@ -323,6 +326,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"option-def\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_OPTION_DEF(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("option-def", driver.loc_);
+    }
+}
+
 \"option-data\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -342,6 +354,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
@@ -444,6 +457,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"code\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
         return isc::dhcp::Dhcp6Parser::make_CODE(driver.loc_);
     default:
@@ -621,6 +635,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"space\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
         return isc::dhcp::Dhcp6Parser::make_SPACE(driver.loc_);
     default:
@@ -630,6 +645,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"csv-format\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
         return isc::dhcp::Dhcp6Parser::make_CSV_FORMAT(driver.loc_);
     default:

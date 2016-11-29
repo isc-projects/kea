@@ -67,6 +67,7 @@ using namespace std;
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   SUBNET6 "subnet6"
+  OPTION_DEF "option-def"
   OPTION_DATA "option-data"
   NAME "name"
   DATA "data"
@@ -131,11 +132,13 @@ using namespace std;
  // parse.
   TOPLEVEL_GENERIC_JSON
   TOPLEVEL_DHCP6
+  SUB_DHCP6
   SUB_INTERFACES6
   SUB_SUBNET6
   SUB_POOL6
   SUB_PD_POOL
   SUB_RESERVATION
+  SUB_OPTION_DEF
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_JSON
@@ -159,11 +162,13 @@ using namespace std;
 
 start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
      | TOPLEVEL_DHCP6 { ctx.ctx_ = ctx.CONFIG; } syntax_map
+     | SUB_DHCP6 { ctx.ctx_ = ctx.DHCP6; } sub_dhcp6
      | SUB_INTERFACES6 { ctx.ctx_ = ctx.INTERFACES_CONFIG; } sub_interfaces6
      | SUB_SUBNET6 { ctx.ctx_ = ctx.SUBNET6; } sub_subnet6
      | SUB_POOL6 { ctx.ctx_ = ctx.POOLS; } sub_pool6
      | SUB_PD_POOL { ctx.ctx_ = ctx.PD_POOLS; } sub_pd_pool
      | SUB_RESERVATION { ctx.ctx_ = ctx.RESERVATIONS; } sub_reservation
+     | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
@@ -299,6 +304,16 @@ dhcp6_object: DHCP6 {
     ctx.leave();
 };
 
+// subparser: similar to the corresponding rule but without parent
+// so the stack is empty at the rule entry.
+sub_dhcp6: LCURLY_BRACKET {
+    // Parse the Dhcp6 map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} global_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 global_params: global_param
              | global_params COMMA global_param
              ;
@@ -317,6 +332,7 @@ global_param: preferred_lifetime
             | relay_supplied_options
             | host_reservation_identifiers
             | client_classes
+            | option_def_list
             | option_data_list
             | hooks_libraries
             | expired_leases_processing
@@ -356,8 +372,6 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.leave();
 };
 
-// subparser: similar to the corresponding rule but without parent
-// so the stack is empty at the rule entry.
 sub_interfaces6: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -695,6 +709,95 @@ id: ID COLON INTEGER {
     ctx.stack_.back()->set("id", id);
 };
 
+// ---- option-def --------------------------
+
+// This defines the "option-def": [ ... ] entry that may appear
+// at a global option.
+option_def_list: OPTION_DEF {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("option-def", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.OPTION_DEF);
+} COLON LSQUARE_BRACKET option_def_list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// This defines the content of option-def. It may be empty,
+// have one entry or multiple entries separated by comma.
+option_def_list_content: %empty
+                       | not_empty_option_def_list
+                       ;
+
+not_empty_option_def_list: option_def_entry
+                         | not_empty_option_def_list COMMA option_def_entry
+                          ;
+
+// This defines the content of a single entry { ... } within
+// option-def list.
+option_def_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} option_def_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+sub_option_def: LCURLY_BRACKET {
+    // Parse the option-def list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} option_def_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+// This defines parameters specified inside the map that itself
+// is an entry in option-def list.
+option_def_params: %empty
+                 | not_empty_option_def_params
+                 ;
+
+not_empty_option_def_params: option_def_param
+                           | not_empty_option_def_params COMMA option_def_param
+                           ;
+
+option_def_param: option_def_name
+                | option_def_code
+                | option_def_type
+                | option_def_space
+                | option_def_csv_format
+                | unknown_map_entry
+                ;
+
+
+option_def_name: name;
+
+code: CODE COLON INTEGER {
+    ElementPtr code(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("code", code);
+};
+
+option_def_code: code;
+
+option_def_type: type;
+
+space: SPACE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr space(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("space", space);
+    ctx.leave();
+};
+
+option_def_space: space;
+
+csv_format: CSV_FORMAT COLON BOOLEAN {
+    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("csv-format", space);
+};
+
+option_def_csv_format: csv_format;
+
 // ---- option-data --------------------------
 
 // This defines the "option-data": [ ... ] entry that may appear
@@ -766,23 +869,11 @@ option_data_data: DATA {
     ctx.leave();
 };
 
-option_data_code: CODE COLON INTEGER {
-    ElementPtr code(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("code", code);
-};
+option_data_code: code;
 
-option_data_space: SPACE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr space(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("space", space);
-    ctx.leave();
-};
+option_data_space: space;
 
-option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
-    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("csv-format", space);
-};
+option_data_csv_format: csv_format;
 
 // ---- pools ------------------------------------
 
