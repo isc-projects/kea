@@ -138,6 +138,7 @@ using namespace std;
   SUB_RESERVATION
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
+  SUB_JSON
 ;
 
 %token <std::string> STRING "constant string"
@@ -153,7 +154,7 @@ using namespace std;
 
 // The whole grammar starts with a map, because the config file
 // constists of Dhcp, Logger and DhcpDdns entries in one big { }.
-// We made the same for subparsers.
+// We made the same for subparsers at the exception of the JSON value.
 %start start;
 
 start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
@@ -165,6 +166,7 @@ start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
      | SUB_RESERVATION { ctx.ctx_ = ctx.RESERVATIONS; } sub_reservation
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
+     | SUB_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -180,6 +182,11 @@ value: INTEGER { $$ = ElementPtr(new IntElement($1, ctx.loc2pos(@1))); }
      | map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
      | list_generic { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); }
      ;
+
+sub_json: value {
+    // Push back the JSON value on the stack
+    ctx.stack_.push_back($1);
+};
 
 map2: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
@@ -349,6 +356,8 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.leave();
 };
 
+// subparser: similar to the corresponding rule but without parent
+// so the stack is empty at the rule entry.
 sub_interfaces6: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
