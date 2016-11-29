@@ -196,8 +196,12 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
         // surround it with try-catch.
         if (element.first == "option-data") {
             CfgOptionPtr cfg_option = host_->getCfgOption4();
-            OptionDataListParser parser(element.first, cfg_option, AF_INET);
-            parser.build(element.second);
+
+            // This parser is converted to SimpleParser already. It
+            // parses the Element structure immediately, there's no need
+            // to go through build/commit phases.
+            OptionDataListParser parser(AF_INET);
+            parser.parse(cfg_option, element.second);
 
        // Everything else should be surrounded with try-catch to append
        // position.
@@ -255,8 +259,12 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
         // appended).
         if (element.first == "option-data") {
             CfgOptionPtr cfg_option = host_->getCfgOption6();
-            OptionDataListParser parser(element.first, cfg_option, AF_INET6);
-            parser.build(element.second);
+
+            // This parser is converted to SimpleParser already. It
+            // parses the Element structure immediately, there's no need
+            // to go through build/commit phases.
+            OptionDataListParser parser(AF_INET6);
+            parser.parse(cfg_option, element.second);
 
         } else if (element.first == "ip-addresses" || element.first == "prefixes") {
             BOOST_FOREACH(ConstElementPtr prefix_element,
