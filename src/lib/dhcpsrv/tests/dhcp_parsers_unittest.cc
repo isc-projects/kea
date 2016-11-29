@@ -16,6 +16,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/simple_parser.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
@@ -292,7 +293,7 @@ public:
     /// @return returns an ConstElementPtr containing the numeric result
     /// code and outcome comment.
     isc::data::ConstElementPtr parseElementSet(isc::data::ConstElementPtr
-                                           config_set) {
+                                               config_set) {
         // Answer will hold the result.
         ConstElementPtr answer;
         if (!config_set) {
@@ -310,6 +311,16 @@ public:
             const std::map<std::string, ConstElementPtr>& values_map =
                                                       config_set->mapValue();
             BOOST_FOREACH(config_pair, values_map) {
+
+                // These are the simple parsers. No need to go through
+                // the ParserPtr hooplas with them.
+                if ( (config_pair.first == "option-data") ||
+                     (config_pair.first == "option-def")) {
+                    continue;
+                }
+                // Remaining ones are old style parsers. Need go do
+                // the build/commit dance with them.
+
                 // Create the parser based on element name.
                 ParserPtr parser(createConfigParser(config_pair.first));
                 // Options must be parsed last
@@ -322,12 +333,27 @@ public:
                 }
             }
 
+            int family = parser_context_->universe_ == Option::V4
+                ? AF_INET : AF_INET6;
+
+            // The option definition parser is the next one to be run.
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                def_config = values_map.find("option-def");
+            if (def_config != values_map.end()) {
+
+                CfgOptionDefPtr cfg_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+                OptionDefListParser def_list_parser(family);
+                def_list_parser.parse(cfg_def, def_config->second);
+            }
+
             // The option values parser is the next one to be run.
             std::map<std::string, ConstElementPtr>::const_iterator
                                 option_config = values_map.find("option-data");
             if (option_config != values_map.end()) {
-                option_parser->build(option_config->second);
-                option_parser->commit();
+                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+
+                OptionDataListParser option_list_parser(family);
+                option_list_parser.parse(cfg_option, option_config->second);
             }
 
             // Everything was fine. Configuration is successful.
@@ -359,17 +385,9 @@ public:
     /// @throw throws NotImplemented if element name isn't supported.
     ParserPtr createConfigParser(const std::string& config_id) {
         ParserPtr parser;
-        int family = parser_context_->universe_ == Option::V4 ?
-            AF_INET : AF_INET6;
-        if (config_id.compare("option-data") == 0) {
-            parser.reset(new OptionDataListParser(config_id, CfgOptionPtr(),
-                                                  family));
-
-        } else if (config_id.compare("option-def") == 0) {
-            parser.reset(new OptionDefListParser(config_id,
-                                                 parser_context_));
-
-        } else if (config_id.compare("hooks-libraries") == 0) {
+        // option-data and option-def converted to SimpleParser, so they
+        // are no longer here.
+        if (config_id.compare("hooks-libraries") == 0) {
             parser.reset(new HooksLibrariesParser(config_id));
             hooks_libraries_parser_ =
                 boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
@@ -392,13 +410,15 @@ public:
     ///
     /// @return retuns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
-    int parseConfiguration(const std::string& config) {
+    int parseConfiguration(const std::string& config, bool v6 = false) {
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
         ElementPtr json = Element::fromJSON(config);
         EXPECT_TRUE(json);
         if (json) {
+            SimpleParser::setAllDefaults(json, v6);
+
             ConstElementPtr status = parseElementSet(json);
             ConstElementPtr comment = parseAnswer(rcode_, status);
             error_text_ = comment->stringValue();
@@ -566,7 +586,7 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
         "}";
 
     // Verify that the configuration string parses.
-    int rcode = parseConfiguration(config);
+    int rcode = parseConfiguration(config, true);
     ASSERT_EQ(0, rcode);
 
 
@@ -828,7 +848,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_NE(0, rcode);
 
     CfgMgr::instance().clear();
@@ -844,7 +864,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"data\": \"0\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_NE(0, rcode);
 
     CfgMgr::instance().clear();
@@ -859,7 +879,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"data\": \"0\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     ASSERT_EQ(0, rcode);
     OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
@@ -875,10 +895,11 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
+        "    \"csv-format\": false,"
         "    \"data\": \"123456\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
@@ -899,7 +920,7 @@ TEST_F(ParseConfigTest, optionDataNoName) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
@@ -919,7 +940,7 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
@@ -938,7 +959,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
@@ -955,7 +976,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
         " } ]"
         "}";
     rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    23));
@@ -984,7 +1005,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "}";
 
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 2345));
@@ -1010,7 +1031,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "}";
 
     rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    2345));
@@ -1031,7 +1052,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
         "}";
 
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, D6O_DHCPV4_O_DHCPV6_SERVER));
