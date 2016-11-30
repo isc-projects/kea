@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <util/threads/thread.h>
 #include <util/threads/sync.h>
 
@@ -20,7 +22,7 @@
 
 using std::string;
 using std::exception;
-using std::auto_ptr;
+using std::unique_ptr;
 using boost::scoped_ptr;
 
 namespace isc {
@@ -123,7 +125,7 @@ public:
 Thread::Thread(const boost::function<void ()>& main) :
     impl_(NULL)
 {
-    auto_ptr<Impl> impl(new Impl(main));
+    unique_ptr<Impl> impl(new Impl(main));
     Blocker blocker;
     const int result = pthread_create(&impl->tid_, NULL, &Impl::run,
                                       impl.get());

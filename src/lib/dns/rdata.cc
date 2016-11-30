@@ -1,8 +1,10 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 
@@ -278,10 +280,10 @@ Generic::constructFromLexer(MasterLexer& lexer) {
 Generic::Generic(const std::string& rdata_string) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
+    // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the GenericImpl that constructFromLexer() returns.
-    std::auto_ptr<GenericImpl> impl_ptr(NULL);
+    std::unique_ptr<GenericImpl> impl_ptr;
 
     try {
         std::istringstream ss(rdata_string);

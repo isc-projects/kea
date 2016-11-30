@@ -117,6 +117,48 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+# Check for std::unique_ptr and aggregate initialization (aka C++11) support
+retried=0
+CXX_SAVED=$CXX
+for retry in "--std=c++11" "--std=c++0x" "--std=c++1x"; do
+	AC_MSG_CHECKING(std::unique_ptr support)
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <memory>],
+			[std::unique_ptr<int> a;])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 if test $retried -eq 0; then
+			AC_MSG_WARN([unsupported C++11 feature])
+		 fi
+		 if test $retried -ge 3; then
+		 	AC_MSG_ERROR([std::unique_ptr (a C++11 feature) is not supported])
+		 fi
+		 AC_MSG_NOTICE([retrying by adding $retry to $CXX])
+		 retried=`expr $retried + 1`
+		 CXX="$CXX_SAVED $retry"
+		 continue])
+
+	AC_MSG_CHECKING(aggregate initialization support)
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <vector>],
+			[std::vector<int> foo = { 1, 2, 3};])],
+		[AC_MSG_RESULT([yes])
+		 break],
+		[AC_MSG_RESULT([no])
+		 if test $retried -eq 0; then
+		 	AC_MSG_WARN([unsupported C++11 feature])
+		 fi
+		 if test $retried -ge 3; then
+		 	AC_MSG_ERROR([aggregate initialization (a C++11 feature) is not supported])
+		 fi
+		 AC_MSG_NOTICE([retrying by adding $retry to $CXX])
+		 retried=`expr $retried + 1`
+		 CXX="$CXX_SAVED $retry"
+		 continue])
+done
+
 dnl Determine if we are using GNU sed
 GNU_SED=no
 $SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
