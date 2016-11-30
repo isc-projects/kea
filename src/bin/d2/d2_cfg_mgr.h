@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <d2/d_cfg_mgr.h>
 #include <d2/d2_config.h>
+#include <process/d_cfg_mgr.h>
 
 #include <stdint.h>
 #include <string>

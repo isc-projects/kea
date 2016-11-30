@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,9 @@
 
 #include <config.h>
 #include <asiolink/io_service.h>
-#include <d2/d2_log.h>
-#include <d2/spec_config.h>
-#include <d2/tests/d_test_stubs.h>
+#include <process/d2_log.h>
+#include <process/spec_config.h>
+#include <process/testutils/d_test_stubs.h>
 
 using namespace boost::asio;
 

@@ -1498,7 +1498,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/d2/Makefile
-                 src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
@@ -1585,6 +1584,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
+                 src/lib/process/Makefile
+                 src/lib/process/spec_config.h.pre
+                 src/lib/process/tests/Makefile
+                 src/lib/process/testutils/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/dhcp_test_lib.sh
                  src/lib/stats/Makefile

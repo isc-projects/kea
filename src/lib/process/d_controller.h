@@ -9,12 +9,12 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d2_log.h>
-#include <d2/d_process.h>
-#include <d2/io_service_signal.h>
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <process/d2_log.h>
+#include <process/d_process.h>
+#include <process/io_service_signal.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
