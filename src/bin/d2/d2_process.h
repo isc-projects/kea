@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,9 @@
 #ifndef D2_PROCESS_H
 #define D2_PROCESS_H
 
-#include <d2/d_process.h>
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_update_mgr.h>
+#include <process/d_process.h>
 
 namespace isc {
 namespace d2 {

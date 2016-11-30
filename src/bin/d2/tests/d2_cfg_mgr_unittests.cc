@@ -9,10 +9,10 @@
 #include <config/module_spec.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
-#include <d_test_stubs.h>
+#include <dhcpsrv/testutils/config_result_check.h>
+#include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
 #include <util/encode/base64.h>
-#include <dhcpsrv/testutils/config_result_check.h>
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>

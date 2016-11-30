@@ -19,7 +19,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda d2_messages.h d2_messages.cc s-messages
 
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
@@ -47,25 +47,19 @@ $(man_MANS):
 
 endif
 
-spec_config.h: spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
 d2_messages.h d2_messages.cc: s-messages
 
 s-messages: d2_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
 	touch $@
 
-BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
+BUILT_SOURCES = d2_messages.h d2_messages.cc
 
 # convenience archive
 
 noinst_LTLIBRARIES = libd2.la
 
 libd2_la_SOURCES  =
-libd2_la_SOURCES += d_process.h
-libd2_la_SOURCES += d_controller.cc d_controller.h
-libd2_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
 libd2_la_SOURCES += d2_config.cc d2_config.h
@@ -75,13 +69,11 @@ libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
 libd2_la_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 libd2_la_SOURCES += d2_zone.cc d2_zone.h
 libd2_la_SOURCES += dns_client.cc dns_client.h
-libd2_la_SOURCES += io_service_signal.cc io_service_signal.h
 libd2_la_SOURCES += labeled_value.cc labeled_value.h
 libd2_la_SOURCES += nc_add.cc nc_add.h
 libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += state_model.cc state_model.h
-
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
@@ -93,6 +85,7 @@ kea_dhcp_ddns_SOURCES  = main.cc
 
 kea_dhcp_ddns_LDADD  = libd2.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la

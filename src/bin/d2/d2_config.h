@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,10 +9,10 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <d2/d_cfg_mgr.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
 #include <exceptions/exceptions.h>
+#include <process/d_cfg_mgr.h>
 
 #include <boost/foreach.hpp>
 

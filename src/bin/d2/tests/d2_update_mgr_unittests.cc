@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,9 +8,9 @@
 
 #include <asiolink/io_service.h>
 #include <d2/d2_update_mgr.h>
-#include <util/time_utilities.h>
-#include <d_test_stubs.h>
 #include <nc_test_utils.h>
+#include <process/testutils/d_test_stubs.h>
+#include <util/time_utilities.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
