@@ -6,13 +6,13 @@
 
 /// Defines the logger used by the top-level component of kea-dhcp-ddns.
 
-#include <process/d2_log.h>
+#include <process/d_log.h>
 
 namespace isc {
 namespace d2 {
 
 /// @brief Defines the logger used within libkea-process library.
-isc::log::Logger dctl_logger("dhcpddns");
+isc::log::Logger dctl_logger("dctl");
 
 } // namespace d2
 } // namespace isc

@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
-#include <process/d2_log.h>
+#include <process/d_log.h>
 #include <process/d_controller.h>
 
 #ifdef HAVE_MYSQL
