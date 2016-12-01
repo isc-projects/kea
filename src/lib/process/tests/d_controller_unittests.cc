@@ -284,14 +284,17 @@ TEST_F(DStubControllerTest, configUpdateTests) {
 /// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
-/// d2::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a d2::COMMAND_SUCCESS status.
-/// 3. A valid, custom controller command is recognized a d2::COMMAND_SUCCESS
+/// process::COMMAND_INVALID.
+/// 2. Shutdown command is recognized and returns a process::COMMAND_SUCCESS
 /// status.
-/// 4. A valid, custom process command is recognized a d2::COMMAND_SUCCESS
+/// 3. A valid, custom controller command is recognized a
+/// process::COMMAND_SUCCESS
 /// status.
-/// 5. That a valid controller command that fails returns a d2::COMMAND_ERROR.
-/// 6. That a valid process command that fails returns a d2::COMMAND_ERROR.
+/// 4. A valid, custom process command is recognized a
+/// process::COMMAND_SUCCESS status.
+/// 5. That a valid controller command that fails returns a
+/// process::COMMAND_ERROR.
+/// 6. That a valid process command that fails returns a process::COMMAND_ERROR.
 TEST_F(DStubControllerTest, executeCommandTests) {
     int rcode = -1;
     isc::data::ConstElementPtr answer;
@@ -301,38 +304,39 @@ TEST_F(DStubControllerTest, executeCommandTests) {
     ASSERT_NO_THROW(initProcess());
     EXPECT_TRUE(checkProcess());
 
-    // Verify that an unknown command returns an d2::COMMAND_INVALID response.
+    // Verify that an unknown command returns an process::COMMAND_INVALID
+    // response.
     std::string bogus_command("bogus");
     answer = executeCommand(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
-    // Verify that shutdown command returns d2::COMMAND_SUCCESS response.
+    // Verify that shutdown command returns process::COMMAND_SUCCESS response.
     answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command returns
-    // d2::COMMAND_SUCCESS response.
+    // process::COMMAND_SUCCESS response.
     answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
-    // Verify that a valid custom process command returns d2::COMMAND_SUCCESS
-    // response.
+    // Verify that a valid custom process command returns
+    // process::COMMAND_SUCCESS response.
     answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command that fails returns
-    // a d2::COMMAND_ERROR.
+    // a process::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftControllerCommand);
     answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 
     // Verify that a valid custom process command that fails returns
-    // a d2::COMMAND_ERROR.
+    // a process::COMMAND_ERROR.
     SimFailure::set(SimFailure::ftProcessCommand);
     answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
@@ -456,5 +460,5 @@ TEST_F(DStubControllerTest, sigtermShutdown) {
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace
