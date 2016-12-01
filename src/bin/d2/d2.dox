@@ -41,14 +41,14 @@ base are shown in the following class diagram:
 
 @image html abstract_app_classes.svg  "Controllable Process Layer Classes"
 
-- isc::d2::DControllerBase - provides all of the services necessary to manage
+- isc::process::DControllerBase - provides all of the services necessary to manage
 an application process class derived from isc::d2::DProcess. These services include:
     - Command line argument handling
     - Process instantiation and initialization
     - Support for stand-alone execution
     - Process event loop invocation and shutdown
 
-    It creates and manages an instance of isc::d2::DProcessBase.  The CPL is
+    It creates and manages an instance of isc::process::DProcessBase.  The CPL is
     designed for asynchronous event processing applications.  It is constructed
     to use ASIO library for IO processing.  @c DControllerBase owns an
     isc::asiolink::IOService instance and it passes this into the @c
@@ -66,7 +66,7 @@ an application process class derived from isc::d2::DProcess. These services incl
         - module-name : is a label which uniquely identifies the
         configuration data for the (i.e. the controlled process.)
         It is the value returned by @ref
-        isc::d2::DControllerBase::getAppName()
+        isc::process::DControllerBase::getAppName()
 
         - module-config: a set of zero or more JSON elements which comprise
         application's configuration values.  Element syntax is governed
@@ -78,21 +78,21 @@ an application process class derived from isc::d2::DProcess. These services incl
     control operations such as configuration changes or status reporting will
     likely be implemented.
 
-- isc::d2::DProcessBase - defines an asynchronous-event processor (i.e.
+- isc::process::DProcessBase - defines an asynchronous-event processor (i.e.
 application) which provides a uniform interface to:
     - Instantiate and initialize a process instance
     - "Run" the application by starting its event loop
     - Inject events to control the process
 It owns an instance of @c DCfgMgrBase.
 
-- isc::d2::DCfgMgrBase - provides the mechanisms for managing an application's
+- isc::process::DCfgMgrBase - provides the mechanisms for managing an application's
 configuration.  This includes services for parsing sets of configuration
 values, storing the parsed information in its converted form, and retrieving
 the information on demand.  It owns an instance of @c DCfgContextBase, which
 provides a "global" context for information that is accessible before, during,
 and after parsing.
 
-- isc::d2::DCfgContextBase - implements a container for configuration
+- isc::process::DCfgContextBase - implements a container for configuration
 information or "context".  It provides a single enclosure for the storage of
 configuration parameters or any other information that needs to accessible
 within a given context.
@@ -121,41 +121,41 @@ libraries.  Therefore, CPL provides its own signal handling mechanism to
 propagate an OS signal such as SIGHUP to an IOSerivce as a ready event with a
 callback.
 
-isc::d2::DControllerBase uses two mechanisms to carry out signal handling.  It
-uses isc::util::SignalSet to catch OS signals, and isc::d2:IOSignalQueue to
+isc::process::DControllerBase uses two mechanisms to carry out signal handling.  It
+uses isc::util::SignalSet to catch OS signals, and isc::process::IOSignalQueue to
 propagate them to its isc::asiolink::IOService as instances of
-isc::d2::IOSignal.
+isc::process::IOSignal.
 
 This CPL signaling class hierarchy is illustrated in the following diagram:
 
 @image html cpl_signal_classes.svg "CPL Signal Classes"
 
-The mechanics of isc::d2::IOSignal are straight forward. Upon construction it
+The mechanics of isc::process::IOSignal are straight forward. Upon construction it
 is given the target isc::asiolink::IOService, the value of the OS signal to
-send (e.g. SIGINT, SIGHUP...), and an isc::d2::IOSignalHandler.  This handler
+send (e.g. SIGINT, SIGHUP...), and an isc::process::IOSignalHandler.  This handler
 should contain the logic the caller would normally execute in its OS signal
-handler. Each isc::d2::IOSignal instance has a unique identifier called its
+handler. Each isc::process::IOSignal instance has a unique identifier called its
 sequence_id.
 
 Internally, IOSignal creates a 1 ms, one-shot timer, on the given
 IOService.  When the timer expires its event handler invokes the caller's
 IOSignalHandler passing it the sequence_id of the IOSignal.
 
-Sending IOSignals is done through an isc::d2::IOSignalQueue.  This class is
+Sending IOSignals is done through an isc::process::IOSignalQueue.  This class is
 used to create the signals, house them until they are delivered, and dequeue
 them so they can be been handled.  To generate an IOSignal when an OS signal
 arrives, the process's OS signal handler need only call
-isc::d2::IOSignalQueue::pushSignal() with the appropriate values.
+isc::process::IOSignalQueue::pushSignal() with the appropriate values.
 
 To dequeue the IOSignal inside the caller's IOSignalHandler, one simply
-invokes isc::d2::IOSignalQueue::popSignal() passing it the sequence_id
+invokes isc::process::IOSignalQueue::popSignal() passing it the sequence_id
 parameter passed to the handler.  This method returns a pointer to
 instigating IOSignal from which the value of OS signal (i.e. SIGINT,
 SIGUSR1...) can be obtained.  Note that calling popSignal() removes the
 IOSignalPtr from the queue, which should reduce its reference count to
 zero upon exiting the handler (unless a deliberate copy of it is made).
 
-A typical isc::d2::IOSignalHandler might be structured as follows:
+A typical isc::process::IOSignalHandler might be structured as follows:
 @code
 
     void processSignal(IOSignalId sequence_id) {
@@ -175,12 +175,12 @@ exceptions thrown by an IOSignalHandler.  This is done to protect the integrity
 IOService context.
 
 CPL integrates the use of the two mechanisms by registering the method,
-isc::d2::DControllerBase::osSignalHandler(), as the
+isc::process::DControllerBase::osSignalHandler(), as the
 isc::util::SignalSet::onreceipt_handler_.  This configures SignalSet's internal
 handler to invoke the method each time a signal arrives.  When invoked, this
-method will call isc::d2::IOSignalQueue::pushSignal() to create an
-isc::d2::IOSignal, passing in the OS signal received and
-isc::d2::DControllerBase::ioSignalHandler() to use as the IOSignal's
+method will call isc::process::IOSignalQueue::pushSignal() to create an
+isc::process::IOSignal, passing in the OS signal received and
+isc::process::DControllerBase::ioSignalHandler() to use as the IOSignal's
 ready event handler
 
 The following sequence diagram depicts the initialization of signal handling
