@@ -13,7 +13,7 @@
 using namespace boost::asio;
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 const char* valid_d2_config = "{ "
                         "\"ip-address\" : \"127.0.0.1\" , "
@@ -423,5 +423,5 @@ DStubCfgMgr::createConfigParser(const std::string& element_id,
     return (parser);
 }
 
-}; // namespace isc::d2
+}; // namespace isc::process
 }; // namespace isc

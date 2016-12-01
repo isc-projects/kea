@@ -11,6 +11,8 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
 
+using namespace isc::process;
+
 namespace isc {
 namespace d2 {
 

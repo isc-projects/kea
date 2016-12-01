@@ -18,7 +18,7 @@
 using namespace boost::posix_time;
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Test fixture class for testing DControllerBase class. This class
 /// derives from DControllerTest and wraps a DStubController.  DStubController

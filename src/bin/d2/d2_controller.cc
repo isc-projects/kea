@@ -12,6 +12,8 @@
 
 #include <stdlib.h>
 
+using namespace isc::process;
+
 namespace isc {
 namespace d2 {
 

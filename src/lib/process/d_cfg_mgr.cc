@@ -30,7 +30,7 @@ using namespace isc::data;
 using namespace isc::asiolink;
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 // *********************** DCfgContextBase  *************************
 

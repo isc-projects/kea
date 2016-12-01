@@ -15,7 +15,7 @@
 #include <queue>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Test fixture for testing the use of IOSignals.
 ///
@@ -387,5 +387,5 @@ TEST_F(IOSignalTest, mixedSignals) {
     EXPECT_EQ(sigusr2_cnt, (stop_at_count_/3));
 }
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace

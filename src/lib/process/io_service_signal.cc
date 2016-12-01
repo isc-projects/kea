@@ -9,7 +9,7 @@
 #include <process/io_service_signal.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 IOSignal::IOSignal (asiolink::IOService& io_service, int signum,
                     IOSignalHandler handler)
@@ -112,5 +112,5 @@ IOSignalQueue::clear() {
     signals_.clear();
 }
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace

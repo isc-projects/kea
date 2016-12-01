@@ -21,7 +21,7 @@
 
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Exception thrown when the command line is invalid.
 class InvalidUsage : public isc::Exception {
@@ -508,7 +508,7 @@ private:
 friend class DControllerTest;
 };
 
-}; // namespace isc::d2
+}; // namespace isc::process
 }; // namespace isc
 
 #endif

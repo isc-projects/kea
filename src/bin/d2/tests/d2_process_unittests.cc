@@ -22,6 +22,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::config;
 using namespace isc::d2;
+using namespace isc::process;
 using namespace boost::posix_time;
 
 namespace {
