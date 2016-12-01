@@ -21,7 +21,7 @@ namespace d2 {
 /// to receive DNS mapping change requests and carry them out.
 /// It implements the DProcessBase interface, which structures it such that it
 /// is a managed "application", controlled by a management layer.
-class D2Process : public DProcessBase {
+class D2Process : public process::DProcessBase {
 public:
 
     /// @brief Defines the shutdown types supported by D2Process

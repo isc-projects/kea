@@ -28,7 +28,7 @@ using namespace boost::posix_time;
 #include <sstream>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Provides a valid DHCP-DDNS configuration for testing basic
 /// parsing fundamentals.
@@ -862,7 +862,7 @@ private:
 /// testing configuration parsing fundamentals.
 extern const char* valid_d2_config;
 
-}; // namespace isc::d2
+}; // namespace isc::process
 }; // namespace isc
 
 #endif

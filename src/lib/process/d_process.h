@@ -16,7 +16,7 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Exception thrown if the process encountered an operational error.
 class DProcessBaseError : public isc::Exception {
@@ -203,7 +203,7 @@ private:
 /// @brief Defines a shared pointer to DProcessBase.
 typedef boost::shared_ptr<DProcessBase> DProcessBasePtr;
 
-}; // namespace isc::d2
+}; // namespace isc::process
 }; // namespace isc
 
 #endif

@@ -9,11 +9,11 @@
 #include <process/d_log.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Defines the logger used within libkea-process library.
 isc::log::Logger dctl_logger("dctl");
 
-} // namespace d2
+} // namespace process
 } // namespace isc
 

@@ -30,7 +30,7 @@ typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 /// and any other DHCP-DDNS specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
 /// It is derived from the context base class, DCfgContextBase.
-class D2CfgContext : public DCfgContextBase {
+class D2CfgContext : public process::DCfgContextBase {
 public:
     /// @brief Constructor
     D2CfgContext();
@@ -41,8 +41,8 @@ public:
     /// @brief Creates a clone of this context object.
     ///
     /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone() {
-        return (DCfgContextBasePtr(new D2CfgContext(*this)));
+    virtual process::DCfgContextBasePtr clone() {
+        return (process::DCfgContextBasePtr(new D2CfgContext(*this)));
     }
 
     /// @brief Fetches a reference to the D2Params
@@ -103,7 +103,7 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 /// configuration.  This includes services for parsing sets of configuration
 /// values, storing the parsed information in its converted form,
 /// and retrieving the information on demand.
-class D2CfgMgr : public DCfgMgrBase {
+class D2CfgMgr : public process::DCfgMgrBase {
 public:
     /// @brief Reverse zone suffix added to IPv4 addresses for reverse lookups
     /// @todo This should be configurable.
@@ -294,7 +294,7 @@ protected:
     /// error.
     ///
     /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual DCfgContextBasePtr createNewContext();
+    virtual process::DCfgContextBasePtr createNewContext();
 };
 
 /// @brief Defines a shared pointer to D2CfgMgr.

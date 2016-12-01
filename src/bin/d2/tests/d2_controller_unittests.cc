@@ -18,6 +18,7 @@
 
 #include <sstream>
 
+using namespace isc::process;
 using namespace boost::posix_time;
 
 namespace isc {

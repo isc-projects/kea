@@ -22,14 +22,14 @@ namespace d2 {
 /// DControllerBase a templated class but the labor savings versus the
 /// potential number of virtual methods which may be overridden didn't seem
 /// worth the clutter at this point.
-class D2Controller : public DControllerBase {
+class D2Controller : public process::DControllerBase {
 public:
     /// @brief Static singleton instance method. This method returns the
     /// base class singleton instance member.  It instantiates the singleton
     /// and sets the base class instance member upon first invocation.
     ///
     /// @return returns the pointer reference to the singleton instance.
-    static DControllerBasePtr& instance();
+    static process::DControllerBasePtr& instance();
 
     /// @brief Destructor.
     virtual ~D2Controller();
@@ -51,7 +51,7 @@ private:
     /// Note the caller is responsible for destructing the process. This
     /// is handled by the base class, which wraps this pointer with a smart
     /// pointer.
-    virtual DProcessBase* createProcess();
+    virtual process::DProcessBase* createProcess();
 
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.

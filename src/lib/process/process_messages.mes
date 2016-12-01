@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-$NAMESPACE isc::d2
+$NAMESPACE isc::process
 
 % DCTL_ALREADY_RUNNING %1 already running? %2
 This is an error message that occurs when a module encounters a pre-existing

@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 DControllerBasePtr DControllerBase::controller_;
 
@@ -498,6 +498,6 @@ DControllerBase::getVersion(bool extended) {
     return (tmp.str());
 }
 
-}; // namespace isc::d2
+}; // namespace isc::process
 
 }; // namespace isc
