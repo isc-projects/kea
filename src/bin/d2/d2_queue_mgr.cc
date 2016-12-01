@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -137,7 +137,7 @@ D2QueueMgr::startListening() {
                   << ex.what());
     }
 
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_QUEUE_MGR_STARTED);
+    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_QUEUE_MGR_STARTED);
 }
 
 void
@@ -172,7 +172,7 @@ D2QueueMgr::stopListening(const State target_stop_state) {
 void
 D2QueueMgr::updateStopState() {
     mgr_state_ = target_stop_state_;
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_QUEUE_MGR_STOPPED);
+    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_QUEUE_MGR_STOPPED);
 }
 
 

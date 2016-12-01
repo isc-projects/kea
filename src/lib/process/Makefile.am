@@ -36,9 +36,9 @@ EXTRA_DIST = process_messages.mes
 CLEANFILES = *.gcno *.gcda spec_config.h process_messages.h process_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-process.la
-libkea_process_la_SOURCES  = d2_log.cc d2_log.h
-libkea_process_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
+libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
 libkea_process_la_SOURCES += d_controller.cc d_controller.h
+libkea_process_la_SOURCES += d_log.cc d_log.h
 libkea_process_la_SOURCES += d_process.h
 libkea_process_la_SOURCES += io_service_signal.cc io_service_signal.h
 
@@ -65,7 +65,7 @@ libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_process_includedir = $(pkgincludedir)/process
 libkea_process_include_HEADERS = \
-	d2_log.h \
+	d_log.h \
 	d_cfg_mgr.h \
 	d_controller.h \
 	d_process.h \

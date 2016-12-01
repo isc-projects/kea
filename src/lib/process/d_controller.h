@@ -12,7 +12,7 @@
 #include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
-#include <process/d2_log.h>
+#include <process/d_log.h>
 #include <process/d_process.h>
 #include <process/io_service_signal.h>
 

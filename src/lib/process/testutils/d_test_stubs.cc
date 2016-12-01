@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <asiolink/io_service.h>
-#include <process/d2_log.h>
+#include <process/d_log.h>
 #include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
 

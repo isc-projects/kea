@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <log/logger_support.h>
-#include <process/d2_log.h>
+#include <process/d_log.h>
 #include <gtest/gtest.h>
 
 int

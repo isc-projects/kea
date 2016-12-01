@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <asiolink/interval_timer.h>
-#include <process/d2_log.h>
+#include <process/d_log.h>
 #include <process/io_service_signal.h>
 
 namespace isc {

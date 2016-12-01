@@ -441,10 +441,16 @@
 
           <listitem>
             <simpara>
+              <command>kea-dhcp-ddns.dctl</command> - the logger used by the
+              kea-dhcp-ddns daemon for logging basic information about the
+              process, received signals and triggered reconfigurations.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-dhcp-ddns.dhcpddns</command> - the logger used by the
-              kea-dhcp-ddns daemon for logging configuration and global event
-              information.  This logger does not specify logging settings for
-              libraries used by the daemon.
+              kea-dhcp-ddns daemon for logging events related to DDNS operations.
             </simpara>
           </listitem>
 
