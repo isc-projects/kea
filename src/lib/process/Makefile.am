@@ -30,7 +30,7 @@ spec_config.h: spec_config.h.pre
 BUILT_SOURCES = spec_config.h process_messages.h process_messages.cc
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = process_messages.mes
+EXTRA_DIST = process_messages.mes libprocess.dox
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda spec_config.h process_messages.h process_messages.cc s-messages
