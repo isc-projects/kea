@@ -7,23 +7,18 @@
 /**
  @page libprocess libkea-process - Controllable Process Layer (CPL)
 
-The D2 module was built upon an abstract set of classes referred to as the
-Controllable Process Layer or CPL. These classes were originally included
-in the src/bin/d2 directory because D2 was the only module using
-them. The classes were later moved to their own libkea-process library with
-the intent to be used as a base for creating new Kea modules.
-
-The origin of the libkea-process implementation, being a part of D2 module,
-is a reason why its design documentation is combined with the design
-documentation of D2:
-<a href="http://kea.isc.org/wiki/DhcpDdnsDesign">D2 Design</a>.
-
-The following sections describe the architecture of the CPL and how
-it can be used to implement new daemons in Kea.
-
 @section cpl Controllable Process Layer (CPL)
+During the design and development of D2 (Kea's DHCP-DDNS process), an abstract
+layer for process control, called the Controllable Process Layer or CPL, was
+created.  Kea's DHCP servers were initially developed prior to D2 and thus
+before CPL existed.  
 
-This CPL provides the essentials for a controllable, configurable,
+Out of short term convenience and the fact that only D2 was using it, the CPL
+was initially developed as part of D2 in src/bin/d2.  In order to use CPL for
+new Kea processes, it has since been moved into its own library, libkea-process.
+The following sections describe the architecture of CPL and how it can be used to implement new daemons in Kea.
+
+The CPL provides the essentials for a controllable, configurable,
 asynchronous process.  They are the result of an effort to distill the
 common facets of process control currently duplicated in Kea's
 DHCP servers into a reusable construct.  The classes which form this abstract
