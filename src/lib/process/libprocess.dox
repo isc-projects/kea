@@ -11,7 +11,7 @@
 During the design and development of D2 (Kea's DHCP-DDNS process), an abstract
 layer for process control, called the Controllable Process Layer or CPL, was
 created.  Kea's DHCP servers were initially developed prior to D2 and thus
-before CPL existed.  
+before CPL existed.
 
 Out of short term convenience and the fact that only D2 was using it, the CPL
 was initially developed as part of D2 in src/bin/d2.  In order to use CPL for
