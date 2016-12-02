@@ -11,6 +11,8 @@
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
 
+using namespace isc::process;
+
 namespace isc {
 namespace d2 {
 
@@ -42,7 +44,7 @@ D2Process::init() {
 
 void
 D2Process::run() {
-    LOG_INFO(dctl_logger, DHCP_DDNS_STARTED).arg(VERSION);
+    LOG_INFO(d2_logger, DHCP_DDNS_STARTED).arg(VERSION);
     // Loop forever until we are allowed to shutdown.
     while (!canShutdown()) {
         try {
@@ -68,7 +70,7 @@ D2Process::run() {
                           "Primary IO service stopped unexpectedly");
             }
         } catch (const std::exception& ex) {
-            LOG_FATAL(dctl_logger, DHCP_DDNS_FAILED).arg(ex.what());
+            LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
             isc_throw (DProcessBaseError,
                        "Process run method failed: " << ex.what());
         }
@@ -78,7 +80,7 @@ D2Process::run() {
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
 
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
+    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
 };
 
@@ -145,7 +147,7 @@ D2Process::canShutdown() const {
         }
 
         if (all_clear) {
-            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+            LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
                      DHCP_DDNS_CLEARED_FOR_SHUTDOWN)
                      .arg(getShutdownTypeStr(shutdown_type_));
         }
@@ -156,7 +158,7 @@ D2Process::canShutdown() const {
 
 isc::data::ConstElementPtr
 D2Process::shutdown(isc::data::ConstElementPtr args) {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN_COMMAND)
+    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN_COMMAND)
               .arg(args ? args->str() : "(no arguments)");
 
     // Default shutdown type is normal.
@@ -190,7 +192,7 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
 
 isc::data::ConstElementPtr
 D2Process::configure(isc::data::ConstElementPtr config_set) {
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
+    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
               DHCP_DDNS_CONFIGURE).arg(config_set->str());
 
     int rcode = 0;
@@ -235,7 +237,7 @@ D2Process::checkQueueStatus() {
             // canceling active listening which may generate an IO event, so
             // instigate the stop and get out.
             try {
-                LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+                LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
                           DHCP_DDNS_QUEUE_MGR_STOPPING)
                          .arg(reconf_queue_flag_ ? "reconfiguration"
                                                  : "shutdown");
@@ -243,7 +245,7 @@ D2Process::checkQueueStatus() {
             } catch (const isc::Exception& ex) {
                 // It is very unlikey that we would experience an error
                 // here, but theoretically possible.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_STOP_ERROR)
+                LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_STOP_ERROR)
                           .arg(ex.what());
             }
         }
@@ -256,12 +258,12 @@ D2Process::checkQueueStatus() {
             size_t threshold = (((queue_mgr_->getMaxQueueSize()
                                 * QUEUE_RESTART_PERCENT)) / 100);
             if (queue_mgr_->getQueueSize() <= threshold) {
-                LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RESUMING)
+                LOG_INFO (d2_logger, DHCP_DDNS_QUEUE_MGR_RESUMING)
                           .arg(threshold).arg(queue_mgr_->getMaxQueueSize());
                 try {
                     queue_mgr_->startListening();
                 } catch (const isc::Exception& ex) {
-                    LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_RESUME_ERROR)
+                    LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_RESUME_ERROR)
                               .arg(ex.what());
                 }
             }
@@ -278,7 +280,7 @@ D2Process::checkQueueStatus() {
         // to keep from endlessly retrying over and over, with little time
         // in between.
         if (!shouldShutdown()) {
-            LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RECOVERING);
+            LOG_INFO (d2_logger, DHCP_DDNS_QUEUE_MGR_RECOVERING);
             reconfigureQueueMgr();
         }
         break;
@@ -295,7 +297,7 @@ D2Process::checkQueueStatus() {
         // we can do the reconfigure. In other words, we aren't RUNNING or
         // STOPPING.
         if (reconf_queue_flag_) {
-            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
                       DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
             reconfigureQueueMgr();
         }
@@ -326,7 +328,7 @@ D2Process::reconfigureQueueMgr() {
         /// @todo Remove this once we provide a secure mechanism.
         std::string ip_address =  d2_params->getIpAddress().toText();
         if (ip_address != "127.0.0.1" && ip_address != "::1") {
-            LOG_WARN(dctl_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
+            LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
         }
 
         // Instantiate the listener.
@@ -350,7 +352,7 @@ D2Process::reconfigureQueueMgr() {
         // Queue manager failed to initialize and therefore not listening.
         // This is most likely due to an unavailable IP address or port,
         // which is a configuration issue.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_START_ERROR).arg(ex.what());
+        LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_START_ERROR).arg(ex.what());
     }
 }
 
@@ -360,7 +362,7 @@ D2Process::command(const std::string& command,
     // @todo This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise
     // it should reject all commands as it does now.
-    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_COMMAND)
+    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_COMMAND)
         .arg(command).arg(args ? args->str() : "(no args)");
 
     return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "

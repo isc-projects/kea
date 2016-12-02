@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Exception thrown if IOSignal encounters an error.
 class IOSignalError : public isc::Exception {
@@ -54,7 +54,7 @@ typedef boost::function<void(IOSignalId sequence_id)> IOSignalHandler;
 /// create the signals, house them until they are delivered, and dequeue them
 /// so they can be been handled.  To generate an IOSignal when an OS signal
 /// arrives, the process's OS signal handler simply calls @ref
-/// isc::d2::IOSignalQueue::pushSignal() with the appropriate values.
+/// isc::process::IOSignalQueue::pushSignal() with the appropriate values.
 ///
 /// @note that an IOSignalQueue requires a non-null IOServicePtr to construct.
 /// This ensures that the IOService cannot be destroyed before any pending
@@ -63,12 +63,13 @@ typedef boost::function<void(IOSignalId sequence_id)> IOSignalHandler;
 /// one service, each service must have its own queue.
 ///
 /// To dequeue the IOSignal inside the caller's IOSignalHandler, one simply
-/// invokes @ref isc::d2::IOSignalQueue::popSignal() passing it the sequence_id
-/// parameter passed to the handler.  This method returns a pointer to
-/// instigating IOSignal from which the value of OS signal (i.e. SIGINT,
-/// SIGUSR1...) can be obtained.  Note that calling popSignal() removes the
-/// IOSignalPtr from the queue, which should reduce its reference count to
-/// zero upon exiting the handler (unless a delibrate copy of it is made).
+/// invokes @ref isc::process::IOSignalQueue::popSignal() passing it the
+/// sequence_id parameter passed to the handler.  This method returns a
+/// pointer to instigating IOSignal from which the value of OS signal (i.e.
+/// SIGINT, SIGUSR1...) can be obtained.  Note that calling popSignal()
+/// removes the IOSignalPtr from the queue, which should reduce its
+/// reference count to zero upon exiting the handler (unless a delibrate
+/// copy of it is made).
 ///
 /// A typical IOSignalHandler might be structured as follows:
 /// @code
@@ -252,7 +253,7 @@ private:
 typedef boost::shared_ptr<IOSignalQueue> IOSignalQueuePtr;
 
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace
 
 #endif // IO_SERVICE_SIGNAL_H

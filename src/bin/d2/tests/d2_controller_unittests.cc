@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,10 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <d_test_stubs.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
-#include <d2/spec_config.h>
+#include <process/spec_config.h>
+#include <process/testutils/d_test_stubs.h>
 
 #include <boost/pointer_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -18,6 +18,7 @@
 
 #include <sstream>
 
+using namespace isc::process;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -232,7 +233,7 @@ TEST_F(D2ControllerTest, invalidConfigReload) {
 
     // Context is still available post launch.
     // Check to see that our configuration matches the original per
-    // valid_d2_config (see d_test_stubs.cc)
+    // valid_d2_config (see src/lib/process/testutils/d_test_stubs.cc)
     D2CfgMgrPtr d2_cfg_mgr = getD2CfgMgr();
     D2ParamsPtr d2_params = d2_cfg_mgr->getD2Params();
     ASSERT_TRUE(d2_params);

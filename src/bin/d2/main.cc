@@ -14,6 +14,7 @@
 #include <iostream>
 
 using namespace isc::d2;
+using namespace isc::process;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCP-DDNS

@@ -42,26 +42,21 @@ if HAVE_GTEST
 
 TESTS += d2_unittests
 
-d2_unittests_SOURCES = d_test_stubs.cc d_test_stubs.h
-d2_unittests_SOURCES += d2_unittests.cc
+d2_unittests_SOURCES  = d2_unittests.cc
 d2_unittests_SOURCES += d2_process_unittests.cc
-d2_unittests_SOURCES += d_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_cfg_mgr_unittests.cc
 d2_unittests_SOURCES += d2_queue_mgr_unittests.cc
 d2_unittests_SOURCES += d2_update_message_unittests.cc
 d2_unittests_SOURCES += d2_update_mgr_unittests.cc
 d2_unittests_SOURCES += d2_zone_unittests.cc
 d2_unittests_SOURCES += dns_client_unittests.cc
-d2_unittests_SOURCES += io_service_signal_unittests.cc
 d2_unittests_SOURCES += labeled_value_unittests.cc
 d2_unittests_SOURCES += nc_add_unittests.cc
 d2_unittests_SOURCES += nc_remove_unittests.cc
 d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += state_model_unittests.cc
-
 d2_unittests_SOURCES += d2_controller_unittests.cc
-d2_unittests_SOURCES += d_controller_unittests.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
@@ -77,7 +72,9 @@ endif
 d2_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 d2_unittests_LDADD = $(top_builddir)/src/bin/d2/libd2.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
