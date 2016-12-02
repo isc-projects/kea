@@ -1,0 +1,20 @@
+# Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::agent
+
+% CTRL_AGENT_FAILED application experienced a fatal error: %1
+This is a debug message issued when the Control Agent application
+encounters an unrecoverable error from within the event loop.
+
+% CTRL_AGENT_RUN_EXIT application is exiting the event loop
+This is a debug message issued when the Control Angent exits its
+event loop.
+
+% CTRL_AGENT_STARTED Kea Control Agent version %1 started
+This informational message indicates that the DHCP-DDNS server has
+processed all configuration information and is ready to begin processing.
+The version is also printed.
