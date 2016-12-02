@@ -1,3 +1,8 @@
+1192.   [build]         marcin
+        Created libkea-process library and moved the Controllable
+        Process Layer (CPL) from D2 to this new library.
+        (Trac #5074, git 4563925f7966e9da2132eb427e742cc3d3feee5d)
+
 1191.	[build]		tomek
 	Optional support for premium package added.
 	(Trac #5027, git 5ff51f28a1f05d941bb117986922a6f410f23c6c)
