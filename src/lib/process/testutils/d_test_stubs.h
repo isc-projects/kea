@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,10 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 
-#include <d2/d_controller.h>
-#include <d2/d_cfg_mgr.h>
-
 #include <log/logger_support.h>
+
+#include <process/d_controller.h>
+#include <process/d_cfg_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -28,7 +28,7 @@ using namespace boost::posix_time;
 #include <sstream>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Provides a valid DHCP-DDNS configuration for testing basic
 /// parsing fundamentals.
@@ -862,7 +862,7 @@ private:
 /// testing configuration parsing fundamentals.
 extern const char* valid_d2_config;
 
-}; // namespace isc::d2
+}; // namespace isc::process
 }; // namespace isc
 
 #endif

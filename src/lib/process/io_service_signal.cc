@@ -1,15 +1,15 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <asiolink/interval_timer.h>
-#include <d2/d2_log.h>
-#include <d2/io_service_signal.h>
+#include <process/d_log.h>
+#include <process/io_service_signal.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 IOSignal::IOSignal (asiolink::IOService& io_service, int signum,
                     IOSignalHandler handler)
@@ -50,7 +50,7 @@ IOSignal::TimerCallback::operator()() {
         handler_(sequence_id_);
     } catch (const std::exception& ex) {
         // We log it and swallow it so we don't undermine IOService::run.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_SIGNAL_ERROR)
+        LOG_ERROR(dctl_logger, DCTL_SIGNAL_ERROR)
                   .arg(sequence_id_).arg(ex.what());
     }
 
@@ -112,5 +112,5 @@ IOSignalQueue::clear() {
     signals_.clear();
 }
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace

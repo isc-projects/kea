@@ -784,6 +784,7 @@ INPUT                  = ../src/bin/d2 \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
                          ../src/lib/log/interprocess \
+                         ../src/lib/process \
                          ../src/lib/stats \
                          ../src/lib/testutils \
                          ../src/lib/util \
