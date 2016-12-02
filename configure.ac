@@ -1512,6 +1512,9 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/agent/Makefile
+                 src/bin/agent/tests/Makefile
+                 src/bin/agent/tests/ctrl_agent_process_tests.sh
                  src/bin/d2/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
