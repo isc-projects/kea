@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,26 +28,26 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>kea-dhcp-ddns</refentrytitle>
+    <refentrytitle>kea-ctrl-agent</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="manual">Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>kea-dhcp-ddns</refname>
-    <refpurpose>DHCP-DDNS process in Kea</refpurpose>
+    <refname>kea-ctrl-agent</refname>
+    <refpurpose>Control Agent process in Kea</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
-      <year>2013-2016</year>
+      <year>2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>kea-dhcp-ddns</command>
+      <command>kea-ctrl-agent</command>
       <arg><option>-v</option></arg>
       <arg><option>-V</option></arg>
       <arg><option>-W</option></arg>
@@ -60,10 +60,12 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>kea-dhcp-ddns</command> service process requests to
-      update DNS mapping based on DHCP lease change events. It runs as
-      a separate process that expects to receive Name Change Requests
-      from Kea DHCP servers.
+      The <command>kea-ctrl-agent</command> provides a REST service for
+      controlling Kea services. The received HTTP requests are decapsulated
+      and forwarded to the respective Kea services as JSON strings. Received
+      JSON responses are encapsulated within HTTP responses and returned to
+      the controlling entity. Some commands may be handled by the Control
+      Agent directly, and not forwarded to any Kea service.
     </para>
 
   </refsect1>
@@ -107,8 +109,9 @@
       <varlistentry>
         <term><option>-c</option></term>
         <listitem><para>
-          Configuration file including the configuration for DHCP-DDNS server.
-          It may also contain configuration entries for other Kea services.
+          Configuration file including the configuration for the Control Agent
+          server. It may also contain configuration entries for other Kea
+          services.
         </para></listitem>
       </varlistentry>
 
@@ -155,13 +158,8 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-dhcp-ddns</command> process was first coded in
-      May 2013 by Thomas Markwalder.
-    </para>
-    <para>
-      Kea became a standalone server and the BIND10 framework was
-      removed. The DHCP-DDNS server binary was renamed to kea-dhcp-ddns
-      in July 2014. Kea 1.0.0 was released in December 2015.
+      The <command>kea-ctrl-agent</command> was first coded in December 2016
+      by Marcin Siodelski.
     </para>
   </refsect1>
 
@@ -179,7 +177,7 @@
       </citerefentry>,
 
       <citerefentry>
-        <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

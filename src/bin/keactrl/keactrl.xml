@@ -235,6 +235,11 @@
       </citerefentry>,
 
       <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
         <refentrytitle>kea-admin</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,

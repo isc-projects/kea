@@ -2,4 +2,5 @@
 /ctrl_agent_messages.cc
 /ctrl_agent_messages.h
 /s-messages
+/kea-ctrl-agent.8
 
