@@ -9,7 +9,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda ctrl_agent_messages.h ctrl_agent__messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda ctrl_agent_messages.h ctrl_agent_messages.cc s-messages
 
 man_MANS = kea-ctrl-agent.8
 DISTCLEANFILES = $(man_MANS)
