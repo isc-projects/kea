@@ -754,17 +754,18 @@ command line needed to create the library using the Gnu C++ compiler on a
 Linux system is:
 
 @code
-g++ -I /usr/include/kea -L /usr/lib/kea/lib -fpic -shared -o example.so \
+g++ -I <install-dir>/include/kea -L <install-dir>/lib -fpic -shared -o example.so \
     load_unload.cc pkt4_receive.cc pkt4_send.cc version.cc \
     -lkea-dhcpsrv -lkea-dhcp++ -lkea-hooks -lkea-log -lkea-util -lkea-exceptions
 @endcode
 
 Notes:
+- Replace "<install-dir>" with the location in which you installed Kea. Unless
+you specified the "--prefix" switch on the "configure" command line when
+building Kea, it will be installed in the default location, usually /usr/local.
 - The compilation command and switches required may vary depending on
 your operating system and compiler - consult the relevant documentation
 for details.
-- The values for the "-I" and "-L" switches depend on where you have
-installed Kea.
 - The list of libraries that need to be included in the command line
 depends on the functionality used by the hook code and the module to
 which they are attached. Depending on operating system, you may also need
