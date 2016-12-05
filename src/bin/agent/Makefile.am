@@ -11,23 +11,23 @@ endif
 
 CLEANFILES  = *.gcno *.gcda ctrl_agent_messages.h ctrl_agent__messages.cc s-messages
 
-#man_MANS = kea-ctrl-agent.8
-#DISTCLEANFILES = $(man_MANS)
-#EXTRA_DIST = $(man_MANS) kea-ctrl-agent.xml agent.dox
+man_MANS = kea-ctrl-agent.8
+DISTCLEANFILES = $(man_MANS)
+EXTRA_DIST = $(man_MANS) kea-ctrl-agent.xml
 
-#if GENERATE_DOCS
-#kea-ctrl-agent.8: kea-ctrl-agent.xml
-#	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-#        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-#	$(srcdir)/kea-ctrl-agent.xml
+if GENERATE_DOCS
+kea-ctrl-agent.8: kea-ctrl-agent.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/kea-ctrl-agent.xml
 
-#else
+else
 
-#$(man_MANS):
-#	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-#	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
-#endif
+endif
 
 ctrl_agent_messages.h ctrl_agent_messages.cc: s-messages
 
@@ -48,7 +48,7 @@ libagent_la_SOURCES += ctrl_agent_log.cc ctrl_agent_log.h
 libagent_la_SOURCES += ctrl_agent_process.cc ctrl_agent_process.h
 
 nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
-EXTRA_DIST = ctrl_agent_messages.mes
+EXTRA_DIST += ctrl_agent_messages.mes
 
 sbin_PROGRAMS = kea-ctrl-agent
 
