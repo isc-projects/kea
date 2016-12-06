@@ -66,6 +66,16 @@
   "subnet6": [
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
+
+      "pd-pools": [
+      {
+          "prefix": "2001:db8:abcd::",
+          "prefix-len": 48,
+          "delegated-len": 64,
+          "excluded-prefix": "2001:db8:abcd:1234::",
+          "excluded-prefix-len": 62
+      }
+      ],
       "subnet": "2001:db8:1::/64",
       "interface": "ethX"
     }

@@ -430,6 +430,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"excluded-prefix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::PD_POOLS:
+        return isc::dhcp::Dhcp6Parser::make_EXCLUDED_PREFIX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("excluded-prefix", driver.loc_);
+    }
+}
+
+\"excluded-prefix-len\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::PD_POOLS:
+        return isc::dhcp::Dhcp6Parser::make_EXCLUDED_PREFIX_LEN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("excluded-prefix-len", driver.loc_);
+    }
+}
+
 \"delegated-len\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
