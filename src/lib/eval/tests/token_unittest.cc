@@ -221,7 +221,7 @@ public:
     /// stack then executes the eval and checks the results.
     ///
     /// @param test_string The string to operate on
-    /// @param test_start The postion to start when getting a substring
+    /// @param test_start The position to start when getting a substring
     /// @param test_length The length of the substring to get
     /// @param result_string The expected result of the eval
     /// @param should_throw The eval will throw
@@ -293,10 +293,11 @@ public:
         // Now let's add specified number of data tuples
         OpaqueDataTuple::LengthFieldType len = (u == Option::V4?OpaqueDataTuple::LENGTH_1_BYTE:
                                                 OpaqueDataTuple::LENGTH_2_BYTES);
-        const char * content[] = { "alpha", "beta", "delta", "gamma", "epsilon",
-                                 "zeta", "eta", "theta", "iota", "kappa" };
-        ASSERT_TRUE(tuples_size < sizeof(content));
-        for (int i = 0; i < tuples_size; i++) {
+        const char* content[] = { "alpha", "beta", "delta", "gamma", "epsilon",
+                                  "zeta", "eta", "theta", "iota", "kappa" };
+        const size_t nb_content = sizeof(content) / sizeof(char*);
+        ASSERT_TRUE(tuples_size < nb_content);
+        for (size_t i = 0; i < tuples_size; ++i) {
             OpaqueDataTuple tuple(len);
             tuple.assign(string(content[i]));
             if (u == Option::V4 && i == 0) {
@@ -351,7 +352,8 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorExists(Option::Universe u, uint32_t token_vendor_id,
-                          uint32_t option_vendor_id, std::string expected_result) {
+                          uint32_t option_vendor_id,
+                          const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -374,7 +376,7 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorEnterprise(Option::Universe u, uint32_t option_vendor_id,
-                              std::string expected_result) {
+                              const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -393,7 +395,7 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorClassEnterprise(Option::Universe u, uint32_t option_vendor_id,
-                                   std::string expected_result) {
+                                   const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -413,7 +415,8 @@ public:
     ///        create the option)
     /// @param expected_result text representation of the expected outcome
     void testVendorClassExists(Option::Universe u, uint32_t token_vendor_id,
-                               uint32_t option_vendor_id, std::string expected_result) {
+                               uint32_t option_vendor_id,
+                               const std::string& expected_result) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -440,7 +443,8 @@ public:
     void testVendorSuboption(Option::Universe u,
                              uint32_t token_vendor_id, uint16_t token_option_code,
                              uint32_t option_vendor_id, uint16_t option_code,
-                             TokenOption::RepresentationType repr, std::string expected) {
+                             TokenOption::RepresentationType repr,
+                             const std::string& expected) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -470,7 +474,7 @@ public:
     void testVendorClassData(Option::Universe u,
                              uint32_t token_vendor_id, uint16_t token_index,
                              uint32_t option_vendor_id, uint16_t data_tuples,
-                             std::string expected) {
+                             const std::string& expected) {
         // Let's clear any old values, so we can run multiple cases in each test
         clearStack();
 
@@ -1744,7 +1748,7 @@ TEST_F(TokenTest, substringLength) {
     EXPECT_TRUE(checkFile());
 }
 
-// Test that we get nothing if the starting postion is out of the string
+// Test that we get nothing if the starting position is out of the string
 TEST_F(TokenTest, substringStartingPosition) {
     // Off the front
     verifySubstringEval("foobar", "-7", "1", "");

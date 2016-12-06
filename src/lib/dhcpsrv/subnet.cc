@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,37 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/subnet.h>
-
+#include <algorithm>
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::dhcp;
+
+namespace {
+
+/// @brief Function used in calls to std::upper_bound to check
+/// if the specified prefix is lower than the first address a pool.
+///
+/// @return true if prefix is lower than the first address in the pool.
+bool
+prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
+    return (prefix < pool->getFirstAddress());
+}
+
+/// @brief Function used in calls to std::sort to compare first
+/// prefixes of the two pools.
+///
+/// @param pool1 First pool.
+/// @param pool2 Second pool.
+///
+/// @return true if first prefix of the first pool is smaller than
+/// the first address of the second pool.
+bool
+comparePoolFirstAddress(const PoolPtr& pool1, const PoolPtr& pool2) {
+    return (pool1->getFirstAddress() < pool2->getFirstAddress());
+};
+
+}
 
 namespace isc {
 namespace dhcp {
@@ -228,27 +255,41 @@ PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
 }
 
 const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& hint,
-                        bool anypool /* true */) const {
+                              bool anypool /* true */) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
     const PoolCollection& pools = getPools(type);
 
     PoolPtr candidate;
-    for (PoolCollection::const_iterator pool = pools.begin();
-         pool != pools.end(); ++pool) {
 
-        // if we won't find anything better, then let's just use the first pool
-        if (anypool && !candidate) {
-            candidate = *pool;
+    if (!pools.empty()) {
+        // Pools are sorted by their first prefixes. For example: 2001::,
+        // 2001::db8::, 3000:: etc. If our hint is 2001:db8:5:: we want to
+        // find the pool with the longest matching prefix, so: 2001:db8::,
+        // rather than 2001::. upper_bound returns the first pool with a prefix
+        // that is greater than 2001:db8:5::, i.e. 3000::. To find the longest
+        // matching prefix we use decrement operator to go back by one item.
+        // If returned iterator points to begin it means that prefixes in all
+        // pools are greater than out prefix, and thus there is no match.
+        PoolCollection::const_iterator ub =
+            std::upper_bound(pools.begin(), pools.end(), hint,
+                             prefixLessThanFirstAddress);
+
+        if (ub != pools.begin()) {
+            --ub;
+            if ((*ub)->inRange(hint)) {
+                candidate = *ub;
+            }
         }
 
-        // if the client provided a pool and there's a pool that hint is valid
-        // in, then let's use that pool
-        if ((*pool)->inRange(hint)) {
-            return (*pool);
+        // If we don't find anything better, then let's just use the first pool
+        if (!candidate && anypool) {
+            candidate = *pools.begin();
         }
     }
+
+    // Return a pool or NULL if no match found.
     return (candidate);
 }
 
@@ -271,13 +312,40 @@ Subnet::addPool(const PoolPtr& pool) {
                       << " the prefix of a subnet: "
                       << prefix_ << "/" << static_cast<int>(prefix_len_)
                       << " to which it is being added");
+
         }
     }
 
-    /// @todo: Check that pools do not overlap
+    bool overlaps = false;
+    if (pool->getType() == Lease::TYPE_V4) {
+        overlaps = poolOverlaps(Lease::TYPE_V4, pool);
+
+    } else {
+        overlaps =
+            poolOverlaps(Lease::TYPE_NA, pool) ||
+            poolOverlaps(Lease::TYPE_PD, pool) ||
+            poolOverlaps(Lease::TYPE_TA, pool);
+    }
+
+    if (overlaps) {
+        isc_throw(BadValue,"a pool of type "
+                  << Lease::typeToText(pool->getType())
+                  << ", with the following address range: "
+                  << pool->getFirstAddress() << "-"
+                  << pool->getLastAddress() << " overlaps with "
+                  "an existing pool in the subnet: "
+                  << prefix_ << "/" << static_cast<int>(prefix_len_)
+                  << " to which it is being added");
+    }
+
+    PoolCollection& pools_writable = getPoolsWritable(pool->getType());
 
     // Add the pool to the appropriate pools collection
-    getPoolsWritable(pool->getType()).push_back(pool);
+    pools_writable.push_back(pool);
+
+    // Sort pools by first address.
+    std::sort(pools_writable.begin(), pools_writable.end(),
+              comparePoolFirstAddress);
 }
 
 void
@@ -314,6 +382,72 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
     // There's no pool that address belongs to
     return (false);
 }
+
+bool
+Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
+    const PoolCollection& pools = getPools(pool_type);
+
+    // If no pools, we don't overlap. Nothing to do.
+    if (pools.empty()) {
+        return (false);
+    }
+
+    // We're going to insert a new pool, likely between two existing pools.
+    // So we're going to end up with the following case:
+    // |<---- pool1 ---->|    |<-------- pool2 ------>|  |<-- pool3 -->|
+    // F1               L1    F2                     L2  F3           L3
+    // where pool1 and pool3 are existing pools, pool2 is a pool being
+    // inserted and "F"/"L" mark first and last address in the pools
+    // respectively. So the following conditions must be fulfilled:
+    // F2 > L1 and L2 < F3. Obviously, for any pool: F < L.
+
+    // Search for pool3. We use F2 and upper_bound to find the F3 (upper_bound
+    // returns first pool in the sorted container which first address is
+    // greater than F2). prefixLessThanPoolAddress with the first argument
+    // set to "true" is the custom comparison function for upper_bound, which
+    // compares F2 with the first addresses of the existing pools.
+    PoolCollection::const_iterator pool3_it =
+        std::upper_bound(pools.begin(), pools.end(), pool->getFirstAddress(),
+                         prefixLessThanFirstAddress);
+
+    // upper_bound returns a first pool which first address is greater than the
+    // address F2. However, it is also possible that there is a pool which first
+    // address is equal to F2. Such pool is also in conflict with a new pool.
+    // If the returned value is pools.begin() it means that all pools have greater
+    // first address than F2, thus none of the pools can have first address equal
+    // to F2. Otherwise, we'd need to check them for equality.
+    if (pool3_it != pools.begin()) {
+        // Go back one pool and check if addresses are equal.
+        PoolPtr pool3 = *(pool3_it - 1);
+        if (pool3->getFirstAddress() == pool->getFirstAddress()) {
+            return (true);
+        }
+    }
+
+    // If returned value is unequal pools.end() it means that there is a pool3,
+    // with F3 > F2.
+    if (pool3_it != pools.end()) {
+        // Let's store the pointer to this pool.
+        PoolPtr pool3 = *pool3_it;
+        // F3 must be greater than L2, otherwise pools will overlap.
+        if (pool3->getFirstAddress() <= pool->getLastAddress()) {
+            return (true);
+        }
+    }
+
+    // If L2 is ok, we now have to find the pool1. This pool should be
+    // right before the pool3 if there is any pool before pool3.
+    if (pool3_it != pools.begin()) {
+        PoolPtr pool1 = *(pool3_it - 1);
+        // F2 must be greater than L1.
+        if (pool->getFirstAddress() <= pool1->getLastAddress()) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
 
 Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,

@@ -451,7 +451,7 @@ public:
             // address: int
             // The address in the Lease structure is an IOAddress object.
             // Convert this to an integer for storage.
-            addr4_ = static_cast<cass_int32_t>(uint32_t(lease_->addr_));
+            addr4_ = static_cast<cass_int32_t>(lease_->addr_.toUint32());
             data.add(reinterpret_cast<void*>(&addr4_));
 
             // hwaddr: blob
@@ -1123,7 +1123,7 @@ CqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     // Set up the WHERE clause value
     CqlDataArray data;
 
-    cass_int32_t addr4_data = static_cast<cass_int32_t>(uint32_t(addr));
+    cass_int32_t addr4_data = static_cast<cass_int32_t>(addr.toUint32());
     data.add(reinterpret_cast<void*>(&addr4_data));
 
     // Get the data
@@ -1426,7 +1426,7 @@ CqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     data.remove(0);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    cass_int32_t addr4_data = static_cast<cass_int32_t>(uint32_t(lease->addr_));
+    cass_int32_t addr4_data = static_cast<cass_int32_t>(lease->addr_.toUint32());
     data.add(reinterpret_cast<void*>(&addr4_data));
 
     // Drop to common update code
@@ -1506,9 +1506,9 @@ CqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     CqlDataArray data;
 
     if (addr.isV4()) {
-        cass_int32_t addr4_data = static_cast<cass_int32_t>(uint32_t(addr));
+        cass_int32_t addr4_data = static_cast<cass_int32_t>(addr.toUint32());
         data.add(reinterpret_cast<void*>(&addr4_data));
-        return deleteLeaseCommon(DELETE_LEASE4, data, *exchange4_);
+        return (deleteLeaseCommon(DELETE_LEASE4, data, *exchange4_));
     } else {
         if (addr_data.size() > ADDRESS6_TEXT_MAX_LEN) {
             isc_throw(BadValue, "deleteLease(): " <<
@@ -1517,7 +1517,7 @@ CqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
                       ADDRESS6_TEXT_MAX_LEN);
         }
         data.add(reinterpret_cast<void*>(&addr_data));
-        return deleteLeaseCommon(DELETE_LEASE6, data, *exchange6_);
+        return (deleteLeaseCommon(DELETE_LEASE6, data, *exchange6_));
     }
 }
 
@@ -1680,8 +1680,7 @@ CqlLeaseMgr::getVersion() const {
     cass_future_free(future);
     cass_statement_free(statement);
 
-    return std::make_pair<unsigned int, unsigned int>(
-        static_cast<unsigned int>(version), static_cast<unsigned int>(minor));
+    return (make_pair(version, minor));
 }
 
 void

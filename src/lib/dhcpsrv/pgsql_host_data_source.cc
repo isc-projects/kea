@@ -287,43 +287,62 @@ public:
             static_cast<Host::IdentifierType>(type);
 
         // dhcp4_subnet_id : INT NULL
-        uint32_t subnet_id;
-        getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
+        uint32_t subnet_id(0);
+        if (!isColumnNull(r, row, DHCP4_SUBNET_ID_COL)) {
+            getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
+        }
         SubnetID dhcp4_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // dhcp6_subnet_id : INT NULL
-        getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
+        subnet_id = 0;
+        if (!isColumnNull(r, row, DHCP6_SUBNET_ID_COL)) {
+            getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
+        }
         SubnetID dhcp6_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // ipv4_address : BIGINT NULL
-        uint32_t addr4;
-        getColumnValue(r, row, IPV4_ADDRESS_COL, addr4);
+        uint32_t addr4(0);
+        if (!isColumnNull(r, row, IPV4_ADDRESS_COL)) {
+            getColumnValue(r, row, IPV4_ADDRESS_COL, addr4);
+        }
         isc::asiolink::IOAddress ipv4_reservation(addr4);
 
         // hostname : VARCHAR(255) NULL
         std::string hostname;
-        getColumnValue(r, row, HOSTNAME_COL, hostname);
+        if (!isColumnNull(r, row, HOSTNAME_COL)) {
+            getColumnValue(r, row, HOSTNAME_COL, hostname);
+        }
 
         // dhcp4_client_classes : VARCHAR(255) NULL
         std::string dhcp4_client_classes;
-        getColumnValue(r, row, DHCP4_CLIENT_CLASSES_COL, dhcp4_client_classes);
+        if (!isColumnNull(r, row, DHCP4_CLIENT_CLASSES_COL)) {
+            getColumnValue(r, row, DHCP4_CLIENT_CLASSES_COL, dhcp4_client_classes);
+        }
 
         // dhcp6_client_classes : VARCHAR(255) NULL
         std::string dhcp6_client_classes;
-        getColumnValue(r, row, DHCP6_CLIENT_CLASSES_COL, dhcp6_client_classes);
+        if (!isColumnNull(r, row, DHCP6_CLIENT_CLASSES_COL)) {
+            getColumnValue(r, row, DHCP6_CLIENT_CLASSES_COL, dhcp6_client_classes);
+        }
 
         // dhcp4_next_server : BIGINT NULL
-        uint32_t dhcp4_next_server_as_uint32;
-        getColumnValue(r, row, DHCP4_NEXT_SERVER_COL, dhcp4_next_server_as_uint32);
+        uint32_t dhcp4_next_server_as_uint32(0);
+        if (!isColumnNull(r, row, DHCP4_NEXT_SERVER_COL)) {
+            getColumnValue(r, row, DHCP4_NEXT_SERVER_COL, dhcp4_next_server_as_uint32);
+        }
         isc::asiolink::IOAddress dhcp4_next_server(dhcp4_next_server_as_uint32);
 
         // dhcp4_server_hostname : VARCHAR(64)
         std::string dhcp4_server_hostname;
-        getColumnValue(r, row, DHCP4_SERVER_HOSTNAME_COL, dhcp4_server_hostname);
+        if (!isColumnNull(r, row, DHCP4_SERVER_HOSTNAME_COL)) {
+            getColumnValue(r, row, DHCP4_SERVER_HOSTNAME_COL, dhcp4_server_hostname);
+        }
 
         // dhcp4_boot_file_name : VARCHAR(128)
         std::string dhcp4_boot_file_name;
-        getColumnValue(r, row, DHCP4_BOOT_FILE_NAME_COL, dhcp4_boot_file_name);
+        if (!isColumnNull(r, row, DHCP4_BOOT_FILE_NAME_COL)) {
+            getColumnValue(r, row, DHCP4_BOOT_FILE_NAME_COL, dhcp4_boot_file_name);
+        }
 
         // Finally, attempt to create the new host.
         HostPtr host;
@@ -468,18 +487,29 @@ private:
 
             // value: BYTEA
             uint8_t value[OPTION_VALUE_MAX_LEN];
-            size_t value_len;
-            PgSqlExchange::convertFromBytea(r, row, value_index_, value,
-                                            sizeof(value), value_len);
+            size_t value_len(0);
+            if (!isColumnNull(r, row, value_index_)) {
+                PgSqlExchange::convertFromBytea(r, row, value_index_, value,
+                                                sizeof(value), value_len);
+            }
 
             // formatted_value: TEXT
             std::string formatted_value;
-            PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
-                                          formatted_value);
+            if (!isColumnNull(r, row, formatted_value_index_)) {
+                PgSqlExchange::getColumnValue(r, row, formatted_value_index_,
+                                              formatted_value);
+            }
 
             // space: VARCHAR(128)
             std::string space;
-            PgSqlExchange::getColumnValue(r, row, space_index_, space);
+            if (!isColumnNull(r, row, space_index_)) {
+                PgSqlExchange::getColumnValue(r, row, space_index_, space);
+            }
+
+            // If empty or null space provided, use a default top level space.
+            if (space.empty()) {
+                space = (universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+            }
 
             // persistent: BOOL default false
             bool persistent;
@@ -495,11 +525,7 @@ private:
             // If the option space is a standard DHCPv4 or DHCPv6 option space,
             // this is most likely a standard option, for which we have a
             // definition created within libdhcp++.
-            OptionDefinitionPtr def;
-            if ((space == DHCP4_OPTION_SPACE) ||
-                (space == DHCP6_OPTION_SPACE)) {
-                def = LibDHCP::getOptionDef(universe_, code);
-            }
+            OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
 
             // Otherwise, we may check if this an option encapsulated within the
             // vendor space.
@@ -1020,7 +1046,8 @@ public:
 
     /// @brief Constructor.
     PgSqlOptionExchange()
-        : PgSqlExchange(OPTION_COLUMNS) {
+        : PgSqlExchange(OPTION_COLUMNS), value_(),
+          value_len_(0), option_() {
         columns_[OPTION_ID_COL] = "option_id";
         columns_[CODE_COL] = "code";
         columns_[VALUE_COL] = "value";
@@ -1147,6 +1174,7 @@ public:
         GET_HOST_SUBID6_DHCPID, // Gets host by IPv6 SubnetID, HW address/DUID
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
+        GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
         GET_VERSION,            // Obtain version number
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
@@ -1453,6 +1481,32 @@ TaggedStatementArray tagged_statements = { {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
+    // PgSqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using IPv6 subnet id and prefix. This query
+    // returns host information for a single host. However, multiple rows
+    // are returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
+    {2,
+     { OID_INT4, OID_VARCHAR },
+     "get_host_subid6_addr",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, "
+     "  r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE h.dhcp6_subnet_id = $1 AND r.address = $2 "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
+
     // PgSqlHostDataSourceImpl::GET_VERSION
     // Retrieves MySQL schema version.
     {0,
@@ -1698,7 +1752,7 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     uint32_t minor;
     PgSqlExchange::getColumnValue(r, 0, 0, minor);
 
-    return (std::make_pair<uint32_t, uint32_t>(version, minor));
+    return (std::make_pair(version, minor));
 }
 
 void
@@ -1942,6 +1996,34 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
+                             bind_array, impl_->host_ipv6_exchange_,
+                             collection, true);
+
+    // Return single record if present, else clear the host.
+    ConstHostPtr result;
+    if (!collection.empty()) {
+        result = *collection.begin();
+    }
+
+    return (result);
+}
+
+ConstHostPtr
+PgSqlHostDataSource::get6(const SubnetID& subnet_id,
+                          const asiolink::IOAddress& address) const {
+    /// @todo: Check that prefix is v6 address, not v4.
+
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id
+    bind_array->add(subnet_id);
+
+    // Add the prefix
+    bind_array->add(address);
+
+    ConstHostCollection collection;
+    impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
                              bind_array, impl_->host_ipv6_exchange_,
                              collection, true);
 

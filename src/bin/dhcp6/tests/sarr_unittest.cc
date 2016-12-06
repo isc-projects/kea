@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -38,6 +39,20 @@ namespace {
 ///   - enables Rapid Commit for the first subnet and disables for the second
 ///     one
 ///   - DNS updates enabled
+///
+/// - Configuration 2:
+///   - single subnet 3000::/32,
+///   - two options specified in the subnet scope,
+///   - one option specified at the global scope,
+///   - two address pools: 3000::10-3000::20, 3000::40-3000::50,
+///   - two prefix pools: 2001:db8:3::/64 and 2001:db8:4::/64,
+///   - an option with unique value specified for each pool, so as it is
+///     possible to test that pool specific options can be assigned.
+///
+/// Configuration 3:
+///   - one subnet 3000::/32 used on eth0 interface
+///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - Excluded Prefix specified (RFC 6603).
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -82,7 +97,90 @@ const char* CONFIGS[] = {
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : True, "
         "     \"qualifying-suffix\" : \"example.com\" }"
-    "}"
+    "}",
+
+// Configuration 2
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-data\": [ {"
+        "    \"name\": \"dns-servers\","
+        "    \"data\": \"3000:1::234\""
+        "},"
+        "{"
+        "    \"name\": \"sntp-servers\","
+        "    \"data\": \"3000:2::1\""
+        "} ],"
+        "\"subnet6\": [ { "
+        "    \"option-data\": [ {"
+        "        \"name\": \"dns-servers\","
+        "        \"data\": \"3000:1::567\""
+        "    },"
+        "    {"
+        "        \"name\": \"sntp-servers\","
+        "        \"data\": \"3000:2::1\""
+        "    } ],"
+        "    \"pools\": [ { "
+        "        \"pool\": \"3000::10 - 3000::20\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"sntp-servers\","
+        "            \"data\": \"3000:2::2\""
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"pool\": \"3000::40 - 3000::50\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"nisp-servers\","
+        "            \"data\": \"3000:2::3\""
+        "        } ]"
+        "    } ],"
+        "    \"pd-pools\": [ { "
+        "        \"prefix\": \"2001:db8:3::\","
+        "        \"prefix-len\": 64,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3000:1::678\""
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"prefix\": \"2001:db8:4::\","
+        "        \"prefix-len\": 64,"
+        "        \"delegated-len\": 64,"
+        "        \"option-data\": [ {"
+        "            \"name\": \"nis-servers\","
+        "            \"data\": \"3000:1::789\""
+        "        } ]"
+        "    } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
+    "}",
+
+    // Configuration 3
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:3::\", "
+        "          \"prefix-len\": 48, "
+        "          \"delegated-len\": 64,"
+        "          \"excluded-prefix\": \"2001:db8:3::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -171,6 +269,108 @@ TEST_F(SARRTest, directClientPrefixHint) {
     EXPECT_EQ(4000, lease_client.valid_lft_);
     lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
+}
+
+// This test verifies that the same options can be specified on the global
+// level, subnet level and pool level. The options associated with pools
+// are used when the lease is handed out from these pools.
+TEST_F(SARRTest, optionsInheritance) {
+    Dhcp6Client client;
+    // Request a single address and single prefix.
+    ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
+    ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));
+    // Request two options configured for the pools from which the client may get
+    // a lease.
+    client.requestOption(D6O_NAME_SERVERS);
+    client.requestOption(D6O_NIS_SERVERS);
+    client.requestOption(D6O_NISP_SERVERS);
+    client.requestOption(D6O_SNTP_SERVERS);
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[2], *client.getServer()));
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // We have provided hints so we should get leases appropriate
+    // for the hints we provided.
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:4::"), 64));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::45")));
+    // We shouldn't have leases for the prefix and address which we didn't
+    // request.
+    ASSERT_FALSE(client.hasLeaseForPrefix(IOAddress("2001:db8:3::"), 64));
+    ASSERT_FALSE(client.hasLeaseForAddress(IOAddress("3000::11")));
+
+    // We should have received options associated with a prefix pool and
+    // address pool from which we have requested the leases. We should not
+    // have received options associated with the remaining pools. Instead,
+    // we should have received options associated with a subnet.
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "3000:1::567"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NIS_SERVERS, "3000:1::789"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NISP_SERVERS, "3000:2::3"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::1"));
+
+    // Let's now also request a prefix and an address from the remaining pools.
+    ASSERT_NO_THROW(client.requestPrefix(0x6806, 64, IOAddress("2001:db8:3::")));
+    ASSERT_NO_THROW(client.requestAddress(0x6860, IOAddress("3000::11")));
+
+    // Perform 4-way exchange again.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // We should now have two prefixes from two distinct pools.
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:3::"), 64));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("2001:db8:4::"), 64));
+    //  We should also have two addresses from two distinct pools.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::45")));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("3000::11")));
+
+    // This time, options from all pools should have been assigned.
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "3000:1::678"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NIS_SERVERS, "3000:1::789"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NISP_SERVERS, "3000:2::3"));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
+}
+
+/// This test verifies that it is possible to specify an excluded prefix
+/// (RFC 6603) and send it back to the client requesting prefix delegation.
+TEST_F(SARRTest, directClientExcludedPrefix) {
+    Dhcp6Client client;
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    client.requestOption(D6O_PD_EXCLUDE);
+    configure(CONFIGS[3], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    OptionPtr option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option);
+    ASSERT_TRUE(ia);
+    option = ia->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
+    ASSERT_TRUE(pd_option);
+    option = pd_option->getOption(D6O_PD_EXCLUDE);
+    ASSERT_TRUE(option);
+    Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
+    ASSERT_TRUE(pd_exclude);
+    EXPECT_EQ("2001:db8:3::1000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
+                                                                64).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 // Check that when the client includes the Rapid Commit option in its

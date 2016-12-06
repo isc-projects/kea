@@ -327,7 +327,7 @@ public:
 
         try {
             addr_str_ = boost::lexical_cast<std::string>
-                        (static_cast<uint32_t>(lease->addr_));
+                        (lease->addr_.toUint32());
             bind_array.add(addr_str_);
 
             if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
@@ -580,6 +580,15 @@ public:
     /// @throw DbOperationError if the lease cannot be created.
     Lease6Ptr convertFromDatabase(const PgSqlResult& r, int row) {
         try {
+
+            /// @todo In theory, an administrator could tweak lease
+            /// information in the database. In this case, some of the
+            /// values could be set to NULL. This is less likely than
+            /// in case of host reservations, but we may consider if
+            /// retrieved values should be checked for being NULL to
+            /// prevent cryptic errors during conversions from NULL
+            /// to actual values.
+
             isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
             convertFromBytea(r, row, DUID_COL, duid_buffer_,
@@ -881,9 +890,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_ADDR4).arg(tagged_statements[stindex].name);
-
     PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
@@ -954,7 +960,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     // LEASE ADDRESS
     std::string addr_str = boost::lexical_cast<std::string>
-                           (static_cast<uint32_t>(addr));
+                           (addr.toUint32());
     bind_array.add(addr_str);
 
     // Get the data
@@ -1240,7 +1246,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Set up the WHERE clause and append it to the SQL_BIND array
     std::string addr4_ = boost::lexical_cast<std::string>
-                         (static_cast<uint32_t>(lease->addr_));
+                         (lease->addr_.toUint32());
     bind_array.add(addr4_);
 
     // Drop to common update code
@@ -1291,7 +1297,7 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
     if (addr.isV4()) {
         std::string addr4_str = boost::lexical_cast<std::string>
-                                 (static_cast<uint32_t>(addr));
+                                 (addr.toUint32());
         bind_array.add(addr4_str);
         return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
     }
@@ -1390,7 +1396,7 @@ PgSqlLeaseMgr::getVersion() const {
     tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
 
-    return make_pair<uint32_t, uint32_t>(version, minor);
+    return (make_pair(version, minor));
 }
 
 void

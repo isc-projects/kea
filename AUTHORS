@@ -96,15 +96,36 @@ We have received the following contributions:
 
  - Angelo Failla, Facebook
    2016-04: Fixes for transaction id generation in perfdhcp
+   2016-08: Using a file as a source of MAC addresses to be used
+            in new transactions.
+   2016-08: Support for generating relayed DHCPv6 traffic.
 
  - Razvan Becheriu, Qualitance
    2016-05: Added support for Cassandra
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
+   2016-11: Fixes in Lease File Cleanup unit test
 
- - Michal Humpula
+ - Michal Humpula (mihu)
    2016-07: Response to DHCPINFORM is sent to port 68
+
+ - Andreas Rammhold (andir)
+   2016-09: Compilation fixes for GCC 6, using C++14.
+
+ - Yusef Shaban (xxwolfsrainxx)
+   2016-09: MySQL database creation scripts use single quotes for
+            strings to avoid issues with creation of the database
+            when MySQL server operates in ANSI_QUOTES mode.
+
+ - Cristian Secareanu, Qualitance
+   2016-10: Support for IPv6 prefix and PDEXCLUDE option
+
+ - Andrei Pavel, Qualitance
+   2016-10: Support for DHCPv6 options defined in RFC6603 and RFC7598
+
+ - Vincent Legout
+   2016-11: Fixed serveral spelling mistakes
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan

@@ -275,7 +275,7 @@ Lease6::getDuidVector() const {
 void
 Lease6::decline(uint32_t probation_period) {
     hwaddr_.reset();
-    duid_ = DUID::generateEmpty();
+    duid_.reset(new DUID(DUID::EMPTY()));
     t1_ = 0;
     t2_ = 0;
     preferred_lft_ = 0;

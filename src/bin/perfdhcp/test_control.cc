@@ -21,6 +21,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,8 +80,9 @@ TestControl::instance() {
     return (test_control);
 }
 
-TestControl::TestControl() {
-    reset();
+TestControl::TestControl()
+    : number_generator_(0, CommandOptions::instance().getMacsFromFile().size()) {
+  reset();
 }
 
 void
@@ -464,38 +466,51 @@ TestControl::factoryRequestList4(Option::Universe u,
 }
 
 std::vector<uint8_t>
-TestControl::generateMacAddress(uint8_t& randomized) const {
+TestControl::generateMacAddress(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
-    uint32_t clients_num = options.getClientsNum();
-    if (clients_num < 2) {
-        return (options.getMacTemplate());
+
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    // if we are using the -M option return a random one from the list...
+    if (macs.size() > 0) {
+      uint16_t r = number_generator_();
+      if (r >= macs.size()) {
+        r = 0;
+      }
+      return macs[r];
+
+    } else {
+      // ... otherwise use the standard behavior
+      uint32_t clients_num = options.getClientsNum();
+      if (clients_num < 2) {
+          return (options.getMacTemplate());
+      }
+      // Get the base MAC address. We are going to randomize part of it.
+      std::vector<uint8_t> mac_addr(options.getMacTemplate());
+      if (mac_addr.size() != HW_ETHER_LEN) {
+          isc_throw(BadValue, "invalid MAC address template specified");
+      }
+      uint32_t r = macaddr_gen_->generate();
+      randomized = 0;
+      // Randomize MAC address octets.
+      for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
+           it >= mac_addr.begin();
+           --it) {
+          // Add the random value to the current octet.
+          (*it) += r;
+          ++randomized;
+          if (r < 256) {
+              // If we are here it means that there is no sense
+              // to randomize the remaining octets of MAC address
+              // because the following bytes of random value
+              // are zero and it will have no effect.
+              break;
+          }
+          // Randomize the next octet with the following
+          // byte of random value.
+          r >>= 8;
+      }
+      return (mac_addr);
     }
-    // Get the base MAC address. We are going to randomize part of it.
-    std::vector<uint8_t> mac_addr(options.getMacTemplate());
-    if (mac_addr.size() != HW_ETHER_LEN) {
-        isc_throw(BadValue, "invalid MAC address template specified");
-    }
-    uint32_t r = macaddr_gen_->generate();
-    randomized = 0;
-    // Randomize MAC address octets.
-    for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
-         it >= mac_addr.begin();
-         --it) {
-        // Add the random value to the current octet.
-        (*it) += r;
-        ++randomized;
-        if (r < 256) {
-            // If we are here it means that there is no sense
-            // to randomize the remaining octets of MAC address
-            // because the following bytes of random value
-            // are zero and it will have no effect.
-            break;
-        }
-        // Randomize the next octet with the following
-        // byte of random value.
-        r >>= 8;
-    }
-    return (mac_addr);
 }
 
 OptionPtr
@@ -508,20 +523,50 @@ TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
 }
 
 std::vector<uint8_t>
-TestControl::generateDuid(uint8_t& randomized) const {
+TestControl::generateDuid(uint8_t& randomized) {
     CommandOptions& options = CommandOptions::instance();
-    uint32_t clients_num = options.getClientsNum();
-    if ((clients_num == 0) || (clients_num == 1)) {
-        return (options.getDuidTemplate());
-    }
-    // Get the base DUID. We are going to randomize part of it.
-    std::vector<uint8_t> duid(options.getDuidTemplate());
-    // @todo: add support for DUIDs of different sizes.
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
-    duid.resize(duid.size());
-    std::copy(mac_addr.begin(), mac_addr.end(),
-              duid.begin() + duid.size() - mac_addr.size());
-    return (duid);
+    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    // pick a random mac address if we are using option -M..
+    if (macs.size() > 0) {
+      uint16_t r = number_generator_();
+      if (r >= macs.size()) {
+        r = 0;
+      }
+      std::vector<uint8_t> mac = macs[r];
+      // DUID_LL is in this format
+      //  0                   1                   2                   3
+      //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      // |               3               |    hardware type (16 bits)    |
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      // .                                                               .
+      // .             link-layer address (variable length)              .
+      // .                                                               .
+      // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      // No C++11 so initializer list support, building a vector<uint8_t> is a
+      // pain...
+      uint8_t duid_ll[] = {0, 3, 0, 1, 0, 0, 0, 0, 0, 0};
+      // copy duid_ll array into the vector
+      std::vector<uint8_t> duid(duid_ll,
+                                duid_ll + sizeof(duid_ll) / sizeof(duid_ll[0]));
+      // put the mac address bytes at the end
+      std::copy(mac.begin(), mac.end(), duid.begin() + 4);
+      return (duid);
+    } else {
+      uint32_t clients_num = options.getClientsNum();
+      if ((clients_num == 0) || (clients_num == 1)) {
+          return (options.getDuidTemplate());
+      }
+      // Get the base DUID. We are going to randomize part of it.
+      std::vector<uint8_t> duid(options.getDuidTemplate());
+      // @todo: add support for DUIDs of different sizes.
+      duid.resize(duid.size());
+      std::copy(mac_addr.begin(), mac_addr.end(),
+                duid.begin() + duid.size() - mac_addr.size());
+      return (duid);
+    }
 }
 
 uint32_t
@@ -745,7 +790,12 @@ TestControl::openSocket() const {
 
     if (port == 0) {
         if (family == AF_INET6) {
+            // need server port (547) because the server is acting as a relay agent
             port = DHCP6_CLIENT_PORT;
+            // if acting as a relay agent change port.
+            if (options.isUseRelayedV6()) {
+              port = DHCP6_SERVER_PORT;
+            }
         } else if (options.getIpVersion() == 4) {
             port = 67; //  TODO: find out why port 68 is wrong here.
         }
@@ -1747,7 +1797,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     OptionPtr opt_requested_address =
         OptionPtr(new Option(Option::V4, DHO_DHCP_REQUESTED_ADDRESS,
                              OptionBuffer()));
-    opt_requested_address->setUint32(static_cast<uint32_t>(yiaddr));
+    opt_requested_address->setUint32(yiaddr.toUint32());
     pkt4->addOption(opt_requested_address);
     OptionPtr opt_parameter_list =
         Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
@@ -1866,8 +1916,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
                                              DHO_DHCP_REQUESTED_ADDRESS,
                                              OptionBuffer(),
                                              rip_offset));
-    // The IOAddress is castable to uint32_t and returns exactly what we need.
-    opt_requested_ip->setUint32(static_cast<uint32_t>(yiaddr));
+    // The IOAddress is convertible to uint32_t and returns exactly what we need.
+    opt_requested_ip->setUint32(yiaddr.toUint32());
     pkt4->addOption(opt_requested_ip);
 
     setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
@@ -2192,6 +2242,18 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     pkt->setLocalAddr(socket.addr_);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
+
+    // only act as a relay agent when told so.
+    // TODO: support more level of encapsulation, at the moment we only support
+    // one, via -A1 option.
+    if (options.isUseRelayedV6()) {
+      Pkt6::RelayInfo relay_info;
+      relay_info.msg_type_ = DHCPV6_RELAY_FORW;
+      relay_info.hop_count_ = 1;
+      relay_info.linkaddr_ = IOAddress(socket.addr_);
+      relay_info.peeraddr_ = IOAddress(socket.addr_);
+      pkt->addRelayInfo(relay_info);
+    }
 }
 
 bool

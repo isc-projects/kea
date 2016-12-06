@@ -283,7 +283,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
     cfg_option = cclass->getCfgOption();
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
-    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll("dhcp4"));
+    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
     EXPECT_EQ(0, oc->size());
 
     // Verify we have no expression.
@@ -314,7 +314,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
     cfg_option = cclass->getCfgOption();
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
-    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll("dhcp4"));
+    ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
     EXPECT_EQ(0, oc->size());
 
     // Verify we can retrieve the expression
@@ -357,7 +357,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
     EXPECT_EQ("MICROSOFT", cclass->getName());
 
     // Our one option should exist.
-    OptionDescriptor od = cclass->getCfgOption()->get("dhcp4", 6);
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 6);
     ASSERT_TRUE(od.option_);
     EXPECT_EQ(6, od.option_->getType());
 
@@ -393,7 +393,7 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
     EXPECT_EQ("MICROSOFT", cclass->getName());
 
     // Our one option should exist.
-    OptionDescriptor od = cclass->getCfgOption()->get("dhcp4", 6);
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 6);
     ASSERT_TRUE(od.option_);
     EXPECT_EQ(6, od.option_->getType());
 

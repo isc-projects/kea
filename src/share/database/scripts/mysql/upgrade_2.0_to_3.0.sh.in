@@ -96,7 +96,7 @@ END
 $$
 DELIMITER ;
 
-UPDATE schema_version SET version="3", minor="0";
+UPDATE schema_version SET version='3', minor='0';
 EOF
 
 RESULT=$?

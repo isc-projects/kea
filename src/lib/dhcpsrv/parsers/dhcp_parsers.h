@@ -835,8 +835,10 @@ public:
     /// accept string as first argument.
     /// @param pools is the storage in which to store the parsed pool
     /// upon "commit".
+    /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolParser(const std::string& dummy, PoolStoragePtr pools);
+    PoolParser(const std::string& dummy, PoolStoragePtr pools,
+               const uint16_t address_family);
 
     /// @brief parses the actual structure
     ///
@@ -879,6 +881,12 @@ protected:
     /// A temporary storage for pools configuration. It is a
     /// storage where pools are stored by build function.
     PoolStorage local_pools_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
+
+    /// @brief Address family: AF_INET (for DHCPv4) or AF_INET6 for DHCPv6.
+    uint16_t address_family_;
 };
 
 /// @brief Parser for a list of pools

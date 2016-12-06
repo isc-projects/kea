@@ -77,13 +77,13 @@ protected:
     OptionPtr
     retrieveOption(const Host& host, const std::string& option_space,
                    const uint16_t option_code) const {
-        if ((option_space != "dhcp6") && (option_space != "dhcp4")) {
+        if ((option_space != DHCP6_OPTION_SPACE) && (option_space != DHCP4_OPTION_SPACE)) {
             return (OptionPtr());
         }
 
         // Retrieve a pointer to the appropriate container depending if we're
         // interested in DHCPv4 or DHCPv6 options.
-        ConstCfgOptionPtr cfg_option = (option_space == "dhcp4" ?
+        ConstCfgOptionPtr cfg_option = (option_space == DHCP4_OPTION_SPACE ?
                                         host.getCfgOption4() : host.getCfgOption6());
 
         // Retrieve options.
@@ -298,6 +298,29 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+}
+
+// This test verifies that it is possible to specify DHCPv4 client classes
+// within the host reservation.
+TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
+    std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
+        "\"client-classes\": [ \"foo\", \"bar\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser4 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
+
+    ASSERT_EQ(1, hosts.size());
+
+    const ClientClasses& classes = hosts[0]->getClientClasses4();
+    ASSERT_EQ(2, classes.size());
+    EXPECT_EQ(1, classes.count("foo"));
+    EXPECT_EQ(1, classes.count("bar"));
 }
 
 // This test verifies that the parser can parse reservation entry
@@ -627,6 +650,29 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
 }
 
+// This test verifies that it is possible to specify DHCPv4 client classes
+// within the host reservation.
+TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"client-classes\": [ \"foo\", \"bar\" ] }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    HostReservationParser6 parser(SubnetID(10));
+    ASSERT_NO_THROW(parser.build(config_element));
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    HostCollection hosts;
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
+    ASSERT_EQ(1, hosts.size());
+
+    const ClientClasses& classes = hosts[0]->getClientClasses6();
+    ASSERT_EQ(2, classes.size());
+    EXPECT_EQ(1, classes.count("foo"));
+    EXPECT_EQ(1, classes.count("bar"));
+}
 
 // This test verifies that the configuration parser throws an exception
 // when IPv4 address is specified for IPv6 reservation.
@@ -733,7 +779,7 @@ TEST_F(HostReservationParserTest, options4) {
 
     // Retrieve and sanity check name servers.
     Option4AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
-        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_NAME_SERVERS));
+        Option4AddrLst>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_NAME_SERVERS));
     ASSERT_TRUE(opt_dns);
     Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
     ASSERT_EQ(2, dns_addrs.size());
@@ -742,7 +788,7 @@ TEST_F(HostReservationParserTest, options4) {
 
     // Retrieve and sanity check log servers.
     Option4AddrLstPtr opt_log = boost::dynamic_pointer_cast<
-        Option4AddrLst>(retrieveOption(*hosts[0], "dhcp4", DHO_LOG_SERVERS));
+        Option4AddrLst>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_LOG_SERVERS));
     ASSERT_TRUE(opt_log);
     Option4AddrLst::AddressContainer log_addrs = opt_log->getAddresses();
     ASSERT_EQ(1, log_addrs.size());
@@ -750,7 +796,7 @@ TEST_F(HostReservationParserTest, options4) {
 
     // Retrieve and sanity check default IP TTL.
     OptionUint8Ptr opt_ttl = boost::dynamic_pointer_cast<
-        OptionUint8>(retrieveOption(*hosts[0], "dhcp4", DHO_DEFAULT_IP_TTL));
+        OptionUint8>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_DEFAULT_IP_TTL));
     ASSERT_TRUE(opt_ttl);
     EXPECT_EQ(64, opt_ttl->getValue());
 }
@@ -791,7 +837,7 @@ TEST_F(HostReservationParserTest, options6) {
 
     // Retrieve and sanity check DNS servers option.
     Option6AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
-        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NAME_SERVERS));
+        Option6AddrLst>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_NAME_SERVERS));
     ASSERT_TRUE(opt_dns);
     Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
     ASSERT_EQ(2, dns_addrs.size());
@@ -800,7 +846,7 @@ TEST_F(HostReservationParserTest, options6) {
 
     // Retrieve and sanity check NIS servers option.
     Option6AddrLstPtr opt_nis = boost::dynamic_pointer_cast<
-        Option6AddrLst>(retrieveOption(*hosts[0], "dhcp6", D6O_NIS_SERVERS));
+        Option6AddrLst>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_NIS_SERVERS));
     ASSERT_TRUE(opt_nis);
     Option6AddrLst::AddressContainer nis_addrs = opt_nis->getAddresses();
     ASSERT_EQ(1, nis_addrs.size());
@@ -808,7 +854,7 @@ TEST_F(HostReservationParserTest, options6) {
 
     // Retrieve and sanity check preference option.
     OptionUint8Ptr opt_prf = boost::dynamic_pointer_cast<
-        OptionUint8>(retrieveOption(*hosts[0], "dhcp6", D6O_PREFERENCE));
+        OptionUint8>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_PREFERENCE));
     ASSERT_TRUE(opt_prf);
     EXPECT_EQ(11, opt_prf->getValue());
 }

@@ -40,8 +40,8 @@ namespace {
 ///   in non-default order.
 ///
 /// - Configuration 3:
-///   - Used to test that host specific options override subnet specific
-///     options and global options.
+///   - Used to test that host specific options override pool specific,
+///     subnet specific and global options.
 ///
 /// - Configuration 4:
 ///   - Used to test that client receives options solely specified in a
@@ -150,7 +150,13 @@ const char* CONFIGS[] = {
         "\"subnet6\": [ "
         " { "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pools\": [ {"
+        "        \"pool\": \"2001:db8:1::/64\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"dns-servers\","
+        "            \"data\": \"3000:2::111\""
+        "        } ]"
+        "    } ],"
         "    \"interface\" : \"eth0\","
         "    \"option-data\": [ {"
         "        \"name\": \"dns-servers\","
@@ -453,7 +459,7 @@ public:
     /// reservation.
     void testReservationByIdentifier(Dhcp6Client& client,
                                      const unsigned int config_index,
-                                     const std::string exp_ip_address) {
+                                     const std::string& exp_ip_address) {
         configure(CONFIGS[config_index], *client.getServer());
 
         const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -498,7 +504,8 @@ public:
     void testOverrideRequestedOptions(const uint16_t msg_type);
 
     /// @brief Verifies that client receives options when they are solely
-    /// defined in the host scope (and not in the global or subnet scope).
+    /// defined in the host scope (and not in the global, subnet or pool
+    /// scope).
     ///
     /// @param msg_type DHCPv6 message type to be sent to the server. If the
     /// message type is Renew or Rebind, the 4-way exchange is made prior to
@@ -1212,29 +1219,29 @@ TEST_F(HostTest, hostIdentifiersOrder) {
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Information-request case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Information-request case).
 TEST_F(HostTest, overrideRequestedOptionsInformationRequest) {
     testOverrideRequestedOptions(DHCPV6_INFORMATION_REQUEST);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Request case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Request case).
 TEST_F(HostTest, overrideRequestedOptionsRequest) {
     testOverrideRequestedOptions(DHCPV6_REQUEST);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Renew case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Renew case).
 TEST_F(HostTest, overrideRequestedOptionsRenew) {
     testOverrideRequestedOptions(DHCPV6_RENEW);
 }
 
 // This test checks that host specific options override subnet specific
-// options. Overridden options are requested with Option Request
-// option (Rebind case).
+// and pool specific options. Overridden options are requested with Option
+// Request option (Rebind case).
 TEST_F(HostTest, overrideRequestedOptionsRebind) {
     testOverrideRequestedOptions(DHCPV6_REBIND);
 }

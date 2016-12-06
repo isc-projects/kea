@@ -1,3 +1,4 @@
+// Generated 201611011345
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Stack handling for Bison parsers in C++
@@ -35,12 +36,12 @@
  ** Define the isc::eval::stack class.
  */
 
-#ifndef YY_YY_STACK_HH_INCLUDED
-# define YY_YY_STACK_HH_INCLUDED
+#ifndef YY_EVAL_STACK_HH_INCLUDED
+# define YY_EVAL_STACK_HH_INCLUDED
 
 # include <vector>
 
-#line 13 "parser.yy" // stack.hh:132
+#line 14 "parser.yy" // stack.hh:132
 namespace isc { namespace eval {
 #line 46 "stack.hh" // stack.hh:132
   template <class T, class S = std::vector<T> >
@@ -150,8 +151,8 @@ namespace isc { namespace eval {
     unsigned int range_;
   };
 
-#line 13 "parser.yy" // stack.hh:132
+#line 14 "parser.yy" // stack.hh:132
 } } // isc::eval
 #line 156 "stack.hh" // stack.hh:132
 
-#endif // !YY_YY_STACK_HH_INCLUDED
+#endif // !YY_EVAL_STACK_HH_INCLUDED

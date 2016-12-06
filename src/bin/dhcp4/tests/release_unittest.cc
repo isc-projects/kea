@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -265,7 +265,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 
     // Modify the client's address to force it to release a different address
     // than it has obtained from the server.
-    client.config_.lease_.addr_ = IOAddress(static_cast<uint32_t>(leased_address) + 1);
+    client.config_.lease_.addr_ = IOAddress(leased_address.toUint32() + 1);
 
     // Send DHCPRELEASE and make sure it was unsuccessful, i.e. the lease
     // remains in the database.

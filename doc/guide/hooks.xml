@@ -35,7 +35,7 @@
       <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
-      found in the <ulink url="http://git.kea.isc.org/~tester/kea/doxygen">Kea
+      found in the <ulink url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
       Developer's Guide</ulink>.
       </para>
     </section> <!-- end Introduction -->
@@ -78,9 +78,9 @@
       <note><para>
         This is a change to the syntax used in Kea 0.9.2 and earlier, where
         hooks-libraries was a list of strings, each string being the name of
-        a library.  The change has been made in Kea 1.0 to facilitate the
-        specification of library-specific parameters, a feature that will be
-        added to a future version of Kea.
+        a library.  The change was made in Kea 1.0 to facilitate the
+        specification of library-specific parameters, a capability
+        available in Kea 1.1.0 onwards.
       </para></note>
 
         <note>
@@ -102,8 +102,8 @@
         parameter), floor (integer parameter), debug (boolean parameter) and
         even lists (list of strings) and maps (containing strings). Nested
         parameters could be used if the library supports it. This topic is
-        explained in detail in the Hooks Developer's Guide in Configuring Hooks
-        Libraries section.
+        explained in detail in the Hooks Developer's Guide in the "Configuring
+        Hooks Libraries" section.
       </para>
 
       <para>
@@ -142,24 +142,211 @@
     <section>
       <title>Available Hooks Libraries</title>
       <para>
-      As described above the hooks functionality provides a way to customize
+      As described above, the hooks functionality provides a way to customize
       a Kea server without modifying the core code.  ISC has chosen to take
-      advantage of this feature to provide functions that may not be useful
-      to all users.  To this end ISC has created some hooks libraries which
-      are discussed in the following sections.
+      advantage of this feature to provide functions that may only be useful
+      to a subset of Kea users.  To this end ISC has created some hooks
+      libraries; these discussed in the following sections.
       </para>
 
-      <para>
-      Some of these libraries will be available with the base code while
-      others will only be available via a support contract.
+      <note><para>
+      Some of these libraries will be available with the base code while others
+      will be shared with organizations supporting development of Kea
+      , possibly as a 'benefit' or 'thank you' for helping to sustain
+      the larger Kea project. If you would like to get access to those
+      libraries, please consider taking out a support contract: this includes
+      professional support, advance security notifications, input into our
+      roadmap planning, and many other benefits, while helping
+      making Kea sustainable in the long term.
+      </para></note>
+
+      <para>Currently the following libraries are available or planned from ISC:
+
+        <table frame="all" id="hook-libs">
+          <title>List of available hooks libraries</title>
+          <tgroup cols='3'>
+          <colspec colname='name' />
+          <colspec colname='avail' />
+          <colspec colname='description' />
+          <thead>
+            <row>
+              <entry>Name</entry>
+              <entry>Availability</entry>
+              <entry>Since</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+
+          <tbody>
+            <row>
+              <entry>user_chk</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 0.8</entry>
+              <entry>Reads known users list from a file. Unknown users
+              will be assigned a
+              lease from the last subnet defined in the configuration file,
+              e.g. to redirect them a captive portal. This demonstrates how an
+              external source of information can be used to influence the Kea
+              allocation engine. This hook is part of the Kea source code and is
+              available in the src/hooks/dhcp/user_chk directory.</entry>
+            </row>
+            <row>
+              <entry>Forensic Logging</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.1.0</entry>
+              <entry>This library provides hooks that record a detailed log of
+              lease assignments and renewals into a set of log files. In many
+              legal jurisdictions companies, especially ISPs, must record
+              information about the addresses they have leased to DHCP
+              clients. This library is designed to help with that
+              requirement. If the information that it records is sufficient it
+              may be used directly. If your jurisdiction requires that you save
+              a different set of information, you may use it as a template or
+              example and create your own custom logging hooks.</entry>
+            </row>
+            <row>
+              <entry>Lightweight 4over6</entry>
+              <entry>Support customers</entry>
+              <entry>Autumn 2016</entry>
+              <entry>Lightweight 4over6
+              (<ulink url="http://tools.ietf.org/html/rfc7596">RFC 7596</ulink>)
+              is a new IPv6 transition
+              technology that provides IPv4 as a service in IPv6-only
+              network. It assumes that dual-stack clients will get a regular IPv6
+              address and IPv6 prefix, but only a fraction of an IPv4 address. The
+              fraction is specified as port-set, which is essentially a range of
+              TCP and UDP ports a client can use. By doing the transition on the
+              client side, this technology eliminates the need to deploy
+              expensive Carrier Grade NATs within the operator's network. The
+              problem on the DHCP side is the non-trivial logic behind it: each
+              client needs to receive an unique set of lightweight 4over6 options
+              (<ulink url="http://tools.ietf.org/html/rfc7598">RFC 7598</ulink>),
+              that include the IPv4 address (shared among several
+              clients), port-set (which is unique among clients sharing the same
+              IPv4 address) and a number of additional parameters. This hooks
+              library will generate values of those options dynamically, thus
+              eliminating the need to manually configure values for each client
+              separately.
+              </entry>
+            </row>
+          </tbody>
+          </tgroup>
+          </table>
+
       </para>
+      <para>
+        ISC hopes to see more hooks libraries become available as time
+        progresses, both developed internally and externally. Since
+        this list may evolve dynamically, we decided to keep it on a
+        wiki page, available at this link: <ulink
+        url="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</ulink>.
+        If you are a developer or are aware of any hooks libraries not
+        listed there, please send a note to the kea-users or kea-dev
+        mailing lists and someone will update it.
+      </para>
+      <section>
+        <title>user_chk: Checking User Access</title>
+        <para>
+          The user_chk library is the first hooks library published by ISC. It
+          attempts to serve several purposes:
+
+          <itemizedlist>
+            <listitem>
+              <para>To assign "new" or "unregistered" users to a
+              restricted subnet, while "known" or "registered" users are assigned
+              to unrestricted subnets.</para>
+            </listitem>
+            <listitem>
+              <para>To allow DHCP response options or vendor option
+              values to be customized based upon user identity. </para>
+            </listitem>
+            <listitem>
+              <para>To provide a real time record of the user registration
+              activity which can be sampled by an external consumer.</para>
+            </listitem>
+            <listitem>
+              <para> To serve as a demonstration of various capabilities
+              possible using the hooks interface.</para>
+            </listitem>
+          </itemizedlist>
+        </para>
+        <para>
+          Once loaded, the library allows segregating incomings requests into
+          known and unknown clients. For known clients, the packets are
+          processed mostly as usual, except it is possible to override certain
+          options being sent. That can be done on a per host basis. Clients
+          that are not on the known hosts list will be treated as unknown and
+          will be assigned to the last subnet defined in the configuration file.
+        </para>
+
+        <para>
+          As an example of use, this behavior may be used to put unknown users into a
+          separate subnet that leads to a walled garden, where they can only
+          access a registration portal. Once they fill in necessary data, their
+          details are added to the known clients file and they get a proper
+          address after their device is restarted.
+        </para>
+
+        <note><para>This library was developed several years before the host
+        reservation mechanism has become available. Currently host reservation is
+        much more
+        powerful and flexible, but nevertheless the user_chk capability to consult
+        and external source of information about clients and alter Kea's
+        behavior is useful and remains of educational value.
+        </para></note>
+
+        <para>
+          The library reads the /tmp/user_chk_registry.txt file while being
+          loaded and each time an incoming packet is processed. The file is expected
+          to have each line contain a self-contained JSON snippet which must
+          have the following two entries:
+
+          <itemizedlist>
+            <listitem><para><command>type</command>, whose value
+            is "HW_ADDR" for IPv4 users or "DUID" for IPv6
+            users</para></listitem>
+            <listitem><para><command>id</command>, whose value is
+            either the hardware address or the DUID from the equest
+            formatted as a string of hex digits, with or without
+            ":" delimiters.</para></listitem>
+          </itemizedlist>
+
+and may have the zero or more of the following entries:
+
+          <itemizedlist>
+            <listitem><para><command>bootfile</command> whose value
+            is the pathname of the desired file</para></listitem>
+            <listitem><para><command>tftp_server</command> whose
+            value is the hostname or IP address of the desired
+            server</para></listitem>
+          </itemizedlist>
+
+          A sample user registry file is shown below:
+
+<screen>{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/tmp/v4bootfile" }
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:06", "tftp_server" : "tftp.v4.example.com" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }</screen>
+
+        </para>
+
+        <para>As with any other hooks libraries provided by ISC, internals of the
+        user_chk code are well documented. You can take a look at the  <ulink
+        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</ulink>
+        that discusses how the code works internally. That, together with
+        our general entries in <ulink
+        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
+        Framework section</ulink> should give you some pointers how to extend
+        this library and perhaps even write your own from scratch.</para>
+
+      </section>
       <section>
         <title>Forensic Logging Hooks</title>
         <para>
         This section describes the forensic log hooks library. This library
         povides hooks that record a detailed log of lease assignments
         and renewals into a set of log files.  Currently this library
-        is only available to customers with a support contract.
+        is only available to ISC customers with a support contract.
         </para>
         <para>
         In many legal jurisdictions companies, especially ISPs, must record

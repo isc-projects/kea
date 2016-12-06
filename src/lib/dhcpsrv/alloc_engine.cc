@@ -410,7 +410,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
                                                    *ctx.duid_,
                                                    ctx.currentIA().iaid_,
                                                    ctx.subnet_->getID());
-
         // Now do the checks:
         // Case 1. if there are no leases, and there are reservations...
         //   1.1. are the reserved addresses are used by someone else?
@@ -689,10 +688,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // non-PD leases.
         uint8_t prefix_len = 128;
         if (ctx.currentIA().type_ == Lease::TYPE_PD) {
-            Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+            pool = boost::dynamic_pointer_cast<Pool6>(
                 ctx.subnet_->getPool(ctx.currentIA().type_, candidate, false));
-            /// @todo: verify that the pool is non-null
-            prefix_len = pool->getLength();
+            if (pool) {
+                prefix_len = pool->getLength();
+            }
         }
 
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
@@ -1382,11 +1382,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         if (old_data->expired()) {
             reclaimExpiredLease(old_data, ctx.callout_handle_);
 
-        } else  if (!lease->hasIdenticalFqdn(*old_data)) {
-            // We're not reclaiming the lease but since the FQDN has changed
-            // we have to at least send NCR.
-            queueNCR(CHG_REMOVE, old_data);
+        } else {
+            if (!lease->hasIdenticalFqdn(*old_data)) {
+                // We're not reclaiming the lease but since the FQDN has changed
+                // we have to at least send NCR.
+                queueNCR(CHG_REMOVE, old_data);
+            }
         }
+
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
         LeaseMgrFactory::instance().updateLease6(lease);
@@ -1398,27 +1401,43 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = *old_data;
     }
+
+    // Add the old lease to the changed lease list. This allows the server
+    // to make decisions regarding DNS updates.
+    ctx.currentIA().changed_leases_.push_back(old_data);
 }
+
 
 Lease6Collection
 AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
+    bool remove_queued = false;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
-        if (!ctx.fake_allocation_ &&
-            (conditionalExtendLifetime(*lease) ||
-             (lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
-             (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
-             (lease->hostname_ != (*lease_it)->hostname_))) {
-            ctx.currentIA().changed_leases_.push_back(*lease_it);
-            LeaseMgrFactory::instance().updateLease6(lease);
+        if (!ctx.fake_allocation_) {
+            bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
+                                 !(lease->hasIdenticalFqdn(**lease_it)));
+
+            if (conditionalExtendLifetime(*lease) || fqdn_changed) {
+                ctx.currentIA().changed_leases_.push_back(*lease_it);
+                LeaseMgrFactory::instance().updateLease6(lease);
+
+                // If the FQDN differs, remove existing DNS entries.
+                // We only need one remove.
+                if (fqdn_changed && !remove_queued) {
+                    queueNCR(CHG_REMOVE, *lease_it);
+                    remove_queued = true;
+                }
+            }
         }
+
         updated_leases.push_back(lease);
     }
+
     return (updated_leases);
 }
 
@@ -2131,13 +2150,21 @@ void findClientLease(const AllocEngine::ClientContext4& ctx, Lease4Ptr& client_l
     // If no lease found using the client identifier, try the lookup using
     // the HW address.
     if (!client_lease && ctx.hwaddr_) {
-        client_lease = lease_mgr.getLease4(*ctx.hwaddr_, ctx.subnet_->getID());
-        // This lookup may return the lease which has conflicting client
-        // identifier and thus is considered to belong to someone else.
-        // If this is the case, we need to toss the result and force the
-        // Allocation Engine to allocate another lease.
-        if (client_lease && !client_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
-            client_lease.reset();
+
+        // There may be cases when there is a lease for the same MAC address
+        // (even within the same subnet). Such situation may occur for PXE
+        // boot clients using the same MAC address but different client
+        // identifiers.
+        Lease4Collection client_leases = lease_mgr.getLease4(*ctx.hwaddr_);
+        for (Lease4Collection::const_iterator client_lease_it = client_leases.begin();
+             client_lease_it != client_leases.end(); ++client_lease_it) {
+            Lease4Ptr existing_lease = *client_lease_it;
+            if ((existing_lease->subnet_id_ == ctx.subnet_->getID()) &&
+                existing_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
+                // Found the lease of this client, so return it.
+                client_lease = existing_lease;
+                break;
+            }
         }
     }
 }

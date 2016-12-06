@@ -19,7 +19,7 @@ mysql "$@" <<EOF
 
 # In the event hardware address cannot be determined, we need to satisfy
 # foreign key constraint between lease6 and lease_hardware_source
-INSERT INTO lease_hwaddr_source VALUES (0, "HWADDR_SOURCE_UNKNOWN");
+INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 #
 # Add order by lease address to lease4DumpData 

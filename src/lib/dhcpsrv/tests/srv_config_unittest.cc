@@ -284,7 +284,7 @@ TEST_F(SrvConfigTest, copy) {
 
     // Add an option.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
-    conf1.getCfgOption()->add(option, true, "dhcp6");
+    conf1.getCfgOption()->add(option, true, DHCP6_OPTION_SPACE);
 
     // Add a class dictionary
     conf1.setClientClassDictionary(ref_dictionary_);

@@ -1,3 +1,4 @@
+// Generated 201611011345
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Positions for Bison parsers in C++
@@ -35,8 +36,8 @@
  ** Define the isc::eval::position class.
  */
 
-#ifndef YY_YY_POSITION_HH_INCLUDED
-# define YY_YY_POSITION_HH_INCLUDED
+#ifndef YY_EVAL_POSITION_HH_INCLUDED
+# define YY_EVAL_POSITION_HH_INCLUDED
 
 # include <algorithm> // std::max
 # include <iostream>
@@ -50,7 +51,7 @@
 #  endif
 # endif
 
-#line 13 "parser.yy" // location.cc:296
+#line 14 "parser.yy" // location.cc:296
 namespace isc { namespace eval {
 #line 56 "position.hh" // location.cc:296
   /// Abstract a position.
@@ -174,7 +175,7 @@ namespace isc { namespace eval {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 13 "parser.yy" // location.cc:296
+#line 14 "parser.yy" // location.cc:296
 } } // isc::eval
 #line 180 "position.hh" // location.cc:296
-#endif // !YY_YY_POSITION_HH_INCLUDED
+#endif // !YY_EVAL_POSITION_HH_INCLUDED

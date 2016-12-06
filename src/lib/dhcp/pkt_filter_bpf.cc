@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -341,7 +341,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // Configure the BPF program to receive unicast packets sent to the
     // specified address. The program will also allow packets sent to the
     // 255.255.255.255 broadcast address.
-    prog.bf_insns[8].k = static_cast<uint32_t>(addr);
+    prog.bf_insns[8].k = addr.toUint32();
 
     // Configure the BPF program to receive packets on the specified port.
     prog.bf_insns[11].k = port;
@@ -490,7 +490,9 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
     // On local loopback interface the ethernet header is not present.
     // Instead, there is a 4-byte long pseudo header containing the
-    // address family in the host byte order.
+    // address family in the host byte order. Note that this header
+    // is present in the received messages on OSX, but should not be
+    // included in the sent messages on OSX.
     if (iface.flag_loopback_) {
         if (buf.getLength() < BPF_LOCAL_LOOPBACK_HEADER_LEN) {
             isc_throw(SocketReadError, "packet received on local loopback"
@@ -554,13 +556,18 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
         pkt->setLocalHWAddr(hwaddr);
     }
 
-    /// Loopback interface requires special treatment. It doesn't
-    /// use the ethernet header but rather a 4-bytes long pseudo header
-    /// holding an address family type (see bpf.c in OS sources).
+    // Loopback interface requires special treatment. It doesn't
+    // use the ethernet header but rather a 4-byte long pseudo header
+    // holding an address family type (see bpf.c in OS sources).
+    // On OSX, it even lacks pseudo header.
+#if !defined (OS_OSX)
     if (iface.flag_loopback_) {
         writeAFPseudoHeader(AF_INET, buf);
+    }
+#endif
 
-    } else {
+    // If this is not a loopback interface create Ethernet frame header.
+    if (!iface.flag_loopback_) {
         // Ethernet frame header.
         // Note that we don't validate whether HW addresses in 'pkt'
         // are valid because they are validated by the function called.

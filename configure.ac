@@ -116,6 +116,17 @@ if test $? -eq 0; then
   GNU_SED=yes
 fi
 
+# Display the C++ version
+AC_MSG_CHECKING([C++ version])
+cat > conftest.cpp << EOF
+long v = __cplusplus;
+EOF
+CXX_STANDARD=`$CXX $CXXFLAGS -E -o - conftest.cpp | grep '^long v = ' | $SED -e 's/^long v = //' -e 's/[[^0-9]]*$//' 2> /dev/null`
+if test -z "$CXX_STANDARD"; then
+	CXX_STANDARD="unknown"
+fi
+AC_MSG_RESULT([$CXX_STANDARD])
+
 # Linker options
 
 # check -R, "-Wl,-R" or -rpath
@@ -1094,12 +1105,12 @@ elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-	log4cplusdirs="/usr/local /usr/pkg /opt /opt/local"
+	log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
 	for d in $log4cplusdirs
 	do
 		if test -f $d/include/log4cplus/logger.h; then
 			LOG4CPLUS_INCLUDES="-I$d/include"
-			LOG4CPLUS_LIBS="-L$d/lib"
+			LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
 			break
 		fi
 	done
@@ -1261,6 +1272,27 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
+#
+# Some Googletest versions bug with C++11 compilers
+#
+if test $enable_gtest != "no"; then
+   AC_MSG_CHECKING([if Google Test is compatible with the compiler])
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
+   AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <boost/shared_ptr.hpp>
+	    #include <gtest/gtest.h>
+	    void foo() {
+	        boost::shared_ptr<int> bar;
+		ASSERT_TRUE(bar);
+            }],
+	    [return 0;])],
+	[AC_MSG_RESULT(yes)],
+    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
+    CPPFLAGS=$CPPFLAGS_SAVED
+fi
+	    
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
@@ -1622,6 +1654,7 @@ Package:
 C++ Compiler:
   CXX:             ${CXX}
   CXX_VERSION:     ${CXX_VERSION}
+  CXX_STANDARD:    ${CXX_STANDARD}
   DEFS:            ${DEFS}
   CPPFLAGS:        ${CPPFLAGS}
   CXXFLAGS:        ${CXXFLAGS}

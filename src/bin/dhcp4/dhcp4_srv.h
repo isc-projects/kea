@@ -154,6 +154,9 @@ private:
     /// host-reservation-identifiers
     void setHostIdentifiers();
 
+    /// @brief Assigns classes retrieved from host reservation database.
+    void setReservedClientClasses();
+
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
     /// @brief Pointer to the DHCPv4 message sent by the client.
@@ -592,11 +595,32 @@ private:
 
     /// @brief Process Hostname %Option sent by a client.
     ///
-    /// This function is called by the @c Dhcpv4Srv::processClientName when
-    /// the client has sent the Hostname option in its message to the server.
-    /// It comprises the actual logic to parse the Hostname option and
-    /// prepare the Hostname option to be sent back to the client in the
-    /// server's response.
+    /// This method is called by the @c Dhcpv4Srv::processClientName to
+    /// create an instance of the Hostname option to be returned to the
+    /// client. If this instance is created it is included in the response
+    /// message within the @c Dhcpv4Exchange object passed as an argument.
+    ///
+    /// The Hostname option instance is created if the client has included
+    /// Hostname option in its query to the server or if the client has
+    /// included Hostname option code in the Parameter Request List option.
+    /// In the former case, the server can use the Hostname supplied by the
+    /// client or replace it with a new hostname, depending on the server's
+    /// configuration. A reserved hostname takes precedence over a hostname
+    /// supplied by the client or auto generated hostname.
+    ///
+    /// If the 'qualifying-suffix' parameter is specified, its value is used
+    /// to qualify a hostname. For example, if the host reservation contains
+    /// a hostname 'marcin-laptop', and the qualifying suffix is
+    /// 'example.isc.org', the hostname returned to the client will be
+    /// 'marcin-laptop.example.isc.org'. If the 'qualifying-suffix' is not
+    /// specified (empty), the reserved hostname is returned to the client
+    /// unqualified.
+    ///
+    /// The 'qualifying-suffix' value is also used to qualify the hostname
+    /// supplied by the client, when this hostname is unqualified,
+    /// e.g. 'laptop-x'. If the supplied hostname is qualified, e.g.
+    /// 'laptop-x.example.org', the qualifying suffix will not be appended
+    /// to it.
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
@@ -783,8 +807,7 @@ private:
     /// @note This is the first part of @ref classifyPacket
     ///
     /// @param pkt packet to be classified
-    /// @param classes a reference to added class names for logging
-    void classifyByVendor(const Pkt4Ptr& pkt, std::string& classes);
+    void classifyByVendor(const Pkt4Ptr& pkt);
 
     /// @private
     /// @brief Constructs netmask option based on subnet4

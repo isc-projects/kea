@@ -13,31 +13,15 @@
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
-#include <dhcpsrv/pool.h>
-#include <dhcpsrv/triplet.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/triplet.h>
 
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief a base class for Subnet4 and Subnet6
-///
-/// This class presents a common base for IPv4 and IPv6 subnets.
-/// In a physical sense, a subnet defines a single network link with all devices
-/// attached to it. In most cases all devices attached to a single link can
-/// share the same parameters. Therefore Subnet holds several values that are
-/// typically shared by all hosts: renew timer (T1), rebind timer (T2) and
-/// leased addresses lifetime (valid-lifetime). It also holds the set
-/// of DHCP option instances configured for the subnet. These options are
-/// included in DHCP messages being sent to clients which are connected
-/// to the particular subnet.
-///
-/// @todo: Implement support for options here
-
-/// @brief Unique identifier for a subnet (both v4 and v6)
-typedef uint32_t SubnetID;
 
 class Subnet {
 public:
@@ -173,13 +157,20 @@ public:
     /// requesting router because the requesting router may use the
     /// delegated prefixes in different networks (using different subnets).
     ///
+    /// A DHCPv4 pool being added must not overlap with any existing DHCPv4
+    /// pool. A DHCPv6 pool being added must not overlap with any existing
+    /// DHCPv6 pool.
+    ///
+    /// Pools held within a subnet are sorted by first pool address/prefix
+    /// from the lowest to the highest.
+    ///
     /// @param pool pool to be added
     ///
-    /// @throw isc::BadValue if the pool type is invalid or the pool
+    /// @throw isc::BadValue if the pool type is invalid, the pool
     /// is not an IA_PD pool and the address range of this pool does not
-    /// match the subnet prefix.
+    /// match the subnet prefix, or the pool overlaps with an existing pool
+    /// within the subnet.
     void addPool(const PoolPtr& pool);
-
 
     /// @brief Deletes all pools of specified type
     ///
@@ -188,6 +179,10 @@ public:
     void delPools(Lease::Type type);
 
     /// @brief Returns a pool that specified address belongs to
+    ///
+    /// This method uses binary search to retrieve the pool. Thus, the number
+    /// of comparisons performed by this method is logarithmic in the number
+    /// of pools belonging to a subnet.
     ///
     /// If there is no pool that the address belongs to (hint is invalid), other
     /// pool of specified type will be returned.
@@ -412,6 +407,16 @@ protected:
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
+
+    /// @brief Checks if the specified pool overlaps with an existing pool.
+    ///
+    /// @param pool_type Pool type.
+    /// @param pool Pointer to a pool for which the method should check if
+    /// it overlaps with any existing pool within this subnet.
+    ///
+    /// @return true if pool overlaps with an existing pool of a specified
+    /// type.
+    bool poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const;
 
     /// @brief subnet-id
     ///

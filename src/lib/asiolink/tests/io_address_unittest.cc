@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -172,7 +172,7 @@ TEST(IOAddressTest, uint32) {
     IOAddress addr1("192.0.2.5");
 
     // operator uint_32() is used here
-    uint32_t tmp = addr1;
+    uint32_t tmp = addr1.toUint32();
 
     uint32_t expected = (192U << 24) +  (0U << 16) + (2U << 8) + 5U;
 

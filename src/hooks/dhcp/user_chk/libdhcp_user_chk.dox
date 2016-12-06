@@ -7,9 +7,9 @@
 /**
 @page libdhcp_user_chk DHCP User Check Hooks Library
 
-@section libdhcp_user_chkIntro Libdhcp_user_chk: An Example Hooks Library
+@section libdhcp_user_chkIntro user_chk: An Example Hooks Library
 ## Introduction
-libdhcp_user_chk is an example hooks library which customizes the DHCP query
+user_chk is an example hooks library which customizes the DHCP query
 processing provided by Kea DHCP server modules (kea-dhcp4 and kea-dhcp6).
 Specifically it allows subnet selection and DHCP response option customization
 based upon a registry of DHCP clients.  Note that the words "client" and "user"
@@ -24,6 +24,8 @@ based upon user identity.
 
 3. To provide a real time record of the user registration activity which can be
 sampled by an external consumer.
+
+The source code is provided in the src/hooks/dhcp/use_chk directory.
 
 ## User Registry Classes
 At the heart of the library is a class hierarchy centered around the class,

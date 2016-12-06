@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,7 +181,7 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
     // Send DHCPv4 message to the local loopback address and server's port.
     sendMessage();
 
-    // Receive the packet using LPF packet filter.
+    // Receive the packet using BPF packet filter.
     Pkt4Ptr rcvd_pkt;
     ASSERT_NO_THROW(rcvd_pkt = pkt_filter.receive(iface, sock_info_));
     // Check that the packet has been correctly received.
@@ -192,6 +192,7 @@ TEST_F(PktFilterBPFTest, DISABLED_receive) {
 
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
+    testRcvdMessageAddressPort(rcvd_pkt);
 }
 
 // This test verifies that if the packet is received over the raw

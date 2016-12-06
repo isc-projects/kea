@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -291,8 +291,9 @@ TEST_F(Option6IATest, suboptionsUnpack) {
     ASSERT_NE(OptionPtr(), subopt); // non-NULL
 
     // Checks for address option
-    Option6IAAddr * addr = dynamic_cast<Option6IAAddr*>(subopt.get());
-    ASSERT_TRUE(NULL != addr);
+    Option6IAAddrPtr addr =
+        boost::dynamic_pointer_cast<Option6IAAddr>(subopt);
+    ASSERT_TRUE(addr);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());
     EXPECT_EQ(28, addr->len());

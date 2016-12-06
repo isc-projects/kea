@@ -292,6 +292,12 @@ TEST_F(PgSqlHostDataSourceTest, get6PrefixWithHWaddr) {
     testGetByIPv6(Host::IDENT_HWADDR, true);
 }
 
+// Test verifies that host with IPv6 prefix reservation can be retrieved
+// by subnet id and prefix value.
+TEST_F(PgSqlHostDataSourceTest, get6SubnetPrefix) {
+    testGetBySubnetIPv6();
+}
+
 // Test verifies if a host reservation can be added and later retrieved by
 // hardware address.
 TEST_F(PgSqlHostDataSourceTest, get6ByHWaddr) {

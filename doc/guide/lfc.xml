@@ -22,7 +22,7 @@
       of the lease entries and to indicate where it is in the process in case of an
       interruption.  Currently the caller must supply names for all of the files, in
       the future this requirement may be relaxed with the process getting the names
-      from either the config file or from defaults.
+      from either the configuration file or from defaults.
       </para>
     </section>
 

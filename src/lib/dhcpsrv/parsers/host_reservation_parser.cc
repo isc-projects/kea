@@ -52,6 +52,7 @@ getSupportedParams4(const bool identifiers_only = false) {
         params_set.insert("next-server");
         params_set.insert("server-hostname");
         params_set.insert("boot-file-name");
+        params_set.insert("client-classes");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -83,6 +84,7 @@ getSupportedParams6(const bool identifiers_only = false) {
         params_set.insert("ip-addresses");
         params_set.insert("prefixes");
         params_set.insert("option-data");
+        params_set.insert("client-classes");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -102,10 +104,10 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
     std::string identifier_name;
     std::string hostname;
 
-    // Gather those parameters that are common for both IPv4 and IPv6
-    // reservations.
-    BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
-        try {
+    try {
+        // Gather those parameters that are common for both IPv4 and IPv6
+        // reservations.
+        BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
             // Check if we support this parameter.
             if (!isSupportedParameter(element.first)) {
                 isc_throw(DhcpConfigError, "unsupported configuration"
@@ -123,15 +125,10 @@ HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
 
             } else if (element.first == "hostname") {
                 hostname = element.second->stringValue();
-            }
-        } catch (const std::exception& ex) {
-            // Append line number where the error occurred.
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << element.second->getPosition() << ")");
-        }
-    }
 
-    try {
+            }
+        }
+
         // Host identifier is a must.
         if (identifier_name.empty()) {
             // If there is no identifier specified, we have to display an
@@ -210,19 +207,25 @@ HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
                     host_->setIPv4Reservation(IOAddress(element.second->
                                                         stringValue()));
                 } else if (element.first == "next-server") {
-                host_->setNextServer(IOAddress(element.second->stringValue()));
+                    host_->setNextServer(IOAddress(element.second->stringValue()));
 
                 } else if (element.first == "server-hostname") {
                     host_->setServerHostname(element.second->stringValue());
 
                 } else if (element.first == "boot-file-name") {
                     host_->setBootFileName(element.second->stringValue());
+
+                } else if (element.first == "client-classes") {
+                    BOOST_FOREACH(ConstElementPtr class_element,
+                                  element.second->listValue()) {
+                        host_->addClientClass4(class_element->stringValue());
+                    }
                 }
 
             } catch (const std::exception& ex) {
                 // Append line number where the error occurred.
                 isc_throw(DhcpConfigError, ex.what() << " ("
-                          << reservation_data->getPosition() << ")");
+                          << element.second->getPosition() << ")");
             }
         }
     }
@@ -317,6 +320,19 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
                     isc_throw(DhcpConfigError, ex.what() << " ("
                               << prefix_element->getPosition() << ")");
                 }
+            }
+
+
+        } else if (element.first == "client-classes") {
+            try {
+                BOOST_FOREACH(ConstElementPtr class_element,
+                              element.second->listValue()) {
+                    host_->addClientClass6(class_element->stringValue());
+                }
+            } catch (const std::exception& ex) {
+                // Append line number where the error occurred.
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << element.second->getPosition() << ")");
             }
         }
     }

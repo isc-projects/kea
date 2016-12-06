@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +49,7 @@ public:
     /// @param duid_type DUID type in numeric format.
     /// @param duid_type_text DUID type in textual format.
     void testTypeOnly(const DUID::DUIDType& duid_type,
-                      const std::string duid_type_text) const;
+                      const std::string& duid_type_text) const;
 
     /// @brief Test that invalid configuration is rejected.
     ///
@@ -109,7 +109,7 @@ DUIDConfigParserTest::build(const std::string& config) const {
 
 void
 DUIDConfigParserTest::testTypeOnly(const DUID::DUIDType& duid_type,
-                                   const std::string duid_type_text) const {
+                                   const std::string& duid_type_text) const {
     // Use DUID configuration with only a "type".
     ASSERT_NO_THROW(build(createConfigWithType(duid_type_text)));
 

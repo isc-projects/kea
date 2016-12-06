@@ -1,3 +1,150 @@
+1188.	[doc]		vlegout
+	Fixed several spelling mistakes.
+	(Github #32, d51c005519c4add6fd0c37bcd68b0fbe94941b2d)
+
+1187.	[bug]		marcin
+	DHCPv4 server allows for allocating multiple leases for the
+	same hardware address if a different client identifier is
+	used for each lease. This facilitates the PXE boot use cases
+	where a booted machine may request a lease multiple times.
+	(Trac #5029, git 03defed4d8bb9a997d31dbfcf30ae3f866bd3353)
+
+1186.	[func]		marcin
+	Support for DHCPv6 options defined in RFC6603 and RFC7598. Thanks
+	to Andrei Pavel and Cristian Secareanu of Qualitance for submitting
+	initial implementation.
+	(Trac #github24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
+
+1185.	[build]		marcin
+	Install Kea headers to be used for building external libraries.
+	Before this change some required headers were not installed.
+	(Trac #5055, git a46087b7b7face4a1318658bbdcbf7602c1bb729)
+
+1184.	[bug]		eest
+	Fixes in the occasionally failing LFC unit test. This
+	fix was provided by Patrik Lundin.
+	(Github #31, git 69a5722bf3b41bf3b2bc0c2bcac966c23c08f62d)
+
+1183.	[bug]		tmark
+	kea-dhcp4 now correctly loads declined leases from CSV
+	lease files. Prior to this, declined leases were being
+	incorrectly and silently discarded.  In addition, both
+	kea-dhcp4 and kea-dhcp6 will now emit an error log for
+	each invalid row encountered when loading leases from
+	CSV files.
+	(Trac #5058, git 29b088079bed3c5059fdf8a43a4e79cd7f9a4207)
+
+1182.	[func]		marcin
+	DHCP servers detect overlapping pool ranges during
+	configuration.
+	(Trac #2280, git c8f931e0189c9630f5fba5d2a5553bed4abf36f7)
+
+1181.	[func]		marcin
+	Extended DHCPv6 server to allow for specifying DHCP options
+	on address and prefix pool levels.
+	(Trac #5022, git e3b2785c79aedbb0c8af7468d61f6d61dafd2282)
+
+1180.	[doc]		stephen
+	Editing pass through the Kea guide.
+	(Trac #4484, git 63456fab1b978bd515198b9b9e604f293efd8217)
+	(Trac #5008, git f09cd12d5b1abc60ccef98df2abc6c41b482a404)
+
+1179.	[doc]		tomek
+	Manual pages updated.
+	(Trac #3515, git 4cf0395e11e724786c4d2a1d48805f1c770f4c99)
+
+1178.	[doc]           tomek
+	user_chk hook library is now documented in the User's Guide.
+	(Trac #3209, git 4a8534d968a21cff3851619fb22d0032a1202c87)
+
+1177.	[build]	marcin
+	Updated Kea libraries version numbers for 1.1-final release.
+	(Trac #5012, git 6e9a224b46def357141a31386fcc912b29dfe16d)
+
+1176.	[doc]		tomek
+	Developer's Guide has been updated.
+	(trac #4299, git ed38076c183394feaef60e7123d0c488c9f6447d)
+
+1175.	[bug]		marcin
+	Corrected a bug whereby a client, for which there was no
+	host reservation specified, did not obtain an IPv6 lease
+	from a server when PostgreSQL or MySQL host database backend
+	was in use. In addition, PostgreSQL host database backend
+	allows for specifying NULL values in certain columns within
+	host reservation tables.
+	(Trac #5009, git d3109bb27786867fdc99954ba55367f0ad129e7a)
+
+1174.	[bug]		tmark
+	Modifed kea-dhcp6 to avoid requesting DNS updates when
+	existing leases are renewed without changes to the FQDN.
+	(Trac #5007, git 05ea3a5eb75c06cf9814c63a1a54261bf58a954b)
+
+1173.	[bug]		xxwolfsrainxx, marcin
+	MySQL database creation scripts use single quotes for
+	strings to avoid issues with creation of the database
+	when MySQL server operates in ANSI_QUOTES mode.
+	(github #30, git e40a54a8e24b5f6427edd4afcd5cdc15012b8866)
+
+1172.	[bug]		andir
+	Kea build fixes for gcc 6, which uses C++14 by default.
+	(github #29, git ad68c3942839618c26d7ff017fbac7df139b5d01)
+
+1171.	[doc]		marcin
+	Updated supported operating systems and the prerequisites for
+	installing and building Kea in the Kea Administrator
+	Reference Manual.
+	(Trac #4502, git af847837590ce5b37a300ebe15652fb172585b38)
+
+1170.	[doc]		marcin
+	Updated Kea Administrator's Reference Manual sections
+	regarding host reservations. Added configuration examples
+	for using host reservations with MySQL and PostgreSQL
+	databases.
+	(Trac #3684, git 71d21eac51d20ff5d368b17c437abc45c955a04c)
+
+1169.	[doc]		marcin
+	Updated Kea Administrator Reference Manual to explain the
+	implications of using "kea_verbose" parameter in the keactrl
+	configuration.
+	(Trac #3950, git c5f4920fd1994882e1fae398ae29b455401296bd)
+
+1168.	[doc]		marcin
+	Corrected location of the Kea repository in the Kea Administrator
+	Reference Manual.
+	(Trac #4258, git f081000b892287316e54848ca1f62ca3512d4263)
+
+1167.	[func]		marcin
+	DHCP servers utilize client classes defined in host reservations.
+	(Trac #4765, git 242fbc47b31da404e57be458ac065f811084cca9)
+
+1166.	[bug]		marcin
+	Corrected error message produced by the host database access
+	parser when the database type was not specified.
+	(Trac #4261, git 028dd49f4fa4843e68e23d11c237e9f4683470ba)
+
+1165.	[func]		marcin
+	Hostname option is returned to the client when requested using
+	Parameter Request List option. Previously this option was only
+	returned when a client has sent Hostname option to the server.
+	(Trac #5005, git 96ab8ecaa3d5b2d6cd88d0b16406f433d2cdf841)
+
+1164.	[bug]		marcin
+	Corrected an issue whereby DHCPv4 server did not correctly set a
+	server identifier in response message sent to a client on BSD
+	systems.
+	(Trac #5003, git 110c67325072a781d55cf0634f8f5f3385611f97)
+
+1163.	[bug]		marcin
+	Corrected swapped DHCPSRV_MEMFILE_GET_EXPIRED{4,6} messages
+	in the Memfile lease manager.
+	(Trac #4717, git ce5919d97879c3fda0858894b24418af135ef8f3)
+
+1162.	[func]		pallotron
+	Added two enhancements to perfdhcp: optionally using MAC
+	addresses from a file in new DHCP transactions, and
+	generation of DHCPv6 relayed messages.
+	(github #22, git c5b4a5981cf642ebb9aecb8acc07b87abdccbd91)
+
 1161.	[bug]		fdupont
 	Fixed interface manager receive methods which raise a bug on
 	Fedora 24 / gcc 6.1?
@@ -298,7 +445,7 @@ Kea 1.1.0-beta released on August 31, 2016
 	to list of modes, which provides greater flexibility in when the Kea
 	servers replace or supply DNS names for clients.  This is supported both
 	kea-dhcp4 and kea-dhcp6.
-	(Trac #4529, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
+	(Trac #4259, git 45e56d7aa0d4a6224a1a28941f6cb11575391222)
 
 1106.	[func]		marcin
 	"circuit-id" can be specified as host identifier in host

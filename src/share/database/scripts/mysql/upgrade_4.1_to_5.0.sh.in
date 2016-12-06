@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS host_identifier_type (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO host_identifier_type VALUES (0, "hw-address"); # Non-temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (1, "duid");       # Temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (2, "circuit-id"); # Prefix delegations
+INSERT INTO host_identifier_type VALUES (0, 'hw-address'); # Non-temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (1, 'duid');       # Temporary v6 addresses
+INSERT INTO host_identifier_type VALUES (2, 'circuit-id'); # Prefix delegations
 COMMIT;
 
 # Add a constraint that any identifier type value added to the hosts
@@ -74,10 +74,10 @@ CREATE TABLE IF NOT EXISTS dhcp_option_scope (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO dhcp_option_scope VALUES (0, "global");
-INSERT INTO dhcp_option_scope VALUES (1, "subnet");
-INSERT INTO dhcp_option_scope VALUES (2, "client-class");
-INSERT INTO dhcp_option_scope VALUES (3, "host");
+INSERT INTO dhcp_option_scope VALUES (0, 'global');
+INSERT INTO dhcp_option_scope VALUES (1, 'subnet');
+INSERT INTO dhcp_option_scope VALUES (2, 'client-class');
+INSERT INTO dhcp_option_scope VALUES (3, 'host');
 COMMIT;
 
 # Add scopes into table holding DHCPv4 options

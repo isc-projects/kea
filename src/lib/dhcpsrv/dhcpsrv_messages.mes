@@ -459,6 +459,12 @@ replaced by those read from the file.
 % DHCPSRV_MEMFILE_LEASE_LOAD loading lease %1
 A debug message issued when DHCP lease is being loaded from the file to memory.
 
+% DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR discarding row %1, error: %2
+An error message issued the the DHCP lease being loaded from the given row of
+the lease file fails. The log message should contain the specific reason the
+row was discarded. The server will continue loading the remaining data.
+This may indicate a corrupt lease file.
+
 % DHCPSRV_MEMFILE_LFC_EXECUTE executing Lease File Cleanup using: %1
 An informational message issued when the Memfile lease database backend
 starts a new process to perform Lease File Cleanup.

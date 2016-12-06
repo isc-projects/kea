@@ -10,6 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 
@@ -28,7 +29,7 @@ namespace dhcp {
 Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& prefix,
                                  uint8_t prefix_len, uint32_t pref, uint32_t valid)
     :Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
     if (prefix_len > 128) {
         isc_throw(BadValue, static_cast<unsigned>(prefix_len)
@@ -40,7 +41,7 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
 Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
     :Option6IAAddr(type, begin, end) {
-    setEncapsulatedSpace("dhcp6");
+    setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     unpack(begin, end);
 }
 

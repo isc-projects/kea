@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcpsrv/testutils/config_result_check.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -1227,10 +1228,10 @@ TEST_F(DdnsDomainTest, duplicateDomain) {
 /// @brief Tests construction of D2CfgMgr
 /// This test verifies that a D2CfgMgr constructs properly.
 TEST(D2CfgMgr, construction) {
-    D2CfgMgr *cfg_mgr = NULL;
+    boost::scoped_ptr<D2CfgMgr> cfg_mgr;
 
     // Verify that configuration manager constructions without error.
-    ASSERT_NO_THROW(cfg_mgr = new D2CfgMgr());
+    ASSERT_NO_THROW(cfg_mgr.reset(new D2CfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1244,7 +1245,7 @@ TEST(D2CfgMgr, construction) {
     EXPECT_TRUE(context->getReverseMgr());
 
     // Verify that the manager can be destructed without error.
-    EXPECT_NO_THROW(delete cfg_mgr);
+    EXPECT_NO_THROW(cfg_mgr.reset());
 }
 
 /// @brief Tests the parsing of a complete, valid DHCP-DDNS configuration.

@@ -173,7 +173,7 @@ public:
     /// @param exp_code expected option code to be parsed
     /// @param exp_repr expected representation to be parsed
     /// @param exp_tokens expected number of tokens
-    void testRelay6Option(std::string expr,
+    void testRelay6Option(const std::string& expr,
                          uint8_t exp_level,
                          uint16_t exp_code,
                          TokenOption::RepresentationType exp_repr,
@@ -221,7 +221,7 @@ public:
     /// @param expr expression to be parsed
     /// @param exp_type expected metadata type to be parsed
     /// @param exp_tokens expected number of tokens
-    void testPktMetadata(std::string expr,
+    void testPktMetadata(const std::string& expr,
                          TokenPkt::MetadataType exp_type,
                          int exp_tokens) {
         EvalContext eval(Option::V6);
@@ -266,7 +266,7 @@ public:
     /// @param expr expression to be parsed
     /// @param exp_type expected field type to be parsed
     /// @param exp_tokens expected number of tokens
-    void testPkt4Field(std::string expr,
+    void testPkt4Field(const std::string& expr,
                        TokenPkt4::FieldType exp_type,
                        int exp_tokens) {
         EvalContext eval(Option::V4);
@@ -314,7 +314,8 @@ public:
     /// @param expr expression to be parsed
     /// @param exp_type expected field type to be parsed
     /// @param exp_tokens expected number of tokens
-    void testPkt6Field(std::string expr, TokenPkt6::FieldType exp_type,
+    void testPkt6Field(const std::string& expr,
+                       TokenPkt6::FieldType exp_type,
                        int exp_tokens) {
         EvalContext eval(Option::V6);
 
@@ -363,7 +364,7 @@ public:
     /// @param exp_level expected level to be parsed
     /// @param exp_type expected field type to be parsed
     /// @param exp_tokens expected number of tokens
-    void testRelay6Field(std::string expr,
+    void testRelay6Field(const std::string& expr,
                          uint8_t exp_level,
                          TokenRelay6Field::FieldType exp_type,
                          int exp_tokens) {
@@ -461,8 +462,9 @@ public:
     /// @param vendor_id expected vendor-id (aka enterprise number)
     /// @param option_code expected option code (ignored if 0)
     /// @param expected_repr expected representation (either 'exists' or 'hex')
-    void testVendor(std::string expr, Option::Universe u, uint32_t vendor_id,
-                    uint16_t option_code, TokenOption::RepresentationType expected_repr) {
+    void testVendor(const std::string& expr, Option::Universe u,
+                    uint32_t vendor_id, uint16_t option_code,
+                    TokenOption::RepresentationType expected_repr) {
         EvalContext eval(u);
 
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
@@ -487,7 +489,8 @@ public:
     /// @param u universe (V4 or V6)
     /// @param vendor_id expected vendor-id (aka enterprise number)
     /// @param expected_repr expected representation (either 'exists' or 'hex')
-    void testVendor(std::string expr, Option::Universe u, uint32_t vendor_id,
+    void testVendor(const std::string& expr, Option::Universe u,
+                    uint32_t vendor_id,
                     TokenOption::RepresentationType expected_repr) {
         testVendor(expr, u, vendor_id, 0, expected_repr);
     }
@@ -499,7 +502,8 @@ public:
     ///
     /// @param expr expression to be parsed
     /// @param u universe (V4 or V6)
-    void testVendorEnterprise(std::string expr, Option::Universe u) {
+    void testVendorEnterprise(const std::string& expr,
+                              Option::Universe u) {
         EvalContext eval(u);
 
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
@@ -524,7 +528,8 @@ public:
     /// @param expr expression to be parsed
     /// @param u universe (V4 or V6)
     /// @param vendor_id expected vendor-id (aka enterprise number)
-    void testVendorClass(std::string expr, Option::Universe u, uint32_t vendor_id) {
+    void testVendorClass(const std::string& expr,
+                         Option::Universe u, uint32_t vendor_id) {
         EvalContext eval(u);
 
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
@@ -548,8 +553,8 @@ public:
     /// @param u universe (V4 or V6)
     /// @param vendor_id expected vendor-id (aka enterprise number)
     /// @param index expected data index
-    void testVendorClass(std::string expr, Option::Universe u, uint32_t vendor_id,
-                         uint16_t index) {
+    void testVendorClass(const std::string& expr, Option::Universe u,
+                         uint32_t vendor_id, uint16_t index) {
         EvalContext eval(u);
 
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
@@ -572,7 +577,8 @@ public:
     ///
     /// @param expr expression to be parsed
     /// @param u universe (V4 or V6)
-    void testVendorClassEnterprise(std::string expr, Option::Universe u) {
+    void testVendorClassEnterprise(const std::string& expr,
+                                   Option::Universe u) {
         EvalContext eval(u);
 
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));

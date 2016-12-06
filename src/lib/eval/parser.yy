@@ -8,6 +8,7 @@
 %require "3.0.0"
 %defines
 %define parser_class_name {EvalParser}
+%define api.prefix {eval}
 %define api.token.constructor
 %define api.value.type variant
 %define api.namespace {isc::eval}
