@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,12 +40,12 @@ PktFilterInet::openSocket(Iface& iface,
     if (receive_bcast && iface.flag_broadcast_) {
         addr4.sin_addr.s_addr = INADDR_ANY;
     } else {
-        addr4.sin_addr.s_addr = htonl(addr);
+        addr4.sin_addr.s_addr = htonl(addr.toUint32());
     }
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
-        isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
+        isc_throw(SocketConfigError, "Failed to create UDP4 socket.");
     }
 
     // Set the close-on-exec flag.
@@ -84,13 +84,21 @@ PktFilterInet::openSocket(Iface& iface,
                   << "/port=" << port);
     }
 
-    // if there is no support for IP_PKTINFO, we are really out of luck
-    // it will be difficult to undersand, where this packet came from
-#if defined(IP_PKTINFO)
+    // On Linux systems IP_PKTINFO socket option is supported. This
+    // option is used to retrieve destination address of the packet.
+#if defined (IP_PKTINFO) && defined (OS_LINUX)
     int flag = 1;
     if (setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &flag, sizeof(flag)) != 0) {
         close(sock);
         isc_throw(SocketConfigError, "setsockopt: IP_PKTINFO: failed.");
+    }
+
+    // On BSD systems IP_RECVDSTADDR is used instead of IP_PKTINFO.
+#elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
+    int flag = 1;
+    if (setsockopt(sock, IPPROTO_IP, IP_RECVDSTADDR, &flag, sizeof(flag)) != 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "setsockopt: IP_RECVDSTADDR: failed.");
     }
 #endif
 
@@ -154,21 +162,17 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(from_port);
     pkt->setLocalPort(socket_info.port_);
 
-// In the future the OS-specific code may be abstracted to a different
-// file but for now we keep it here because there is no code yet, which
-// is specific to non-Linux systems.
+// Linux systems support IP_PKTINFO option which is used to retrieve the
+// destination address of the received packet. On BSD systems IP_RECVDSTADDR
+// is used instead.
 #if defined (IP_PKTINFO) && defined (OS_LINUX)
-    struct cmsghdr* cmsg;
     struct in_pktinfo* pktinfo;
-    struct in_addr to_addr;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
 
-    memset(&to_addr, 0, sizeof(to_addr));
-
-    cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
             (cmsg->cmsg_type == IP_PKTINFO)) {
-            pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+            pktinfo = reinterpret_cast<struct in_pktinfo*>(CMSG_DATA(cmsg));
 
             pkt->setIndex(pktinfo->ipi_ifindex);
             pkt->setLocalAddr(IOAddress(htonl(pktinfo->ipi_addr.s_addr)));
@@ -184,6 +188,21 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
         }
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
+
+#elif defined (IP_RECVDSTADDR) && defined (OS_BSD)
+    struct in_addr* to_addr;
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == IPPROTO_IP) &&
+            (cmsg->cmsg_type == IP_RECVDSTADDR)) {
+            to_addr = reinterpret_cast<struct in_addr*>(CMSG_DATA(cmsg));
+            pkt->setLocalAddr(IOAddress(htonl(to_addr->s_addr)));
+            break;
+        }
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+
 #endif
 
     return (pkt);
@@ -199,7 +218,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_port = htons(pkt->getRemotePort());
-    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr());
+    to.sin_addr.s_addr = htonl(pkt->getRemoteAddr().toUint32());
 
     struct msghdr m;
     // Initialize our message header structure.
@@ -237,7 +256,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
-    pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr()); // set the source IP address
+    pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr().toUint32()); // set the source IP address
     m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 

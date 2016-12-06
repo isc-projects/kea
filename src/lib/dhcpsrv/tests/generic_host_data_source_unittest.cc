@@ -8,7 +8,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
@@ -1002,6 +1001,46 @@ void GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id,
     // will not work.
     EXPECT_FALSE(hdsptr_->get6(IOAddress("2001:db8::5"), len));
 }
+
+void GenericHostDataSourceTest::testGetBySubnetIPv6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a couple of hosts...
+    HostPtr host1 = initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
+    HostPtr host2 = initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
+    HostPtr host3 = initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
+    HostPtr host4 = initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
+
+    // ... and add them to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // And then try to retrieve them back.
+    ConstHostPtr from_hds1 = hdsptr_->get6(host1->getIPv6SubnetID(),
+                                           IOAddress("2001:db8:1::"));
+    ConstHostPtr from_hds2 = hdsptr_->get6(host2->getIPv6SubnetID(),
+                                           IOAddress("2001:db8:2::"));
+    ConstHostPtr from_hds3 = hdsptr_->get6(host3->getIPv6SubnetID(),
+                                           IOAddress("2001:db8:3::"));
+    ConstHostPtr from_hds4 = hdsptr_->get6(host4->getIPv6SubnetID(),
+                                           IOAddress("2001:db8:4::"));
+
+    // Make sure we got something back.
+    ASSERT_TRUE(from_hds1);
+    ASSERT_TRUE(from_hds2);
+    ASSERT_TRUE(from_hds3);
+    ASSERT_TRUE(from_hds4);
+
+    // Then let's check that what we got seems correct.
+    compareHosts(host1, from_hds1);
+    compareHosts(host2, from_hds2);
+    compareHosts(host3, from_hds3);
+    compareHosts(host4, from_hds4);
+}
+
 
 void GenericHostDataSourceTest::testAddDuplicate6WithSameDUID() {
     // Make sure we have the pointer to the host data source.

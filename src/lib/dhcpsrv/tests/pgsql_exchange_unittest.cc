@@ -225,7 +225,7 @@ public:
     /// @lineno line number from where the call was invoked
     ///
     /// Asserts if the result set status does not equal the expected outcome.
-    void runSql(PgSqlResultPtr& r, const std::string sql, int exp_outcome,
+    void runSql(PgSqlResultPtr& r, const std::string& sql, int exp_outcome,
                 int lineno) {
         r.reset(new PgSqlResult(PQexec(*conn_, sql.c_str())));
         ASSERT_EQ(PQresultStatus(*r), exp_outcome)

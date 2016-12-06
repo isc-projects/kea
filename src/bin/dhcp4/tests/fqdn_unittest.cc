@@ -108,6 +108,60 @@ const char* CONFIGS[] = {
             "\"enable-updates\": true,"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
+    "}",
+    // Configuration which disables DNS updates but contains a reservation
+    // for a hostname. Reserved hostname should be assigned to a client if
+    // the client includes it in the Parameter Request List option.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ],"
+        "    \"reservations\": ["
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"hostname\":   \"reserved.example.org\""
+        "       }"
+        "    ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": false,"
+            "\"qualifying-suffix\": \"\""
+        "}"
+    "}",
+    // Configuration which disables DNS updates but contains a reservation
+    // for a hostname and the qualifying-suffix which should be appended to
+    // the reserved hostname in the Hostname option returned to a client.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ],"
+        "    \"reservations\": ["
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"hostname\":   \"foo-bar\""
+        "       }"
+        "    ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": false,"
+            "\"qualifying-suffix\": \"example.isc.org\""
+        "}"
     "}"
 };
 
@@ -1322,6 +1376,87 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
                                 "167B3397B1305FB664C160B967CE1F",
                                 time(NULL), subnet_->getValid(), true);
     }
+}
+
+// This test verifies that the server sends the Hostname option to the client
+// with hostname reservation and which included hostname option code in the
+// Parameter Request List.
+TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use HW address that matches the reservation entry in the configuration.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(CONFIGS[4], *client.getServer());
+    // Make sure that DDNS is enabled.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+    // Request Hostname option.
+    ASSERT_NO_THROW(client.requestOption(DHO_HOST_NAME));
+
+    // Send the DHCPDISCOVER
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Obtain the Hostname option sent in the response and make sure that the server
+    // has used the hostname reserved for this client.
+    OptionStringPtr hostname;
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("reserved.example.org", hostname->getValue());
+
+    // Now send the DHCPREQUEST with including the Hostname option.
+    ASSERT_NO_THROW(client.doRequest());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Once again check that the Hostname is as expected.
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("reserved.example.org", hostname->getValue());
+}
+
+// This test verifies that the server sends the Hostname option to the client
+// with partial hostname reservation and with the global qualifying-suffix set.
+TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use HW address that matches the reservation entry in the configuration.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(CONFIGS[5], *client.getServer());
+    // Make sure that DDNS is enabled.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+    // Include the Hostname option.
+    ASSERT_NO_THROW(client.includeHostname("client-name"));
+
+    // Send the DHCPDISCOVER
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Obtain the Hostname option sent in the response and make sure that the server
+    // has used the hostname reserved for this client.
+    OptionStringPtr hostname;
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("foo-bar.example.isc.org", hostname->getValue());
+
+    // Now send the DHCPREQUEST with including the Hostname option.
+    ASSERT_NO_THROW(client.doRequest());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Once again check that the Hostname is as expected.
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("foo-bar.example.isc.org", hostname->getValue());
 }
 
 // Test verifies that the server properly generates a FQDN when the client

@@ -624,6 +624,7 @@ public:
     /// @param stat_name this statistic is expected to be set to 1
     void testReceiveStats(uint8_t pkt_type, const std::string& stat_name);
 
+
     /// A subnet used in most tests
     isc::dhcp::Subnet6Ptr subnet_;
 

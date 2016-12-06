@@ -10,6 +10,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
@@ -22,8 +23,73 @@ using namespace isc::dhcp;
 
 namespace {
 
+/// This class fixture for testing @c CfgOption class, holding option
+/// configuration.
+class CfgOptionTest : public ::testing::Test {
+public:
+
+    /// @brief Generates encapsulated options and adds them to CfgOption
+    ///
+    /// This method generates the following options:
+    /// - 1000-1019 options: uint16 with value 1234, encapsulate "foo"
+    ///   - 1-19 options: uint8 with value 1, encapsulate "foo-subs"
+    ///     - 1-9 options: uint8 with value 3
+    /// - 1020-1039 options: uint16 with value 2345, encapsulate "bar"
+    ///   - 100-119 options: uint8 with value 2, encapsulate "bar-subs"
+    ///     - 501-509 options: uint8 with value 4
+    void generateEncapsulatedOptions(CfgOption& cfg) {
+        // Create top-level options encapsulating "foo" option space.
+        for (uint16_t code = 1000; code < 1020; ++code) {
+            OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                                      code, 1234));
+            option->setEncapsulatedSpace("foo");
+            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+        }
+
+        // Create top level options encapsulating "bar" option space.
+        for (uint16_t code = 1020; code < 1040; ++code) {
+            OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                                      code, 2345));
+            option->setEncapsulatedSpace("bar");
+            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+        }
+
+        // Create sub-options belonging to "foo" option space and encapsulating
+        // foo-subs option space.
+        for (uint16_t code = 1; code < 20; ++code) {
+            OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
+                                                                   0x01));
+            option->setEncapsulatedSpace("foo-subs");
+            ASSERT_NO_THROW(cfg.add(option, false, "foo"));
+        }
+
+        // Create sub-options belonging to "bar" option space and encapsulating
+        // bar-subs option space.
+        for (uint16_t code = 100;  code < 119; ++code) {
+            OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
+                                                                   code, 0x02));
+            option->setEncapsulatedSpace("bar-subs");
+            ASSERT_NO_THROW(cfg.add(option, false, "bar"));
+        }
+
+        // Create sub-options belonging to "foo-subs" option space.
+        for (uint16_t code = 1; code < 10; ++code) {
+            OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
+                                                                   0x03));
+            ASSERT_NO_THROW(cfg.add(option, false, "foo-subs"));
+        }
+
+        // Create sub-options belonging to "bar-subs" option space.
+        for (uint16_t code = 501;  code < 510; ++code) {
+            OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
+                                                                   code, 0x04));
+            ASSERT_NO_THROW(cfg.add(option, false, "bar-subs"));
+        }
+    }
+};
+
 // This test verifies the empty predicate.
-TEST(CfgOptionTest, empty) {
+TEST_F(CfgOptionTest, empty) {
     CfgOption cfg1;
     CfgOption cfg2;
 
@@ -33,7 +99,7 @@ TEST(CfgOptionTest, empty) {
 
     // Add an option to each configuration
     OptionPtr option(new Option(Option::V6, 1));
-    ASSERT_NO_THROW(cfg1.add(option, false, "dhcp6"));
+    ASSERT_NO_THROW(cfg1.add(option, false, DHCP6_OPTION_SPACE));
     ASSERT_NO_THROW(cfg2.add(option, true, "isc"));
 
     // The first option configuration has an option
@@ -44,7 +110,7 @@ TEST(CfgOptionTest, empty) {
 }
 
 // This test verifies that the option configurations can be compared.
-TEST(CfgOptionTest, equals) {
+TEST_F(CfgOptionTest, equals) {
     CfgOption cfg1;
     CfgOption cfg2;
 
@@ -97,13 +163,13 @@ TEST(CfgOptionTest, equals) {
 
 // This test verifies that multiple options can be added to the configuration
 // and that they can be retrieved using the option space name.
-TEST(CfgOptionTest, add) {
+TEST_F(CfgOptionTest, add) {
     CfgOption cfg;
 
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
@@ -114,7 +180,7 @@ TEST(CfgOptionTest, add) {
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = cfg.getAll("dhcp6");
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
@@ -147,7 +213,7 @@ TEST(CfgOptionTest, add) {
 }
 
 // This test verifies that two option configurations can be merged.
-TEST(CfgOptionTest, merge) {
+TEST_F(CfgOptionTest, merge) {
     CfgOption cfg_src;
     CfgOption cfg_dst;
 
@@ -155,7 +221,7 @@ TEST(CfgOptionTest, merge) {
     // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(cfg_src.add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(cfg_src.add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Create collection of options in vendor space 123, with option codes
@@ -172,7 +238,7 @@ TEST(CfgOptionTest, merge) {
     // 100 to 108.
     for (uint16_t code = 100; code < 110; code += 2) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(cfg_dst.add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(cfg_dst.add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Create collection of options having odd option codes in the range of
@@ -189,7 +255,7 @@ TEST(CfgOptionTest, merge) {
 
     // Validate the options in the dhcp6 option space in the destination.
     for (uint16_t code = 100; code < 110; ++code) {
-        OptionDescriptor desc = cfg_dst.get("dhcp6", code);
+        OptionDescriptor desc = cfg_dst.get(DHCP6_OPTION_SPACE, code);
         ASSERT_TRUE(desc.option_);
         ASSERT_EQ(1, desc.option_->getData().size());
         // The options with even option codes should hold one byte of data
@@ -222,7 +288,7 @@ TEST(CfgOptionTest, merge) {
 
 // This test verifies that the options configuration can be copied between
 // objects.
-TEST(CfgOptionTest, copy) {
+TEST_F(CfgOptionTest, copy) {
     CfgOption cfg_src;
     // Add 10 options to the custom option space in the source configuration.
     for (uint16_t code = 100; code < 110; ++code) {
@@ -262,60 +328,71 @@ TEST(CfgOptionTest, copy) {
 
 // This test verifies that encapsulated options are added as sub-options
 // to the top level options on request.
-TEST(CfgOptionTest, encapsulate) {
+TEST_F(CfgOptionTest, encapsulate) {
     CfgOption cfg;
-    // Create top-level options encapsulating "foo" option space.
-    for (uint16_t code = 1000; code < 1020; ++code) {
-        OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
-                                                                  code, 1234));
-        option->setEncapsulatedSpace("foo");
-        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
-    }
 
-    // Create top level options encapsulating "bar" option space.
-    for (uint16_t code = 1020; code < 1040; ++code) {
-        OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
-                                                                  code, 2345));
-        option->setEncapsulatedSpace("bar");
-        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
-    }
+    generateEncapsulatedOptions(cfg);
 
-    // Create sub-options belonging to "foo" option space.
-    for (uint16_t code = 1; code < 20; ++code) {
-        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
-                                                               0x01));
-        ASSERT_NO_THROW(cfg.add(option, false, "foo"));
-    }
-
-    // Create sub-options belonging to "bar" option space.
-    for (uint16_t code = 100;  code < 130; ++code) {
-        OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
-                                                               code, 0x02));
-        ASSERT_NO_THROW(cfg.add(option, false, "bar"));
-    }
-
-    // Append options from "foo" and "bar" space as sub-options.
+    // Append options from "foo" and "bar" space as sub-options and options
+    // from "foo-subs" and "bar-subs" as sub-options of "foo" and "bar"
+    // options.
     ASSERT_NO_THROW(cfg.encapsulate());
 
     // Verify that we have 40 top-level options.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(40, options->size());
 
+    // Iterate over top level options.
     for (uint16_t code = 1000; code < 1040; ++code) {
+
         OptionUint16Ptr option = boost::dynamic_pointer_cast<
             OptionUint16>(cfg.get(DHCP6_OPTION_SPACE, code).option_);
         ASSERT_TRUE(option) << "option with code " << code << " not found";
-        const OptionCollection& suboptions = option->getOptions();
-        for (OptionCollection::const_iterator suboption =
-                 suboptions.begin(); suboption != suboptions.end();
-             ++suboption) {
-            OptionUint8Ptr opt = boost::dynamic_pointer_cast<
-                OptionUint8>(suboption->second);
-            ASSERT_TRUE(opt);
-            if (code < 1020) {
-                EXPECT_EQ(0x01, opt->getValue());
+
+        // First level sub options. There are 19 sub-options for each top
+        // level option.
+        const OptionCollection& first_level = option->getOptions();
+        ASSERT_EQ(19, first_level.size());
+
+        // Iterate over all first level sub-options.
+        std::pair<unsigned int, OptionPtr> first_level_opt;
+        BOOST_FOREACH(first_level_opt, first_level) {
+            // Each option in this test comprises a single one byte field and
+            // should cast to OptionUint8 type.
+            OptionUint8Ptr first_level_uint8 = boost::dynamic_pointer_cast<
+                OptionUint8>(first_level_opt.second);
+            ASSERT_TRUE(first_level_uint8);
+
+            const unsigned int value = static_cast<unsigned int>(first_level_uint8->getValue());
+            // There are two sets of first level sub-options. Those that include
+            // a value of 1 and those that include a value of 2.
+            if (first_level_uint8->getType() < 20) {
+                EXPECT_EQ(1, value);
             } else {
-                EXPECT_EQ(0x02, opt->getValue());
+                EXPECT_EQ(2, value);
+            }
+
+            // Each first level sub-option should include 9 second level
+            // sub options.
+            const OptionCollection& second_level = first_level_uint8->getOptions();
+            ASSERT_EQ(9, second_level.size());
+
+            // Iterate over sub-options and make sure they include the expected
+            // values.
+            std::pair<unsigned int, OptionPtr> second_level_opt;
+            BOOST_FOREACH(second_level_opt, second_level) {
+                OptionUint8Ptr second_level_uint8 = boost::dynamic_pointer_cast<
+                    OptionUint8>(second_level_opt.second);
+                ASSERT_TRUE(second_level_uint8);
+                const unsigned value = static_cast<
+                    unsigned>(second_level_uint8->getValue());
+                // Certain sub-options should have a value of 3, other the values
+                // of 4.
+                if (second_level_uint8->getType() < 20) {
+                    EXPECT_EQ(3, value);
+                } else {
+                    EXPECT_EQ(4, value);
+                }
             }
         }
     }
@@ -323,13 +400,13 @@ TEST(CfgOptionTest, encapsulate) {
 
 // This test verifies that single option can be retrieved from the configuration
 // using option code and option space.
-TEST(CfgOptionTest, get) {
+TEST_F(CfgOptionTest, get) {
     CfgOption cfg;
 
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(cfg.add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptor using
@@ -341,7 +418,7 @@ TEST(CfgOptionTest, get) {
         // Returned descriptor should contain NULL option ptr.
         EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
-        desc = cfg.get("dhcp6", code);
+        desc = cfg.get(DHCP6_OPTION_SPACE, code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
@@ -350,7 +427,7 @@ TEST(CfgOptionTest, get) {
 
 // This test verifies that the same options can be added to the configuration
 // under different option space.
-TEST(CfgOptionTest, addNonUniqueOptions) {
+TEST_F(CfgOptionTest, addNonUniqueOptions) {
     CfgOption cfg;
 
     // Create a set of options with non-unique codes.
@@ -358,12 +435,12 @@ TEST(CfgOptionTest, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(cfg.add(option, false, "dhcp6"));
+            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
         }
     }
 
     // Sanity check that all options are there.
-    OptionContainerPtr options = cfg.getAll("dhcp6");
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(20, options->size());
 
     // Use container index #1 to get the options by their codes.
@@ -412,11 +489,11 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(cfg.add(option, persistent, "dhcp6"));
+        ASSERT_NO_THROW(cfg.add(option, persistent, DHCP6_OPTION_SPACE));
     }
 
     // Get added options from the subnet.
-    OptionContainerPtr options = cfg.getAll("dhcp6");
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
 
     // options->get<2> returns reference to container index #2. This
     // index is used to access options by the 'persistent' flag.
@@ -438,7 +515,7 @@ TEST(Subnet6Test, addPersistentOption) {
 }
 
 // This test verifies that the vendor option can be added to the configuration.
-TEST(CfgOptionTest, addVendorOptions) {
+TEST_F(CfgOptionTest, addVendorOptions) {
     CfgOption cfg;
 
     // Differentiate options by their codes (100-109)
@@ -494,7 +571,7 @@ TEST(CfgOptionTest, addVendorOptions) {
 
 // This test verifies that option space names for the vendor options are
 // correct.
-TEST(CfgOptionTest, getVendorIdsSpaceNames) {
+TEST_F(CfgOptionTest, getVendorIdsSpaceNames) {
     CfgOption cfg;
 
     // Create 10 options, each goes under a different vendor id.

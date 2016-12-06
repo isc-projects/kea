@@ -198,7 +198,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 5:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 6:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
@@ -221,6 +221,22 @@ EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 
 # Specification file
 EXTRA_DIST += logging.spec
+
+# Specify the headers for copying into the installation directory tree. The
+# following headers are anticipated to be useful for the user libraries.
+libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
+libkea_dhcpsrv_include_HEADERS = \
+    cfg_option.h \
+    cfg_4o6.h \
+    d2_client_cfg.h \
+    d2_client_mgr.h \
+    key_from_key.h \
+    lease.h \
+    ncr_generator.h \
+    pool.h \
+    subnet.h \
+    subnet_id.h \
+    triplet.h
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)

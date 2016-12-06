@@ -39,9 +39,10 @@
 
 @section dhcpv6HooksHookPoints Hooks in the DHCPv6 Server
 
-The following list is ordered by appearance of specific hook points during
-packet processing. Hook points that are not specific to packet processing
-(e.g. lease expiration) will be added to the end of this list.
+The following list is roughly ordered by appearance of specific hook points during
+packet processing, but the exact order depends on the actual processing. Hook points
+that are not specific to packet processing (e.g. lease expiration) will be added
+to the end of this list.
 
  @subsection dhcpv6HooksBuffer6Receive buffer6_receive
 

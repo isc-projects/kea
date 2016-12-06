@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -279,6 +279,9 @@ struct SocketSessionReceiver::ReceiverImpl {
                            header_buf_(DEFAULT_HEADER_BUFLEN),
                            data_buf_(INITIAL_BUFSIZE)
     {
+        memset(&ss_local_, 0, sizeof(ss_local_));
+        memset(&ss_remote_, 0, sizeof(ss_remote_));
+
         if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &SOCKSESSION_BUFSIZE,
                        sizeof(SOCKSESSION_BUFSIZE)) == -1) {
             isc_throw(SocketSessionError,

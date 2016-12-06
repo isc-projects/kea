@@ -12,13 +12,25 @@
 <refentry>
 
   <refentryinfo>
-    <date>June 10, 2015</date>
+    <productname>ISC Kea</productname>
+    <date>Sep. 28, 2016</date>
+    <edition>1.1.0</edition>
+    <author>
+      <contrib>The Kea software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
+        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
+        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+        chronological order in which the authors made their first
+        contribution. For a complete list of authors and
+        contributors, see AUTHORS file.</contrib>
+      <orgname>Internet Systems Consortium, Inc.</orgname>
+    </author>
   </refentryinfo>
 
   <refmeta>
     <refentrytitle>kea-dhcp-ddns</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo>Kea</refmiscinfo>
+    <refmiscinfo class="manual">Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
@@ -28,7 +40,7 @@
 
   <docinfo>
     <copyright>
-      <year>2014-2015</year>
+      <year>2013-2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -49,11 +61,9 @@
     <title>DESCRIPTION</title>
     <para>
       The <command>kea-dhcp-ddns</command> service process requests to
-      update DNS mapping based on DHCP lease change events. The service
-      may run either as a Kea module (integrated mode) or as a individual
-      process (stand-alone mode) dependent upon command line arguments. The
-      default is integrated mode.  Stand alone operation is strictly for
-      development purposes and is not suited for production.
+      update DNS mapping based on DHCP lease change events. It runs as
+      a separate process that expects to receive Name Change Requests
+      from Kea DHCP servers.
     </para>
 
   </refsect1>
@@ -106,17 +116,93 @@
   </refsect1>
 
   <refsect1>
+    <title>DOCUMENTATION</title>
+    <para>Kea comes with an extensive Kea User's Guide documentation
+      that covers all aspects of running the Kea software -
+      compilation, installation, configuration, configuration examples
+      and many more. Kea also features a Kea Messages Manual, which
+      lists all possible messages Kea can print with a brief
+      description for each of them. Both documents are typically
+      available in various formats (txt, html, pdf) with your Kea
+      distribution. The on-line version is available at
+      http://kea.isc.org/docs/.</para>
+    <para>
+      Kea source code is documented in the Kea Developer's Guide. It's
+      on-line version is available at http://kea.isc.org. Please
+      follow Developer's Guide link.
+    </para>
+    <para>
+      Kea project website is available at: http://kea.isc.org.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
+    <para>
+      There are two mailing lists available for Kea project. kea-users
+      (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
+      (kea-dev at lists.isc.org) is intended for Kea developers, prospective
+      contributors and other advanced users.  Both lists are available at
+      http://lists.isc.org. The community provides best effort type of support
+      on both of those lists.
+    </para>
+    <para>
+      ISC provides professional support for Kea services. See
+      https://www.isc.org/kea/ for details.
+    </para>
+  </refsect1>
+
+  <refsect1>
     <title>HISTORY</title>
     <para>
       The <command>b10-dhcp-ddns</command> process was first coded in
-      May 2013 by the ISC Kea/DHCP team.
+      May 2013 by Thomas Markwalder.
     </para>
     <para>
       Kea became a standalone server and the BIND10 framework was
       removed. The DHCP-DDNS server binary was renamed to kea-dhcp-ddns
-      in July 2014.
+      in July 2014. Kea 1.0.0 was released in December 2015.
     </para>
   </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>perfdhcp</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-lfc</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator's Guide</citetitle>.
+
+    </para>
+  </refsect1>
+
 </refentry><!--
  - Local variables:
  - mode: sgml

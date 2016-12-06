@@ -106,10 +106,10 @@ Pkt4::pack() {
         buffer_out_.writeUint32(transid_);
         buffer_out_.writeUint16(secs_);
         buffer_out_.writeUint16(flags_);
-        buffer_out_.writeUint32(ciaddr_);
-        buffer_out_.writeUint32(yiaddr_);
-        buffer_out_.writeUint32(siaddr_);
-        buffer_out_.writeUint32(giaddr_);
+        buffer_out_.writeUint32(ciaddr_.toUint32());
+        buffer_out_.writeUint32(yiaddr_.toUint32());
+        buffer_out_.writeUint32(siaddr_.toUint32());
+        buffer_out_.writeUint32(giaddr_.toUint32());
 
 
         if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
@@ -203,7 +203,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
 
-    size_t offset = LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input

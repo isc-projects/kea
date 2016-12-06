@@ -128,7 +128,7 @@ public:
 
     /// @brief Returns whether or not forward updates are enabled.
     ///
-    /// This method currently uses the presence or absence of Foward DDNS
+    /// This method currently uses the presence or absence of Forward DDNS
     /// Domains to determine if forward updates are enabled or disabled.
     /// @todo This could be expanded to include the check of a configurable
     /// boolean value.

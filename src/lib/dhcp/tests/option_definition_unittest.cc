@@ -1241,7 +1241,7 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     // see if it rejects it.
     OptionBuffer buf(1);
     EXPECT_THROW(
-        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, "dhcp6",
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, DHCP6_OPTION_SPACE,
                                                buf.begin(), buf.end()),
         isc::dhcp::InvalidDataType
     );
@@ -1287,6 +1287,227 @@ TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
     OptionDefinition opt_def_invalid("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
                                      "uint8");
     EXPECT_FALSE(opt_def_invalid.haveClientFqdnFormat());
+}
+
+// This test verifies that a definition of an option with a single IPv6
+// prefix can be created and used to create an instance of the option.
+TEST_F(OptionDefinitionTest, prefix) {
+    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix");
+
+    // Create a buffer holding a prefix.
+    OptionBuffer buf;
+    buf.push_back(32);
+    buf.push_back(0x30);
+    buf.push_back(0x00);
+    buf.resize(5);
+
+    OptionPtr option_v6;
+
+    // Create an instance of this option from the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, buf);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    PrefixTuple prefix = option_cast_v6->readPrefix();
+    EXPECT_EQ(32, prefix.first.asUnsigned());
+    EXPECT_EQ("3000::", prefix.second.toText());
+}
+
+// This test verifies that a definition of an option with a single IPv6
+// prefix can be created and that the instance of this option can be
+// created by specifying the prefix in the textual format.
+TEST_F(OptionDefinitionTest, prefixTokenized) {
+    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix");
+
+    OptionPtr option_v6;
+    // Specify a single prefix.
+    std::vector<std::string> values(1, "2001:db8:1::/64");
+
+    // Create an instance of the option using the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    PrefixTuple prefix = option_cast_v6->readPrefix();
+    EXPECT_EQ(64, prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", prefix.second.toText());
+}
+
+// This test verifies that a definition of an option with an array
+// of IPv6 prefixes can be created and that the instance of this
+// option can be created by specifying multiple prefixes in the
+// textual format.
+TEST_F(OptionDefinitionTest, prefixArrayTokenized) {
+    OptionDefinition opt_def("option-prefix", 1000, "ipv6-prefix", true);
+
+    OptionPtr option_v6;
+
+    // Specify 3 prefixes
+    std::vector<std::string> values;
+    values.push_back("2001:db8:1:: /64");
+    values.push_back("3000::/ 32");
+    values.push_back("3001:1:: /  48");
+
+    // Create an instance of an option using the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the option class returned is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+
+    // There should be 3 prefixes in this option.
+    ASSERT_EQ(3, option_cast_v6->getDataFieldsNum());
+
+    ASSERT_NO_THROW({
+        PrefixTuple prefix0 = option_cast_v6->readPrefix(0);
+        EXPECT_EQ(64, prefix0.first.asUnsigned());
+        EXPECT_EQ("2001:db8:1::", prefix0.second.toText());
+    });
+
+    ASSERT_NO_THROW({
+        PrefixTuple prefix1 = option_cast_v6->readPrefix(1);
+        EXPECT_EQ(32, prefix1.first.asUnsigned());
+        EXPECT_EQ("3000::", prefix1.second.toText());
+    });
+
+    ASSERT_NO_THROW({
+        PrefixTuple prefix2 = option_cast_v6->readPrefix(2);
+        EXPECT_EQ(48, prefix2.first.asUnsigned());
+        EXPECT_EQ("3001:1::", prefix2.second.toText());
+    });
+}
+
+// This test verifies that a definition of an option with a single PSID
+// value can be created and used to create an instance of the option.
+TEST_F(OptionDefinitionTest, psid) {
+    OptionDefinition opt_def("option-psid", 1000, "psid");
+
+    OptionPtr option_v6;
+
+    // Create a buffer holding PSID.
+    OptionBuffer buf;
+    buf.push_back(6);
+    buf.push_back(0x4);
+    buf.push_back(0x0);
+
+    // Create an instance of this option from the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, buf);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    PSIDTuple psid = option_cast_v6->readPsid();
+    EXPECT_EQ(6, psid.first.asUnsigned());
+    EXPECT_EQ(1, psid.second.asUint16());
+}
+
+// This test verifies that a definition of an option with a single PSID
+// value can be created and that the instance of this option can be
+// created by specifying PSID length and value in the textual format.
+TEST_F(OptionDefinitionTest, psidTokenized) {
+    OptionDefinition opt_def("option-psid", 1000, "psid");
+
+    OptionPtr option_v6;
+    // Specify a single PSID with a length of 6 and value of 3.
+    std::vector<std::string> values(1, "3 / 6");
+
+    // Create an instance of the option using the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    PSIDTuple psid = option_cast_v6->readPsid();
+    EXPECT_EQ(6, psid.first.asUnsigned());
+    EXPECT_EQ(3, psid.second.asUint16());
+}
+
+// This test verifies that a definition of an option with an array
+// of PSIDs can be created and that the instance of this option can be
+// created by specifying multiple PSIDs in the textual format.
+TEST_F(OptionDefinitionTest, psidArrayTokenized) {
+    OptionDefinition opt_def("option-psid", 1000, "psid", true);
+
+    OptionPtr option_v6;
+
+    // Specify 3 PSIDs.
+    std::vector<std::string> values;
+    values.push_back("3 / 6");
+    values.push_back("0/1");
+    values.push_back("7     /   3");
+
+    // Create an instance of an option using the definition.
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the option class returned is correct.
+    const Option* optptr = option_v6.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    OptionCustomPtr option_cast_v6 =
+        boost::dynamic_pointer_cast<OptionCustom>(option_v6);
+
+    // There should be 3 PSIDs in this option.
+    ASSERT_EQ(3, option_cast_v6->getDataFieldsNum());
+
+    // Check their values.
+    PSIDTuple psid0;
+    PSIDTuple psid1;
+    PSIDTuple psid2;
+
+    psid0 = option_cast_v6->readPsid(0);
+    EXPECT_EQ(6, psid0.first.asUnsigned());
+    EXPECT_EQ(3, psid0.second.asUint16());
+
+    psid1 = option_cast_v6->readPsid(1);
+    EXPECT_EQ(1, psid1.first.asUnsigned());
+    EXPECT_EQ(0, psid1.second.asUint16());
+
+    psid2 = option_cast_v6->readPsid(2);
+    EXPECT_EQ(3, psid2.first.asUnsigned());
+    EXPECT_EQ(7, psid2.second.asUint16());
 }
 
 } // anonymous namespace

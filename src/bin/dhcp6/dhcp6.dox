@@ -174,13 +174,6 @@ different way. If the server overrides client's preference it will communicate i
 by sending the DHCPv6 Client FQDN Option in its responses to a client, with
 appropriate flags set.
 
-@todo Note, that current implementation doesn't allow configuration of the server's behavior
-with respect to DNS Updates. This is planned for the future. The default behavior is
-constituted by the set of constants defined in the (upper part of) dhcp6_srv.cc file.
-Once the configuration is implemented, these constants will be removed.
-
- @todo Add section about setting up options and their definitions with bindctl.
-
 @section dhcpv6OptionsParse Custom functions to parse message options
 
 The DHCPv6 server implementation provides a generic support to define option
@@ -308,6 +301,6 @@ specified at server startup. The location of this file is held in the
 
 For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
 
-@subpage dhcpv4o6Dhcp6
+For a description of how DHCPv4-over-DHCPv6 is implemented, see @subpage dhcpv4o6Dhcp6
 
  */

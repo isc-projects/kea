@@ -1,3 +1,4 @@
+// Generated 201611011345
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Locations for Bison parsers in C++
@@ -35,12 +36,12 @@
  ** Define the isc::eval::location class.
  */
 
-#ifndef YY_YY_LOCATION_HH_INCLUDED
-# define YY_YY_LOCATION_HH_INCLUDED
+#ifndef YY_EVAL_LOCATION_HH_INCLUDED
+# define YY_EVAL_LOCATION_HH_INCLUDED
 
 # include "position.hh"
 
-#line 13 "parser.yy" // location.cc:296
+#line 14 "parser.yy" // location.cc:296
 namespace isc { namespace eval {
 #line 46 "location.hh" // location.cc:296
   /// Abstract a location.
@@ -186,7 +187,7 @@ namespace isc { namespace eval {
     return ostr;
   }
 
-#line 13 "parser.yy" // location.cc:296
+#line 14 "parser.yy" // location.cc:296
 } } // isc::eval
 #line 192 "location.hh" // location.cc:296
-#endif // !YY_YY_LOCATION_HH_INCLUDED
+#endif // !YY_EVAL_LOCATION_HH_INCLUDED

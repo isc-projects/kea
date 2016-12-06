@@ -58,7 +58,7 @@
       When determining which options to include in the response the server will examine
       the union of options from all of the assigned classes. In the case two or more
       classes include the same option, the value from the first class examined will
-      be used.  When choosing a subnet the server will iterate over all of the
+      be used.  When choosing a subnet, the server will iterate over all of the
       subnets that are feasible given the information found in the packet (client address,
       relay address etc). It will use the first subnet it finds that either doesn't
       have a class associated with it or that has a class which matches one of
@@ -68,7 +68,8 @@
       </para>
 
       <para>
-      As an example, imagine two classes.  Class "foo" defines values for an NTP server
+      As an example, imagine that an incoming packet matches two classes.
+      Class "foo" defines values for an NTP server
       (option 42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while class
       "bar" defines values for an NTP server and a POP3 server (option 70 in DHCPv4).
       The server will examine the three options NTP, SMTP and POP3 and return any
@@ -92,6 +93,14 @@
         clients that do not meet class criteria to be denied any service altogether.
       </para>
       </note>
+  </section>
+
+  <section id="classification-using-host-reservations">
+    <title>Using Static Host Reservations In Classification</title>
+    <para>Classes can be statically assigned to the clients using techniques described
+    in <xref linkend="reservation4-client-classes"/> and
+    <xref linkend="reservation6-client-classes"/>.
+    </para>
   </section>
 
   <section id="classification-using-vendor">
@@ -123,9 +132,9 @@
       Expressions are pre-processed during the parsing of the configuration file
       and converted to an internal representation. This allows certain types of
       errors to be caught and logged during parsing.  Examples of these errors
-      include incorrect number or types of arguments to an operator.  The
+      include an incorrect number or types of arguments to an operator.  The
       evaluation code will also check for this class of error and generally
-      throw an exception, though they should not occur in a normally functioning
+      throw an exception, though this should not occur in a normally functioning
       system.
       </para>
 
@@ -138,7 +147,7 @@
       <para>
       Expressions are a work in progress and the supported operators and
       values are limited. The expectation is that additional operators and values
-      will be added over time, however it is expected the basic mechanisms will
+      will be added over time, however the basic mechanisms will
       remain the same.
       </para>
 
@@ -352,7 +361,7 @@
               <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
-              bytes. Returns '' otherwise.</entry>
+              bytes. Returns "" otherwise.</entry>
             </row>
             <row>
               <entry>Vendor sub-option existence</entry>
@@ -393,7 +402,7 @@
               <entry>4491</entry>
               <entry>If the vendor option is present, it returns the
               value of the enterprise-id field padded to 4
-              bytes. Returns '' otherwise.</entry>
+              bytes. Returns "" otherwise.</entry>
             </row>
             <row>
               <entry>First data chunk from vendor class option</entry>
@@ -401,7 +410,7 @@
               <entry>docsis3.0</entry>
               <entry>Returns content of the first data chunk from
               the vendor class option with specified enterprise-id.
-              Returns '' if missing.</entry>
+              Returns "" if missing.</entry>
             </row>
             <row>
               <entry>Specific data chunk from vendor class option</entry>
@@ -415,20 +424,26 @@
           </tbody>
           </tgroup>
         </table>
-      Hex Strings are converted into a string as expected.  The starting &quot;0X&quot; or
+        Notes:
+      </para>
+
+      <itemizedlist>
+
+      <listitem><para>
+      Hexadecimal strings are converted into a string as expected.  The starting &quot;0X&quot; or
       &quot;0x&quot; is removed and if the string is an odd number of characters a
       &quot;0&quot; is prepended to it.
-      </para>
+      </para></listitem>
 
-      <para>
+      <listitem><para>
       IP addresses are converted into strings of length 4 or 16. IPv4, IPv6,
       and IPv4 embedded IPv6 (e.g., IPv4 mapped IPv6) addresses are supported.
-      </para>
+      </para></listitem>
 
-      <para>
+      <listitem><para>
       Integers in an expression are converted to 32 bit unsigned integers and
-      are represented as four byte strings. For example 123 is represented as
-      0x0000007b. All expressions that return numeric values use 32 bit
+      are represented as four-byte strings. For example 123 is represented as
+      0x0000007b. All expressions that return numeric values use 32-bit
       unsigned integers, even if the field in the packet is smaller.  In general
       it is easier to use decimal notation to represent integers, but it is also
       possible to use hex notation. When using hex notation to represent an
@@ -436,88 +451,101 @@
       bits, e.g. use 0x00000001 instead of 0x1 or 0x01. Also, make
       sure the value is specified in network order, e.g. 1 is
       represented as 0x00000001.
-      </para>
+      </para></listitem>
 
-      <para>
+      <listitem><para>
       "option[code].hex" extracts the value of the option with the code "code"
       from the incoming packet. If the packet doesn't contain the option, it
       returns the empty string. The string is presented as a byte string of
       the option payload without the type code or length fields.
-      </para>
+      </para></listitem>
 
-      <para>
+      <listitem><para>
       "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
-      </para>
+      </para></listitem>
 
-      <para>
-        "relay4[code].hex" attempts to extract the value of the sub-option
-        "code" from the option inserted as the DHCPv4 Relay Agent Information
-        (82) option. If the packet doesn't contain a RAI option, or the RAI
-        option doesn't contain the requested sub-option, the expression returns
-        an empty string. The string is presented as a byte string of the
-        option payload without the type code or length fields. This
-        expression is allowed in DHCPv4 only.
-      </para>
+      <listitem><para>
+      "relay4[code].hex" attempts to extract the value of the sub-option
+      "code" from the option inserted as the DHCPv4 Relay Agent Information
+      (82) option. If the packet doesn't contain a RAI option, or the RAI
+      option doesn't contain the requested sub-option, the expression returns
+      an empty string. The string is presented as a byte string of the
+      option payload without the type code or length fields. This
+      expression is allowed in DHCPv4 only.
+      </para></listitem>
 
-      <para>
-       "relay4" shares the same representation types as "option", for
-       instance "relay4[code].exists" is supported.
-      </para>
+      <listitem><para>
+      "relay4" shares the same representation types as "option", for
+      instance "relay4[code].exists" is supported.
+      </para></listitem>
 
-      <para>
-       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
-       relays that forwarded the packet.  The "nest" level specifies the relay
-       from which to extract the information, with a value of 0 indicating
-       the relay closest to the DHCPv6 server.  If the requested encapsulation
-       doesn't exist an empty string "" is returned.  This expression is
-       allowed in DHCPv6 only.
-      </para>
+      <listitem><para>
+      "relay6[nest]" allows access to the encapsulations used by any DHCPv6
+      relays that forwarded the packet.  The "nest" level specifies the relay
+      from which to extract the information, with a value of 0 indicating
+      the relay closest to the DHCPv6 server.  If the requested encapsulation
+      doesn't exist an empty string "" is returned.  This expression is
+      allowed in DHCPv6 only.
+      </para></listitem>
 
-      <para>
-       "relay6[nest].option[code]" shares the same representation types as
-       "option", for instance "relay6[nest].option[code].exists" is supported.
-      </para>
+      <listitem><para>
+      "relay6[nest].option[code]" shares the same representation types as
+      "option", for instance "relay6[nest].option[code].exists" is supported.
+      </para></listitem>
 
-      <para>
-        Expressions starting with "pkt4" can be used only in DHCPv4.
-        They allows access to DHCPv4 message fields.
-      </para>
+      <listitem><para>
+       Expressions starting with "pkt4" can be used only in DHCPv4.
+       They allows access to DHCPv4 message fields.
+      </para></listitem>
 
-      <para>
-       "pkt6" refers to information from the client request.  To access any
-       information from an intermediate relay use "relay6".  "pkt6.msgtype"
-       and "pkt6.transid" output a 4 byte binary string for the message type
-       or transaction id.  For example the message type SOLICIT will be
-       "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
-      </para>
+      <listitem><para>
+      "pkt6" refers to information from the client request.  To access any
+      information from an intermediate relay use "relay6".  "pkt6.msgtype"
+      and "pkt6.transid" output a 4 byte binary string for the message type
+      or transaction id.  For example the message type SOLICIT will be
+      "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
+      </para></listitem>
 
-      <para>
-        Vendor option means Vendor-Identifying Vendor-specific Information
-        option (code 125, see Section 4 of RFC3925) in DHCPv4 and
-        Vendor-specific Information Option (code 17, defined in Section 22.17 of
-        RFC3315) in DHCPv6. Vendor class option means Vendor-Identifying Vendor
-        Class Option (code 124, see Section 3 of RFC3925) in DHCPv4 and Vendor
-        Class Option (code 16, see Section 22.16 of RFC3315). Vendor options may
-        have sub-options that are referenced by their codes. Vendor class
-        options do not have sub-options, but rather data chunks, which are
-        referenced by index value. Index 0 means the first data chunk, Index 1
-        is for the second data chunk (if present), etc.
-      </para>
+      <listitem><para>
+      Vendor option means Vendor-Identifying Vendor-specific Information
+      option in DHCPv4 (code 125, see
+      <ulink url="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</ulink>) and
+      Vendor-specific Information Option in DHCPv6 (code 17, defined in
+      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
+      RFC 3315</ulink>). Vendor class option means Vendor-Identifying Vendor
+      Class Option in DHCPv4 (code 124, see
+      <ulink url="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</ulink>) in DHCPv4 and
+      Class Option in DHCPv6 (code 16, see
+      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</ulink>).
+      Vendor options may
+      have sub-options that are referenced by their codes. Vendor class
+      options do not have sub-options, but rather data chunks, which are
+      referenced by index value. Index 0 means the first data chunk, Index 1
+      is for the second data chunk (if present), etc.
+      </para></listitem>
 
-      <para>In the vendor and vendor-class constructs Asterisk (*) or 0 can be
+      <listitem><para>
+      In the vendor and vendor-class constructs Asterisk (*) or 0 can be
       used to specify a wildcard enterprise-id value, i.e. it will match any
-      enterprise-id value.</para>
+      enterprise-id value.
+      </para></listitem>
 
-      <para>Vendor Class Identifier (option 60 in DHCPv4) can be
-      accessed using option[60] expression.</para>
+      <listitem><para>Vendor Class Identifier (option 60 in DHCPv4) can be
+      accessed using option[60] expression.</para></listitem>
 
-      <para>RFC3925 and RFC3315 allow for multiple instances of vendor options
+      <listitem><para>
+      <ulink url="http://tools.ietf.org/html/rfc3925">RFC3925</ulink> and
+      <ulink url="http://tools.ietf.org/html/rfc3315">RFC3315</ulink>
+      allow for multiple instances of vendor options
       to appear in a single message. The client classification code currently
       examines the first instance if more than one appear. For vendor.enterprise
       and vendor-class.enterprise expressions, the value from the first instance
       is returned. Please submit a feature request on Kea website if you need
-      support for multiple instances.</para>
+      support for multiple instances.
+      </para></listitem>
+
+      </itemizedlist>
 
       <para>
         <table frame="all" id="classification-expressions-list">
@@ -549,7 +577,7 @@ concatenation of the strings</entry></row>
       <section>
         <title>Logical operators</title>
         The Not, And and Or logical operators are the common operators. Not
-        has the highest precedence, Or the lowest. And and Or are (left)
+        has the highest precedence and Or the lowest. And and Or are (left)
         associative, parentheses around a logical expression can be used
         to enforce a specific grouping, for instance in "A and (B or C)"
         (without parentheses "A and B or C" means "(A and B) or C").
@@ -618,7 +646,7 @@ concatenation of the strings</entry></row>
 
       <para>
       In the following example the class named &quot;Client_foo&quot; is defined.
-      It is comprised of all clients who's client ids (option 61) start with the
+      It is comprised of all clients whose client ids (option 61) start with the
       string &quot;foo&quot;. Members of this class will be given 192.0.2.1 and
       192.0.2.2 as their domain name servers.
 
@@ -677,7 +705,7 @@ concatenation of the strings</entry></row>
     <title>Configuring Subnets With Class Information</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
-        only to clients that belong to a given class using the "client-class"
+        only to clients that belong to a given class, using the "client-class"
         keyword when defining the subnet.
       </para>
 
@@ -776,9 +804,9 @@ concatenation of the strings</entry></row>
       expression would either be complex or time consuming and be easier or
       better to write as code.  Once the hook has added the proper class name
       to the packet the rest of the classification system will work as normal
-      in choosing a subnet and selecting options.  For a description of the
+      in choosing a subnet and selecting options.  For a description of
       hooks see <xref linkend="hooks-libraries"/>, for a description on
-      configuring he classes see <xref linkend="classification-configuring"/>
+      configuring classes see <xref linkend="classification-configuring"/>
       and <xref linkend="classification-subnets"/>.
       </para>
   </section>
@@ -809,7 +837,7 @@ concatenation of the strings</entry></row>
      <para>
      The list of tokens is created when the configuration file is processed with
      most expressions and values being converted to a token.  The list is organized
-     in reverse Polish notation.  During execution the list will be traversed
+     in reverse Polish notation.  During execution, the list will be traversed
      in order.  As each token is executed it will be able to pop values
      from the top of the stack and eventually push its result on the top of the
      stack.  Imagine the following expression:
@@ -828,17 +856,17 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     When debug logging is enabled each time a token is evaluated it will
-     emit a log line indicating the values of any objects that were popped
+     When debug logging is enabled, each time a token is evaluated it will
+     emit a log message indicating the values of any objects that were popped
      off of the value stack and any objects that were pushed onto the value
      stack.
      </para>
 
      <para>
      The values will be displayed as either text if the command is known
-     to use text values or hex if the command either uses binary values or
+     to use text values or hexadecimal if the command either uses binary values or
      can manipulate either text or binary values.  For expressions that
-     pop multiple values off the stack the values will be displayed in
+     pop multiple values off the stack, the values will be displayed in
      the order they were popped.  For most expressions this won't matter
      but for the concat expression the values are displayed in reverse
      order from how they are written in the expression.
@@ -855,8 +883,7 @@ concatenation of the strings</entry></row>
        2016-05-19 13:35:04.163 DEBUG [kea.eval/44478] EVAL_DEBUG_OPTION Pushing option 61 with value 0x666F6F626172
        2016-05-19 13:35:04.164 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '0'
        2016-05-19 13:35:04.165 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '3'
-       2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0,
-       string 0x666F6F626172 pushing result 0x666F6F
+       2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0, string 0x666F6F626172 pushing result 0x666F6F
        2016-05-19 13:35:04.167 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string 'foo'
        2016-05-19 13:35:04.168 DEBUG [kea.eval/44478] EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F pushing result 'true'
        </screen>
@@ -864,7 +891,7 @@ concatenation of the strings</entry></row>
 
      <note><para>
      The debug logging may be quite verbose if you have a number of expressions
-     to evaluate.  It is intended as an aide in helping you create and debug
+     to evaluate.  It is intended as an aid in helping you create and debug
      your expressions.  You should plan to disable debug logging when you have your
      expressions working correctly.  You also may wish to include only one set of
      expressions at a time in the configuration file while debugging them in order

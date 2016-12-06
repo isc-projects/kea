@@ -525,7 +525,8 @@ OptionDataParser::extractCSVFormat() const {
 
 std::string
 OptionDataParser::extractSpace() const {
-    std::string space = address_family_ == AF_INET ? "dhcp4" : "dhcp6";
+    std::string space = address_family_ == AF_INET ?
+        DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
     try {
         space = string_values_->getParam("space");
 
@@ -565,21 +566,15 @@ template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
                                        const SearchKey& search_key) const {
-    const Option::Universe u = address_family_ == AF_INET ?
-        Option::V4 : Option::V6;
-    OptionDefinitionPtr def;
-
-    if ((option_space == DHCP4_OPTION_SPACE) ||
-        (option_space == DHCP6_OPTION_SPACE)) {
-        def = LibDHCP::getOptionDef(u, search_key);
-
-    }
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(option_space, search_key);
 
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
         // definition.
         uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
         if (vendor_id) {
+            const Option::Universe u = address_family_ == AF_INET ?
+                Option::V4 : Option::V6;
             def = LibDHCP::getVendorOptionDef(u, vendor_id, search_key);
         }
     }
@@ -838,7 +833,8 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
     std::string record_types =
         string_values_->getOptionalParam("record-types", "");
     std::string space = string_values_->getOptionalParam("space",
-              global_context_->universe_ == Option::V4 ? "dhcp4" : "dhcp6");
+              global_context_->universe_ == Option::V4 ? DHCP4_OPTION_SPACE :
+                                                         DHCP6_OPTION_SPACE);
     std::string encapsulates =
         string_values_->getOptionalParam("encapsulate", "");
 
@@ -1039,8 +1035,10 @@ void PoolsListParser::commit() {
 }
 
 //****************************** PoolParser ********************************
-PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
-        :pools_(pools) {
+PoolParser::PoolParser(const std::string&, PoolStoragePtr pools,
+                       const uint16_t address_family)
+        :pools_(pools), options_(new CfgOption()),
+         address_family_(address_family) {
 
     if (!pools_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
@@ -1066,6 +1064,8 @@ PoolParser::build(ConstElementPtr pool_structure) {
     // first let's remove any whitespaces
     boost::erase_all(txt, " "); // space
     boost::erase_all(txt, "\t"); // tabulation
+
+    PoolPtr pool;
 
     // Is this prefix/len notation?
     size_t pos = txt.find("/");
@@ -1093,28 +1093,53 @@ PoolParser::build(ConstElementPtr pool_structure) {
                       << " (" << text_pool->getPosition() << ")");
         }
 
-        PoolPtr pool(poolMaker(addr, len));
+        pool = poolMaker(addr, len);
         local_pools_.push_back(pool);
-        return;
+
+    } else {
+
+        // Is this min-max notation?
+        pos = txt.find("-");
+        if (pos != string::npos) {
+            // using min-max notation
+            isc::asiolink::IOAddress min(txt.substr(0,pos));
+            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+
+            pool = poolMaker(min, max);
+            local_pools_.push_back(pool);
+        }
     }
 
-    // Is this min-max notation?
-    pos = txt.find("-");
-    if (pos != string::npos) {
-        // using min-max notation
-        isc::asiolink::IOAddress min(txt.substr(0,pos));
-        isc::asiolink::IOAddress max(txt.substr(pos + 1));
-
-        PoolPtr pool(poolMaker(min, max));
-        local_pools_.push_back(pool);
-        return;
+    if (!pool) {
+        isc_throw(DhcpConfigError, "invalid pool definition: "
+                  << text_pool->stringValue() <<
+                  ". There are two acceptable formats <min address-max address>"
+                  " or <prefix/len> ("
+                  << text_pool->getPosition() << ")");
     }
 
-    isc_throw(DhcpConfigError, "invalid pool definition: "
-              << text_pool->stringValue() <<
-              ". There are two acceptable formats <min address-max address>"
-              " or <prefix/len> ("
-              << text_pool->getPosition() << ")");
+    // Parser pool specific options.
+    ConstElementPtr option_data = pool_structure->get("option-data");
+    if (option_data) {
+        try {
+            // Currently we don't support specifying options for the DHCPv4 server.
+            if (address_family_ == AF_INET) {
+                isc_throw(DhcpConfigError, "option-data is not supported for DHCPv4"
+                          " address pools");
+            }
+
+            OptionDataListParserPtr option_parser(new OptionDataListParser("option-data",
+                                                                           options_,
+                                                                           address_family_));
+            option_parser->build(option_data);
+            option_parser->commit();
+            options_->copyTo(*pool->getCfgOption());;
+
+        } catch (const std::exception& ex) {
+            isc_throw(isc::dhcp::DhcpConfigError, ex.what()
+                      << " (" << option_data->getPosition() << ")");
+        }
+    }
 }
 
 void

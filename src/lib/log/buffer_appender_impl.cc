@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <log/buffer_appender_impl.h>
 
 #include <log4cplus/loglevel.h>
+#include <log4cplus/version.h>
 #include <boost/scoped_ptr.hpp>
 #include <cstdio>
 
@@ -75,8 +76,12 @@ BufferAppender::append(const log4cplus::spi::InternalLoggingEvent& event) {
                   "Internal log buffer has been flushed already");
     }
     // get a clone, and put the pointer in a shared_ptr in the list
-    std::auto_ptr<log4cplus::spi::InternalLoggingEvent> event_aptr =
-        event.clone();
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
+    std::auto_ptr<log4cplus::spi::InternalLoggingEvent>
+#else
+    std::unique_ptr<log4cplus::spi::InternalLoggingEvent>
+#endif
+        event_aptr = event.clone();
     // Also store the string representation of the log level, to be
     // used in flushStdout if necessary
     stored_.push_back(LevelAndEvent(

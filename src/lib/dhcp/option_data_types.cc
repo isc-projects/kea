@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,9 @@
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <util/encode/hex.h>
+#include <algorithm>
+
+using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
@@ -24,6 +27,8 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_types_["uint32"] = OPT_UINT32_TYPE;
     data_types_["ipv4-address"] = OPT_IPV4_ADDRESS_TYPE;
     data_types_["ipv6-address"] = OPT_IPV6_ADDRESS_TYPE;
+    data_types_["ipv6-prefix"] = OPT_IPV6_PREFIX_TYPE;
+    data_types_["psid"] = OPT_PSID_TYPE;
     data_types_["string"] = OPT_STRING_TYPE;
     data_types_["fqdn"] = OPT_FQDN_TYPE;
     data_types_["record"] = OPT_RECORD_TYPE;
@@ -39,6 +44,8 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_UINT32_TYPE] = "uint32";
     data_type_names_[OPT_IPV4_ADDRESS_TYPE] = "ipv4-address";
     data_type_names_[OPT_IPV6_ADDRESS_TYPE] = "ipv6-address";
+    data_type_names_[OPT_IPV6_PREFIX_TYPE] = "ipv6-prefix";
+    data_type_names_[OPT_PSID_TYPE] = "psid";
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
     data_type_names_[OPT_RECORD_TYPE] = "record";
@@ -85,6 +92,9 @@ OptionDataTypeUtil::getDataTypeLen(const OptionDataType data_type) {
 
     case OPT_IPV6_ADDRESS_TYPE:
         return (asiolink::V6ADDRESS_LEN);
+
+    case OPT_PSID_TYPE:
+        return (3);
 
     default:
         ;
@@ -236,6 +246,207 @@ OptionDataTypeUtil::getLabelCount(const std::string& text_name) {
         isc_throw(BadDataTypeCast, ex.what());
     }
 }
+
+PrefixTuple
+OptionDataTypeUtil::readPrefix(const std::vector<uint8_t>& buf) {
+    // Prefix typically consists of the prefix length and the
+    // actual value. If prefix length is 0, the buffer length should
+    // be at least 1 byte to hold this length value.
+    if (buf.empty()) {
+        isc_throw(BadDataTypeCast, "unable to read prefix length from "
+                  "a truncated buffer");
+    }
+
+    // Surround everything with try-catch to unify exceptions being
+    // thrown by various functions and constructors.
+    try {
+        // Try to create PrefixLen object from the prefix length held
+        // in the buffer. This may cause an exception if the length is
+        // invalid (greater than 128).
+        PrefixLen prefix_len(buf.at(0));
+
+        // Convert prefix length to bytes, because we operate on bytes,
+        // rather than bits.
+        uint8_t prefix_len_bytes = (prefix_len.asUint8() / 8);
+        // Check if we need to zero pad any bits. This is the case when
+        // the prefix length is not divisible by 8 (bits per byte). The
+        // calculations below may require some explanations. We first
+        // perform prefix_len % 8 to get the number of useful bits beyond
+        // the current prefix_len_bytes value. By substracting it from 8
+        // we get the number of zero padded bits, but with the special
+        // case of 8 when the result of substraction is 0. The value of
+        // 8 really means no padding so we make a modulo division once
+        // again to turn 8s to 0s.
+        const uint8_t zero_padded_bits =
+            static_cast<uint8_t>((8 - (prefix_len.asUint8() % 8)) % 8);
+        // If there are zero padded bits, it means that we need an extra
+        // byte to be retrieved from the buffer.
+        if (zero_padded_bits > 0) {
+            ++prefix_len_bytes;
+        }
+
+        // Make sure that the buffer is long enough. We substract 1 to
+        // also account for the fact that the buffer includes a prefix
+        // length besides a prefix.
+        if ((buf.size() - 1) < prefix_len_bytes) {
+            isc_throw(BadDataTypeCast, "unable to read a prefix having length of "
+                      << prefix_len.asUnsigned() << " from a truncated buffer");
+        }
+
+        // It is possible for a prefix to be zero if the prefix length
+        // is zero.
+        IOAddress prefix(IOAddress::IPV6_ZERO_ADDRESS());
+
+        // If there is anything more than prefix length is this buffer
+        // we need to read it.
+        if (buf.size() > 1) {
+            // Buffer has to be copied, because we will modify its
+            // contents by setting certain bits to 0, if necessary.
+            std::vector<uint8_t> prefix_buf(buf.begin() + 1, buf.end());
+            // All further conversions require that the buffer length is
+            // 16 bytes.
+            if (prefix_buf.size() < V6ADDRESS_LEN) {
+                prefix_buf.resize(V6ADDRESS_LEN);
+                if (prefix_len_bytes < prefix_buf.size()) {
+                    // Zero all bits in the buffer beyond prefix length
+                    // position.
+                    std::fill(prefix_buf.begin() + prefix_len_bytes,
+                              prefix_buf.end(), 0);
+
+                    if (zero_padded_bits) {
+                        // There is a byte that require zero padding. We
+                        // achieve that by shifting the value of that byte
+                        // back and forth by the number of zeroed bits.
+                        prefix_buf.at(prefix_len_bytes - 1) =
+                            (prefix_buf.at(prefix_len_bytes - 1)
+                             >> zero_padded_bits)
+                            << zero_padded_bits;
+                    }
+                }
+            }
+            // Convert the buffer to the IOAddress object.
+            prefix = IOAddress::fromBytes(AF_INET6, &prefix_buf[0]);
+        }
+
+        return (std::make_pair(prefix_len, prefix));
+
+    } catch (const BadDataTypeCast& ex) {
+        // Pass through the BadDataTypeCast exceptions.
+        throw;
+
+    } catch (const std::exception& ex) {
+        // If an exception of a different type has been thrown, insert
+        // a text that indicates that the failure occurred during reading
+        // the prefix and modify exception type to BadDataTypeCast.
+        isc_throw(BadDataTypeCast, "unable to read a prefix from a buffer: "
+                  << ex.what());
+    }
+}
+
+void
+OptionDataTypeUtil::writePrefix(const PrefixLen& prefix_len,
+                                const IOAddress& prefix,
+                                std::vector<uint8_t>& buf) {
+    // Prefix must be an IPv6 prefix.
+    if (!prefix.isV6()) {
+        isc_throw(BadDataTypeCast, "illegal prefix value "
+                  << prefix);
+    }
+
+    // We don't need to validate the prefix_len value, because it is
+    // already validated by the PrefixLen class.
+    buf.push_back(prefix_len.asUint8());
+
+    // Convert the prefix length to a number of bytes.
+    uint8_t prefix_len_bytes = prefix_len.asUint8() / 8;
+    // Check if there are any bits that require zero padding. See the
+    // commentary in readPrefix to see how this is calculated.
+    const uint8_t zero_padded_bits =
+        static_cast<uint8_t>((8 - (prefix_len.asUint8() % 8)) % 8);
+    // If zero padding is needed it means that we need to extend the
+    // buffer to hold the "partially occupied" byte.
+    if (zero_padded_bits > 0) {
+        ++prefix_len_bytes;
+    }
+
+    // Convert the prefix to byte representation and append it to
+    // our output buffer.
+    std::vector<uint8_t> prefix_bytes = prefix.toBytes();
+    buf.insert(buf.end(), prefix_bytes.begin(),
+               prefix_bytes.begin() + prefix_len_bytes);
+    // If the last byte requires zero padding we achieve that by shifting
+    // bits back and forth by the number of insignificant bits.
+    if (zero_padded_bits) {
+        *buf.rbegin() = (*buf.rbegin() >> zero_padded_bits) << zero_padded_bits;
+    }
+}
+
+PSIDTuple
+OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
+    if (buf.size() < 3) {
+        isc_throw(BadDataTypeCast, "unable to read PSID from the buffer."
+                  << " Invalid buffer size " << buf.size()
+                  << ". Expected 3 bytes (PSID length and PSID value)");
+    }
+
+    // Read PSID length.
+    uint8_t psid_len = buf[0];
+
+    // PSID length must not be greater than 16 bits.
+    if (psid_len > sizeof(uint16_t) * 8) {
+        isc_throw(BadDataTypeCast, "invalid PSID length value "
+                  << static_cast<unsigned>(psid_len)
+                  << ", this value is expected to be in range of 0 to 16");
+    }
+
+    // Read two bytes of PSID value.
+    uint16_t psid = isc::util::readUint16(&buf[1], 2);
+
+    // We need to check that the PSID value does not exceed the maximum value
+    // for a specified PSID length. That means that all bits placed further than
+    // psid_len from the left must be set to 0. So, we create a bit mask
+    // by shifting a value of 0xFFFF to the left and right by psid_len. This
+    // leaves us with psid_len leftmost bits unset and the rest set. Next, we
+    // apply the mask on the PSID value from the buffer and make sure the result
+    // is 0. Otherwise, it means that there are some bits set in the PSID which
+    // aren't supposed to be set.
+    if ((psid_len > 0) &&
+        ((psid & static_cast<uint16_t>(static_cast<uint16_t>(0xFFFF << psid_len)
+                                       >> psid_len)) != 0)) {
+        isc_throw(BadDataTypeCast, "invalid PSID value " << psid
+                  << " for a specified PSID length "
+                  << static_cast<unsigned>(psid_len));
+    }
+
+    // All is good, so we can convert the PSID value read from the buffer to
+    // the port set number.
+    psid = psid >> (sizeof(psid) * 8 - psid_len);
+    return (std::make_pair(PSIDLen(psid_len), PSID(psid)));
+}
+
+void
+OptionDataTypeUtil::writePsid(const PSIDLen& psid_len, const PSID& psid,
+                              std::vector<uint8_t>& buf) {
+    if (psid_len.asUint8() > sizeof(psid) * 8) {
+        isc_throw(BadDataTypeCast, "invalid PSID length value "
+                  << psid_len.asUnsigned()
+                  << ", this value is expected to be in range of 0 to 16");
+    }
+
+    if (psid_len.asUint8() > 0 &&
+        (psid.asUint16() > (0xFFFF >> (sizeof(uint16_t) * 8 - psid_len.asUint8())))) {
+        isc_throw(BadDataTypeCast, "invalid PSID value " << psid.asUint16()
+                  << " for a specified PSID length "
+                  << psid_len.asUnsigned());
+    }
+
+    buf.resize(buf.size() + 3);
+    buf.at(buf.size() - 3) = psid_len.asUint8();
+    isc::util::writeUint16(static_cast<uint16_t>
+                           (psid.asUint16() << (sizeof(uint16_t) * 8 - psid_len.asUint8())),
+                           &buf[buf.size() - 2], 2);
+}
+
 
 std::string
 OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {

@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -124,7 +125,8 @@ TEST(Subnet4Test, matchClientId) {
     EXPECT_TRUE(subnet.getMatchClientId());
 }
 
-TEST(Subnet4Test, Pool4InSubnet4) {
+// Checks that it is possible to add and retrieve multiple pools.
+TEST(Subnet4Test, pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
 
@@ -132,15 +134,16 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
 
-    EXPECT_NO_THROW(subnet->addPool(pool1));
+    // Add pools in reverse order to make sure that they get ordered by
+    // first address.
+    EXPECT_NO_THROW(subnet->addPool(pool3));
 
     // If there's only one pool, get that pool
     PoolPtr mypool = subnet->getAnyPool(Lease::TYPE_V4);
-    EXPECT_EQ(mypool, pool1);
-
+    EXPECT_EQ(mypool, pool3);
 
     EXPECT_NO_THROW(subnet->addPool(pool2));
-    EXPECT_NO_THROW(subnet->addPool(pool3));
+    EXPECT_NO_THROW(subnet->addPool(pool1));
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
@@ -149,11 +152,30 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    EXPECT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
                                              IOAddress("192.1.2.195")));
-
     EXPECT_EQ(mypool, pool3);
 
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+                                             IOAddress("192.1.2.129")));
+    EXPECT_EQ(mypool, pool2);
+
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+                                             IOAddress("192.1.2.64")));
+    EXPECT_EQ(mypool, pool1);
+
+    // Specify addresses which don't belong to any existing pools. The
+    // third parameter prevents it from returning "any" available
+    // pool if a good match is not found.
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+                                             IOAddress("192.1.2.200"),
+                                             false));
+    EXPECT_FALSE(mypool);
+
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+                                             IOAddress("192.1.1.254"),
+                                             false));
+    EXPECT_FALSE(mypool);
 }
 
 // Check if it's possible to get specified number of possible leases for
@@ -182,22 +204,69 @@ TEST(Subnet4Test, getCapacity) {
     EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4));
 }
 
-TEST(Subnet4Test, Subnet4_Pool4_checks) {
+// Checks that it is not allowed to add invalid pools.
+TEST(Subnet4Test, pool4Checks) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
 
     // this one is in subnet
-    Pool4Ptr pool1(new Pool4(IOAddress("192.255.0.0"), 16));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.254.0.0"), 16));
     subnet->addPool(pool1);
 
     // this one is larger than the subnet!
     Pool4Ptr pool2(new Pool4(IOAddress("193.0.0.0"), 24));
 
-    EXPECT_THROW(subnet->addPool(pool2), BadValue);
+    ASSERT_THROW(subnet->addPool(pool2), BadValue);
 
     // this one is totally out of blue
     Pool4Ptr pool3(new Pool4(IOAddress("1.2.3.4"), 16));
-    EXPECT_THROW(subnet->addPool(pool3), BadValue);
+    ASSERT_THROW(subnet->addPool(pool3), BadValue);
+
+    // This pool should be added just fine.
+    Pool4Ptr pool4(new Pool4(IOAddress("192.0.2.10"),
+                             IOAddress("192.0.2.20")));
+    ASSERT_NO_THROW(subnet->addPool(pool4));
+
+    // This one overlaps with the previous pool.
+    Pool4Ptr pool5(new Pool4(IOAddress("192.0.2.1"),
+                             IOAddress("192.0.2.15")));
+    ASSERT_THROW(subnet->addPool(pool5), BadValue);
+
+    // This one also overlaps.
+    Pool4Ptr pool6(new Pool4(IOAddress("192.0.2.20"),
+                             IOAddress("192.0.2.30")));
+    ASSERT_THROW(subnet->addPool(pool6), BadValue);
+
+    // This one "surrounds" the other pool.
+    Pool4Ptr pool7(new Pool4(IOAddress("192.0.2.8"),
+                             IOAddress("192.0.2.23")));
+    ASSERT_THROW(subnet->addPool(pool7), BadValue);
+
+    // This one does not overlap.
+    Pool4Ptr pool8(new Pool4(IOAddress("192.0.2.30"),
+                             IOAddress("192.0.2.40")));
+    ASSERT_NO_THROW(subnet->addPool(pool8));
+
+    // This one has a lower bound in the pool of 192.0.2.10-20.
+    Pool4Ptr pool9(new Pool4(IOAddress("192.0.2.18"),
+                             IOAddress("192.0.2.30")));
+    ASSERT_THROW(subnet->addPool(pool9), BadValue);
+
+    // This one has an upper bound in the pool of 192.0.2.30-40.
+    Pool4Ptr pool10(new Pool4(IOAddress("192.0.2.25"),
+                              IOAddress("192.0.2.32")));
+    ASSERT_THROW(subnet->addPool(pool10), BadValue);
+
+    // Add a pool with a single address.
+    Pool4Ptr pool11(new Pool4(IOAddress("192.255.0.50"),
+                              IOAddress("192.255.0.50")));
+    ASSERT_NO_THROW(subnet->addPool(pool11));
+
+    // Now we're going to add the same pool again. This is an interesting
+    // case because we're checking if the code is properly using upper_bound
+    // function, which returns a pool that has an address greater than the
+    // specified one.
+    ASSERT_THROW(subnet->addPool(pool11), BadValue);
 }
 
 // Tests whether Subnet4 object is able to store and process properly
@@ -282,7 +351,7 @@ TEST(Subnet4Test, addInvalidOption) {
     // should result in exception.
     OptionPtr option2;
     ASSERT_FALSE(option2);
-    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, "dhcp4"),
+    EXPECT_THROW(subnet->getCfgOption()->add(option2, false, DHCP4_OPTION_SPACE),
                  isc::BadValue);
 }
 
@@ -721,27 +790,78 @@ TEST(Subnet6Test, clientClassesMultiple) {
     EXPECT_TRUE(subnet->clientSupported(bar_class));
 }
 
-TEST(Subnet6Test, Subnet6_Pool6_checks) {
+// Checks that it is not allowed to add invalid pools.
+TEST(Subnet6Test, pool6Checks) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
     // this one is in subnet
     Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
-    subnet->addPool(pool1);
+    ASSERT_NO_THROW(subnet->addPool(pool1));
 
     // this one is larger than the subnet!
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8::"), 48));
 
-    EXPECT_THROW(subnet->addPool(pool2), BadValue);
-
+    ASSERT_THROW(subnet->addPool(pool2), BadValue);
 
     // this one is totally out of blue
     Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("3000::"), 16));
-    EXPECT_THROW(subnet->addPool(pool3), BadValue);
-
+    ASSERT_THROW(subnet->addPool(pool3), BadValue);
 
     Pool6Ptr pool4(new Pool6(Lease::TYPE_NA, IOAddress("4001:db8:1::"), 80));
-    EXPECT_THROW(subnet->addPool(pool4), BadValue);
+    ASSERT_THROW(subnet->addPool(pool4), BadValue);
+
+    // This pool should be added just fine.
+    Pool6Ptr pool5(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::100"),
+                             IOAddress("2001:db8:1:2::200")));
+    ASSERT_NO_THROW(subnet->addPool(pool5));
+
+    // This pool overlaps with a previously added pool.
+    Pool6Ptr pool6(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::1"),
+                             IOAddress("2001:db8:1:2::150")));
+    ASSERT_THROW(subnet->addPool(pool6), BadValue);
+
+    // This pool also overlaps
+    Pool6Ptr pool7(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::150"),
+                             IOAddress("2001:db8:1:2::300")));
+    ASSERT_THROW(subnet->addPool(pool7), BadValue);
+
+    // This one "surrounds" the other pool.
+    Pool6Ptr pool8(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::50"),
+                             IOAddress("2001:db8:1:2::250")));
+    ASSERT_THROW(subnet->addPool(pool8), BadValue);
+
+    // This one does not overlap.
+    Pool6Ptr pool9(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::300"),
+                             IOAddress("2001:db8:1:2::400")));
+    ASSERT_NO_THROW(subnet->addPool(pool9));
+
+    // This one has a lower bound in the pool of 2001:db8:1::100-200.
+    Pool6Ptr pool10(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::200"),
+                              IOAddress("2001:db8:1:2::225")));
+    ASSERT_THROW(subnet->addPool(pool10), BadValue);
+
+    // This one has an upper bound in the pool of 2001:db8:1::300-400.
+    Pool6Ptr pool11(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::250"),
+                              IOAddress("2001:db8:1:2::300")));
+    ASSERT_THROW(subnet->addPool(pool11), BadValue);
+
+    // Add a pool with a single address.
+    Pool6Ptr pool12(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::250"),
+                              IOAddress("2001:db8:1:3::250")));
+    ASSERT_NO_THROW(subnet->addPool(pool12));
+
+    // Now we're going to add the same pool again. This is an interesting
+    // case because we're checking if the code is properly using upper_bound
+    // function, which returns a pool that has an address greater than the
+    // specified one.
+    ASSERT_THROW(subnet->addPool(pool12), BadValue);
+
+    // Prefix pool overlaps with the pool1. We can't hand out addresses and
+    // prefixes from the same range.
+    Pool6Ptr pool13(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:1:2::"),
+                              80, 96));
+    ASSERT_THROW(subnet->addPool(pool13), BadValue);
 }
 
 TEST(Subnet6Test, addOptions) {
@@ -751,7 +871,7 @@ TEST(Subnet6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
@@ -762,7 +882,7 @@ TEST(Subnet6Test, addOptions) {
     }
 
     // Get options from the Subnet and check if all 10 are there.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(10, options->size());
 
@@ -803,12 +923,12 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // In the inner loop we create options with unique codes (100-109).
         for (uint16_t code = 100; code < 110; ++code) {
             OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+            ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
         }
     }
 
     // Sanity check that all options are there.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(20, options->size());
 
     // Use container index #1 to get the options by their codes.
@@ -855,11 +975,11 @@ TEST(Subnet6Test, addPersistentOption) {
         // and options with these codes will be flagged non-persistent.
         // Options with other codes will be flagged persistent.
         bool persistent = (code % 3) ? true : false;
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, persistent, DHCP6_OPTION_SPACE));
     }
 
     // Get added options from the subnet.
-    OptionContainerPtr options = subnet->getCfgOption()->getAll("dhcp6");
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
 
     // options->get<2> returns reference to container index #2. This
     // index is used to access options by the 'persistent' flag.
@@ -886,7 +1006,7 @@ TEST(Subnet6Test, getOptions) {
     // Add 10 options to a "dhcp6" option space in the subnet.
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(subnet->getCfgOption()->add(option, false, DHCP6_OPTION_SPACE));
     }
 
     // Check that we can get each added option descriptor using
@@ -898,7 +1018,7 @@ TEST(Subnet6Test, getOptions) {
         // Returned descriptor should contain NULL option ptr.
         EXPECT_FALSE(desc.option_);
         // Now, try the valid option space.
-        desc = subnet->getCfgOption()->get("dhcp6", code);
+        desc = subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, code);
         // Test that the option code matches the expected code.
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());

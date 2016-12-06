@@ -206,6 +206,16 @@ public:
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
+    /// @brief Returns a host connected to the IPv6 subnet and having
+    /// a reservation for a specified IPv6 address or prefix.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Const @c Host object using a specified IPv6 address/prefix.
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+
     /// @brief Adds a new host to the collection.
     ///
     /// The method will insert the given host and all of its children (v4

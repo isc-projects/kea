@@ -361,7 +361,7 @@ public:
             // Address: uint32_t
             // The address in the Lease structure is an IOAddress object.  Convert
             // this to an integer for storage.
-            addr4_ = static_cast<uint32_t>(lease_->addr_);
+            addr4_ = lease_->addr_.toUint32();
             bind_[0].buffer_type = MYSQL_TYPE_LONG;
             bind_[0].buffer = reinterpret_cast<char*>(&addr4_);
             bind_[0].is_unsigned = MLM_TRUE;
@@ -1240,10 +1240,11 @@ public:
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),
-         fetch_type_(fetch_type),
-         // Set the number of columns in the bind array based on fetch_type
-         // This is the number of columns expected in the result set
-         bind_(fetch_type_ ? 4 : 3) {
+          fetch_type_(fetch_type),
+          // Set the number of columns in the bind array based on fetch_type
+          // This is the number of columns expected in the result set
+          bind_(fetch_type_ ? 4 : 3),
+          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
         if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
             isc_throw(BadValue, "MySqlLeaseStatsQuery"
                       " - invalid statement index" << statement_index_);
@@ -1595,7 +1596,7 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    uint32_t addr4 = static_cast<uint32_t>(addr);
+    uint32_t addr4 = addr.toUint32();
     inbind[0].buffer_type = MYSQL_TYPE_LONG;
     inbind[0].buffer = reinterpret_cast<char*>(&addr4);
     inbind[0].is_unsigned = MLM_TRUE;
@@ -1959,7 +1960,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     MYSQL_BIND where;
     memset(&where, 0, sizeof(where));
 
-    uint32_t addr4 = static_cast<uint32_t>(lease->addr_);
+    uint32_t addr4 = lease->addr_.toUint32();
     where.buffer_type = MYSQL_TYPE_LONG;
     where.buffer = reinterpret_cast<char*>(&addr4);
     where.is_unsigned = MLM_TRUE;
@@ -2031,7 +2032,7 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     memset(inbind, 0, sizeof(inbind));
 
     if (addr.isV4()) {
-        uint32_t addr4 = static_cast<uint32_t>(addr);
+        uint32_t addr4 = addr.toUint32();
 
         inbind[0].buffer_type = MYSQL_TYPE_LONG;
         inbind[0].buffer = reinterpret_cast<char*>(&addr4);

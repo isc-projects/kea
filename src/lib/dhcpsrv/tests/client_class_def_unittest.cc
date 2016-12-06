@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <asiolink/io_address.h>
@@ -69,13 +70,13 @@ TEST(ClientClassDef, cfgOptionBasics) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
 
     option.reset(new Option(Option::V6, 101, OptionBuffer(10, 0xFF)));
     ASSERT_NO_THROW(test_options->add(option, false, "isc"));
 
     option.reset(new Option(Option::V6, 100, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "dhcp6"));
+    ASSERT_NO_THROW(test_options->add(option, false, DHCP6_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr, test_options)));
@@ -83,7 +84,7 @@ TEST(ClientClassDef, cfgOptionBasics) {
     ASSERT_TRUE(class_options);
 
     // Now make sure we can find all the options
-    OptionDescriptor opt_desc = class_options->get("dhcp4",17);
+    OptionDescriptor opt_desc = class_options->get(DHCP4_OPTION_SPACE,17);
     ASSERT_TRUE(opt_desc.option_);
     EXPECT_EQ(17, opt_desc.option_->getType());
 
@@ -91,7 +92,7 @@ TEST(ClientClassDef, cfgOptionBasics) {
     ASSERT_TRUE(opt_desc.option_);
     EXPECT_EQ(101, opt_desc.option_->getType());
 
-    opt_desc = class_options->get("dhcp6",100);
+    opt_desc = class_options->get(DHCP6_OPTION_SPACE,100);
     ASSERT_TRUE(opt_desc.option_);
     EXPECT_EQ(100, opt_desc.option_->getType());
 }
@@ -113,7 +114,7 @@ TEST(ClientClassDef, copyAndEquality) {
     OptionPtr option;
     test_options.reset(new CfgOption());
     option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
 
     // Now remake the client class with cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class_one", expr,
@@ -176,7 +177,7 @@ TEST(ClientClassDef, copyAndEquality) {
     // Make a class that with same name and expression, but different options
     // verify that the equality tools reflect that the classes are not equal.
     option.reset(new Option(Option::V4, 20, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, "dhcp4"));
+    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
     ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
                                                      test_options)));
     EXPECT_FALSE(cclass->equals(*cclass2));

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ PktFilterTest::sendMessage(const IOAddress& dest) {
     memset(&dest_addr4, 0, sizeof(sockaddr));
     dest_addr4.sin_family = AF_INET;
     dest_addr4.sin_port = htons(port_);
-    dest_addr4.sin_addr.s_addr = htonl(dest);
+    dest_addr4.sin_addr.s_addr = htonl(dest.toUint32());
     ASSERT_EQ(sendto(send_msg_sock_, test_message_->getBuffer().getData(),
                      test_message_->getBuffer().getLength(), 0,
                      reinterpret_cast<struct sockaddr*>(&dest_addr4),
@@ -158,6 +158,14 @@ PktFilterTest::testRcvdMessage(const Pkt4Ptr& rcvd_msg) const {
     EXPECT_TRUE(test_message_->getFile() == rcvd_msg->getFile());
     EXPECT_EQ(test_message_->getHtype(), rcvd_msg->getHtype());
     EXPECT_EQ(test_message_->getHlen(), rcvd_msg->getHlen());
+}
+
+void
+PktFilterTest::testRcvdMessageAddressPort(const Pkt4Ptr& rcvd_msg) const {
+    EXPECT_EQ(test_message_->getRemoteAddr(), rcvd_msg->getLocalAddr());
+    EXPECT_EQ(test_message_->getLocalAddr(), rcvd_msg->getRemoteAddr());
+    EXPECT_EQ(test_message_->getRemotePort(), rcvd_msg->getLocalPort());
+    EXPECT_EQ(test_message_->getLocalPort(), rcvd_msg->getRemotePort());
 }
 
 bool

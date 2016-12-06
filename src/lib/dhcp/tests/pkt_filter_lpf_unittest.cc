@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,6 +179,7 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
 
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
+    testRcvdMessageAddressPort(rcvd_pkt);
 }
 
 // This test verifies that if the packet is received over the raw

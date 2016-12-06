@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,10 +71,16 @@ public:
     /// @param sock A descriptor of the open socket.
     void testDgramSocket(const int sock) const;
 
-    /// @brief Checks if the received message matches the test_message_.
+    /// @brief Checks if a received message matches the test_message_.
     ///
     /// @param rcvd_msg An instance of the message to be tested.
     void testRcvdMessage(const Pkt4Ptr& rcvd_msg) const;
+
+    /// @brief Checks if received message has appropriate addresses and
+    /// port values set.
+    ///
+    /// @param rcvd_msg An instance of the message to be tested.
+    void testRcvdMessageAddressPort(const Pkt4Ptr& rcvd_msg) const;
 
     std::string ifname_;   ///< Loopback interface name
     uint16_t ifindex_;     ///< Loopback interface index.

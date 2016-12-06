@@ -105,19 +105,31 @@ CfgOption::encapsulateInternal(const std::string& option_space) {
     // from the option spaces they encapsulate.
     for (OptionContainer::const_iterator opt = options->begin();
          opt != options->end(); ++opt) {
-        // Get encapsulated option space for the option.
-        const std::string& encap_space = opt->option_->getEncapsulatedSpace();
-        // Empty value means that no option space is encapsulated.
-        if (!encap_space.empty()) {
-            // Retrieve all options from the encapsulated option space.
-            OptionContainerPtr encap_options = getAll(encap_space);
-            for (OptionContainer::const_iterator encap_opt =
-                     encap_options->begin(); encap_opt != encap_options->end();
-                 ++encap_opt) {
-                // Add sub-option if there isn't one added already.
-                if (!opt->option_->getOption(encap_opt->option_->getType())) {
-                    opt->option_->addOption(encap_opt->option_);
-                }
+        encapsulateInternal(opt->option_);
+    }
+}
+
+void
+CfgOption::encapsulateInternal(const OptionPtr& option) {
+    // Get encapsulated option space for the option.
+    const std::string& encap_space = option->getEncapsulatedSpace();
+    // Empty value means that no option space is encapsulated.
+    if (!encap_space.empty()) {
+        // Retrieve all options from the encapsulated option space.
+        OptionContainerPtr encap_options = getAll(encap_space);
+        for (OptionContainer::const_iterator encap_opt =
+                 encap_options->begin(); encap_opt != encap_options->end();
+             ++encap_opt) {
+            // Add sub-option if there isn't one added already.
+            if (!option->getOption(encap_opt->option_->getType())) {
+                option->addOption(encap_opt->option_);
+            }
+            // This is a workaround for preventing infinite recursion when
+            // trying to encapsulate options created with default global option
+            // spaces.
+            if (encap_space != DHCP4_OPTION_SPACE &&
+                encap_space != DHCP6_OPTION_SPACE) {
+                encapsulateInternal(encap_opt->option_);
             }
         }
     }

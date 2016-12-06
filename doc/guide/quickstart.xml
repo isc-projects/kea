@@ -7,16 +7,16 @@
 ]>
 
   <chapter id="quickstart">
-    <title>Quick start</title>
+    <title>Quick Start</title>
 
     <para>
-        This quickly covers the standard steps for installing and deploying Kea.
+        This section describes the basic steps needed to get Kea up and running.
         For further details, full customizations, and troubleshooting, see the
         respective chapters in the Kea guide.
     </para>
 
     <section id="quick-start">
-      <title>Quick start guide for DHCPv4 and DHCPv6 services</title>
+      <title>Quick Start Guide for DHCPv4 and DHCPv6 Services</title>
 
       <orderedlist>
 
@@ -54,8 +54,9 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Install it (by default the installation prefix is <filename>/usr/local/</filename>,
-          so you likely need root privileges for that step):
+          <para>Install it (by default it will be placed in
+          <filename>/usr/local/</filename>,
+          so it is likely that you will need root privileges for this step):
             <screen># <userinput>make install</userinput></screen>
           </para>
         </listitem>
@@ -64,7 +65,8 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <para>Edit the configuration file which by default is installed in
           <filename>[kea-install-dir]/etc/kea/kea.conf</filename> and contains
           configuration for all Kea services. Configuration choices for DHCPv4
-          and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/>, respectively.</para>
+          and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/>:w
+ respectively.</para>
         </listitem>
 
         <listitem>
@@ -81,10 +83,11 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         <listitem>
           <para>Verify that Kea server(s) are running:
           <screen># <userinput>keactrl status</userinput></screen>
-          If the server status is "inactive" may indicate a configuration
-          error. Please check a log file (by default located in
-          <filename>[kea-install-dir]/var/kea/kea.log</filename>) for the
-          details of the error.
+          A server status of "inactive" may indicate a configuration
+          error. Please check the log file (by default named
+          <filename>[kea-install-dir]/var/kea/kea-dhcp4.log</filename> or
+          <filename>[kea-install-dir]/var/kea/kea-dhcp6.log</filename>) 
+          for the details of the error.
           </para>
         </listitem>
 
@@ -99,15 +102,15 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
 
         <listitem>
           <para>
-            Stop running server(s):
+            Stop running the server(s):
             <screen># <userinput>keactrl stop</userinput></screen>
           </para>
         </listitem>
       </orderedlist>
       <para>
-        For more system specific installation procedures, you may want to visit
-        <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes">System specific notes</ulink>,
-        available on <ulink url="http://kea.isc.org/">Kea homepage</ulink>.
+        For instructions specific to your system, please read the
+        <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes">system specific notes</ulink>,
+        available on the <ulink url="http://kea.isc.org/">Kea web site</ulink>.
       </para>
 
       <para>The details of <command>keactrl</command> script usage can be found
@@ -115,12 +118,12 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
     </section>
 
     <section id="quick-start-direct-run">
-      <title>Running Kea servers directly</title>
-      <para>Kea servers can be started directly (without a need to use
-      <command>keactrl</command>). To start DHCPv4 server run the following
+      <title>Running the Kea Servers Directly</title>
+      <para>The Kea servers can be started directly, without the need to use the
+      <command>keactrl</command>. To start the DHCPv4 server run the following
       command:
       <screen># <userinput>kea-dhcp4 -c /path/to/your/kea4/config/file.json</userinput></screen>
-      And, to start the DHCPv6 server run the following command:
+      Similarly, to start the DHCPv6 server run the following command:
       <screen># <userinput>kea-dhcp6 -c /path/to/your/kea6/config/file.json</userinput></screen>
     </para>
     </section>

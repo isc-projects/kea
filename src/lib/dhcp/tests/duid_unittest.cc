@@ -160,7 +160,7 @@ TEST(DuidTest, toText) {
 // This test verifies that empty DUID returns proper value
 TEST(DuidTest, empty) {
     DuidPtr empty;
-    EXPECT_NO_THROW(empty = DUID::generateEmpty());
+    EXPECT_NO_THROW(empty.reset(new DUID(DUID::EMPTY())));
 
     // This method must return something
     ASSERT_TRUE(empty);
@@ -168,6 +168,13 @@ TEST(DuidTest, empty) {
     // Ok, technically empty is not really empty, it's just a single
     // byte with value of 0.
     EXPECT_EQ("00", empty->toText());
+
+    EXPECT_TRUE(*empty == DUID::EMPTY());
+
+    uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
+    DUID duid(data1, sizeof(data1));
+
+    EXPECT_FALSE(duid == DUID::EMPTY());
 }
 
 // This test checks if the comparison operators are sane.
