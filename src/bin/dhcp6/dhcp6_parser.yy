@@ -86,6 +86,8 @@ using namespace std;
   PD_POOLS "pd-pools"
   PREFIX "prefix"
   PREFIX_LEN "prefix-len"
+  EXCLUDED_PREFIX "excluded-prefix"
+  EXCLUDED_PREFIX_LEN "excluded-prefix-len"
   DELEGATED_LEN "delegated-len"
 
   SUBNET "subnet"
@@ -1070,6 +1072,8 @@ pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
              | option_data_list
+             | excluded_prefix
+             | excluded_prefix_len
              | unknown_map_entry
              ;
 
@@ -1084,6 +1088,19 @@ pd_prefix: PREFIX {
 pd_prefix_len: PREFIX_LEN COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("prefix-len", prf);
+}
+
+excluded_prefix: EXCLUDED_PREFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("excluded-prefix", prf);
+    ctx.leave();
+}
+
+excluded_prefix_len: EXCLUDED_PREFIX_LEN COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("excluded-prefix-len", prf);
 }
 
 pd_delegated_len: DELEGATED_LEN COLON INTEGER {
