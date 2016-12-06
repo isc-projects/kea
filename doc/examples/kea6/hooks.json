@@ -41,7 +41,11 @@
         "library": "/opt/lib/security.so"
      },
      {
-        "library": "/opt/lib/charging.so"
+        "library": "/opt/lib/charging.so",
+        "parameters": {
+             "path": "/var/kea/var",
+             "base-name": "kea-forensic6"
+        }
      }
   ]
 }

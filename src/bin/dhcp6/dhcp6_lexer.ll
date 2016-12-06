@@ -744,6 +744,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+
+\"parameters\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
+        return isc::dhcp::Dhcp6Parser::make_PARAMETERS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("parameters", driver.loc_);
+    }
+}
+
 \"library\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:

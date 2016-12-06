@@ -114,6 +114,7 @@ using namespace std;
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
+  PARAMETERS "parameters"
 
   EXPIRED_LEASES_PROCESSING "expired-leases-processing"
 
@@ -593,13 +594,23 @@ hooks_params: hooks_param
             | hooks_params COMMA hooks_param
             ;
 
-hooks_param: LIBRARY {
+hooks_param: library
+           | parameters;
+
+library: LIBRARY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave(); 
 };
+
+parameters: PARAMETERS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("parameters", $4);
+    ctx.leave();
+}
 
 // --- expired-leases-processing ------------------------
 expired_leases_processing: EXPIRED_LEASES_PROCESSING {
