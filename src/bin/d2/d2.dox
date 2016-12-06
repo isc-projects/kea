@@ -215,7 +215,7 @@ The transaction classes are shown in the following diagram:
 
 - isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add entries
 - isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove entries
-- isc::d2::StateModel - abstract state model described in @ref d2StateModel
+- isc::util::StateModel - abstract state model described in @ref d2StateModel
 
 The state models for these two transactions implement DDNS with conflict
 resolution as described in <a href="https://tools.ietf.org/html/rfc4703">RFC 4703</a>.
@@ -244,7 +244,7 @@ a common library.
 
 @image html state_model_classes.svg "State Model Classes"
 
-- isc::d2::StateModel - provides the mechanics for executing a state model
+- isc::util::StateModel - provides the mechanics for executing a state model
 described by a dictionary events and states.  It provides methods to:
     - initialize the model - constructs the dictionary of events and states
     - start the model - sets the model to its initial state, posts a "start"

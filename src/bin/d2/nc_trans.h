@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,9 @@
 #include <exceptions/exceptions.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/dns_client.h>
-#include <d2/state_model.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dns/tsig.h>
+#include <util/state_model.h>
 
 #include <boost/shared_ptr.hpp>
 #include <map>
@@ -74,7 +74,7 @@ typedef isc::dhcp_ddns::D2Dhcid TransactionKey;
 /// as needed, but it must support the common set.  NameChangeTransaction
 /// does not supply any state handlers.  These are the sole responsibility of
 /// derivations.
-class NameChangeTransaction : public DNSClient::Callback, public StateModel {
+class NameChangeTransaction : public DNSClient::Callback, public util::StateModel {
 public:
 
     //@{ States common to all transactions.

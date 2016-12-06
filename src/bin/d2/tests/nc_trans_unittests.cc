@@ -24,6 +24,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace {

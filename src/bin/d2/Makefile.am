@@ -69,11 +69,9 @@ libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
 libd2_la_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 libd2_la_SOURCES += d2_zone.cc d2_zone.h
 libd2_la_SOURCES += dns_client.cc dns_client.h
-libd2_la_SOURCES += labeled_value.cc labeled_value.h
 libd2_la_SOURCES += nc_add.cc nc_add.h
 libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
-libd2_la_SOURCES += state_model.cc state_model.h
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc

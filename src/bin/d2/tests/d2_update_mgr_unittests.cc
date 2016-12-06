@@ -24,6 +24,7 @@ using namespace isc;
 using namespace isc::dhcp_ddns;
 using namespace isc::d2;
 using namespace isc::process;
+using namespace isc::util;
 
 namespace {
 
