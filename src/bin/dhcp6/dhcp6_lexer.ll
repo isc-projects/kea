@@ -157,7 +157,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     isc_throw(Dhcp6ParseError, "Directive not closed.");
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
-    
+
 
 <*>{blank}+   {
     // Ok, we found a with space. Let's ignore it and update loc variable.
@@ -213,6 +213,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_HOSTS_DATABASE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("hosts-database", driver.loc_);
+    }
+}
+
+\"readonly\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_READONLY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("readonly", driver.loc_);
     }
 }
 
@@ -961,7 +970,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     // Bad string with a bad escape inside
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
 }
-    
+
 \"{JSONStringCharacter}*\\\" {
     // Bad string with an open escape at the end
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
