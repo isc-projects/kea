@@ -102,10 +102,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     if (start_token_flag) {
         start_token_flag = false;
         switch (start_token_value) {
-        case Parser6Context::SUBPARSER_JSON:
+        case Parser6Context::PARSER_JSON:
         default:
-            return isc::dhcp::Dhcp6Parser::make_SUB_JSON(driver.loc_);
-//            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(driver.loc_);
+            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_JSON(driver.loc_);
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(driver.loc_);
         case Parser6Context::SUBPARSER_DHCP6:

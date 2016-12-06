@@ -114,7 +114,7 @@ Parser6Context::leave()
 }
 
 const std::string
-Parser6Context::context_name()
+Parser6Context::contextName()
 {
     switch (ctx_) {
     case NO_KEYWORD:

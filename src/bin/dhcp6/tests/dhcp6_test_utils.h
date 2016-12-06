@@ -639,15 +639,24 @@ public:
     NakedDhcpv6Srv srv_;
 };
 
-// For parser testing (JSON map, no exception expected)
+/// @brief Runs parser in JSON mode, useful for parser testing
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
 inline isc::data::ConstElementPtr
 parseJSON(const std::string& in)
 {
     isc::dhcp::Parser6Context ctx;
-    return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_JSON));
+    return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_JSON));
 }
 
-// For parser testing (DHCP6)
+/// @brief Runs parser in Dhcp6 mode
+///
+/// This is a simplified Dhcp6 mode, so no outer { } and "Dhcp6" is
+/// needed. This format is used by most of the tests.
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
 inline isc::data::ConstElementPtr
 parseDHCP6(const std::string& in)
 {
@@ -656,14 +665,17 @@ parseDHCP6(const std::string& in)
         return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
     }
     catch (const std::exception& ex) {
-#ifdef ENABLE_DEBUG
         std::cout << "EXCEPTION: " << ex.what() << std::endl;
-#endif // ENABLE_DEBUG
         throw;
     }
 }
 
-// For parser testing (OPTION_DEF)
+/// @brief Runs parser in option definition mode
+///
+/// This function parses specified text as JSON that defines option definitions.
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
 inline isc::data::ConstElementPtr
 parseOPTION_DEF(const std::string& in)
 {
@@ -672,9 +684,7 @@ parseOPTION_DEF(const std::string& in)
         return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEF));
     }
     catch (const std::exception& ex) {
-#ifdef ENABLE_DEBUG
         std::cout << "EXCEPTION: " << ex.what() << std::endl;
-#endif // ENABLE_DEBUG
         throw;
     }
 }
