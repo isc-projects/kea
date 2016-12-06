@@ -65,7 +65,7 @@ void testParser2(const std::string& txt, Parser6Context::ParserType parser_type)
 
 TEST(ParserTest, mapInMap) {
     string txt = "{ \"xyzzy\": { \"foo\": 123, \"baz\": 456 } }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, listInList) {
@@ -76,7 +76,7 @@ TEST(ParserTest, listInList) {
 
 TEST(ParserTest, nestedMaps) {
     string txt = "{ \"europe\": { \"UK\": { \"London\": { \"street\": \"221B Baker\" }}}}";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, nestedLists) {
@@ -87,7 +87,7 @@ TEST(ParserTest, nestedLists) {
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelguese\" ], "
                     "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
@@ -103,7 +103,7 @@ TEST(ParserTest, types) {
                    "\"map\": { \"foo\": \"bar\" },"
                    "\"list\": [ 1, 2, 3 ],"
                    "\"null\": null }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
@@ -111,7 +111,7 @@ TEST(ParserTest, keywordJSON) {
                    "\"type\": \"password\","
                    "\"user\": \"name\","
                    "\"password\": \"type\" }";
-    testParser(txt, Parser6Context::PARSER_GENERIC_JSON);
+    testParser(txt, Parser6Context::SUBPARSER_JSON);
 }
 
 TEST(ParserTest, keywordDhcp6) {
@@ -267,148 +267,142 @@ void testError(const std::string& txt,
 // Check errors
 TEST(ParserTest, errors) {
     // no input
-    testError("",
-              Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.1: syntax error, unexpected end of file, "
-              "expecting {");
-    testError(" ",
-              Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:1.2: syntax error, unexpected end of file, "
-              "expecting {");
-    testError("\n",
-              Parser6Context::PARSER_GENERIC_JSON,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting {");
+    testError("", Parser6Context::SUBPARSER_JSON,
+              "<string>:1.1: syntax error, unexpected end of file");
+    testError(" ", Parser6Context::SUBPARSER_JSON,
+              "<string>:1.2: syntax error, unexpected end of file");
+    testError("\n", Parser6Context::SUBPARSER_JSON,
+              "<string>:2.1: syntax error, unexpected end of file");
 
     // comments
     testError("# nothing\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting {");
     testError(" #\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting {");
     testError("// nothing\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting {");
     testError("/* nothing */\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting {");
     testError("/* no\nthing */\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:3.1: syntax error, unexpected end of file, "
               "expecting {");
     testError("/* no\nthing */\n\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:4.1: syntax error, unexpected end of file, "
               "expecting {");
     testError("/* nothing\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Comment not closed. (/* in line 1");
     testError("\n\n\n/* nothing\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Comment not closed. (/* in line 4");
     testError("{ /* */*/ }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3-8: Invalid character: *");
     testError("{ /* // *// }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3-11: Invalid character: /");
     testError("{ /* // *///  }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting }");
 
     // includes
     testError("<?\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Directive not closed.");
     testError("<?include\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Directive not closed.");
     string file = string(CFG_EXAMPLES) + "/" + "stateless.json";
     testError("<?include \"" + file + "\"\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Directive not closed.");
     testError("<?include \"/foo/bar\" ?>/n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "Can't open include file /foo/bar");
 
     // numbers
     testError("123",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-3: syntax error, unexpected integer, "
               "expecting {");
     testError("-456",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-4: syntax error, unexpected integer, "
               "expecting {");
     testError("-0001",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-5: syntax error, unexpected integer, "
               "expecting {");
     testError("1234567890123456789012345678901234567890",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-40: Failed to convert "
               "1234567890123456789012345678901234567890"
               " to an integer.");
     testError("-3.14e+0",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-8: syntax error, unexpected floating point, "
               "expecting {");
     testError("1e50000",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-7: Failed to convert 1e50000 "
               "to a floating point.");
 
     // strings
     testError("\"aabb\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-6: syntax error, unexpected constant string, "
               "expecting {");
     testError("{ \"aabb\"err",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.9: Invalid character: e");
     testError("{ err\"aabb\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3: Invalid character: e");
     testError("\"a\n\tb\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-6: Invalid control in \"a\n\tb\"");
     testError("\"a\\n\\tb\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-8: syntax error, unexpected constant string, "
               "expecting {");
     testError("\"a\\x01b\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-8: Bad escape in \"a\\x01b\"");
     testError("\"a\\u0062\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-9: Unsupported unicode escape in \"a\\u0062\"");
     testError("\"a\\u062z\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-9: Bad escape in \"a\\u062z\"");
     testError("\"abc\\\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1-6: Overflow escape in \"abc\\\"");
 
     // from data_unittest.c
     testError("\\a",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1: Invalid character: \\");
     testError("\\",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1: Invalid character: \\");
     testError("\\\"\\\"",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1: Invalid character: \\");
 
     // want a map
     testError("[]\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.1: syntax error, unexpected [, "
               "expecting {");
     testError("[]\n",
@@ -416,14 +410,14 @@ TEST(ParserTest, errors) {
               "<string>:1.1: syntax error, unexpected [, "
               "expecting {");
     testError("{ 123 }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3-5: syntax error, unexpected integer, "
               "expecting }");
     testError("{ 123 }\n",
               Parser6Context::PARSER_DHCP6,
               "<string>:1.3-5: syntax error, unexpected integer");
     testError("{ \"foo\" }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "
               "expecting :");
     testError("{ \"foo\" }\n",
@@ -442,21 +436,21 @@ TEST(ParserTest, errors) {
               "<string>:2.1: syntax error, unexpected end of file, "
               "expecting \",\" or }");
     testError("{}{}\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3: syntax error, unexpected {, "
               "expecting end of file");
 
     // bad commas
     testError("{ , }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3: syntax error, unexpected \",\", "
               "expecting }");
     testError("{ , \"foo\":true }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.3: syntax error, unexpected \",\", "
               "expecting }");
     testError("{ \"foo\":true, }\n",
-              Parser6Context::PARSER_GENERIC_JSON,
+              Parser6Context::SUBPARSER_JSON,
               "<string>:1.15: syntax error, unexpected }, "
               "expecting constant string");
 

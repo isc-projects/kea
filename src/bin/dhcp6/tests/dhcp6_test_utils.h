@@ -644,7 +644,7 @@ inline isc::data::ConstElementPtr
 parseJSON(const std::string& in)
 {
     isc::dhcp::Parser6Context ctx;
-    return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_GENERIC_JSON));
+    return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_JSON));
 }
 
 // For parser testing (DHCP6)
@@ -669,7 +669,7 @@ parseOPTION_DEF(const std::string& in)
 {
     try {
         isc::dhcp::Parser6Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_OPTION_DEF));
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEF));
     }
     catch (const std::exception& ex) {
 #ifdef ENABLE_DEBUG
