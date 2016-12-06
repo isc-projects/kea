@@ -48,41 +48,40 @@ public:
     /// is being told to start parsing as SUBPARSER_HOST_RESERVATION6.
     typedef enum {
         /// This parser will parse the content as generic JSON.
-        //PARSER_GENERIC_JSON,
+        PARSER_JSON,
 
-        SUBPARSER_JSON,
-
-        /// This parser will parse the content as Dhcp6 config wrapped in a map (that's
-        /// the regular config file)
+        /// This parser will parse the content as Dhcp6 config wrapped in a map
+        /// (that's the regular config file)
         PARSER_DHCP6,
 
-        /// This parser will parse the content of Dhcp6. It is mostly used
-        /// in unit-tests as most of the unit-tests do not define the outer
-        /// map and Dhcp6 entity, just the contents of it.
+        /// This parser will parse the content of Dhcp6 (without outer { } and
+        /// without "Dhcp6"). It is mostly used in unit-tests as most of the
+        /// unit-tests do not define the outer map and Dhcp6 entity, just the
+        /// contents of it.
         SUBPARSER_DHCP6,
 
-        /// This will parse the conde as Subnet6 content.
+        /// This will parse the input as Subnet6 content.
         PARSER_SUBNET6,
 
-        /// This parser will parse pool6 content.
+        /// This will parse the input as pool6 content.
         PARSER_POOL6,
 
-        /// This parser will parse the interfaces content.
+        /// This will parse the input as interfaces content.
         PARSER_INTERFACES,
 
-        /// This parser will parse the content as pd-pool.
+        /// This will parse the input as pd-pool content.
         PARSER_PD_POOL,
 
-        /// This parser will parse the content as host-reservation
+        /// This will parse the input as host-reservation.
         PARSER_HOST_RESERVATION,
 
-        /// This parser will parse the content as option definition.
+        /// This will parse the input as option definition.
         PARSER_OPTION_DEF,
 
-        /// This parser will parse the content as option data.
+        /// This will parse the input as option data.
         PARSER_OPTION_DATA,
 
-        /// This parser will parse the content as hooks-library
+        /// This will parse the input as hooks-library.
         PARSER_HOOKS_LIBRARY
     } ParserType;
 
@@ -109,13 +108,27 @@ public:
 
     /// @brief Run the parser on the string specified.
     ///
+    /// This method parses specified string. Depending on the value of
+    /// parser_type, parser may either check only that the input is valid
+    /// JSON, or may do more specific syntax checking. See @ref ParserType
+    /// for supported syntax checkers.
+    ///
     /// @param str string to be parsed
-    /// @param parser_type specifies expected content (either DHCP6 or generic JSON)
-    /// @return true on success.
+    /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
+    /// @return Element structure representing parsed text.
     isc::data::ConstElementPtr parseString(const std::string& str,
                                            ParserType parser_type);
 
     /// @brief Run the parser on the file specified.
+    ///
+    /// This method parses specified file. Depending on the value of
+    /// parser_type, parser may either check only that the input is valid
+    /// JSON, or may do more specific syntax checking. See @ref ParserType
+    /// for supported syntax checkers.
+    ///
+    /// @param filename file to be parsed
+    /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
+    /// @return Element structure representing parsed text.
     isc::data::ConstElementPtr parseFile(const std::string& filename,
                                          ParserType parser_type);
 
@@ -141,43 +154,86 @@ public:
     ///
     /// Convert a bison location into an element position
     /// (take the begin, the end is lost)
+    /// @brief loc location in bison format
+    /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
 
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
-        /// at toplevel
+        ///< This one is used in pure JSON mode.
         NO_KEYWORD,
+
+        ///< Used while parsing top level (that contains Dhcp6, Logging and others)
         CONFIG,
-        /// in config
+
+        ///< Used while parsing content of Dhcp6.
         DHCP6,
+
         // not yet DHCP4,
         // not yet DHCP_DDNS,
+
+        ///< Used while parsing content of Logging
         LOGGING,
-        /// Dhcp6
+
+        /// Used while parsing Dhcp6/interfaces structures.
         INTERFACES_CONFIG,
-        LEASE_DATABASE,
+
+        /// Used while parsing Dhcp6/hosts-database structures.
         HOSTS_DATABASE,
+
+        /// Used while parsing Dhcp6/lease-database structures.
+        LEASE_DATABASE,
+
+        /// Used while parsing Dhcp6/mac-sources structures.
         MAC_SOURCES,
+
+        /// Used while parsing Dhcp6/host-reservation-identifiers.
         HOST_RESERVATION_IDENTIFIERS,
+
+        /// Used while parsing Dhcp6/hooks-libraries.
         HOOKS_LIBRARIES,
+
+        /// Used while parsing Dhcp6/Subnet6 structures.
         SUBNET6,
+
+        /// Used while parsing Dhcp6/option-def structures.
         OPTION_DEF,
+
+        /// Used while parsing Dhcp6/option-data, Dhcp6/subnet6/option-data
+        /// or anywhere option-data is present (client classes, host
+        /// reservations and possibly others).
         OPTION_DATA,
+
+        /// Used while parsing Dhcp6/client-classes structures.
         CLIENT_CLASSES,
+
+        /// Used while parsing Dhcp6/server-id structures.
         SERVER_ID,
+
+        /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
-        /// subnet6
+
+        /// Used while parsing Dhcp6/subnet6/pools structures.
         POOLS,
+
+        /// Used while parsing Dhcp6/subnet6/pd-pools structures.
         PD_POOLS,
+
+        /// Used while parsing Dhcp6/reservations structures.
         RESERVATIONS,
+
+        /// Used while parsing Dhcp6/subnet6/relay structures.
         RELAY,
-        /// client-classes
+
+        /// Used while parsing Dhcp6/client-classes structures.
         CLIENT_CLASS,
-        /// Logging
+
+        /// Used while parsing Logging/loggers structures.
         LOGGERS,
-        /// loggers
+
+        /// Used while parsing Logging/loggers/output_options structures.
         OUTPUT_OPTIONS
-    } ParserContext;    
+    } ParserContext;
 
     /// @brief File name
     std::string file_;
@@ -201,12 +257,24 @@ public:
     FILE* sfile_;
 
     /// @brief sFile (aka FILE) stack
+    ///
+    /// This is a stack of files. Typically there's only one file (the
+    /// one being currently parsed), but there may be more if one
+    /// file includes another.
     std::vector<FILE*> sfiles_;
 
     /// @brief Current syntactic context
     ParserContext ctx_;
 
     /// @brief Enter a new syntactic context
+    ///
+    /// Entering a nex syntactic context is useful in several ways.
+    /// First, it allows the parser to avoid conflicts. Second, it
+    /// allows the lexer to return different tokens depending on
+    /// context (e.g. if "renew-timer" string is detected, the lexer
+    /// will return STRING token if in JSON mode or RENEW_TIMER if
+    /// in DHCP6 mode. Finally, the stntactic context allows the
+    /// error message to be more descriptive.
     void enter(const ParserContext& ctx);
 
     /// @brief Leave a syntactic context
@@ -214,7 +282,8 @@ public:
     void leave();
 
     /// @brief Get the syntactix context name
-    const std::string context_name();
+    /// @return printable name of the context.
+    const std::string contextName();
 
  private:
     /// @brief Flag determining scanner debugging.

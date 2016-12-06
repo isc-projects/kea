@@ -144,7 +144,7 @@ using namespace std;
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
-  TOPLEVEL_GENERIC_JSON
+  TOPLEVEL_JSON
   TOPLEVEL_DHCP6
   SUB_DHCP6
   SUB_INTERFACES6
@@ -155,7 +155,6 @@ using namespace std;
   SUB_OPTION_DEF
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
-  SUB_JSON
 ;
 
 %token <std::string> STRING "constant string"
@@ -175,7 +174,7 @@ using namespace std;
 // We made the same for subparsers at the exception of the JSON value.
 %start start;
 
-start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
+start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | TOPLEVEL_DHCP6 { ctx.ctx_ = ctx.CONFIG; } syntax_map
      | SUB_DHCP6 { ctx.ctx_ = ctx.DHCP6; } sub_dhcp6
      | SUB_INTERFACES6 { ctx.ctx_ = ctx.INTERFACES_CONFIG; } sub_interfaces6
@@ -186,7 +185,6 @@ start: TOPLEVEL_GENERIC_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } map2
      | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
-     | SUB_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -270,7 +268,7 @@ not_empty_list: value {
 
 // Unknown keyword in a map
 unknown_map_entry: STRING COLON {
-    const std::string& where = ctx.context_name();
+    const std::string& where = ctx.contextName();
     const std::string& keyword = $1;
     error(@1,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
@@ -279,7 +277,6 @@ unknown_map_entry: STRING COLON {
 
 // This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
 // objects.
-// ctx_ = CONFIG
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
