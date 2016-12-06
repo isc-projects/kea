@@ -875,7 +875,6 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                  AllocEngine::ClientContext6& ctx,
                                   const CfgOptionList& co_list) {
 
     // Client requests some options using ORO option. Try to
@@ -2377,7 +2376,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
     appendDefaultOptions(solicit, response, co_list);
-    appendRequestedOptions(solicit, response, ctx, co_list);
+    appendRequestedOptions(solicit, response, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
 
     // Only generate name change requests if sending a Reply as a result
@@ -2408,7 +2407,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     CfgOptionList co_list;
     buildCfgOptionList(request, ctx, co_list);
     appendDefaultOptions(request, reply, co_list);
-    appendRequestedOptions(request, reply, ctx, co_list);
+    appendRequestedOptions(request, reply, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2436,7 +2435,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     CfgOptionList co_list;
     buildCfgOptionList(renew, ctx, co_list);
     appendDefaultOptions(renew, reply, co_list);
-    appendRequestedOptions(renew, reply, ctx, co_list);
+    appendRequestedOptions(renew, reply, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2464,7 +2463,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     CfgOptionList co_list;
     buildCfgOptionList(rebind, ctx, co_list);
     appendDefaultOptions(rebind, reply, co_list);
-    appendRequestedOptions(rebind, reply, ctx, co_list);
+    appendRequestedOptions(rebind, reply, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
     generateFqdn(reply);
@@ -2497,7 +2496,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     CfgOptionList co_list;
     buildCfgOptionList(confirm, ctx, co_list);
     appendDefaultOptions(confirm, reply, co_list);
-    appendRequestedOptions(confirm, reply, ctx, co_list);
+    appendRequestedOptions(confirm, reply, co_list);
     appendRequestedVendorOptions(confirm, reply, ctx, co_list);
     // Indicates if at least one address has been verified. If no addresses
     // are verified it means that the client has sent no IA_NA options
@@ -2902,7 +2901,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     appendDefaultOptions(inf_request, reply, co_list);
 
     // Try to assign options that were requested by the client.
-    appendRequestedOptions(inf_request, reply, ctx, co_list);
+    appendRequestedOptions(inf_request, reply, co_list);
 
     // Try to assigne vendor options that were requested by the client.
     appendRequestedVendorOptions(inf_request, reply, ctx, co_list);

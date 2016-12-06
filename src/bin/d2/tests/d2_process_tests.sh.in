@@ -115,7 +115,7 @@ dynamic_reconfiguration_test() {
     send_signal 1 ${bin}
 
     # Wait up to 10s for the D2Controller to log reload signal received.
-    wait_for_message 10 "DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD"  1
+    wait_for_message 10 "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD"  1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
         printf "ERROR: D2 did report the reload signal receipt.\n"
         clean_exit 1
@@ -124,7 +124,7 @@ dynamic_reconfiguration_test() {
     # After receiving SIGHUP the server should try to reconfigure itself.
     # The configuration provided is invalid so it should result in
     # reconfiguration failure but the server should still be running.
-    wait_for_message 10 "DHCP_DDNS_CFG_FILE_RELOAD_ERROR" 1
+    wait_for_message 10 "DCTL_CFG_FILE_RELOAD_ERROR" 1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
         printf "ERROR: D2 did not report reload error.\n"
         clean_exit 1
@@ -213,7 +213,7 @@ shutdown_test() {
     send_signal ${signum} ${bin}
 
     # Now wait for process to log that it is exiting.
-    wait_for_message 10 "DHCP_DDNS_SHUTDOWN" 1
+    wait_for_message 10 "DCTL_SHUTDOWN" 1
     if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
         printf "ERROR: DHCP-DDNS did not log shutdown.\n"
         clean_exit 1
@@ -227,7 +227,7 @@ shutdown_test() {
     test_finish 0
 }
 
-server_pid_file_test "${CONFIG}" DHCP_DDNS_ALREADY_RUNNING
+server_pid_file_test "${CONFIG}" DCTL_ALREADY_RUNNING
 dynamic_reconfiguration_test
 shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2

@@ -5,15 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <d2/d2_log.h>
 #include <cc/command_interpreter.h>
-#include <d2/d_controller.h>
-#include <exceptions/exceptions.h>
-#include <log/logger_support.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <cryptolink/cryptolink.h>
-#include <log/logger.h>
 #include <cfgrpt/config_report.h>
+#include <cryptolink/cryptolink.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <exceptions/exceptions.h>
+#include <log/logger.h>
+#include <log/logger_support.h>
+#include <process/d_log.h>
+#include <process/d_controller.h>
 
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_lease_mgr.h>
@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 DControllerBasePtr DControllerBase::controller_;
 
@@ -87,19 +87,18 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     try {
         createPIDFile();
     } catch (const dhcp::DaemonPIDExists& ex) {
-        LOG_FATAL(dctl_logger, DHCP_DDNS_ALREADY_RUNNING)
+        LOG_FATAL(dctl_logger, DCTL_ALREADY_RUNNING)
                   .arg(bin_name_).arg(ex.what());
         isc_throw (LaunchError, "Launch Failed: " << ex.what());
     } catch (const std::exception& ex) {
-        LOG_FATAL(dctl_logger, DHCP_DDNS_PID_FILE_ERROR)
+        LOG_FATAL(dctl_logger, DCTL_PID_FILE_ERROR)
                   .arg(app_name_).arg(ex.what());
         isc_throw (LaunchError, "Launch failed: " << ex.what());
     }
 
-    // Log the starting of the service.  Although this is the controller
-    // module, use a "DHCP_DDNS_" prefix to the module (to conform to the
-    // principle of least astonishment).
-    LOG_INFO(dctl_logger, DHCP_DDNS_STARTING).arg(getpid()).arg(VERSION);
+    // Log the starting of the service.
+    LOG_INFO(dctl_logger, DCTL_STARTING)
+        .arg(app_name_).arg(getpid()).arg(VERSION);
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();
@@ -136,9 +135,9 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application process event loop failed: " << ex.what());
     }
 
-    // All done, so bail out.  Log the event (using a DHCP_DDNS_ prefix
-    // for the same reason as used for DHCP_DDNS_STARTING).
-    LOG_INFO(dctl_logger, DHCP_DDNS_SHUTDOWN);
+    // All done, so bail out.
+    LOG_INFO(dctl_logger, DCTL_SHUTDOWN)
+        .arg(app_name_).arg(getpid()).arg(VERSION);
 }
 
 void
@@ -414,14 +413,14 @@ DControllerBase::processSignal(int signum) {
     switch (signum) {
         case SIGHUP:
         {
-            LOG_INFO(dctl_logger, DHCP_DDNS_CFG_FILE_RELOAD_SIGNAL_RECVD)
+            LOG_INFO(dctl_logger, DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD)
                      .arg(signum).arg(getConfigFile());
             int rcode;
             isc::data::ConstElementPtr comment = isc::config::
                                                  parseAnswer(rcode,
                                                              configFromFile());
             if (rcode != 0) {
-                LOG_ERROR(dctl_logger, DHCP_DDNS_CFG_FILE_RELOAD_ERROR)
+                LOG_ERROR(dctl_logger, DCTL_CFG_FILE_RELOAD_ERROR)
                           .arg(comment->stringValue());
             }
 
@@ -432,14 +431,14 @@ DControllerBase::processSignal(int signum) {
         case SIGTERM:
         {
             LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
-                      DHCP_DDNS_SHUTDOWN_SIGNAL_RECVD).arg(signum);
+                      DCTL_SHUTDOWN_SIGNAL_RECVD).arg(signum);
             isc::data::ElementPtr arg_set;
             executeCommand(SHUT_DOWN_COMMAND, arg_set);
             break;
         }
 
         default:
-            LOG_WARN(dctl_logger, DHCP_DDNS_UNSUPPORTED_SIGNAL).arg(signum);
+            LOG_WARN(dctl_logger, DCTL_UNSUPPORTED_SIGNAL).arg(signum);
             break;
     }
 }
@@ -499,6 +498,6 @@ DControllerBase::getVersion(bool extended) {
     return (tmp.str());
 }
 
-}; // namespace isc::d2
+}; // namespace isc::process
 
 }; // namespace isc

@@ -1,0 +1,72 @@
+SUBDIRS = . testutils tests
+
+AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
+endif
+
+AM_CXXFLAGS  = $(KEA_CXXFLAGS)
+
+# Define rule to build logging source files from message file
+process_messages.h process_messages.cc: s-messages
+
+s-messages: process_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/process/process_messages.mes
+	touch $@
+
+spec_config.h: spec_config.h.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
+
+# Tell automake that the message files are built as part of the build process
+# (so that they are built before the main library is built).
+BUILT_SOURCES = spec_config.h process_messages.h process_messages.cc
+
+# Ensure that the message file is included in the distribution
+EXTRA_DIST = process_messages.mes libprocess.dox
+
+# Get rid of generated message files on a clean
+CLEANFILES = *.gcno *.gcda spec_config.h process_messages.h process_messages.cc s-messages
+
+lib_LTLIBRARIES = libkea-process.la
+libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
+libkea_process_la_SOURCES += d_controller.cc d_controller.h
+libkea_process_la_SOURCES += d_log.cc d_log.h
+libkea_process_la_SOURCES += d_process.h
+libkea_process_la_SOURCES += io_service_signal.cc io_service_signal.h
+
+nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
+
+libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
+libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
+libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
+libkea_process_la_LDFLAGS += -no-undefined -version-info 1:0:0
+
+libkea_process_la_LIBADD  =
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+
+# Specify the headers for copying into the installation directory tree.
+libkea_process_includedir = $(pkgincludedir)/process
+libkea_process_include_HEADERS = \
+	d_log.h \
+	d_cfg_mgr.h \
+	d_controller.h \
+	d_process.h \
+	io_service_signal.h

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,11 @@ private:
 public:
     /// \brief Destructor
     ~Hash();
+
+    /// \brief Returns the HashAlgorithm of the object
+    ///
+    /// \return hash algorithm
+    HashAlgorithm getHashAlgorithm() const;
 
     /// \brief Returns the output size of the digest
     ///

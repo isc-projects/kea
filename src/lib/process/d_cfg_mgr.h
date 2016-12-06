@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@
 #endif
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Defines a map of ConstElementPtrs keyed by name
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
@@ -403,7 +403,7 @@ private:
 typedef boost::shared_ptr<DCfgMgrBase> DCfgMgrBasePtr;
 
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace
 
 #endif // D_CFG_MGR_H

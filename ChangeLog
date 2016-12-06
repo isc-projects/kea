@@ -1,6 +1,30 @@
+1193.	[doc]		stephen
+	Update Hook Developers documentation to make it clearer where
+	the Kea include files and libraries are located.
+	(Trac #5069, git 14a78caaf3af9fe9a0ffe2c8af784eab78e813e0)
+
+1192.   [build]     marcin
+	Created libkea-process library and moved the Controllable
+	Process Layer (CPL) from D2 to this new library.
+	(Trac #5074, git 4563925f7966e9da2132eb427e742cc3d3feee5d)
+
+1191.	[build]		tomek
+	Optional support for premium package added.
+	(Trac #5027, git 5ff51f28a1f05d941bb117986922a6f410f23c6c)
+
+1190.	[func]		tomek
+	User context implemented: an arbitrary user information can
+	now be defined for address and prefix pools.
+	(Trac #5023, git 4f81789e19b72c933bcf86e402b417c63bd7bd3f)
+
+1189.	[func]		fdupont
+	Owing to API changes, crypto code now requires OpenSSL 1.0.1 or
+	later.
+	(Trac #3908, git 4c14fdfd4187a4c8f7b775432082b76782e47663)
+
 1188.	[doc]		vlegout
 	Fixed several spelling mistakes.
-	(Github #32, d51c005519c4add6fd0c37bcd68b0fbe94941b2d)
+	(Github #32, git d51c005519c4add6fd0c37bcd68b0fbe94941b2d)
 
 1187.	[bug]		marcin
 	DHCPv4 server allows for allocating multiple leases for the

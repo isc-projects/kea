@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <d2/d2_process.h>
 #include <dhcp_ddns/ncr_io.h>
-#include <d_test_stubs.h>
+#include <process/testutils/d_test_stubs.h>
 
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -22,6 +22,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::config;
 using namespace isc::d2;
+using namespace isc::process;
 using namespace boost::posix_time;
 
 namespace {

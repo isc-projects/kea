@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,15 +7,15 @@
 #include <config.h>
 
 #include <asiolink/io_service.h>
-#include <d_test_stubs.h>
-#include <d2/io_service_signal.h>
+#include <process/io_service_signal.h>
+#include <process/testutils/d_test_stubs.h>
 
 #include <gtest/gtest.h>
 
 #include <queue>
 
 namespace isc {
-namespace d2 {
+namespace process {
 
 /// @brief Test fixture for testing the use of IOSignals.
 ///
@@ -387,5 +387,5 @@ TEST_F(IOSignalTest, mixedSignals) {
     EXPECT_EQ(sigusr2_cnt, (stop_at_count_/3));
 }
 
-}; // end of isc::d2 namespace
+}; // end of isc::process namespace
 }; // end of isc namespace

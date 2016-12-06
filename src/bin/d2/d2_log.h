@@ -15,7 +15,7 @@ namespace isc {
 namespace d2 {
 
 /// Define the loggers for the "d2" logging.
-extern isc::log::Logger dctl_logger;
+extern isc::log::Logger d2_logger;
 extern isc::log::Logger dhcp_to_d2_logger;
 extern isc::log::Logger d2_to_dns_logger;
 
