@@ -1621,6 +1621,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/hooks/tests/Makefile
                  src/lib/hooks/tests/marker_file.h
                  src/lib/hooks/tests/test_libraries.h
+                 src/lib/http/Makefile
+                 src/lib/http/tests/Makefile
                  src/lib/log/Makefile
                  src/lib/log/compiler/Makefile
                  src/lib/log/interprocess/Makefile
