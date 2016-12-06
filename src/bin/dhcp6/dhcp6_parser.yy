@@ -62,6 +62,7 @@ using namespace std;
   HOST "host"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
+  READONLY "readonly"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -442,6 +443,7 @@ database_map_param: type
                   | name
                   | persist
                   | lfc_interval
+                  | readonly
                   | unknown_map_entry
 ;
 
@@ -493,6 +495,11 @@ persist: PERSIST COLON BOOLEAN {
 lfc_interval: LFC_INTERVAL COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("lfc-interval", n);
+};
+
+readonly: READONLY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("readonly", n);
 };
 
 mac_sources: MAC_SOURCES {
@@ -803,6 +810,9 @@ option_def_entry: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+// This defines the top level scope when the parser is told to parse a single
+// option definition. It's almost exactly the same as option_def_entry, except
+// that it does leave its value on stack.
 sub_option_def: LCURLY_BRACKET {
     // Parse the option-def list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -893,6 +903,8 @@ option_data_list_content: %empty
                         | not_empty_option_data_list
                         ;
 
+// This defines the content of option-data list. It can either
+// be a single value or multiple entries separated by comma.
 not_empty_option_data_list: option_data_entry
                           | not_empty_option_data_list COMMA option_data_entry
                           ;
@@ -907,6 +919,9 @@ option_data_entry: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
+// This defines the top level scope when the parser is told to parse a single
+// option data. It's almost exactly the same as option_data_entry, except
+// that it does leave its value on stack.
 sub_option_data: LCURLY_BRACKET {
     // Parse the option-data list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
