@@ -102,29 +102,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     if (start_token_flag) {
         start_token_flag = false;
         switch (start_token_value) {
-        case Parser6Context::PARSER_GENERIC_JSON:
+        case Parser6Context::SUBPARSER_JSON:
         default:
-            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(driver.loc_);
+            return isc::dhcp::Dhcp6Parser::make_SUB_JSON(driver.loc_);
+//            return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_GENERIC_JSON(driver.loc_);
         case Parser6Context::PARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_TOPLEVEL_DHCP6(driver.loc_);
         case Parser6Context::SUBPARSER_DHCP6:
             return isc::dhcp::Dhcp6Parser::make_SUB_DHCP6(driver.loc_);
-        case Parser6Context::SUBPARSER_INTERFACES6:
+        case Parser6Context::PARSER_INTERFACES:
             return isc::dhcp::Dhcp6Parser::make_SUB_INTERFACES6(driver.loc_);
-        case Parser6Context::SUBPARSER_SUBNET6:
+        case Parser6Context::PARSER_SUBNET6:
             return isc::dhcp::Dhcp6Parser::make_SUB_SUBNET6(driver.loc_);
-        case Parser6Context::SUBPARSER_POOL6:
+        case Parser6Context::PARSER_POOL6:
             return isc::dhcp::Dhcp6Parser::make_SUB_POOL6(driver.loc_);
-        case Parser6Context::SUBPARSER_PD_POOL:
+        case Parser6Context::PARSER_PD_POOL:
             return isc::dhcp::Dhcp6Parser::make_SUB_PD_POOL(driver.loc_);
-        case Parser6Context::SUBPARSER_HOST_RESERVATION6:
+        case Parser6Context::PARSER_HOST_RESERVATION:
             return isc::dhcp::Dhcp6Parser::make_SUB_RESERVATION(driver.loc_);
-        case Parser6Context::SUBPARSER_OPTION_DATA:
+        case Parser6Context::PARSER_OPTION_DATA:
             return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DATA(driver.loc_);
-        case Parser6Context::SUBPARSER_HOOKS_LIBRARY:
+        case Parser6Context::PARSER_HOOKS_LIBRARY:
             return isc::dhcp::Dhcp6Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
-        case Parser6Context::SUBPARSER_JSON:
-            return isc::dhcp::Dhcp6Parser::make_SUB_JSON(driver.loc_);
         }
     }
 %}

@@ -23,6 +23,8 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Evaluation error exception raised when trying to parse.
+///
+/// @todo: This probably should be common for Dhcp4 and Dhcp6.
 class Dhcp6ParseError : public isc::Exception {
 public:
     Dhcp6ParseError(const char* file, size_t line, const char* what) :
@@ -35,26 +37,53 @@ class Parser6Context
 {
 public:
 
-    /// @brief Defines currently support the content supported
+    /// @brief Defines currently supported scopes
+    ///
+    /// Dhcp6Parser is able to parse several types of scope. Usually, when it
+    /// parses a config file, it expects the data to have a map with Dhcp6 in it
+    /// and all the parameters within that Dhcp6 map. However, sometimes the
+    /// parser is expected to parse only a subset of that information. For example,
+    /// it may be asked to parse a structure that is host-reservation only, without
+    /// the global 'Dhcp6' or 'reservations' around it. In such case the parser
+    /// is being told to start parsing as SUBPARSER_HOST_RESERVATION6.
     typedef enum {
-        PARSER_GENERIC_JSON, // This will parse the content as generic JSON
-        PARSER_DHCP6,        // This will parse the content as DHCP6 config
-        // DHCP6 config subparsers
+        /// This parser will parse the content as generic JSON.
+        //PARSER_GENERIC_JSON,
+
+        SUBPARSER_JSON,
+
+        /// This parser will parse the content as Dhcp6 config wrapped in a map (that's
+        /// the regular config file)
+        PARSER_DHCP6,
+
+        /// This parser will parse the content of Dhcp6. It is mostly used
+        /// in unit-tests as most of the unit-tests do not define the outer
+        /// map and Dhcp6 entity, just the contents of it.
         SUBPARSER_DHCP6,
-        SUBPARSER_INTERFACES6,
-        SUBPARSER_SUBNET6,
-        SUBPARSER_POOL6,
-        SUBPARSER_PD_POOL,
-        SUBPARSER_HOST_RESERVATION6,
-        // Common DHCP subparsers
-        SUBPARSER_OPTION_DEF,
-        SUBPARSER_OPTION_DATA,
-        SUBPARSER_HOOKS_LIBRARY,
-          // SUBPARSER_CONTROL_SOCKET,
-          // SUBPARSER_D2_CLIENT,
-          // SUBPARSER_LEASE_EXPIRATION,
-        // JSON value subparser
-        SUBPARSER_JSON
+
+        /// This will parse the conde as Subnet6 content.
+        PARSER_SUBNET6,
+
+        /// This parser will parse pool6 content.
+        PARSER_POOL6,
+
+        /// This parser will parse the interfaces content.
+        PARSER_INTERFACES,
+
+        /// This parser will parse the content as pd-pool.
+        PARSER_PD_POOL,
+
+        /// This parser will parse the content as host-reservation
+        PARSER_HOST_RESERVATION,
+
+        /// This parser will parse the content as option definition.
+        PARSER_OPTION_DEF,
+
+        /// This parser will parse the content as option data.
+        PARSER_OPTION_DATA,
+
+        /// This parser will parse the content as hooks-library
+        PARSER_HOOKS_LIBRARY
     } ParserType;
 
     /// @brief Default constructor.
@@ -108,7 +137,7 @@ public:
     /// Used by YY_FATAL_ERROR macro so required to be static.
     static void fatal(const std::string& what);
 
-    /// @brief Convert position
+    /// @brief Converts bison's position to one understandable by isc::data::Element
     ///
     /// Convert a bison location into an element position
     /// (take the begin, the end is lost)
@@ -166,7 +195,7 @@ public:
     std::vector<isc::dhcp::location> locs_;
 
     /// @brief Lexer state stack
-    std::vector<struct yy_buffer_state*> states_;;
+    std::vector<struct yy_buffer_state*> states_;
 
     /// @brief sFile (aka FILE)
     FILE* sfile_;
