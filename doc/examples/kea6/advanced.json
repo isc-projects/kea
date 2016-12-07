@@ -67,6 +67,10 @@
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
 
+# This defines PD (prefix delegation) pools. In this case
+# we have only one pool. That consists of /64 prefixes
+# being delegated out of large /48 pool. Each delegated
+# prefix will contain an excluded-prefix option.
       "pd-pools": [
       {
           "prefix": "2001:db8:abcd::",

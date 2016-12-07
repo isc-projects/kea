@@ -933,15 +933,20 @@ sub_option_data: LCURLY_BRACKET {
 };
 
 // This defines parameters specified inside the map that itself
-// is an entry in option-data list.
+// is an entry in option-data list. It can either be empty
+// or have a non-empty list of parameters.
 option_data_params: %empty
                   | not_empty_option_data_params
                   ;
 
+// Those parameters can either be a single parameter or
+// a list of parameters separated by comma.
 not_empty_option_data_params: option_data_param
     | not_empty_option_data_params COMMA option_data_param
     ;
 
+// Each single option-data parameter can be one of the following
+// expressions.
 option_data_param: option_data_name
                  | option_data_data
                  | option_data_code
