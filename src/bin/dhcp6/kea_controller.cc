@@ -107,15 +107,6 @@ void configure(const std::string& file_name) {
                 "no details available";
             isc_throw(isc::BadValue, reason);
         }
-
-        // If configuration was parsed successfully, apply the new logger
-        // configuration to log4cplus. It is done before commit in case
-        // something goes wrong.
-        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-        // Use new configuration.
-        CfgMgr::instance().commit();
-
     }  catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
