@@ -67,9 +67,45 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr args) {
-
     return (processConfig(args));
 }
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
+                                             ConstElementPtr args) {
+    const int status_code = 1; // 1 indicates an error
+    ConstElementPtr dhcp6;
+    string message;
+
+    // Throw out the preivous staging config that may be present
+    CfgMgr::instance().rollback();
+
+    // Command arguments are expected to be:
+    // { "Dhcp6": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional, but very recommended.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp6 = args->get("Dhcp6");
+        if (!dhcp6) {
+            message = "Missing mandatory 'Dhcp6' parameter.";
+        } else if (dhcp6->getType() != Element::map) {
+            message = "'Dhcp6' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // Now that we have extracted the configuration, reuse the reload command
+    // to configure the server.
+    return (ControlledDhcpv6Srv::processCommand("config-reload", dhcp6));
+}
+
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
@@ -121,6 +157,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
+
+        } else if (command == "set-config") {
+            return (srv->commandSetConfigHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -260,6 +299,14 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     }
 
+    // Configuration was parsed successfully, apply the new logger
+    // configuration to log4cplus. It is done before commit in case
+    // something goes wrong.
+    CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+    // Use new configuration.
+    CfgMgr::instance().commit();
+
     // Finally, we can commit runtime option definitions in libdhcp++. This is
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
@@ -280,6 +327,10 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("set-config",
+        boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
+
     /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
 
     CommandMgr::instance().registerCommand("leases-reclaim",
@@ -324,6 +375,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("set-config");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
