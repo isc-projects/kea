@@ -33,7 +33,6 @@ using namespace std;
 %code
 {
 #include <dhcp6/parser_context.h>
-
 }
 
 
@@ -135,6 +134,26 @@ using namespace std;
   SOCKET_NAME "socket-name"
 
   DHCP_DDNS "dhcp-ddns"
+
+ /// @todo: Implement proper parsing for those parameters in Dhcp6/dhcp-ddns/*.
+ /// This should be part of the #5043 ticket. Listing the keywords here for
+ /// completeness.
+
+ // These are tokens defined in Dhcp6/dhcp-ddns/*
+ // They're not
+ //  ENABLE_UPDATES "enable-updates"
+ //  SERVER_IP "server-ip"
+ //  SENDER_IP "sender-ip"
+ //  SENDER_PORT "sender-port"
+ //  MAX_QUEUE_SIZE "max-queue-size"
+ //  NCR_PROTOCOL "ncr-protocol"
+ //  NCR_FORMAT "ncr-format"
+ //  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
+ //  OVERRDIDE_NO_UPDATE "override-no-update"
+ //  OVERRDIDE_CLIENT_UPDATE "override-client-update"
+ //  REPLACE_CLIENT_NAME "replace-client-name"
+ //  GENERATED_PREFIX "generated-prefix"
+ //  QUALIFYING_SUFFIX "qualifying-suffix"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -536,7 +555,7 @@ host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
-    ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);    
+    ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);
 } COLON LSQUARE_BRACKET host_reservation_identifiers_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -611,7 +630,7 @@ library: LIBRARY {
 } COLON STRING {
     ElementPtr lib(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("library", lib);
-    ctx.leave(); 
+    ctx.leave();
 };
 
 parameters: PARAMETERS {
