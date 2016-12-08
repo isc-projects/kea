@@ -118,28 +118,30 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Check for std::unique_ptr and aggregate initialization (aka C++11) support
-retried=0
 CXX_SAVED=$CXX
-for retry in "--std=c++11" "--std=c++0x" "--std=c++1x"; do
+feature=
+for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
+	if test "$retry" = "fail"; then
+		AC_MSG_ERROR([$feature (a C++11 feature) is not supported])
+	fi
+	if test "$retry" != "none"; then
+		AC_MSG_WARN([unsupported C++11 feature])
+		AC_MSG_NOTICE([retrying by adding $retry to $CXX])
+		CXX="$CXX_SAVED $retry"
+	fi
+
 	AC_MSG_CHECKING(std::unique_ptr support)
+	feature="std::unique_ptr"
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM(
 			[#include <memory>],
 			[std::unique_ptr<int> a;])],
 		[AC_MSG_RESULT([yes])],
 		[AC_MSG_RESULT([no])
-		 if test $retried -eq 0; then
-			AC_MSG_WARN([unsupported C++11 feature])
-		 fi
-		 if test $retried -ge 3; then
-		 	AC_MSG_ERROR([std::unique_ptr (a C++11 feature) is not supported])
-		 fi
-		 AC_MSG_NOTICE([retrying by adding $retry to $CXX])
-		 retried=`expr $retried + 1`
-		 CXX="$CXX_SAVED $retry"
 		 continue])
 
 	AC_MSG_CHECKING(aggregate initialization support)
+	feature="aggregate initialization"
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM(
 			[#include <vector>],
@@ -147,15 +149,6 @@ for retry in "--std=c++11" "--std=c++0x" "--std=c++1x"; do
 		[AC_MSG_RESULT([yes])
 		 break],
 		[AC_MSG_RESULT([no])
-		 if test $retried -eq 0; then
-		 	AC_MSG_WARN([unsupported C++11 feature])
-		 fi
-		 if test $retried -ge 3; then
-		 	AC_MSG_ERROR([aggregate initialization (a C++11 feature) is not supported])
-		 fi
-		 AC_MSG_NOTICE([retrying by adding $retry to $CXX])
-		 retried=`expr $retried + 1`
-		 CXX="$CXX_SAVED $retry"
 		 continue])
 done
 
