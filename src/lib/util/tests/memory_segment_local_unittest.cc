@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <util/memory_segment_local.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
+#include <boost/scoped_ptr.hpp>
 #include <memory>
 #include <limits.h>
 
@@ -18,7 +19,7 @@ using namespace isc::util;
 namespace {
 
 TEST(MemorySegmentLocal, TestLocal) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+    boost::scoped_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     // By default, nothing is allocated.
     EXPECT_TRUE(segment->allMemoryDeallocated());
@@ -50,7 +51,7 @@ TEST(MemorySegmentLocal, TestLocal) {
 
 /// @todo: disabled, see ticket #3510
 TEST(MemorySegmentLocal, DISABLED_TestTooMuchMemory) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+    boost::scoped_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     // Although it should be perfectly fine to use the ULONG_MAX
     // instead of LONG_MAX as the size_t value should be unsigned,
@@ -61,7 +62,7 @@ TEST(MemorySegmentLocal, DISABLED_TestTooMuchMemory) {
 }
 
 TEST(MemorySegmentLocal, TestBadDeallocate) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+    boost::scoped_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     // By default, nothing is allocated.
     EXPECT_TRUE(segment->allMemoryDeallocated());
@@ -94,7 +95,7 @@ TEST(MemorySegmentLocal, TestBadDeallocate) {
 }
 
 TEST(MemorySegmentLocal, TestNullDeallocate) {
-    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+    boost::scoped_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     // By default, nothing is allocated.
     EXPECT_TRUE(segment->allMemoryDeallocated());

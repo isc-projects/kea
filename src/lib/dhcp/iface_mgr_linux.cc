@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,7 +143,7 @@ void Netlink::rtnl_open_socket() {
     local_.nl_family = AF_NETLINK;
     local_.nl_groups = 0;
 
-    if (bind(fd_, convertSockAddr(&local_), sizeof(local_)) < 0) {
+    if (::bind(fd_, convertSockAddr(&local_), sizeof(local_)) < 0) {
         isc_throw(Unexpected, "Failed to bind netlink socket.");
     }
 
