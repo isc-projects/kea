@@ -1,13 +1,13 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <d2/labeled_value.h>
+#include <util/labeled_value.h>
 
 namespace isc {
-namespace d2 {
+namespace util {
 
 /**************************** LabeledValue ****************************/
 
@@ -111,5 +111,5 @@ LabeledValueSet::getLabel(const int value) const {
     return (std::string(UNDEFINED_LABEL));
 }
 
-} // namespace isc::d2
+} // namespace isc::util
 } // namespace isc

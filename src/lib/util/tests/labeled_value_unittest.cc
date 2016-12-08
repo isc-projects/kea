@@ -1,16 +1,16 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <d2/labeled_value.h>
+#include <util/labeled_value.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::d2;
+using namespace isc::util;
 
 namespace {
 
