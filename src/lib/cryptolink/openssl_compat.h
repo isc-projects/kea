@@ -8,6 +8,9 @@
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 
+// This file is included by hash and hmac codes so KEA_H* macros
+// avoid to define unused inlines.
+
 #ifdef KEA_HASH
 
 // EVP_MD_CTX_new() is EVP_MD_CTX_create() in OpenSSL < 1.1
@@ -39,8 +42,10 @@ inline HMAC_CTX* HMAC_CTX_new() {
 // HMAC_CTX_free() implementation for OpenSSL < 1.1
 
 inline void HMAC_CTX_free(HMAC_CTX* ctx) {
-    HMAC_CTX_cleanup(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != 0) {
+        HMAC_CTX_cleanup(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 #endif
