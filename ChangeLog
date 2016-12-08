@@ -1,7 +1,7 @@
 1195.	[build]		fdupont
 	Altered to compile in C++ 2011 standard mode. Also replace (most)
 	instances of the deprecated std::auto_ptr with std::unique_ptr.
-	(Trac #5066, git xxx)
+	(Trac #5066, git a060d4a983860bf3056d50d9bf7ee4355c8372f2)
 
 1194.   [build]     	marcin
 	Moved StateModel class from D2 to libkea-util.
