@@ -254,7 +254,8 @@ void testError(const std::string& txt,
     try {
         Parser6Context ctx;
         ConstElementPtr parsed = ctx.parseString(txt, parser_type);
-        FAIL() << "Expected Dhcp6ParseError but nothing was raised";
+        FAIL() << "Expected Dhcp6ParseError but nothing was raised (expected: "
+               << msg << ")";
     }
     catch (const Dhcp6ParseError& ex) {
         EXPECT_EQ(msg, ex.what());
@@ -277,28 +278,22 @@ TEST(ParserTest, errors) {
     // comments
     testError("# nothing\n",
               Parser6Context::PARSER_JSON,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:2.1: syntax error, unexpected end of file");
     testError(" #\n",
               Parser6Context::PARSER_JSON,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:2.1: syntax error, unexpected end of file");
     testError("// nothing\n",
               Parser6Context::PARSER_JSON,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:2.1: syntax error, unexpected end of file");
     testError("/* nothing */\n",
               Parser6Context::PARSER_JSON,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:2.1: syntax error, unexpected end of file");
     testError("/* no\nthing */\n",
               Parser6Context::PARSER_JSON,
-              "<string>:3.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:3.1: syntax error, unexpected end of file");
     testError("/* no\nthing */\n\n",
               Parser6Context::PARSER_JSON,
-              "<string>:4.1: syntax error, unexpected end of file, "
-              "expecting {");
+              "<string>:4.1: syntax error, unexpected end of file");
     testError("/* nothing\n",
               Parser6Context::PARSER_JSON,
               "Comment not closed. (/* in line 1");
@@ -333,15 +328,15 @@ TEST(ParserTest, errors) {
 
     // numbers
     testError("123",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-3: syntax error, unexpected integer, "
               "expecting {");
     testError("-456",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-4: syntax error, unexpected integer, "
               "expecting {");
     testError("-0001",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-5: syntax error, unexpected integer, "
               "expecting {");
     testError("1234567890123456789012345678901234567890",
@@ -350,7 +345,7 @@ TEST(ParserTest, errors) {
               "1234567890123456789012345678901234567890"
               " to an integer.");
     testError("-3.14e+0",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-8: syntax error, unexpected floating point, "
               "expecting {");
     testError("1e50000",
@@ -360,7 +355,7 @@ TEST(ParserTest, errors) {
 
     // strings
     testError("\"aabb\"",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-6: syntax error, unexpected constant string, "
               "expecting {");
     testError("{ \"aabb\"err",
@@ -373,7 +368,7 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_JSON,
               "<string>:1.1-6: Invalid control in \"a\n\tb\"");
     testError("\"a\\n\\tb\"",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1-8: syntax error, unexpected constant string, "
               "expecting {");
     testError("\"a\\x01b\"",
@@ -402,7 +397,7 @@ TEST(ParserTest, errors) {
 
     // want a map
     testError("[]\n",
-              Parser6Context::PARSER_JSON,
+              Parser6Context::PARSER_DHCP6,
               "<string>:1.1: syntax error, unexpected [, "
               "expecting {");
     testError("[]\n",

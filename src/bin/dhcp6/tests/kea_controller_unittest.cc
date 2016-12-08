@@ -393,7 +393,7 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
 
     writeFile(TEST_FILE, config_recursive_include);
     writeFile(TEST_INCLUDE, include);
-    
+
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
