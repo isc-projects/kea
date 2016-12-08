@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,7 +86,7 @@ OPT::OPT(MasterLexer&, const Name*,
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
-    std::auto_ptr<OPTImpl> impl_ptr(new OPTImpl);
+    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl);
 
     while (true) {
         if (rdata_len == 0) {

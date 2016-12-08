@@ -117,6 +117,41 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+# Check for std::unique_ptr and aggregate initialization (aka C++11) support
+CXX_SAVED=$CXX
+feature=
+for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
+	if test "$retry" = "fail"; then
+		AC_MSG_ERROR([$feature (a C++11 feature) is not supported])
+	fi
+	if test "$retry" != "none"; then
+		AC_MSG_WARN([unsupported C++11 feature])
+		AC_MSG_NOTICE([retrying by adding $retry to $CXX])
+		CXX="$CXX_SAVED $retry"
+	fi
+
+	AC_MSG_CHECKING(std::unique_ptr support)
+	feature="std::unique_ptr"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <memory>],
+			[std::unique_ptr<int> a;])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(aggregate initialization support)
+	feature="aggregate initialization"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <vector>],
+			[std::vector<int> foo = { 1, 2, 3};])],
+		[AC_MSG_RESULT([yes])
+		 break],
+		[AC_MSG_RESULT([no])
+		 continue])
+done
+
 dnl Determine if we are using GNU sed
 GNU_SED=no
 $SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
