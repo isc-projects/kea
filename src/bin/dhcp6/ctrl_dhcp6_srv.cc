@@ -80,6 +80,12 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     // Throw out the preivous staging config that may be present
     CfgMgr::instance().rollback();
 
+    // Logging is a sibling element and so, has to be explicitly
+    // configured. We should call configureLogger even if there's no
+    // Logging element as this will revert it to default logging.
+    Daemon::configureLogger(args->get("Logging"),
+                            CfgMgr::instance().getStagingCfg());
+
     // Command arguments are expected to be:
     // { "Dhcp6": { ... }, "Logging": { ... } }
     // The Logging component is technically optional, but very recommended.
@@ -100,10 +106,8 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
                                                            message);
         return (result);
     }
-
-    // Now that we have extracted the configuration, reuse the reload command
-    // to configure the server.
-    return (ControlledDhcpv6Srv::processCommand("config-reload", dhcp6));
+    // Now we configure the server proper.
+    return (processConfig(dhcp6));
 }
 
 

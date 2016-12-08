@@ -15,6 +15,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <hooks/hooks_manager.h>
+#include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
 
@@ -149,6 +150,11 @@ public:
 
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
+
+        // If the configuration doesn't contain logging config, processConfig()
+        // will revert the logging to default (stdout). We call initLogger()
+        // to restore unit test logging.
+        isc::log::initLogger();
 
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
@@ -385,7 +391,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         "            \"severity\": \"INFO\", \n"
         "            \"debuglevel\": 0, \n"
         "            \"output_options\": [{ \n"
-        "                \"output\": \"stdout\" \n"
+        "                \"output\": \"/dev/null\" \n"
         "            }] \n"
         "        }] \n"
         "    } \n";
@@ -403,7 +409,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         << control_socket_footer
         << "}\n"                      // close dhcp6
         << ","
-        << logger_txt << "}}";
+        << logger_txt
+        << "}}";
 
     // Send the set-config command
     std::string response;
@@ -429,15 +436,14 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         << socket_path_
         << control_socket_footer
         << "}\n"                      // close dhcp6
-        << ","
-        << logger_txt << "}}";
+        "}}";
 
     // Send the set-config command
     sendUnixCommand(os.str(), response);
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"unsupported parameter: BOGUS (<string>:12:33)\" }",
+              "\"text\": \"unsupported parameter: BOGUS (<string>:12:26)\" }",
               response);
 
     // Check that the config was not lost
@@ -455,8 +461,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         << subnet2
         << subnet_footer
         << "}\n"                      // close dhcp6
-        << ","
-        << logger_txt << "}}";
+        << "}}";
 
     // Send the set-config command
     sendUnixCommand(os.str(), response);
