@@ -20,7 +20,11 @@ TESTS =
 if HAVE_GTEST
 TESTS += libhttp_unittests
 
-libhttp_unittests_SOURCES  = run_unittests.cc
+libhttp_unittests_SOURCES  = post_request_json_unittests.cc
+libhttp_unittests_SOURCES += request_parser_unittests.cc
+libhttp_unittests_SOURCES += request_test.h
+libhttp_unittests_SOURCES += request_unittests.cc
+libhttp_unittests_SOURCES += run_unittests.cc
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
@@ -29,6 +33,7 @@ libhttp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 libhttp_unittests_LDADD  = $(top_builddir)/src/lib/http/libkea-http.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libhttp_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libhttp_unittests_LDADD += $(LOG4CPLUS_LIBS)
 libhttp_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
