@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,17 +10,14 @@
 /// @file state_model.h This file defines the class StateModel.
 
 #include <exceptions/exceptions.h>
-#include <d2/d2_config.h>
-#include <d2/dns_client.h>
-#include <d2/labeled_value.h>
-#include <dhcp_ddns/ncr_msg.h>
-
+#include <util/labeled_value.h>
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <string>
 
 namespace isc {
-namespace d2 {
+namespace util {
 
 /// @brief Thrown if the state machine encounters a general error.
 class StateModelError : public isc::Exception {
@@ -666,6 +663,6 @@ private:
 /// @brief Defines a pointer to a StateModel.
 typedef boost::shared_ptr<StateModel> StateModelPtr;
 
-} // namespace isc::d2
+} // namespace isc::util
 } // namespace isc
 #endif

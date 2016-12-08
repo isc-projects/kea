@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@
 /// LabeledValueSet.
 
 namespace isc {
-namespace d2 {
+namespace util {
 
 /// @brief Thrown if an error is encountered handling a LabeledValue.
 class LabeledValueError : public isc::Exception {
@@ -171,6 +171,6 @@ private:
     LabeledValueMap map_;
 };
 
-} // namespace isc::d2
+} // namespace isc::util
 } // namespace isc
 #endif
