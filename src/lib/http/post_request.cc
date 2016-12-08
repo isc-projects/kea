@@ -4,16 +4,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// Defines the logger used by the top-level component of kea-dhcp-ddns.
-
-#include <http/http_log.h>
+#include <http/post_request.h>
 
 namespace isc {
 namespace http {
 
-/// @brief Defines the logger used within libkea-http library.
-isc::log::Logger http_logger("http");
+PostHttpRequest::PostHttpRequest()
+    : HttpRequest() {
+    requireHttpMethod(Method::HTTP_POST);
+    requireHeader("Content-Length");
+    requireHeader("Content-Type");
+}
 
 } // namespace http
 } // namespace isc
-

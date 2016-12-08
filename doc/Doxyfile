@@ -781,6 +781,7 @@ INPUT                  = ../src/bin/d2 \
                          ../src/lib/eval \
                          ../src/lib/exceptions \
                          ../src/lib/hooks \
+                         ../src/lib/http \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
                          ../src/lib/log/interprocess \
