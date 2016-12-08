@@ -1,3 +1,7 @@
+1194.   [build]     	marcin
+	Moved StateModel class from D2 to libkea-util.
+	(Trac #3175, git 270ec379aec2894104a299cdd1080e24007e25fb)
+
 1193.	[doc]		stephen
 	Update Hook Developers documentation to make it clearer where
 	the Kea include files and libraries are located.
