@@ -50,7 +50,7 @@ MemorySegmentLocal::getNamedAddressImpl(const char* name) const {
     if (found != named_addrs_.end()) {
         return (NamedAddressResult(true, found->second));
     }
-    return (NamedAddressResult(false, NULL));
+    return (NamedAddressResult(false, static_cast<void*>(0)));
 }
 
 bool
