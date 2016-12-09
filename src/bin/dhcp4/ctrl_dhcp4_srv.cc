@@ -66,6 +66,51 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
+                                             ConstElementPtr args) {
+    const int status_code = 1; // 1 indicates an error
+    ConstElementPtr dhcp4;
+    string message;
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Command arguments are expected to be:
+    // { "Dhcp4": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional, but very recommended.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp4 = args->get("Dhcp4");
+        if (!dhcp4) {
+            message = "Missing mandatory 'Dhcp4' parameter.";
+        } else if (dhcp4->getType() != Element::map) {
+            message = "'Dhcp4' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // Logging is a sibling element and must be be parsed explicitly.
+    // The call to configureLogger parses the given Logging element if
+    // not null, into the staging config.  Note this DOES alter the
+    // current loggers, they remain in effect until we apply the
+    // logging config.
+    Daemon::configureLogger(args->get("Logging"),
+                            CfgMgr::instance().getStagingCfg());
+
+    // Now we configure the server proper.
+    return (processConfig(dhcp4));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
@@ -115,6 +160,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
+
+        } else if (command == "set-config") {
+            return (srv->commandSetConfigHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -235,7 +283,13 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     }
 
+    // Configuration was parsed successfully, apply the new logger
+    // configuration to log4cplus. It is done before commit in case
+    // something goes wrong.
+    CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
+    // Use new configuration.
+    CfgMgr::instance().commit();
 
     return (answer);
 }
@@ -253,6 +307,10 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("set-config",
+        boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
+
     /// @todo: register libreload (see CtrlDhcpv4Srv::commandLibReloadHandler)
 
     CommandMgr::instance().registerCommand("leases-reclaim",
@@ -297,6 +355,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
 
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
+        CommandMgr::instance().deregisterCommand("set-config");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");

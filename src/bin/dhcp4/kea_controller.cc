@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,11 +33,6 @@ void configure(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp4;
     isc::data::ConstElementPtr logger;
@@ -68,26 +63,14 @@ void configure(const std::string& file_name) {
                       " Did you forget to add { } around your configuration?");
         }
 
-        // If there's no logging element, we'll just pass NULL pointer,
-        // which will be handled by configureLogger().
-        Daemon::configureLogger(json->get("Logging"),
-                                CfgMgr::instance().getStagingCfg());
-
-        // Get Dhcp4 component from the config
-        dhcp4 = json->get("Dhcp4");
-        if (!dhcp4) {
-            isc_throw(isc::BadValue, "no mandatory 'Dhcp4' entry in"
-                      " the configuration");
-        }
-
         // Use parsed JSON structures to configure the server
-        result = ControlledDhcpv4Srv::processCommand("config-reload", dhcp4);
+        result = ControlledDhcpv4Srv::processCommand("set-config", json);
         if (!result) {
             // Undetermined status of the configuration. This should never
             // happen, but as the configureDhcp4Server returns a pointer, it is
             // theoretically possible that it will return NULL.
             isc_throw(isc::BadValue, "undefined result of "
-                      "processCommand(\"config-reload\", dhcp4)");
+                      "processCommand(\"set-config\", json)");
         }
 
         // Now check is the returned result is successful (rcode=0) or not
@@ -100,17 +83,6 @@ void configure(const std::string& file_name) {
                 "no details available";
             isc_throw(isc::BadValue, reason);
         }
-
-        // If configuration was parsed successfully, apply the new logger
-        // configuration to log4cplus. It is done before commit in case
-        // something goes wrong.
-        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-        // Use new configuration.
-        /// @todo: This commit should be moved to
-        /// CtrlDhcp4Srv::commandConfigReloadHandler.
-        CfgMgr::instance().commit();
-
     }  catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
