@@ -21,6 +21,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <log/logger_support.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <list>
@@ -122,6 +123,8 @@ public:
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
+        // Revert to unit test logging
+        isc::log::initLogger();
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server
@@ -167,6 +170,8 @@ public:
     }
 
     virtual ~NakedDhcpv4Srv() {
+        // Revert to unit test logging
+        isc::log::initLogger();
     }
 
     /// @brief Dummy server identifier option used by various tests.

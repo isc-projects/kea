@@ -14,6 +14,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
+#include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
 
@@ -120,6 +121,13 @@ public:
         ConstElementPtr config = Element::fromJSON(config_txt);
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
+
+#if 0
+        // If the configuration doesn't contain logging config, processConfig()
+        // will revert the logging to default (stdout). We call initLogger()
+        // to restore unit test logging.
+        isc::log::initLogger();
+#endif
 
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
