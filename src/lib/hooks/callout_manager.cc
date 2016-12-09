@@ -247,7 +247,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     /// Construct a CalloutEntry matching the current library (the callout
     /// pointer is NULL as we are not checking that).
-    CalloutEntry target(current_library_, NULL);
+    CalloutEntry target(current_library_, static_cast<void>(0));
 
     /// To decide if any entries were removed, we'll record the initial size
     /// of the callout vector for the hook, and compare it with the size after
