@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,11 +37,6 @@ void configure(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
     // configuration from a JSON file.
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp6;
     isc::data::ConstElementPtr logger;
@@ -79,7 +74,7 @@ void configure(const std::string& file_name) {
             // happen, but as the configureDhcp6Server returns a pointer, it is
             // theoretically possible that it will return NULL.
             isc_throw(isc::BadValue, "undefined result of "
-                      "processCommand(\"set-config\", dhcp6)");
+                      "processCommand(\"set-config\", json)");
         }
 
         // Now check is the returned result is successful (rcode=0) or not

@@ -48,7 +48,7 @@ BaseServerTest::~BaseServerTest() {
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
 
-    // Revert to unit test logging
+    // Revert to unit test logging in case the test reconfigured logging.
     isc::log::initLogger();
 }
 

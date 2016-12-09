@@ -151,11 +151,6 @@ public:
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
 
-        // If the configuration doesn't contain logging config, processConfig()
-        // will revert the logging to default (stdout). We call initLogger()
-        // to restore unit test logging.
-        isc::log::initLogger();
-
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
         // This should succeed. If not, print the error message.
