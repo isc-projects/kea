@@ -117,8 +117,14 @@ SrvConfig::applyLoggingCfg() const {
          it != logging_info_.end(); ++it) {
         specs.push_back(it->toSpec());
     }
-    LoggerManager manager;
-    manager.process(specs.begin(), specs.end());
+
+    // If there are no specs, then leave logging alone. This will leave
+    // the existing logging setup intact. Calling process() with no
+    // specs will reset the logging heirarchy and so forth.
+    if (specs.size()) {
+        LoggerManager manager;
+        manager.process(specs.begin(), specs.end());
+    }
 }
 
 bool

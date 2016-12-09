@@ -77,14 +77,10 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     ConstElementPtr dhcp6;
     string message;
 
-    // Throw out the preivous staging config that may be present
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
     CfgMgr::instance().rollback();
-
-    // Logging is a sibling element and so, has to be explicitly
-    // configured. We should call configureLogger even if there's no
-    // Logging element as this will revert it to default logging.
-    Daemon::configureLogger(args->get("Logging"),
-                            CfgMgr::instance().getStagingCfg());
 
     // Command arguments are expected to be:
     // { "Dhcp6": { ... }, "Logging": { ... } }
@@ -106,6 +102,15 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
                                                            message);
         return (result);
     }
+
+    // Logging is a sibling element and must be be parsed explicitly.
+    // The call to configureLogger parses the given Logging element if
+    // not null, into the staging config.  Note this DOES alter the
+    // current loggers, they remain in effect until we apply the
+    // logging config.
+    Daemon::configureLogger(args->get("Logging"),
+                            CfgMgr::instance().getStagingCfg());
+
     // Now we configure the server proper.
     return (processConfig(dhcp6));
 }
