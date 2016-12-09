@@ -123,8 +123,6 @@ public:
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
-        // Revert to unit test logging
-        isc::log::initLogger();
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server
