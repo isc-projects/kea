@@ -72,7 +72,7 @@ general, the following issues of the existing code were noted:
    no-op operation.
 -# There is no way to generate a list of all directives. We do have .spec files,
    but they're not actually used by the code. The code has the directives
-   spread out in multiple places in multiple files in mutliple directories.
+   spread out in multiple places in multiple files in multiple directories.
    Answering a simple question ("can I do X in the scope Y?") requires
    a short session of reverse engineering. What's worse, we have the .spec
    files that are kinda kept up to date. This is actually more damaging that
@@ -127,13 +127,13 @@ PHASE 2: simplify existing parsers by getting rid of the build/commit split.
    from the existing parsers  and implemented in the bison parser.
    It should return extra JSON elements. The details are TBD, but there is
    one example for setting up an renew-timer value on the subnet level that
-   is ihnerited from the global ("Dhcp6") level. This phase is covered by
+   is inherited from the global ("Dhcp6") level. This phase is covered by
    ticket 5039.
 
-The code change for 5036 introduces bison based parser. It is
+The code change for 5036 introduces flex/bison based parser. It is
 essentially defined in two files: dhcp6_lexer.ll, which defines
 regular expressions that are used on the input (be it a file or a
-string in memory). In essence, this code is being called repetively
+string in memory). In essence, this code is being called repeatedly
 and each time it returns a token. This repeats until either the
 parsing is complete or syntax error is encountered. For example, for
 the following text:
@@ -147,8 +147,8 @@ the following text:
 }
 @endcode
 this code would return the following sentence of tokens: LCURLY_BRACKET,
-DHCP6, LCURLY_BRACKET, COLON, LCURLY_BRACKET, RENEW_TIMER, COLON,
-INTEGER(a token with a value of 100), RCURLY_BRACKET, RCURLY_BRACKET, END
+DHCP6, COLON, LCURLY_BRACKET, RENEW_TIMER, COLON, INTEGER
+(a token with a value of 100), RCURLY_BRACKET, RCURLY_BRACKET, END
 
 This stream of tokens is being consumed by the parser that is defined
 in dhcp6_parser.yy. This file defines a grammar. Here's very simplified
@@ -158,29 +158,29 @@ version of the Dhcp6 grammar:
 dhcp6_object: DHCP6 COLON LCURLY_BRACKET global_params RCURLY_BRACKET;
 
 global_params: global_param
-| global_params COMMA global_param;
+             | global_params COMMA global_param
+             ;
 
 // These are the parameters that are allowed in the top-level for
 // Dhcp6.
-global_param
-: preferred_lifetime
-| valid_lifetime
-| renew_timer
-| rebind_timer
-| subnet6_list
-| interfaces_config
-| lease_database
-| hosts_database
-| mac_sources
-| relay_supplied_options
-| host_reservation_identifiers
-| client_classes
-| option_data_list
-| hooks_libraries
-| expired_leases_processing
-| server_id
-| dhcp4o6_port
-;
+global_param: preferred_lifetime
+            | valid_lifetime
+            | renew_timer
+            | rebind_timer
+            | subnet6_list
+            | interfaces_config
+            | lease_database
+            | hosts_database
+            | mac_sources
+            | relay_supplied_options
+            | host_reservation_identifiers
+            | client_classes
+            | option_data_list
+            | hooks_libraries
+            | expired_leases_processing
+            | server_id
+            | dhcp4o6_port
+            ;
 
 renew_timer: RENEW_TIMER COLON INTEGER;
 @endcode
@@ -190,16 +190,16 @@ to the notation, it's very powerful and easy to extend. The first line defines
 that dhcp6_object consists of certain tokens (DHCP6, COLON and LCURLY_BRACKET)
 followed by 'global_params' expression, followed by RCURLY_BRACKET.
 
-The 'global_params' is defined recursively. It can either be a single 'global_param'
-expression, or (a shorter) global_params followed by a comma and global_param.
-Bison will apply this and will be able to parse comma separated lists of
-arbitrary lengths.
+The 'global_params' is defined recursively. It can either be a single
+'global_param' expression, or (a shorter) global_params followed by a
+comma and global_param.  Bison will apply this and will be able to
+parse comma separated lists of arbitrary lengths.
 
-A single parameter is defined by 'global_param' expression. This represents
-any paramter that may appear in the global scope of Dhcp6 object. The
-complete definition for all of them is complex, but the example above includes
-renew_timer definition. It is defined as a series of RENEW_TIMER, COLON, INTEGER
-tokens.
+A single parameter is defined by 'global_param' expression. This
+represents any parameter that may appear in the global scope of Dhcp6
+object. The complete definition for all of them is complex, but the
+example above includes renew_timer definition. It is defined as a
+series of RENEW_TIMER, COLON, INTEGER tokens.
 
 The above is a simplified version of the actual grammar. If used in the version
 above, it would parse the whole file, but would do nothing with that information.
@@ -237,10 +237,10 @@ is removed from the stack. At the end of parsing, there should be a single
 element on the stack as the top-level parsing (syntax_map) only inserts the
 MapElement object, but does not remove it.
 
-@section dhcpv6ConfigSubParser Parsing Partial Configuation in DHCPv6
+@section dhcpv6ConfigSubParser Parsing Partial Configuration in DHCPv6
 
 One another important capability required is the ability to parse not only the
-whole configuration, but a subset of it. This is done by introducing articifical
+whole configuration, but a subset of it. This is done by introducing artificial
 tokens (e.g. TOPLEVEL_JSON and TOPLEVEL_DHCP6). For complete list of available
 starting contexts, see @ref isc::dhcp::Parser6Context::ParserType. The
 Parse6Context::parse() method takes one parameter that specifies, whether the
@@ -251,15 +251,17 @@ For example, to add the ability to parse only pools, the following could be adde
 
 @code
 start: TOPLEVEL_GENERIC_JSON sub_json
-| TOPLEVEL_DHCP6 sub_dhcp6
-| TOPLEVEL_POOL6 sub_pool6;
+     | TOPLEVEL_DHCP6 sub_dhcp6
+     | TOPLEVEL_POOL6 sub_pool6
+     ;
 @endcode
 
-The code on trac5036 branch contains the code defintion and the Kea-dhcp6 updated
-to use that new parser. I'm sure that parser does not cover 100% of all parameters,
-but so far it is able to load all examples from doc/example/kea6. It is also
-able to parser # comments (bash style, starting at the beginning or middle of
-the line), // comments (C++ style, can start anywhere) or / * * / comments (C style,
+The code on trac5036 branch contains the code definition and the
+Kea-dhcp6 updated to use that new parser. I'm sure that parser does
+not cover 100% of all parameters, but so far it is able to load all
+examples from doc/example/kea6. It is also able to parser # comments
+(bash style, starting at the beginning or middle of the line), //
+comments (C++ style, can start anywhere) or / * * / comments (C style,
 can span multiple lines).
 
 This parser is currently used. See configure() method in kea_controller.cc.
@@ -293,11 +295,12 @@ To include one file from another, user the following syntax:
 }
 @endcode
 
-The inclusion is implemented as a stack of files. Typically, when a single
-file is parsed, the files_ (a vector of strings) and sfiles_ (a vector of FILE*)
-both contain a single entry. However, when lexer detects &lt;?include "filename.json?&gt;,
-it calls @ref isc::dhcp::Parser6Context::includeFile method. Up to ten
-nesting levels are supported. This arbitrarily chosen limit is a protection
+The inclusion is implemented as a stack of files. Typically, when a
+single file is parsed, the files_ (a vector of strings) and sfiles_ (a
+vector of FILE*) both contain a single entry. However, when lexer
+detects &lt;?include "filename.json?&gt;, it calls
+@ref isc::dhcp::Parser6Context::includeFile method. Up to ten nesting
+levels are supported. This arbitrarily chosen limit is a protection
 against recursive inclusions.
 
 @section dhcp6ParserConflicts Avoiding syntactical conflicts in parsers
@@ -306,7 +309,6 @@ Syntactic parser has a powerful ability to not only parse the string and
 check if it's a valid JSON syntax, but also check that the resulting structures
 match expected syntax (if subnet6 are really an array, not a map, if
 timers are expressed as integers, not as strings etc.).
-
 
 However, there are times when we need to parse a string as arbitrary JSON.
 For example, if we're in Dhcp6 and the config contains entries for DhcpDdns
@@ -320,7 +322,9 @@ type of content is expected. For example, when Dhcp6 parser discovers
 uninteresting content like Dhcp4, it enters NO_KEYWORD mode. In this
 mode, everything is parsed as generic maps, lists, integers, booleans
 or strings. This results in generic JSON structures without any syntax
-checking.
+checking. Of course a corresponding/balanced @ref
+isc::dhcp::Parser6Context::leave() call is required before leaving
+the context to come back to the previous context.
 
 Details of the refactor of the classes derived from DhcpConfigParser are
 documented in http://kea.isc.org/wiki/SimpleParser.
