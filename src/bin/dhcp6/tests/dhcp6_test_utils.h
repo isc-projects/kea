@@ -656,16 +656,19 @@ parseJSON(const std::string& in)
 /// needed. This format is used by most of the tests.
 ///
 /// @param in string to be parsed
+/// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ConstElementPtr
-parseDHCP6(const std::string& in)
+parseDHCP6(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser6Context ctx;
         return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
     }
     catch (const std::exception& ex) {
-        std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
         throw;
     }
 }
@@ -675,16 +678,19 @@ parseDHCP6(const std::string& in)
 /// This function parses specified text as JSON that defines option definitions.
 ///
 /// @param in string to be parsed
+/// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ConstElementPtr
-parseOPTION_DEF(const std::string& in)
+parseOPTION_DEF(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser6Context ctx;
         return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEF));
     }
     catch (const std::exception& ex) {
-        std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
         throw;
     }
 }

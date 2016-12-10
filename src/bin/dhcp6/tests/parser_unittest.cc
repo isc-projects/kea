@@ -326,6 +326,14 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_JSON,
               "Can't open include file /foo/bar");
 
+    // case sensitivity
+    testError("{ \"foo\": True }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: T");
+    testError("{ \"foo\": NULL  }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: N");
+
     // numbers
     testError("123",
               Parser6Context::PARSER_DHCP6,
