@@ -35,6 +35,7 @@ config.h.in~
 /py-compile
 /stamp-h1
 /test-driver
+/ylwrap
 
 /all.info
 /coverage-cpp-html
