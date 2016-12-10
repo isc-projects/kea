@@ -39,13 +39,14 @@ public:
 
     /// @brief Defines currently supported scopes
     ///
-    /// Dhcp6Parser is able to parse several types of scope. Usually, when it
-    /// parses a config file, it expects the data to have a map with Dhcp6 in it
-    /// and all the parameters within that Dhcp6 map. However, sometimes the
-    /// parser is expected to parse only a subset of that information. For example,
-    /// it may be asked to parse a structure that is host-reservation only, without
-    /// the global 'Dhcp6' or 'reservations' around it. In such case the parser
-    /// is being told to start parsing as SUBPARSER_HOST_RESERVATION6.
+    /// Dhcp6Parser is able to parse several types of scope. Usually,
+    /// when it parses a config file, it expects the data to have a map
+    /// with Dhcp6 in it and all the parameters within that Dhcp6 map.
+    /// However, sometimes the parser is expected to parse only a subset
+    /// of that information. For example, it may be asked to parse
+    /// a structure that is host-reservation only, without the global
+    /// 'Dhcp6' or 'reservations' around it. In such case the parser
+    /// is being told to start parsing as PARSER_HOST_RESERVATION6.
     typedef enum {
         /// This parser will parse the content as generic JSON.
         PARSER_JSON,
@@ -60,14 +61,14 @@ public:
         /// contents of it.
         SUBPARSER_DHCP6,
 
+        /// This will parse the input as interfaces content.
+        PARSER_INTERFACES,
+
         /// This will parse the input as Subnet6 content.
         PARSER_SUBNET6,
 
         /// This will parse the input as pool6 content.
         PARSER_POOL6,
-
-        /// This will parse the input as interfaces content.
-        PARSER_INTERFACES,
 
         /// This will parse the input as pd-pool content.
         PARSER_PD_POOL,
@@ -95,15 +96,24 @@ public:
     std::vector<isc::data::ElementPtr> stack_;
 
     /// @brief Method called before scanning starts on a string.
+    ///
+    /// @param str string to be parsed
+    /// @param parser_type specifies expected content
     void scanStringBegin(const std::string& str, ParserType type);
 
     /// @brief Method called before scanning starts on a file.
-    void scanFileBegin(FILE * f, const std::string& filename, ParserType type);
+    ///
+    /// @param f stdio FILE pointer
+    /// @param filename file to be parsed
+    /// @param parser_type specifies expected content
+    void scanFileBegin(FILE* f, const std::string& filename, ParserType type);
 
     /// @brief Method called after the last tokens are scanned.
     void scanEnd();
 
     /// @brief Divert input to an include file.
+    ///
+    /// @param filename file to be included
     void includeFile(const std::string& filename);
 
     /// @brief Run the parser on the string specified.
@@ -136,25 +146,33 @@ public:
     ///
     /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
+    /// @throw Dhcp6ParseError
     void error(const isc::dhcp::location& loc, const std::string& what);
 
     /// @brief Error handler
     ///
     /// This is a simplified error reporting tool for possible future
     /// cases when the Dhcp6Parser is not able to handle the packet.
+    ///
+    /// @param what string explaining the nature of the error.
+    /// @throw Dhcp6ParseError
     void error(const std::string& what);
 
     /// @brief Fatal error handler
     ///
     /// This is for should not happen but fatal errors.
     /// Used by YY_FATAL_ERROR macro so required to be static.
+    ///
+    /// @param what string explaining the nature of the error.
+    /// @throw Dhcp6ParseError
     static void fatal(const std::string& what);
 
     /// @brief Converts bison's position to one understandable by isc::data::Element
     ///
     /// Convert a bison location into an element position
     /// (take the begin, the end is lost)
-    /// @brief loc location in bison format
+    ///
+    /// @param loc location in bison format
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
 
@@ -178,11 +196,11 @@ public:
         /// Used while parsing Dhcp6/interfaces structures.
         INTERFACES_CONFIG,
 
-        /// Used while parsing Dhcp6/hosts-database structures.
-        HOSTS_DATABASE,
-
         /// Used while parsing Dhcp6/lease-database structures.
         LEASE_DATABASE,
+
+        /// Used while parsing Dhcp6/hosts-database structures.
+        HOSTS_DATABASE,
 
         /// Used while parsing Dhcp6/mac-sources structures.
         MAC_SOURCES,
@@ -275,13 +293,17 @@ public:
     /// will return STRING token if in JSON mode or RENEW_TIMER if
     /// in DHCP6 mode. Finally, the stntactic context allows the
     /// error message to be more descriptive.
+    ///
+    /// @param ctx the syntactic context to enter into
     void enter(const ParserContext& ctx);
 
     /// @brief Leave a syntactic context
+    ///
     /// @throw isc::Unexpected if unbalanced
     void leave();
 
     /// @brief Get the syntactix context name
+    ///
     /// @return printable name of the context.
     const std::string contextName();
 
@@ -296,6 +318,8 @@ public:
     std::vector<ParserContext> cstack_;
 
     /// @brief Common part of parseXXX
+    ///
+    /// @return Element structure representing parsed text.
     isc::data::ConstElementPtr parseCommon();
 };
 

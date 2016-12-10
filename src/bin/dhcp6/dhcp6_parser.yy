@@ -295,7 +295,7 @@ unknown_map_entry: STRING COLON {
     const std::string& keyword = $1;
     error(@1,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
-}
+};
 
 
 // This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
@@ -620,10 +620,12 @@ sub_hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
+            | unknown_map_entry
             ;
 
 hooks_param: library
-           | parameters;
+           | parameters
+           ;
 
 library: LIBRARY {
     ctx.enter(ctx.NO_KEYWORD);
@@ -638,7 +640,7 @@ parameters: PARAMETERS {
 } COLON value {
     ctx.stack_.back()->set("parameters", $4);
     ctx.leave();
-}
+};
 
 // --- expired-leases-processing ------------------------
 expired_leases_processing: EXPIRED_LEASES_PROCESSING {
@@ -661,7 +663,7 @@ expired_leases_params: expired_leases_param
 expired_leases_param: STRING COLON INTEGER {
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set($1, value);
-}
+};
 
 // --- subnet6 ------------------------------------------
 // This defines subnet6 as a list of maps.
@@ -1107,12 +1109,12 @@ pd_prefix: PREFIX {
     ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("prefix", prf);
     ctx.leave();
-}
+};
 
 pd_prefix_len: PREFIX_LEN COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("prefix-len", prf);
-}
+};
 
 excluded_prefix: EXCLUDED_PREFIX {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1120,17 +1122,17 @@ excluded_prefix: EXCLUDED_PREFIX {
     ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("excluded-prefix", prf);
     ctx.leave();
-}
+};
 
 excluded_prefix_len: EXCLUDED_PREFIX_LEN COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("excluded-prefix-len", prf);
-}
+};
 
 pd_delegated_len: DELEGATED_LEN COLON INTEGER {
     ElementPtr deleg(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("delegated-len", deleg);
-}
+};
 
 // --- end of pd-pools ---------------------------------------
 
@@ -1230,7 +1232,7 @@ hostname: HOSTNAME {
     ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
-}
+};
 
 reservation_client_classes: CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
@@ -1310,7 +1312,7 @@ client_class_test: TEST {
     ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
-}
+};
 
 // --- end of client classes ---------------------------------
 
