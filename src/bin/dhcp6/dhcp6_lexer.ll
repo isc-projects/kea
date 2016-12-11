@@ -968,7 +968,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             }
             break;
         default:
-            if (c < 0x20) {
+            if ((c >= 0) && (c < 0x20)) {
                 // impossible condition
                 driver.error(driver.loc_, "Invalid control in \"" + raw + "\"");
             }
