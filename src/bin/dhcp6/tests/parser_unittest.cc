@@ -274,6 +274,10 @@ TEST(ParserTest, errors) {
               "<string>:1.2: syntax error, unexpected end of file");
     testError("\n", Parser6Context::PARSER_JSON,
               "<string>:2.1: syntax error, unexpected end of file");
+    testError("\t", Parser6Context::PARSER_JSON,
+              "<string>:1.2: syntax error, unexpected end of file");
+    testError("\r", Parser6Context::PARSER_JSON,
+              "<string>:1.2: syntax error, unexpected end of file");
 
     // comments
     testError("# nothing\n",

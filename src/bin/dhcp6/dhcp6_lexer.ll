@@ -66,7 +66,7 @@ unsigned int comment_start_line = 0;
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
 int   \-?[0-9]+
-blank [ \t]
+blank [ \t\r]
 
 UnicodeEscapeSequence           u[0-9A-Fa-f]{4}
 JSONEscapeCharacter             ["\\/bfnrt]
