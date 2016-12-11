@@ -14,6 +14,7 @@
 #include <map>
 #include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -795,7 +796,15 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            ss << c;
+            if ((c >= 0) && (c < 0x20)) {
+                ss << "\\u"
+                   << hex
+                   << setw(4)
+                   << setfill('0')
+                   << (static_cast<unsigned>(c) & 0xff);
+            } else {
+                ss << c;
+            }
         }
     }
     ss << "\"";

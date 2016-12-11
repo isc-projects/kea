@@ -926,6 +926,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     std::string decoded;
     decoded.reserve(len);
     for (size_t pos = 0; pos < len; ++pos) {
+        int b = 0;
         char c = raw[pos];
         switch (c) {
         case '"':
@@ -960,8 +961,42 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
                 decoded.push_back('\t');
                 break;
             case 'u':
-                // not yet implemented
-                driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                // support only \u0000 to \u00ff
+                ++pos;
+                if (pos + 4 > len) {
+                    // impossible condition
+                    driver.error(driver.loc_,
+                                 "Overflow unicode escape in \"" + raw + "\"");
+                }
+                if ((raw[pos] != '0') || (raw[pos + 1] != '0')) {
+                    driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                }
+                pos += 2;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b = (c - '0') << 4;
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b = (c - 'A' + 10) << 4;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b = (c - 'a' + 10) << 4;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                pos++;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b |= c - '0';
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b |= c - 'A' + 10;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b |= c - 'a' + 10;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                decoded.push_back(static_cast<char>(b & 0xff));
+                break;
             default:
                 // impossible condition
                 driver.error(driver.loc_, "Bad escape in \"" + raw + "\"");
