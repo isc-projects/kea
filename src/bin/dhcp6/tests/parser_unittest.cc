@@ -31,8 +31,8 @@ void testParser(const std::string& txt, Parser6Context::ParserType parser_type) 
     ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     ASSERT_NO_THROW({
             try {
-        Parser6Context ctx;
-        test_json = ctx.parseString(txt, parser_type);
+                Parser6Context ctx;
+                test_json = ctx.parseString(txt, parser_type);
             } catch (const std::exception &e) {
                 cout << "EXCEPTION: " << e.what() << endl;
                 throw;
@@ -49,8 +49,8 @@ void testParser2(const std::string& txt, Parser6Context::ParserType parser_type)
 
     ASSERT_NO_THROW({
             try {
-        Parser6Context ctx;
-        test_json = ctx.parseString(txt, parser_type);
+                Parser6Context ctx;
+                test_json = ctx.parseString(txt, parser_type);
             } catch (const std::exception &e) {
                 cout << "EXCEPTION: " << e.what() << endl;
                 throw;
@@ -386,9 +386,9 @@ TEST(ParserTest, errors) {
     testError("\"a\\x01b\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-8: Bad escape in \"a\\x01b\"");
-    testError("\"a\\u0062\"",
+    testError("\"a\\u0162\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0062\"");
+              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0162\"");
     testError("\"a\\u062z\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-9: Bad escape in \"a\\u062z\"");
@@ -475,5 +475,42 @@ TEST(ParserTest, errors) {
               "<string>:2.2-21: got unexpected keyword "
               "\"preferred_lifetime\" in Dhcp6 map.");
 }
+
+// Check unicode escapes
+TEST(ParserTest, unicodeEscapes) {
+    ConstElementPtr result;
+    string json;
+
+    // check we can reread output
+    for (char c = -128; c < 127; ++c) {
+        string ins(" ");
+        ins[1] = c;
+        ConstElementPtr e(new StringElement(ins));
+        json = e->str();
+        ASSERT_NO_THROW(
+        try {
+            Parser6Context ctx;
+            result = ctx.parseString(json, Parser6Context::PARSER_JSON);
+        } catch (const std::exception &x) {
+            cout << "EXCEPTION: " << x.what() << endl;
+            throw;
+        });
+        ASSERT_EQ(Element::string, result->getType());
+        EXPECT_EQ(ins, result->stringValue());
+    }
+
+    // check the 4 possible encodings of solidus '/'
+    json = "\"/\\/\\u002f\\u002F\"";
+    ASSERT_NO_THROW(
+    try {
+        Parser6Context ctx;
+        result = ctx.parseString(json, Parser6Context::PARSER_JSON);
+    } catch (const std::exception &x) {
+        cout << "EXCEPTION: " << x.what() << endl;
+        throw;
+    });
+    ASSERT_EQ(Element::string, result->getType());
+    EXPECT_EQ("////", result->stringValue());
+}       
 
 };
