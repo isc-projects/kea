@@ -1042,9 +1042,9 @@ static yyconst flex_int16_t yy_rule_linenum[106] =
       644,  653,  662,  671,  682,  692,  701,  711,  720,  729,
       738,  747,  756,  765,  775,  784,  793,  802,  811,  820,
       829,  838,  847,  856,  865,  874,  883,  892,  901,  910,
-      919,  982,  987,  992,  997,  998,  999, 1000, 1001, 1002,
+      919, 1017, 1022, 1027, 1032, 1033, 1034, 1035, 1036, 1037,
 
-     1004, 1022, 1035, 1040, 1044
+     1039, 1057, 1070, 1075, 1079
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2599,6 +2599,7 @@ YY_RULE_SETUP
     std::string decoded;
     decoded.reserve(len);
     for (size_t pos = 0; pos < len; ++pos) {
+        int b = 0;
         char c = raw[pos];
         switch (c) {
         case '"':
@@ -2633,15 +2634,49 @@ YY_RULE_SETUP
                 decoded.push_back('\t');
                 break;
             case 'u':
-                // not yet implemented
-                driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                // support only \u0000 to \u00ff
+                ++pos;
+                if (pos + 4 > len) {
+                    // impossible condition
+                    driver.error(driver.loc_,
+                                 "Overflow unicode escape in \"" + raw + "\"");
+                }
+                if ((raw[pos] != '0') || (raw[pos + 1] != '0')) {
+                    driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                }
+                pos += 2;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b = (c - '0') << 4;
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b = (c - 'A' + 10) << 4;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b = (c - 'a' + 10) << 4;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                pos++;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b |= c - '0';
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b |= c - 'A' + 10;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b |= c - 'a' + 10;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                decoded.push_back(static_cast<char>(b & 0xff));
+                break;
             default:
                 // impossible condition
                 driver.error(driver.loc_, "Bad escape in \"" + raw + "\"");
             }
             break;
         default:
-            if ((c > 0) && (c < 0x20)) {
+            if ((c >= 0) && (c < 0x20)) {
                 // impossible condition
                 driver.error(driver.loc_, "Invalid control in \"" + raw + "\"");
             }
@@ -2655,7 +2690,7 @@ YY_RULE_SETUP
 case 92:
 /* rule 92 can match eol */
 YY_RULE_SETUP
-#line 982 "dhcp6_lexer.ll"
+#line 1017 "dhcp6_lexer.ll"
 {
     // Bad string with a forbidden control character inside
     driver.error(driver.loc_, "Invalid control in " + std::string(parser6_text));
@@ -2664,7 +2699,7 @@ YY_RULE_SETUP
 case 93:
 /* rule 93 can match eol */
 YY_RULE_SETUP
-#line 987 "dhcp6_lexer.ll"
+#line 1022 "dhcp6_lexer.ll"
 {
     // Bad string with a bad escape inside
     driver.error(driver.loc_, "Bad escape in " + std::string(parser6_text));
@@ -2672,7 +2707,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 992 "dhcp6_lexer.ll"
+#line 1027 "dhcp6_lexer.ll"
 {
     // Bad string with an open escape at the end
     driver.error(driver.loc_, "Overflow escape in " + std::string(parser6_text));
@@ -2680,37 +2715,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 997 "dhcp6_lexer.ll"
+#line 1032 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 998 "dhcp6_lexer.ll"
+#line 1033 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 999 "dhcp6_lexer.ll"
+#line 1034 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 1000 "dhcp6_lexer.ll"
+#line 1035 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 1001 "dhcp6_lexer.ll"
+#line 1036 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 1002 "dhcp6_lexer.ll"
+#line 1037 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 1004 "dhcp6_lexer.ll"
+#line 1039 "dhcp6_lexer.ll"
 {
     // An integer was found.
     std::string tmp(parser6_text);
@@ -2731,7 +2766,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 1022 "dhcp6_lexer.ll"
+#line 1057 "dhcp6_lexer.ll"
 {
     // A floating point was found.
     std::string tmp(parser6_text);
@@ -2747,7 +2782,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 1035 "dhcp6_lexer.ll"
+#line 1070 "dhcp6_lexer.ll"
 {
     string tmp(parser6_text);
     return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2755,18 +2790,18 @@ YY_RULE_SETUP
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 1040 "dhcp6_lexer.ll"
+#line 1075 "dhcp6_lexer.ll"
 {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 1044 "dhcp6_lexer.ll"
+#line 1079 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(parser6_text));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1046 "dhcp6_lexer.ll"
+#line 1081 "dhcp6_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
@@ -2792,10 +2827,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 1069 "dhcp6_lexer.ll"
+#line 1104 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2799 "dhcp6_lexer.cc"
+#line 2834 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3898,7 +3933,7 @@ void parser6_free (void * ptr )
 
 /* %ok-for-header */
 
-#line 1069 "dhcp6_lexer.ll"
+#line 1104 "dhcp6_lexer.ll"
 
 
 
