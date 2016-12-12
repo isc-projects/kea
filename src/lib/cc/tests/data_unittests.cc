@@ -131,11 +131,13 @@ TEST(Element, from_and_to_json) {
     sv.push_back("{1}");
     //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
     //std::cout << ep << std::endl;
-    sv.push_back("\n\nTru");
+    sv.push_back("\n\nTrue");
+    sv.push_back("\n\ntru");
     sv.push_back("{ \n \"aaa\nbbb\"err:");
-    sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n True, \"\\\"");
+    sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n true, \"\\\"");
     sv.push_back("{ \"a\": None}");
     sv.push_back("");
+    sv.push_back("NULL");
     sv.push_back("nul");
     sv.push_back("hello\"foobar\"");
     sv.push_back("\"foobar\"hello");
@@ -178,12 +180,6 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
-    EXPECT_EQ("null", Element::fromJSON("Null")->str());
-    EXPECT_EQ("null", Element::fromJSON("NULL")->str());
-    EXPECT_EQ("false", Element::fromJSON("False")->str());
-    EXPECT_EQ("false", Element::fromJSON("FALSE")->str());
-    EXPECT_EQ("true", Element::fromJSON("True")->str());
-    EXPECT_EQ("true", Element::fromJSON("TRUE")->str());
     EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
@@ -709,35 +705,35 @@ TEST(Element, equals) {
     EXPECT_NE(*efs("1"), *efs("2"));
     EXPECT_NE(*efs("1"), *efs("\"1\""));
     EXPECT_NE(*efs("1"), *efs("[]"));
-    EXPECT_NE(*efs("1"), *efs("True"));
+    EXPECT_NE(*efs("1"), *efs("true"));
     EXPECT_NE(*efs("1"), *efs("{}"));
 
     EXPECT_EQ(*efs("1.1"), *efs("1.1"));
     EXPECT_NE(*efs("1.0"), *efs("1"));
     EXPECT_NE(*efs("1.1"), *efs("\"1\""));
     EXPECT_NE(*efs("1.1"), *efs("[]"));
-    EXPECT_NE(*efs("1.1"), *efs("True"));
+    EXPECT_NE(*efs("1.1"), *efs("true"));
     EXPECT_NE(*efs("1.1"), *efs("{}"));
 
-    EXPECT_EQ(*efs("True"), *efs("True"));
-    EXPECT_NE(*efs("True"), *efs("False"));
-    EXPECT_NE(*efs("True"), *efs("1"));
-    EXPECT_NE(*efs("True"), *efs("\"1\""));
-    EXPECT_NE(*efs("True"), *efs("[]"));
-    EXPECT_NE(*efs("True"), *efs("{}"));
+    EXPECT_EQ(*efs("true"), *efs("true"));
+    EXPECT_NE(*efs("true"), *efs("false"));
+    EXPECT_NE(*efs("true"), *efs("1"));
+    EXPECT_NE(*efs("true"), *efs("\"1\""));
+    EXPECT_NE(*efs("true"), *efs("[]"));
+    EXPECT_NE(*efs("true"), *efs("{}"));
 
     EXPECT_EQ(*efs("\"foo\""), *efs("\"foo\""));
     EXPECT_NE(*efs("\"foo\""), *efs("\"bar\""));
     EXPECT_NE(*efs("\"foo\""), *efs("1"));
     EXPECT_NE(*efs("\"foo\""), *efs("\"1\""));
-    EXPECT_NE(*efs("\"foo\""), *efs("True"));
+    EXPECT_NE(*efs("\"foo\""), *efs("true"));
     EXPECT_NE(*efs("\"foo\""), *efs("[]"));
     EXPECT_NE(*efs("\"foo\""), *efs("{}"));
 
     EXPECT_EQ(*efs("[]"), *efs("[]"));
     EXPECT_EQ(*efs("[ 1, 2, 3 ]"), *efs("[ 1, 2, 3 ]"));
-    EXPECT_EQ(*efs("[ \"a\", [ True, 1], 2.2 ]"), *efs("[ \"a\", [ True, 1], 2.2 ]"));
-    EXPECT_NE(*efs("[ \"a\", [ True, 1], 2.2 ]"), *efs("[ \"a\", [ True, 2], 2.2 ]"));
+    EXPECT_EQ(*efs("[ \"a\", [ true, 1], 2.2 ]"), *efs("[ \"a\", [ true, 1], 2.2 ]"));
+    EXPECT_NE(*efs("[ \"a\", [ true, 1], 2.2 ]"), *efs("[ \"a\", [ true, 2], 2.2 ]"));
     EXPECT_NE(*efs("[]"), *efs("[1]"));
     EXPECT_NE(*efs("[]"), *efs("1"));
     EXPECT_NE(*efs("[]"), *efs("\"1\""));

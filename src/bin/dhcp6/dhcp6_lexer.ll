@@ -1076,6 +1076,12 @@ null {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 
+(?i:true) driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
+
+(?i:false) driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
+
+(?i:null) driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
+
 <*>.   driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 
 <<EOF>> {

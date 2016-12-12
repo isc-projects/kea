@@ -483,7 +483,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
+        "      \"array\": false,"
         "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"\""
@@ -604,7 +604,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"space\": \"isc\","
         "    \"code\": 100,"
         "    \"data\": \"192.0.2.0\","
-        "    \"csv-format\": True"
+        "    \"csv-format\": true"
         " } ]"
         "}";
 
@@ -733,7 +733,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
         "    \"name\": \"swap-server\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 16,"
-        "    \"csv-format\": True,"
+        "    \"csv-format\": true,"
         "    \"data\": \"192.0.2.0\""
         " } ]"
         "}";
@@ -753,7 +753,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
         "    \"name\": \"swap-server\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 16,"
-        "    \"csv-format\": False,"
+        "    \"csv-format\": false,"
         "    \"data\": \"C0000200\""
         " } ]"
         "}";
@@ -840,7 +840,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
-        "    \"csv-format\": True,"
+        "    \"csv-format\": true,"
         "    \"data\": \"0\""
         " } ]"
         "}";
@@ -855,7 +855,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
-        "    \"csv-format\": False,"
+        "    \"csv-format\": false,"
         "    \"data\": \"0\""
         " } ]"
         "}";
@@ -974,7 +974,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"name\": \"foo-name\","
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"
@@ -1000,7 +1000,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"name\": \"foo-name\","
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"

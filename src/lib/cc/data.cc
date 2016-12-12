@@ -20,7 +20,6 @@
 #include <fstream>
 #include <cerrno>
 
-#include <boost/algorithm/string.hpp> // for iequals
 #include <boost/lexical_cast.hpp>
 
 #include <cmath>
@@ -458,10 +457,10 @@ fromStringstreamBool(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
 
-    if (boost::iequals(word, "True")) {
+    if (word == "true") {
         return (Element::create(true, Element::Position(file, line,
                                                         start_pos)));
-    } else if (boost::iequals(word, "False")) {
+    } else if (word == "false") {
         return (Element::create(false, Element::Position(file, line,
                                                          start_pos)));
     } else {
@@ -480,7 +479,7 @@ fromStringstreamNull(std::istream& in, const std::string& file,
     const uint32_t start_pos = pos;
     // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
-    if (boost::iequals(word, "null")) {
+    if (word == "null") {
         return (Element::create(Element::Position(file, line, start_pos)));
     } else {
         throwJSONError(std::string("Bad null value: ") + word, file,
@@ -659,16 +658,13 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
                 el_read = true;
                 break;
             case 't':
-            case 'T':
             case 'f':
-            case 'F':
                 in.putback(c);
                 --pos;
                 element = fromStringstreamBool(in, file, line, pos);
                 el_read = true;
                 break;
             case 'n':
-            case 'N':
                 in.putback(c);
                 --pos;
                 element = fromStringstreamNull(in, file, line, pos);
