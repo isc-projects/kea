@@ -40,12 +40,28 @@ const SimpleDefaults OPTION6_DEFAULTS = {
     { "encapsulate",  Element::string,  "" }
 };
 
+/// This table defines default values for DHCPv4
+const SimpleDefaults GLOBAL4_DEFAULTS = {
+    { "renew-timer",        Element::integer, "900" },
+    { "rebind-timer",       Element::integer, "1800" },
+    { "valid-lifetime",     Element::integer, "7200" }
+};
+
 /// This table defines default values for both DHCPv4 and DHCPv6
-const SimpleDefaults GLOBAL_DEFAULTS = {
+const SimpleDefaults GLOBAL6_DEFAULTS = {
     { "renew-timer",        Element::integer, "900" },
     { "rebind-timer",       Element::integer, "1800" },
     { "preferred-lifetime", Element::integer, "3600" },
     { "valid-lifetime",     Element::integer, "7200" }
+};
+
+/// This list defines parameters that can be inherited from the global
+/// scope to subnet scope.
+const ParamsList INHERIT_GLOBAL_TO_SUBNET = {
+    "renew-timer",
+    "rebind-timer",
+    "preferred-lifetime",
+    "valid-lifetime"
 };
 
 std::string
@@ -162,8 +178,8 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
     return (cnt);
 }
 
-size_t SimpleParser::setGlobalDefaults(isc::data::ElementPtr global) {
-    return (setDefaults(global, GLOBAL_DEFAULTS));
+size_t SimpleParser::setGlobalDefaults(isc::data::ElementPtr global, bool v6) {
+    return (setDefaults(global, v6 ? GLOBAL6_DEFAULTS : GLOBAL4_DEFAULTS));
 }
 
 size_t SimpleParser::setOptionDefaults(isc::data::ElementPtr option, bool v6) {
@@ -196,7 +212,8 @@ size_t SimpleParser::setAllDefaults(isc::data::ElementPtr global, bool v6) {
     size_t cnt = 0;
 
     // Set global defaults first.
-    //cnt = setGlobalDefaults(global);
+    /// @todo: Uncomment as part of the ticket 5019 work.
+    //cnt = setGlobalDefaults(global, v6);
 
     // Now set option defintion defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
@@ -247,6 +264,12 @@ SimpleParser::deriveParams(isc::data::ConstElementPtr parent,
     }
 
     return (cnt);
+}
+
+size_t
+SimpleParser::inheritGlobalToSubnet(isc::data::ConstElementPtr global,
+                                    isc::data::ElementPtr subnet) {
+    return deriveParams(global, subnet, INHERIT_GLOBAL_TO_SUBNET);
 }
 
 }; // end of isc::dhcp namespace

@@ -20,7 +20,8 @@ if HAVE_CQL
 AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
+# This is a temporary workaround until we have Kea-wide support for C++11.
+AM_CXXFLAGS = $(KEA_CXXFLAGS) -std=c++11
 
 # The files in the subfolder must be explicitly specified here so
 # as they are copied to the distribution. The other option would
