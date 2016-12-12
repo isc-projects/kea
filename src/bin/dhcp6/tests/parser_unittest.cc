@@ -330,13 +330,22 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_JSON,
               "Can't open include file /foo/bar");
 
-    // case sensitivity
+    // JSON keywords
     testError("{ \"foo\": True }",
               Parser6Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: T");
-    testError("{ \"foo\": NULL  }",
+              "<string>:1.10-13: JSON true reserved keyword is lower case only");
+    testError("{ \"foo\": False }",
               Parser6Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: N");
+              "<string>:1.10-14: JSON false reserved keyword is lower case only");
+    testError("{ \"foo\": NULL }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10-13: JSON null reserved keyword is lower case only");
+    testError("{ \"foo\": Tru }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: T");
+    testError("{ \"foo\": nul }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: n");
 
     // numbers
     testError("123",
