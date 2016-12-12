@@ -4,7 +4,7 @@
 <!ENTITY mdash  "&#x2014;" >
 ]>
 
-  <chapter id="dhcp6">
+ <chapter id="dhcp6">
     <title>The DHCPv6 Server</title>
 
     <section id="dhcp6-start-stop">
@@ -3496,7 +3496,8 @@ If not specified, the default value is:
       provided by the clients.
       </para>
       <para>
-      The configuration is controlled by the <command>mac-sources</command>parameter as follows:
+      The configuration is controlled by the <command>mac-sources</command>
+      parameter as follows:
         <screen>
 "Dhcp6": {
     <userinput>"mac-sources": [ "method1", "method2", "method3", ... ]</userinput>,
@@ -3543,7 +3544,7 @@ If not specified, the default value is:
         that those addresses are based on EUI-64, which contains MAC address. This
         method is not completely reliable, as clients may use other link-local address
         types.  In particular, privacy extensions, defined in
-        <ulink utl="http://tools.ietf.org/html/rfc4941">RFC 4941</ulink>, do not use
+        <ulink url="http://tools.ietf.org/html/rfc4941">RFC 4941</ulink>, do not use
         MAC addresses.  Also note that successful extraction requires that the
         address's u-bit must be set to 1 and its g-bit set to 0, indicating that it
         is an interface identifier as per
@@ -3600,7 +3601,11 @@ If not specified, the default value is:
         </simpara>
       </listitem>
     </itemizedlist>
-    </para>
+  </para>
+
+  <para>Empty mac-sources is not allowed. If you do not want to specify it,
+  either simply omit mac-sources definition or specify it with the "any" value
+  which is the default.</para>
   </section>
 
     <section id="dhcp6-decline">

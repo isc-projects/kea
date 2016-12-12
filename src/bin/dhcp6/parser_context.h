@@ -286,13 +286,14 @@ public:
 
     /// @brief Enter a new syntactic context
     ///
-    /// Entering a nex syntactic context is useful in several ways.
+    /// Entering a new syntactic context is useful in several ways.
     /// First, it allows the parser to avoid conflicts. Second, it
     /// allows the lexer to return different tokens depending on
     /// context (e.g. if "renew-timer" string is detected, the lexer
     /// will return STRING token if in JSON mode or RENEW_TIMER if
-    /// in DHCP6 mode. Finally, the stntactic context allows the
-    /// error message to be more descriptive.
+    /// in DHCP6 mode. Finally, the syntactic context allows the
+    /// error message to be more descriptive if the input string
+    /// does not parse properly.
     ///
     /// @param ctx the syntactic context to enter into
     void enter(const ParserContext& ctx);
