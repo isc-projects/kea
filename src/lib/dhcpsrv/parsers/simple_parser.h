@@ -62,6 +62,17 @@ class SimpleParser {
     static size_t deriveParams(isc::data::ConstElementPtr parent,
                                isc::data::ElementPtr child,
                                const ParamsList& params);
+    /// @brief Derives (inherits) parameters from global to subnet scope
+    ///
+    /// This method derives global parameters into subnet scope if they're
+    /// not defined there yet.
+    ///
+    /// @param global parameters will be inherited from here
+    /// @param subnet parameters will be inserted here
+    /// @return number of parameters copied
+    static size_t
+    inheritGlobalToSubnet(isc::data::ConstElementPtr global,
+                          isc::data::ElementPtr subnet);
 
     /// @brief Sets the default values
     ///
@@ -84,8 +95,9 @@ class SimpleParser {
     /// for that.
     ///
     /// @param global scope to be filled in with defaults.
+    /// @param v6 is it v6 (true) or v4 (false) option?
     /// @return number of default values added
-    static size_t setGlobalDefaults(isc::data::ElementPtr global);
+    static size_t setGlobalDefaults(isc::data::ElementPtr global, bool v6);
 
     /// @brief Sets option defaults for a single option
     ///
@@ -131,6 +143,7 @@ class SimpleParser {
     /// set the global defaults only, see @ref setGlobalDefaults for that.
     ///
     /// @param global scope to be filled in with defaults.
+    /// @param v6 true = v6, false = v4
     /// @return number of default values added
     static size_t setAllDefaults(isc::data::ElementPtr global, bool v6);
 
@@ -145,7 +158,7 @@ class SimpleParser {
     getPosition(const std::string& name, const data::ConstElementPtr parent =
                 data::ConstElementPtr()) const;
 
-    /// @destructor
+    /// Destructor
     ///
     /// It's really simple, isn't it?
     virtual ~SimpleParser() {}

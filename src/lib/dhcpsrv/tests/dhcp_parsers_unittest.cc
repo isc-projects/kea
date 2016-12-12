@@ -318,6 +318,16 @@ public:
                      (config_pair.first == "option-def")) {
                     continue;
                 }
+
+                // We also don't care about the default values that may be been
+                // inserted
+                if ( (config_pair.first == "preferred-lifetime") ||
+                     (config_pair.first == "valid-lifetime") ||
+                     (config_pair.first == "renew-timer") ||
+                     (config_pair.first == "rebind-timer")) {
+                    continue;
+                }
+
                 // Remaining ones are old style parsers. Need go do
                 // the build/commit dance with them.
 
@@ -475,6 +485,28 @@ public:
         // Set it to minimal, disabled config
         D2ClientConfigPtr tmp(new D2ClientConfig());
         CfgMgr::instance().setD2ClientConfig(tmp);
+    }
+
+    /// @brief Checks if specified map has an integer parameter with expected value
+    ///
+    /// @param map map to be checked
+    /// @param param_name name of the parameter to be checked
+    /// @param exp_value expected value of the parameter.
+    void checkIntegerValue(const ConstElementPtr& map, const std::string& param_name,
+                           int64_t exp_value) {
+
+        // First check if the passed element is a map.
+        ASSERT_EQ(Element::map, map->getType());
+
+        // Now try to get the element being checked
+        ConstElementPtr elem = map->get(param_name);
+        ASSERT_TRUE(elem);
+
+        // Now check if it's indeed integer
+        ASSERT_EQ(Element::integer, elem->getType());
+
+        // Finally, check if its value meets expectation.
+        EXPECT_EQ(exp_value, elem->intValue());
     }
 
     /// @brief Parsers used in the parsing of the configuration
@@ -2392,5 +2424,66 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in
 // src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).
+
+// This test checks if global defaults are properly set for DHCPv6.
+TEST_F(ParseConfigTest, globalDefaults6) {
+
+    ElementPtr empty = Element::fromJSON("{ }");
+    size_t num;
+
+    EXPECT_NO_THROW(num = SimpleParser::setGlobalDefaults(empty, true));
+
+    // We expect at least 4 parameters to be inserted.
+    EXPECT_TRUE(num >= 4);
+
+    checkIntegerValue(empty, "valid-lifetime", 7200);
+    checkIntegerValue(empty, "preferred-lifetime", 3600);
+    checkIntegerValue(empty, "rebind-timer", 1800);
+    checkIntegerValue(empty, "renew-timer", 900);
+}
+
+// This test checks if global defaults are properly set for DHCPv4.
+TEST_F(ParseConfigTest, DISABLED_globalDefaults4) {
+
+    ElementPtr empty = Element::fromJSON("{ }");
+    size_t num;
+
+    EXPECT_NO_THROW(num = SimpleParser::setGlobalDefaults(empty, false));
+
+    // We expect at least 3 parameters to be inserted.
+    EXPECT_TRUE(num >= 3);
+
+    checkIntegerValue(empty, "valid-lifetime", 7200);
+    checkIntegerValue(empty, "rebind-timer", 1800);
+    checkIntegerValue(empty, "renew-timer", 900);
+
+    // Make sure that preferred-lifetime is not set for v4 (it's v6 only
+    // parameter)
+    EXPECT_FALSE(empty->get("preferred-lifetime"));
+}
+
+// This test checks if the parameters can be inherited from the global
+// scope to the subnet scope.
+TEST_F(ParseConfigTest, inheritGlobalToSubnet) {
+    ElementPtr global = Element::fromJSON("{ \"renew-timer\": 1,"
+                                          "  \"rebind-timer\": 2,"
+                                          "  \"preferred-lifetime\": 3,"
+                                          "  \"valid-lifetime\": 4"
+                                          "}");
+    ElementPtr subnet = Element::fromJSON("{ \"renew-timer\": 100 }");
+
+    // we should inherit 3 parameters. Renew-timer should remain intact,
+    // as it was already defined in the subnet scope.
+    size_t num;
+    EXPECT_NO_THROW(num = SimpleParser::inheritGlobalToSubnet(global, subnet));
+    EXPECT_EQ(3, num);
+
+    // Check the values. 3 of them are interited, while the fourth one
+    // was already defined in the subnet, so should not be inherited.
+    checkIntegerValue(subnet, "renew-timer", 100);
+    checkIntegerValue(subnet, "rebind-timer", 2);
+    checkIntegerValue(subnet, "preferred-lifetime", 3);
+    checkIntegerValue(subnet, "valid-lifetime", 4);
+}
 
 };  // Anonymous namespace

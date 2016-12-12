@@ -710,13 +710,11 @@ class OptionDefListParser : public SimpleParser {
 public:
     /// @brief Constructor.
     ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// Stores address family that will be used to make certain decisions
+    /// during parsing.
+    ///
+    /// @param address_family @c AF_INET or @c AF_INET6
     OptionDefListParser(const uint16_t address_family);
-                        //const std::string& dummy,
-                        //ParserContextPtr global_context);
 
     /// @brief Parses a list of option defintions, create them and store in cfg
     ///
