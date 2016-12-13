@@ -98,14 +98,14 @@ public:
     /// @brief Method called before scanning starts on a string.
     ///
     /// @param str string to be parsed
-    /// @param parser_type specifies expected content
+    /// @param type specifies expected content
     void scanStringBegin(const std::string& str, ParserType type);
 
     /// @brief Method called before scanning starts on a file.
     ///
     /// @param f stdio FILE pointer
     /// @param filename file to be parsed
-    /// @param parser_type specifies expected content
+    /// @param type specifies expected content
     void scanFileBegin(FILE* f, const std::string& filename, ParserType type);
 
     /// @brief Method called after the last tokens are scanned.
