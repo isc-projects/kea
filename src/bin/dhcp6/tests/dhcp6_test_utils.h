@@ -26,6 +26,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <hooks/hooks_manager.h>
 
 #include <list>
@@ -637,6 +638,62 @@ public:
     /// @brief Server object under test.
     NakedDhcpv6Srv srv_;
 };
+
+/// @brief Runs parser in JSON mode, useful for parser testing
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseJSON(const std::string& in)
+{
+    isc::dhcp::Parser6Context ctx;
+    return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_JSON));
+}
+
+/// @brief Runs parser in Dhcp6 mode
+///
+/// This is a simplified Dhcp6 mode, so no outer { } and "Dhcp6" is
+/// needed. This format is used by most of the tests.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseDHCP6(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser6Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
+
+/// @brief Runs parser in option definition mode
+///
+/// This function parses specified text as JSON that defines option definitions.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseOPTION_DEF(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser6Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEF));
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

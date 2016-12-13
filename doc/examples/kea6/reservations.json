@@ -81,7 +81,8 @@
               {
                   "name": "nis-servers",
                   "data": "3000:1::234"
-              }]
+              }],
+              "client-classes": [ "special_snowflake", "office" ]
           },
 # This is a bit more advanced reservation. The client with the specified
 # DUID will get a reserved address, a reserved prefix and a hostname.

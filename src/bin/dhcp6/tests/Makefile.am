@@ -24,6 +24,7 @@ AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
 
 CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
@@ -93,6 +94,7 @@ dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 dhcp6_unittests_SOURCES += classify_unittests.cc
+dhcp6_unittests_SOURCES += parser_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 

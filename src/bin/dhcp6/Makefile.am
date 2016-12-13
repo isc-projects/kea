@@ -64,6 +64,10 @@ libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 
+libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
+libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
+libdhcp6_la_SOURCES += parser_context.cc parser_context.h
+
 libdhcp6_la_SOURCES += kea_controller.cc
 
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
@@ -105,3 +109,30 @@ endif
 
 kea_dhcp6dir = $(pkgdatadir)
 kea_dhcp6_DATA = dhcp6.spec
+
+if GENERATE_PARSER
+
+parser: dhcp6_lexer.cc location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h
+	@echo "Flex/bison files regenerated"
+
+# --- Flex/Bison stuff below --------------------------------------------------
+# When debugging grammar issues, it's useful to add -v to bison parameters.
+# bison will generate parser.output file that explains the whole grammar.
+# It can be used to manually follow what's going on in the parser.
+# This is especially useful if yydebug_ is set to 1 as that variable
+# will cause parser to print out its internal state.
+# Call flex with -s to check that the default rule can be suppressed
+# Call bison with -W to get warnings like unmarked empty rules
+# Note C++11 deprecated register still used by flex < 2.6.0
+location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
+	$(YACC) --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
+
+dhcp6_lexer.cc: dhcp6_lexer.ll
+	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h dhcp6_lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif

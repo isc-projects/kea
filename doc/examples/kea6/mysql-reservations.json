@@ -45,7 +45,8 @@
     "name": "kea",
     "user": "kea",
     "password": "kea",
-    "host": "localhost"
+    "host": "localhost",
+    "readonly": true
   },
 
 # Define a subnet with a pool of dynamic addresses and a pool of dynamic

@@ -693,7 +693,8 @@ Dhcpv6SrvTest::configure(const std::string& config) {
 
 void
 Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
-    ElementPtr json = data::Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted

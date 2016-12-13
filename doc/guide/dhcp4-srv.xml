@@ -2978,7 +2978,7 @@ It is merely echoed by the server
 
       <para>
         It is possible to store host reservations in MySQL or PostgreSQL database. See
-        <xref linkend="hosts-storage4"/> for information on how to configure Kea to use
+        <xref linkend="hosts4-storage"/> for information on how to configure Kea to use
         reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
         tools for managing reservations in a database. The Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> provides detailed

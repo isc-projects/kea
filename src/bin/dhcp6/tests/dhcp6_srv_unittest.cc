@@ -75,7 +75,7 @@ const char* CONFIGS[] = {
     "        {"
     "          \"name\": \"subscriber-id\","
     "          \"data\": \"1234\","
-    "          \"csv-format\": False"
+    "          \"csv-format\": false"
     "        } ]"
     " } ],"
     "\"valid-lifetime\": 4000 }",
@@ -1682,7 +1682,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
         "          \"code\": ";
     string config_postfix = ","
         "          \"data\": \"normal_erouter_v6.cm\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
@@ -1704,8 +1704,10 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
     // definition, the config should fail.
     string config_bogus = config_prefix + "99" + config_postfix;
 
-    ElementPtr json_bogus = Element::fromJSON(config_bogus);
-    ElementPtr json_valid = Element::fromJSON(config_valid);
+    ConstElementPtr json_bogus;
+    ASSERT_NO_THROW(json_bogus = parseDHCP6(config_bogus));
+    ConstElementPtr json_valid;
+    ASSERT_NO_THROW(json_valid = parseDHCP6(config_valid));
 
     NakedDhcpv6Srv srv(0);
 

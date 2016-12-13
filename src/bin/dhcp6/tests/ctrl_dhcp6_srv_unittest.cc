@@ -145,7 +145,8 @@ public:
 
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
 
-        ConstElementPtr config = Element::fromJSON(config_txt);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP6(config_txt));
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
 
@@ -321,7 +322,8 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr config = Element::fromJSON(config_txt);
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
 
     // Make sure there are no subnets configured.
     CfgMgr::instance().clear();

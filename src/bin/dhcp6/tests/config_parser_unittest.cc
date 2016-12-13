@@ -30,6 +30,7 @@
 #include "test_data_files_config.h"
 #include "test_libraries.h"
 #include "marker_file.h"
+#include "dhcp6_test_utils.h"
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
@@ -278,25 +279,25 @@ public:
             params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = "38";
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "space") {
             params["name"] = "subscriber-id";
             params["space"] = param_value;
             params["code"] = "38";
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "code") {
             params["name"] = "subscriber-id";
             params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = param_value;
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "data") {
             params["name"] = "subscriber-id";
             params["space"] = DHCP6_OPTION_SPACE;
             params["code"] = "38";
             params["data"] = param_value;
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "csv-format") {
             params["name"] = "subscriber-id";
             params["space"] = DHCP6_OPTION_SPACE;
@@ -431,9 +432,10 @@ public:
     ///         latter case, a failure will have been added to the current test.
     bool
     executeConfiguration(const std::string& config, const char* operation) {
+        ConstElementPtr json;
         ConstElementPtr status;
         try {
-            ElementPtr json = Element::fromJSON(config);
+            json = parseJSON(config);
             status = configureDhcp6Server(srv_, json);
 
         } catch (const std::exception& ex) {
@@ -553,7 +555,7 @@ public:
                                 const std::string& parameter) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json = parseDHCP6(config);
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
@@ -571,7 +573,7 @@ public:
     testInvalidOptionParam(const std::map<std::string, std::string>& params) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(params);
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json = parseDHCP6(config);
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
@@ -672,7 +674,7 @@ public:
         CfgMgr::instance().clear();
 
         // Configure the server.
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json = parseDHCP6(config);
 
         // Make sure that the configuration was successful.
         ConstElementPtr status;
@@ -735,11 +737,11 @@ public:
 // config update.
 TEST_F(Dhcp6ParserTest, version) {
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6("{\"version\": 0}"));
+
     ConstElementPtr x;
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
-                    Element::fromJSON("{\"version\": 0}")));
-
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     // returned value must be 0 (configuration accepted)
     checkResult(x, 0);
 }
@@ -751,26 +753,30 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
     ConstElementPtr x;
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_,
-                    Element::fromJSON("{\"bogus\": 5}")));
+                    parseJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
     checkResult(x, 1);
+
+    // it should be refused by syntax too
+    EXPECT_THROW(parseDHCP6("{\"bogus\": 5}"), Dhcp6ParseError);
 }
 
 /// The goal of this test is to verify if configuration without any
 /// subnets defined can be accepted.
 TEST_F(Dhcp6ParserTest, emptySubnet) {
 
-    ConstElementPtr status;
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ " + genIfaceConfig() + ","
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6("{ " + genIfaceConfig() + ","
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet6\": [  ], "
-                                      "\"valid-lifetime\": 4000 }")));
+                                      "\"valid-lifetime\": 4000 }"));
 
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+                    
     // returned value should be 0 (success)
     checkResult(status, 0);
 }
@@ -778,8 +784,6 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 /// The goal of this test is to verify if defined subnet uses global
 /// parameter timer definitions.
 TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
-
-    ConstElementPtr status;
 
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
@@ -790,8 +794,10 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // check if returned status is OK
@@ -841,7 +847,8 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 
     int cnt = 0; // Number of reconfigurations
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
@@ -899,7 +906,8 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 
     int cnt = 0; // Number of reconfigurations
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
@@ -953,7 +961,8 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsOverlapingIDs) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 1);
@@ -1040,7 +1049,8 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     // CASE 1: Configure 4 subnets, then reconfigure and remove the
     // last one.
 
-    ElementPtr json = Element::fromJSON(config4);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config4));
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
 
@@ -1052,7 +1062,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
 
     // Do the reconfiguration (the last subnet is removed)
-    json = Element::fromJSON(config_first3);
+    ASSERT_NO_THROW(json = parseDHCP6(config_first3));
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
 
@@ -1069,14 +1079,14 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     /// CASE 2: Configure 4 subnets, then reconfigure and remove one
     /// from in between (not first, not last)
 
-    json = Element::fromJSON(config4);
+    ASSERT_NO_THROW(json = parseDHCP6(config4));
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().commit();
 
     // Do reconfiguration
-    json = Element::fromJSON(config_second_removed);
+    ASSERT_NO_THROW(json = parseDHCP6(config_second_removed));
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
 
@@ -1098,8 +1108,6 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 // on a per subnet basis.
 TEST_F(Dhcp6ParserTest, subnetLocal) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1113,8 +1121,10 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -1133,8 +1143,6 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 // interface defined.
 TEST_F(Dhcp6ParserTest, subnetInterface) {
 
-    ConstElementPtr status;
-
     // There should be at least one interface
 
     string config = "{ " + genIfaceConfig() + ","
@@ -1148,8 +1156,10 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
         "\"valid-lifetime\": 4000 }";
     cout << config << endl;
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -1165,8 +1175,6 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 // Subnet6 definition.
 TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
 
-    ConstElementPtr status;
-
     // There should be at least one interface
 
     string config = "{ " + genIfaceConfig() + ","
@@ -1180,8 +1188,10 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
         "\"valid-lifetime\": 4000 }";
     cout << config << endl;
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 1 (configuration error)
@@ -1198,8 +1208,6 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
 // parameter.
 TEST_F(Dhcp6ParserTest, interfaceGlobal) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1211,13 +1219,16 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
         "\"valid-lifetime\": 4000 }";
     cout << config << endl;
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseJSON(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 1 (parse error)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 }
 
 
@@ -1240,7 +1251,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -1281,7 +1293,7 @@ TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseJSON(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -1289,6 +1301,8 @@ TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
     // Returned value should be 1 (parse error)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 }
 
 // This test checks if it is not possible to define a subnet with an
@@ -1305,7 +1319,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -1341,7 +1356,7 @@ TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
                         "\"subnet6\": [ { "
                         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
                         "2001:db8:1::ffff\" } ],"
-                        "    \"rapid-commit\": True,"
+                        "    \"rapid-commit\": true,"
                         "    \"subnet\": \"2001:db8:1::/64\" } ],"
                         "\"valid-lifetime\": 4000 }",
                         true);
@@ -1356,7 +1371,7 @@ TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
                         "\"subnet6\": [ { "
                         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - "
                         "2001:db8:1::ffff\" } ],"
-                        "    \"rapid-commit\": False,"
+                        "    \"rapid-commit\": false,"
                         "    \"subnet\": \"2001:db8:1::/64\" } ],"
                         "\"valid-lifetime\": 4000 }",
                         false);
@@ -1386,8 +1401,8 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
         "    \"subnet\": \"2001:db8:2::/64\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -1426,8 +1441,6 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
 // pool are rejected.
 TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1438,8 +1451,10 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
         "\"valid-lifetime\": 4000 }";
 
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value must be 1 (values error)
@@ -1466,7 +1481,8 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
 
@@ -1505,8 +1521,8 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
         "] }";
 
     // Convert the JSON string into Elements.
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
@@ -1643,8 +1659,8 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         "] }";
 
     // Convert the JSON string into Elements.
-    ElementPtr json = Element::fromJSON(config);
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
@@ -1699,8 +1715,8 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
         "] }";
 
     // Convert the JSON string into Elements.
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
@@ -1743,7 +1759,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
 
     const char *config[] =  {
         // No prefix.
-        "{ \"interfaces-config\": { },"
+        "{ \"interfaces-config\": { \"interfaces\": [ ] },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1757,7 +1773,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No prefix-len.
-        "{ \"interfaces-config\": { },"
+        "{ \"interfaces-config\": { \"interfaces\": [ ] },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1770,7 +1786,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // No delegated-len.
-        "{ \"interfaces-config\": { },"
+        "{ \"interfaces-config\": { \"interfaces\": [ ] },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1783,7 +1799,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "\"valid-lifetime\": 4000 }"
         "] }",
         // Delegated length is too short.
-        "{ \"interfaces-config\": { },"
+        "{ \"interfaces-config\": { \"interfaces\": [ ] },"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1798,11 +1814,11 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         "] }"
         };
 
-    ElementPtr json;
+    ConstElementPtr json;
     int num_msgs = sizeof(config)/sizeof(char*);
     for (unsigned int i = 0; i < num_msgs; i++) {
         // Convert JSON string to Elements.
-        ASSERT_NO_THROW(json = Element::fromJSON(config[i]));
+        ASSERT_NO_THROW(json = parseDHCP6(config[i]));
 
         // Configuration processing should fail without a throw.
         ASSERT_NO_THROW(x = configureDhcp6Server(srv_, json));
@@ -1827,7 +1843,8 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1868,7 +1885,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
     // configuration and should result in removal of the option 100 from the
     // libdhcp++.
     config = "{ }";
-    json = Element::fromJSON(config);
+    json = parseOPTION_DEF(config);
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
@@ -1890,7 +1907,8 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1942,7 +1960,8 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the option definitions do not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -2008,7 +2027,8 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the option definition does not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -2042,11 +2062,12 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -2085,7 +2106,8 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
         "      \"encapsulate\": \"sub-opts-space\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -2123,7 +2145,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2147,7 +2170,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2172,7 +2196,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2197,7 +2222,8 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
         "      \"encapsulate\": \"invalid%space%name\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2220,12 +2246,13 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"valid-space-name\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2250,7 +2277,8 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
         "      \"encapsulate\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2279,7 +2307,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp6\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 100);
@@ -2313,7 +2342,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp6\""
         "  } ]"
         "}";
-    json = Element::fromJSON(config);
+    json = parseOPTION_DEF(config);
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -2335,7 +2364,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp6\""
         "  } ]"
         "}";
-    json = Element::fromJSON(config);
+    json = parseOPTION_DEF(config);
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -2364,7 +2393,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
         "\"option-data\": [ {"
         "    \"name\": \"subscriber-id\","
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"preference\","
@@ -2376,7 +2405,8 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -2438,7 +2468,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
         "    \"option-data\": [ {"
         "        \"name\": \"subscriber-id\","
         "        \"data\": \"ABCDEF0105\","
-        "        \"csv-format\": False"
+        "        \"csv-format\": false"
         "     },"
         "     {"
         "        \"name\": \"preference\","
@@ -2447,7 +2477,8 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -2517,7 +2548,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
         "\"option-data\": [ {"
         "    \"name\": \"subscriber-id\","
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"foo\","
@@ -2536,10 +2567,10 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2612,10 +2643,10 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2670,8 +2701,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
         " } ]"
         "}";
 
-
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
@@ -2715,7 +2745,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"subscriber-id\","
         "          \"data\": \"0102030405060708090A\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        } ]"
         " },"
         " {"
@@ -2724,12 +2754,13 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"user-class\","
         "          \"data\": \"FFFEFDFCFB\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -2793,7 +2824,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
         "        \"option-data\": [ {"
         "            \"name\": \"subscriber-id\","
         "            \"data\": \"0102030405060708090A\","
-        "            \"csv-format\": False"
+        "            \"csv-format\": false"
         "        } ]"
         "    },"
         "    {"
@@ -2801,7 +2832,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
         "        \"option-data\": [ {"
         "            \"name\": \"user-class\","
         "            \"data\": \"FFFEFDFCFB\","
-        "            \"csv-format\": False"
+        "            \"csv-format\": false"
         "        } ]"
         "    } ],"
         "    \"pd-pools\": [ { "
@@ -2811,7 +2842,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
         "        \"option-data\": [ {"
         "            \"name\": \"subscriber-id\","
         "            \"data\": \"112233445566\","
-        "            \"csv-format\": False"
+        "            \"csv-format\": false"
         "        } ]"
         "    },"
         "    {"
@@ -2821,14 +2852,15 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
         "        \"option-data\": [ {"
         "            \"name\": \"user-class\","
         "            \"data\": \"aabbccddee\","
-        "            \"csv-format\": False"
+        "            \"csv-format\": false"
         "        } ]"
         "    } ],"
         "    \"subnet\": \"2001:db8:1::/64\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -2985,7 +3017,7 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
                       sizeof(expected_option_data));
 
     // Bogus values should not be accepted.
-    params["data"] = "bugus";
+    params["data"] = "bogus";
     testInvalidOptionParam(params);
 
     params["data"] = "2";
@@ -3072,7 +3104,7 @@ TEST_F(Dhcp6ParserTest, optionDataUnexpectedPrefix) {
 TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     ConstElementPtr x;
     std::string config = createConfigWithOption("0a0b0C0D", "data");
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseDHCP6(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -3112,10 +3144,10 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // Option code 3 means OPTION_IA_NA.
     params["code"] = "3";
     params["data"] = "12345, 6789, 1516";
-    params["csv-format"] = "True";
+    params["csv-format"] = "true";
 
     std::string config = createConfigWithOption(params);
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseDHCP6(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -3174,14 +3206,14 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
         "    \"space\": \"vendor-4491\","
         "    \"code\": 100,"
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"option-two\","
         "    \"space\": \"vendor-1234\","
         "    \"code\": 100,"
         "    \"data\": \"1234\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " } ],"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
@@ -3189,10 +3221,10 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -3248,7 +3280,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
 
     ConstElementPtr status;
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
@@ -3312,10 +3345,10 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -3365,9 +3398,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
         " } ]"
         "}";
 
-
-    json = Element::fromJSON(config);
-
+    ASSERT_NO_THROW(json = parseDHCP6(config));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -3432,7 +3463,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
 
     // Create the first part of the configuration string.
     string config =
-        "{ \"interfaces-config\": { },"
+        "{ \"interfaces-config\": { \"interfaces\": [] },"
            "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
@@ -3512,8 +3543,10 @@ TEST_F(Dhcp6ParserTest, InvalidLibrary) {
     // Parse a configuration containing a failing library.
     string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
     ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // The status object must not be NULL
@@ -3568,8 +3601,6 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
     ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET6));
     ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET6));
 
-    ConstElementPtr status;
-
     string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"eth0\" ]"
         "},"
@@ -3579,8 +3610,10 @@ TEST_F(Dhcp6ParserTest, selectedInterfaces) {
         "\"valid-lifetime\": 4000 }";
 
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value must be 1 (values error)
@@ -3602,8 +3635,6 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET6));
     ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET6));
 
-    ConstElementPtr status;
-
     // This configuration specifies two interfaces on which server should listen
     // but also includes '*'. This keyword switches server into the
     // mode when it listens on all interfaces regardless of what interface names
@@ -3617,8 +3648,10 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
         "\"valid-lifetime\": 4000 }";
 
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
@@ -3633,8 +3666,6 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
 // This test checks if it is possible to specify relay information
 TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
 
-    ConstElementPtr status;
-
     // A config with relay information.
     string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
@@ -3648,8 +3679,10 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
         "\"preferred-lifetime\": 3000, "
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -3690,7 +3723,8 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -3751,8 +3785,6 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
 // This test checks the ability of the server to parse a configuration
 // containing a full, valid dhcp-ddns (D2ClientConfig) entry.
 TEST_F(Dhcp6ParserTest, d2ClientConfig) {
-    ConstElementPtr status;
-
     // Verify that the D2 configuraiton can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
@@ -3787,10 +3819,11 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
-    ElementPtr config;
-    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_str));
 
     // Pass the configuration in for parsing.
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
 
     // check if returned status is OK
@@ -3823,8 +3856,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
 // This test checks the ability of the server to handle a configuration
 // containing an invalid dhcp-ddns (D2ClientConfig) entry.
 TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
-    ConstElementPtr status;
-
     // Configuration string with an invalid D2 client config,
     // "server-ip" is invalid.
     string config_str = "{ " + genIfaceConfig() + ","
@@ -3849,10 +3880,11 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
-    ElementPtr config;
-    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_str));
 
     // Configuration should not throw, but should fail.
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
 
     // check if returned status is failed.
@@ -3965,7 +3997,8 @@ TEST_F(Dhcp6ParserTest, reservations) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -4120,7 +4153,8 @@ TEST_F(Dhcp6ParserTest, reservationWithOptionDefinition) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 0);
@@ -4173,10 +4207,12 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     checkResult(x, 1);
+
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 
     // Case 2: DUID and HW Address both specified.
     config = "{ " + genIfaceConfig() + ","
@@ -4200,7 +4236,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    json = parseDHCP6(config);
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -4227,7 +4263,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    json = parseDHCP6(config);
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -4260,7 +4296,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
         "\"preferred-lifetime\": 3000,"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    json = parseDHCP6(config);
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -4275,17 +4311,19 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 /// rfc4580 = subscriber-id).
 TEST_F(Dhcp6ParserTest, macSources) {
 
-    ConstElementPtr status;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\","
+                   "\"client-link-addr-option\", \"remote-id\", \"subscriber-id\"],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ " + genIfaceConfig() + ","
-                          "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\","
-                          "\"client-link-addr-option\", \"remote-id\", \"subscriber-id\"],"
-                          "\"preferred-lifetime\": 3000,"
-                          "\"rebind-timer\": 2000, "
-                          "\"renew-timer\": 1000, "
-                          "\"subnet6\": [  ], "
-                          "\"valid-lifetime\": 4000 }")));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -4305,18 +4343,19 @@ TEST_F(Dhcp6ParserTest, macSources) {
 
 /// The goal of this test is to verify that MAC sources configuration can be
 /// empty.
+/// Note the Dhcp6 parser requires the list to NOT be empty?!
 TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
 
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ " + genIfaceConfig() + ","
-                                      "\"mac-sources\": [ ],"
-                                      "\"preferred-lifetime\": 3000,"
-                                      "\"rebind-timer\": 2000, "
-                                      "\"renew-timer\": 1000, "
-                                      "\"subnet6\": [  ], "
-                                      "\"valid-lifetime\": 4000 }")));
+                    parseJSON("{ " + genIfaceConfig() + ","
+                              "\"mac-sources\": [ ],"
+                              "\"preferred-lifetime\": 3000,"
+                              "\"rebind-timer\": 2000, "
+                              "\"renew-timer\": 1000, "
+                              "\"subnet6\": [  ], "
+                              "\"valid-lifetime\": 4000 }")));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -4329,17 +4368,17 @@ TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
 /// only use valid parameters.
 TEST_F(Dhcp6ParserTest, macSourcesBogus) {
 
-    ConstElementPtr status;
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ " + genIfaceConfig() + ","
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6("{ " + genIfaceConfig() + ","
                                       "\"mac-sources\": [ \"from-wire\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet6\": [  ], "
-                                      "\"valid-lifetime\": 4000 }")));
+                                      "\"valid-lifetime\": 4000 }"));
 
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     // returned value should be 1 (failure)
     checkResult(status, 1);
 }
@@ -4381,10 +4420,11 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ConstElementPtr status;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON(HR_CONFIG)));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -4424,16 +4464,18 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
 /// Relay Supplied options (specified as numbers).
 TEST_F(Dhcp6ParserTest, rsooNumbers) {
 
-    ConstElementPtr status;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"relay-supplied-options\": [ \"10\", \"20\", \"30\" ],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ " + genIfaceConfig() + ","
-                          "\"relay-supplied-options\": [ \"10\", \"20\", \"30\" ],"
-                          "\"preferred-lifetime\": 3000,"
-                          "\"rebind-timer\": 2000, "
-                          "\"renew-timer\": 1000, "
-                          "\"subnet6\": [  ], "
-                          "\"valid-lifetime\": 4000 }")));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -4457,16 +4499,18 @@ TEST_F(Dhcp6ParserTest, rsooNumbers) {
 /// Relay Supplied options (specified as names).
 TEST_F(Dhcp6ParserTest, rsooNames) {
 
-    ConstElementPtr status;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"relay-supplied-options\": [ \"dns-servers\", \"remote-id\" ],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
 
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ " + genIfaceConfig() + ","
-                          "\"relay-supplied-options\": [ \"dns-servers\", \"remote-id\" ],"
-                          "\"preferred-lifetime\": 3000,"
-                          "\"rebind-timer\": 2000, "
-                          "\"renew-timer\": 1000, "
-                          "\"subnet6\": [  ], "
-                          "\"valid-lifetime\": 4000 }")));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -4505,32 +4549,36 @@ TEST_F(Dhcp6ParserTest, rsooNames) {
 }
 
 TEST_F(Dhcp6ParserTest, rsooNegativeNumber) {
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ " + genIfaceConfig() + ","
-                          "\"relay-supplied-options\": [ \"80\", \"-2\" ],"
-                          "\"preferred-lifetime\": 3000,"
-                          "\"rebind-timer\": 2000, "
-                          "\"renew-timer\": 1000, "
-                          "\"subnet6\": [  ], "
-                          "\"valid-lifetime\": 4000 }")));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"relay-supplied-options\": [ \"80\", \"-2\" ],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
 
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     // returned value should be 0 (success)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 TEST_F(Dhcp6ParserTest, rsooBogusName) {
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-        Element::fromJSON("{ " + genIfaceConfig() + ","
-                          "\"relay-supplied-options\": [ \"bogus\", \"dns-servers\" ],"
-                          "\"preferred-lifetime\": 3000,"
-                          "\"rebind-timer\": 2000, "
-                          "\"renew-timer\": 1000, "
-                          "\"subnet6\": [  ], "
-                          "\"valid-lifetime\": 4000 }")));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"relay-supplied-options\": [ \"bogus\", \"dns-servers\" ],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
 
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     // returned value should be 0 (success)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -4539,13 +4587,13 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
 /// Check that the decline-probation-period value can be set properly.
 TEST_F(Dhcp6ParserTest, declineTimerDefault) {
 
-    ConstElementPtr status;
-
     string config_txt = "{ " + genIfaceConfig() + ","
         "\"subnet6\": [  ] "
         "}";
-    ElementPtr config = Element::fromJSON(config_txt);
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
 
     // returned value should be 0 (success)
@@ -4559,15 +4607,15 @@ TEST_F(Dhcp6ParserTest, declineTimerDefault) {
 
 /// Check that the decline-probation-period value can be set properly.
 TEST_F(Dhcp6ParserTest, declineTimer) {
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"decline-probation-period\": 12345,"
         "\"subnet6\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 0 (success)
@@ -4581,15 +4629,14 @@ TEST_F(Dhcp6ParserTest, declineTimer) {
 
 /// Check that an incorrect decline-probation-period value will be caught.
 TEST_F(Dhcp6ParserTest, declineTimerError) {
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"decline-probation-period\": \"soon\","
         "\"subnet6\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseJSON(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
 
     // returned value should be 1 (error)
@@ -4597,6 +4644,9 @@ TEST_F(Dhcp6ParserTest, declineTimerError) {
 
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // Check that the Dhcp6 parser catches the type error
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 }
 
 // Check that configuration for the expired leases processing may be
@@ -4616,7 +4666,8 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessing) {
         "\"subnet6\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -4656,7 +4707,8 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessingError) {
         "\"subnet6\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -4692,9 +4744,10 @@ TEST_F(Dhcp6ParserTest, validClientClassDictionary) {
         "    \"subnet\": \"2001:db8:1::/64\" } ], \n"
         "\"valid-lifetime\": 4000 } \n";
 
-    ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -4733,12 +4786,14 @@ TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json = parseJSON(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+
+    EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 }
 
 // Test verifies that regular configuration does not provide any user context
