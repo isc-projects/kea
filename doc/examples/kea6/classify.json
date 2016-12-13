@@ -3,7 +3,7 @@
 
 { "Dhcp6":
 
-{ 
+{
 # Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
@@ -26,8 +26,8 @@
       "name": "lab",
       "test": "pkt.iface == 'ethX'",
       "option-data": [{
-          "name": "dns-servers",
-          "data": "2001:db8::1"
+	  "name": "dns-servers",
+	  "data": "2001:db8::1"
       }]
   },
 
@@ -40,36 +40,36 @@
 
 # Let's pick cable modems. In this simple example we'll assume the device
 # is a cable modem if it sends a vendor option with enterprise-id equal
-# to 4491.    
+# to 4491.
   {
       "name": "cable-modems",
       "test": "vendor.enterprise == 4491"
-  },
+  }
 
   ],
-    
+
 
 # The following list defines subnets. Each subnet consists of at
 # least subnet and pool entries.
-  "subnet6": [ 
+  "subnet6": [
     {
-        "pools": [ { "pool": "2001:db8:1::/80" } ],
-        "subnet": "2001:db8:1::/64",
-        "client-class": "cable-modems",
-        "interface": "ethX"
+	"pools": [ { "pool": "2001:db8:1::/80" } ],
+	"subnet": "2001:db8:1::/64",
+	"client-class": "cable-modems",
+	"interface": "ethX"
     },
 # The following subnet contains a class reservation for a client using
 # DUID 01:02:03:04:05:0A:0B:0C:0D:0E. This client will always be assigned
 # to this class.
     {
-        "pools": [ { "pool": "2001:db8:2::/80" } ],
-        "subnet": "2001:db8:2::/64",
-        "reservations": [
-        {
-            "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
-            "client-classes": [ "cable-modems" ]
-        } ],
-        "interface": "ethX"
+	"pools": [ { "pool": "2001:db8:2::/80" } ],
+	"subnet": "2001:db8:2::/64",
+	"reservations": [
+	{
+	    "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+	    "client-classes": [ "cable-modems" ]
+	} ],
+	"interface": "ethX"
     }
   ]
 },
@@ -78,18 +78,17 @@
 # informational level (info, warn, error and fatal) should be logged to stdout.
 "Logging": {
     "loggers": [
-        {
-            "name": "kea-dhcp6",
-            "output_options": [
-                {
-                    "output": "stdout"
-                }
-            ],
-            "debuglevel": 0,
-            "severity": "INFO"
-        }
+	{
+	    "name": "kea-dhcp6",
+	    "output_options": [
+		{
+		    "output": "stdout"
+		}
+	    ],
+	    "debuglevel": 0,
+	    "severity": "INFO"
+	}
     ]
 }
 
 }
-
