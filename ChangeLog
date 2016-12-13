@@ -1,3 +1,11 @@
+1196.	[func]		tomek, fdupont
+	Dhcp6 parser migrated to bison. This yields a number of user
+	visible changes:
+	- better comment handling (bash, C, C++ style comments)
+	- file includes now supported
+	- better syntax checking
+	(Trac #5036, git 4c5902da95a5228275cdb151b357864cfa9c31f5)
+
 1195.	[build]		fdupont
 	Altered to compile in C++ 2011 standard mode. Also replace (most)
 	instances of the deprecated std::auto_ptr with std::unique_ptr.
