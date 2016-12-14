@@ -57,6 +57,16 @@ clean-cpp-coverage:
 perform-coverage: check
 
 report-cpp-coverage:
+if HAVE_BOTAN
+BOTAN_PATH=botan/\*
+else
+BOTAN_PATH=
+endif
+if HAVE_OPENSSL
+OPENSSL_PATH=openssl/\*
+else
+OPENSSL_PATH=
+endif
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --capture --directory . --output-file all.info ; \
 		$(LCOV) --remove all.info \
@@ -66,20 +76,16 @@ report-cpp-coverage:
 			c++/4.4\*/ext/\* \
 			c++/4.4\*/\*-\*/bits/\* \
 			boost/\* \
-if HAVE_BOTAN
-			botan/\* \
-endif
 			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			log4cplus/\* \
-if HAVE_OPENSSL
-			openssl/\* \
-endif
 			unittests/\* \
 			\*_unittests.cc \
 			\*_unittest.cc \
 			\*_unittests.h \
+			$(BOTAN_PATH) \
+			$(OPENSSL_PATH) \
 			--output report.info ; \
 		sed -e "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" < report.info > report.info.2 ; \
 		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info.2 ; \
@@ -90,6 +96,8 @@ endif
 	fi
 
 # for c++ test coverage
+.NOTPARALLEL: coverage
+
 coverage: clean-coverage perform-coverage report-coverage
 
 clean-coverage: clean-cpp-coverage
@@ -98,8 +106,8 @@ report-coverage: report-cpp-coverage
 
 # for static C++ check using cppcheck (when available)
 cppcheck:
-	cppcheck -I./src/lib -I./src/bin --enable=all --suppressions \
-		src/cppcheck-suppress.lst --inline-suppr \
+	cppcheck -I./src/lib -I./src/bin --enable=all \
+		--suppressions-list=src/cppcheck-suppress.lst --inline-suppr \
 		--quiet --error-exitcode=1 \
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
