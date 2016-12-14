@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -148,6 +149,17 @@ HostPtr GenericHostDataSourceTest::initializeHost6(std::string address,
     return (host);
 }
 
+bool
+GenericHostDataSourceTest::reservationExists(const IPv6Resrv& resrv,
+                                             const IPv6ResrvRange& range) {
+    for (IPv6ResrvIterator it = range.first; it != range.second; ++it) {
+        if (resrv == it->second) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 GenericHostDataSourceTest::compareHwaddrs(const ConstHostPtr& host1,
                                           const ConstHostPtr& host2,
@@ -259,6 +271,24 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     // Compare DHCPv4 and DHCPv6 options.
     compareOptions(host1->getCfgOption4(), host2->getCfgOption4());
     compareOptions(host1->getCfgOption6(), host2->getCfgOption6());
+}
+
+bool GenericHostDataSourceTest::compareHostsForSort4(
+    const ConstHostPtr& host1,
+    const ConstHostPtr& host2) {
+    if (host1->getIPv4SubnetID() < host2->getIPv4SubnetID()) {
+        return true;
+    }
+    return false;
+}
+
+bool GenericHostDataSourceTest::compareHostsForSort6(
+    const ConstHostPtr& host1,
+    const ConstHostPtr& host2) {
+    if (host1->getIPv6SubnetID() < host2->getIPv6SubnetID()) {
+        return true;
+    }
+    return false;
 }
 
 DuidPtr
@@ -817,6 +847,12 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Verify that the values returned are proper.
     int i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are eventually implemented as ordered in the Cassandra host data
+        // source.
+        std::sort(all_by_addr.begin(), all_by_addr.end(), compareHostsForSort4);
+    }
     for (ConstHostCollection::const_iterator it = all_by_addr.begin();
          it != all_by_addr.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -831,6 +867,12 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Check that the returned values are as expected.
     i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are eventually implemented as ordered in the Cassandra host data
+        // source.
+        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort4);
+    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -952,6 +994,11 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
 
     // Check that the returned values are as expected.
     int i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are implemented as ordered in the Cassandra host data source.
+        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort6);
+    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("0.0.0.0"), (*it)->getIPv4Reservation());
@@ -1463,6 +1510,76 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+void
+GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Make sure the variable part of the generated address fits in a 16-bit
+    // field.
+    ASSERT_LE(nOfHosts, 0xfffdU);
+
+    // Create hosts.
+    std::vector<HostPtr> hosts;
+    hosts.reserve(nOfHosts);
+    for (unsigned int i = 0x0001U; i < 0x0001U + nOfHosts; ++i) {
+        /// @todo: Check if this is written in hexadecimal format.
+        std::stringstream ss;
+        std::string n_host;
+        ss << std::hex << i;
+        ss >> n_host;
+
+        const std::string prefix = std::string("2001:db8::") + n_host;
+        hosts.push_back(initializeHost6(prefix, Host::IDENT_HWADDR, false));
+        IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+        EXPECT_TRUE(reservationExists(
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress(prefix)), range));
+    }
+    const size_t hosts_size = hosts.size();
+
+    std::cout << "Starting to add hosts..." << std::endl;
+    struct timespec start, end;
+    start = (struct timespec){0, 0};
+    end = (struct timespec){0, 0};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
+    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); it++) {
+        ASSERT_NO_THROW(hdsptr_->add(*it));
+    }
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
+    double s = static_cast<double>(end.tv_sec - start.tv_sec) +
+               static_cast<double>(end.tv_nsec - start.tv_nsec) / 1e9;
+    std::cout << "Adding " << hosts_size
+              << (hosts_size == 1 ? " host" : " hosts") << " took "
+              << std::fixed << std::setprecision(2) << s << " seconds."
+              << std::endl;
+
+    // And then try to retrieve them back.
+    std::cout << "Starting to retrieve hosts..." << std::endl;
+    start = (struct timespec){0, 0};
+    end = (struct timespec){0, 0};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
+    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); it++) {
+        IPv6ResrvRange range = (*it)->getIPv6Reservations();
+        // This get6() call is particularly useful to test because it involves a
+        // subquery for MySQL and PostgreSQL and two separate queries for
+        // Cassandra.
+        ConstHostPtr from_hds =
+            hdsptr_->get6(range.first->second.getPrefix(), 128);
+        ASSERT_TRUE(from_hds);
+        compareHosts(*it, from_hds);
+    }
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
+    s = static_cast<double>(end.tv_sec - start.tv_sec) +
+        static_cast<double>(end.tv_nsec - start.tv_nsec) / 1e9;
+    std::cout << "Retrieving " << hosts_size
+              << (hosts_size == 1 ? " host" : " hosts") << " took "
+              << std::fixed << std::setprecision(2) << s << " seconds."
+              << std::endl;
+}
+
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
