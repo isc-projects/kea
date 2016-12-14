@@ -1302,7 +1302,7 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
-                    if ! test -f "$dir/lib/libgtests.a"; then
+                    if ! test -f "$dir/lib/libgtest.a"; then
                         AC_MSG_WARN([Found Google Test include but not the library in $dir.])
                         continue
                     fi
@@ -1348,7 +1348,7 @@ if test $enable_gtest != "no"; then
     	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
-	    
+
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
