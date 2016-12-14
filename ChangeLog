@@ -2401,7 +2401,7 @@ bind10-1.2.0rc1 released on April 8, 2014
 776.	[func]		tomek
 	b10-dhcp4 and b10-dhcp6 now support using PostgreSQL as the backend
 	for storing lease data.  This backend is enabled by specifying
-	--with-dhcp-pgsql on the "configure" command line. Without this
+	--with-pgsql on the "configure" command line. Without this
 	switch the PostgreSQL backend is not compiled leaving BIND 10 able to
 	be built on systems without PostgreSQL installed.  Thanks to David
 	Carlier who contributed the initial patches for this work.
@@ -4330,7 +4330,7 @@ bind10-devel-20121115 released on November 15, 2012
 	Add initial version of a MySQL backend for the DHCP code.  This
 	implements the basic IPv6 lease access functions - add lease, delete
 	lease and update lease.  The backend is enabled by specifying
-	--with-dhcp-mysql on the "configure" command line: without this
+	--with-mysql on the "configure" command line: without this
 	switch, the MySQL code is not compiled, so leaving BIND 10 able to
 	be built on systems without MySQL installed.
 	(Trac #2342, git c7defffb89bd0f3fdd7ad2437c78950bcb86ad37)
