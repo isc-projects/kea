@@ -44,7 +44,7 @@
 -- -----------------------------------------------------
 -- Table `lease4`
 -- -----------------------------------------------------
-CREATE TABLE lease4 (
+CREATE TABLE IF NOT EXISTS lease4 (
     address int,
     hwaddr blob,
     client_id blob,
@@ -59,11 +59,11 @@ CREATE TABLE lease4 (
 );
 
 -- Create search indexes for lease4 table
-CREATE INDEX lease4index1 ON lease4 (client_id);
-CREATE INDEX lease4index2 ON lease4 (subnet_id);
-CREATE INDEX lease4index3 ON lease4 (hwaddr);
-CREATE INDEX lease4index4 ON lease4 (expire);
-CREATE INDEX lease4index5 ON lease4 (state);
+CREATE INDEX IF NOT EXISTS lease4index1 ON lease4 (client_id);
+CREATE INDEX IF NOT EXISTS lease4index2 ON lease4 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease4index3 ON lease4 (hwaddr);
+CREATE INDEX IF NOT EXISTS lease4index4 ON lease4 (expire);
+CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
@@ -71,7 +71,7 @@ CREATE INDEX lease4index5 ON lease4 (state);
 -- -----------------------------------------------------
 -- Table `lease6`
 -- -----------------------------------------------------
-CREATE TABLE lease6 (
+CREATE TABLE IF NOT EXISTS lease6 (
     address varchar,
     duid blob,
     valid_lifetime bigint,
@@ -92,12 +92,12 @@ CREATE TABLE lease6 (
 );
 
 -- Create search indexes for lease6 table
-CREATE INDEX lease6index1 ON lease6 (lease_type);
-CREATE INDEX lease6index2 ON lease6 (duid);
-CREATE INDEX lease6index3 ON lease6 (iaid);
-CREATE INDEX lease6index4 ON lease6 (subnet_id);
-CREATE INDEX lease6index5 ON lease6 (expire);
-CREATE INDEX lease6index6 ON lease6 (state);
+CREATE INDEX IF NOT EXISTS lease6index1 ON lease6 (lease_type);
+CREATE INDEX IF NOT EXISTS lease6index2 ON lease6 (duid);
+CREATE INDEX IF NOT EXISTS lease6index3 ON lease6 (iaid);
+CREATE INDEX IF NOT EXISTS lease6index4 ON lease6 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease6index5 ON lease6 (expire);
+CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 
 -- ... and a definition of lease6 types.  This table is a convenience for
 -- users of the database - if they want to view the lease table and use the
@@ -107,7 +107,7 @@ CREATE INDEX lease6index6 ON lease6 (state);
 -- -----------------------------------------------------
 -- Table `lease6_types`
 -- -----------------------------------------------------
-CREATE TABLE lease6_types (
+CREATE TABLE IF NOT EXISTS lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
     PRIMARY KEY (lease_type)
@@ -125,7 +125,7 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- -----------------------------------------------------
 -- Table `lease_hwaddr_source`
 -- -----------------------------------------------------
-CREATE TABLE lease_hwaddr_source (
+CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
     PRIMARY KEY (hwaddr_source)
@@ -158,7 +158,7 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE
 -- -----------------------------------------------------
 -- Table `lease_state`
 -- -----------------------------------------------------
-CREATE TABLE lease_state (
+CREATE TABLE IF NOT EXISTS lease_state (
     state int,
     name varchar,
     PRIMARY KEY (state)
@@ -176,7 +176,7 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- -----------------------------------------------------
 -- Table `schema_version`
 -- -----------------------------------------------------
-CREATE TABLE schema_version (
+CREATE TABLE IF NOT EXISTS schema_version (
     version int,
     minor int,
     PRIMARY KEY (version)
@@ -191,7 +191,7 @@ INSERT INTO schema_version (version, minor) VALUES (1, 0);
 -- -----------------------------------------------------
 -- Table `host_reservations`
 -- -----------------------------------------------------
-CREATE TABLE host_reservations (
+CREATE TABLE IF NOT EXISTS host_reservations (
     id bigint,
     host_identifier blob,
     host_identifier_type int,
@@ -215,13 +215,13 @@ CREATE TABLE host_reservations (
     option_subnet_id int,
     PRIMARY KEY (id)
 );
-CREATE INDEX host_reservationsindex1 ON host_reservations (host_identifier);
-CREATE INDEX host_reservationsindex2 ON host_reservations (host_identifier_type);
-CREATE INDEX host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
-CREATE INDEX host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
-CREATE INDEX host_reservationsindex5 ON host_reservations (host_ipv4_address);
-CREATE INDEX host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
-CREATE INDEX host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
+CREATE INDEX IF NOT EXISTS host_reservationsindex1 ON host_reservations (host_identifier);
+CREATE INDEX IF NOT EXISTS host_reservationsindex2 ON host_reservations (host_identifier_type);
+CREATE INDEX IF NOT EXISTS host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ipv4_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
 DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);

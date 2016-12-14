@@ -18,11 +18,8 @@ DROP TABLE IF EXISTS lease4;
 DROP TABLE IF EXISTS lease6;
 DROP TABLE IF EXISTS lease6_types;
 DROP TABLE IF EXISTS lease_hwaddr_source;
-DROP TABLE IF EXISTS schema_version;
-DROP TABLE IF EXISTS ipv6_reservations;
-DROP TABLE IF EXISTS hosts;
-DROP TABLE IF EXISTS host_identifier_type;
 DROP TABLE IF EXISTS lease_state;
+DROP TABLE IF EXISTS schema_version;
 DROP TABLE IF EXISTS host_reservations;
 
 DROP INDEX IF EXISTS lease4index1;
