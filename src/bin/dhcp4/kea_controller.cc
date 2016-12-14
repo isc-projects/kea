@@ -9,6 +9,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/parser_context.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 
@@ -52,7 +53,8 @@ void configure(const std::string& file_name) {
         }
 
         // Read contents of the file and parse it as JSON
-        json = isc::data::Element::fromJSONFile(file_name, true);
+        Parser4Context parser;
+        json = parser.parseFile(file_name, Parser4Context::PARSER_DHCP4);
         if (!json) {
             isc_throw(isc::BadValue, "no configuration found");
         }
