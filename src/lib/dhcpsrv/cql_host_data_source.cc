@@ -1017,28 +1017,22 @@ CqlHostExchange::retrieve() {
                           host_identifier_type, ipv4_subnet_id, ipv6_subnet_id,
                           ipv4_reservation, hostname_,
                           host_ipv4_client_classes_, host_ipv6_client_classes_);
-    try{
-        host->setHostId(id);
+    host->setHostId(id);
 
-        const IPv6Resrv reservation = retrieveReservation();
-        if (reservation != NULL_IPV6_RESERVATION &&
-            !host->hasReservation(reservation)) {
-            host->addReservation(reservation);
-        }
+    const IPv6Resrv reservation = retrieveReservation();
+    if (reservation != NULL_IPV6_RESERVATION &&
+        !host->hasReservation(reservation)) {
+        host->addReservation(reservation);
+    }
 
-        OptionDescriptorPtr option_descriptor_ptr = retrieveOption();
-        if (option_descriptor_ptr) {
-            if (option_descriptor_ptr->option_->getUniverse() == Option::V4) {
-                host->getCfgOption4()->add(*option_descriptor_ptr, option_space_);
-            } else if (option_descriptor_ptr->option_->getUniverse() ==
-                       Option::V6) {
-                host->getCfgOption6()->add(*option_descriptor_ptr, option_space_);
-            }
+    OptionDescriptorPtr option_descriptor_ptr = retrieveOption();
+    if (option_descriptor_ptr) {
+        if (option_descriptor_ptr->option_->getUniverse() == Option::V4) {
+            host->getCfgOption4()->add(*option_descriptor_ptr, option_space_);
+        } else if (option_descriptor_ptr->option_->getUniverse() ==
+                   Option::V6) {
+            host->getCfgOption6()->add(*option_descriptor_ptr, option_space_);
         }
-    } catch (const std::exception& exception) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_CQL_HOST_RETRIEVE_ERROR)
-            .arg(exception.what());
-        throw;
     }
 
     return reinterpret_cast<void*>(host);
@@ -1374,6 +1368,9 @@ CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {
 
 void
 CqlHostDataSourceImpl::add(const HostPtr& host) {
+    // Start transaction.
+    CqlTransaction transaction(dbconn_);
+
     // Get option space names and vendor space names and combine them within a
     // single list.
     // For IPv4:
@@ -1407,6 +1404,7 @@ CqlHostDataSourceImpl::add(const HostPtr& host) {
         insertHostWithReservations(host, NULL, option_spaces4, cfg_option4,
                                    option_spaces6, cfg_option6);
     }
+    transaction.commit();
 }
 
 ConstHostPtr

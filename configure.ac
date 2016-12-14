@@ -1666,6 +1666,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/cql/Makefile
+                 src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])
