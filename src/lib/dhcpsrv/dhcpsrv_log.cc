@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the NSAS
 
+#include <config.h>
+
 #include "dhcpsrv/dhcpsrv_log.h"
 
 namespace isc {

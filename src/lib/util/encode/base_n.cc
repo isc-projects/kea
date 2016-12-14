@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <util/encode/base32hex_from_binary.h>
 #include <util/encode/binary_from_base32hex.h>
 #include <util/encode/base16_from_binary.h>

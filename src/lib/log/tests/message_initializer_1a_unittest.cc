@@ -9,6 +9,8 @@
 // checked.  This tests that merely declaring the MessageInitializer object
 // is enough to include the definitions in the global dictionary.
 
+#include <config.h>
+
 #include <log/message_initializer.h>
 
 using namespace isc::log;

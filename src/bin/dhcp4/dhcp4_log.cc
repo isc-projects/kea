@@ -7,6 +7,8 @@
 /// @file dhcp4_log.cc
 /// Contains the loggers used by the DHCPv4 server component.
 
+#include <config.h>
+
 #include <dhcp4/dhcp4_log.h>
 
 namespace isc {
