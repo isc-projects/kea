@@ -532,7 +532,7 @@ public:
     void testLeaseForIA(const Reservation& r, size_t& address_count,
                         size_t& prefix_count);
 
-    /// @brief Checks if the client obtined lease for specified hint.
+    /// @brief Checks if the client obtained lease for specified hint.
     ///
     /// The hint belongs to a specific IA (identified by IAID) and is expected
     /// to be returned in this IA by the server.
@@ -1559,7 +1559,7 @@ TEST_F(HostTest, appendReservationDuringRenew) {
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:2::"), 64));
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64));
 
-    // Make sure that the replaced leases have been returned with zero liftimes.
+    // Make sure that the replaced leases have been returned with zero lifetimes.
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(dynamic_address_lease));
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
 
@@ -1578,7 +1578,7 @@ TEST_F(HostTest, appendReservationDuringRenew) {
     // allocated once, i.e. 6 + 6 = 12.
     ASSERT_EQ(12, client_.getLeaseNum());
 
-    // All removed leases should be returned with zero liftimes.
+    // All removed leases should be returned with zero lifetimes.
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::1")));
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::2")));
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::3")));
@@ -1670,7 +1670,7 @@ TEST_F(HostTest, insertReservationDuringRenew) {
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3000:1:3::"), 64,
                                           IAID(6)));
 
-    // Make sure that the replaced leases have been returned with zero liftimes.
+    // Make sure that the replaced leases have been returned with zero lifetimes.
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(dynamic_address_lease));
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForPrefix(dynamic_prefix_lease, 64));
 }
@@ -1737,7 +1737,7 @@ TEST_F(HostTest, multipleIAsConflict) {
     ASSERT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
                                            IAID(1)));
     // The address "2001:db8:1::1" was hijacked by another client so it
-    // must not be assigned to thsi client.
+    // must not be assigned to this client.
     ASSERT_FALSE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::1")));
     // This client should have got an address from the dynamic pool excluding
     // two addresses already assigned, i.e. excluding "2001:db8:1::1" and

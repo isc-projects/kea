@@ -59,19 +59,19 @@ void StatsMgr::addValue(const std::string& name, const std::string& value) {
 
 ObservationPtr StatsMgr::getObservation(const std::string& name) const {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->get(name));
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->add(stat));
 }
 
 bool StatsMgr::deleteObservation(const std::string& name) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->del(name));
 }
 

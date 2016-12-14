@@ -427,7 +427,7 @@ public:
     // in a client request correctly, according to the replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use client-name-replacment parameter - for
+    // @param mode - value to use client-name-replacement parameter - for
     // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
     // "\"NEVER\"".  This allows us to also pass in boolean literals which
     // are unquoted.
@@ -568,7 +568,7 @@ public:
     /// @param len - expected lease length in the NCR
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
-    /// equal to CLTT plus lease lenght.
+    /// equal to CLTT plus lease length.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -1462,7 +1462,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
 // Test verifies that the server properly generates a FQDN when the client
 // FQDN name is blank, whether or not DDNS updates are enabled.  It also
 // verifies that the lease is only in the database following a DHCPREQUEST and
-// that the lesae contains the generated FQDN.
+// that the lease contains the generated FQDN.
 TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     isc::asiolink::IOAddress expected_address("10.0.0.10");

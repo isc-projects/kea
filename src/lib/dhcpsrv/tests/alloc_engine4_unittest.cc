@@ -512,7 +512,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
                                sizeof(hwaddr2), 495, 100, 200, now,
                                subnet_->getID()));
-    // Make a copy of the lease, so as we can comapre that with the old lease
+    // Make a copy of the lease, so as we can compare that with the old lease
     // instance returned by the allocation engine.
     Lease4 original_lease(*lease);
 
@@ -714,7 +714,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     testStatistics(stat2, 1001);
 }
 
-// This test checks that the Allocation Engine correcly identifies the
+// This test checks that the Allocation Engine correctly identifies the
 // existing client's lease in the lease database, using the client
 // identifier and HW address.
 TEST_F(AllocEngine4Test, identifyClientLease) {
@@ -1652,8 +1652,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
     ctx.addHostIdentifier(Host::IDENT_DUID, clientid_->getDuid());
 
-    // There is no reservation in the database so no host should be
-    // retruned.
+    // There is no reservation in the database so no host should be returned.
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_FALSE(ctx.host_);
 

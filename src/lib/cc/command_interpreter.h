@@ -73,7 +73,7 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 /// @brief Creates a standard config/command level answer message
 ///
 /// @param status_code The return code (0 for success)
-/// @param status textual represenation of the status (used mostly for errors)
+/// @param status textual representation of the status (used mostly for errors)
 /// @param arg The optional argument for the answer. This can be of
 ///        any Element type. May be NULL.
 /// @return Standard command/config answer message

@@ -52,7 +52,7 @@ const char* values[] = {
     "LOG_PREFIX_INVALID_ARG", "line %1: $PREFIX directive has an invalid argument ('%2')",
     "LOG_READING_LOCAL_FILE", "reading local message file %1",
     "LOG_READ_ERROR", "error reading from message file %1: %2",
-    "LOG_UNRECOGNIZED_DIRECTIVE", "line %1: unrecogniszd directive '%2'",
+    "LOG_UNRECOGNIZED_DIRECTIVE", "line %1: unrecognized directive '%2'",
     "LOG_WRITE_ERROR", "error writing to %1: %2",
     NULL
 };

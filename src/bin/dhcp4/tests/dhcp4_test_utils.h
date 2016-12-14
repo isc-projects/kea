@@ -421,7 +421,7 @@ public:
     ///
     /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,
     /// then creates a message of specified type and sends it to the
-    /// server and then checks whether expected statstics were set
+    /// server and then checks whether expected statistics were set
     /// appropriately.
     ///
     /// @param srv the DHCPv4 server to be used

@@ -139,7 +139,7 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     /// Cleans up statistics after the test.
     ~InformTest() {

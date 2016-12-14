@@ -129,7 +129,7 @@ protected:
         EXPECT_TRUE(hosts[0]->getCfgOption6()->empty());
     }
 
-    /// @brief This test verfies that the parser can parse a DHCPv4
+    /// @brief This test verifies that the parser can parse a DHCPv4
     /// reservation configuration including a specific identifier.
     ///
     /// @param identifier_name Identifier name.
@@ -163,7 +163,7 @@ protected:
         EXPECT_TRUE(hosts[0]->getHostname().empty());
     }
 
-    /// @brief This test verfies that the parser returns an error when
+    /// @brief This test verifies that the parser returns an error when
     /// configuration is invalid.
     ///
     /// @param config JSON configuration to be tested.
@@ -215,7 +215,7 @@ HostReservationParserTest::TearDown() {
     CfgMgr::instance().clear();
 }
 
-// This test verfies that the parser can parse the reservation entry for
+// This test verifies that the parser can parse the reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp4HWaddr) {
     testIdentifier4("hw-address", "1:2:3:4:5:6", Host::IDENT_HWADDR,
@@ -505,7 +505,7 @@ TEST_F(HostReservationParserTest, invalidParameterName) {
     testInvalidConfig<HostReservationParser4>(config);
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry for
+// This test verifies that the parser can parse the IPv6 reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6HWaddr) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
@@ -553,7 +553,7 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
 
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry for
+// This test verifies that the parser can parse the IPv6 reservation entry for
 // which DUID is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6DUID) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
@@ -613,7 +613,7 @@ TEST_F(HostReservationParserTest, dhcp6ClientId) {
     testInvalidConfig<HostReservationParser6>(config);
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry
+// This test verifies that the parser can parse the IPv6 reservation entry
 // which lacks hostname parameter.
 TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","

@@ -1184,7 +1184,7 @@ private:
 /// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
 /// This class extends the @ref MySqlHostWithOptionsExchange class with the
-/// mechanisms to retrieve IPv6 reservations. This class is used in sitations
+/// mechanisms to retrieve IPv6 reservations. This class is used in situations
 /// when it is desired to retrieve DHCPv6 specific information about the host
 /// (DHCPv6 options and reservations), or entire information about the host
 /// (DHCPv4 options, DHCPv6 options and reservations). The following are the
@@ -1747,7 +1747,7 @@ public:
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements.
-    /// It is assumed that the order is such that the indicies of statements
+    /// It is assumed that the order is such that the indices of statements
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
@@ -1862,7 +1862,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     /// @param stindex Statement index.

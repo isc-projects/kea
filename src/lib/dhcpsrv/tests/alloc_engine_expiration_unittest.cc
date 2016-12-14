@@ -48,7 +48,7 @@ const unsigned int TEST_LEASES_NUM = 100;
 struct LowerBound {
     /// @brief Constructor.
     ///
-    /// @param lower_bound Interger value wrapped by the structure.
+    /// @param lower_bound Integer value wrapped by the structure.
     explicit LowerBound(const size_t lower_bound)
         : lower_bound_(lower_bound) { };
 
@@ -70,7 +70,7 @@ struct LowerBound {
 struct UpperBound {
     /// @brief Constructor.
     ///
-    /// @param lower_bound Interger value wrapped by the structure.
+    /// @param lower_bound Integer value wrapped by the structure.
     explicit UpperBound(const size_t upper_bound)
         : upper_bound_(upper_bound) { };
 
@@ -98,7 +98,7 @@ std::string callout_argument_name("lease4");
 /// - it processes multiple leases,
 /// - leases are processed in certain order,
 /// - number of processed leases may be limited by the parameters,
-/// - maxium duration of the lease reclamation routine may be limited,
+/// - maximum duration of the lease reclamation routine may be limited,
 /// - reclaimed leases may be marked as reclaimed or deleted,
 /// - DNS records for some of the leases must be removed when the lease
 ///   is reclaimed and DNS updates are enabled,
@@ -304,7 +304,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -783,7 +783,7 @@ public:
                 << "check failed for i = " << i;
 
 
-            // At early stages of iterations, there should be conitnuous
+            // At early stages of iterations, there should be continuous
             // group of leases (expired and not expired) which haven't been
             // reclaimed.
             if (reclaimed_lower_bound > 0) {
@@ -838,7 +838,7 @@ public:
         EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
     }
 
-    /// @brief This test verfies that callouts are executed for each expired
+    /// @brief This test verifies that callouts are executed for each expired
     /// lease when installed.
     void testReclaimExpiredLeasesHooks() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
@@ -868,7 +868,7 @@ public:
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
     }
 
-    /// @brief This test verfies that callouts are executed for each expired
+    /// @brief This test verifies that callouts are executed for each expired
     /// lease and that the lease is not reclaimed when skip flag is set.
     void testReclaimExpiredLeasesHooksWithSkip() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
@@ -1000,11 +1000,11 @@ public:
     ///
     /// This method works for both v4 and v6. Just make sure the correct
     /// statistic name is passed. This is the name of the assigned addresses,
-    /// that is expected to be decreased once the reclaimation procedure
+    /// that is expected to be decreased once the reclamation procedure
     /// is complete.
     ///
     /// @param stat_name name of the statistic for assigned addresses statistic
-    ///        ("assgined-addresses" for both v4 and "assigned-nas" for v6)
+    ///        ("assigned-addresses" for both v4 and "assigned-nas" for v6)
     void testReclaimDeclinedStats(const std::string& stat_name) {
 
         // Leases by default all belong to subnet_id_ = 1. Let's count the
@@ -1072,8 +1072,8 @@ public:
 
         // subnet[X].assigned-addresses should go down. Between the time
         // of DHCPDECLINE(v4)/DECLINE(v6) reception and declined expired lease
-        // reclaimation, we count this address as assigned-addresses. We decrease
-        // assigned-addresses(v4)/assgined-nas(v6) when we reclaim the lease,
+        // reclamation, we count this address as assigned-addresses. We decrease
+        // assigned-addresses(v4)/assigned-nas(v6) when we reclaim the lease,
         // not when the packet is received. For explanation, see Duplicate
         // Addresses (DHCPDECLINE support) (v4) or Duplicate Addresses (DECLINE
         // support) sections in the User's Guide or a comment in
@@ -1164,7 +1164,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -1707,7 +1707,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the

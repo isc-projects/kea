@@ -15,7 +15,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown when error occured during parsing packet's headers.
+/// @brief Exception thrown when error occurred during parsing packet's headers.
 ///
 /// This exception is thrown when parsing link, Internet or Transport layer
 /// header has failed.

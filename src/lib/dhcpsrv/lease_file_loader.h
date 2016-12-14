@@ -218,7 +218,7 @@ public:
     }
 };
 
-} // namesapce dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_FILE_LOADER_H

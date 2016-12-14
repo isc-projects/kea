@@ -8,7 +8,7 @@
 #include <util/unittests/run_all.h>
 #include <stdlib.h>
 
-// This file uses TEST_DATA_TOPBUILDDIR macro, which must point to a writeable
+// This file uses TEST_DATA_TOPBUILDDIR macro, which must point to a writable
 // directory. It will be used for creating a logger lockfile.
 
 int

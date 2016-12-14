@@ -46,7 +46,7 @@ public:
     Observation d;
 };
 
-// Basic tests for the Obseration constructors. This test checks whether
+// Basic tests for the Observation constructors. This test checks whether
 // parameters passed to the constructor initialize the object properly.
 TEST_F(ObservationTest, constructor) {
 
@@ -139,7 +139,7 @@ TEST_F(ObservationTest, timers) {
     ptime before = microsec_clock::local_time();
     b.setValue(123.0); // Set it to a random value and record the time.
 
-    // Allow a bit of inprecision. This test allows 50ms. That should be ok,
+    // Allow a bit of imprecision. This test allows 50ms. That should be ok,
     // when running on virtual machines.
     ptime after = before + millisec::time_duration(0,0,0,50);
 

@@ -120,7 +120,7 @@ public:
 
     /// @brief returns path do the data directory
     ///
-    /// This method returns a path to writeable directory that DHCP servers
+    /// This method returns a path to writable directory that DHCP servers
     /// can store data in.
     /// @return data directory
     std::string getDataDir() const;

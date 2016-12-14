@@ -184,7 +184,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             .arg(server_hooks_.getName(current_hook_))
             .arg(stopwatch.logFormatTotalDuration());
 
-        // Reset the current hook and library indexs to an invalid value to
+        // Reset the current hook and library indices to an invalid value to
         // catch any programming errors.
         current_hook_ = -1;
         current_library_ = -1;

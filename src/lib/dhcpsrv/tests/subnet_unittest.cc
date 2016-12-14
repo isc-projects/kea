@@ -298,7 +298,7 @@ TEST(Subnet4Test, clientClasses) {
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
 
-    // Let's allow only clients belongning to "bar" class.
+    // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
@@ -329,7 +329,7 @@ TEST(Subnet4Test, clientClassesMultiple) {
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
 
-    // Let's allow clients belongning to "bar" or "foo" class.
+    // Let's allow clients belonging to "bar" or "foo" class.
     subnet->allowClientClass("bar");
     subnet->allowClientClass("foo");
 
@@ -462,7 +462,7 @@ TEST(Subnet4Test, PoolType) {
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.1.5")));
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.2.254")));
 
-    // Try with bogus hints (hints should be ingored)
+    // Try with bogus hints (hints should be ignored)
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("10.1.1.1")));
 
     // Trying to add Pool6 to Subnet4 is a big no,no!
@@ -694,7 +694,7 @@ TEST(Subnet6Test, poolTypes) {
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:2::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
 
-    // Try with bogus hints (hints should be ingored)
+    // Try with bogus hints (hints should be ignored)
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:7::1")));
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:7::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:7::1")));
@@ -745,7 +745,7 @@ TEST(Subnet6Test, clientClasses) {
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
 
-    // Let's allow only clients belongning to "bar" class.
+    // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
@@ -776,7 +776,7 @@ TEST(Subnet6Test, clientClassesMultiple) {
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
 
-    // Let's allow only clients belongning to "foo" or "bar" class.
+    // Let's allow only clients belonging to "foo" or "bar" class.
     subnet->allowClientClass("foo");
     subnet->allowClientClass("bar");
 
@@ -940,7 +940,7 @@ TEST(Subnet6Test, addNonUniqueOptions) {
                   OptionContainerTypeIndex::const_iterator> range =
             idx.equal_range(code);
         // Distance between iterators indicates how many options
-        // have been retured for the particular code.
+        // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;

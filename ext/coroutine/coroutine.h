@@ -15,22 +15,22 @@
 // \brief Coroutine object
 //
 // A coroutine object maintains the state of a re-enterable routine.  It
-// is assignable and copy-constructable, and can be used as a base class
+// is assignable and copy-constructible, and can be used as a base class
 // for a class that uses it, or as a data member.  The copy overhead is
 // a single int.
 //
-// A reenterable function contains a CORO_REENTER (coroutine)  { ... }
+// A reentrant function contains a CORO_REENTER (coroutine)  { ... }
 // block.  Whenever an asychrnonous operation is initiated within the
 // routine, the function is provided as the handler object.  (The simplest
-// way to do this is to have the reenterable function be the operator()
+// way to do this is to have the reentrant function be the operator()
 // member for the coroutine object itself.)   For example:
-// 
+//
 //     CORO_YIELD socket->async_read_some(buffer, *this);
 //
 // The CORO_YIELD keyword updates the current status of the coroutine to
 // indicate the line number currently being executed.  The
 // async_read_some() call is initiated, with a copy of the updated
-// corotutine as its handler object, and the current coroutine exits.  When
+// coroutine as its handler object, and the current coroutine exits.  When
 // the async_read_some() call finishes, the copied coroutine will be
 // called, and will resume processing exactly where the original one left
 // off--right after asynchronous call.  This allows asynchronous I/O

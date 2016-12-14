@@ -174,7 +174,7 @@ fi
 # This function uses PID file to obtain the PID and then calls
 # 'kill -0 <pid>' to check if the process is alive.
 # The PID files are expected to be located in the ${PID_FILE_PATH},
-# and their names should match the follwing pattern:
+# and their names should match the following pattern:
 # <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
 # specified a 'test_config' is used by default.
 #
@@ -261,8 +261,8 @@ get_log_messages() {
 #   _GET_RECONFIGS: number of configurations so far.
 #   _GET_RECONFIG_ERRORS: number of configuration errors.
 get_reconfigs() {
-    # Grep log file for CONFIG_COMPLETE occurences. There should
-    # be one occurence per (re)configuration.
+    # Grep log file for CONFIG_COMPLETE occurrences. There should
+    # be one occurrence per (re)configuration.
     _GET_RECONFIGS=$( grep -o CONFIG_COMPLETE ${LOG_FILE} | wc -w )
     # Grep log file for CONFIG_LOAD_FAIL to check for configuration
     # failures.
@@ -318,7 +318,7 @@ cleanup() {
 }
 
 # Exists the test in the clean way.
-# It peformes the cleanup and prints whether the test has passed or failed.
+# It performs the cleanup and prints whether the test has passed or failed.
 # If a test fails, the Kea log is dumped.
 clean_exit() {
     exit_code=${1}  # Exit code to be returned by the exit function.
@@ -384,7 +384,7 @@ wait_for_kea() {
 # of message occurrences to show up. If the expected number of
 # message doesn't occur, the error status is returned.
 # Return value:
-#    _WAIT_FOR_MESSAGE: 0 if the message hasn't occured, 1 otherwise.
+#    _WAIT_FOR_MESSAGE: 0 if the message hasn't occurred, 1 otherwise.
 wait_for_message() {
     local timeout=${1}     # Expected timeout value in seconds.
     local message="${2}"   # Expected message id.
@@ -435,7 +435,7 @@ must be a number"
 
 # Waits for server to be down.
 # Return value:
-#    _WAIT_FOR_SERVER_DOWN: 1 if server is down, 0 if timeout occured and the
+#    _WAIT_FOR_SERVER_DOWN: 1 if server is down, 0 if timeout occurred and the
 #                             server is still running.
 wait_for_server_down() {
     local timeout=${1}    # Timeout specified in seconds.

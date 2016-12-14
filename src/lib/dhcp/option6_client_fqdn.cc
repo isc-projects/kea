@@ -47,9 +47,9 @@ public:
 
     /// @brief Constructor, from wire data.
     ///
-    /// @param first An iterator pointing to the begining of the option data
+    /// @param first An iterator pointing to the beginning of the option data
     /// in the wire format.
-    /// @param last An iterator poiting to the end of the option data in the
+    /// @param last An iterator pointing to the end of the option data in the
     /// wire format.
     Option6ClientFqdnImpl(OptionBufferConstIter first,
                           OptionBufferConstIter last);
@@ -87,9 +87,9 @@ public:
 
     /// @brief Parse the Option provided in the wire format.
     ///
-    /// @param first An iterator pointing to the begining of the option data
+    /// @param first An iterator pointing to the beginning of the option data
     /// in the wire format.
-    /// @param last An iterator poiting to the end of the option data in the
+    /// @param last An iterator pointing to the end of the option data in the
     /// wire format.
     void parseWireData(OptionBufferConstIter first,
                        OptionBufferConstIter last);

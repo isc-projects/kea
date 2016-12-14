@@ -222,7 +222,7 @@ TEST(ClientClassDictionary, basics) {
     // Verify duplicate add attempt throws
     ASSERT_THROW(dictionary->addClass(cclass), DuplicateClientClassDef);
 
-    // Verify that you cannot add emtpy class pointer
+    // Verify that you cannot add empty class pointer
     cclass.reset();
     ASSERT_THROW(dictionary->addClass(cclass), BadValue);
 
@@ -242,7 +242,7 @@ TEST(ClientClassDictionary, basics) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("cc3", cclass->getName());
 
-    // Verify the looking for non-existant returns empty pointer
+    // Verify the looking for non-existing returns empty pointer
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
 
@@ -254,7 +254,7 @@ TEST(ClientClassDictionary, basics) {
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc3"));
     EXPECT_FALSE(cclass);
 
-    // Verify that we can attempt to remove a non-existant class
+    // Verify that we can attempt to remove a non-existing class
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
     EXPECT_EQ(2, classes->size());

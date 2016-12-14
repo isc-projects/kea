@@ -22,7 +22,7 @@
 /// There parsers defined are:
 ///
 /// ClientClassDefListParser  - creates a ClientClassDictionary from a list
-/// of element maps, where each map contains the entries that specifiy a
+/// of element maps, where each map contains the entries that specify a
 /// single class.  The names of the classes in the are expected to be
 /// unique.  Attempting to define a duplicate class will result in an
 /// DhcpConfigError throw.  Invoking @c commit() method causes the dictionary
@@ -59,7 +59,7 @@ public:
     /// accept string as first argument.
     /// @param expression variable in which to store the new expression
     /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     ExpressionParser(const std::string& dummy, ExpressionPtr& expression,
                      ParserContextPtr global_context);
 
@@ -98,7 +98,7 @@ public:
     /// accept string as first argument.
     /// @param class_dictionary dictionary into which the class should be added
     /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     ClientClassDefParser(const std::string& dummy,
                          ClientClassDictionaryPtr& class_dictionary,
                          ParserContextPtr global_context);
@@ -150,7 +150,7 @@ public:
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     ClientClassDefListParser(const std::string& dummy,
                         ParserContextPtr global_context);
 

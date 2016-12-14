@@ -738,7 +738,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     // Tamper with the watch socket by closing the select-fd.
     close(sender.getSelectFd());
 
-    // Send should fail as we interferred by closing the select-fd.
+    // Send should fail as we interfered by closing the select-fd.
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
@@ -775,7 +775,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     close (sender.getSelectFd());
 
     // Run one handler. This should execute the send completion handler
-    // after sending the first message.  Duing completion handling, we will
+    // after sending the first message.  Doing completion handling, we will
     // attempt to queue the second message which should fail.
     ASSERT_NO_THROW(sender.runReadyIO());
 
@@ -822,7 +822,7 @@ TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     ASSERT_NE(util::WatchSocket::MARKER, buf);
 
     // Run one handler. This should execute the send completion handler
-    // after sending the message.  Duing completion handling clearing the
+    // after sending the message.  Doing completion handling clearing the
     // watch socket should fail, which will close the socket, but not
     // result in a throw.
     ASSERT_NO_THROW(sender.runReadyIO());

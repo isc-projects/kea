@@ -212,7 +212,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -254,7 +254,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -306,7 +306,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:

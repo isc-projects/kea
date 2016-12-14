@@ -342,7 +342,7 @@ TEST_F(CfgIfaceTest, equality) {
     EXPECT_FALSE(cfg1 == cfg2);
     EXPECT_TRUE(cfg1 != cfg2);
 
-    // Finally, both are equal as they use wildacard.
+    // Finally, both are equal as they use wildcard.
     cfg2.use(AF_INET, "*");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);

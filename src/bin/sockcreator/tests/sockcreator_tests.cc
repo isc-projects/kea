@@ -54,7 +54,7 @@ setAddressFamilyFields(sockaddr_in6* address) {
     address->sin6_addr = in6addr_loopback;
 }
 
-// Socket has been opened, peform a check on it.  The sole argument is the
+// Socket has been opened, perform a check on it.  The sole argument is the
 // socket descriptor.  The TCP check is the same regardless of the address
 // family.  The UDP check requires that the socket address be obtained so
 // is parameterised on the type of structure required to hold the address.
@@ -94,7 +94,7 @@ udpCheck(const int socknum) {
 // code, so provide a convenient typedef.
 typedef void (*socket_check_t)(const int);
 
-// Address-family-specific scoket checks.
+// Address-family-specific socket checks.
 //
 // The first argument is used to select the overloaded check function.
 // The other argument is the socket descriptor number.
@@ -306,7 +306,7 @@ getSockDummy(const int type, struct sockaddr* addr, const socklen_t,
 int
 send_FdDummy(const int destination, const int what) {
     // Make sure it is 1 byte so we know the length. We do not use more during
-    // the test anyway.  And even with the LS bute, we can distinguish between
+    // the test anyway.  And even with the LS byte, we can distinguish between
     // the different results.
     const char fd_data = what & 0xff;
     const bool status = write_data(destination, &fd_data, sizeof(fd_data));

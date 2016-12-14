@@ -240,7 +240,7 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 }
 
-// Test that client classes are considered when the subnet is selcted by the
+// Test that client classes are considered when the subnet is selected by the
 // interface name.
 TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClaassify) {
     CfgSubnets6 cfg;

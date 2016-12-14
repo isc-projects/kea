@@ -163,14 +163,14 @@ TEST(CfgExpirationTest, getUnwarnedReclaimCycles) {
 /// but instead they record the number of calls to them and the parameters
 /// with which they were executed. This allows for checking if the
 /// @c CfgExpiration object calls the leases reclamation routine with the
-/// appropriate parameteres.
+/// appropriate parameters.
 class LeaseReclamationStub {
 public:
 
     /// @brief Collection of parameters with which the @c reclaimExpiredLeases
     /// method is called.
     ///
-    /// Examination of these values allows for assesment if the @c CfgExpiration
+    /// Examination of these values allows for assessment if the @c CfgExpiration
     /// calls the routine with the appropriate values.
     struct RecordedParams {
         /// @brief Maximum number of leases to be processed.
@@ -233,7 +233,7 @@ public:
     /// expired-reclaimed leases.
     ///
     /// @param secs Specifies the minimum amount of time, expressed in
-    /// seconds, that must elapse before the expired-reclaime lease is
+    /// seconds, that must elapse before the expired-reclaimed lease is
     /// deleted from the database.
     void
     deleteReclaimedLeases(const uint32_t secs) {
@@ -401,7 +401,7 @@ TEST_F(CfgExpirationTimersTest, noLeaseAffinity) {
     EXPECT_EQ(0, stub_->delete_calls_count_);
 }
 
-// This test verfies that lease reclamation may be disabled.
+// This test verifies that lease reclamation may be disabled.
 TEST_F(CfgExpirationTimersTest, noLeaseReclamation) {
     // Disable both timers.
     cfg_.setReclaimTimerWaitTime(0);

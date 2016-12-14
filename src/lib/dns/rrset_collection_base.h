@@ -108,7 +108,7 @@ protected:
     /// used by the public iterator.  Derived classes of
     /// \c RRsetCollectionBase are supposed to implement this class and
     /// the \c getBeginning() and \c getEnd() methods, so that the
-    /// public interator interface can be provided. This is a forward
+    /// public iterator interface can be provided. This is a forward
     /// iterator only.
     class Iter {
     public:

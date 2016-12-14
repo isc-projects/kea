@@ -386,7 +386,7 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     EXPECT_EQ(0, tuple.getLength());
 }
 
-// This test verfifies that exception is thrown if the empty buffer is being
+// This test verifies that exception is thrown if the empty buffer is being
 // parsed.
 TEST(OpaqueDataTuple, unpack1ByteEmptyBuffer) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);

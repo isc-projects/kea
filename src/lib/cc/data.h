@@ -78,7 +78,7 @@ public:
     /// \endcode
     ///
     /// the position of the element "bar" is: line_ = 2; pos_ = 9, because
-    /// begining of the value "123" is at offset 9 from the beginning of
+    /// beginning of the value "123" is at offset 9 from the beginning of
     /// the second line, including whitespaces.
     ///
     /// Note that the @c Position structure is used as an argument to @c Element
@@ -505,7 +505,7 @@ public:
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
-    /// Since the wire format is JSON, thise is the same as
+    /// Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
     /// \param in The input stringstream.
@@ -514,7 +514,7 @@ public:
     static ElementPtr fromWire(std::stringstream& in, int length);
 
     /// Creates an Element from the wire format in the given string
-    /// Since the wire format is JSON, thise is the same as
+    /// Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
     /// \param s The input string

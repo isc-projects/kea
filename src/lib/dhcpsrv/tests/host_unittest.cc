@@ -186,7 +186,7 @@ TEST_F(HostTest, getIdentifier) {
     EXPECT_THROW(Host::getIdentifierType("unuspported"), isc::BadValue);
 }
 
-// This test verfies that it is possible to create a Host object
+// This test verifies that it is possible to create a Host object
 // using hardware address in the textual format.
 TEST_F(HostTest, createFromHWAddrString) {
     boost::scoped_ptr<Host> host;
@@ -680,7 +680,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
                  isc::BadValue);
     // Zero address can't be set, the removeIPv4Reservation should be
-    // used intead.
+    // used instead.
     EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_ZERO_ADDRESS()),
                  isc::BadValue);
     // Broadcast address can't be set.

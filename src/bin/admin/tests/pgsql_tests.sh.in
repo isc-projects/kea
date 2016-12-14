@@ -86,7 +86,7 @@ pgsql_lease_version_test() {
     ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    # Verfiy that kea-admin lease-version returns the correct version
+    # Verify that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
     assert_str_eq "3.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
@@ -280,7 +280,7 @@ pgsql_lease4_dump_test() {
     # Let's wipe the whole database
     pgsql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
@@ -375,7 +375,7 @@ pgsql_lease6_dump_test() {
     # Let's wipe the whole database
     pgsql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database,  status code %d"

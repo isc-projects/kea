@@ -314,7 +314,7 @@ Pkt6::packUDP() {
 
         }
 
-        // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
+        // DHCPv6 header: message-type (1 octet) + transaction id (3 octets)
         buffer_out_.writeUint8(msg_type_);
         // store 3-octet transaction-id
         buffer_out_.writeUint8( (transid_ >> 16) & 0xff );

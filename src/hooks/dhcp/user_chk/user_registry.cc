@@ -85,7 +85,7 @@ void UserRegistry::refresh() {
             addUser(user);
         }
     } catch (const std::exception& ex) {
-        // Source was compromsised so restore registry from backup.
+        // Source was compromised so restore registry from backup.
         users_ = backup;
         // Close the source.
         source_->close();

@@ -215,7 +215,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
       false, NO_RECORD_DEF, "" }
 
-        // @todo add definitions for all remaning options.
+        // @todo add definitions for all remaining options.
 };
 
 /// Number of option definitions defined.
@@ -269,9 +269,9 @@ RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 ///
 /// @warning in this array, the initializers are provided for all
 /// OptionDefParams struct's members despite initializers for
-/// 'records' and 'record_size' could be ommited for entries for
+/// 'records' and 'record_size' could be omitted for entries for
 /// which 'type' does not equal to OPT_RECORD_TYPE. If initializers
-/// are ommitted the corresponding values should default to 0.
+/// are omitted the corresponding values should default to 0.
 /// This however does not work on Solaris (GCC) which issues a
 /// warning about lack of initializers for some struct members
 /// causing build to fail.

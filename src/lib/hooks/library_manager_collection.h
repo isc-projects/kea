@@ -98,7 +98,7 @@ public:
     ///
     /// Returns a callout manager that can be used with this set of loaded
     /// libraries (even if the number of loaded libraries is zero).  This
-    /// method may only be caslled after loadLibraries() has been called.
+    /// method may only be called after loadLibraries() has been called.
     ///
     /// @return Pointer to a callout manager for this set of libraries.
     ///

@@ -19,7 +19,7 @@
 // #define ERRCODE_UNIQUE_VIOLATION MAKE_SQLSTATE('2','3','5','0','5')
 //
 // PostgreSQL deliberately omits the MAKE_SQLSTATE macro so callers can/must
-// supply their own.  We'll define it as an initlizer_list:
+// supply their own.  We'll define it as an initialization list:
 #define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
 // So we can use it like this: const char some_error[] = ERRCODE_xxxx;
 #define PGSQL_STATECODE_LEN 5
@@ -35,7 +35,7 @@ const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
-PgSqlResult::PgSqlResult(PGresult *result) 
+PgSqlResult::PgSqlResult(PGresult *result)
     : result_(result), rows_(0), cols_(0) {
     if (!result) {
         isc_throw (BadValue, "PgSqlResult result pointer cannot be null");
@@ -45,10 +45,10 @@ PgSqlResult::PgSqlResult(PGresult *result)
     cols_ = PQnfields(result);
 }
 
-void 
+void
 PgSqlResult::rowCheck(int row) const {
     if (row < 0 || row >= rows_) {
-        isc_throw (DbOperationError, "row: " << row 
+        isc_throw (DbOperationError, "row: " << row
                    << ", out of range: 0.." << rows_);
     }
 }
@@ -198,7 +198,7 @@ PgSqlConnection::openDatabase() {
         }
 
         // The timeout is only valid if greater than zero, as depending on the
-        // database, a zero timeout might signify someting like "wait
+        // database, a zero timeout might signify something like "wait
         // indefinitely".
         //
         // The check below also rejects a value greater than the maximum
@@ -239,7 +239,7 @@ PgSqlConnection::openDatabase() {
 bool
 PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
     const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-    // PostgreSQL garuantees it will always be 5 characters long
+    // PostgreSQL guarantees it will always be 5 characters long
     return ((sqlstate != NULL) &&
             (memcmp(sqlstate, error_state, PGSQL_STATECODE_LEN) == 0));
 }

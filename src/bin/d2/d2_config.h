@@ -258,7 +258,7 @@ private:
 /// @brief Dumps the contents of a D2Params as text to an output stream
 ///
 /// @param os output stream to which text should be sent
-/// @param config D2Param instnace to dump
+/// @param config D2Param instance to dump
 std::ostream&
 operator<<(std::ostream& os, const D2Params& config);
 
@@ -287,7 +287,7 @@ public:
     /// @brief Constructor
     ///
     /// @param name the unique label used to identify this key
-    /// @param algorithm the id of the encryption alogirthm this key uses.
+    /// @param algorithm the id of the encryption algorithm this key uses.
     /// Currently supported values are (case insensitive):
     /// -# "HMAC-MD5"
     /// -# "HMAC-SHA1"
@@ -538,7 +538,7 @@ public:
     ///
     /// @param name is the domain name of the domain.
     /// @param servers is the list of server(s) supporting this domain.
-    /// @param tsig_key_info pointer to the TSIGKeyInfo for the dommain's key
+    /// @param tsig_key_info pointer to the TSIGKeyInfo for the domain's key
     /// It defaults to an empty pointer, signifying the domain has no key.
     DdnsDomain(const std::string& name,
                DnsServerInfoStoragePtr servers,

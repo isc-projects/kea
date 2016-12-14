@@ -438,7 +438,7 @@ TEST_F(MySQLHostMgrTest, getAll) {
 }
 
 // This test verifies that IPv4 reservations for a particular client can
-// be retrieved from the configuration file and a database simulatneously.
+// be retrieved from the configuration file and a database simultaneously.
 TEST_F(MySQLHostMgrTest, getAll4) {
     testGetAll4(*getCfgHosts(), HostMgr::instance());
 }
@@ -515,7 +515,7 @@ TEST_F(PostgreSQLHostMgrTest, getAll) {
 }
 
 // This test verifies that IPv4 reservations for a particular client can
-// be retrieved from the configuration file and a database simulatneously.
+// be retrieved from the configuration file and a database simultaneously.
 TEST_F(PostgreSQLHostMgrTest, getAll4) {
     testGetAll4(*getCfgHosts(), HostMgr::instance());
 }

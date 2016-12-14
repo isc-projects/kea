@@ -64,7 +64,7 @@ typedef boost::multi_index_container<
         // Second index is used to search for the host using reserved IPv4
         // address.
         boost::multi_index::ordered_non_unique<
-            // Index using values returned by the @c Host::getIPv4Resrvation.
+            // Index using values returned by the @c Host::getIPv4Reservation.
             boost::multi_index::const_mem_fun<Host, const asiolink::IOAddress&,
                                                &Host::getIPv4Reservation>
         >

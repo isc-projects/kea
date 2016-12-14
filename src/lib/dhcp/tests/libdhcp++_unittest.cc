@@ -490,7 +490,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     ASSERT_TRUE(opt_oro);
     // Get set of uint16_t values.
     std::vector<uint16_t> opts = opt_oro->getValues();
-    // Prepare the refrence data.
+    // Prepare the reference data.
     std::vector<uint16_t> expected_opts;
     expected_opts.push_back(0x6C6D); // equivalent to: 108, 109
     expected_opts.push_back(0x6E6F); // equivalent to 110, 111
@@ -718,7 +718,7 @@ TEST_F(LibDhcpTest, packOptions4) {
     // we want to use this buffer as a reference to verify that produced
     // option in on-wire format is correct.
 
-    // Create Ciruit ID sub-option and add to RAI.
+    // Create Circuit ID sub-option and add to RAI.
     OptionPtr circuit_id(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
                                     OptionBuffer(v4_opts + 46,
                                                  v4_opts + 50)));
@@ -736,7 +736,7 @@ TEST_F(LibDhcpTest, packOptions4) {
 
     isc::dhcp::OptionCollection opts; // list of options
     // Note that we insert each option under the same option code into
-    // the map. This gurantees that options are packed in the same order
+    // the map. This guarantees that options are packed in the same order
     // they were added. Otherwise, options would get sorted by code and
     // the resulting buffer wouldn't match with the reference buffer.
     opts.insert(make_pair(opt1->getType(), opt1));

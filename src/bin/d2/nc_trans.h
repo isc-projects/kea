@@ -144,7 +144,7 @@ public:
     static const int NCT_DERIVED_EVENT_MIN = SM_DERIVED_EVENT_MIN + 101;
     //@}
 
-    /// @brief Defualt time to assign to a single DNS udpate.
+    /// @brief Default time to assign to a single DNS update.
     /// @todo  This value will be made configurable in the very near future
     /// under trac3268. For now we will define it to 100 milliseconds
     /// so unit tests will run within a reasonable amount of time.
@@ -289,7 +289,7 @@ protected:
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
     /// @brief Destroys the current update request packet and resets
-    /// udpate attempts count.
+    /// update attempts count.
     void clearDnsUpdateRequest();
 
     /// @brief Sets the update status to the given status value.

@@ -61,7 +61,7 @@
         runtime) are responsible for creating the loggers used by those
         libraries. Such loggers should have unique names, different
         from the logger names used by Kea. In this way the
-        messages output by the hooks library can be distingued from
+        messages output by the hooks library can be distinguished from
         messages issued by the core Kea code. Unique names also allow
         the loggers to be configured independently of loggers used
         by Kea.  Whenever it makes sense, a hook library can use multiple
@@ -150,7 +150,7 @@
           packet drops, you must create configuration entry for the
           logger called <quote>kea-dhcp4.bad-packets</quote> and specify
           severity DEBUG for this logger. All other configuration
-          parameters may be omited for this logger if the logger should
+          parameters may be omitted for this logger if the logger should
           use the default values specified in the root logger's
           configuration.
         </para>

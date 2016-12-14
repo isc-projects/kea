@@ -73,7 +73,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_FALSE(chptr_1 == chptr_2);
 
     // Check reference counts.  The getCalloutHandle function should be storing
-    // pointers to the objects poiunted to by chptr_2 and pktptr_2.
+    // pointers to the objects pointed to by chptr_2 and pktptr_2.
     EXPECT_EQ(1, chptr_1.use_count());
     EXPECT_EQ(1, pktptr_1.use_count());
     EXPECT_EQ(2, chptr_2.use_count());

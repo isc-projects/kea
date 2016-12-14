@@ -290,7 +290,7 @@ HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
 
                         // Convert the prefix length from the string to the
                         // number. Note, that we don't use the uint8_t type
-                        // as the lexical cast would expect a chracter, e.g.
+                        // as the lexical cast would expect a character, e.g.
                         // 'a', instead of prefix length, e.g. '64'.
                         try {
                             prefix_len = boost::lexical_cast<

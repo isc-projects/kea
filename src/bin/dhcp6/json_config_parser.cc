@@ -832,7 +832,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
-    // config_pair holds ther details of the current parser when iterating over
+    // config_pair holds the details of the current parser when iterating over
     // the parsers.  It is declared outside the loop so in case of error, the
     // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;

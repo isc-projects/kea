@@ -98,7 +98,7 @@ TEST_F(Lease4Test, constructor) {
     }
 }
 
-// This test verfies that copy constructor copies Lease4 fields correctly.
+// This test verifies that copy constructor copies Lease4 fields correctly.
 TEST_F(Lease4Test, copyConstructor) {
 
     // Get current time for the use in Lease4.
@@ -134,7 +134,7 @@ TEST_F(Lease4Test, copyConstructor) {
     EXPECT_TRUE(lease == copied_lease2);
 }
 
-// This test verfies that the assignment operator copies all Lease4 fields
+// This test verifies that the assignment operator copies all Lease4 fields
 // correctly.
 TEST_F(Lease4Test, operatorAssign) {
 

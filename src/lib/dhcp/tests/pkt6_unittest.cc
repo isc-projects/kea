@@ -986,7 +986,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_FALSE(opt == relay3_opt1);
     // Test that option copy has replaced the original option within the
-    // packet. We achive that by calling a variant of the method which
+    // packet. We achieve that by calling a variant of the method which
     // retrieved non-copied option.
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(relay3_opt1);
@@ -1084,7 +1084,7 @@ TEST_F(Pkt6Test, clientClasses) {
 TEST_F(Pkt6Test, getMAC) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
-    // DHCPv6 packet by default doens't have MAC address specified.
+    // DHCPv6 packet by default doesn't have MAC address specified.
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
 
@@ -1578,7 +1578,7 @@ TEST_F(Pkt6Test, getClientId) {
     EXPECT_TRUE(duid->getDuid() == duid_vec);
 }
 
-// This test verfies that it is possible to obtain the packet
+// This test verifies that it is possible to obtain the packet
 // identifiers (DUID, HW Address, transaction id) in the textual
 // format.
 TEST_F(Pkt6Test, makeLabel) {

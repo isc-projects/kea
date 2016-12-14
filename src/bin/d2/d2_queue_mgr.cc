@@ -153,7 +153,7 @@ D2QueueMgr::stopListening(const State target_stop_state) {
                       << target_stop_state);
         }
 
-        // Remember the state we want to acheive.
+        // Remember the state we want to achieve.
         target_stop_state_ = target_stop_state;
 
         // Instruct the listener to stop.  If the listener reports that  it

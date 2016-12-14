@@ -59,7 +59,7 @@ typedef boost::shared_ptr<LoggerDuplicatesList> LoggerDuplicatesListPtr;
 /// To avoid static initialization fiasco problems, the containers shared by
 /// all instances of this class are dynamically allocated on first use, and
 /// held in the smart pointers which are de-allocated only when all instances
-/// of the class are destructred. After the object has been created with the
+/// of the class are destructed. After the object has been created with the
 /// constructor, the \c MessageInitializer::loadDictionary static function is
 /// called to populate the messages defined in various instances of the
 /// \c MessageInitializer class to the global dictionary.
