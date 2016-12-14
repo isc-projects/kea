@@ -1156,7 +1156,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>s46-br</entry><entry>90</entry><entry>ipv6-address</entry><entry>false</entry></row>
 <row><entry>s46-dmr</entry><entry>91</entry><entry>ipv6-prefix</entry><entry>false</entry></row>
 <row><entry>s46-v4v6bind</entry><entry>92</entry><entry>record (ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
-<row><entry>s46-portparams</entry><entry>93</entry><entry>record(uint8, psid)</entry><entry>false</entry></row>
+<row><entry>s46-portparams</entry><entry>93</entry><entry>record (uint8, psid)</entry><entry>false</entry></row>
 <row><entry>s46-cont-mape</entry><entry>94</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>s46-cont-mapt</entry><entry>95</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>s46-cont-lw</entry><entry>96</entry><entry>empty</entry><entry>false</entry></row>
@@ -2908,13 +2908,13 @@ should include options from the isc option space:
     with classification using expressions.</para>
     </section>
 
-    <section id="reservations6-mysql-pgsql">
-      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
+    <section id="reservations6-mysql-pgsql-cql">
+      <title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title>
 
       <para>
-        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
-        linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
+        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
+        reservations stored in MySQL, PostgreSQL or Cassandra. Kea does not provide any dedicated
         tools for managing reservations in a database. The Kea wiki <ulink
         url="http://kea.isc.org/wiki/HostReservationsHowTo" /> provides detailed
         information and examples of how reservations can be inserted into the
@@ -2923,12 +2923,6 @@ should include options from the isc option space:
 
       <note><simpara>In Kea 1.1.0 maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
-    </section>
-
-    <section id="reservations6-cql">
-      <title>Storing Host Reservations in CQL (Cassandra)</title>
-      <para>Kea currently does not support storing reservations in
-      Cassandra (CQL).</para>
     </section>
 
     <section id="reservations6-tuning">
