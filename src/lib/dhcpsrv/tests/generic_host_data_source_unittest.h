@@ -86,6 +86,13 @@ public:
     /// @return Identifier in textual form acceptable by Host constructor
     std::vector<uint8_t> generateIdentifier(const bool new_identifier = true);
 
+    /// @brief Checks if the reservation is in the range of reservations.
+    ///
+    /// @param resrv Reservation to be searched for.
+    /// @param range Range of reservations returned by the @c Host object
+    /// in which the reservation will be searched
+    bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range);
+
     /// @brief Compares hardware addresses of the two hosts.
     ///
     /// This method compares two hwardware address and uses gtest
@@ -533,6 +540,15 @@ public:
     ///
     void testMessageFields4();
 
+    /// @brief Stress test on adding and retrieving hosts
+    ///
+    /// Rather than checking for correctness, this test gives interpretable
+    /// performance results.
+    ///
+    /// @param n_of_hosts number of hosts to insert into and retrieve from the
+    ///     database; defaults to the maximum number of allowed hosts.
+    void stressTest(uint32_t n_of_hosts /* = 0xfffdU */);
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful
@@ -555,8 +571,8 @@ public:
 
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

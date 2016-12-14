@@ -35,10 +35,8 @@ namespace {
 
 class CqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    CqlHostDataSourceTest() {
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -58,15 +56,27 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
+        hdsptr_->rollback();
+        HostDataSourceFactory::destroy();
+        destroyCqlSchema(false, true);
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    CqlHostDataSourceTest(){
+        initializeTest();
+    }
+
     /// @brief Destructor
     ///
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
     /// close the database.  Then reopen it and delete everything created by the
     /// test.
     virtual ~CqlHostDataSourceTest() {
-        hdsptr_->rollback();
-        HostDataSourceFactory::destroy();
-        destroyCqlSchema(false, true);
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -475,8 +485,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     CqlConnection connection(params);
     ASSERT_NO_THROW(connection.openDatabase());
 
-    // Drop every table so we make sure host_ipv6_reservation_options doesn't
-    // exist anymore
+    // Drop every table so we make sure host_reservations doesn't exist anymore.
     destroyCqlSchema(false, true);
 
     // Create a host with a reservation.
@@ -502,4 +511,14 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
         DbOperationError);
 }
 
-};  // anonymous namespace
+TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
+    // Run with 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4092, 8192,
+    // 16384 & 32768 hosts.
+    for (unsigned int i = 0X0001U; i < 0xfffdU; i <<= 1) {
+        initializeTest();
+        stressTest(i);
+        destroyTest();
+    }
+}
+
+}  // namespace
