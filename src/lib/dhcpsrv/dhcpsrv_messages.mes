@@ -175,11 +175,21 @@ with the specified address to the Cassandra backend database.
 % DHCPSRV_CQL_COMMIT committing to Cassandra database
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
+% DHCPSRV_CQL_BEGIN_TRANSACTION committing to Cassandra database.
+The server has issued a begin transaction call.
+
 % DHCPSRV_CQL_DB opening Cassandra lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a Cassandra lease database.  The parameters of
 the connection including database name and username needed to access it
 (but not the password if any) are logged.
+
+% DHCPSRV_CQL_DEALLOC_ERROR An error occurred while closing the CQL connection: %1
+This is an error message issued when a DHCP server (either V4 or V6) experienced
+and error freeing CQL database resources as part of closing its connection to
+the Cassandra database. The connection is closed as part of normal server
+shutdown. This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
 
 % DHCPSRV_CQL_DELETE_ADDR deleting lease for address %1
 A debug message issued when the server is attempting to delete a lease from the
@@ -709,7 +719,7 @@ with the specified address to the PostgreSQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
-% DHCPSRV_PGSQL_COMMIT committing to MySQL database
+% DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
