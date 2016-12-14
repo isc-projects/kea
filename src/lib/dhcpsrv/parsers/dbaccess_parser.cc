@@ -53,7 +53,8 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         try {
-            if ((param.first == "persist") || (param.first == "readonly")) {
+            if ((param.first == "persist") || (param.first == "readonly") ||
+                (param.first == "tcp-nodelay")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -67,6 +68,20 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(timeout);
 
+            } else if (param.first == "reconnect-wait-time") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "request-timeout") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "tcp-keepalive") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
             } else {
                 values_copy[param.first] = param.second->stringValue();
             }

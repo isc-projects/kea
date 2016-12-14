@@ -38,11 +38,14 @@
 -- is initialized to 1.0, then upgraded to 2.0 etc. This may be somewhat
 -- sub-optimal, but it ensues consistency with upgrade scripts. (It is much
 -- easier to maintain init and upgrade scripts if they look the same).
--- Since initialization is done only once, it's perfromance is not an issue.
+-- Since initialization is done only once, it's performance is not an issue.
 
 -- This line starts database initialization to 1.0.
 
 -- Holds the IPv4 leases.
+-- -----------------------------------------------------
+-- Table `lease4`
+-- -----------------------------------------------------
 CREATE TABLE lease4 (
     address int,
     hwaddr blob,
@@ -61,11 +64,15 @@ CREATE TABLE lease4 (
 CREATE INDEX lease4index1 ON lease4 (client_id);
 CREATE INDEX lease4index2 ON lease4 (subnet_id);
 CREATE INDEX lease4index3 ON lease4 (hwaddr);
-CREATE INDEX lease4index4 ON lease4 (state);
+CREATE INDEX lease4index4 ON lease4 (expire);
+CREATE INDEX lease4index5 ON lease4 (state);
 
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
 -- it will eventually be replaced by BINARY(16).
+-- -----------------------------------------------------
+-- Table `lease6`
+-- -----------------------------------------------------
 CREATE TABLE lease6 (
     address varchar,
     duid blob,
@@ -91,13 +98,17 @@ CREATE INDEX lease6index1 ON lease6 (lease_type);
 CREATE INDEX lease6index2 ON lease6 (duid);
 CREATE INDEX lease6index3 ON lease6 (iaid);
 CREATE INDEX lease6index4 ON lease6 (subnet_id);
-CREATE INDEX lease6index5 ON lease6 (state);
+CREATE INDEX lease6index5 ON lease6 (expire);
+CREATE INDEX lease6index6 ON lease6 (state);
 
 -- ... and a definition of lease6 types.  This table is a convenience for
 -- users of the database - if they want to view the lease table and use the
 -- type names, they can join this table with the lease6 table.
 -- Make sure those values match Lease6::LeaseType enum (see src/bin/dhcpsrv/
 -- lease_mgr.h)
+-- -----------------------------------------------------
+-- Table `lease6_types`
+-- -----------------------------------------------------
 CREATE TABLE lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
@@ -107,13 +118,15 @@ INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-tempor
 INSERT INTO lease6_types (lease_type, name) VALUES (1, 'IA_TA');   -- Temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix delegations
 
-
 -- Kea keeps track of the hardware/MAC address source, i.e. how the address
 -- was obtained. Depending on the technique and your network topology, it may
 -- be more or less trustworthy. This table is a convenience for
 -- users of the database - if they want to view the lease table and use the
 -- type names, they can join this table with the lease6 table. For details,
 -- see constants defined in src/lib/dhcp/dhcp/pkt.h for detailed explanation.
+-- -----------------------------------------------------
+-- Table `lease_hwaddr_source`
+-- -----------------------------------------------------
 CREATE TABLE lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
@@ -141,47 +154,12 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
--- -----------------------------------------------------
--- Table `dhcp4_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp4_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp4_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp4_options table
-CREATE INDEX dhcp4_optionsindex1 ON dhcp4_options (host_id);
-
--- -----------------------------------------------------
--- Table `dhcp6_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp6_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp6_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp6_options table
-CREATE INDEX dhcp6_optionsindex1 ON dhcp6_options (host_id);
-
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
+-- -----------------------------------------------------
+-- Table `lease_state`
+-- -----------------------------------------------------
 CREATE TABLE lease_state (
     state int,
     name varchar,
@@ -197,11 +175,18 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
--- Note: This MUST be kept in step with src/share/database/scripts/cassandra/dhcpdb_create.cql,
--- which defines the schema for the unit tests.
+-- Note: This MUST be kept synchronized with
+-- src/share/database/scripts/cql/dhcpdb_create.cql which defines the schema for
+-- the unit tests.
+-- -----------------------------------------------------
+-- Table `schema_version`
+-- -----------------------------------------------------
 CREATE TABLE schema_version (
     version int,
     minor int,
     PRIMARY KEY (version)
 );
+
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
+
+-- This line concludes database initalization to version 1.0.

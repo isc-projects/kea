@@ -41,6 +41,9 @@
 -- This line starts database initialization to 1.0.
 
 -- Holds the IPv4 leases.
+-- -----------------------------------------------------
+-- Table `lease4`
+-- -----------------------------------------------------
 CREATE TABLE lease4 (
     address int,
     hwaddr blob,
@@ -65,6 +68,9 @@ CREATE INDEX lease4index5 ON lease4 (state);
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
 -- it will eventually be replaced by BINARY(16).
+-- -----------------------------------------------------
+-- Table `lease6`
+-- -----------------------------------------------------
 CREATE TABLE lease6 (
     address varchar,
     duid blob,
@@ -98,6 +104,9 @@ CREATE INDEX lease6index6 ON lease6 (state);
 -- type names, they can join this table with the lease6 table.
 -- Make sure those values match Lease6::LeaseType enum (see src/bin/dhcpsrv/
 -- lease_mgr.h)
+-- -----------------------------------------------------
+-- Table `lease6_types`
+-- -----------------------------------------------------
 CREATE TABLE lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
@@ -113,6 +122,9 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- users of the database - if they want to view the lease table and use the
 -- type names, they can join this table with the lease6 table. For details,
 -- see constants defined in src/lib/dhcp/dhcp/pkt.h for detailed explanation.
+-- -----------------------------------------------------
+-- Table `lease_hwaddr_source`
+-- -----------------------------------------------------
 CREATE TABLE lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
@@ -140,47 +152,12 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
--- -----------------------------------------------------
--- Table `dhcp4_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp4_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp4_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp4_options table
-CREATE INDEX dhcp4_optionsindex1 ON dhcp4_options (host_id);
-
--- -----------------------------------------------------
--- Table `dhcp6_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp6_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp6_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp6_options table
-CREATE INDEX dhcp6_optionsindex1 ON dhcp6_options (host_id);
-
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
+-- -----------------------------------------------------
+-- Table `lease_state`
+-- -----------------------------------------------------
 CREATE TABLE lease_state (
     state int,
     name varchar,
@@ -196,9 +173,15 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- This table is only modified during schema upgrades.  For historical reasons
 -- (related to the names of the columns in the BIND 10 DNS database file), the
 -- first column is called "version" and not "major".
+-- -----------------------------------------------------
+-- Table `schema_version`
+-- -----------------------------------------------------
 CREATE TABLE schema_version (
     version int,
     minor int,
     PRIMARY KEY (version)
 );
+
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
+
+-- This line concludes database initalization to version 1.0.

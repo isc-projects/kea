@@ -352,6 +352,31 @@ TEST(CqlOpenTest, OpenDatabase) {
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
+    // Check that invalid login data does not cause an exception, CQL should use
+    // default values.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
+
+    // Check that invalid timeouts throw DbOperationError.
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
+                 DbOperationError);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_2)),
+                 DbOperationError);
+
+    // Check that CQL allows the hostname to not be specified.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+
     // Tidy up after the test
     destroyCqlSchema(false, true);
 }
@@ -375,8 +400,8 @@ TEST_F(CqlLeaseMgrTest, getType) {
 /// This test checks that the conversion is correct.
 TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
     const time_t cltt = time(NULL);
-    const uint32_t valid_lft = 86400;       // 1 day
-    uint64_t cql_expire;
+    const cass_int64_t valid_lft = 86400; // 1 day
+    cass_int64_t cql_expire;
 
     // Convert to the database time
     CqlExchange::convertToDatabaseTime(cltt, valid_lft, cql_expire);
@@ -643,4 +668,4 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
 }
 
-}; // Of anonymous namespace
+}  // namespace
