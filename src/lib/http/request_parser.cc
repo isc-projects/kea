@@ -347,7 +347,6 @@ HttpRequestParser::uriHandler() {
 
         } else if (isCtl(c)) {
             parseFailure("control character found in HTTP URI");
-            transition(HTTP_PARSE_FAILED_ST, HTTP_PARSE_FAILED_EVT);
 
         } else {
             // Still parsing the URI. Append the next character to the
@@ -397,7 +396,6 @@ HttpRequestParser::versionNumberStartHandler(const unsigned int next_state,
         } else {
             parseFailure("expected digit in HTTP version, found " +
                          std::string(1, c));
-            transition(HTTP_PARSE_FAILED_ST, HTTP_PARSE_FAILED_EVT);
         }
     });
 }
@@ -421,7 +419,6 @@ HttpRequestParser::versionNumberHandler(const char following_character,
         } else {
             parseFailure("expected digit in HTTP version, found " +
                          std::string(1, c));
-            transition(HTTP_PARSE_FAILED_ST, HTTP_PARSE_FAILED_EVT);
         }
     });
 }
