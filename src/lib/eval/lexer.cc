@@ -56,6 +56,8 @@
 
 /* begin standard C headers. */
 /* %if-c-only */
+#include <config.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

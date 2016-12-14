@@ -11,4 +11,6 @@
 /// tests.  See callout_common.cc for details.
 
 static const int LIBRARY_NUMBER = 1;
+#include <config.h>
+
 #include "callout_library_common.h"

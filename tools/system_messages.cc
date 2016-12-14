@@ -18,6 +18,8 @@
 // If no output file is specified, output is written to stdout.
 // The produced format is docbook XML.
 
+#include <config.h>
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>

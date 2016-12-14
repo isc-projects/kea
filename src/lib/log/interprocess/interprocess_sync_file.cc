@@ -7,6 +7,8 @@
 // This file requires LOCKFILE_DIR to be defined. It points to the default
 // directory where lockfile will be created.
 
+#include <config.h>
+
 #include <log/interprocess/interprocess_sync_file.h>
 
 #include <string>
