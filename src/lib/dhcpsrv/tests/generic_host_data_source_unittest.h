@@ -122,6 +122,14 @@ public:
     /// @param host2 second host to compare
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
 
+    /// @ brief Used to sort a host collection by IPv4 subnet id.
+    static bool compareHostsForSort4(const ConstHostPtr& host1,
+                                     const ConstHostPtr& host2);
+
+    /// @ brief Used to sort a host collection by IPv6 subnet id.
+    static bool compareHostsForSort6(const ConstHostPtr& host1,
+                                     const ConstHostPtr& host2);
+
     /// @brief Compares two IPv6 reservation lists.
     ///
     /// This method uses gtest macros to signal errors.

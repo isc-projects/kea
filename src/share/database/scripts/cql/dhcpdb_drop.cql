@@ -21,10 +21,9 @@ DROP TABLE IF EXISTS lease_hwaddr_source;
 DROP TABLE IF EXISTS schema_version;
 DROP TABLE IF EXISTS ipv6_reservations;
 DROP TABLE IF EXISTS hosts;
-DROP TABLE IF EXISTS dhcp4_options;
-DROP TABLE IF EXISTS dhcp6_options;
 DROP TABLE IF EXISTS host_identifier_type;
 DROP TABLE IF EXISTS lease_state;
+DROP TABLE IF EXISTS host_reservations;
 
 DROP INDEX IF EXISTS lease4index1;
 DROP INDEX IF EXISTS lease4index2;
@@ -38,3 +37,11 @@ DROP INDEX IF EXISTS lease6index3;
 DROP INDEX IF EXISTS lease6index4;
 DROP INDEX IF EXISTS lease6index5;
 DROP INDEX IF EXISTS lease6index6;
+
+DROP INDEX IF EXISTS host_reservationsindex1;
+DROP INDEX IF EXISTS host_reservationsindex2;
+DROP INDEX IF EXISTS host_reservationsindex3;
+DROP INDEX IF EXISTS host_reservationsindex4;
+DROP INDEX IF EXISTS host_reservationsindex5;
+DROP INDEX IF EXISTS host_reservationsindex6;
+DROP INDEX IF EXISTS host_reservationsindex7;

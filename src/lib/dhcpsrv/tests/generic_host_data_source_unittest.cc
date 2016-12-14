@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -259,6 +260,24 @@ void GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     // Compare DHCPv4 and DHCPv6 options.
     compareOptions(host1->getCfgOption4(), host2->getCfgOption4());
     compareOptions(host1->getCfgOption6(), host2->getCfgOption6());
+}
+
+bool GenericHostDataSourceTest::compareHostsForSort4(
+    const ConstHostPtr& host1,
+    const ConstHostPtr& host2) {
+    if (host1->getIPv4SubnetID() < host2->getIPv4SubnetID()) {
+        return true;
+    }
+    return false;
+}
+
+bool GenericHostDataSourceTest::compareHostsForSort6(
+    const ConstHostPtr& host1,
+    const ConstHostPtr& host2) {
+    if (host1->getIPv6SubnetID() < host2->getIPv6SubnetID()) {
+        return true;
+    }
+    return false;
 }
 
 DuidPtr
@@ -817,6 +836,12 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Verify that the values returned are proper.
     int i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are eventually implemented as ordered in the Cassandra host data
+        // source.
+        std::sort(all_by_addr.begin(), all_by_addr.end(), compareHostsForSort4);
+    }
     for (ConstHostCollection::const_iterator it = all_by_addr.begin();
          it != all_by_addr.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -831,6 +856,12 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Check that the returned values are as expected.
     i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are eventually implemented as ordered in the Cassandra host data
+        // source.
+        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort4);
+    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
@@ -952,6 +983,11 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
 
     // Check that the returned values are as expected.
     int i = 0;
+    if (hdsptr_->getType() == "cql") {
+        // There is no ORDER BY in Cassandra. Order here. Remove this if entries
+        // are implemented as ordered in the Cassandra host data source.
+        std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort6);
+    }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
          it != all_by_id.end(); ++it) {
         EXPECT_EQ(IOAddress("0.0.0.0"), (*it)->getIPv4Reservation());
