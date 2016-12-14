@@ -55,7 +55,7 @@
   {
       "name": "VoIP",
       "test": "substring(option[60].hex,0,6) == 'Aastra'"
-  },
+  }
 
   ],
 
