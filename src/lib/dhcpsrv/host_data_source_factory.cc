@@ -18,6 +18,10 @@
 #include <dhcpsrv/pgsql_host_data_source.h>
 #endif
 
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_host_data_source.h>
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -76,8 +80,10 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
 #ifdef HAVE_CQL
     if (db_type == "cql") {
-        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
-                  "is not implemented yet.");
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        getHostDataSourcePtr().reset(new CqlHostDataSource(parameters));
+        return;
     }
 #endif
 

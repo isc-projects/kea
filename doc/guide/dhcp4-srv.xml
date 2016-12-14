@@ -2973,8 +2973,8 @@ It is merely echoed by the server
     with classification using expressions.</para>
     </section>
 
-    <section id="reservations4-mysql-pgsql">
-      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
+    <section id="reservations4-mysql-pgsql-cql">
+      <title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title>
 
       <para>
         It is possible to store host reservations in MySQL or PostgreSQL database. See
@@ -2989,13 +2989,6 @@ It is merely echoed by the server
       <note><simpara>In Kea 1.1.0 maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
-
-    <section id="reservations4-cql">
-      <title>Storing host reservations in CQL (Cassandra)</title>
-      <para>Kea currently does not support storing reservations in
-      Cassandra (CQL).</para>
-    </section>
-
 
     <section id="reservations4-tuning">
       <title>Fine Tuning DHCPv4 Host Reservation</title>
