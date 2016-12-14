@@ -341,7 +341,7 @@ public:
     /// @brief Get data type buffer length.
     ///
     /// This function returns the size of a particular data type.
-    /// Values retured by this function correspond to the data type
+    /// Values returned by this function correspond to the data type
     /// sizes defined in OptionDataTypeTraits (IPV4_ADDRESS_TYPE and
     /// IPV6_ADDRESS_TYPE are exceptions here) so they rather indicate
     /// the fixed length of the data being written into the buffer,

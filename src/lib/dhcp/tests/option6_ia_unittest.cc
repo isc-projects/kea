@@ -80,7 +80,7 @@ public:
         EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(type, opt->getType());
 
-        EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
+        EXPECT_EQ(16, outBuf_.getLength()); // length(IA_NA) = 16
 
         // Check if pack worked properly:
         InputBuffer out(outBuf_.getData(), outBuf_.getLength());

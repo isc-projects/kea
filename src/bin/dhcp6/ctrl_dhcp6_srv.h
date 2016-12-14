@@ -167,7 +167,7 @@ private:
     /// this method.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in milliseconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the

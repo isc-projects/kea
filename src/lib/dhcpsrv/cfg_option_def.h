@@ -104,7 +104,7 @@ public:
 
     /// @brief Return option definition for the particular option space and name.
     ///
-    /// @param option_space pption space.
+    /// @param option_space option space.
     /// @param option_name option name.
     ///
     /// @return An option definition or NULL pointer if option definition

@@ -112,7 +112,7 @@ public:
     /// @brief Name of the timer for reclaiming expired leases.
     static const std::string RECLAIM_EXPIRED_TIMER_NAME;
 
-    /// @brief Name of the timer for flushing relclaimed leases.
+    /// @brief Name of the timer for flushing reclaimed leases.
     static const std::string FLUSH_RECLAIMED_TIMER_NAME;
 
     //@}

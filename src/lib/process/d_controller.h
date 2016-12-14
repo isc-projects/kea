@@ -113,7 +113,7 @@ public:
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref isc::dhcp::Daemon::getVersion()
     static std::string getVersion(bool extended);
- 
+
     /// @brief Acts as the primary entry point into the controller execution
     /// and provides the outermost application control logic:
     ///
@@ -179,7 +179,7 @@ public:
     ///
     /// The method extracts the set of configuration elements for the
     /// module-name which matches the controller's app_name_ and passes that
-    /// set into @c udpateConfig().
+    /// set into @c updateConfig().
     ///
     /// The file may contain an arbitrary number of other modules.
     ///

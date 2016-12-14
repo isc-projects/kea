@@ -234,7 +234,7 @@ public:
 
     /// @brief Adds IA option to the message.
     ///
-    /// Addded option holds an address.
+    /// Added option holds an address.
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
@@ -391,7 +391,7 @@ public:
     // in a client request correctly, according to the replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use client-name-replacment parameter - for
+    // @param mode - value to use client-name-replacement parameter - for
     // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
     // "\"NEVER\"".  This allows us to also pass in boolean literals which
     // are unquoted.
@@ -556,7 +556,7 @@ public:
     ///
     /// @param type An expected type of the NameChangeRequest (Add or Remove).
     /// @param reverse An expected setting of the reverse update flag.
-    /// @param forward An expected setting of the forward udpate flag.
+    /// @param forward An expected setting of the forward update flag.
     /// @param addr A string representation of the IPv6 address held in the
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.
@@ -564,7 +564,7 @@ public:
     /// dhcp_ddns::D2Dhcid::createDigest() with the appropriate arguments. This
     /// method uses encryption tools to produce the value which cannot be
     /// easily duplicated by hand.  It is more or less necessary to generate
-    /// these values programmatically and place them here. Should the
+    /// these values programatically and place them here. Should the
     /// underlying implementation of createDigest() change these test values
     /// will likely need to be updated as well.
     /// @param expires A timestamp when the lease associated with the
@@ -793,7 +793,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 // Checks that NameChangeRequests to add entries are not
 // created when ddns updates are disabled.
 TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
-    // Disable DDNS udpates.
+    // Disable DDNS updates.
     disableD2();
 
     // Create Reply message with Client Id and Server id.

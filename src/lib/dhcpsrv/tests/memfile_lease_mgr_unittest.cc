@@ -1647,7 +1647,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // pick a lease.
     std::vector<IOAddress> lease_addresses;
 
-    // Generarate random leases. We remember their addresses in
+    // Generate random leases. We remember their addresses in
     // lease_addresses.
     for (uint32_t i = 0; i < leases_cnt; ++i) {
         Lease4Ptr lease = initiateRandomLease4(addr);
@@ -1786,7 +1786,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // pick a lease.
     std::vector<IOAddress> lease_addresses;
 
-    // Generarate random leases. We remember their addresses in
+    // Generate random leases. We remember their addresses in
     // lease_addresses.
     for (uint32_t i = 0; i < leases_cnt; ++i) {
         Lease6Ptr lease = initiateRandomLease6(addr);

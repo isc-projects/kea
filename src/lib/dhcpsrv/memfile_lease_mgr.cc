@@ -50,7 +50,7 @@ namespace dhcp {
 /// the interval timer and assigns a callback function (pointer to which is
 /// passed in the constructor), which will be called at the specified
 /// intervals to perform the cleanup. It is also responsible for creating
-/// and maintaing the object which is used to spawn the new process which
+/// and maintaining the object which is used to spawn the new process which
 /// executes the @c kea-lfc program.
 ///
 /// This functionality is enclosed in a separate class so as the implementation
@@ -216,7 +216,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
         callback_();
     }
 
-    // If it's suposed to run periodically, setup that now.
+    // If it's supposed to run periodically, setup that now.
     if (lfc_interval > 0) {
         // Set the timer to call callback function periodically.
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
@@ -332,7 +332,7 @@ public:
     /// The result set is populated by iterating over the IPv4 leases in
     /// storage, in ascending order by address, accumulating the lease state
     /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not gaurantee
+    /// inherently group them by subnet, and while this does not guarantee
     /// ascending order of subnet id, it should be sufficient to accumulate
     /// state counts per subnet.  This avoids introducing an additional
     /// subnet_id index.
@@ -425,7 +425,7 @@ public:
     /// The result set is populated by iterating over the IPv6 leases in
     /// storage, in ascending order by address, accumulating the lease state
     /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not gaurantee
+    /// inherently group them by subnet, and while this does not guarantee
     /// ascending order of subnet id, it should be sufficient to accumulate
     /// state counts per subnet.  This avoids introducing an additional
     /// subnet_id index.
@@ -993,12 +993,12 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
 
     // This returns the first element which is greater than the specified
     // tuple (true, time(NULL) - secs). However, the range between the
-    // beginnng of the index and returned element also includes all the
+    // beginning of the index and returned element also includes all the
     // elements for which the first value is false (lease state is NOT
     // reclaimed), because false < true. All elements between the
     // beginning of the index and the element returned, for which the
     // first value is true, represent the reclaimed leases which should
-    // be deleted, because their expiration time + secs has occured earlier
+    // be deleted, because their expiration time + secs has occurred earlier
     // than current time.
     typename IndexType::const_iterator upper_limit =
         index.upper_bound(boost::make_tuple(true, time(NULL) - secs));

@@ -499,7 +499,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
@@ -511,7 +511,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query

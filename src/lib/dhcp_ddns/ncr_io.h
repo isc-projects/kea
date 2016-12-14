@@ -550,7 +550,7 @@ public:
     ///
     /// @throw NcrSenderError if either sender is in send mode, if the number of
     /// messages in the source sender's queue is larger than this sender's
-    /// maxium queue size, or if this sender's queue is not empty.
+    /// maximum queue size, or if this sender's queue is not empty.
     void assumeQueue(NameChangeSender& source_sender);
 
     /// @brief Returns a file descriptor suitable for use with select
@@ -754,7 +754,7 @@ private:
     /// @brief Boolean indicator which tracks sending status.
     bool sending_;
 
-    /// @brief A pointer to regisetered send completion handler.
+    /// @brief A pointer to registered send completion handler.
     RequestSendHandler& send_handler_;
 
     /// @brief Maximum number of entries permitted in the send queue.

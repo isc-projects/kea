@@ -2443,7 +2443,7 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
                       sizeof(expected_option_data));
 
     // Bogus values should not be accepted.
-    params["data"] = "bugus";
+    params["data"] = "bogus";
     testInvalidOptionParam(params);
 
     params["data"] = "2";
@@ -3239,7 +3239,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
 TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     ConstElementPtr status;
 
-    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    // Verify that the D2 configuration can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
@@ -3343,7 +3343,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    // Verify that the D2 configuration can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
@@ -4152,7 +4152,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
         "    \"4o6-subnet\": \"2001:db8:bogus/45\" } ],"
         "\"valid-lifetime\": 4000 }",
 
-        // Bogus configuration 3: incorrect prefix lenght
+        // Bogus configuration 3: incorrect prefix length
         "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "

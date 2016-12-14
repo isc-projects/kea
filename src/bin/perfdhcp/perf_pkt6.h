@@ -85,7 +85,7 @@ public:
     /// \brief Handles limited binary packet parsing for packets with
     /// custom offsets of options and transaction id
     ///
-    /// This methoid handles the parsing of packets that have custom offsets
+    /// This method handles the parsing of packets that have custom offsets
     /// of options or transaction ID. Use
     /// \ref isc::dhcp::Pkt4::addOption to specify which options to parse.
     /// Options should be of the \ref isc::perfdhcp::LocalizedOption

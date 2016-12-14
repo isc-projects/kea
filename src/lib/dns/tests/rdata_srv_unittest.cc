@@ -179,7 +179,7 @@ TEST_F(Rdata_SRV_Test, toText) {
 }
 
 TEST_F(Rdata_SRV_Test, compare) {
-    // test RDATAs, sorted in the ascendent order.
+    // test RDATAs, sorted in the ascending order.
     vector<in::SRV> compare_set;
     compare_set.push_back(in::SRV("1 5 1500 a.example.com."));
     compare_set.push_back(in::SRV("2 5 1500 a.example.com."));

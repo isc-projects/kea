@@ -363,7 +363,7 @@ protected:
     /// @return Returns a DCfgContextBasePtr to the new context instance.
     virtual DCfgContextBasePtr createNewContext() = 0;
 
-    /// @brief Replaces existing context with a new, emtpy context.
+    /// @brief Replaces existing context with a new, empty context.
     void resetContext();
 
     /// @brief Update the current context.

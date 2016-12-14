@@ -820,7 +820,7 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     To enable the debug statements in the classifciaton system you will
+     To enable the debug statements in the classification system you will
      need to set the severity to "DEBUG" and the debug level to at least 55.
      The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
      </para>

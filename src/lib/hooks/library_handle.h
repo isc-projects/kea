@@ -135,10 +135,10 @@ public:
     ///    }
     ///]
     ///
-    /// The first library has no parameters, so regardles of the name
+    /// The first library has no parameters, so regardless of the name
     /// specified, for that library getParameter will always return NULL.
     ///
-    /// For the second paramter, depending the following calls will return:
+    /// For the second parameter, depending the following calls will return:
     /// - x = getParameter("mail") will return instance of
     ///   isc::data::StringElement. The content can be accessed with
     ///   x->stringValue() and will return std::string.

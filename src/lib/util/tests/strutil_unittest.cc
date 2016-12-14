@@ -405,7 +405,7 @@ TEST(StringUtilTest, decodeFormattedHexString) {
     testFormatted("", "");
 
     std::vector<uint8_t> decoded;
-    // Whitepspace.
+    // Whitespace.
     EXPECT_THROW(decodeFormattedHexString("0a ", decoded),
                  isc::BadValue);
     // Whitespace within a string.

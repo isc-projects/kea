@@ -29,7 +29,7 @@ DROP INDEX key_dhcp6_identifier_subnet_id ON hosts;
 CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts (dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC);
 
 # Create index to search for reservations using IP address and subnet id.
-# This unique index guarantees that there is only one occurence of the
+# This unique index guarantees that there is only one occurrence of the
 # particular IPv4 address for a given subnet.
 CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts (ipv4_address ASC , dhcp4_subnet_id ASC);
 

@@ -1646,7 +1646,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
-    // Get DDNS udpate directions
+    // Get DDNS update directions
     bool do_fwd = false;
     bool do_rev = false;
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
@@ -1753,7 +1753,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // The server wasn't able allocate new lease and renew an exising
+        // The server wasn't able allocate new lease and renew an existing
         // lease. In that case, the server sends NoAddrsAvail per RFC7550.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoAddrsAvail,
@@ -1916,7 +1916,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // The server wasn't able allocate new lease and renew an exising
+        // The server wasn't able allocate new lease and renew an existing
         // lease. In that case, the server sends NoPrefixAvail per RFC7550.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoPrefixAvail,
@@ -2903,7 +2903,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // Try to assign options that were requested by the client.
     appendRequestedOptions(inf_request, reply, co_list);
 
-    // Try to assigne vendor options that were requested by the client.
+    // Try to assign vendor options that were requested by the client.
     appendRequestedVendorOptions(inf_request, reply, ctx, co_list);
 
     return (reply);

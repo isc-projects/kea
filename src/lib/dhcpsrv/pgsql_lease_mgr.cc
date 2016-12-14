@@ -26,8 +26,8 @@ using namespace std;
 
 namespace {
 
-/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source
-/// columns.  This is coverd by tickets #3557, #4530, and PR#9.
+/// @todo TKM lease6 needs to accommodate hwaddr,hwtype, and hwaddr source
+/// columns.  This is covered by tickets #3557, #4530, and PR#9.
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
@@ -705,7 +705,7 @@ private:
 
 /// @brief Base PgSql derivation of the statistical lease data query
 ///
-/// This class provides the functionality such as results storgae and row
+/// This class provides the functionality such as results storage and row
 /// fetching common to fulfilling the statistical lease data query.
 ///
 class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
@@ -822,9 +822,11 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     pair<uint32_t, uint32_t> code_version(PG_CURRENT_VERSION, PG_CURRENT_MINOR);
     pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError, "Posgresql schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "." << db_version.second);
+        isc_throw(DbOpenError,
+                  "PostgreSQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
     }
 }
 

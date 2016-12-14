@@ -259,7 +259,7 @@ void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
 /// - DOCSIS3_V6_CONFIG_FILE from user property "bootfile"
 /// - DOCSIS3_V6_TFTP_SERVERS from user property "tftp_server"
 ///
-/// @param response IPv5 reponse packet
+/// @param response IPv5 response packet
 /// @param user User from whom properties are sourced
 void add6Options(Pkt6Ptr& response, const UserPtr& user) {
     if (!user) {

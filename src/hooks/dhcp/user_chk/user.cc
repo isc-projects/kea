@@ -38,7 +38,7 @@ UserId::UserId(UserIdType id_type, const std::string & id_str) :
     // Input is expected to be 2-digits per bytes, no delimiters.
     std::vector<uint8_t> addr_bytes;
 
-    // Strip out colon delimeters, decodeHex doesn't like them.
+    // Strip out colon delimiters, decodeHex doesn't like them.
     std::string clean_id_str = id_str;
     std::string::iterator end_pos = std::remove(clean_id_str.begin(),
                                                 clean_id_str.end(), ':');

@@ -9,7 +9,7 @@ routines to be written in a straightfowrard step-step-step fashion rather
 than as a complex chain of separate handler functions.
 
 Coroutine objects (i.e., UDPServer, TCPServer and IOFetch) are objects
-with reenterable operator() members.  When an instance of one of these
+with reentrant operator() members.  When an instance of one of these
 classes is called as a function, it resumes at the position where it left
 off.  Thus, a UDPServer can issue an asynchronous I/O call and specify
 itself as the handler object; when the call completes, the UDPServer
@@ -89,7 +89,7 @@ fetch logic:
            |
       IOAsioSocket
            |
-     +-----+-----+                
+     +-----+-----+
      |           |
 UDPSocket    TCPSocket
 
@@ -122,7 +122,7 @@ protocol to use.  The sequence is:
     if (! synchronous) {
         YIELD;
     }
-    YIELD asyncSend(query)           // Send query 
+    YIELD asyncSend(query)           // Send query
     do {
         YIELD asyncReceive(response) // Read response
     } while (! complete(response))

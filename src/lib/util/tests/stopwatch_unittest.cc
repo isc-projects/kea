@@ -59,7 +59,7 @@ public:
 
 protected:
 
-    /// @brief Returs the current time.
+    /// @brief Returns the current time.
     ///
     /// This method returns the fixed @c current_time_ timestamp.
     virtual ptime getCurrentTime() const;

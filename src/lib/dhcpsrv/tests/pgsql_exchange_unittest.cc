@@ -216,7 +216,7 @@ public:
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param sql string containing the SQL statement text.  Note that
     /// PostgreSQL supports executing text which contains more than one SQL
     /// statement separated by semicolons.
@@ -236,7 +236,7 @@ public:
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param statement statement descriptor of the prepared statement
     /// to execute.
     /// @param bind_array bind array containing the input values to submit
@@ -268,7 +268,7 @@ public:
     /// of the defined columns, in the order they are defined.
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param exp_rows expected number of rows fetched. (This can be 0).
     /// @lineno line number from where the call was invoked
     ///
@@ -308,7 +308,7 @@ TEST_F(PgSqlBasicsTest, rowColumnBasics) {
     PgSqlResultPtr r;
     FETCH_ROWS(r, 0);
 
-    // Column meta-data is deteremined by the select statement and is
+    // Column meta-data is determined by the select statement and is
     // present whether or not any rows were returned.
     EXPECT_EQ(r->getCols(), NUM_BASIC_COLS);
 

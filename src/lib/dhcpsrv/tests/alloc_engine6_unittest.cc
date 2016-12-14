@@ -1320,7 +1320,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 /// reservation for the second IA. This works for Requests and Renews, though.
 /// In both of those messages, when processing of the first IA is complete,
 /// we have a lease in the database. Based on that, when processing the second
-/// IA we can detect that the first reservated address is in use already and
+/// IA we can detect that the first reserved address is in use already and
 /// use the second reservation.
 TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     // Create reservation for the client. This is in-pool reservation,
@@ -1667,7 +1667,7 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
         address << "2001:db8:1::";
         address << i;
 
-        // Allocate the leease.
+        // Allocate the lease.
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(address.str()),
                                    duid, iaid, 501, 502, 503, 504, subnet_->getID(),
                                    HWAddrPtr(), 0));

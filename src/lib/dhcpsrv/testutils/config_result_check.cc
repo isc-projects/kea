@@ -40,7 +40,7 @@ bool errorContainsPosition(ConstElementPtr error_element,
         // If the file name is present, check that it is followed by the line
         // number and position within the line.
         if (pos != std::string::npos) {
-            // Split the string starting at the begining of the <filename>. It
+            // Split the string starting at the beginning of the <filename>. It
             // should return a vector of strings.
             std::string sub = error_string.substr(pos);
             std::vector<std::string> split_pos;

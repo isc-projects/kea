@@ -342,7 +342,7 @@ protected:
 class TokenRelay6Option : public TokenOption {
 public:
     /// @brief Constructor that takes a nesting level and an option
-    /// code as paramaters.
+    /// code as parameters.
     ///
     /// @param nest_level the nesting for which relay to examine.
     /// @param option_code code of the option.
@@ -398,10 +398,10 @@ public:
 
     /// @brief Gets a value from the specified packet.
     ///
-    /// Evaluation uses metadatas available in the packet. It does not
+    /// Evaluation uses metadata available in the packet. It does not
     /// require any values to be present on the stack.
     ///
-    /// @param pkt - metadatas will be extracted from here
+    /// @param pkt - metadata will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
     void evaluate(Pkt& pkt, ValueStack& values);
 
@@ -499,7 +499,7 @@ public:
 
     /// @brief Gets a value of the specified packet.
     ///
-    /// The evaluation uses fields that are availabe in the packet.  It does not
+    /// The evaluation uses fields that are available in the packet.  It does not
     /// require any values to be present on the stack.
     ///
     /// @throw EvalTypeError when called for a DHCPv4 packet

@@ -18,7 +18,7 @@
       For example, Kea currently only stores lease information
       and host reservations. Future versions of Kea will store
       additional data such as subnet definitions: the database
-      structure will need to be updated to accomdate the extra
+      structure will need to be updated to accommodate the extra
       information.
     </para>
 
@@ -72,7 +72,7 @@
         <listitem>
           <simpara>
             <command>lease-init</command> &mdash;
-            Initializes a new lease database. This is useful during a new 
+            Initializes a new lease database. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
             installed.
@@ -616,7 +616,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
         <orderedlist>
           <listitem>
             <para>
-              Export CQLSH_HOST environemnt variable:
+              Export CQLSH_HOST environment variable:
 <screen>
 $ <userinput>export CQLSH_HOST=localhost</userinput>
 </screen>
@@ -715,7 +715,7 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       read-only mode.
       Sections <xref linkend="read-only-database-configuration4"/> and
       <xref linkend="read-only-database-configuration6"/> describe when
-      such configuration may be reqired and how to configure Kea to
+      such configuration may be required and how to configure Kea to
       operate using a read-only host database.
       </para>
     </section>

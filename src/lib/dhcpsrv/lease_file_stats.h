@@ -88,7 +88,7 @@ protected:
     uint32_t write_errs_;
 };
 
-} // namespace isc::dhcp
-} // namesapce isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_FILE_STATS_H

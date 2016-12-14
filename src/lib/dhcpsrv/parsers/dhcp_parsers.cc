@@ -671,7 +671,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
     OptionPtr option;
     if (!def) {
-        // @todo We have a limited set of option definitions initalized at
+        // @todo We have a limited set of option definitions initialized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
@@ -1028,7 +1028,7 @@ void PoolsListParser::commit() {
 
     if (pools_) {
         // local_pools_ holds the values produced by the build function.
-        // At this point parsing should have completed successfuly so
+        // At this point parsing should have completed successfully so
         // we can append new data to the supplied storage.
         pools_->insert(pools_->end(), local_pools_->begin(), local_pools_->end());
     }
@@ -1156,7 +1156,7 @@ void
 PoolParser::commit() {
     if (pools_) {
         // local_pools_ holds the values produced by the build function.
-        // At this point parsing should have completed successfuly so
+        // At this point parsing should have completed successfully so
         // we can append new data to the supplied storage.
         pools_->insert(pools_->end(), local_pools_.begin(), local_pools_.end());
     }
@@ -1548,7 +1548,7 @@ D2ClientConfigParser::commit() {
     // rollback.  This gets sticky, because who owns the listener instance?
     // Does CfgMgr maintain it or does the server class?  If the latter
     // how do we get that value here?
-    // I'm thinkikng D2ClientConfig could contain the listener instance
+    // I'm thinking D2ClientConfig could contain the listener instance
     CfgMgr::instance().setD2ClientConfig(local_client_config_);
 }
 

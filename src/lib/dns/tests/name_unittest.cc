@@ -355,7 +355,7 @@ TEST_F(NameTest, atSign) {
     EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
 
     // It is not alone. It is taken verbatim. We check the name converted
-    // back to the textual form, since checking it agains other name object
+    // back to the textual form, since checking it against other name object
     // may be wrong -- if we create it wrong the same way as the tested
     // object.
     EXPECT_EQ("\\@.", Name("@.").toText());

@@ -58,7 +58,7 @@ public:
 
     /// \brief Direct assignment from value
     ///
-    /// \param value the uint32_t value to assing
+    /// \param value the uint32_t value to assign
     void operator=(uint32_t value) { value_ = value; }
 
     /// \brief Returns the uint32_t representation of this serial value

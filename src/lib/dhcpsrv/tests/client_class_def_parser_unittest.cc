@@ -89,7 +89,7 @@ protected:
 
     /// @brief Convenience method for parsing a configuration
     ///
-    /// Attempt to parse a given client class defintion.
+    /// Attempt to parse a given client class definition.
     ///
     /// @param config - JSON string containing the client class configuration
     /// to parse.
@@ -101,7 +101,7 @@ protected:
     /// or by the parsing itself are not caught
     ClientClassDefPtr parseClientClassDef(const std::string& config,
                                           Option::Universe universe) {
-        // Create local dicitonary to which the parser add the class.
+        // Create local dictionary to which the parser add the class.
         ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
         // Create the "global" context for the parser.
         ParserContextPtr context(new ParserContext(universe));
@@ -132,14 +132,14 @@ protected:
     /// @brief Convenience method for parsing a list of client class
     /// definitions.
     ///
-    /// Attempt to parse a given list of client class defintions into a
+    /// Attempt to parse a given list of client class definitions into a
     /// ClientClassDictionary.
     ///
     /// @param config - JSON string containing the list of definitions to parse.
     /// @param universe - the universe in which the parsing context should
     /// occur.
     /// @return Returns a pointer to class dictionary created
-    /// @throw indirectly, execptions convertring the JSON text to elements,
+    /// @throw indirectly, exceptions convertring the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDictionaryPtr parseClientClassDefList(const std::string& config,
                                                      Option::Universe universe)
@@ -157,7 +157,7 @@ protected:
         // Commit should push it to CfgMgr staging
         parser.commit();
 
-        // Return the parser's local dicationary
+        // Return the parser's local dictionary
         return (parser.local_dictionary_);
     }
 };
@@ -536,7 +536,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("three", cclass->getName());
 
-    // For good measure, make sure we can't find a non-existant class.
+    // For good measure, make sure we can't find a non-existing class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
 

@@ -243,7 +243,7 @@ D2Process::checkQueueStatus() {
                                                  : "shutdown");
                 queue_mgr_->stopListening();
             } catch (const isc::Exception& ex) {
-                // It is very unlikey that we would experience an error
+                // It is very unlikely that we would experience an error
                 // here, but theoretically possible.
                 LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_STOP_ERROR)
                           .arg(ex.what());

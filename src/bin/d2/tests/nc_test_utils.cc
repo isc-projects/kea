@@ -107,7 +107,7 @@ FauxServer::requestHandler(const boost::system::error_code& error,
     try {
         request.fromWire(request_buf);
 
-        // If contex is not NULL, then we need to verify the message.
+        // If context is not NULL, then we need to verify the message.
         if (context) {
             dns::TSIGError error = context->verify(request.getTSIGRecord(),
                                                    receive_buffer_,

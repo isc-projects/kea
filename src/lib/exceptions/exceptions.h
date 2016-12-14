@@ -64,7 +64,7 @@ public:
     /// @return A C-style character string of the exception cause.
     virtual const char* what() const throw();
 
-    /// \brief Returns a C-style charater string of the cause of exception.
+    /// \brief Returns a C-style character string of the cause of exception.
     ///
     /// With verbose set to true, also returns file name and line numbers.
     /// Note that we can't simply define a single what() method with parameters,
@@ -241,6 +241,6 @@ public:
 }
 #endif // EXCEPTIONS_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

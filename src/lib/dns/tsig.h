@@ -414,7 +414,7 @@ public:
 protected:
     /// \brief Update internal HMAC state by more data.
     ///
-    /// This is used mostly internaly, when we need to verify a message without
+    /// This is used mostly internally, when we need to verify a message without
     /// TSIG signature in the middle of signed TCP stream. However, it is also
     /// used in tests, so it's protected instead of private, to allow tests
     /// in.

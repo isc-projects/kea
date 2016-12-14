@@ -67,7 +67,7 @@ bool waitForProcess(const ProcessSpawn& process, const pid_t pid,
 ///
 /// This method does not use any sleep() calls, but rather iterates through
 /// the loop very fast. This is not recommended in general, but is necessary
-/// to avoid updating errno by sleep() after receving a signal.
+/// to avoid updating errno by sleep() after receiving a signal.
 ///
 /// Note: the timeout is only loosely accurate. Depending on the fraction
 /// of second it was started on, it may terminate later by up to almost

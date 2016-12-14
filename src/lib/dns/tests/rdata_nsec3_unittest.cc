@@ -204,7 +204,7 @@ TEST_F(Rdata_NSEC3_Test, compare) {
     EXPECT_THROW(generic::NSEC3(nsec3_txt).compare(*rdata_nomatch),
                  bad_cast);
 
-    // test RDATAs, sorted in the ascendent order.  We only check comparison
+    // test RDATAs, sorted in the ascending order.  We only check comparison
     // on NSEC3-specific fields.  Bitmap comparison is tested in the bitmap
     // tests.  Common cases for NSEC3 and NSECPARAM3 are in their shared tests.
     vector<generic::NSEC3> compare_set;
