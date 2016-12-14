@@ -9,10 +9,10 @@ else
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
 
-VERSION=`cql_version "$@"`
+version=$(cql_version "$@")
 
-if [ "$VERSION" != "1.0" ]; then
-    printf "This script upgrades 1.0 to 2.0. Reported version is $VERSION. Skipping upgrade.\n"
+if [ "${version}" != "1.0" ]; then
+    printf "This script upgrades 1.0 to 2.0. Reported version is %s. Skipping upgrade.\n" "${version}"
     exit 0
 fi
 
@@ -20,7 +20,7 @@ cqlsh "$@" <<EOF
 -- This line starts database upgrade to version 2.0
 
 -- -----------------------------------------------------
--- Table `host_reservations`
+-- Table \`host_reservations\`
 -- -----------------------------------------------------
 CREATE TABLE host_reservations (
     id bigint,
@@ -46,13 +46,13 @@ CREATE TABLE host_reservations (
     option_subnet_id int,
     PRIMARY KEY (id)
 );
-CREATE INDEX host_reservationsindex1 ON host_reservations (host_identifier);
-CREATE INDEX host_reservationsindex2 ON host_reservations (host_identifier_type);
-CREATE INDEX host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
-CREATE INDEX host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
-CREATE INDEX host_reservationsindex5 ON host_reservations (host_ipv4_address);
-CREATE INDEX host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
-CREATE INDEX host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
+CREATE INDEX IF NOT EXISTS host_reservationsindex1 ON host_reservations (host_identifier);
+CREATE INDEX IF NOT EXISTS host_reservationsindex2 ON host_reservations (host_identifier_type);
+CREATE INDEX IF NOT EXISTS host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ipv4_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
 DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);

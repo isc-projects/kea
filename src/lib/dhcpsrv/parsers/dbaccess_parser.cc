@@ -82,6 +82,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                 timeout = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(timeout);
+
             } else {
                 values_copy[param.first] = param.second->stringValue();
             }

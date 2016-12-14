@@ -172,6 +172,9 @@ with the specified address to the Cassandra backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the Cassandra backend database.
 
+% DHCPSRV_CQL_BEGIN_TRANSACTION committing to Cassandra database.
+The server has issued a begin transaction call.
+
 % DHCPSRV_CQL_COMMIT committing to Cassandra database
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
@@ -260,10 +263,6 @@ subnet ID and hardware address.
 % DHCPSRV_CQL_GET_VERSION obtaining schema version information
 A debug message issued when the server is about to obtain schema version
 information from the Cassandra database.
-
-% DHCPSRV_CQL_HOST_RETRIEVE_ERROR Unable to retrieve host reservation or option: %1
-A host couldn't be fully retrieved. An exception was thrown, but the server
-should continue running.
 
 % DHCPSRV_CQL_ROLLBACK rolling back Cassandra database
 The code has issued a rollback call. For Cassandra, this is

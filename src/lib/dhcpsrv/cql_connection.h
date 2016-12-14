@@ -48,7 +48,7 @@ struct CqlTaggedStatement {
 const uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
 const uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
 
-/// Define CQL schema version: 1.0
+/// Define CQL schema version: 2.0
 const uint32_t CQL_SCHEMA_VERSION_MAJOR = 2;
 const uint32_t CQL_SCHEMA_VERSION_MINOR = 0;
 
