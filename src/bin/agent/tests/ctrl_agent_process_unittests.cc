@@ -22,7 +22,7 @@ using namespace isc::process;
 
 namespace {
 
-/// @brief CtrlAgentProcess test fixture lcass.
+/// @brief CtrlAgentProcess test fixture class.
 class CtrlAgentProcessTest : public CtrlAgentProcess, public ::testing::Test  {
 public:
     /// @brief Constructor
