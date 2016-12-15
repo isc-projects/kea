@@ -40,7 +40,7 @@ public:
 /// HTTP uses TCP as a transport which is asynchronous in nature, i.e. the
 /// HTTP message is received in chunks and multiple TCP connections can be
 /// established at the same time. Multiplexing between these connections
-/// requires providing a separate state machine per connection to "remeber"
+/// requires providing a separate state machine per connection to "remember"
 /// the state of each transaction when the parser is waiting for asynchronous
 /// data to be delivered. While the parser is waiting for the data, it can
 /// parse requests received over other connections. This class provides means
@@ -49,7 +49,7 @@ public:
 ///
 /// The request parser validates the syntax of the received message as it
 /// progresses with parsing the data. Though, it doesn't interpret the received
-/// data until it parses the whole message. In most cases we want to apply some
+/// data until the whole message is parsed. In most cases we want to apply some
 /// restrictions on the message content, e.g. Kea Control API requires that
 /// commands are sent using HTTP POST, with a JSON command being carried in a
 /// message body. The parser doesn't verify if the message meets these
@@ -173,7 +173,7 @@ public:
     /// @brief New data provided and parsing should continue.
     static const int MORE_DATA_PROVIDED_EVT = SM_DERIVED_EVENT_MIN + 3;
 
-    /// @brief Parsing HTTP request sucessfull.
+    /// @brief Parsing HTTP request successful.
     static const int HTTP_PARSE_OK_EVT = SM_DERIVED_EVENT_MIN + 100;
 
     /// @brief Parsing HTTP request failed.
@@ -192,9 +192,9 @@ public:
 
     /// @brief Initialize the state model for parsing.
     ///
-    /// This method must be  called before parsing the request, i.e. before
+    /// This method must be called before parsing the request, i.e. before
     /// calling @ref HttpRequestParser::poll. It initializes dictionaries of
-    /// states and events and sets the initial model state to RECEIVE_START_ST.
+    /// states and events, and sets the initial model state to RECEIVE_START_ST.
     void initModel();
 
     /// @brief Run the parser as long as the amount of data is sufficient.
@@ -412,7 +412,7 @@ private:
     /// @param [out] next A reference to the variable where read data should be
     /// stored.
     ///
-    /// @return true if character was sucessfully read, false otherwise.
+    /// @return true if character was successfully read, false otherwise.
     bool popNextFromBuffer(char& next);
 
     /// @brief Checks if specified value is a character.
