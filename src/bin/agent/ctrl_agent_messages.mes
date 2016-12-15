@@ -11,7 +11,7 @@ This is a debug message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
 
 % CTRL_AGENT_RUN_EXIT application is exiting the event loop
-This is a debug message issued when the Control Angent exits its
+This is a debug message issued when the Control Agent exits its
 event loop.
 
 % CTRL_AGENT_STARTED Kea Control Agent version %1 started

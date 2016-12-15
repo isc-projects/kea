@@ -102,7 +102,7 @@ TEST_F(CtrlAgentControllerTest, launchNormalShutdown) {
     time_duration elapsed_time;
     runWithConfig(valid_agent_config, 1000, elapsed_time);
 
-    // Give a generous margin to accomodate slower test environs.
+    // Give a generous margin to accommodate slower test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() >= 800 &&
                 elapsed_time.total_milliseconds() <= 1300);
 }
@@ -118,7 +118,7 @@ TEST_F(CtrlAgentControllerTest, sigintShutdown) {
     runWithConfig(valid_agent_config, 1000, elapsed_time);
 
     // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accomodate slow
+    // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
@@ -133,7 +133,7 @@ TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
     runWithConfig(valid_agent_config, 1000, elapsed_time);
 
     // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accomodate slow
+    // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
