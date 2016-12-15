@@ -172,6 +172,9 @@ with the specified address to the Cassandra backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the Cassandra backend database.
 
+% DHCPSRV_CQL_BEGIN_TRANSACTION committing to Cassandra database.
+The server has issued a begin transaction call.
+
 % DHCPSRV_CQL_COMMIT committing to Cassandra database
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
