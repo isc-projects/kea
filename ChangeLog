@@ -1,3 +1,8 @@
+1197.	[doc]		tomek
+	Configuration examples now set lfc-interval to a default
+	value of one hour.
+	(Trac #5072, git cf4362196fa2b7892643d1e40b974bb450a3de7e)
+
 1196.	[func]		tomek, fdupont
 	Dhcp6 parser migrated to bison. This yields a number of user
 	visible changes:
