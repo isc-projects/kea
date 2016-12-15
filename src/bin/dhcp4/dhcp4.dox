@@ -41,6 +41,43 @@ all configuration parsers. All DHCPv4 parsers deriving from this class
 directly have their entire implementation in the
 src/bin/dhcp4/json_config_parser.cc.
 
+@section dhcpv4ConfigParserBison Configuration Parser for DHCPv4 (bison)
+
+If you are here only to learn absolute minimum about the new parser, here's how you
+use it:
+
+@code
+ // The following code:
+ json = isc::data::Element::fromJSONFile(file_name, true);
+
+ // can be replaced with this:
+ Parser4Context parser;
+ json = parser.parseFile(file_name, Parser4Context::PARSER_DHCP4);
+@endcode
+
+For an introduction, rationale and issues the new parser tries to address,
+see @ref dhcpv6ConfigParserBison.
+
+The code change for 5017 introduces flex/bison based parser. It is
+essentially defined in two files: dhcp4_lexer.ll, which defines
+regular expressions that are used on the input (be it a file or a
+string in memory). In essence, this code is being called repeatedly
+and each time it returns a token. This repeats until either the
+parsing is complete or syntax error is encountered. For detailed
+discussion, how they operate see @ref dhcpv6ConfigParserBison.
+
+@section dhcpv4ConfigSubParser Parsing Partial Configuration in DHCPv4
+
+See @ref dhcpv6ConfigSubParser.
+
+@section dhcp4ParserIncludes Config File Includes
+
+See @ref dhcp6ParserIncludes.
+
+@section dhcp4ParserConflicts Avoiding syntactical conflicts in parsers
+
+See @ref dhcp6ParserConflicts.
+
 @section dhcpv4ConfigInherit DHCPv4 configuration inheritance
 
 One notable useful feature of DHCP configuration is its parameter inheritance.
