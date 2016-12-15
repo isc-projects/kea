@@ -137,7 +137,7 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
 
     // We don't need to call openActiveSockets() or startD2() as these
     // methods are called in processConfig() which is called by
-    // processCommand("reload-config", ...)
+    // processCommand("set-config", ...)
 
     // Set signal handlers. When the SIGHUP is received by the process
     // the server reconfiguration will be triggered. When SIGTERM or

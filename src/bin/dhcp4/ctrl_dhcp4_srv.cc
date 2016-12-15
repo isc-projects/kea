@@ -62,7 +62,8 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr args) {
-    return (processConfig(args));
+    // Use set-config as it handles logging and server config
+    return (commandSetConfigHandler("", args));
 }
 
 ConstElementPtr
@@ -72,14 +73,10 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
     ConstElementPtr dhcp4;
     string message;
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    CfgMgr::instance().rollback();
-
     // Command arguments are expected to be:
     // { "Dhcp4": { ... }, "Logging": { ... } }
-    // The Logging component is technically optional, but very recommended.
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
@@ -98,16 +95,36 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
         return (result);
     }
 
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
     // Logging is a sibling element and must be be parsed explicitly.
     // The call to configureLogger parses the given Logging element if
-    // not null, into the staging config.  Note this DOES alter the
+    // not null, into the staging config.  Note this does not alter the
     // current loggers, they remain in effect until we apply the
-    // logging config.
+    // logging config below.  If no logging is supplied logging will
+    // revert to default logging.
     Daemon::configureLogger(args->get("Logging"),
                             CfgMgr::instance().getStagingCfg());
 
     // Now we configure the server proper.
-    return (processConfig(dhcp4));
+    ConstElementPtr result = processConfig(dhcp4);
+
+    // If the configuration parsed successfully, apply the new logger
+    // configuration and the commit the new configuration.  We apply
+    // the logging first in case there's a configuration failure.
+    int rcode = 0;
+    isc::config::parseAnswer(rcode, result);
+    if (rcode == 0) {
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Use new configuration.
+        CfgMgr::instance().commit();
+    }
+
+    return (result);
 }
 
 ConstElementPtr
@@ -282,14 +299,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             return (isc::config::createAnswer(1, err.str()));
         }
     }
-
-    // Configuration was parsed successfully, apply the new logger
-    // configuration to log4cplus. It is done before commit in case
-    // something goes wrong.
-    CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-    // Use new configuration.
-    CfgMgr::instance().commit();
 
     return (answer);
 }

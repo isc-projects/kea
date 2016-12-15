@@ -168,8 +168,6 @@ public:
     }
 
     virtual ~NakedDhcpv4Srv() {
-        // Revert to unit test logging
-        isc::log::initLogger();
     }
 
     /// @brief Dummy server identifier option used by various tests.

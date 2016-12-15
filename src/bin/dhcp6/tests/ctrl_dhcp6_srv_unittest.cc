@@ -149,6 +149,12 @@ public:
         ConstElementPtr config = Element::fromJSON(config_txt);
 
         ConstElementPtr answer = server_->processConfig(config);
+
+        // Commit the configuration so any subsequent reconfigurations
+        // will only close the command channel if its configuration has
+        // changed.
+        CfgMgr::instance().commit();
+
         ASSERT_TRUE(answer);
 
         int status = 0;
@@ -302,7 +308,7 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
 
     // Use empty parameters list
     // Prepare configuration file.
-    string config_txt = "{ \"interfaces-config\": {"
+    string config_txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -321,7 +327,7 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/80\" } ],"
         "    \"subnet\": \"2001:db8:3::/64\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }}";
 
     ElementPtr config = Element::fromJSON(config_txt);
 
@@ -361,6 +367,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         "        \"valid-lifetime\": 4000, \n"
         "        \"renew-timer\": 1000, \n"
         "        \"rebind-timer\": 2000, \n"
+        "       \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
         "        \"subnet6\": [ \n";
     string subnet1 =
         "               {\"subnet\": \"3002::/64\", \n"
@@ -382,9 +393,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
     string logger_txt =
         "    \"Logging\": { \n"
         "        \"loggers\": [ { \n"
-        "            \"name\": \"*\", \n"
-        "            \"severity\": \"INFO\", \n"
-        "            \"debuglevel\": 0, \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
         "            \"output_options\": [{ \n"
         "                \"output\": \"/dev/null\" \n"
         "            }] \n"
@@ -438,7 +448,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"unsupported parameter: BOGUS (<string>:12:26)\" }",
+              "\"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }",
               response);
 
     // Check that the config was not lost
