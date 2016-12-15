@@ -54,7 +54,7 @@ void createCqlSchema(bool force_wipe, bool show_err = false);
 
 /// @brief Run a CQL script against the CQL unit test database
 ///
-/// Submits the given SQL script to CQL via cqlsh CLI. The output of
+/// Submits the given CQL script to CQL via cqlsh CLI. The output of
 /// stderr is suppressed unless the parameter, show_err is true. The is done
 /// to suppress warnings that might otherwise make test output needlessly
 /// noisy. A gtest assertion occurs if the script fails to execute.

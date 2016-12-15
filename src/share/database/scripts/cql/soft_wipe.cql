@@ -22,3 +22,4 @@ TRUNCATE TABLE lease6;
 TRUNCATE TABLE hosts;
 TRUNCATE TABLE dhcp4_options;
 TRUNCATE TABLE dhcp6_options;
+TRUNCATE TABLE host_reservations;
