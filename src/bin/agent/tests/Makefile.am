@@ -54,12 +54,18 @@ ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libproce
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+ctrl_agent_unittests_LDADD += += $(top_builddir)/src/lib/stats/libkea-stats.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+ctrl_agent_unittests_LDADD += += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 ctrl_agent_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
