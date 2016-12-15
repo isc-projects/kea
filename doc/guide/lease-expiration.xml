@@ -1,10 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-<chapter id="lease-expiration">
-  <title>Lease Expiration in DHCPv4 and DHCPv6</title>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="lease-expiration"><info><title>Lease Expiration in DHCPv4 and DHCPv6</title></info>
+  
 
   <para>The primary role of the DHCP server is to assign addresses and/or
   delegate prefixes to DHCP clients. These addresses and prefixes are
@@ -47,8 +43,8 @@
   DHCPv6 server configuration.
   </para>
 
-  <section id="lease-reclamation">
-    <title>Lease Reclamation</title>
+  <section xml:id="lease-reclamation"><info><title>Lease Reclamation</title></info>
+    
     <para>Lease reclamation is the process through which an expired lease
     becomes available for assignment to the same or different client.
     This process involves the following steps for each reclaimed lease:
@@ -81,8 +77,8 @@
     hooks libraries.</para>
   </section>
 
-  <section id="lease-reclaim-config">
-    <title>Configuring Lease Reclamation</title>
+  <section xml:id="lease-reclaim-config"><info><title>Configuring Lease Reclamation</title></info>
+    
     <para>Kea can be configured to periodically detect and reclaim expired
     leases. During this process the lease entries in the database are
     modified or removed. While this is happening the server will not process incoming DHCP
@@ -122,8 +118,8 @@
 <screen>
 
 |  c1  |            | c2 |            |c3|            | c4 |
-|&#x3c;----&#x3e;|&#x3c;----------&#x3e;|&#x3c;--&#x3e;|&#x3c;----------&#x3e;|&#x3c;&#x3e;|&#x3c;----------&#x3e;|&#x3c;--&#x3e;|
----------------------------------------------------------------->
+|&lt;----&gt;|&lt;----------&gt;|&lt;--&gt;|&lt;----------&gt;|&lt;&gt;|&lt;----------&gt;|&lt;--&gt;|
+----------------------------------------------------------------&gt;
 |      |     5s     |    |     5s     |  |     5s     |    | time
 
 </screen>
@@ -187,8 +183,8 @@
 <screen>
 
 | c1 |                | c2 |                | c3 |                | c4 |
-|&#x3c;--&#x3e;|&#x3c;--------------&#x3e;|&#x3c;--&#x3e;|&#x3c;--------------&#x3e;|&#x3c;--&#x3e;|&#x3c;--------------&#x3e;|&#x3c;--&#x3e;|&#x3c;--
------------------------------------------------------------------------------->
+|&lt;--&gt;|&lt;--------------&gt;|&lt;--&gt;|&lt;--------------&gt;|&lt;--&gt;|&lt;--------------&gt;|&lt;--&gt;|&lt;--
+------------------------------------------------------------------------------&gt;
 |50ms|       3s       |50ms|       3s       |50ms|       3s       |50ms|  time
 
 </screen>
@@ -225,8 +221,8 @@
     periodic reclamation of the expired leases.</para>
   </section>
 
-  <section id="lease-affinity">
-    <title>Configuring Lease Affinity</title>
+  <section xml:id="lease-affinity"><info><title>Configuring Lease Affinity</title></info>
+    
     <para>Suppose that a laptop goes to a sleep mode after a period of user
     inactivity.  While the laptop is in sleep mode, its DHCP client will not
     renew leases obtained from the server and these leases will eventually
@@ -295,8 +291,8 @@
     process may impact server responsiveness.</para>
   </section>
 
-  <section id="lease-reclamation-defaults">
-    <title>Default Configuration Values for Leases Reclamation</title>
+  <section xml:id="lease-reclamation-defaults"><info><title>Default Configuration Values for Leases Reclamation</title></info>
+    
     <para>The following list presents all configuration parameters
     pertaining to processing expired leases with their default values:</para>
 
@@ -329,8 +325,8 @@
 
   </section>
 
-  <section id="leases-reclamation-using-command">
-    <title>Reclaiming Expired Leases with Command</title>
+  <section xml:id="leases-reclamation-using-command"><info><title>Reclaiming Expired Leases with Command</title></info>
+    
     <para>The <emphasis>leases-reclaim</emphasis> command can be used to trigger
     leases reclamation at any time. Please consult the
     <xref linkend="command-leases-reclaim"/> for the details about using this

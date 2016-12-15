@@ -1,19 +1,9 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
-<!--
- - Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
- -
- - This Source Code Form is subject to the terms of the Mozilla Public
- - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
--->
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
 
-<refentry>
-
-  <refentryinfo>
-    <date>July 1, 2014</date>
-  </refentryinfo>
+  <info>
+    <date>2014-07-01</date>
+  </info>
 
   <refmeta>
     <refentrytitle>kea-sockcreator</refentrytitle>
@@ -34,13 +24,13 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>kea-sockcreator</command>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1>
-    <title>DESCRIPTION</title>
+  <refsection><info><title>DESCRIPTION</title></info>
+    
     <para>
       The <command>kea-sockcreator</command> daemon's entire job
       is to create sockets and assign names to them.
@@ -53,18 +43,18 @@
       if there is an unrecoverable error or unknown command.
     </para>
 
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>SEE ALSO</title>
+  <refsection><info><title>SEE ALSO</title></info>
+    
     <para>
       <citetitle>Kea Guide</citetitle>.
     </para>
 <!-- TODO: point to developer docs -->
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>HISTORY</title>
+  <refsection><info><title>HISTORY</title></info>
+    
     <para>
       The <command>b10-sockcreator</command> daemon
       was initially designed by Michal Vaner of CZNIC.
@@ -74,10 +64,6 @@
       removed. The socket creator server binary was renamed to
       kea-sockcreator in July 2014.
     </para>
-  </refsect1>
+  </refsection>
 
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+</refentry>

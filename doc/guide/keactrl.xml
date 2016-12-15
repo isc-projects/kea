@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="keactrl"><info><title>Managing Kea with keactrl</title></info>
+    
 
-  <chapter id="keactrl">
-    <title>Managing Kea with keactrl</title>
-
-    <section id="keactrl-overview">
-      <title>Overview</title>
+    <section xml:id="keactrl-overview"><info><title>Overview</title></info>
+      
       <para>keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
       <command>kea-dhcp6</command> and <command>kea-dhcp-ddns</command>). It
@@ -17,8 +12,8 @@
       </para>
     </section>
 
-    <section id="keactrl-usage">
-      <title>Command Line Options</title>
+    <section xml:id="keactrl-usage"><info><title>Command Line Options</title></info>
+      
       <para><command>keactrl</command> is run as follows:
 <screen>
 keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
@@ -50,8 +45,8 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
       </para>
     </section>
 
-    <section id="keactrl-config-file">
-      <title>The keactrl Configuration File</title>
+    <section xml:id="keactrl-config-file"><info><title>The keactrl Configuration File</title></info>
+      
       <para>
         Depending on requirements, not all of the available servers need
         be run.  The keactrl configuration file sets which servers are
@@ -137,8 +132,8 @@ kea_verbose=no
       </note>
     </section>
 
-    <section id="keactrl-commands">
-      <title>Commands</title>
+    <section xml:id="keactrl-commands"><info><title>Commands</title></info>
+      
       <para>The following commands are supported by <command>keactrl</command>:
       <itemizedlist>
         <listitem><simpara>
@@ -253,8 +248,8 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
       </para>
     </section>
 
-    <section id="keactrl-overriding-servers">
-      <title>Overriding the Server Selection</title>
+    <section xml:id="keactrl-overriding-servers"><info><title>Overriding the Server Selection</title></info>
+      
       <para>
         The optional <command>-s</command> switch allows
         the selection of the servers to which <command>keactrl</command>
