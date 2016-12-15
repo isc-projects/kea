@@ -21,7 +21,8 @@
 # This is the easiest backend to use as it does not require any extra
 # dependencies or services running.
 #  "lease-database": {
-#      "type": "memfile"
+#      "type": "memfile",
+#      "lfc-interval": 3600
 #  },
 
 # 2. MySQL backend. Leases will be stored in MySQL database. Make sure it

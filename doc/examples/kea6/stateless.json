@@ -20,6 +20,9 @@
 # Kea 0.9.1 requires lease-database to be specified, even it is not used.
 # In stateless mode, only options are granted, not addresses or prefixes, so
 # there will be no leases (unless stateless and stateful mode is used together).
-    "lease-database": { "type": "memfile" }
+    "lease-database": {
+        "type": "memfile",
+        "lfc-interval": 3600
+    }
 }
 }
