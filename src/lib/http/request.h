@@ -248,7 +248,7 @@ protected:
     /// @brief Map holding required HTTP headers.
     ///
     /// The key of this map specifies the HTTP header name. The value
-    /// spefifies the HTTP header value. If the value is empty, the
+    /// specifies the HTTP header value. If the value is empty, the
     /// header is required but the value of the header is not checked.
     /// If the value is non-empty, the value in the HTTP request must
     /// be equal to the value in the map.

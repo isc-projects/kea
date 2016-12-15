@@ -15,7 +15,7 @@ using namespace isc::http::test;
 
 namespace {
 
-/// @brief Test fixutre class for @ref PostHttpRequest.
+/// @brief Test fixture class for @ref PostHttpRequest.
 typedef HttpRequestTestBase<PostHttpRequest> PostHttpRequestTest;
 
 // This test verifies that PostHttpRequest class only accepts POST

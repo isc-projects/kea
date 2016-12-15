@@ -6,5 +6,5 @@
 
 $NAMESPACE isc::http
 
-% HTTP_DUMMY a dummy message for libkea-htto
+% HTTP_DUMMY a dummy message for libkea-http
 This is a dummy message.
