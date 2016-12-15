@@ -18,8 +18,7 @@ namespace http {
 /// @brief Exception thrown when body of the HTTP message is not JSON.
 class HttpRequestJsonError : public HttpRequestError {
 public:
-    HttpRequestJsonError(const char* file, size_t line,
-                                 const char* what) :
+    HttpRequestJsonError(const char* file, size_t line, const char* what) :
         HttpRequestError(file, line, what) { };
 };
 
