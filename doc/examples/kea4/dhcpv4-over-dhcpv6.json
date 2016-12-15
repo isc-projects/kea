@@ -11,8 +11,9 @@
   },
 
   "lease-database": {
-    "type": "memfile",
-    "name": "leases4"
+      "type": "memfile",
+      "name": "leases4",
+      "lfc-interval": 3600
   },
 
   "valid-lifetime": 4000,

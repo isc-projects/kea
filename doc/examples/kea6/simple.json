@@ -16,7 +16,8 @@
 # PostgreSQL, Cassandra, and the in-memory database, Memfile.
 # We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
-    "type": "memfile"
+      "type": "memfile",
+      "lfc-interval": 3600
   },
 
 # Addresses will be assigned with preferred and valid lifetimes
