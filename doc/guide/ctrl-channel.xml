@@ -158,7 +158,7 @@ will be sent to Kea and the responses received from Kea printed to standard outp
 </screen>
        </para>
        <para>
-         The server will respond with a result of 0 indcating success, or 1
+         The server will respond with a result of 0 indicating success, or 1
          indicating a failure.
        </para>
      </section> <!-- end of command-libreload -->
