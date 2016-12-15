@@ -1,13 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
-]>
-
-  <chapter id="ctrl-channel">
-    <title>Management API</title>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="ctrl-channel"><info><title>Management API</title></info>
+    
 
     <para>A classic approach to daemon configuration assumes that
     the server's configuration is stored in configuration files
@@ -29,13 +22,12 @@
 
     <para>Currently the only supported type of control channel
     is UNIX stream socket. For details how to configure it, see
-    <xref linkend="dhcp4-ctrl-channel" /> and <xref
-    linkend="dhcp6-ctrl-channel" />. It is likely that support
+    <xref linkend="dhcp4-ctrl-channel"/> and <xref linkend="dhcp6-ctrl-channel"/>. It is likely that support
     for other control channel types will be added in the future.
     </para>
 
-    <section id="ctrl-channel-syntax">
-    <title>Data Syntax</title>
+    <section xml:id="ctrl-channel-syntax"><info><title>Data Syntax</title></info>
+    
     <para>Communication over the control channel is conducted using JSON
     structures. If configured, Kea will open a socket and listen
     for incoming connections. A process connecting to this socket
@@ -81,8 +73,8 @@
     if it contains no data values.</para>
     </section>
 
-    <section id="ctrl-channel-client">
-    <title>Using the Control Channel</title>
+    <section xml:id="ctrl-channel-client"><info><title>Using the Control Channel</title></info>
+    
 
     <para>Kea does not currently provide a client for using the control channel.  The primary
     reason for this is the expectation is that the entity using the control channel
@@ -92,8 +84,8 @@
     how one can take advantage of the API.</para>
 
     <para>The easiest way is to use a tool called <command>socat</command>,
-    a tool available from <ulink url="http://www.dest-unreach.org/socat/">socat
-    homepage</ulink>, but it is also widely available in Linux and BSD
+    a tool available from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.dest-unreach.org/socat/">socat
+    homepage</link>, but it is also widely available in Linux and BSD
     distributions. Once Kea is started, one could connect to the control
     interface using the following command:
 <screen>
@@ -110,11 +102,11 @@ will be sent to Kea and the responses received from Kea printed to standard outp
 
     </section>
 
-    <section id="commands-common">
-      <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
+    <section xml:id="commands-common"><info><title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title></info>
+      
 
-      <section id="command-leases-reclaim">
-        <title>leases-reclaim</title>
+      <section xml:id="command-leases-reclaim"><info><title>leases-reclaim</title></info>
+        
         <para>
           <emphasis>leases-reclaim</emphasis> command instructs the server to
           reclaim all expired leases immediately. The command has the following
@@ -140,8 +132,8 @@ will be sent to Kea and the responses received from Kea printed to standard outp
         about the processing of expired leases (leases reclamation).</para>
       </section>
 
-      <section id="command-list-commands">
-      <title>list-commands</title>
+      <section xml:id="command-list-commands"><info><title>list-commands</title></info>
+      
 
       <para>
 	The <emphasis>list-commands</emphasis> command retrieves a list of all
@@ -161,8 +153,8 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       </para>
     </section> <!-- end of command-list-commands -->
 
-    <section id="command-shutdown">
-      <title>shutdown</title>
+    <section xml:id="command-shutdown"><info><title>shutdown</title></info>
+      
 
       <para>
 	The <emphasis>shutdown</emphasis> command instructs the server to initiate

@@ -1,26 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="logging"><info><title>Logging</title></info>
+  
 
-  <!-- Note: Please use the following terminology:
-       - daemon - one process (e.g. kea-dhcp4)
-       - component - one piece of code within a daemon (e.g. libdhcp or hooks)
-       - server - currently equal to daemon, but the difference will be more
-                  prominent once we add client or relay support
-       - logger - one instance of isc::log::Logger
-       - structure - an element in config file (e.g. "Dhcp4")
-
-       Do not use:
-       - module => daemon
-    -->
-
-<chapter id="logging">
-  <title>Logging</title>
-
-  <section>
-    <title>Logging Configuration</title>
+  <section><info><title>Logging Configuration</title></info>
+    
     <para>
       During its operation Kea may produce many messages. They differ in
       severity (some are more important than others) and source (some are
@@ -40,8 +23,8 @@
       logging configuration between daemons.
     </para>
 
-    <section>
-      <title>Loggers</title>
+    <section><info><title>Loggers</title></info>
+      
       <para>
         Within Kea, a message is logged through an entity called a
         "logger". Different components log messages through different
@@ -77,7 +60,7 @@
         severity or greater to standard output. There is also a small
         time window after Kea has been started, but has not yet read its
         configuration. Logging in this short period can be controlled
-        using environment variables. For details, see <xref linkend="logging-during-startup"></xref>.
+        using environment variables. For details, see <xref linkend="logging-during-startup"/>.
       </para>
 
       <para>
@@ -89,8 +72,8 @@
         debug-level logging has been selected.
       </para>
 
-      <section>
-        <title>name (string)</title>
+      <section><info><title>name (string)</title></info>
+        
         <para>
           Each logger in the system has a name, the name being that of the
           component binary file using it to log messages. For instance, if you
@@ -171,8 +154,8 @@
           that might match a particular logger, the specification with the
           more specific logger name takes precedence. For example, if there
           are entries for both <quote>kea-dhcp4</quote> and
-          <quote>kea-dhcp4.dhcpsrv</quote>, the DHCPv4 server &mdash; and all
-          libraries it uses that are not dhcpsrv &mdash; will log messages
+          <quote>kea-dhcp4.dhcpsrv</quote>, the DHCPv4 server — and all
+          libraries it uses that are not dhcpsrv — will log messages
           according to the configuration in the first entry
           (<quote>kea-dhcp4</quote>).
         </para>
@@ -501,8 +484,8 @@
         </para>
       </section>
 
-      <section>
-        <title>severity (string)</title>
+      <section><info><title>severity (string)</title></info>
+        
         <para>
           This specifies the category of messages logged.  Each message is
           logged with an associated severity which may be one of the following
@@ -568,8 +551,8 @@
         </note>
       </section>
 
-      <section>
-        <title>debuglevel (integer)</title>
+      <section><info><title>debuglevel (integer)</title></info>
+        
         <para>
           When a logger's severity is set to DEBUG, this value specifies what
           level of debug messages should be printed. It ranges from 0 (least
@@ -578,16 +561,16 @@
         </para>
       </section>
 
-      <section>
-        <title>output_options (list)</title>
+      <section><info><title>output_options (list)</title></info>
+        
         <para>
           Each logger can have zero or more <option>output_options</option>.
           These specify where log messages are sent. These are explained in
           detail below.
         </para>
 
-        <section>
-          <title>output (string)</title>
+        <section><info><title>output (string)</title></info>
+          
           <para>
             This value determines the type of output. There are several special
             values allowed here: <command>stdout</command> (messages are printed
@@ -599,8 +582,8 @@
           </para>
         </section>
 
-        <section>
-          <title>flush (true of false)</title>
+        <section><info><title>flush (true of false)</title></info>
+          
           <para>
             Flush buffers after each log message. Doing this will reduce
             performance but will ensure that if the program terminates
@@ -609,13 +592,13 @@
           </para>
         </section>
 
-        <section>
-          <title>maxsize (integer)</title>
+        <section><info><title>maxsize (integer)</title></info>
+          
           <para>
             Only relevant when destination is file, this is maximum file size of
             output files in bytes. When the maximum size is reached, the file is
             renamed and a new file opened.  (For example, a ".1" is appended to
-            the name &mdash; if a ".1" file exists, it is renamed ".2", etc.)
+            the name — if a ".1" file exists, it is renamed ".2", etc.)
           </para>
           <para>
             If this is set to 0 or omitted, no maximum file size is used.
@@ -636,8 +619,8 @@
           </note>
         </section>
 
-        <section>
-          <title>maxver (integer)</title>
+        <section><info><title>maxver (integer)</title></info>
+          
           <para>
             Maximum number of old log files to keep around when rolling the
             output file. Only relevant when <option>output</option> is
@@ -646,8 +629,8 @@
         </section>
       </section>
 
-      <section>
-        <title>Example Logger Configurations</title>
+      <section><info><title>Example Logger Configurations</title></info>
+        
         <para>
           In this example we want to set the global logging to write to the
           console using standard output.
@@ -695,8 +678,8 @@
 
     </section>
 
-    <section id="logging-message-format">
-      <title>Logging Message Format</title>
+    <section xml:id="logging-message-format"><info><title>Logging Message Format</title></info>
+      
       <para>
         Each message written  to the configured logging destinations comprises a
         number of components that identify the origin of the message and, if the
@@ -762,9 +745,9 @@
               <para>
                 The message identification.  Every message in Kea has a unique
                 identification, which can be used as an index into the
-                <ulink url="kea-messages.html"><citetitle>Kea Messages
-                Manual</citetitle></ulink>
-                (<ulink url="http://kea.isc.org/docs/kea-messages.html" />)
+                <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="kea-messages.html"><citetitle>Kea Messages
+                Manual</citetitle></link>
+                (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs/kea-messages.html">http://kea.isc.org/docs/kea-messages.html</uri>)
                 from which more information can be obtained.
               </para>
             </listitem>
@@ -786,8 +769,8 @@
       </para>
     </section>
 
-    <section id="logging-during-startup">
-      <title>Logging During Kea Startup</title>
+    <section xml:id="logging-during-startup"><info><title>Logging During Kea Startup</title></info>
+      
       <para>
         The logging configuration is specified in the configuration file.
         However, when Kea starts, the file is not read until some way into the

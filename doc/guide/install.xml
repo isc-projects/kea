@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="installation"><info><title>Installation</title></info>
+    
 
-  <chapter id="installation">
-    <title>Installation</title>
-
-    <section id="packages">
-      <title>Packages</title>
+    <section xml:id="packages"><info><title>Packages</title></info>
+      
 
       <para>
         Some operating systems or software package vendors may provide
@@ -25,63 +20,63 @@
       </para>
     </section>
 
-    <section id="install-hierarchy">
-      <title>Installation Hierarchy</title>
+    <section xml:id="install-hierarchy"><info><title>Installation Hierarchy</title></info>
+      
       <para>
         The following is the directory layout of the complete Kea installation.
         (All directory paths are relative to the installation directory):
         <itemizedlist>
           <listitem>
           <simpara>
-            <filename>bin/</filename> &mdash;
+            <filename>bin/</filename> —
             utility programs.
           </simpara>
           </listitem>
           <listitem>
           <simpara>
-            <filename>etc/kea/</filename> &mdash;
+            <filename>etc/kea/</filename> —
             configuration files.
           </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>include/</filename> &mdash;
+              <filename>include/</filename> —
               C++ development header files.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>lib/</filename> &mdash;
+              <filename>lib/</filename> —
               libraries.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>sbin/</filename> &mdash;
+              <filename>sbin/</filename> —
               server software and commands used by the system administrator.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>share/kea/</filename> &mdash;
+              <filename>share/kea/</filename> —
               configuration specifications and examples.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>share/doc/kea/</filename> &mdash;
+              <filename>share/doc/kea/</filename> —
               this guide, other supplementary documentation, and examples.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>share/man/</filename> &mdash;
+              <filename>share/man/</filename> —
               manual pages (online documentation).
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <filename>var/kea/</filename> &mdash;
+              <filename>var/kea/</filename> —
               server identification, lease databases, and log files.
             </simpara>
           </listitem>
@@ -89,12 +84,11 @@
       </para>
     </section>
 
-    <section id="build-requirements">
-      <title>Building Requirements</title>
+    <section xml:id="build-requirements"><info><title>Building Requirements</title></info>
+      
 
         <para>
-          In addition to the run-time requirements (listed in <xref
-          linkend="required-software"/>), building Kea from source code requires
+          In addition to the run-time requirements (listed in <xref linkend="required-software"/>), building Kea from source code requires
           various development include headers and program development tools.
         </para>
 
@@ -113,7 +107,7 @@
           <itemizedlist>
             <listitem>
                 <para>Boost build-time headers
-          (<ulink url="http://www.boost.org/"/>).
+          (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>).
           At least Boost version 1.41 is required.
           When header-only Boost error code is not available or wanted, the
           Boost system library is required too.
@@ -197,33 +191,32 @@ Debian and Ubuntu:
 
         <para>
           Visit the user-contributed wiki at
-          <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes" />
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/SystemSpecificNotes">http://kea.isc.org/wiki/SystemSpecificNotes</uri>
           for system-specific installation tips.
         </para>
 
     </section>
 
-    <section id="install">
-      <title>Installation from Source</title>
+    <section xml:id="install"><info><title>Installation from Source</title></info>
+      
       <para>
         Kea is open source software written in C++.  It is freely available in
         source code form from ISC as a downloadable tar file.  A copy of the Kea
-        source code repository is accessible from Github (<ulink
-        url="https://github.com/isc-projects/kea"/>). Kea may also be available
+        source code repository is accessible from Github (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). Kea may also be available
         in pre-compiled ready-to-use packages from operating system vendors.
       </para>
 
-      <section>
+      <section><info><title>Download Tar File</title></info>
 
-        <title>Download Tar File</title>
+        
         <para>
           The Kea release tarballs may be downloaded from:
-          <ulink url="http://ftp.isc.org/isc/kea/"/> (using FTP or HTTP).
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">http://ftp.isc.org/isc/kea/</uri> (using FTP or HTTP).
         </para>
       </section>
 
-      <section>
-        <title>Retrieve from Git</title>
+      <section><info><title>Retrieve from Git</title></info>
+        
         <para>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
@@ -241,7 +234,7 @@ Debian and Ubuntu:
 
         <para>
           The latest development code is available on Github (see
-          <ulink url="https://github.com/isc-projects/kea"/>). The Kea source
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). The Kea source
           is public and development is done in the <quote>master</quote>
           branch.
         </para>
@@ -271,18 +264,18 @@ Debian and Ubuntu:
           are a developer planning to contribute to Kea, please fork our Github
           repository and use the "pull request" mechanism to request integration of
           your code. Please consult
-          <ulink url="https://help.github.com/articles/fork-a-repo/"/> for help on
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
           how to fork a Github repository.
-          The <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea 
-          Developer's Guide</ulink> contains more information about the process, as
+          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea 
+          Developer's Guide</link> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>
 
       </section>
 
 
-      <section id="configure">
-        <title>Configure Before the Build</title>
+      <section xml:id="configure"><info><title>Configure Before the Build</title></info>
+        
         <para>
           Kea uses the GNU Build System to discover build environment
           details.
@@ -348,7 +341,7 @@ Debian and Ubuntu:
                 Google Test framework. This option specifies the path to the
                 gtest source. (If the framework
                 is not installed on your system, it can be downloaded
-                from <ulink url="https://code.google.com/p/googletest"/>.)
+                from <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://code.google.com/p/googletest">https://code.google.com/p/googletest</uri>.)
               </simpara>
             </listitem>
           </varlistentry>
@@ -379,7 +372,7 @@ Debian and Ubuntu:
               For instructions concerning the installation and configuration
               of database backends for Kea, see <xref linkend="dhcp-install-configure"/>.
               For information concerning the configuration backends, see
-              <xref linkend="dhcp-config-backend" />.
+              <xref linkend="dhcp-config-backend"/>.
             </para>
           </note>
         </para>
@@ -421,8 +414,8 @@ Debian and Ubuntu:
 
       </section>
 
-      <section>
-        <title>Build</title>
+      <section><info><title>Build</title></info>
+        
         <para>
           After the configure step is complete, build the executables
           from the C++ code and prepare the Python scripts by running the command:
@@ -430,8 +423,8 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section>
-        <title>Install</title>
+      <section><info><title>Install</title></info>
+        
         <para>
           To install the Kea executables, support files,
           and documentation, issue the command:
@@ -469,8 +462,8 @@ Debian and Ubuntu:
 
     </section>
 
-    <section id="dhcp-config-backend">
-      <title>Selecting the Configuration Backend</title>
+    <section xml:id="dhcp-config-backend"><info><title>Selecting the Configuration Backend</title></info>
+      
       <para>Kea 0.9 introduced configuration backends that are
       switchable during the compilation phase. Only one backend, JSON,
       is currently supported.
@@ -493,8 +486,8 @@ Debian and Ubuntu:
 
     </section>
 
-    <section id="dhcp-install-configure">
-      <title>DHCP Database Installation and Configuration</title>
+    <section xml:id="dhcp-install-configure"><info><title>DHCP Database Installation and Configuration</title></info>
+      
       <para>
         Kea stores its leases in a lease database.  The software has been
         written in a way that makes it possible to choose which database product
@@ -512,13 +505,13 @@ Debian and Ubuntu:
           When unit tests are built with Kea (the --with-gtest configuration option is specified),
           the databases must be manually pre-configured for the unit tests to run.
           The details of this configuration can be found in the
-          <ulink url="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
-          Guide</ulink>.
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
+          Guide</link>.
         </simpara>
       </note>
 
-      <section>
-        <title>Building with MySQL Support</title>
+      <section><info><title>Building with MySQL Support</title></info>
+        
         <para>
           Install MySQL according to the instructions for your system.  The client development
           libraries must be installed.
@@ -539,11 +532,11 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section>
-        <title>Building with PostgreSQL support</title>
+      <section><info><title>Building with PostgreSQL support</title></info>
+        
         <para>
           Install PostgreSQL according to the instructions for your system.  The client development
-          libraries must be installed. Client development libraries are often packaged as &quot;libpq&quot;.
+          libraries must be installed. Client development libraries are often packaged as "libpq".
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
@@ -561,17 +554,16 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section>
-        <title>Building with CQL (Cassandra) support</title>
+      <section><info><title>Building with CQL (Cassandra) support</title></info>
+        
         <para>
           Install Cassandra according to the instructions for your system. The
-          Cassandra project website contains useful pointers: <ulink
-          url="http://cassandra.apache.org" />.
+          Cassandra project website contains useful pointers: <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cassandra.apache.org">http://cassandra.apache.org</uri>.
         </para>
         <para>
           Download and compile cpp-driver from DataStax. For details regarding
           dependencies for building cpp-driver, see the project homepage
-          <ulink url="https://github.com/datastax/cpp-driver" />. In June
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/datastax/cpp-driver">https://github.com/datastax/cpp-driver</uri>. In June
           2016, the following commands were used:
           <screen>
 $ <userinput>git clone https://github.com/datastax/cpp-driver</userinput>

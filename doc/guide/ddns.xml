@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-
-  <chapter id="dhcp-ddns-server">
-    <title>The DHCP-DDNS Server</title>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp-ddns-server"><info><title>The DHCP-DDNS Server</title></info>
+    
     <para>
     The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts the client side of
-    the DDNS protocol (defined in <ulink url="http://tools.ietf.org/html/rfc2136">RFC 2136</ulink>)
+    the DDNS protocol (defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2136">RFC 2136</link>)
     on behalf of the DHCPv4 and DHCPv6
     servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
@@ -49,8 +44,8 @@
     rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
     simply disregard the reverse update portion of requests.
     </para>
-    <section id="dhcp-ddns-server-start-stop">
-      <title>Starting and Stopping the DHCP-DDNS Server</title>
+    <section xml:id="dhcp-ddns-server-start-stop"><info><title>Starting and Stopping the DHCP-DDNS Server</title></info>
+      
 
       <para>
       <command>kea-dhcp-ddns</command> is the Kea DHCP-DDNS server
@@ -149,8 +144,8 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 
 
     </section> <!-- end start-stop -->
-    <section id="d2-configuration">
-      <title>Configuring the DHCP-DDNS Server</title>
+    <section xml:id="d2-configuration"><info><title>Configuring the DHCP-DDNS Server</title></info>
+      
       <para>
 	Before starting <command>kea-dhcp-ddns</command> module for the
 	first time, a configuration file needs to be created. The following default
@@ -198,8 +193,8 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 	    </simpara>
 	  </listitem>
 	</itemizedlist>
-      <section id="d2-server-parameter-config">
-	<title>Global Server Parameters</title>
+      <section xml:id="d2-server-parameter-config"><info><title>Global Server Parameters</title></info>
+	
       <itemizedlist>
 
       <listitem><simpara>
@@ -264,12 +259,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </note>
       </section> <!-- "d2-server-parameter-config" -->
 
-      <section id="d2-tsig-key-list-config">
-	<title>TSIG Key List</title>
+      <section xml:id="d2-tsig-key-list-config"><info><title>TSIG Key List</title></info>
+	
 	<para>
 	A DDNS protocol exchange can be conducted with or without TSIG
-	(defined in <ulink url="http://tools.ietf/org/html/rfc2845">RFC
-	2845</ulink>). This configuration section allows the administrator
+	(defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf/org/html/rfc2845">RFC
+	2845</link>). This configuration section allows the administrator
 	to define the set of TSIG keys that may be used in such
 	exchanges.</para>
 
@@ -391,8 +386,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
       </section>
 	<!-- "d2-tsig-key-list-config" -->
 
-      <section id="d2-forward-ddns-config">
-	<title>Forward DDNS</title>
+      <section xml:id="d2-forward-ddns-config"><info><title>Forward DDNS</title></info>
+	
 	<para>
 	The Forward DDNS section is used to configure D2's forward update
 	behavior. Currently it contains a single parameter, the catalog of
@@ -409,8 +404,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	By default, this list is empty, which will cause the server to ignore
 	the forward update portions of requests.
 	</para>
-	<section id="add-forward-ddns-domain">
-	  <title>Adding Forward DDNS Domains</title>
+	<section xml:id="add-forward-ddns-domain"><info><title>Adding Forward DDNS Domains</title></info>
+	  
 	  <para>
 	  A forward DDNS Domain maps a forward DNS zone to a set of
 	  DNS servers which maintain the forward DNS data (i.e. name to
@@ -480,8 +475,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	server to it.
 	</para>
 
-	<section id="add-forward-dns-servers">
-	  <title>Adding Forward DNS Servers</title>
+	<section xml:id="add-forward-dns-servers"><info><title>Adding Forward DNS Servers</title></info>
+	  
 	  <para>
 	  This section describes how to add DNS servers to a Forward DDNS Domain.
 	  Repeat them for as many servers as desired for a each domain.
@@ -549,8 +544,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       </section> <!-- "d2-forward-ddns-config" -->
 
-      <section id="d2-reverse-ddns-config">
-	<title>Reverse DDNS</title>
+      <section xml:id="d2-reverse-ddns-config"><info><title>Reverse DDNS</title></info>
+	
 	<para>
 	The Reverse DDNS section is used to configure D2's reverse update
 	behavior, and the concepts are the same as for the forward DDNS
@@ -567,8 +562,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	By default, this list is empty, which will cause the server to ignore
 	the reverse update portions of requests.
 	</para>
-	<section id="add-reverse-ddns-domain">
-	  <title>Adding Reverse DDNS Domains</title>
+	<section xml:id="add-reverse-ddns-domain"><info><title>Adding Reverse DDNS Domains</title></info>
+	  
 	  <para>
 	  A reverse DDNS Domain maps a reverse DNS zone to a set of DNS
 	  servers which maintain the reverse DNS data (address to name
@@ -646,8 +641,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	server to it.
 	</para>
 
-	<section id="add-reverse-dns-servers">
-	  <title>Adding Reverse DNS Servers</title>
+	<section xml:id="add-reverse-dns-servers"><info><title>Adding Reverse DNS Servers</title></info>
+	  
 	  <para>
 	  This section describes how to add DNS servers to a Reverse DDNS Domain.
 	  Repeat them for as many servers as desired for each domain.
@@ -716,20 +711,20 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       </section> <!-- "d2-reverse-ddns-config" -->
 
-      <section id="d2-exmaple-config">
-	<title>Example DHCP-DDNS Server Configuration</title>
+      <section xml:id="d2-exmaple-config"><info><title>Example DHCP-DDNS Server Configuration</title></info>
+	
 	<para>
 	This section provides an example DHCP-DDNS server configuration based
 	on a small example network.  Let's suppose our example network has
 	three domains, each with their own subnet.
 
-	<table>
-	  <title>Our example network</title>
-	  <tgroup cols='4' align='left'>
-	  <colspec colname='domain'/>
-	  <colspec colname='subnet'/>
-	  <colspec colname='fservers'/>
-	  <colspec colname='rservers'/>
+	<table><info><title>Our example network</title></info>
+	  
+	  <tgroup cols="4" align="left">
+	  <colspec colname="domain"/>
+	  <colspec colname="subnet"/>
+	  <colspec colname="fservers"/>
+	  <colspec colname="rservers"/>
 	  <thead>
 	    <row>
 	      <entry>Domain</entry>
@@ -763,12 +758,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	</para>
 	<para>
 	We need to construct three forward DDNS Domains:
-	<table>
-	  <title>Forward DDNS Domains Needed</title>
-	  <tgroup cols='3' align='left'>
-	  <colspec colname='num'/>
-	  <colspec colname='name'/>
-	  <colspec colname='servers'/>
+	<table><info><title>Forward DDNS Domains Needed</title></info>
+	  
+	  <tgroup cols="3" align="left">
+	  <colspec colname="num"/>
+	  <colspec colname="name"/>
+	  <colspec colname="servers"/>
 	  <thead>
 	    <row>
 	      <entry>#</entry>
@@ -839,12 +834,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	</para>
 	<para>
 	Similarly, we need to construct the three reverse DDNS Domains:
-	<table>
-	  <title>Reverse DDNS Domains Needed</title>
-	  <tgroup cols='3' align='left'>
-	  <colspec colname='num'/>
-	  <colspec colname='DDNS Domain name'/>
-	  <colspec colname='DDNS Domain DNS Servers'/>
+	<table><info><title>Reverse DDNS Domains Needed</title></info>
+	  
+	  <tgroup cols="3" align="left">
+	  <colspec colname="num"/>
+	  <colspec colname="DDNS Domain name"/>
+	  <colspec colname="DDNS Domain DNS Servers"/>
 	  <thead>
 	    <row>
 	      <entry>#</entry>
@@ -912,8 +907,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	</para>
 	</section> <!-- end of "d2-example" -->
     </section> <!-- end of section "d2-configuration" -->
-    <section>
-      <title>DHCP-DDNS Server Limitations</title>
+    <section><info><title>DHCP-DDNS Server Limitations</title></info>
+      
       <para>The following are the current limitations of the DHCP-DDNS Server.</para>
       <itemizedlist>
 	<listitem>
@@ -925,4 +920,4 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 	</listitem>
       </itemizedlist>
     </section>
-  </chapter> <!-- DHCP-DDNS Server -->
+  </chapter>

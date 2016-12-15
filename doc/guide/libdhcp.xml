@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-
-  <chapter id="libdhcp">
-    <title>The libdhcp++ Library</title>
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="libdhcp"><info><title>The libdhcp++ Library</title></info>
+    
     <para>
       libdhcp++ is a library written in C++ that handles
       many DHCP-related tasks, including:
@@ -32,8 +27,8 @@
 
 <!-- TODO: point to doxygen docs -->
 
-    <section id="iface-detect">
-      <title>Interface detection and Socket handling</title>
+    <section xml:id="iface-detect"><info><title>Interface detection and Socket handling</title></info>
+      
       <para>Both the DHCPv4 and DHCPv6 components share network
       interface detection routines. Interface detection is
       currently supported on Linux, all BSD family (FreeBSD, NetBSD,

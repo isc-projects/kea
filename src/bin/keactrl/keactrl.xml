@@ -1,30 +1,17 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
-<!--
- - Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
- -
- - This Source Code Form is subject to the terms of the Mozilla Public
- - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
--->
-
-<refentry>
-  <refentryinfo>
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info>
     <productname>ISC Kea</productname>
     <date>Sep. 28, 2016</date>
     <edition>1.1.0</edition>
-    <author>
-      <contrib>The Kea software has been written by a number of
+    <author><personname/><contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
         Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-      <orgname>Internet Systems Consortium, Inc.</orgname>
-    </author>
-  </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
 
   <refmeta>
     <refentrytitle>keactrl</refentrytitle>
@@ -45,16 +32,16 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>keactrl</command>
-      <arg>command</arg>
-      <arg><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
-      <arg><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">command</arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1>
-    <title>DESCRIPTION</title>
+  <refsection><info><title>DESCRIPTION</title></info>
+    
     <para>
       keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
@@ -62,10 +49,10 @@
       also provides the means for checking the current status of the servers
       and determining the configuration files in use.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>CONFIGURATION FILE</title>
+  <refsection><info><title>CONFIGURATION FILE</title></info>
+    
     <para>
      Depending on requirements, not all of the available servers need
      be run.  The keactrl configuration file sets which servers are
@@ -76,10 +63,10 @@
       See the Kea Administrator's Guide for the documentation of the parameters
       in the <command>keactrl</command> configuration file.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>OPTIONS</title>
+  <refsection><info><title>OPTIONS</title></info>
+    
     <variablelist>
       <varlistentry>
         <term><option><replaceable class="parameter">command</replaceable></option></term>
@@ -177,10 +164,10 @@
       </varlistentry>
 
     </variablelist>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>DOCUMENTATION</title>
+  <refsection><info><title>DOCUMENTATION</title></info>
+    
     <para>Kea comes with an extensive Kea User's Guide documentation
       that covers all aspects of running the Kea software -
       compilation, installation, configuration, configuration examples
@@ -198,10 +185,10 @@
     <para>
       Kea project website is available at: http://kea.isc.org.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>MAILING LISTS AND SUPPORT</title>
+  <refsection><info><title>MAILING LISTS AND SUPPORT</title></info>
+    
     <para>
       There are two mailing lists available for Kea project. kea-users
       (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
@@ -214,10 +201,10 @@
       ISC provides professional support for Kea services. See
       https://www.isc.org/kea/ for details.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>SEE ALSO</title>
+  <refsection><info><title>SEE ALSO</title></info>
+    
     <para>
       <citerefentry>
         <refentrytitle>kea-dhcp4</refentrytitle>
@@ -253,6 +240,6 @@
       <citetitle>Kea Administrator's Guide</citetitle>.
 
     </para>
-  </refsect1>
+  </refsection>
 
 </refentry>
