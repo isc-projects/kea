@@ -117,7 +117,7 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
-# Check for std::unique_ptr and aggregate initialization (aka C++11) support
+# Check for C++11 features support
 CXX_SAVED=$CXX
 feature=
 for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
@@ -146,6 +146,16 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_LANG_PROGRAM(
 			[#include <vector>],
 			[std::vector<int> foo = { 1, 2, 3};])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(lambda support)
+	feature="lambda"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[],
+			[auto incr = [[]](int x) { return x + 1; };])],
 		[AC_MSG_RESULT([yes])
 		 break],
 		[AC_MSG_RESULT([no])
