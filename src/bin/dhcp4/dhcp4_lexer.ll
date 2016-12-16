@@ -851,6 +851,58 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"echo-client-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+        return isc::dhcp::Dhcp4Parser::make_ECHO_CLIENT_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("echo-client-id", driver.loc_);
+    }
+}
+
+\"match-client-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+        return isc::dhcp::Dhcp4Parser::make_MATCH_CLIENT_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("match-client-id", driver.loc_);
+    }
+}
+
+\"next-server\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_NEXT_SERVER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("next-server", driver.loc_);
+    }
+}
+
+\"server-hostname\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_SERVER_HOSTNAME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("server-hostname", driver.loc_);
+    }
+}
+
+\"boot-file-name\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_BOOT_FILE_NAME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("boot-file-name", driver.loc_);
+    }
+}
+
+
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
