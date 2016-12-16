@@ -314,7 +314,7 @@ global_objects: global_object
               | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
+// This represents a single top level entry, e.g. Dhcp4 or DhcpDdns.
 global_object: dhcp4_object
              | logging_object
              | dhcp6_json_object
@@ -340,7 +340,7 @@ dhcp4_object: DHCP4 {
 // subparser: similar to the corresponding rule but without parent
 // so the stack is empty at the rule entry.
 sub_dhcp4: LCURLY_BRACKET {
-    // Parse the Dhcp6 map
+    // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } global_params RCURLY_BRACKET {
@@ -661,7 +661,7 @@ subnet4_list: SUBNET4 {
     ctx.leave();
 };
 
-// This defines the ... in "subnet6": [ ... ]
+// This defines the ... in "subnet4": [ ... ]
 // It can either be empty (no subnets defined), have one subnet
 // or have multiple subnets separate by comma.
 subnet4_list_content: %empty
@@ -675,7 +675,7 @@ not_empty_subnet4_list: subnet4
 // --- Subnet definitions -------------------------------
 
 // This defines a single subnet, i.e. a single map with
-// subnet6 array.
+// subnet4 array.
 subnet4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
@@ -688,7 +688,7 @@ subnet4: LCURLY_BRACKET {
     //     ctx.stack_.back()->set("interface", StringElement("loopback"));
     // }
     //
-    // We can also stack up one level (Dhcp6) and copy over whatever
+    // We can also stack up one level (Dhcp4) and copy over whatever
     // global parameters we want to:
     // if (!ctx.stack_.back()->get("renew-timer")) {
     //     ElementPtr renew = ctx_stack_[...].get("renew-timer");
@@ -700,7 +700,7 @@ subnet4: LCURLY_BRACKET {
 };
 
 sub_subnet4: LCURLY_BRACKET {
-    // Parse the subnet6 list entry map
+    // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } subnet4_params RCURLY_BRACKET {
