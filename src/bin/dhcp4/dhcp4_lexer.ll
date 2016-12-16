@@ -1101,7 +1101,7 @@ Parser4Context::scanFileBegin(FILE * f,
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
 
-    // See dhcp6_lexer.cc header for available definitions
+    // See dhcp4_lexer.cc header for available definitions
     buffer = parser4__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal("cannot scan file " + filename);
