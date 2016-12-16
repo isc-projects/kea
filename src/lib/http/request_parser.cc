@@ -269,15 +269,15 @@ HttpRequestParser::getNextFromBuffer() {
 
 void
 HttpRequestParser::invalidEventError(const std::string& handler_name,
-                                 const unsigned int event) {
+                                     const unsigned int event) {
     isc_throw(HttpRequestParserError, handler_name << ": "
               << " invalid event " << getEventLabel(static_cast<int>(event)));
 }
 
 void
 HttpRequestParser::stateWithReadHandler(const std::string& handler_name,
-                                    boost::function<void(const char c)>
-                                    after_read_logic) {
+                                        boost::function<void(const char c)>
+                                        after_read_logic) {
     char c = getNextFromBuffer();
     // Do nothing if we reached the end of buffer.
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
@@ -359,7 +359,7 @@ HttpRequestParser::uriHandler() {
 
 void
 HttpRequestParser::versionHTTPHandler(const char expected_letter,
-                                  const unsigned int next_state) {
+                                      const unsigned int next_state) {
     stateWithReadHandler("versionHTTPHandler",
                          [this, expected_letter, next_state](const char c) {
         // We're handling one of the letters: 'H', 'T' or 'P'.
@@ -384,7 +384,7 @@ HttpRequestParser::versionHTTPHandler(const char expected_letter,
 
 void
 HttpRequestParser::versionNumberStartHandler(const unsigned int next_state,
-                                         unsigned int* storage) {
+                                             unsigned int* storage) {
     stateWithReadHandler("versionNumberStartHandler",
                          [this, next_state, storage](const char c) mutable {
         // HTTP version number must be a digit.
@@ -402,8 +402,8 @@ HttpRequestParser::versionNumberStartHandler(const unsigned int next_state,
 
 void
 HttpRequestParser::versionNumberHandler(const char following_character,
-                     const unsigned int next_state,
-                     unsigned int* const storage) {
+                                        const unsigned int next_state,
+                                        unsigned int* const storage) {
     stateWithReadHandler("versionNumberHandler",
                          [this, following_character, next_state, storage](const char c)
                          mutable {
