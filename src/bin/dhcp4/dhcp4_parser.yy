@@ -53,6 +53,12 @@ using namespace std;
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
 
+  ECHO_CLIENT_ID "echo-client-id"
+  MATCH_CLIENT_ID "match-client-id"
+  NEXT_SERVER "next-server"
+  SERVER_HOSTNAME "server-hostname"
+  BOOT_FILE_NAME "boot-file-name"
+
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   TYPE "type"
@@ -365,6 +371,9 @@ global_param: valid_lifetime
             | version
             | control_socket
             | dhcp_ddns
+            | echo_client_id
+            | match_client_id
+            | next_server
             | unknown_map_entry
             ;
 
@@ -387,6 +396,17 @@ decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 };
+
+echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
+    ElementPtr echo(new BoolElement($3, ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("echo-client-id", echo);
+};
+
+match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
+    ElementPtr match(new BoolElement($3, ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("match-client-id", match);
+};
+
 
 interfaces_config: INTERFACES_CONFIG {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -1083,13 +1103,42 @@ reservation_param: duid
                  | hw_address
                  | hostname
                  | option_data_list
+                 | next_server
+                 | server_hostname
+                 | boot_file_name
                  | unknown_map_entry
                  ;
 
+next_server: NEXT_SERVER {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr next_server(new StringElement($4, ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("next-server", next_server);
+    ctx.leave();
+};
+
+server_hostname: SERVER_HOSTNAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr srv(new StringElement($4, ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("server-hostname", srv);
+    ctx.leave();
+};
+
+boot_file_name: BOOT_FILE_NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("boot-file-name", bootfile);
+    ctx.leave();
+};
+
 ip_address: IP_ADDRESS {
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr addr(new StringElement($4, ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ip-address", addr);
+    ctx.leave();
 };
 
 duid: DUID {
@@ -1200,6 +1249,9 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
+                  | next_server
+                  | server_hostname
+                  | boot_file_name
                   | unknown_map_entry
                   ;
 
