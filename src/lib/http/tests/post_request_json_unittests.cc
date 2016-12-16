@@ -99,6 +99,7 @@ TEST_F(PostHttpRequestJsonTest, requireContentLength) {
 // This test verifies that JSON body can be retrieved from the
 // HTTP request.
 TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
+    typedef std::map<std::string, ConstElementPtr> MapElementType;
     // Create HTTP POST request with JSON body.
     setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
@@ -113,7 +114,8 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
 
     // Iterate over JSON values and store them in a simple map.
     std::map<std::string, std::string> config_values;
-    for (auto config_element = json->mapValue().begin();
+    for (MapElementType::const_iterator config_element =
+             json->mapValue().begin();
          config_element != json->mapValue().end();
          ++config_element) {
         ASSERT_FALSE(config_element->first.empty());
