@@ -53,8 +53,6 @@ HttpRequest::requiresBody() const {
 
 void
 HttpRequest::create() {
-    typedef std::vector<HttpHeaderContext> HeadersVector;
-    typedef std::map<std::string, std::string> HeadersMap;
     try {
         // The RequestParser doesn't validate the method name. Thus, this
         // may throw an exception. But, we're fine with lower case names,
@@ -78,7 +76,7 @@ HttpRequest::create() {
         }
 
         // Copy headers from the context.
-        for (HeadersVector::iterator header = context_->headers_.begin();
+        for (auto header = context_->headers_.begin();
              header != context_->headers_.end();
              ++header) {
             headers_[header->name_] = header->value_;
@@ -86,10 +84,10 @@ HttpRequest::create() {
 
         // Iterate over required headers and check that they exist
         // in the HTTP request.
-        for (HeadersMap::iterator req_header = required_headers_.begin();
+        for (auto req_header = required_headers_.begin();
              req_header != required_headers_.end();
              ++req_header) {
-            HeadersMap::iterator header = headers_.find(req_header->first);
+            auto header = headers_.find(req_header->first);
             if (header == headers_.end()) {
                 isc_throw(BadValue, "required header " << header->first
                           << " not found in the HTTP request");
@@ -155,10 +153,9 @@ HttpRequest::getHttpVersion() const {
 
 std::string
 HttpRequest::getHeaderValue(const std::string& header) const {
-    typedef std::map<std::string, std::string> HeadersMap;
     checkCreated();
 
-    HeadersMap::const_iterator header_it = headers_.find(header);
+    auto header_it = headers_.find(header);
     if (header_it != headers_.end()) {
         return (header_it->second);
     }
