@@ -120,6 +120,13 @@ public:
 
         ConstElementPtr config = Element::fromJSON(config_txt);
         ConstElementPtr answer = server_->processConfig(config);
+
+        // Commit the configuration so any subsequent reconfigurations
+        // will only close the command channel if its configuration has
+        // changed.
+        CfgMgr::instance().commit();
+
+
         ASSERT_TRUE(answer);
 
         int status = 0;
@@ -478,6 +485,137 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
                     "  \"arguments\": {}}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
               response);
+}
+
+// Check that the "set-config" command will replace current configuration
+TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
+    createUnixChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "       \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"BOGUS\": \"192.2.2.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "    \"Logging\": { \n"
+        "        \"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output_options\": [{ \n"
+        "                \"output\": \"/dev/null\" \n"
+        "            }] \n"
+        "        }] \n"
+        "    } \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        << ","
+        << logger_txt
+        << "}}";
+
+    // Send the set-config command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        "}}";
+
+    // Send the set-config command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"unsupported parameter: BOGUS (<string>:15:26)\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a valid config with two subnets and no command channel.
+    // It should succeed but client will not receive a the response
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Send the set-config command
+    sendUnixCommand(os.str(), response);
+
+    // With no command channel, no response
+    EXPECT_EQ("", response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
 }
 
 } // End of anonymous namespace
