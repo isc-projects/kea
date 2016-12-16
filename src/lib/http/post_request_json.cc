@@ -41,13 +41,11 @@ PostHttpRequestJson::getBodyAsJson() {
 
 ConstElementPtr
 PostHttpRequestJson::getJsonElement(const std::string& element_name) {
-    typedef std::map<std::string, ConstElementPtr> MapElementType;
     try {
         ConstElementPtr body = getBodyAsJson();
         if (body) {
-            const MapElementType& map_value = body->mapValue();
-            MapElementType::const_iterator map_element =
-                map_value.find(element_name);
+            const std::map<std::string, ConstElementPtr>& map_value = body->mapValue();
+            auto map_element = map_value.find(element_name);
             if (map_element != map_value.end()) {
                 return (map_element->second);
             }
