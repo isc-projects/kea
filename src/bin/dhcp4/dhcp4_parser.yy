@@ -75,6 +75,7 @@ using namespace std;
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
+  SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
   SUBNET_4O6_SUBNET "4o6-subnet"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -726,7 +727,10 @@ subnet4_param: valid_lifetime
              | reservations
              | reservation_mode
              | relay
+             | match_client_id
+             | next_server
              | subnet_4o6_interface
+             | subnet_4o6_interface_id
              | subnet_4o6_subnet
              | unknown_map_entry
              ;
@@ -744,6 +748,14 @@ subnet_4o6_interface: SUBNET_4O6_INTERFACE {
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("4o6-interface", iface);
+    ctx.leave();
+};
+
+subnet_4o6_interface_id: SUBNET_4O6_INTERFACE_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("4o6-interface-id", iface);
     ctx.leave();
 };
 

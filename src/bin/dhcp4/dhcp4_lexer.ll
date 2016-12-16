@@ -842,6 +842,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"4o6-interface-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+        return isc::dhcp::Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("4o6-interface-id", driver.loc_);
+    }
+}
+
 \"4o6-subnet\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
