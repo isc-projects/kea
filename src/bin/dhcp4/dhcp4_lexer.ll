@@ -169,12 +169,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 }
 
 
-\"Dhcp6\"  {
+\"Dhcp4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_DHCP6(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_DHCP4(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("Dhcp6", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("Dhcp4", driver.loc_);
     }
 }
 
@@ -815,12 +815,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"Dhcp4\" {
+\"Dhcp6\"  {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
-        return isc::dhcp::Dhcp4Parser::make_DHCP4(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_DHCP6(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("Dhcp4", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("Dhcp6", driver.loc_);
     }
 }
 
