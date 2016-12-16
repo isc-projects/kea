@@ -64,10 +64,10 @@ public:
         /// This will parse the input as interfaces content.
         PARSER_INTERFACES,
 
-        /// This will parse the input as Subnet6 content.
+        /// This will parse the input as Subnet4 content.
         PARSER_SUBNET4,
 
-        /// This will parse the input as pool6 content.
+        /// This will parse the input as pool4 content.
         PARSER_POOL4,
 
         /// This will parse the input as host-reservation.
@@ -205,13 +205,13 @@ public:
         /// Used while parsing Dhcp4/hooks-libraries.
         HOOKS_LIBRARIES,
 
-        /// Used while parsing Dhcp4/Subnet6 structures.
+        /// Used while parsing Dhcp4/Subnet4 structures.
         SUBNET4,
 
         /// Used while parsing Dhcp4/option-def structures.
         OPTION_DEF,
 
-        /// Used while parsing Dhcp4/option-data, Dhcp4/subnet6/option-data
+        /// Used while parsing Dhcp4/option-data, Dhcp4/subnet4/option-data
         /// or anywhere option-data is present (client classes, host
         /// reservations and possibly others).
         OPTION_DATA,
@@ -225,13 +225,13 @@ public:
         /// Used while parsing Dhcp4/control-socket structures.
         CONTROL_SOCKET,
 
-        /// Used while parsing Dhcp4/subnet6/pools structures.
+        /// Used while parsing Dhcp4/subnet4/pools structures.
         POOLS,
 
         /// Used while parsing Dhcp4/reservations structures.
         RESERVATIONS,
 
-        /// Used while parsing Dhcp4/subnet6/relay structures.
+        /// Used while parsing Dhcp4/subnet4relay structures.
         RELAY,
 
         /// Used while parsing Dhcp4/client-classes structures.
