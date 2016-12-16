@@ -120,26 +120,25 @@ TEST(ParserTest, keywordDhcp4) {
                   "\"rebind-timer\": 2000, \n"
                   "\"renew-timer\": 1000, \n"
                   "\"subnet4\": [ { "
-                  "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                  "    \"subnet\": \"2001:db8:1::/48\", "
-                  "    \"interface\": \"test\" } ],\n"
+                  "  \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                  "  \"subnet\": \"192.0.2.0/24\", "
+                  "  \"interface\": \"test\" } ],\n"
                    "\"valid-lifetime\": 4000 } }";
      testParser2(txt, Parser4Context::PARSER_DHCP4);
 }
 
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
-                "\"preferred-lifetime\": 3000,\n"
                 "# this is a comment\n"
                 "\"rebind-timer\": 2000, \n"
                 "# lots of comments here\n"
                 "# and here\n"
                 "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
+                "\"subnet4\": [ { "
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
@@ -147,15 +146,14 @@ TEST(ParserTest, bashComments) {
 }
 
 TEST(ParserTest, cComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
-                "\"preferred-lifetime\": 3000, // this is a comment \n"
                 "\"rebind-timer\": 2000, // everything after // is ignored\n"
                 "\"renew-timer\": 1000, // this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
+                "\"subnet4\": [ { "
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
@@ -163,15 +161,14 @@ TEST(ParserTest, cComments) {
 }
 
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
-                "\"preferred-lifetime\": 3000, # this is a comment \n"
                 "\"rebind-timer\": 2000, # everything after # is ignored\n"
                 "\"renew-timer\": 1000, # this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
+                "\"subnet4\": [ { "
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
@@ -179,16 +176,16 @@ TEST(ParserTest, bashCommentsInline) {
 }
 
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
-                "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
+                "   /* this is a C style comment\n"
                 "that\n can \n span \n multiple \n lines */ \n"
                 "\"rebind-timer\": 2000,\n"
                 "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
+                "\"subnet4\": [ { "
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
@@ -223,7 +220,7 @@ void testFile(const std::string& fname, bool print) {
 
 // This test loads all available existing files. Each config is loaded
 // twice: first with the existing Element::fromJSONFile() and then
-// the second time with Parser6. Both JSON trees are then compared.
+// the second time with Parser4. Both JSON trees are then compared.
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("backends.json");
@@ -250,14 +247,14 @@ void testError(const std::string& txt,
     try {
         Parser4Context ctx;
         ConstElementPtr parsed = ctx.parseString(txt, parser_type);
-        FAIL() << "Expected Dhcp6ParseError but nothing was raised (expected: "
+        FAIL() << "Expected Dhcp4ParseError but nothing was raised (expected: "
                << msg << ")";
     }
     catch (const Dhcp4ParseError& ex) {
         EXPECT_EQ(msg, ex.what());
     }
     catch (...) {
-        FAIL() << "Expected Dhcp6ParseError but something else was raised";
+        FAIL() << "Expected Dhcp4ParseError but something else was raised";
     }
 }
 
