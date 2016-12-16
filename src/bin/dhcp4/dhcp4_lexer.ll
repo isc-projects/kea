@@ -862,6 +862,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"echo-client-id\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
         return isc::dhcp::Dhcp4Parser::make_ECHO_CLIENT_ID(driver.loc_);
     default:
@@ -871,6 +872,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"match-client-id\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
         return isc::dhcp::Dhcp4Parser::make_MATCH_CLIENT_ID(driver.loc_);
     default:
