@@ -886,7 +886,7 @@ namespace isc { namespace dhcp {
   case 56:
 #line 342 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    // Parse the Dhcp6 map
+    // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
@@ -940,7 +940,7 @@ namespace isc { namespace dhcp {
   case 87:
 #line 401 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr echo(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[2].location)));
+    ElementPtr echo(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("echo-client-id", echo);
 }
 #line 947 "dhcp4_parser.cc" // lalr1.cc:859
@@ -949,7 +949,7 @@ namespace isc { namespace dhcp {
   case 88:
 #line 406 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr match(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[2].location)));
+    ElementPtr match(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("match-client-id", match);
 }
 #line 956 "dhcp4_parser.cc" // lalr1.cc:859
@@ -1386,7 +1386,7 @@ namespace isc { namespace dhcp {
     //     ctx.stack_.back()->set("interface", StringElement("loopback"));
     // }
     //
-    // We can also stack up one level (Dhcp6) and copy over whatever
+    // We can also stack up one level (Dhcp4) and copy over whatever
     // global parameters we want to:
     // if (!ctx.stack_.back()->get("renew-timer")) {
     //     ElementPtr renew = ctx_stack_[...].get("renew-timer");
@@ -1402,7 +1402,7 @@ namespace isc { namespace dhcp {
   case 167:
 #line 702 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    // Parse the subnet6 list entry map
+    // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
@@ -1931,7 +1931,7 @@ namespace isc { namespace dhcp {
   case 313:
 #line 1126 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr next_server(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[3].location)));
+    ElementPtr next_server(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 }
@@ -1949,7 +1949,7 @@ namespace isc { namespace dhcp {
   case 315:
 #line 1134 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr srv(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[3].location)));
+    ElementPtr srv(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-hostname", srv);
     ctx.leave();
 }
@@ -1967,7 +1967,7 @@ namespace isc { namespace dhcp {
   case 317:
 #line 1142 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr bootfile(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[3].location)));
+    ElementPtr bootfile(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
     ctx.leave();
 }
@@ -1985,7 +1985,7 @@ namespace isc { namespace dhcp {
   case 319:
 #line 1150 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ElementPtr addr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[3].location)));
+    ElementPtr addr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 }
