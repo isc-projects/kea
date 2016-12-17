@@ -21,6 +21,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <list>
@@ -477,6 +478,62 @@ public:
     /// @brief Server object under test.
     NakedDhcpv4Srv srv_;
 };
+
+/// @brief Runs parser in JSON mode, useful for parser testing
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseJSON(const std::string& in)
+{
+    isc::dhcp::Parser4Context ctx;
+    return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_JSON));
+}
+
+/// @brief Runs parser in Dhcp4 mode
+///
+/// This is a simplified Dhcp4 mode, so no outer { } and "Dhcp4" is
+/// needed. This format is used by most of the tests.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseDHCP4(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser4Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::SUBPARSER_DHCP4));
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
+
+/// @brief Runs parser in option definition mode
+///
+/// This function parses specified text as JSON that defines option definitions.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ConstElementPtr
+parseOPTION_DEF(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser4Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEF));
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

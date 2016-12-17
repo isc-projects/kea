@@ -599,7 +599,8 @@ Dhcpv4SrvTest::configure(const std::string& config, const bool commit) {
 void
 Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
                          const bool commit) {
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted

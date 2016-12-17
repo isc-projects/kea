@@ -399,12 +399,12 @@ decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
-    ElementPtr echo(new BoolElement($3, ctx.loc2pos(@1)));
+    ElementPtr echo(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("echo-client-id", echo);
 };
 
 match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
-    ElementPtr match(new BoolElement($3, ctx.loc2pos(@1)));
+    ElementPtr match(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("match-client-id", match);
 };
 
@@ -1124,7 +1124,7 @@ reservation_param: duid
 next_server: NEXT_SERVER {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr next_server(new StringElement($4, ctx.loc2pos(@1)));
+    ElementPtr next_server(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 };
@@ -1132,7 +1132,7 @@ next_server: NEXT_SERVER {
 server_hostname: SERVER_HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr srv(new StringElement($4, ctx.loc2pos(@1)));
+    ElementPtr srv(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("server-hostname", srv);
     ctx.leave();
 };
@@ -1140,7 +1140,7 @@ server_hostname: SERVER_HOSTNAME {
 boot_file_name: BOOT_FILE_NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@1)));
+    ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
     ctx.leave();
 };
@@ -1148,7 +1148,7 @@ boot_file_name: BOOT_FILE_NAME {
 ip_address: IP_ADDRESS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr addr(new StringElement($4, ctx.loc2pos(@1)));
+    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 };

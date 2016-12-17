@@ -12,6 +12,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/parser_context.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
@@ -64,6 +65,7 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
+        static_cast<void>(remove(TEST_INCLUDE));
     };
 
     /// @brief writes specified content to a well known file
@@ -71,11 +73,12 @@ public:
     /// Writes specified content to TEST_FILE. Tests will
     /// attempt to read that file.
     ///
+    /// @param file_name name of file to be written
     /// @param content content to be written to file
-    void writeFile(const std::string& content) {
-        static_cast<void>(remove(TEST_FILE));
+    void writeFile(const std::string& file_name, const std::string& content) {
+        static_cast<void>(remove(file_name.c_str()));
 
-        ofstream out(TEST_FILE, ios::trunc);
+        ofstream out(file_name.c_str(), ios::trunc);
         EXPECT_TRUE(out.is_open());
         out << content;
         out.close();
@@ -98,9 +101,11 @@ public:
 
     /// Name of a config file used during tests
     static const char* TEST_FILE;
+    static const char* TEST_INCLUDE;
 };
 
 const char* JSONFileBackendTest::TEST_FILE  = "test-config.json";
+const char* JSONFileBackendTest::TEST_INCLUDE = "test-include.json";
 
 // This test checks if configuration can be read from a JSON file.
 TEST_F(JSONFileBackendTest, jsonFile) {
@@ -128,7 +133,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "\"valid-lifetime\": 4000 }"
         "}";
 
-    writeFile(config);
+    writeFile(TEST_FILE, config);
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -179,8 +184,9 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ(Lease::TYPE_V4, pools3.at(0)->getType());
 }
 
-// This test checks if configuration can be read from a JSON file.
-TEST_F(JSONFileBackendTest, comments) {
+// This test checks if configuration can be read from a JSON file
+// using hash (#) line comments
+TEST_F(JSONFileBackendTest, hashComments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
@@ -198,10 +204,7 @@ TEST_F(JSONFileBackendTest, comments) {
         "\"valid-lifetime\": 4000 }"
         "}";
 
-    /// @todo: Implement C++-style (// ...) comments
-    /// @todo: Implement C-style (/* ... */) comments
-
-    writeFile(config_hash_comments);
+    writeFile(TEST_FILE, config_hash_comments);
 
     // Now initialize the server
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -228,6 +231,191 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using C++ line (//) comments.
+TEST_F(JSONFileBackendTest, cppLineComments) {
+
+    string config_cpp_line_comments = "// This is a comment. It should be \n"
+        "//ignored. Real config starts in line below\n"
+        "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "// comments in the middle should be ignored, too\n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/22\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+    writeFile(TEST_FILE, config_cpp_line_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
+    // And configure it using config with comments.
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(22, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using C block (/* */) comments
+TEST_F(JSONFileBackendTest, cBlockComments) {
+
+    string config_c_block_comments = "/* This is a comment. It should be \n"
+      "ignored. Real config starts in line below*/\n"
+        "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "/* comments in the middle should be ignored, too*/\n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/22\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+    writeFile(TEST_FILE, config_c_block_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
+    // And configure it using config with comments.
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(22, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using an include file.
+TEST_F(JSONFileBackendTest, include) {
+
+    string config_hash_comments = "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "<?include \"" + string(TEST_INCLUDE) + "\"?>,"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/22\" "
+        " } ]\n";
+
+    writeFile(TEST_FILE, config_hash_comments);
+    writeFile(TEST_INCLUDE, include);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
+    // And configure it using config with comments.
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("192.0.2.0", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(22, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
+}
+
+// This test checks if recursive include of a file is detected
+TEST_F(JSONFileBackendTest, recursiveInclude) {
+
+    string config_recursive_include = "{ \"Dhcp4\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ <?include \"" + string(TEST_INCLUDE) + "\"?> ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/22\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\"eth\", <?include \"" + string(TEST_INCLUDE) + "\"?>";
+    string msg = "configuration error using file '" + string(TEST_FILE) +
+        "': Too many nested include.";
+
+    writeFile(TEST_FILE, config_recursive_include);
+    writeFile(TEST_INCLUDE, include);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv4Srv(0))
+    );
+
+    // And configure it using config with comments.
+    try {
+        srv->init(TEST_FILE);
+        FAIL() << "Expected Dhcp4ParseError but nothing was raised";
+    }
+    catch (const Exception& ex) {
+        EXPECT_EQ(msg, ex.what());
+    }
 }
 
 // This test checks if configuration detects failure when trying:
@@ -263,15 +451,15 @@ TEST_F(JSONFileBackendTest, configBroken) {
     EXPECT_THROW(srv->init(""), BadValue);
 
     // Try to configure it using empty file. Should fail.
-    writeFile(config_empty);
+    writeFile(TEST_FILE, config_empty);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config that does not have Dhcp4 component.
-    writeFile(config_v4);
+    writeFile(TEST_FILE, config_v4);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config with Dhcp4 full of nonsense.
-    writeFile(config_nonsense);
+    writeFile(TEST_FILE, config_nonsense);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 }
 
@@ -347,7 +535,7 @@ TEST_F(JSONFileBackendTest, timers) {
         "\"subnet4\": [ ],"
         "\"valid-lifetime\": 4000 }"
         "}";
-    writeFile(config);
+    writeFile(TEST_FILE, config);
 
     // Create an instance of the server and intialize it.
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -416,7 +604,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
         "\"subnet4\": [ ],"
         "\"valid-lifetime\": 4000 }"
         "}";
-    writeFile(config);
+    writeFile(TEST_FILE, config);
 
     // Create an instance of the server and intialize it.
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
@@ -518,7 +706,7 @@ void
 JSONFileBackendMySQLTest::
 testBackendReconfiguration(const std::string& backend_first,
                            const std::string& backend_second) {
-    writeFile(createConfiguration(backend_first));
+    writeFile(TEST_FILE, createConfiguration(backend_first));
 
     // Create an instance of the server and intialize it.
     boost::scoped_ptr<NakedControlledDhcpv4Srv> srv;
@@ -533,7 +721,7 @@ testBackendReconfiguration(const std::string& backend_first,
               LeaseMgrFactory::instance().getType());
 
     // New configuration modifies the lease database backend type.
-    writeFile(createConfiguration(backend_second));
+    writeFile(TEST_FILE, createConfiguration(backend_second));
 
     // Explicitly calling signal handler for SIGHUP to trigger server
     // reconfiguration.
