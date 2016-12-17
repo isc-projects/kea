@@ -882,6 +882,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"next-server\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:

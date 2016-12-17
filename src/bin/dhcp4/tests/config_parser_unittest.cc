@@ -31,6 +31,7 @@
 #include "marker_file.h"
 #include "test_libraries.h"
 #include "test_data_files_config.h"
+#include "dhcp4_test_utils.h"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -207,25 +208,25 @@ public:
             params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = "56";
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "space") {
             params["name"] = "dhcp-message";
             params["space"] = param_value;
             params["code"] = "56";
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "code") {
             params["name"] = "dhcp-message";
             params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = param_value;
             params["data"] = "ABCDEF0105";
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "data") {
             params["name"] = "dhcp-message";
             params["space"] = DHCP4_OPTION_SPACE;
             params["code"] = "56";
             params["data"] = param_value;
-            params["csv-format"] = "False";
+            params["csv-format"] = "false";
         } else if (parameter == "csv-format") {
             params["name"] = "dhcp-message";
             params["space"] = DHCP4_OPTION_SPACE;
@@ -352,7 +353,7 @@ public:
                                 const std::string& parameter) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json = parseDHCP4(config);
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
@@ -369,7 +370,7 @@ public:
     testInvalidOptionParam(const std::map<std::string, std::string>& params) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(params);
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json = parseDHCP4(config);
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
@@ -463,9 +464,10 @@ public:
     bool
     executeConfiguration(const std::string& config, const char* operation) {
         CfgMgr::instance().clear();
+        ConstElementPtr json;
         ConstElementPtr status;
         try {
-            ElementPtr json = Element::fromJSON(config);
+            json = parseJSON(config);
             status = configureDhcp4Server(*srv_, json);
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "Unable to " << operation << ". "
@@ -601,11 +603,11 @@ public:
 // config update.
 TEST_F(Dhcp4ParserTest, version) {
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4("{\"version\": 0}"));
+
     ConstElementPtr x;
-
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"version\": 0}")));
-
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     // returned value must be 0 (configuration accepted)
     checkResult(x, 0);
 }
@@ -617,10 +619,13 @@ TEST_F(Dhcp4ParserTest, bogusCommand) {
     ConstElementPtr x;
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"bogus\": 5}")));
+                    parseJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
     checkResult(x, 1);
+
+    // it should be refused by syntax too
+    EXPECT_THROW(parseDHCP4("{\"bogus\": 5}"), Dhcp4ParseError);
 }
 
 /// The goal of this test is to verify if wrongly defined subnet will
@@ -628,14 +633,15 @@ TEST_F(Dhcp4ParserTest, bogusCommand) {
 /// pool definition.
 TEST_F(Dhcp4ParserTest, emptySubnet) {
 
-    ConstElementPtr status;
-
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{ " + genIfaceConfig() + "," +
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4("{ " + genIfaceConfig() + "," +
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet4\": [  ], "
-                                      "\"valid-lifetime\": 4000 }")));
+                                      "\"valid-lifetime\": 4000 }"));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -648,7 +654,6 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
 /// Check that the renew-timer doesn't have to be specified, in which case
 /// it is marked unspecified in the Subnet.
 TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
-    ConstElementPtr status;
 
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
@@ -657,8 +662,10 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value should be 0 (success)
@@ -682,7 +689,6 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 /// Check that the rebind-timer doesn't have to be specified, in which case
 /// it is marked unspecified in the Subnet.
 TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
-    ConstElementPtr status;
 
     string config = "{ " + genIfaceConfig() + "," +
         "\"renew-timer\": 1000, "
@@ -691,8 +697,10 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value should be 0 (success)
@@ -716,8 +724,6 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
 /// parameter timer definitions.
 TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -726,8 +732,10 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // check if returned status is OK
@@ -775,7 +783,8 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     int cnt = 0; // Number of reconfigurations
 
@@ -832,7 +841,8 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     int cnt = 0; // Number of reconfigurations
     do {
@@ -886,7 +896,8 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsOverlapingIDs) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
@@ -969,7 +980,8 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     // CASE 1: Configure 4 subnets, then reconfigure and remove the
     // last one.
 
-    ElementPtr json = Element::fromJSON(config4);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config4));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
 
@@ -981,7 +993,7 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     CfgMgr::instance().clear();
 
     // Do the reconfiguration (the last subnet is removed)
-    json = Element::fromJSON(config_first3);
+    ASSERT_NO_THROW(json = parseDHCP4(config_first3));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
 
@@ -1000,14 +1012,14 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     /// from in between (not first, not last)
 
     /// @todo: Uncomment subnet removal test as part of #3281.
-    json = Element::fromJSON(config4);
+    ASSERT_NO_THROW(json = parseDHCP4(config4));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
 
     CfgMgr::instance().clear();
 
     // Do reconfiguration
-    json = Element::fromJSON(config_second_removed);
+    ASSERT_NO_THROW(json = parseDHCP4(config_second_removed));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
 
@@ -1028,8 +1040,6 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 // consideration.
 TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1039,8 +1049,10 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // check if returned status is OK
@@ -1058,8 +1070,6 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 // consideration.
 TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1069,8 +1079,10 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // check if returned status is OK
@@ -1088,8 +1100,6 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 // address, IPv6 adddress and empty string.
 TEST_F(Dhcp4ParserTest, nextServerNegative) {
     IfaceMgrTestConfig test_config(true);
-
-    ConstElementPtr status;
 
     // Config with junk instead of next-server address
     string config_bogus1 = "{ " + genIfaceConfig() + "," +
@@ -1127,11 +1137,15 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json1 = Element::fromJSON(config_bogus1);
-    ElementPtr json2 = Element::fromJSON(config_bogus2);
-    ElementPtr json3 = Element::fromJSON(config_bogus3);
+    ConstElementPtr json1;
+    ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
+    ConstElementPtr json2;
+    ASSERT_NO_THROW(json2 = parseDHCP4(config_bogus2));
+    ConstElementPtr json3;
+    ASSERT_NO_THROW(json3 = parseDHCP4(config_bogus3));
 
     // check if returned status is always a failure
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -1153,8 +1167,6 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
 // specific value.
 TEST_F(Dhcp4ParserTest, nextServerOverride) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1165,8 +1177,10 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // check if returned status is OK
@@ -1670,7 +1684,7 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"isc\""
         "  } ]"
         "}";
@@ -1851,7 +1865,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"uint32\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"valid-space-name\""
         "  } ]"
@@ -1994,12 +2008,12 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"default-ip-ttl\","
         "    \"data\": \"01\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2066,12 +2080,12 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
         "    \"option-data\": [ {"
         "        \"name\": \"dhcp-message\","
         "        \"data\": \"ABCDEF0105\","
-        "        \"csv-format\": False"
+        "        \"csv-format\": false"
         "     },"
         "     {"
         "        \"name\": \"default-ip-ttl\","
         "        \"data\": \"01\","
-        "        \"csv-format\": False"
+        "        \"csv-format\": false"
         "     } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -2137,7 +2151,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"foo\","
@@ -2330,7 +2344,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "\"option-data\": [ {"
         "      \"name\": \"dhcp-message\","
         "      \"data\": \"AB\","
-        "      \"csv-format\": False"
+        "      \"csv-format\": false"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -2338,12 +2352,12 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
         "          \"data\": \"ABCDEF0105\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        },"
         "        {"
         "          \"name\": \"default-ip-ttl\","
         "          \"data\": \"01\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -2481,7 +2495,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"dhcp-message\","
         "          \"data\": \"0102030405060708090A\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        } ]"
         " },"
         " {"
@@ -2490,7 +2504,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         "    \"option-data\": [ {"
         "          \"name\": \"default-ip-ttl\","
         "          \"data\": \"FF\","
-        "          \"csv-format\": False"
+        "          \"csv-format\": false"
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -2638,7 +2652,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     params["code"] = "41";
     // Specify option values in a CSV (user friendly) format.
     params["data"] = "192.0.2.10, 192.0.2.1, 192.0.2.3";
-    params["csv-format"] = "True";
+    params["csv-format"] = "true";
 
     std::string config = createConfigWithOption(params);
     ElementPtr json = Element::fromJSON(config);
@@ -2794,7 +2808,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
         "    \"name\": \"vendor-encapsulated-options\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"foo\","
@@ -2806,7 +2820,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "    \"space\": \"vendor-encapsulated-options-space\","
         "    \"code\": 2,"
         "    \"data\": \"192.168.2.1\","
-        "    \"csv-format\": True"
+        "    \"csv-format\": true"
         " } ],"
         "\"option-def\": [ {"
         "    \"name\": \"foo\","
@@ -2890,14 +2904,14 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
         "    \"space\": \"vendor-4491\"," // VENDOR_ID_CABLE_LABS = 4491
         "    \"code\": 100," // just a random code
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"option-two\","
         "    \"space\": \"vendor-1234\","
         "    \"code\": 100,"
         "    \"data\": \"1234\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " } ],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],"
@@ -3016,7 +3030,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         "\"option-data\": [ {"
         "    \"name\": \"dhcp-message\","
         "    \"data\": \"ABCDEF0105\","
-        "    \"csv-format\": False"
+        "    \"csv-format\": false"
         " },"
         " {"
         "    \"name\": \"foo\","
