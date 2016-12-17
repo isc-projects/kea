@@ -1197,8 +1197,6 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
 // Check whether it is possible to configure echo-client-id
 TEST_F(Dhcp4ParserTest, echoClientId) {
 
-    ConstElementPtr status;
-
     string config_false = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1217,13 +1215,16 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json_false = Element::fromJSON(config_false);
-    ElementPtr json_true = Element::fromJSON(config_true);
+    ConstElementPtr json_false;
+    ASSERT_NO_THROW(json_false = parseDHCP4(config_false));
+    ConstElementPtr json_true;
+    ASSERT_NO_THROW(json_true = parseDHCP4(config_true));
 
     // Let's check the default. It should be true
     ASSERT_TRUE(CfgMgr::instance().echoClientId());
 
     // Now check that "false" configuration is really applied.
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_false));
     ASSERT_FALSE(CfgMgr::instance().echoClientId());
 
@@ -1240,8 +1241,6 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
 // This test checks that the global match-client-id parameter is optional
 // and that values under the subnet are used.
 TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
-    ConstElementPtr status;
-
     std::string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1258,7 +1257,10 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
         "} ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
@@ -1276,8 +1278,6 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
 // when there is no such parameter under subnet and that the parameter
 // specified for a subnet overrides the global setting.
 TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
-    ConstElementPtr status;
-
     std::string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1294,7 +1294,10 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
         "} ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
@@ -1312,8 +1315,6 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
 // on a per subnet basis.
 TEST_F(Dhcp4ParserTest, subnetLocal) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1325,8 +1326,10 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -1363,8 +1366,8 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
         "    \"subnet\": \"192.0.3.0/24\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1402,8 +1405,6 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
 // pool are rejected.
 TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1412,8 +1413,10 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value must be 1 (values error)
@@ -1427,8 +1430,6 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 // notation as it was tested in several previous tests.
 TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
-    ConstElementPtr status;
-
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1437,8 +1438,10 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // returned value must be 0 (configuration accepted)
@@ -1465,7 +1468,8 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config, true));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1507,7 +1511,8 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
     // configuration and should result in removal of the option 100 from the
     // libdhcp++.
     config = "{ }";
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config, true));
+
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
@@ -1529,7 +1534,8 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1582,7 +1588,8 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the option definitions do not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -1650,7 +1657,8 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the option definition does not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -1688,7 +1696,8 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1729,7 +1738,8 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
         "      \"encapsulate\": \"sub-opts-space\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1768,7 +1778,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1792,7 +1803,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1817,7 +1829,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
         "      \"space\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1842,7 +1855,8 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
         "      \"encapsulate\": \"invalid%space%name\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1870,7 +1884,8 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "      \"encapsulate\": \"valid-space-name\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1895,7 +1910,8 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
         "      \"encapsulate\": \"isc\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1923,7 +1939,8 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 109);
@@ -1957,7 +1974,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1979,7 +1996,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2021,7 +2038,8 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2090,7 +2108,8 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2170,10 +2189,10 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2245,10 +2264,10 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2302,7 +2321,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         " } ]"
         "}";
 
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
@@ -2362,7 +2381,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2509,7 +2529,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2612,7 +2633,8 @@ TEST_F(Dhcp4ParserTest, optionDataUnexpectedPrefix) {
 TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     ConstElementPtr x;
     std::string config = createConfigWithOption("0a0b0C0D", "data");
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2655,7 +2677,8 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     params["csv-format"] = "true";
 
     std::string config = createConfigWithOption(params);
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2713,8 +2736,8 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 1: 0 - minimum value, should work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"version\": 0,"
-                                      "\"renew-timer\": 0}")));
+                    parseDHCP4("{\"version\": 0,"
+                               "\"renew-timer\": 0}")));
 
     // returned value must be ok (0 is a proper value)
     checkResult(status, 0);
@@ -2722,8 +2745,8 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 2: 4294967295U (UINT_MAX) should work as well
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"version\": 0,"
-                                      "\"renew-timer\": 4294967295}")));
+                    parseDHCP4("{\"version\": 0,"
+                               "\"renew-timer\": 4294967295}")));
 
     // returned value must be ok (0 is a proper value)
     checkResult(status, 0);
@@ -2731,8 +2754,8 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 3: 4294967296U (UINT_MAX + 1) should not work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"version\": 0,"
-                                      "\"renew-timer\": 4294967296}")));
+                    parseJSON("{\"version\": 0,"
+                              "\"renew-timer\": 4294967296}")));
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
@@ -2740,8 +2763,8 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 4: -1 (UINT_MIN -1 ) should not work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{\"version\": 0,"
-                                      "\"renew-timer\": -1}")));
+                    parseJSON("{\"version\": 0,"
+                              "\"renew-timer\": -1}")));
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
@@ -2784,10 +2807,10 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2841,7 +2864,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
         "}";
 
 
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
@@ -2919,10 +2942,10 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -2974,10 +2997,10 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         " } ]"
         "}";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
-
-    ElementPtr json = Element::fromJSON(config);
-
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -3089,8 +3112,9 @@ TEST_F(Dhcp4ParserTest, InvalidLibrary) {
     // Parse a configuration containing a failing library.
     string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
     // The status object must not be NULL
@@ -3150,7 +3174,8 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
 
@@ -3188,7 +3213,8 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
 
@@ -3221,7 +3247,8 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
         "\"renew-timer\": 1000, "
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
 
@@ -3285,8 +3312,8 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
-    ElementPtr config;
-    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_str));
 
     // Pass the configuration in for parsing.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
@@ -3347,8 +3374,8 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
-    ElementPtr config;
-    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_str));
 
     // Configuration should not throw, but should fail.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
@@ -3385,7 +3412,8 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -3426,7 +3454,8 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -3570,7 +3599,8 @@ TEST_F(Dhcp4ParserTest, reservations) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -3711,7 +3741,7 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
         "          \"space\": \"isc\""
         "        }"
         "        ]"
-        "      },"
+        "      }"
         "    ],"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
@@ -3720,7 +3750,8 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
         "\"valid-lifetime\": 4000"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -3772,7 +3803,8 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
 
     CfgMgr::instance().clear();
 
@@ -3799,7 +3831,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -3824,7 +3856,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -3855,7 +3887,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     // Remove existing configuration, if any.
     CfgMgr::instance().clear();
@@ -3900,7 +3932,8 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(hr_config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(hr_config));
     ConstElementPtr result;
     EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
 
@@ -3946,7 +3979,8 @@ TEST_F(Dhcp4ParserTest, declineTimerDefault) {
         "\"subnet4\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -3968,7 +4002,8 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
         "\"subnet4\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -3990,7 +4025,8 @@ TEST_F(Dhcp4ParserTest, declineTimerError) {
         "\"subnet4\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4018,7 +4054,8 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
         "\"subnet4\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -4058,7 +4095,8 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
         "\"subnet4\": [ ]"
         "}";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -4086,7 +4124,8 @@ TEST_F(Dhcp4ParserTest, 4o6default) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4119,7 +4158,8 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
         "    \"4o6-subnet\": \"2001:db8::123/45\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4177,9 +4217,12 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
         "\"valid-lifetime\": 4000 }"
     };
 
-    ElementPtr json1 = Element::fromJSON(config[0]);
-    ElementPtr json2 = Element::fromJSON(config[0]);
-    ElementPtr json3 = Element::fromJSON(config[0]);
+    ConstElementPtr json1;
+    ASSERT_NO_THROW(json1 = parseDHCP4(config[0]));
+    ConstElementPtr json2;
+    ASSERT_NO_THROW(json2 = parseDHCP4(config[0]));
+    ConstElementPtr json3;
+    ASSERT_NO_THROW(json3 = parseDHCP4(config[0]));
 
     // Check that the first config is rejected.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
@@ -4211,7 +4254,8 @@ TEST_F(Dhcp4ParserTest, 4o6iface) {
         "    \"4o6-interface\": \"ethX\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4246,7 +4290,8 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
         "    \"4o6-interface\": \"ethX\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4283,7 +4328,8 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
         "    \"4o6-interface-id\": \"vlan123\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4331,9 +4377,11 @@ TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
@@ -4372,9 +4420,10 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr status;
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
