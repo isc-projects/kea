@@ -65,7 +65,7 @@ libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
-libdhcp4_la_SOURCES += parser_context.cc parser_context.h
+libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 
 libdhcp4_la_SOURCES += kea_controller.cc
 
