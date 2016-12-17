@@ -3811,6 +3811,8 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 1);
 
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
+
     // Case 2: DUID and HW Address both specified.
     config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
@@ -4035,6 +4037,9 @@ TEST_F(Dhcp4ParserTest, declineTimerError) {
 
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // Check that the Dhcp4 parser catches the type error
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 }
 
 // Check that configuration for the expired leases processing may be
@@ -4427,6 +4432,8 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 1);
+
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 }
 
 // Test verifies that regular configuration does not provide any user context

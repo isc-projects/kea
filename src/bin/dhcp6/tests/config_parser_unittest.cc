@@ -1579,8 +1579,8 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
         "] }";
 
     // Convert the JSON string into Elements.
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
 
     // Verify that DHCP6 configuration processing succeeds.
     // Returned value must be non-empty ConstElementPtr to config result.
