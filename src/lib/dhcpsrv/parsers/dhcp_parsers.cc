@@ -117,7 +117,7 @@ template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
     // Invoke common code for all specializations of build().
     buildCommon(value);
     // The Config Manager checks if user specified a
-    // valid value for a boolean parameter: True or False.
+    // valid value for a boolean parameter: true or false.
     // We should have a boolean Element, use value directly
     try {
         value_ = value->boolValue();
@@ -1475,11 +1475,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         mode_str  = string_values_->getOptionalParam("replace-client-name",
                                                      D2ClientConfig::
                                                      DFT_REPLACE_CLIENT_NAME_MODE);
-        if (boost::iequals(mode_str, "FALSE")) {
+        if (boost::iequals(mode_str, "false")) {
             // @todo add a debug log
             replace_client_name_mode = D2ClientConfig::RCM_NEVER;
         }
-        else if (boost::iequals(mode_str, "TRUE")) {
+        else if (boost::iequals(mode_str, "true")) {
             // @todo add a debug log
             replace_client_name_mode = D2ClientConfig::RCM_WHEN_PRESENT;
         } else {

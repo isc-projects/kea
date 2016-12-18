@@ -33,7 +33,7 @@ To add a simple configuration option, let's say an int, we make it the following
 "config_data" contains a list of elements of the form
 { "item_name": "name"
   "item_type": "integer|real|boolean|string|list|map"
-  "item_optional": True|False
+  "item_optional": true|false
   "item_default": <depends on type>
 }
 
