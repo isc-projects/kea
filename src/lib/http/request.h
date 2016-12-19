@@ -78,6 +78,8 @@ public:
     ///
     /// This method is called by the @ref HttpRequestParser to retrieve the
     /// context in which parsed data is stored.
+    ///
+    /// @return Pointer to the underlying @ref HttpRequestContext.
     const HttpRequestContextPtr& context() const {
         return (context_);
     }
