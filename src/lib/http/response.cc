@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <http/response.h>
+#include <ctime>
 #include <sstream>
 
 using namespace isc::http;
@@ -52,13 +53,13 @@ HttpResponse::setBody(const std::string& body) {
 bool
 HttpResponse::isClientError(const HttpStatusCode& status_code) {
     uint16_t c = statusCodeToNumber(status_code);
-    return ((c >= 400) && (c <= 500));
+    return ((c >= 400) && (c < 500));
 }
 
 bool
 HttpResponse::isServerError(const HttpStatusCode& status_code) {
     uint16_t c = statusCodeToNumber(status_code);
-    return ((c >= 500) && (c <= 600));
+    return ((c >= 500) && (c < 600));
 }
 
 std::string
@@ -78,6 +79,16 @@ HttpResponse::statusCodeToNumber(const HttpStatusCode& status_code) {
 }
 
 std::string
+HttpResponse::getDateHeaderValue() const {
+    time_t rawtime;
+  struct tm * timeinfo;
+
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  return (std::string(asctime(timeinfo)));
+}
+
+std::string
 HttpResponse::toString() const {
     std::ostringstream s;
     s << "HTTP/" << http_version_.first << "." << http_version_.second;
@@ -89,8 +100,10 @@ HttpResponse::toString() const {
         s << header->first << ": " << header->second << crlf;
     }
 
+    s << "Date: " << getDateHeaderValue() << crlf;
+
     if (!body_.empty()) {
-        s << "Content-Length" << ": " << body_.length() << crlf;
+        s << "Content-Length: " << body_.length() << crlf;
     }
 
     s << crlf;
