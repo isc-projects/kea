@@ -630,7 +630,8 @@ HttpRequestParser::popNextFromBuffer(char& next) {
 
 bool
 HttpRequestParser::isChar(const char c) const {
-    return ((c >= 0) && (c <= 127));
+    // was (c >= 0) && (c <= 127)
+    return (c >= 0);
 }
 
 bool
