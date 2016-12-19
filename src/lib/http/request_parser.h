@@ -76,7 +76,14 @@ public:
 /// internal buffer. This method returns control to the caller when the parser
 /// runs out of data in this buffer. The caller must feed the buffer by calling
 /// @ref HttpRequestParser::postBuffer and then run @ref HttpRequestParser::poll
-//// again.
+/// again.
+///
+/// In case the caller provides more data than indicated by the "Content-Length"
+/// header the parser will return from poll() after parsing the data which
+/// constitute the HTTP request and not parse the extraneous data. The caller
+/// should test the @ref HttpRequestParser::needData and
+/// @ref HttpRequestParser::httpParseOk to determine whether parsing has
+/// completed.
 ///
 /// The @ref util::StateModel::runModel must not be used to run the
 /// @ref HttpRequestParser state machine, thus it is made private method.

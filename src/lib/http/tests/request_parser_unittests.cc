@@ -130,6 +130,47 @@ TEST_F(HttpRequestParserTest, postHttpRequestWithJson) {
     EXPECT_EQ("shutdown", json_element->stringValue());
 }
 
+// This test verifies that extranous data in the request will not cause
+// an error if "Content-Length" value refers to the length of the valid
+// part of the request.
+TEST_F(HttpRequestParserTest, extraneousDataInRequest) {
+    std::string http_req = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n";
+    std::string json = "{ \"service\": \"dhcp4\", \"command\": \"shutdown\" }";
+
+    // Create valid request;
+    http_req = createRequestString(http_req, json);
+
+    // Add some garbage at the end.
+    http_req += "some stuff which, if parsed, will cause errors";
+
+    // Create HTTP request which accepts POST method and JSON as a body.
+    PostHttpRequestJson request;
+
+    // Create a parser and make it use the request we created.
+    HttpRequestParser parser(request);
+    ASSERT_NO_THROW(parser.initModel());
+
+    // Feed the parser with the request containing some garbage at the end.
+    parser.postBuffer(&http_req[0], http_req.size());
+    ASSERT_NO_THROW(parser.poll());
+
+    // The parser should only parse the valid part of the request as indicated
+    // by the Content-Length.
+    ASSERT_FALSE(parser.needData());
+    ASSERT_TRUE(parser.httpParseOk());
+    // There should be no error message.
+    EXPECT_TRUE(parser.getErrorMessage().empty());
+
+    // Do another poll() to see if the parser will parse the garbage. We
+    // expect that it doesn't.
+    ASSERT_NO_THROW(parser.poll());
+    EXPECT_FALSE(parser.needData());
+    EXPECT_TRUE(parser.httpParseOk());
+    EXPECT_TRUE(parser.getErrorMessage().empty());
+}
+
+
 // This test verifies that LWS is parsed correctly. The LWS marks line breaks
 // in the HTTP header values.
 TEST_F(HttpRequestParserTest, getLWS) {
