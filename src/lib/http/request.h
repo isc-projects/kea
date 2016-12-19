@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <http/request_context.h>
+#include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
 #include <stdint.h>
@@ -33,6 +34,14 @@ public:
                                  const char* what) :
         HttpRequestError(file, line, what) { };
 };
+
+class HttpRequest;
+
+/// @brief Pointer to the @ref HttpRequest object.
+typedef boost::shared_ptr<HttpRequest> HttpRequestPtr;
+
+/// @brief Pointer to the const @ref HttpRequest object.
+typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
 
 /// @brief Represents HTTP request message.
 ///

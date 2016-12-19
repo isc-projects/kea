@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <http/http_types.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -42,6 +43,14 @@ enum class HttpStatusCode : std::uint16_t {
     BAD_GATEWAY = 502,
     SERVICE_UNAVAILABLE = 503
 };
+
+class HttpResponse;
+
+/// @brief Pointer to the @ref HttpResponse object.
+typedef boost::shared_ptr<HttpResponse> HttpResponsePtr;
+
+/// @brief Pointer to the const @ref HttpResponse object.
+typedef boost::shared_ptr<const HttpResponse> ConstHttpResponsePtr;
 
 class HttpResponse {
 public:
