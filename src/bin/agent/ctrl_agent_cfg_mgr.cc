@@ -21,13 +21,13 @@ CtrlAgentCfgMgr::~CtrlAgentCfgMgr() {
 }
 
 std::string
-CtrlAgentCfgMgr::getConfigSummary(const uint32_t selection) {
+CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     return ("Control Agent is currently not configurable.");
 }
 
 isc::dhcp::ParserPtr
 CtrlAgentCfgMgr::createConfigParser(const std::string& element_id,
-                                    const isc::data::Element::Position& pos) {
+                                    const isc::data::Element::Position& /*pos*/) {
     // Create dummy parser, so as we don't return null pointer.
     isc::dhcp::ParserPtr parser;
     parser.reset(new Uint32Parser(element_id, getContext()->getUint32Storage()));

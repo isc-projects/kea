@@ -46,7 +46,7 @@ CtrlAgentProcess::run() {
 }
 
 isc::data::ConstElementPtr
-CtrlAgentProcess::shutdown(isc::data::ConstElementPtr args) {
+CtrlAgentProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     setShutdownFlag(true);
     return (isc::config::createAnswer(0, "Control Agent is shutting down"));
 }
@@ -61,7 +61,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set) {
 
 isc::data::ConstElementPtr
 CtrlAgentProcess::command(const std::string& command,
-                          isc::data::ConstElementPtr args) {
+                          isc::data::ConstElementPtr /*args*/) {
     return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
                                       + command));
 }
