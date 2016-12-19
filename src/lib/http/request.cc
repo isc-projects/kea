@@ -89,7 +89,7 @@ HttpRequest::create() {
              ++req_header) {
             auto header = headers_.find(req_header->first);
             if (header == headers_.end()) {
-                isc_throw(BadValue, "required header " << header->first
+                isc_throw(BadValue, "required header " << req_header->first
                           << " not found in the HTTP request");
             } else if (!req_header->second.empty() &&
                        header->second != req_header->second) {
