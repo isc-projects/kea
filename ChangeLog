@@ -1,3 +1,9 @@
+1198.   [func]         marcin
+	Created kea-ctrl-agent. This application currently doesn't
+	do anything. Future tickets will add REST API to allow for
+	managing Kea services.
+        (Trac #5075, git 1ec7586da5ae1474b52d5a395fb80ee37d6d568e)
+
 1197.	[doc]		tomek
 	Configuration examples now set lfc-interval to a default
 	value of one hour.
