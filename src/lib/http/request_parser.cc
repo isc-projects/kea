@@ -97,8 +97,8 @@ HttpRequestParser::postBuffer(const void* buf, const size_t buf_size) {
         if (getNextEvent() == NEED_MORE_DATA_EVT) {
             transition(getCurrState(), MORE_DATA_PROVIDED_EVT);
         }
-        buffer_.insert(buffer_.end(), static_cast<const uint8_t*>(buf),
-                       static_cast<const uint8_t*>(buf) + buf_size);
+        buffer_.insert(buffer_.end(), static_cast<const char*>(buf),
+                       static_cast<const char*>(buf) + buf_size);
     }
 }
 
