@@ -57,21 +57,11 @@ public:
 
     HttpResponse(const HttpVersion& version, const HttpStatusCode& status_code);
 
-    virtual ~HttpResponse() {
+    virtual ~HttpResponse() { }
+
+    void addHeader(const std::string& name, const std::string& value) {
+        headers_[name] = value;
     }
-
-    template<typename ValueType>
-    void addHeader(const std::string& name, const ValueType& value) {
-        try {
-            headers_[name] = boost::lexical_cast<std::string>(value);
-
-        } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(HttpResponseError, "unable to convert header value"
-                      " to a string: " << ex.what());
-        }
-    }
-
-    void setGenericBody(const HttpStatusCode& status_code) { };
 
     virtual void setBody(const std::string& body);
 
@@ -85,9 +75,13 @@ public:
 
 protected:
 
+    virtual std::string getDateHeaderValue() const;
+
     static uint16_t statusCodeToNumber(const HttpStatusCode& status_code);
 
 private:
+
+    void setGenericBody(const HttpStatusCode& status_code) { };
 
     HttpVersion http_version_;
 
