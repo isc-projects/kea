@@ -8,6 +8,7 @@
 #include <agent/ctrl_agent_process.h>
 #include <agent/ctrl_agent_log.h>
 #include <cc/command_interpreter.h>
+#include <boost/pointer_cast.hpp>
 
 using namespace isc::process;
 

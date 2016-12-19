@@ -8,6 +8,7 @@
 #define CTRL_AGENT_CFG_MGR_H
 
 #include <process/d_cfg_mgr.h>
+#include <boost/pointer_cast.hpp>
 
 namespace isc {
 namespace agent {
@@ -81,7 +82,7 @@ protected:
     virtual isc::dhcp::ParserPtr
     createConfigParser(const std::string& element_id,
                        const isc::data::Element::Position& pos
-                       = isc::data::Element::Position());
+                       = isc::data::Element::ZERO_POSITION());
 
     /// @brief Creates a new, blank CtrlAgentCfgContext context.
     ///
