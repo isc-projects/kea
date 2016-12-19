@@ -8,6 +8,7 @@
 #include <agent/ctrl_agent_controller.h>
 #include <agent/ctrl_agent_process.h>
 #include <process/testutils/d_test_stubs.h>
+#include <boost/pointer_cast.hpp>
 
 using namespace isc::agent;
 using namespace isc::process;
