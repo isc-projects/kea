@@ -44,6 +44,7 @@ public:
     /// @tparam integer type.
     template<typename T>
     void writeInt(T value, std::vector<uint8_t>& buf) {
+        // This loop is incorrectly compiled by some old g++?!
         for (int i = 0; i < sizeof(T); ++i) {
             buf.push_back(value >> ((sizeof(T) - i - 1) * 8) & 0xFF);
         }
