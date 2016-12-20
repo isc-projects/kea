@@ -428,8 +428,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, globalContext());
-    } else if ((config_id.compare("version") == 0) ||
-               (config_id.compare("next-server") == 0)) {
+    } else if ((config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
                                     globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -853,15 +853,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"version\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_VERSION(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("version", driver.loc_);
-    }
-}
-
 \"control-socket\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -926,6 +917,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     std::string decoded;
     decoded.reserve(len);
     for (size_t pos = 0; pos < len; ++pos) {
+        int b = 0;
         char c = raw[pos];
         switch (c) {
         case '"':
@@ -960,8 +952,42 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
                 decoded.push_back('\t');
                 break;
             case 'u':
-                // not yet implemented
-                driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                // support only \u0000 to \u00ff
+                ++pos;
+                if (pos + 4 > len) {
+                    // impossible condition
+                    driver.error(driver.loc_,
+                                 "Overflow unicode escape in \"" + raw + "\"");
+                }
+                if ((raw[pos] != '0') || (raw[pos + 1] != '0')) {
+                    driver.error(driver.loc_, "Unsupported unicode escape in \"" + raw + "\"");
+                }
+                pos += 2;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b = (c - '0') << 4;
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b = (c - 'A' + 10) << 4;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b = (c - 'a' + 10) << 4;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                pos++;
+                c = raw[pos];
+                if ((c >= '0') && (c <= '9')) {
+                    b |= c - '0';
+                } else if ((c >= 'A') && (c <= 'F')) {
+                    b |= c - 'A' + 10;
+                } else if ((c >= 'a') && (c <= 'f')) {
+                    b |= c - 'a' + 10;
+                } else {
+                    // impossible condition
+                    driver.error(driver.loc_, "Not hexadecimal in unicode escape in \"" + raw + "\"");
+                }
+                decoded.push_back(static_cast<char>(b & 0xff));
+                break;
             default:
                 // impossible condition
                 driver.error(driver.loc_, "Bad escape in \"" + raw + "\"");
@@ -1040,6 +1066,12 @@ true|false {
 null {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
+
+(?i:true) driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
+
+(?i:false) driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
+
+(?i:null) driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 
 <*>.   driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 

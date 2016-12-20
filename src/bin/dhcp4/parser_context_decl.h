@@ -4,15 +4,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef PARSER6_CONTEXT_DECL_H
-#define PARSER6_CONTEXT_DECL_H
+#ifndef PARSER4_CONTEXT_DECL_H
+#define PARSER4_CONTEXT_DECL_H
 
-/// @file dhcp6/parser_context_decl.h Forward declaration of the ParserContext class
+/// @file dhcp4/parser_context_decl.h Forward declaration of the ParserContext class
 
 namespace isc {
 namespace dhcp {
 
-class Parser6Context;
+class Parser4Context;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

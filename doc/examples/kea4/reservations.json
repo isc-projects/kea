@@ -107,6 +107,16 @@
                      "data": "10.1.1.202,10.1.1.203"
                  }
              ]
+         },
+# This reservation is for a client that needs specific DHCPv4 fields to be
+# set. Three supported fields are next-server, server-hostname and
+# boot-file-name
+         {
+             "client-id": "01:0a:0b:0c:0d:0e:of",
+             "ip-address": "192.0.2.205",
+             "next-server": "192.0.2.1",
+             "server-hostname": "hal9000",
+             "boot-file-name": "/dev/null"
          }
        ]
     }

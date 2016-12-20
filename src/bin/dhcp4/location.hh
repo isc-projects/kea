@@ -36,12 +36,12 @@
  ** Define the isc::dhcp::location class.
  */
 
-#ifndef YY_PARSER6_LOCATION_HH_INCLUDED
-# define YY_PARSER6_LOCATION_HH_INCLUDED
+#ifndef YY_PARSER4_LOCATION_HH_INCLUDED
+# define YY_PARSER4_LOCATION_HH_INCLUDED
 
 # include "position.hh"
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp4_parser.yy" // location.cc:296
 namespace isc { namespace dhcp {
 #line 46 "location.hh" // location.cc:296
   /// Abstract a location.
@@ -187,7 +187,7 @@ namespace isc { namespace dhcp {
     return ostr;
   }
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp4_parser.yy" // location.cc:296
 } } // isc::dhcp
 #line 192 "location.hh" // location.cc:296
-#endif // !YY_PARSER6_LOCATION_HH_INCLUDED
+#endif // !YY_PARSER4_LOCATION_HH_INCLUDED

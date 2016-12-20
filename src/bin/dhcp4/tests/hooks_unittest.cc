@@ -1161,7 +1161,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1239,7 +1240,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted

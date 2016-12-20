@@ -36,12 +36,12 @@
  ** Define the isc::dhcp::stack class.
  */
 
-#ifndef YY_PARSER6_STACK_HH_INCLUDED
-# define YY_PARSER6_STACK_HH_INCLUDED
+#ifndef YY_PARSER4_STACK_HH_INCLUDED
+# define YY_PARSER4_STACK_HH_INCLUDED
 
 # include <vector>
 
-#line 14 "dhcp6_parser.yy" // stack.hh:132
+#line 14 "dhcp4_parser.yy" // stack.hh:132
 namespace isc { namespace dhcp {
 #line 46 "stack.hh" // stack.hh:132
   template <class T, class S = std::vector<T> >
@@ -151,8 +151,8 @@ namespace isc { namespace dhcp {
     unsigned int range_;
   };
 
-#line 14 "dhcp6_parser.yy" // stack.hh:132
+#line 14 "dhcp4_parser.yy" // stack.hh:132
 } } // isc::dhcp
 #line 156 "stack.hh" // stack.hh:132
 
-#endif // !YY_PARSER6_STACK_HH_INCLUDED
+#endif // !YY_PARSER4_STACK_HH_INCLUDED
