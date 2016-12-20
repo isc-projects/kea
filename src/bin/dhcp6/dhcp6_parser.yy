@@ -127,7 +127,6 @@ using namespace std;
   ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
-  VERSION "version"
 
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
@@ -186,7 +185,6 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
-%type <ElementPtr> version_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -374,7 +372,6 @@ global_param: preferred_lifetime
             | expired_leases_processing
             | server_id
             | dhcp4o6_port
-            | version
             | control_socket
             | dhcp_ddns
             | unknown_map_entry
@@ -1369,20 +1366,6 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 };
-
-// code says it is a string, unit test a number
-version: VERSION {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON version_value {
-    ctx.stack_.back()->set("version", $4);
-    ctx.leave();
-};
-
-version_value:
-    INTEGER { $$ = ElementPtr(new IntElement($1, ctx.loc2pos(@1))); }
-  | FLOAT { $$ = ElementPtr(new DoubleElement($1, ctx.loc2pos(@1))); }
-  | STRING { $$ = ElementPtr(new StringElement($1, ctx.loc2pos(@1))); }
-  ;
 
 // --- control socket ----------------------------------------
 

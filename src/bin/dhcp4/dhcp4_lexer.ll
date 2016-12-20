@@ -779,15 +779,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"version\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP4:
-        return isc::dhcp::Dhcp4Parser::make_VERSION(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("version", driver.loc_);
-    }
-}
-
 \"control-socket\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

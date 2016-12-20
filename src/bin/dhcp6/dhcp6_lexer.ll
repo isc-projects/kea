@@ -853,15 +853,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"version\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_VERSION(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("version", driver.loc_);
-    }
-}
-
 \"control-socket\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
