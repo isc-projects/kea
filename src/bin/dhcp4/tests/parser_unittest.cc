@@ -500,9 +500,13 @@ TEST(ParserTest, unicodeEscapes) {
         ASSERT_EQ(Element::string, result->getType());
         EXPECT_EQ(ins, result->stringValue());
     }
+}
 
+// This test checks that all represenations of a slash is recognized properly.
+TEST(ParserTest, unicodeSlash) {
     // check the 4 possible encodings of solidus '/'
-    json = "\"/\\/\\u002f\\u002F\"";
+    ConstElementPtr result;
+    string json = "\"/\\/\\u002f\\u002F\"";
     ASSERT_NO_THROW(
     try {
         Parser4Context ctx;
