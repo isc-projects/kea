@@ -591,7 +591,7 @@ TEST(ParserTest, unicodeEscapes) {
     }
 }
 
-// This test checks that all represenations of a slash is recognized properly.
+// This test checks that all representations of a slash is recognized properly.
 TEST(ParserTest, unicodeSlash) {
     // check the 4 possible encodings of solidus '/'
     ConstElementPtr result;
