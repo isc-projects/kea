@@ -598,20 +598,6 @@ public:
     isc::dhcp::ClientClasses classify_; ///< used in client classification
 };
 
-// Goal of this test is a verification if a very simple config update
-// with just a bumped version number. That's the simplest possible
-// config update.
-TEST_F(Dhcp4ParserTest, version) {
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4("{\"version\": 0}"));
-
-    ConstElementPtr x;
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    // returned value must be 0 (configuration accepted)
-    checkResult(x, 0);
-}
-
 /// The goal of this test is to verify that the code accepts only
 /// valid commands and malformed or unsupported parameters are rejected.
 TEST_F(Dhcp4ParserTest, bogusCommand) {

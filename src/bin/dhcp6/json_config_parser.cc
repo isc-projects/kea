@@ -707,9 +707,6 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET6);
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id, globalContext());
-    } else if (config_id.compare("version") == 0) {
-        parser  = new StringParser(config_id,
-                                   globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
         parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
     } else if (config_id.compare("hosts-database") == 0) {
