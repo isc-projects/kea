@@ -1,3 +1,13 @@
+1199.	[func]		tomek, fdupont
+	Dhcp4 parser migrated to bison. This yields a number of user
+	visible changes:
+	- better comment handling (bash, C, C++ style comments)
+	- file includes now supported
+	- better syntax checking
+	- added advanced.json config example
+	- removed obsolete 'version' parameter
+	(Trac #5017, git 1cf853c595a100c86f9b2b3353f1b5964d902147)
+
 1198.   [func]         marcin
 	Created kea-ctrl-agent. This application currently doesn't
 	do anything. Future tickets will add REST API to allow for
