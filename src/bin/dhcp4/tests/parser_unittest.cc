@@ -326,13 +326,13 @@ TEST(ParserTest, errors) {
     // JSON keywords
     testError("{ \"foo\": True }",
               Parser4Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: T");
+              "<string>:1.10-13: JSON true reserved keyword is lower case only");
     testError("{ \"foo\": False }",
               Parser4Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: F");
+              "<string>:1.10-14: JSON false reserved keyword is lower case only");
     testError("{ \"foo\": NULL }",
               Parser4Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: N");
+              "<string>:1.10-13: JSON null reserved keyword is lower case only");
     testError("{ \"foo\": Tru }",
               Parser4Context::PARSER_JSON,
               "<string>:1.10: Invalid character: T");
