@@ -31,28 +31,28 @@
 // version 2.2 of Bison.
 
 /**
- ** \file dhcp6_parser.h
+ ** \file dhcp4_parser.h
  ** Define the isc::dhcp::parser class.
  */
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
-#ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
-# define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
+#ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
+# define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp6_parser.yy" // lalr1.cc:377
+#line 17 "dhcp4_parser.yy" // lalr1.cc:377
 
 #include <string>
 #include <cc/data.h>
 #include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
-#include <dhcp6/parser_context_decl.h>
+#include <dhcp4/parser_context_decl.h>
 
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp6_parser.h" // lalr1.cc:377
+#line 56 "dhcp4_parser.h" // lalr1.cc:377
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -123,21 +123,21 @@ using namespace std;
 #endif
 
 /* Debug traces.  */
-#ifndef PARSER6_DEBUG
+#ifndef PARSER4_DEBUG
 # if defined YYDEBUG
 #if YYDEBUG
-#   define PARSER6_DEBUG 1
+#   define PARSER4_DEBUG 1
 #  else
-#   define PARSER6_DEBUG 0
+#   define PARSER4_DEBUG 0
 #  endif
 # else /* ! defined YYDEBUG */
-#  define PARSER6_DEBUG 1
+#  define PARSER4_DEBUG 1
 # endif /* ! defined YYDEBUG */
-#endif  /* ! defined PARSER6_DEBUG */
+#endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:377
 namespace isc { namespace dhcp {
-#line 141 "dhcp6_parser.h" // lalr1.cc:377
+#line 141 "dhcp4_parser.h" // lalr1.cc:377
 
 
 
@@ -297,10 +297,10 @@ namespace isc { namespace dhcp {
 
 
   /// A Bison parser.
-  class Dhcp6Parser
+  class Dhcp4Parser
   {
   public:
-#ifndef PARSER6_STYPE
+#ifndef PARSER4_STYPE
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
@@ -323,7 +323,7 @@ namespace isc { namespace dhcp {
     /// Symbol semantic values.
     typedef variant<sizeof(union_type)> semantic_type;
 #else
-    typedef PARSER6_STYPE semantic_type;
+    typedef PARSER4_STYPE semantic_type;
 #endif
     /// Symbol locations.
     typedef location location_type;
@@ -348,59 +348,59 @@ namespace isc { namespace dhcp {
         TOKEN_LCURLY_BRACKET = 262,
         TOKEN_RCURLY_BRACKET = 263,
         TOKEN_NULL_TYPE = 264,
-        TOKEN_DHCP6 = 265,
+        TOKEN_DHCP4 = 265,
         TOKEN_INTERFACES_CONFIG = 266,
         TOKEN_INTERFACES = 267,
-        TOKEN_LEASE_DATABASE = 268,
-        TOKEN_HOSTS_DATABASE = 269,
-        TOKEN_TYPE = 270,
-        TOKEN_USER = 271,
-        TOKEN_PASSWORD = 272,
-        TOKEN_HOST = 273,
-        TOKEN_PERSIST = 274,
-        TOKEN_LFC_INTERVAL = 275,
-        TOKEN_READONLY = 276,
-        TOKEN_PREFERRED_LIFETIME = 277,
-        TOKEN_VALID_LIFETIME = 278,
-        TOKEN_RENEW_TIMER = 279,
-        TOKEN_REBIND_TIMER = 280,
-        TOKEN_DECLINE_PROBATION_PERIOD = 281,
-        TOKEN_SUBNET6 = 282,
-        TOKEN_OPTION_DEF = 283,
-        TOKEN_OPTION_DATA = 284,
-        TOKEN_NAME = 285,
-        TOKEN_DATA = 286,
-        TOKEN_CODE = 287,
-        TOKEN_SPACE = 288,
-        TOKEN_CSV_FORMAT = 289,
-        TOKEN_RECORD_TYPES = 290,
-        TOKEN_ENCAPSULATE = 291,
-        TOKEN_ARRAY = 292,
-        TOKEN_POOLS = 293,
-        TOKEN_POOL = 294,
-        TOKEN_PD_POOLS = 295,
-        TOKEN_PREFIX = 296,
-        TOKEN_PREFIX_LEN = 297,
-        TOKEN_EXCLUDED_PREFIX = 298,
-        TOKEN_EXCLUDED_PREFIX_LEN = 299,
-        TOKEN_DELEGATED_LEN = 300,
-        TOKEN_SUBNET = 301,
-        TOKEN_INTERFACE = 302,
-        TOKEN_INTERFACE_ID = 303,
-        TOKEN_ID = 304,
-        TOKEN_RAPID_COMMIT = 305,
-        TOKEN_RESERVATION_MODE = 306,
-        TOKEN_MAC_SOURCES = 307,
-        TOKEN_RELAY_SUPPLIED_OPTIONS = 308,
+        TOKEN_DHCP_SOCKET_TYPE = 268,
+        TOKEN_ECHO_CLIENT_ID = 269,
+        TOKEN_MATCH_CLIENT_ID = 270,
+        TOKEN_NEXT_SERVER = 271,
+        TOKEN_SERVER_HOSTNAME = 272,
+        TOKEN_BOOT_FILE_NAME = 273,
+        TOKEN_LEASE_DATABASE = 274,
+        TOKEN_HOSTS_DATABASE = 275,
+        TOKEN_TYPE = 276,
+        TOKEN_USER = 277,
+        TOKEN_PASSWORD = 278,
+        TOKEN_HOST = 279,
+        TOKEN_PERSIST = 280,
+        TOKEN_LFC_INTERVAL = 281,
+        TOKEN_READONLY = 282,
+        TOKEN_VALID_LIFETIME = 283,
+        TOKEN_RENEW_TIMER = 284,
+        TOKEN_REBIND_TIMER = 285,
+        TOKEN_DECLINE_PROBATION_PERIOD = 286,
+        TOKEN_SUBNET4 = 287,
+        TOKEN_SUBNET_4O6_INTERFACE = 288,
+        TOKEN_SUBNET_4O6_INTERFACE_ID = 289,
+        TOKEN_SUBNET_4O6_SUBNET = 290,
+        TOKEN_OPTION_DEF = 291,
+        TOKEN_OPTION_DATA = 292,
+        TOKEN_NAME = 293,
+        TOKEN_DATA = 294,
+        TOKEN_CODE = 295,
+        TOKEN_SPACE = 296,
+        TOKEN_CSV_FORMAT = 297,
+        TOKEN_RECORD_TYPES = 298,
+        TOKEN_ENCAPSULATE = 299,
+        TOKEN_ARRAY = 300,
+        TOKEN_POOLS = 301,
+        TOKEN_POOL = 302,
+        TOKEN_SUBNET = 303,
+        TOKEN_INTERFACE = 304,
+        TOKEN_INTERFACE_ID = 305,
+        TOKEN_ID = 306,
+        TOKEN_RAPID_COMMIT = 307,
+        TOKEN_RESERVATION_MODE = 308,
         TOKEN_HOST_RESERVATION_IDENTIFIERS = 309,
         TOKEN_CLIENT_CLASSES = 310,
         TOKEN_TEST = 311,
         TOKEN_CLIENT_CLASS = 312,
         TOKEN_RESERVATIONS = 313,
-        TOKEN_IP_ADDRESSES = 314,
-        TOKEN_PREFIXES = 315,
-        TOKEN_DUID = 316,
-        TOKEN_HW_ADDRESS = 317,
+        TOKEN_DUID = 314,
+        TOKEN_HW_ADDRESS = 315,
+        TOKEN_CIRCUIT_ID = 316,
+        TOKEN_CLIENT_ID = 317,
         TOKEN_HOSTNAME = 318,
         TOKEN_RELAY = 319,
         TOKEN_IP_ADDRESS = 320,
@@ -424,23 +424,22 @@ namespace isc { namespace dhcp {
         TOKEN_OUTPUT = 338,
         TOKEN_DEBUGLEVEL = 339,
         TOKEN_SEVERITY = 340,
-        TOKEN_DHCP4 = 341,
+        TOKEN_DHCP6 = 341,
         TOKEN_DHCPDDNS = 342,
         TOKEN_TOPLEVEL_JSON = 343,
-        TOKEN_TOPLEVEL_DHCP6 = 344,
-        TOKEN_SUB_DHCP6 = 345,
-        TOKEN_SUB_INTERFACES6 = 346,
-        TOKEN_SUB_SUBNET6 = 347,
-        TOKEN_SUB_POOL6 = 348,
-        TOKEN_SUB_PD_POOL = 349,
-        TOKEN_SUB_RESERVATION = 350,
-        TOKEN_SUB_OPTION_DEF = 351,
-        TOKEN_SUB_OPTION_DATA = 352,
-        TOKEN_SUB_HOOKS_LIBRARY = 353,
-        TOKEN_STRING = 354,
-        TOKEN_INTEGER = 355,
-        TOKEN_FLOAT = 356,
-        TOKEN_BOOLEAN = 357
+        TOKEN_TOPLEVEL_DHCP4 = 344,
+        TOKEN_SUB_DHCP4 = 345,
+        TOKEN_SUB_INTERFACES4 = 346,
+        TOKEN_SUB_SUBNET4 = 347,
+        TOKEN_SUB_POOL4 = 348,
+        TOKEN_SUB_RESERVATION = 349,
+        TOKEN_SUB_OPTION_DEF = 350,
+        TOKEN_SUB_OPTION_DATA = 351,
+        TOKEN_SUB_HOOKS_LIBRARY = 352,
+        TOKEN_STRING = 353,
+        TOKEN_INTEGER = 354,
+        TOKEN_FLOAT = 355,
+        TOKEN_BOOLEAN = 356
       };
     };
 
@@ -589,7 +588,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_DHCP6 (const location_type& l);
+    make_DHCP4 (const location_type& l);
 
     static inline
     symbol_type
@@ -598,6 +597,30 @@ namespace isc { namespace dhcp {
     static inline
     symbol_type
     make_INTERFACES (const location_type& l);
+
+    static inline
+    symbol_type
+    make_DHCP_SOCKET_TYPE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ECHO_CLIENT_ID (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MATCH_CLIENT_ID (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NEXT_SERVER (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SERVER_HOSTNAME (const location_type& l);
+
+    static inline
+    symbol_type
+    make_BOOT_FILE_NAME (const location_type& l);
 
     static inline
     symbol_type
@@ -637,10 +660,6 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_PREFERRED_LIFETIME (const location_type& l);
-
-    static inline
-    symbol_type
     make_VALID_LIFETIME (const location_type& l);
 
     static inline
@@ -657,7 +676,19 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_SUBNET6 (const location_type& l);
+    make_SUBNET4 (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUBNET_4O6_INTERFACE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUBNET_4O6_INTERFACE_ID (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUBNET_4O6_SUBNET (const location_type& l);
 
     static inline
     symbol_type
@@ -709,30 +740,6 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_PD_POOLS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PREFIX (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PREFIX_LEN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_EXCLUDED_PREFIX (const location_type& l);
-
-    static inline
-    symbol_type
-    make_EXCLUDED_PREFIX_LEN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DELEGATED_LEN (const location_type& l);
-
-    static inline
-    symbol_type
     make_SUBNET (const location_type& l);
 
     static inline
@@ -757,14 +764,6 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_MAC_SOURCES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RELAY_SUPPLIED_OPTIONS (const location_type& l);
-
-    static inline
-    symbol_type
     make_HOST_RESERVATION_IDENTIFIERS (const location_type& l);
 
     static inline
@@ -785,19 +784,19 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_IP_ADDRESSES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PREFIXES (const location_type& l);
-
-    static inline
-    symbol_type
     make_DUID (const location_type& l);
 
     static inline
     symbol_type
     make_HW_ADDRESS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CIRCUIT_ID (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CLIENT_ID (const location_type& l);
 
     static inline
     symbol_type
@@ -893,7 +892,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_DHCP4 (const location_type& l);
+    make_DHCP6 (const location_type& l);
 
     static inline
     symbol_type
@@ -905,27 +904,23 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_TOPLEVEL_DHCP6 (const location_type& l);
+    make_TOPLEVEL_DHCP4 (const location_type& l);
 
     static inline
     symbol_type
-    make_SUB_DHCP6 (const location_type& l);
+    make_SUB_DHCP4 (const location_type& l);
 
     static inline
     symbol_type
-    make_SUB_INTERFACES6 (const location_type& l);
+    make_SUB_INTERFACES4 (const location_type& l);
 
     static inline
     symbol_type
-    make_SUB_SUBNET6 (const location_type& l);
+    make_SUB_SUBNET4 (const location_type& l);
 
     static inline
     symbol_type
-    make_SUB_POOL6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SUB_PD_POOL (const location_type& l);
+    make_SUB_POOL4 (const location_type& l);
 
     static inline
     symbol_type
@@ -961,14 +956,14 @@ namespace isc { namespace dhcp {
 
 
     /// Build a parser object.
-    Dhcp6Parser (isc::dhcp::Parser6Context& ctx_yyarg);
-    virtual ~Dhcp6Parser ();
+    Dhcp4Parser (isc::dhcp::Parser4Context& ctx_yyarg);
+    virtual ~Dhcp4Parser ();
 
     /// Parse.
     /// \returns  0 iff parsing succeeded.
     virtual int parse ();
 
-#if PARSER6_DEBUG
+#if PARSER4_DEBUG
     /// The current debugging stream.
     std::ostream& debug_stream () const YY_ATTRIBUTE_PURE;
     /// Set the current debugging stream.
@@ -992,8 +987,8 @@ namespace isc { namespace dhcp {
 
   private:
     /// This class is not copyable.
-    Dhcp6Parser (const Dhcp6Parser&);
-    Dhcp6Parser& operator= (const Dhcp6Parser&);
+    Dhcp4Parser (const Dhcp4Parser&);
+    Dhcp4Parser& operator= (const Dhcp4Parser&);
 
     /// State numbers.
     typedef int state_type;
@@ -1063,7 +1058,7 @@ namespace isc { namespace dhcp {
 
     /// For a symbol, its name in clear.
     static const char* const yytname_[];
-#if PARSER6_DEBUG
+#if PARSER4_DEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
   static const unsigned short int yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
@@ -1164,23 +1159,23 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 630,     ///< Last index in yytable_.
-      yynnts_ = 271,  ///< Number of nonterminal symbols.
-      yyfinal_ = 24, ///< Termination state number.
+      yylast_ = 624,     ///< Last index in yytable_.
+      yynnts_ = 267,  ///< Number of nonterminal symbols.
+      yyfinal_ = 22, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 103  ///< Number of tokens.
+      yyntokens_ = 102  ///< Number of tokens.
     };
 
 
     // User arguments.
-    isc::dhcp::Parser6Context& ctx;
+    isc::dhcp::Parser4Context& ctx;
   };
 
   // Symbol number corresponding to token number t.
   inline
-  Dhcp6Parser::token_number_type
-  Dhcp6Parser::yytranslate_ (token_type t)
+  Dhcp4Parser::token_number_type
+  Dhcp4Parser::yytranslate_ (token_type t)
   {
     static
     const token_number_type
@@ -1221,9 +1216,9 @@ namespace isc { namespace dhcp {
       65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
       75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
       85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,    96,    97,    98,    99,   100,   101,   102
+      95,    96,    97,    98,    99,   100,   101
     };
-    const unsigned int user_token_number_max_ = 357;
+    const unsigned int user_token_number_max_ = 356;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1235,7 +1230,7 @@ namespace isc { namespace dhcp {
   }
 
   inline
-  Dhcp6Parser::syntax_error::syntax_error (const location_type& l, const std::string& m)
+  Dhcp4Parser::syntax_error::syntax_error (const location_type& l, const std::string& m)
     : std::runtime_error (m)
     , location (l)
   {}
@@ -1243,36 +1238,36 @@ namespace isc { namespace dhcp {
   // basic_symbol.
   template <typename Base>
   inline
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol ()
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol ()
     : value ()
   {}
 
   template <typename Base>
   inline
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
     : Base (other)
     , value ()
     , location (other.location)
   {
       switch (other.type_get ())
     {
-      case 116: // value
+      case 114: // value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 102: // "boolean"
+      case 101: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 101: // "floating point"
+      case 100: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 100: // "integer"
+      case 99: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 99: // "constant string"
+      case 98: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1285,7 +1280,7 @@ namespace isc { namespace dhcp {
 
   template <typename Base>
   inline
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
     : Base (t)
     , value ()
     , location (l)
@@ -1293,23 +1288,23 @@ namespace isc { namespace dhcp {
     (void) v;
       switch (this->type_get ())
     {
-      case 116: // value
+      case 114: // value
         value.copy< ElementPtr > (v);
         break;
 
-      case 102: // "boolean"
+      case 101: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 101: // "floating point"
+      case 100: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 100: // "integer"
+      case 99: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 99: // "constant string"
+      case 98: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1322,42 +1317,42 @@ namespace isc { namespace dhcp {
   // Implementation of basic_symbol constructor for each type.
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
     , value ()
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1366,7 +1361,7 @@ namespace isc { namespace dhcp {
 
   template <typename Base>
   inline
-  Dhcp6Parser::basic_symbol<Base>::~basic_symbol ()
+  Dhcp4Parser::basic_symbol<Base>::~basic_symbol ()
   {
     clear ();
   }
@@ -1374,7 +1369,7 @@ namespace isc { namespace dhcp {
   template <typename Base>
   inline
   void
-  Dhcp6Parser::basic_symbol<Base>::clear ()
+  Dhcp4Parser::basic_symbol<Base>::clear ()
   {
     // User destructor.
     symbol_number_type yytype = this->type_get ();
@@ -1389,23 +1384,23 @@ namespace isc { namespace dhcp {
     // Type destructor.
     switch (yytype)
     {
-      case 116: // value
+      case 114: // value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 102: // "boolean"
+      case 101: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 101: // "floating point"
+      case 100: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 100: // "integer"
+      case 99: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 99: // "constant string"
+      case 98: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1419,7 +1414,7 @@ namespace isc { namespace dhcp {
   template <typename Base>
   inline
   bool
-  Dhcp6Parser::basic_symbol<Base>::empty () const
+  Dhcp4Parser::basic_symbol<Base>::empty () const
   {
     return Base::type_get () == empty_symbol;
   }
@@ -1427,28 +1422,28 @@ namespace isc { namespace dhcp {
   template <typename Base>
   inline
   void
-  Dhcp6Parser::basic_symbol<Base>::move (basic_symbol& s)
+  Dhcp4Parser::basic_symbol<Base>::move (basic_symbol& s)
   {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 116: // value
+      case 114: // value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 102: // "boolean"
+      case 101: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 101: // "floating point"
+      case 100: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 100: // "integer"
+      case 99: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 99: // "constant string"
+      case 98: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1461,30 +1456,30 @@ namespace isc { namespace dhcp {
 
   // by_type.
   inline
-  Dhcp6Parser::by_type::by_type ()
+  Dhcp4Parser::by_type::by_type ()
     : type (empty_symbol)
   {}
 
   inline
-  Dhcp6Parser::by_type::by_type (const by_type& other)
+  Dhcp4Parser::by_type::by_type (const by_type& other)
     : type (other.type)
   {}
 
   inline
-  Dhcp6Parser::by_type::by_type (token_type t)
+  Dhcp4Parser::by_type::by_type (token_type t)
     : type (yytranslate_ (t))
   {}
 
   inline
   void
-  Dhcp6Parser::by_type::clear ()
+  Dhcp4Parser::by_type::clear ()
   {
     type = empty_symbol;
   }
 
   inline
   void
-  Dhcp6Parser::by_type::move (by_type& that)
+  Dhcp4Parser::by_type::move (by_type& that)
   {
     type = that.type;
     that.clear ();
@@ -1492,14 +1487,14 @@ namespace isc { namespace dhcp {
 
   inline
   int
-  Dhcp6Parser::by_type::type_get () const
+  Dhcp4Parser::by_type::type_get () const
   {
     return type;
   }
 
   inline
-  Dhcp6Parser::token_type
-  Dhcp6Parser::by_type::token () const
+  Dhcp4Parser::token_type
+  Dhcp4Parser::by_type::token () const
   {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
@@ -1517,623 +1512,617 @@ namespace isc { namespace dhcp {
      325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
      335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
      345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
-     355,   356,   357
+     355,   356
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
   // Implementation of make_symbol for each symbol type.
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_END (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_END (const location_type& l)
   {
     return symbol_type (token::TOKEN_END, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_COMMA (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_COMMA (const location_type& l)
   {
     return symbol_type (token::TOKEN_COMMA, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_COLON (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_COLON (const location_type& l)
   {
     return symbol_type (token::TOKEN_COLON, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LSQUARE_BRACKET (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LSQUARE_BRACKET (const location_type& l)
   {
     return symbol_type (token::TOKEN_LSQUARE_BRACKET, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RSQUARE_BRACKET (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RSQUARE_BRACKET (const location_type& l)
   {
     return symbol_type (token::TOKEN_RSQUARE_BRACKET, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LCURLY_BRACKET (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LCURLY_BRACKET (const location_type& l)
   {
     return symbol_type (token::TOKEN_LCURLY_BRACKET, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RCURLY_BRACKET (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RCURLY_BRACKET (const location_type& l)
   {
     return symbol_type (token::TOKEN_RCURLY_BRACKET, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_NULL_TYPE (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NULL_TYPE (const location_type& l)
   {
     return symbol_type (token::TOKEN_NULL_TYPE, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DHCP6 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP6, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_INTERFACES_CONFIG (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_INTERFACES_CONFIG, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_INTERFACES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_INTERFACES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LEASE_DATABASE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LEASE_DATABASE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HOSTS_DATABASE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOSTS_DATABASE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_TYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TYPE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_USER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_USER, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PASSWORD (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PASSWORD, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HOST (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOST, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PERSIST (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PERSIST, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LFC_INTERVAL (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LFC_INTERVAL, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_READONLY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_READONLY, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PREFERRED_LIFETIME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PREFERRED_LIFETIME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_VALID_LIFETIME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_VALID_LIFETIME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RENEW_TIMER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RENEW_TIMER, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_REBIND_TIMER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_REBIND_TIMER, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DECLINE_PROBATION_PERIOD (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUBNET6 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SUBNET6, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_OPTION_DEF (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OPTION_DEF, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_OPTION_DATA (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OPTION_DATA, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_NAME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DATA (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DATA, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_CODE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CODE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SPACE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SPACE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_CSV_FORMAT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CSV_FORMAT, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RECORD_TYPES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RECORD_TYPES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_ENCAPSULATE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_ENCAPSULATE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_ARRAY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_ARRAY, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_POOLS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_POOLS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_POOL (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_POOL, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PD_POOLS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PD_POOLS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PREFIX (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PREFIX, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PREFIX_LEN (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PREFIX_LEN, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_EXCLUDED_PREFIX (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_EXCLUDED_PREFIX, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_EXCLUDED_PREFIX_LEN (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_EXCLUDED_PREFIX_LEN, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DELEGATED_LEN (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DELEGATED_LEN, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUBNET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SUBNET, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_INTERFACE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_INTERFACE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_INTERFACE_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_INTERFACE_ID, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_ID, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RAPID_COMMIT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RAPID_COMMIT, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RESERVATION_MODE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RESERVATION_MODE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_MAC_SOURCES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_MAC_SOURCES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RELAY_SUPPLIED_OPTIONS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RELAY_SUPPLIED_OPTIONS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HOST_RESERVATION_IDENTIFIERS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_CLIENT_CLASSES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CLIENT_CLASSES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_TEST (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TEST, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_CLIENT_CLASS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CLIENT_CLASS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RESERVATIONS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RESERVATIONS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_IP_ADDRESSES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_IP_ADDRESSES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PREFIXES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PREFIXES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DUID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DUID, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HW_ADDRESS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HW_ADDRESS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HOSTNAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOSTNAME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_RELAY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RELAY, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_IP_ADDRESS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_IP_ADDRESS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HOOKS_LIBRARIES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LIBRARY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LIBRARY, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PARAMETERS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PARAMETERS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_EXPIRED_LEASES_PROCESSING (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SERVER_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SERVER_ID, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_IDENTIFIER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_IDENTIFIER, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_HTYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HTYPE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_TIME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TIME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_ENTERPRISE_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_ENTERPRISE_ID, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DHCP4O6_PORT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP4O6_PORT, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_CONTROL_SOCKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONTROL_SOCKET, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SOCKET_TYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SOCKET_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_NAME, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DHCP_DDNS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP_DDNS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LOGGING (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LOGGING, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_LOGGERS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LOGGERS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_OUTPUT_OPTIONS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_OUTPUT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OUTPUT, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DEBUGLEVEL (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DEBUGLEVEL, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SEVERITY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SEVERITY, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DHCP4 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP4 (const location_type& l)
   {
     return symbol_type (token::TOKEN_DHCP4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_DHCPDDNS (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACES_CONFIG (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_INTERFACES_CONFIG, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_INTERFACES, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_SOCKET_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ECHO_CLIENT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ECHO_CLIENT_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MATCH_CLIENT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MATCH_CLIENT_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NEXT_SERVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NEXT_SERVER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_HOSTNAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_HOSTNAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_BOOT_FILE_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_BOOT_FILE_NAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LEASE_DATABASE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LEASE_DATABASE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTS_DATABASE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTS_DATABASE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TYPE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_USER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_USER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PASSWORD (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PASSWORD, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOST, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PERSIST (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PERSIST, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LFC_INTERVAL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LFC_INTERVAL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_READONLY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_READONLY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_VALID_LIFETIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_VALID_LIFETIME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RENEW_TIMER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RENEW_TIMER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REBIND_TIMER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REBIND_TIMER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DECLINE_PROBATION_PERIOD (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBNET4, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET_4O6_SUBNET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_SUBNET, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OPTION_DEF (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OPTION_DEF, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OPTION_DATA (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OPTION_DATA, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DATA (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DATA, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CODE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CODE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SPACE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SPACE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CSV_FORMAT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CSV_FORMAT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RECORD_TYPES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RECORD_TYPES, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENCAPSULATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ENCAPSULATE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ARRAY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ARRAY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POOLS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_POOLS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POOL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_POOL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBNET, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_INTERFACE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACE_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_INTERFACE_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RAPID_COMMIT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RAPID_COMMIT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATION_MODE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RESERVATION_MODE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST_RESERVATION_IDENTIFIERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASSES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASSES, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TEST (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TEST, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATIONS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RESERVATIONS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DUID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DUID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HW_ADDRESS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HW_ADDRESS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CIRCUIT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CIRCUIT_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RELAY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RELAY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOOKS_LIBRARIES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LIBRARY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LIBRARY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PARAMETERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PARAMETERS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IDENTIFIER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_IDENTIFIER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HTYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HTYPE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TIME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENTERPRISE_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ENTERPRISE_ID, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP4O6_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP4O6_PORT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTROL_SOCKET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_SOCKET, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_NAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP_DDNS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LOGGING, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LOGGERS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT_OPTIONS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DEBUGLEVEL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DEBUGLEVEL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SEVERITY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SEVERITY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP6 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP6, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCPDDNS (const location_type& l)
   {
     return symbol_type (token::TOKEN_DHCPDDNS, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_TOPLEVEL_JSON (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_JSON (const location_type& l)
   {
     return symbol_type (token::TOKEN_TOPLEVEL_JSON, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_TOPLEVEL_DHCP6 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_DHCP4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TOPLEVEL_DHCP6, l);
+    return symbol_type (token::TOKEN_TOPLEVEL_DHCP4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_DHCP6 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_DHCP6, l);
+    return symbol_type (token::TOKEN_SUB_DHCP4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_INTERFACES6 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_INTERFACES4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_INTERFACES6, l);
+    return symbol_type (token::TOKEN_SUB_INTERFACES4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_SUBNET6 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_SUBNET4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_SUBNET6, l);
+    return symbol_type (token::TOKEN_SUB_SUBNET4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_POOL6 (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_POOL4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_POOL6, l);
+    return symbol_type (token::TOKEN_SUB_POOL4, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_PD_POOL (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SUB_PD_POOL, l);
-  }
-
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_RESERVATION (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_RESERVATION (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_RESERVATION, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_OPTION_DEF (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DEF (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_OPTION_DEF, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_OPTION_DATA (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DATA (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_OPTION_DATA, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_SUB_HOOKS_LIBRARY (const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_HOOKS_LIBRARY (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_STRING (const std::string& v, const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_STRING (const std::string& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_STRING, v, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_INTEGER (const int64_t& v, const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTEGER (const int64_t& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_INTEGER, v, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_FLOAT (const double& v, const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLOAT (const double& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_FLOAT, v, l);
   }
 
-  Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_BOOLEAN (const bool& v, const location_type& l)
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_BOOLEAN (const bool& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_BOOLEAN, v, l);
   }
 
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2135 "dhcp6_parser.h" // lalr1.cc:377
+#line 2124 "dhcp4_parser.h" // lalr1.cc:377
 
 
 
 
-#endif // !YY_PARSER6_DHCP6_PARSER_H_INCLUDED
+#endif // !YY_PARSER4_DHCP4_PARSER_H_INCLUDED

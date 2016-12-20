@@ -36,8 +36,8 @@
  ** Define the isc::dhcp::position class.
  */
 
-#ifndef YY_PARSER6_POSITION_HH_INCLUDED
-# define YY_PARSER6_POSITION_HH_INCLUDED
+#ifndef YY_PARSER4_POSITION_HH_INCLUDED
+# define YY_PARSER4_POSITION_HH_INCLUDED
 
 # include <algorithm> // std::max
 # include <iostream>
@@ -51,7 +51,7 @@
 #  endif
 # endif
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp4_parser.yy" // location.cc:296
 namespace isc { namespace dhcp {
 #line 56 "position.hh" // location.cc:296
   /// Abstract a position.
@@ -175,7 +175,7 @@ namespace isc { namespace dhcp {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp4_parser.yy" // location.cc:296
 } } // isc::dhcp
 #line 180 "position.hh" // location.cc:296
-#endif // !YY_PARSER6_POSITION_HH_INCLUDED
+#endif // !YY_PARSER4_POSITION_HH_INCLUDED

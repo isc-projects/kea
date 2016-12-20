@@ -1067,7 +1067,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"10.253.175.16\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
@@ -1079,7 +1079,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1221,7 +1222,8 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1269,7 +1271,8 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1358,7 +1361,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"192.0.2.1, 192.0.2.2\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
@@ -1370,7 +1373,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
     ASSERT_TRUE(x);
@@ -1448,7 +1452,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
         "          \"code\": ";
     string config_postfix = ","
         "          \"data\": \"192.0.2.1\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.50\" } ],"
@@ -1468,8 +1472,10 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     // definition, the config should fail.
     string config_bogus = config_prefix + "99" + config_postfix;
 
-    ElementPtr json_bogus = Element::fromJSON(config_bogus);
-    ElementPtr json_valid = Element::fromJSON(config_valid);
+    ConstElementPtr json_bogus;
+    ASSERT_NO_THROW(json_bogus = parseDHCP4(config_bogus));
+    ConstElementPtr json_valid;
+    ASSERT_NO_THROW(json_valid = parseDHCP4(config_valid));
 
     NakedDhcpv4Srv srv(0);
 
@@ -1543,7 +1549,8 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1629,7 +1636,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
         "{   \"name\": \"router\", "
         "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1679,7 +1687,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
         "    \"code\": 250, "
         "    \"type\": \"string\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1734,7 +1743,8 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1806,7 +1816,8 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
         "    {    \"name\": \"ip-forwarding\", "
         "         \"data\": \"true\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1877,7 +1888,8 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted

@@ -7,8 +7,8 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {Dhcp6Parser}
-%define api.prefix {parser6_}
+%define parser_class_name {Dhcp4Parser}
+%define api.prefix {parser4_}
 %define api.token.constructor
 %define api.value.type variant
 %define api.namespace {isc::dhcp}
@@ -19,26 +19,26 @@
 #include <cc/data.h>
 #include <dhcp/option.h>
 #include <boost/lexical_cast.hpp>
-#include <dhcp6/parser_context_decl.h>
+#include <dhcp4/parser_context_decl.h>
 
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 }
 // The parsing context.
-%param { isc::dhcp::Parser6Context& ctx }
+%param { isc::dhcp::Parser4Context& ctx }
 %locations
 %define parse.trace
 %define parse.error verbose
 %code
 {
-#include <dhcp6/parser_context.h>
+#include <dhcp4/parser_context.h>
 }
 
 
 %define api.token.prefix {TOKEN_}
 // Tokens in an order which makes sense and related to the intented use.
-// Actual regexps for tokens are defined in dhcp6_lexer.ll.
+// Actual regexps for tokens are defined in dhcp4_lexer.ll.
 %token
   END  0  "end of file"
   COMMA ","
@@ -49,9 +49,16 @@ using namespace std;
   RCURLY_BRACKET "}"
   NULL_TYPE "null"
 
-  DHCP6 "Dhcp6"
+  DHCP4 "Dhcp4"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
+  DHCP_SOCKET_TYPE "dhcp-socket-type"
+
+  ECHO_CLIENT_ID "echo-client-id"
+  MATCH_CLIENT_ID "match-client-id"
+  NEXT_SERVER "next-server"
+  SERVER_HOSTNAME "server-hostname"
+  BOOT_FILE_NAME "boot-file-name"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -63,12 +70,14 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
 
-  PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
-  SUBNET6 "subnet6"
+  SUBNET4 "subnet4"
+  SUBNET_4O6_INTERFACE "4o6-interface"
+  SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
+  SUBNET_4O6_SUBNET "4o6-subnet"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
   NAME "name"
@@ -82,12 +91,6 @@ using namespace std;
 
   POOLS "pools"
   POOL "pool"
-  PD_POOLS "pd-pools"
-  PREFIX "prefix"
-  PREFIX_LEN "prefix-len"
-  EXCLUDED_PREFIX "excluded-prefix"
-  EXCLUDED_PREFIX_LEN "excluded-prefix-len"
-  DELEGATED_LEN "delegated-len"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -96,8 +99,6 @@ using namespace std;
   RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
 
-  MAC_SOURCES "mac-sources"
-  RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
@@ -105,10 +106,10 @@ using namespace std;
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
-  IP_ADDRESSES "ip-addresses"
-  PREFIXES "prefixes"
   DUID "duid"
   HW_ADDRESS "hw-address"
+  CIRCUIT_ID "circuit-id"
+  CLIENT_ID "client-id"
   HOSTNAME "hostname"
 
   RELAY "relay"
@@ -134,11 +135,11 @@ using namespace std;
 
   DHCP_DDNS "dhcp-ddns"
 
- /// @todo: Implement proper parsing for those parameters in Dhcp6/dhcp-ddns/*.
+ /// @todo: Implement proper parsing for those parameters in Dhcp4/dhcp-ddns/*.
  /// This should be part of the #5043 ticket. Listing the keywords here for
  /// completeness.
 
- // These are tokens defined in Dhcp6/dhcp-ddns/*
+ // These are tokens defined in Dhcp4/dhcp-ddns/*
  // They're not
  //  ENABLE_UPDATES "enable-updates"
  //  SERVER_IP "server-ip"
@@ -161,18 +162,17 @@ using namespace std;
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
 
-  DHCP4 "Dhcp4"
+  DHCP6 "Dhcp6"
   DHCPDDNS "DhcpDdns"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
   TOPLEVEL_JSON
-  TOPLEVEL_DHCP6
-  SUB_DHCP6
-  SUB_INTERFACES6
-  SUB_SUBNET6
-  SUB_POOL6
-  SUB_PD_POOL
+  TOPLEVEL_DHCP4
+  SUB_DHCP4
+  SUB_INTERFACES4
+  SUB_SUBNET4
+  SUB_POOL4
   SUB_RESERVATION
   SUB_OPTION_DEF
   SUB_OPTION_DATA
@@ -196,12 +196,11 @@ using namespace std;
 %start start;
 
 start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
-     | TOPLEVEL_DHCP6 { ctx.ctx_ = ctx.CONFIG; } syntax_map
-     | SUB_DHCP6 { ctx.ctx_ = ctx.DHCP6; } sub_dhcp6
-     | SUB_INTERFACES6 { ctx.ctx_ = ctx.INTERFACES_CONFIG; } sub_interfaces6
-     | SUB_SUBNET6 { ctx.ctx_ = ctx.SUBNET6; } sub_subnet6
-     | SUB_POOL6 { ctx.ctx_ = ctx.POOLS; } sub_pool6
-     | SUB_PD_POOL { ctx.ctx_ = ctx.PD_POOLS; } sub_pd_pool
+     | TOPLEVEL_DHCP4 { ctx.ctx_ = ctx.CONFIG; } syntax_map
+     | SUB_DHCP4 { ctx.ctx_ = ctx.DHCP4; } sub_dhcp4
+     | SUB_INTERFACES4 { ctx.ctx_ = ctx.INTERFACES_CONFIG; } sub_interfaces4
+     | SUB_SUBNET4 { ctx.ctx_ = ctx.SUBNET4; } sub_subnet4
+     | SUB_POOL4 { ctx.ctx_ = ctx.POOLS; } sub_pool4
      | SUB_RESERVATION { ctx.ctx_ = ctx.RESERVATIONS; } sub_reservation
      | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
@@ -314,21 +313,21 @@ global_objects: global_object
               | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Dhcp6 or DhcpDdns.
-global_object: dhcp6_object
+// This represents a single top level entry, e.g. Dhcp4 or DhcpDdns.
+global_object: dhcp4_object
              | logging_object
-             | dhcp4_json_object
+             | dhcp6_json_object
              | dhcpddns_json_object
              | unknown_map_entry
              ;
 
-dhcp6_object: DHCP6 {
+dhcp4_object: DHCP4 {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Dhcp6", m);
+    ctx.stack_.back()->set("Dhcp4", m);
     ctx.stack_.push_back(m);
-    ctx.enter(ctx.DHCP6);
+    ctx.enter(ctx.DHCP4);
 } COLON LCURLY_BRACKET global_params RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -339,8 +338,8 @@ dhcp6_object: DHCP6 {
 
 // subparser: similar to the corresponding rule but without parent
 // so the stack is empty at the rule entry.
-sub_dhcp6: LCURLY_BRACKET {
-    // Parse the Dhcp6 map
+sub_dhcp4: LCURLY_BRACKET {
+    // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } global_params RCURLY_BRACKET {
@@ -352,18 +351,15 @@ global_params: global_param
              ;
 
 // These are the parameters that are allowed in the top-level for
-// Dhcp6.
-global_param: preferred_lifetime
-            | valid_lifetime
+// Dhcp4.
+global_param: valid_lifetime
             | renew_timer
             | rebind_timer
             | decline_probation_period
-            | subnet6_list
+            | subnet4_list
             | interfaces_config
             | lease_database
             | hosts_database
-            | mac_sources
-            | relay_supplied_options
             | host_reservation_identifiers
             | client_classes
             | option_def_list
@@ -374,13 +370,11 @@ global_param: preferred_lifetime
             | dhcp4o6_port
             | control_socket
             | dhcp_ddns
+            | echo_client_id
+            | match_client_id
+            | next_server
             | unknown_map_entry
             ;
-
-preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
-    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("preferred-lifetime", prf);
-};
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
@@ -402,31 +396,58 @@ decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ctx.stack_.back()->set("decline-probation-period", dpp);
 };
 
+echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
+    ElementPtr echo(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("echo-client-id", echo);
+};
+
+match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
+    ElementPtr match(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("match-client-id", match);
+};
+
+
 interfaces_config: INTERFACES_CONFIG {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
-} COLON LCURLY_BRACKET interface_config_map RCURLY_BRACKET {
+} COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
 
-sub_interfaces6: LCURLY_BRACKET {
+interfaces_config_params: interfaces_config_param
+                        | interfaces_config_params COMMA interfaces_config_param
+                        ;
+
+interfaces_config_param: interfaces_list
+                       | dhcp_socket_type
+                       ;
+
+sub_interfaces4: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} interface_config_map RCURLY_BRACKET {
+} interfaces_config_params RCURLY_BRACKET {
     // parsing completed
 };
 
-interface_config_map: INTERFACES {
+interfaces_list: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list2 {
     ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+dhcp_socket_type: DHCP_SOCKET_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr type(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("dhcp-socket-type", type);
     ctx.leave();
 };
 
@@ -520,31 +541,8 @@ readonly: READONLY COLON BOOLEAN {
     ctx.stack_.back()->set("readonly", n);
 };
 
-mac_sources: MAC_SOURCES {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("mac-sources", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.MAC_SOURCES);
-} COLON LSQUARE_BRACKET mac_sources_list RSQUARE_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-mac_sources_list: mac_sources_value
-                | mac_sources_list COMMA mac_sources_value
-;
-
-mac_sources_value: duid_id
-                 | string_id
-                 ;
-
 duid_id : DUID {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(duid);
-};
-
-string_id : STRING {
-    ElementPtr duid(new StringElement($1, ctx.loc2pos(@1)));
     ctx.stack_.back()->add(duid);
 };
 
@@ -564,6 +562,8 @@ host_reservation_identifiers_list: host_reservation_identifier
 
 host_reservation_identifier: duid_id
                            | hw_address_id
+                           | circuit_id
+                           | client_id
                            ;
 
 hw_address_id : HW_ADDRESS {
@@ -571,14 +571,14 @@ hw_address_id : HW_ADDRESS {
     ctx.stack_.back()->add(hwaddr);
 };
 
-relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("relay-supplied-options", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
-    ctx.stack_.pop_back();
-    ctx.leave();
+circuit_id : CIRCUIT_ID {
+    ElementPtr circuit(new StringElement("circuit-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(circuit);
+};
+
+client_id : CLIENT_ID {
+    ElementPtr client(new StringElement("client-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(client);
 };
 
 hooks_libraries: HOOKS_LIBRARIES {
@@ -662,39 +662,39 @@ expired_leases_param: STRING COLON INTEGER {
     ctx.stack_.back()->set($1, value);
 };
 
-// --- subnet6 ------------------------------------------
-// This defines subnet6 as a list of maps.
-// "subnet6": [ ... ]
-subnet6_list: SUBNET6 {
+// --- subnet4 ------------------------------------------
+// This defines subnet4 as a list of maps.
+// "subnet4": [ ... ]
+subnet4_list: SUBNET4 {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("subnet6", l);
+    ctx.stack_.back()->set("subnet4", l);
     ctx.stack_.push_back(l);
-    ctx.enter(ctx.SUBNET6);
-} COLON LSQUARE_BRACKET subnet6_list_content RSQUARE_BRACKET {
+    ctx.enter(ctx.SUBNET4);
+} COLON LSQUARE_BRACKET subnet4_list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
 
-// This defines the ... in "subnet6": [ ... ]
+// This defines the ... in "subnet4": [ ... ]
 // It can either be empty (no subnets defined), have one subnet
 // or have multiple subnets separate by comma.
-subnet6_list_content: %empty
-                    | not_empty_subnet6_list
+subnet4_list_content: %empty
+                    | not_empty_subnet4_list
                     ;
 
-not_empty_subnet6_list: subnet6
-                      | not_empty_subnet6_list COMMA subnet6
+not_empty_subnet4_list: subnet4
+                      | not_empty_subnet4_list COMMA subnet4
                       ;
 
 // --- Subnet definitions -------------------------------
 
 // This defines a single subnet, i.e. a single map with
-// subnet6 array.
-subnet6: LCURLY_BRACKET {
+// subnet4 array.
+subnet4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
-} subnet6_params RCURLY_BRACKET {
+} subnet4_params RCURLY_BRACKET {
     // Once we reached this place, the subnet parsing is now complete.
     // If we want to, we can implement default values here.
     // In particular we can do things like this:
@@ -702,7 +702,7 @@ subnet6: LCURLY_BRACKET {
     //     ctx.stack_.back()->set("interface", StringElement("loopback"));
     // }
     //
-    // We can also stack up one level (Dhcp6) and copy over whatever
+    // We can also stack up one level (Dhcp4) and copy over whatever
     // global parameters we want to:
     // if (!ctx.stack_.back()->get("renew-timer")) {
     //     ElementPtr renew = ctx_stack_[...].get("renew-timer");
@@ -713,27 +713,25 @@ subnet6: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-sub_subnet6: LCURLY_BRACKET {
-    // Parse the subnet6 list entry map
+sub_subnet4: LCURLY_BRACKET {
+    // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} subnet6_params RCURLY_BRACKET {
+} subnet4_params RCURLY_BRACKET {
     // parsing completed
 };
 
 // This defines that subnet can have one or more parameters.
-subnet6_params: subnet6_param
-              | subnet6_params COMMA subnet6_param
+subnet4_params: subnet4_param
+              | subnet4_params COMMA subnet4_param
               ;
 
 // This defines a list of allowed parameters for each subnet.
-subnet6_param: preferred_lifetime
-             | valid_lifetime
+subnet4_param: valid_lifetime
              | renew_timer
              | rebind_timer
              | option_data_list
              | pools_list
-             | pd_pools_list
              | subnet
              | interface
              | interface_id
@@ -743,6 +741,11 @@ subnet6_param: preferred_lifetime
              | reservations
              | reservation_mode
              | relay
+             | match_client_id
+             | next_server
+             | subnet_4o6_interface
+             | subnet_4o6_interface_id
+             | subnet_4o6_subnet
              | unknown_map_entry
              ;
 
@@ -751,6 +754,30 @@ subnet: SUBNET {
 } COLON STRING {
     ElementPtr subnet(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("subnet", subnet);
+    ctx.leave();
+};
+
+subnet_4o6_interface: SUBNET_4O6_INTERFACE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("4o6-interface", iface);
+    ctx.leave();
+};
+
+subnet_4o6_interface_id: SUBNET_4O6_INTERFACE_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("4o6-interface-id", iface);
+    ctx.leave();
+};
+
+subnet_4o6_subnet: SUBNET_4O6_SUBNET {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("4o6-subnet", iface);
     ctx.leave();
 };
 
@@ -906,7 +933,7 @@ option_def_array: ARRAY COLON BOOLEAN {
 // ---- option-data --------------------------
 
 // This defines the "option-data": [ ... ] entry that may appear
-// in several places, but most notably in subnet6 entries.
+// in several places, but most notably in subnet4 entries.
 option_data_list: OPTION_DATA {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("option-data", l);
@@ -994,7 +1021,7 @@ option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
 
 // ---- pools ------------------------------------
 
-// This defines the "pools": [ ... ] entry that may appear in subnet6.
+// This defines the "pools": [ ... ] entry that may appear in subnet4.
 pools_list: POOLS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("pools", l);
@@ -1023,7 +1050,7 @@ pool_list_entry: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-sub_pool6: LCURLY_BRACKET {
+sub_pool4: LCURLY_BRACKET {
     // Parse the pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
@@ -1049,89 +1076,6 @@ pool_entry: POOL {
 };
 
 // --- end of pools definition -------------------------------
-
-// --- pd-pools ----------------------------------------------
-pd_pools_list: PD_POOLS {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("pd-pools", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.PD_POOLS);
-} COLON LSQUARE_BRACKET pd_pools_list_content RSQUARE_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// Pools may be empty, contain a single pool entry or multiple entries
-// separate by commas.
-pd_pools_list_content: %empty
-                     | not_empty_pd_pools_list
-                     ;
-
-not_empty_pd_pools_list: pd_pool_entry
-                       | not_empty_pd_pools_list COMMA pd_pool_entry
-                       ;
-
-pd_pool_entry: LCURLY_BRACKET {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(m);
-    ctx.stack_.push_back(m);
-} pd_pool_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-};
-
-sub_pd_pool: LCURLY_BRACKET {
-    // Parse the pd-pool list entry map
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.push_back(m);
-} pd_pool_params RCURLY_BRACKET {
-    // parsing completed
-};
-
-pd_pool_params: pd_pool_param
-              | pd_pool_params COMMA pd_pool_param
-              ;
-
-pd_pool_param: pd_prefix
-             | pd_prefix_len
-             | pd_delegated_len
-             | option_data_list
-             | excluded_prefix
-             | excluded_prefix_len
-             | unknown_map_entry
-             ;
-
-pd_prefix: PREFIX {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("prefix", prf);
-    ctx.leave();
-};
-
-pd_prefix_len: PREFIX_LEN COLON INTEGER {
-    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("prefix-len", prf);
-};
-
-excluded_prefix: EXCLUDED_PREFIX {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("excluded-prefix", prf);
-    ctx.leave();
-};
-
-excluded_prefix_len: EXCLUDED_PREFIX_LEN COLON INTEGER {
-    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("excluded-prefix-len", prf);
-};
-
-pd_delegated_len: DELEGATED_LEN COLON INTEGER {
-    ElementPtr deleg(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("delegated-len", deleg);
-};
-
-// --- end of pd-pools ---------------------------------------
 
 // --- reservations ------------------------------------------
 reservations: RESERVATIONS {
@@ -1179,31 +1123,47 @@ not_empty_reservation_params: reservation_param
 // @todo probably need to add mac-address as well here
 reservation_param: duid
                  | reservation_client_classes
-                 | ip_addresses
-                 | prefixes
+                 | client_id_value
+                 | circuit_id_value
+                 | ip_address
                  | hw_address
                  | hostname
                  | option_data_list
+                 | next_server
+                 | server_hostname
+                 | boot_file_name
                  | unknown_map_entry
                  ;
 
-ip_addresses: IP_ADDRESSES {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("ip-addresses", l);
-    ctx.stack_.push_back(l);
+next_server: NEXT_SERVER {
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
-    ctx.stack_.pop_back();
+} COLON STRING {
+    ElementPtr next_server(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 };
 
-prefixes: PREFIXES  {
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("prefixes", l);
-    ctx.stack_.push_back(l);
+server_hostname: SERVER_HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
-    ctx.stack_.pop_back();
+} COLON STRING {
+    ElementPtr srv(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-hostname", srv);
+    ctx.leave();
+};
+
+boot_file_name: BOOT_FILE_NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("boot-file-name", bootfile);
+    ctx.leave();
+};
+
+ip_address: IP_ADDRESS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 };
 
@@ -1222,6 +1182,23 @@ hw_address: HW_ADDRESS {
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 };
+
+client_id_value: CLIENT_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("client-id", hw);
+    ctx.leave();
+};
+
+circuit_id_value: CIRCUIT_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("circuit-id", hw);
+    ctx.leave();
+};
+
 
 hostname: HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1298,6 +1275,9 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
+                  | next_server
+                  | server_hostname
+                  | boot_file_name
                   | unknown_map_entry
                   ;
 
@@ -1417,10 +1397,10 @@ dhcp_ddns: DHCP_DDNS {
 
 // JSON entries for Dhcp4 and DhcpDdns
 
-dhcp4_json_object: DHCP4 {
+dhcp6_json_object: DHCP6 {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
+    ctx.stack_.back()->set("Dhcp6", $4);
     ctx.leave();
 };
 
@@ -1543,7 +1523,7 @@ output_param: OUTPUT {
 %%
 
 void
-isc::dhcp::Dhcp6Parser::error(const location_type& loc,
+isc::dhcp::Dhcp4Parser::error(const location_type& loc,
                               const std::string& what)
 {
     ctx.error(loc, what);

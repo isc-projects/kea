@@ -10,6 +10,7 @@
 #include <config/command_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -117,7 +118,8 @@ public:
 
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
 
-        ConstElementPtr config = Element::fromJSON(config_txt);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(config_txt));
         ConstElementPtr answer = server_->processConfig(config);
         ASSERT_TRUE(answer);
 
