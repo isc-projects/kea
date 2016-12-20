@@ -7,20 +7,18 @@
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <dhcp4/parser_context.h>
+#include <fstream>
+#include <cstdio>
+#include <exceptions/exceptions.h>
 
 using namespace isc::data;
 using namespace std;
 
 namespace {
 
-void compareJSON(ConstElementPtr a, ConstElementPtr b, bool print = true) {
+void compareJSON(ConstElementPtr a, ConstElementPtr b) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
-    if (print) {
-        // std::cout << "JSON A: -----" << endl << a->str() << std::endl;
-        // std::cout << "JSON B: -----" << endl << b->str() << std::endl;
-        // cout << "---------" << endl << endl;
-    }
     EXPECT_EQ(a->str(), b->str());
 }
 
@@ -124,7 +122,7 @@ TEST(ParserTest, keywordDhcp4) {
                   "  \"subnet\": \"192.0.2.0/24\", "
                   "  \"interface\": \"test\" } ],\n"
                    "\"valid-lifetime\": 4000 } }";
-     testParser2(txt, Parser4Context::PARSER_DHCP4);
+     testParser(txt, Parser4Context::PARSER_DHCP4);
 }
 
 TEST(ParserTest, bashComments) {
@@ -142,7 +140,7 @@ TEST(ParserTest, bashComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser4Context::PARSER_DHCP4);
+    testParser(txt, Parser4Context::PARSER_DHCP4);
 }
 
 TEST(ParserTest, cComments) {
@@ -192,14 +190,96 @@ TEST(ParserTest, multilineComments) {
     testParser2(txt, Parser4Context::PARSER_DHCP4);
 }
 
+/// @brief removes comments from a JSON file
+///
+/// This is rather naive implementation, but it's probably sufficient for
+/// testing. It won't be able to pick any trickier cases, like # or //
+/// appearing in strings, nested C++ comments etc.
+///
+/// @param input_file file to be stripped of comments
+/// @return a new file that has comments stripped from it
+std::string decommentJSONfile(const std::string& input_file) {
+    ifstream f(input_file);
+    if (!f.is_open()) {
+        isc_throw(isc::BadValue, "can't open input file for reading: " + input_file);
+    }
 
-void testFile(const std::string& fname, bool print) {
+    string outfile;
+    size_t last_slash = input_file.find_last_of("/");
+    if (last_slash != string::npos) {
+        outfile = input_file.substr(last_slash + 1);
+    } else {
+        outfile = input_file;
+    }
+    outfile += "-decommented";
+
+    ofstream out(outfile);
+    if (!out.is_open()) {
+        isc_throw(isc::BadValue, "can't open output file for writing: " + input_file);
+    }
+
+    bool in_comment = false;
+    string line;
+    while (std::getline(f, line)) {
+        // First, let's get rid of the # comments
+        size_t hash_pos = line.find("#");
+        if (hash_pos != string::npos) {
+            line = line.substr(0, hash_pos);
+        }
+
+        // Second, let's get rid of the // comments
+        size_t dblslash_pos = line.find("//");
+        if (dblslash_pos != string::npos) {
+            line = line.substr(0, dblslash_pos);
+        }
+
+        // Now the tricky part: c comments.
+        size_t begin_pos = line.find("/*");
+        size_t end_pos = line.find("*/");
+        if (in_comment && end_pos == string::npos) {
+            // we continue through multiline comment
+            line = "";
+        } else {
+
+            if (begin_pos != string::npos) {
+                in_comment = true;
+                if (end_pos != string::npos) {
+                    // sigle line comment. Let's get rid of the content in between
+                    line = line.replace(begin_pos, end_pos + 2, end_pos + 2 - begin_pos, ' ');
+                    in_comment = false;
+                } else {
+                    line = line.substr(0, begin_pos);
+                }
+            } else {
+                if (in_comment && end_pos != string::npos) {
+                    line = line.replace(0, end_pos +2 , end_pos + 2, ' ');
+                    in_comment = false;
+                }
+            }
+        }
+
+        // Finally, write the line to the output file.
+        out << line << endl;
+    }
+    f.close();
+    out.close();
+
+    return (outfile);
+}
+
+void testFile(const std::string& fname) {
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
-    cout << "Attempting to load file " << fname << endl;
+    string decommented = decommentJSONfile(fname);
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(fname, true));
+    cout << "Attempting to load file " << fname << " (" << decommented
+         << ")" << endl;
+
+    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+
+    // remove the temporary file
+    EXPECT_NO_THROW(::remove(decommented.c_str()));
 
     EXPECT_NO_THROW(
     try {
@@ -213,7 +293,7 @@ void testFile(const std::string& fname, bool print) {
     ASSERT_TRUE(reference_json);
     ASSERT_TRUE(test_json);
 
-    compareJSON(reference_json, test_json, print);
+    compareJSON(reference_json, test_json);
 
 
 }
@@ -222,21 +302,21 @@ void testFile(const std::string& fname, bool print) {
 // twice: first with the existing Element::fromJSONFile() and then
 // the second time with Parser4. Both JSON trees are then compared.
 TEST(ParserTest, file) {
-    vector<string> configs;
-    configs.push_back("backends.json");
-    configs.push_back("classify.json");
-    configs.push_back("dhcpv4-over-dhcpv6.json");
-    configs.push_back("hooks.json");
-    configs.push_back("leases-expiration.json");
-    configs.push_back("multiple-options.json");
-    configs.push_back("mysql-reservations.json");
-    configs.push_back("pgsql-reservations.json");
-    configs.push_back("reservations.json");
-    configs.push_back("several-subnets.json");
-    configs.push_back("single-subnet.json");
+    vector<string> configs = { "advanced.json" ,
+                               "backends.json",
+                               "classify.json",
+                               "dhcpv4-over-dhcpv6.json",
+                               "hooks.json",
+                               "leases-expiration.json",
+                               "multiple-options.json",
+                               "mysql-reservations.json",
+                               "pgsql-reservations.json",
+                               "reservations.json",
+                               "several-subnets.json",
+                               "single-subnet.json" };
 
     for (int i = 0; i<configs.size(); i++) {
-        testFile(string(CFG_EXAMPLES) + "/" + configs[i], false);
+        testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
 
@@ -517,6 +597,6 @@ TEST(ParserTest, unicodeSlash) {
     });
     ASSERT_EQ(Element::string, result->getType());
     EXPECT_EQ("////", result->stringValue());
-}       
+}
 
 };

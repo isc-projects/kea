@@ -187,6 +187,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"dhcp-socket-type\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("dhcp-socket-type", driver.loc_);
+    }
+}
+
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:

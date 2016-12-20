@@ -8,6 +8,7 @@ EXTRA_DIST += devel/unit-tests.dox
 
 nobase_dist_doc_DATA  = examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
+nobase_dist_doc_DATA += examples/kea4/advanced.json
 nobase_dist_doc_DATA += examples/kea4/backends.json
 nobase_dist_doc_DATA += examples/kea4/classify.json
 nobase_dist_doc_DATA += examples/kea4/dhcpv4-over-dhcpv6.json
