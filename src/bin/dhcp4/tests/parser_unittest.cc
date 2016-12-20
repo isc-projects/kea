@@ -16,17 +16,33 @@ using namespace std;
 
 namespace {
 
+/// @brief compares two JSON trees
+///
+/// If differences are discovered, gtest failure is reported (using EXPECT_EQ)
+///
+/// @param a first to be compared
+/// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
     EXPECT_EQ(a->str(), b->str());
 }
 
-void testParser(const std::string& txt, Parser4Context::ParserType parser_type) {
-    ElementPtr reference_json;
+/// @brief Tests if the input string can be parsed with specific parser
+///
+/// The input text will be passed to bison parser of specified type.
+/// Then the same input text is passed to legacy JSON parser and outputs
+/// from both parsers are compared. The legacy comparison can be disabled,
+/// if the feature tested is not supported by the old parser (e.g.
+/// new comment styles)
+///
+/// @param txt text to be compared
+/// @param parser_type bison parser type to be instantiated
+/// @param compare whether to compare the output with legacy JSON parser
+void testParser(const std::string& txt, Parser4Context::ParserType parser_type,
+                bool compare = true) {
     ConstElementPtr test_json;
 
-    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     ASSERT_NO_THROW({
             try {
                 Parser4Context ctx;
@@ -37,28 +53,15 @@ void testParser(const std::string& txt, Parser4Context::ParserType parser_type) 
             }
 
     });
+
+    if (!compare) {
+        return;
+    };
 
     // Now compare if both representations are the same.
+    ElementPtr reference_json;
+    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     compareJSON(reference_json, test_json);
-}
-
-void testParser2(const std::string& txt, Parser4Context::ParserType parser_type) {
-    ConstElementPtr test_json;
-
-    ASSERT_NO_THROW({
-            try {
-                Parser4Context ctx;
-                test_json = ctx.parseString(txt, parser_type);
-            } catch (const std::exception &e) {
-                cout << "EXCEPTION: " << e.what() << endl;
-                throw;
-            }
-    });
-    /// @todo: Implement actual validation here. since the original
-    /// Element::fromJSON does not support several comment types, we don't
-    /// have anything to compare with.
-    /// std::cout << "Original text:" << txt << endl;
-    /// std::cout << "Parsed text  :" << test_json->str() << endl;
 }
 
 TEST(ParserTest, mapInMap) {
@@ -140,7 +143,7 @@ TEST(ParserTest, bashComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser(txt, Parser4Context::PARSER_DHCP4);
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 TEST(ParserTest, cComments) {
@@ -155,7 +158,7 @@ TEST(ParserTest, cComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser4Context::PARSER_DHCP4);
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 TEST(ParserTest, bashCommentsInline) {
@@ -170,7 +173,7 @@ TEST(ParserTest, bashCommentsInline) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser4Context::PARSER_DHCP4);
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 TEST(ParserTest, multilineComments) {
@@ -187,7 +190,7 @@ TEST(ParserTest, multilineComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser4Context::PARSER_DHCP4);
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
 /// @brief removes comments from a JSON file
@@ -267,6 +270,14 @@ std::string decommentJSONfile(const std::string& input_file) {
     return (outfile);
 }
 
+/// @brief Loads specified example config file
+///
+/// This test loads specified example file twice: first, using the legacy
+/// JSON file and then second time using bison parser. Two created Element
+/// trees are then compared. The input is decommented before it is passed
+/// to legacy parser (as its support for comments is very limited).
+///
+/// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
     ElementPtr reference_json;
     ConstElementPtr test_json;
@@ -294,8 +305,6 @@ void testFile(const std::string& fname) {
     ASSERT_TRUE(test_json);
 
     compareJSON(reference_json, test_json);
-
-
 }
 
 // This test loads all available existing files. Each config is loaded
