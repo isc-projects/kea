@@ -52,6 +52,7 @@ using namespace std;
   DHCP4 "Dhcp4"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
+  DHCP_SOCKET_TYPE "dhcp-socket-type"
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
@@ -414,26 +415,42 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
-} COLON LCURLY_BRACKET interface_config_map RCURLY_BRACKET {
+} COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+interfaces_config_params: interfaces_config_param
+                        | interfaces_config_params COMMA interfaces_config_param
+                        ;
+
+interfaces_config_param: interfaces_list
+                       | dhcp_socket_type
+                       ;
 
 sub_interfaces4: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} interface_config_map RCURLY_BRACKET {
+} interfaces_config_params RCURLY_BRACKET {
     // parsing completed
 };
 
-interface_config_map: INTERFACES {
+interfaces_list: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list2 {
     ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+dhcp_socket_type: DHCP_SOCKET_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr type(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("dhcp-socket-type", type);
     ctx.leave();
 };
 
