@@ -5,9 +5,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <http/response.h>
-#include <ctime>
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <sstream>
 
+using namespace boost::local_time;
 using namespace isc::http;
 
 namespace {
@@ -80,12 +82,13 @@ HttpResponse::statusCodeToNumber(const HttpStatusCode& status_code) {
 
 std::string
 HttpResponse::getDateHeaderValue() const {
-    time_t rawtime;
-  struct tm * timeinfo;
+    local_date_time t(local_sec_clock::local_time(time_zone_ptr()));
+    std::stringstream s;
+    local_time_facet* lf(new local_time_facet("%a, %d %b %Y %H:%M:%S GMT"));
+    s.imbue(std::locale(s.getloc(), lf));
+    s << t;
 
-  time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
-  return (std::string(asctime(timeinfo)));
+    return (s.str());
 }
 
 std::string

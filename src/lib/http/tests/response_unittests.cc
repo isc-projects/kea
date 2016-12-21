@@ -5,39 +5,34 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <http/date_time.h>
 #include <http/http_types.h>
 #include <http/response.h>
+#include <http/tests/response_test.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <string>
 
+using namespace boost::posix_time;
 using namespace isc::http;
+using namespace isc::http::test;
 
 namespace {
 
-class TestHttpResponse : public HttpResponse {
-public:
-
-    TestHttpResponse(const HttpVersion& version, const HttpStatusCode& status_code)
-        : HttpResponse(version, status_code) {
-    }
-
-    virtual std::string getDateHeaderValue() const {
-        return ("Mon Dec 19 18:53:35 2016");
-    }
-};
+typedef TestHttpResponseBase<HttpResponse> TestHttpResponse;
 
 class HttpResponseTest : public ::testing::Test {
 public:
 
     void testResponse(const HttpStatusCode& status_code,
                       const std::string& status_message) {
-        HttpResponse response(HttpVersion(1, 0), status_code);
+        TestHttpResponse response(HttpVersion(1, 0), status_code);
         response.addHeader("Content-Type", "text/html");
         std::ostringstream response_string;
         response_string << "HTTP/1.0 " << static_cast<uint16_t>(status_code)
             << " " << status_message << "\r\n"
-            << "Content-Type: text/html\r\n\r\n";
+            << "Content-Type: text/html\r\n"
+            << "Date: " << response.getDateHeaderValue() << "\r\n\r\n";
 
         EXPECT_EQ(response_string.str(), response.toString());
     }
@@ -51,7 +46,7 @@ TEST_F(HttpResponseTest, responseOK) {
         "<body><h1>Some header</h1></body>"
         "</html>";
 
-    HttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
+    TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
     response.addHeader("Content-Type", "text/html");
     response.addHeader("Host", "kea.example.org");
     response.setBody(sample_body);
@@ -61,6 +56,7 @@ TEST_F(HttpResponseTest, responseOK) {
         "HTTP/1.0 200 OK\r\n"
         "Content-Type: text/html\r\n"
         "Host: kea.example.org\r\n"
+        "Date: " << response.getDateHeaderValue() << "\r\n"
         "Content-Length: " << sample_body.length()
                     << "\r\n\r\n" << sample_body;
     EXPECT_EQ(response_string.str(), response.toString());
@@ -121,6 +117,15 @@ TEST_F(HttpResponseTest, isServerError) {
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::NOT_IMPLEMENTED));
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::BAD_GATEWAY));
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::SERVICE_UNAVAILABLE));
+}
+
+TEST_F(HttpResponseTest, getDateHeaderValue) {
+    TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
+    std::string generated_date = response.generateDateHeaderValue();
+    HttpDateTime parsed_time = HttpDateTime::fromRfc1123(generated_date);
+    time_duration parsed_to_current =
+        microsec_clock::universal_time() - parsed_time.getPtime();
+    EXPECT_LT(parsed_to_current.seconds(), 10);
 }
 
 }

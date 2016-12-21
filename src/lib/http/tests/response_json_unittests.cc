@@ -7,13 +7,17 @@
 #include <config.h>
 #include <cc/data.h>
 #include <http/response_json.h>
+#include <http/tests/response_test.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::http::test;
 
 namespace {
+
+typedef TestHttpResponseBase<HttpResponseJson> TestHttpResponseJson;
 
 class HttpResponseJsonTest : public ::testing::Test {
 public:
@@ -40,7 +44,7 @@ public:
 
     void testGenericResponse(const HttpStatusCode& status_code,
                              const std::string& status_message) {
-        HttpResponseJson response(HttpVersion(1, 0), status_code);
+        TestHttpResponseJson response(HttpVersion(1, 0), status_code);
         std::ostringstream status_message_json;
         status_message_json << "{ \"result\": "
                             << static_cast<uint16_t>(status_code)
@@ -50,7 +54,8 @@ public:
         response_string <<
             "HTTP/1.0 " << static_cast<uint16_t>(status_code) << " "
             << status_message << "\r\n"
-            "Content-Type: application/json\r\n";
+            "Content-Type: application/json\r\n"
+            "Date: " << response.getDateHeaderValue() << "\r\n";
 
         if (HttpResponse::isClientError(status_code) ||
             HttpResponse::isServerError(status_code)) {
@@ -75,13 +80,14 @@ public:
 };
 
 TEST_F(HttpResponseJsonTest, responseWithContent) {
-    HttpResponseJson response(HttpVersion(1, 1), HttpStatusCode::OK);
+    TestHttpResponseJson response(HttpVersion(1, 1), HttpStatusCode::OK);
     ASSERT_NO_THROW(response.setBodyAsJson(json_));
 
     std::ostringstream response_string;
     response_string <<
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
+        "Date: " << response.getDateHeaderValue() << "\r\n"
         "Content-Length: " << json_string_from_json_.length()
                     << "\r\n\r\n" << json_string_from_json_;
     EXPECT_EQ(response_string.str(), response.toString());
