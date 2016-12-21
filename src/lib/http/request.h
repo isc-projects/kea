@@ -199,6 +199,16 @@ public:
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
 
+    /// @brief Checks if the request has been successfully finalized.
+    ///
+    /// The request is gets finalized on successfull call to
+    /// @ref HttpRequest::finalize.
+    ///
+    /// @return true if the request has been finalized, false otherwise.
+    bool isFinalized() const {
+        return (finalized_);
+    }
+
     //@}
 
 protected:

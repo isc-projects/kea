@@ -25,6 +25,8 @@ public:
 
 };
 
+typedef boost::shared_ptr<HttpResponseJson> HttpResponseJsonPtr;
+
 }
 }
 
