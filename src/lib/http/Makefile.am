@@ -32,7 +32,7 @@ libkea_http_la_SOURCES += request.cc request.h
 libkea_http_la_SOURCES += request_context.h
 libkea_http_la_SOURCES += request_parser.cc request_parser.h
 libkea_http_la_SOURCES += response.cc response.h
-libkea_http_la_SOURCES += response_creator.h
+libkea_http_la_SOURCES += response_creator.cc response_creator.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 
 nodist_libkea_http_la_SOURCES = http_messages.cc http_messages.h

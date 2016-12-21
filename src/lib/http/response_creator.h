@@ -18,7 +18,15 @@ public:
 
     virtual ~HttpResponseCreator() { };
 
-    virtual HttpResponsePtr create(const ConstHttpRequestPtr& request) = 0;
+    HttpResponsePtr createHttpResponse(const ConstHttpRequestPtr& request);
+
+protected:
+
+    virtual HttpResponsePtr
+    createStockBadRequest(const ConstHttpRequestPtr& request) const = 0;
+
+    virtual HttpResponsePtr
+    createDynamicHttpResponse(const ConstHttpRequestPtr& request) = 0;
 
 };
 
