@@ -117,7 +117,6 @@ SrvConfig::applyLoggingCfg() const {
          it != logging_info_.end(); ++it) {
         specs.push_back(it->toSpec());
     }
-
     LoggerManager manager;
     manager.process(specs.begin(), specs.end());
 }

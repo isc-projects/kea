@@ -21,7 +21,6 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <log/logger_support.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <list>
