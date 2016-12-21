@@ -55,7 +55,7 @@ HttpDateTime::fromRfc850(const std::string& time_string) {
                                     "RFC 850")));
 }
 
-HttpDateTime 
+HttpDateTime
 HttpDateTime::fromAsctime(const std::string& time_string) {
     std::string time_string_copy(time_string);
     boost::replace_all(time_string_copy, "  ", " 0");
