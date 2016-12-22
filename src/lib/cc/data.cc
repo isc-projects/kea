@@ -131,7 +131,7 @@ Element::get(const int) const {
 }
 
 ElementPtr
-Element::getNonConst(const int) {
+Element::getNonConst(const int) const {
     throwTypeError("get(int) called on a non-list Element");
 }
 

@@ -281,7 +281,7 @@ public:
     ///
     /// \param i The position of the ElementPtr to retrieve
     /// \return specified element pointer
-    virtual ElementPtr getNonConst(const int i);
+    virtual ElementPtr getNonConst(const int i) const;
 
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
@@ -633,7 +633,7 @@ public:
     }
     using Element::get;
     ConstElementPtr get(int i) const { return (l.at(i)); }
-    ElementPtr getNonConst(int i)  { return (l.at(i)); }
+    ElementPtr getNonConst(int i) const  { return (l.at(i)); }
     using Element::set;
     void set(size_t i, ElementPtr e) {
         l.at(i) = e;
