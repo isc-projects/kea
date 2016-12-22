@@ -223,12 +223,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
 // Check that the "libreload" command will reload libraries
 
 TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
-
-    // Sending commands for processing now requires a server that can process
-    // them.
-    ASSERT_NO_THROW(
-        server_.reset(new NakedControlledDhcpv4Srv());
-    );
+    createUnixChannelServer();
 
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
@@ -254,15 +249,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
 
     // Now execute the "libreload" command.  This should cause the libraries
     // to unload and to reload.
-
-    // Use empty parameters list
-    ElementPtr params(new isc::data::MapElement());
-    int rcode = -1;
-
-    ConstElementPtr result =
-        ControlledDhcpv4Srv::processCommand("libreload", params);
-    ConstElementPtr comment = parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode); // Expect success
+    std::string response;
+    sendUnixCommand("{ \"command\": \"libreload\" }", response);
+    EXPECT_EQ("{ \"result\": 0, "
+              "\"text\": \"Hooks libraries successfully reloaded.\" }"
+              , response);
 
     // Check that the libraries have unloaded and reloaded.  The libraries are
     // unloaded in the reverse order to which they are loaded.  When they load,
