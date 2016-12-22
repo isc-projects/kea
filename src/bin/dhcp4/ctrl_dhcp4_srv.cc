@@ -63,7 +63,7 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr args) {
     // Use set-config as it handles logging and server config
-    return (commandSetConfigHandler("", args));
+    return (commandSetConfigHandler("set-config", args));
 }
 
 ConstElementPtr
@@ -100,7 +100,7 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Logging is a sibling element and must be be parsed explicitly.
+    // Logging is a sibling element and must be parsed explicitly.
     // The call to configureLogger parses the given Logging element if
     // not null, into the staging config.  Note this does not alter the
     // current loggers, they remain in effect until we apply the
