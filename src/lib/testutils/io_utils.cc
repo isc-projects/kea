@@ -15,10 +15,8 @@ namespace dhcp {
 namespace test {
 
 bool fileExists(const std::string& file_path) {
-    std::ifstream fs(file_path.c_str());
-    const bool file_exists = fs.good();
-    fs.close();
-    return (file_exists);
+    struct stat statbuf;
+    return(stat(file_path.c_str(), &statbuf) == 0);
 }
 
 std::string readFile(const std::string& file_path) {
