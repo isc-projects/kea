@@ -1,68 +1,19 @@
-#include <dhcpsrv/parsers/simple_parser.h>
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <cc/simple_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cc/data.h>
 #include <string>
 
 using namespace std;
-using namespace isc::data;
 
 namespace isc {
-namespace dhcp {
-
-/// This table defines default values for option definitions in DHCPv4
-const SimpleDefaults OPTION4_DEF_DEFAULTS = {
-    { "record-types", Element::string,  ""},
-    { "space",        Element::string,  "dhcp4"},
-    { "array",        Element::boolean, "false"},
-    { "encapsulate",  Element::string,  "" }
-};
-
-/// This table defines default values for option definitions in DHCPv6
-const SimpleDefaults OPTION6_DEF_DEFAULTS = {
-    { "record-types", Element::string,  ""},
-    { "space",        Element::string,  "dhcp6"},
-    { "array",        Element::boolean, "false"},
-    { "encapsulate",  Element::string,  "" }
-};
-
-/// This table defines default values for options in DHCPv4
-const SimpleDefaults OPTION4_DEFAULTS = {
-    { "space",        Element::string,  "dhcp4"},
-    { "csv-format",   Element::boolean, "true"},
-    { "encapsulate",  Element::string,  "" }
-};
-
-/// This table defines default values for options in DHCPv6
-const SimpleDefaults OPTION6_DEFAULTS = {
-    { "space",        Element::string,  "dhcp6"},
-    { "csv-format",   Element::boolean, "true"},
-    { "encapsulate",  Element::string,  "" }
-};
-
-/// This table defines default values for DHCPv4
-const SimpleDefaults GLOBAL4_DEFAULTS = {
-    { "renew-timer",        Element::integer, "900" },
-    { "rebind-timer",       Element::integer, "1800" },
-    { "valid-lifetime",     Element::integer, "7200" }
-};
-
-/// This table defines default values for both DHCPv4 and DHCPv6
-const SimpleDefaults GLOBAL6_DEFAULTS = {
-    { "renew-timer",        Element::integer, "900" },
-    { "rebind-timer",       Element::integer, "1800" },
-    { "preferred-lifetime", Element::integer, "3600" },
-    { "valid-lifetime",     Element::integer, "7200" }
-};
-
-/// This list defines parameters that can be inherited from the global
-/// scope to subnet scope.
-const ParamsList INHERIT_GLOBAL_TO_SUBNET = {
-    "renew-timer",
-    "rebind-timer",
-    "preferred-lifetime",
-    "valid-lifetime"
-};
+namespace data {
 
 std::string
 SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& name) {
@@ -104,7 +55,7 @@ SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& na
 }
 
 const data::Element::Position&
-SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr parent) const {
+SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr parent) {
     if (!parent) {
         return (data::Element::ZERO_POSITION());
     }
@@ -178,59 +129,13 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
     return (cnt);
 }
 
-size_t SimpleParser::setGlobalDefaults(isc::data::ElementPtr global, bool v6) {
-    return (setDefaults(global, v6 ? GLOBAL6_DEFAULTS : GLOBAL4_DEFAULTS));
-}
-
-size_t SimpleParser::setOptionDefaults(isc::data::ElementPtr option, bool v6) {
-    return (setDefaults(option, v6?OPTION6_DEFAULTS : OPTION4_DEFAULTS));
-}
-
-size_t SimpleParser::setOptionListDefaults(isc::data::ElementPtr option_list, bool v6) {
+size_t
+SimpleParser::setListDefaults(isc::data::ElementPtr list,
+                              const SimpleDefaults& default_values) {
     size_t cnt = 0;
-    BOOST_FOREACH(ElementPtr single_option, option_list->listValue()) {
-        cnt += setOptionDefaults(single_option, v6);
+    BOOST_FOREACH(ElementPtr entry, list->listValue()) {
+        cnt += setDefaults(entry, default_values);
     }
-    return (cnt);
-}
-
-size_t SimpleParser::setOptionDefDefaults(isc::data::ElementPtr option_def, bool v6) {
-    return (setDefaults(option_def, v6? OPTION6_DEF_DEFAULTS : OPTION4_DEF_DEFAULTS));
-}
-
-size_t SimpleParser::setOptionDefListDefaults(isc::data::ElementPtr option_def_list,
-                                              bool v6) {
-    size_t cnt = 0;
-    BOOST_FOREACH(ElementPtr single_def, option_def_list->listValue()) {
-        cnt += setOptionDefDefaults(single_def, v6);
-    }
-    return (cnt);
-}
-
-
-size_t SimpleParser::setAllDefaults(isc::data::ElementPtr global, bool v6) {
-    size_t cnt = 0;
-
-    // Set global defaults first.
-    /// @todo: Uncomment as part of the ticket 5019 work.
-    //cnt = setGlobalDefaults(global, v6);
-
-    // Now set option defintion defaults for each specified option definition
-    ConstElementPtr option_defs = global->get("option-def");
-    if (option_defs) {
-        BOOST_FOREACH(ElementPtr single_def, option_defs->listValue()) {
-            cnt += setOptionDefDefaults(single_def, v6);
-        }
-    }
-
-    ConstElementPtr options = global->get("option-data");
-    if (options) {
-        BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
-            cnt += setOptionDefaults(single_option, v6);
-        }
-        //setOptionListDefaults(options);
-    }
-
     return (cnt);
 }
 
@@ -264,12 +169,6 @@ SimpleParser::deriveParams(isc::data::ConstElementPtr parent,
     }
 
     return (cnt);
-}
-
-size_t
-SimpleParser::inheritGlobalToSubnet(isc::data::ConstElementPtr global,
-                                    isc::data::ElementPtr subnet) {
-    return deriveParams(global, subnet, INHERIT_GLOBAL_TO_SUBNET);
 }
 
 }; // end of isc::dhcp namespace
