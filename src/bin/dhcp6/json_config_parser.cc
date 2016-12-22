@@ -840,10 +840,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
-        std::map<std::string, ConstElementPtr> values;
-        config_set->getValue(values);
-        ElementPtr mutable_cfg(new MapElement());
-        mutable_cfg->setValue(values);
+        ElementPtr mutable_cfg = Element::getMutableMap(config_set);
 
         SimpleParser6::setAllDefaults(mutable_cfg);
 
@@ -881,9 +878,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } /* else if (config_pair.first == "option-data") {
-                option_parser = parser;
-            } */ else if (config_pair.first == "hooks-libraries") {
+            } else if (config_pair.first == "hooks-libraries") {
                 // Executing the commit will alter currently loaded hooks
                 // libraries. Check if the supplied libraries are valid,
                 // but defer the commit until after everything else has
