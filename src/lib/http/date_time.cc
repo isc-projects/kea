@@ -19,7 +19,7 @@ HttpDateTime::HttpDateTime()
     : time_(boost::posix_time::microsec_clock::universal_time()) {
 }
 
-HttpDateTime::HttpDateTime(const ptime& t)
+HttpDateTime::HttpDateTime(const boost::posix_time::ptime& t)
     : time_(t) {
 }
 
