@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/simple_parser4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
@@ -20,7 +21,6 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
-#include <dhcpsrv/parsers/simple_parser.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -573,7 +573,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         mutable_cfg->setValue(values);
 
         // Set all default values if not specified by the user.
-        SimpleParser::setAllDefaults(mutable_cfg, false);
+        SimpleParser4::setAllDefaults(mutable_cfg);
 
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");

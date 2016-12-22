@@ -17,7 +17,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
-#include <dhcpsrv/parsers/simple_parser.h>
+#include <cc/simple_parser.h>
 #include <hooks/libinfo.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
@@ -536,7 +536,7 @@ private:
 /// an option the configuration will not be accepted. If parsing
 /// is successful then an instance of an option is created and
 /// added to the storage provided by the calling class.
-class OptionDataParser : public SimpleParser {
+class OptionDataParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
@@ -652,7 +652,7 @@ typedef OptionDataParser *OptionDataParserFactory(const std::string&,
 /// data for a particular subnet and creates a collection of options.
 /// If parsing is successful, all these options are added to the Subnet
 /// object.
-class OptionDataListParser : public SimpleParser {
+class OptionDataListParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
@@ -679,7 +679,7 @@ typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionT
 /// @brief Parser for a single option definition.
 ///
 /// This parser creates an instance of a single option definition.
-class OptionDefParser : public SimpleParser {
+class OptionDefParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
@@ -706,7 +706,7 @@ private:
 /// option definitions and creates instances of these definitions.
 /// If the parsing is successful, the collection of created definitions
 /// is put into the provided storage.
-class OptionDefListParser : public SimpleParser {
+class OptionDefListParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
