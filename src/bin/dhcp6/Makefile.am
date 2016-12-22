@@ -3,7 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) -std=c++11
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
@@ -31,8 +31,8 @@ if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-        $(srcdir)/kea-dhcp6.xml
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/kea-dhcp6.xml
 
 else
 
@@ -63,8 +63,8 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
-
 libdhcp6_la_SOURCES += kea_controller.cc
+libdhcp6_la_SOURCES += simple_parser6.cc simple_parser6.h
 
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
