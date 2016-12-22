@@ -19,13 +19,22 @@ using namespace isc::http::test;
 
 namespace {
 
+/// @brief Response type used in tests.
 typedef TestHttpResponseBase<HttpResponse> TestHttpResponse;
 
+/// @brief Test fixture class for @ref HttpResponse.
 class HttpResponseTest : public ::testing::Test {
 public:
 
+    /// @brief Checks if the format of the response is correct.
+    ///
+    /// @param status_code HTTP status code in the response.
+    /// @param status_message HTTP status message in the response.
     void testResponse(const HttpStatusCode& status_code,
                       const std::string& status_message) {
+        // Create the response. Because we're using derived class
+        // it returns the fixed value of the Date header, which is
+        // very useful in unit tests.
         TestHttpResponse response(HttpVersion(1, 0), status_code);
         response.addHeader("Content-Type", "text/html");
         std::ostringstream response_string;
@@ -36,32 +45,38 @@ public:
 
         EXPECT_EQ(response_string.str(), response.toString());
     }
-
 };
 
+// Test the case of HTTP OK message.
 TEST_F(HttpResponseTest, responseOK) {
+    // Include HTML body.
     const std::string sample_body =
         "<html>"
         "<head><title>Kea page title</title></head>"
         "<body><h1>Some header</h1></body>"
         "</html>";
 
+    // Create the message and add some headers.
     TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
     response.addHeader("Content-Type", "text/html");
     response.addHeader("Host", "kea.example.org");
     response.setBody(sample_body);
 
+    // Create a string holding expected response. Note that the Date
+    // is a fixed value returned by the customized TestHttpResponse
+    // classs.
     std::ostringstream response_string;
     response_string <<
         "HTTP/1.0 200 OK\r\n"
+        "Content-Length: " << sample_body.length() << "\r\n"
         "Content-Type: text/html\r\n"
-        "Host: kea.example.org\r\n"
         "Date: " << response.getDateHeaderValue() << "\r\n"
-        "Content-Length: " << sample_body.length()
-                    << "\r\n\r\n" << sample_body;
+        "Host: kea.example.org\r\n\r\n" << sample_body;
+
     EXPECT_EQ(response_string.str(), response.toString());
 }
 
+// Test generic responses for various status codes.
 TEST_F(HttpResponseTest, genericResponse) {
     testResponse(HttpStatusCode::OK, "OK");
     testResponse(HttpStatusCode::CREATED, "Created");
@@ -81,6 +96,7 @@ TEST_F(HttpResponseTest, genericResponse) {
     testResponse(HttpStatusCode::SERVICE_UNAVAILABLE, "Service Unavailable");
 }
 
+// Test if the class correctly identifies client errors.
 TEST_F(HttpResponseTest, isClientError) {
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::OK));
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::CREATED));
@@ -100,6 +116,7 @@ TEST_F(HttpResponseTest, isClientError) {
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::SERVICE_UNAVAILABLE));
 }
 
+// Test if the class correctly identifies server errors.
 TEST_F(HttpResponseTest, isServerError) {
     EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::OK));
     EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::CREATED));
@@ -119,10 +136,23 @@ TEST_F(HttpResponseTest, isServerError) {
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::SERVICE_UNAVAILABLE));
 }
 
+// Test that the generated time value, being included in the Date
+// header, is correct.
 TEST_F(HttpResponseTest, getDateHeaderValue) {
+    // Create a response and retrieve the value to be included in the
+    // Date header. This value should hold a current time in the
+    // RFC1123 format.
     TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
     std::string generated_date = response.generateDateHeaderValue();
+
+    // Use our date/time utilities to parse this value into the ptime.
     HttpDateTime parsed_time = HttpDateTime::fromRfc1123(generated_date);
+
+    // Now that we have it converted back, we can check how far this
+    // value is from the current time. To be on the safe side, we check
+    // that it is not later than 10 seconds apart, rather than checking
+    // it for equality. In fact, checking it for equality would almost
+    // certainly cause an error. Especially on a virtual machine.
     time_duration parsed_to_current =
         microsec_clock::universal_time() - parsed_time.getPtime();
     EXPECT_LT(parsed_to_current.seconds(), 10);
