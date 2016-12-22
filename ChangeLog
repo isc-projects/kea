@@ -1,3 +1,9 @@
+1200	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 now support the Command Channel "libreload"
+	command.  The command causes the server to unload and then load all
+	currently loaded hook libraries.
+	(Trac #3238, git d4d8665494e1847b34b66f8ef542851ea6f0213c)
+
 1199.	[func]		tomek, fdupont
 	Dhcp4 parser migrated to bison. This yields a number of user
 	visible changes:
