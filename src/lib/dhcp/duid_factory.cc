@@ -285,6 +285,12 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
         // Assign link layer address and type.
         identifier.assign(iface->getMac(), iface->getMac() + iface->getMacLen());
         htype = iface->getHWType();
+
+        // If it looks like an Ethernet interface we should be happy
+        if ((htype == static_cast<uint16_t>(HTYPE_ETHER)) &&
+            (iface->getMacLen() == 6)) {
+            break;
+        }
     }
 
     // We failed to find an interface which link layer address could be
