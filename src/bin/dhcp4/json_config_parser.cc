@@ -567,10 +567,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
-        std::map<std::string, ConstElementPtr> values;
-        config_set->getValue(values);
-        ElementPtr mutable_cfg(new MapElement());
-        mutable_cfg->setValue(values);
+        ElementPtr mutable_cfg = Element::getMutableMap(config_set);
 
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
