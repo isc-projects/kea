@@ -9,6 +9,9 @@
 
 #include <utility>
 
+/// @brief HTTP protocol version.
+///
+/// First value is a major version, second value is a minor version.
 typedef std::pair<unsigned, unsigned> HttpVersion;
 
 #endif
