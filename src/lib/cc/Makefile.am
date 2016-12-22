@@ -19,4 +19,6 @@ libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
 libkea_cc_includedir = $(pkgincludedir)/cc
 libkea_cc_include_HEADERS = data.h
 
+EXTRA_DIST = cc.dox
+
 CLEANFILES = *.gcno *.gcda

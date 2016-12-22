@@ -24,6 +24,9 @@ component implementation.
 
 @section dhcpv6ConfigParser Configuration Parsers in DHCPv6
 
+Note: parsers are currently being migrated to @ref isc::data::SimpleParser. See
+@ref ccSimpleParser page for details.
+
 The common configuration parsers for the DHCP servers are located in the
 src/lib/dhcpsrv/parsers/ directory. Parsers specific to the DHCPv6 component
 are located in the src/bin/dhcp6/json_config_parser.cc. These parsers derive

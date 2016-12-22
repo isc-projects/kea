@@ -33,7 +33,8 @@ typedef std::vector<std::string> ParamsList;
 
 /// @brief A simple parser
 ///
-/// This class is intended to be a simpler replacement for @ref DhcpConfigParser.
+/// This class is intended to be a simpler replacement for
+/// @ref isc::dhcp::DhcpConfigParser.
 /// The simplification comes from several factors:
 /// - no build/commit nonsense. There's a single step:
 ///   CfgStorage parse(ConstElementPtr json)
@@ -83,6 +84,15 @@ class SimpleParser {
     static size_t setDefaults(isc::data::ElementPtr scope,
                               const SimpleDefaults& default_values);
 
+    /// @brief Sets the default values for all entries in a list
+    ///
+    /// This is a simple utility method that iterates over all
+    /// parameters in a list and calls setDefaults for each
+    /// entry.
+    ///
+    /// @param list list to be iterated over
+    /// @param default_values list of default values
+    /// @return number of parameters inserted
     static size_t setListDefaults(isc::data::ElementPtr list,
                                   const SimpleDefaults& default_values);
 
