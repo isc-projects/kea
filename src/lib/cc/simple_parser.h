@@ -1,3 +1,9 @@
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 #ifndef SIMPLE_PARSER_H
 #define SIMPLE_PARSER_H
 
@@ -6,7 +12,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace dhcp {
+namespace data {
 
 /// This array defines a single entry of default values
 struct SimpleDefault {
@@ -62,17 +68,6 @@ class SimpleParser {
     static size_t deriveParams(isc::data::ConstElementPtr parent,
                                isc::data::ElementPtr child,
                                const ParamsList& params);
-    /// @brief Derives (inherits) parameters from global to subnet scope
-    ///
-    /// This method derives global parameters into subnet scope if they're
-    /// not defined there yet.
-    ///
-    /// @param global parameters will be inherited from here
-    /// @param subnet parameters will be inserted here
-    /// @return number of parameters copied
-    static size_t
-    inheritGlobalToSubnet(isc::data::ConstElementPtr global,
-                          isc::data::ElementPtr subnet);
 
     /// @brief Sets the default values
     ///
@@ -88,64 +83,8 @@ class SimpleParser {
     static size_t setDefaults(isc::data::ElementPtr scope,
                               const SimpleDefaults& default_values);
 
-    /// @brief Sets global defaults
-    ///
-    /// This method sets global defaults. Note it does not set the
-    /// defaults for any scopes lower than global. See @ref setAllDefaults
-    /// for that.
-    ///
-    /// @param global scope to be filled in with defaults.
-    /// @param v6 is it v6 (true) or v4 (false) option?
-    /// @return number of default values added
-    static size_t setGlobalDefaults(isc::data::ElementPtr global, bool v6);
-
-    /// @brief Sets option defaults for a single option
-    ///
-    /// This method sets default values for a single option.
-    ///
-    /// @param option an option data to be filled in with defaults.
-    /// @param v6 is it v6 (true) or v4 (false) option?
-    /// @return number of default values added
-    static size_t setOptionDefaults(isc::data::ElementPtr option, bool v6);
-
-    /// @brief Sets option defaults for the whole options list
-    ///
-    /// This method sets default values for a list of options.
-    ///
-    /// @param option_list an option data to be filled in with defaults.
-    /// @param v6 is it v6 (true) or v4 (false) option?
-    /// @return number of default values added
-    static size_t setOptionListDefaults(isc::data::ElementPtr option_list, bool v6);
-
-    /// @brief Sets option defaults for a single option definition
-    ///
-    /// This method sets default values for a single option definition.
-    ///
-    /// @param option_def an option defintion to be filled in with defaults.
-    /// @param v6 is it v6 (true) or v4 (false) option defintion?
-    /// @return number of default values added
-    static size_t setOptionDefDefaults(isc::data::ElementPtr option_def, bool v6);
-
-    /// @brief Sets option defaults for the whole option definitions list
-    ///
-    /// This method sets default values for a list of option definitions.
-    ///
-    /// @param option_def_list a list of option defintions to be filled in with defaults.
-    /// @param v6 is it v6 (true) or v4 (false) option?
-    /// @return number of default values added
-    static size_t setOptionDefListDefaults(isc::data::ElementPtr option_def_list,
-                                           bool v6);
-
-    /// @brief Sets defaults for the whole configuration
-    ///
-    /// This method sets global, options and option definition defaults. Note
-    /// it does set the defaults for scopes lower than global. If you want to
-    /// set the global defaults only, see @ref setGlobalDefaults for that.
-    ///
-    /// @param global scope to be filled in with defaults.
-    /// @param v6 true = v6, false = v4
-    /// @return number of default values added
-    static size_t setAllDefaults(isc::data::ElementPtr global, bool v6);
+    static size_t setListDefaults(isc::data::ElementPtr list,
+                                  const SimpleDefaults& default_values);
 
     /// @brief Utility method that returns position of an element
     ///
@@ -154,14 +93,9 @@ class SimpleParser {
     /// @param name position of that element will be returned
     /// @param parent parent element (optional)
     /// @return position of the element specified.
-    const data::Element::Position&
+    static const data::Element::Position&
     getPosition(const std::string& name, const data::ConstElementPtr parent =
-                data::ConstElementPtr()) const;
-
-    /// Destructor
-    ///
-    /// It's really simple, isn't it?
-    virtual ~SimpleParser() {}
+                data::ConstElementPtr());
 
  protected:
 
@@ -173,7 +107,8 @@ class SimpleParser {
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return a string value of the parameter
-    static std::string getString(isc::data::ConstElementPtr scope, const std::string& name);
+    static std::string getString(isc::data::ConstElementPtr scope,
+                                 const std::string& name);
 
     /// @brief Returns an integer parameter from a scope
     ///
@@ -183,7 +118,8 @@ class SimpleParser {
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return an integer value of the parameter
-    static int64_t getInteger(isc::data::ConstElementPtr scope, const std::string& name);
+    static int64_t getInteger(isc::data::ConstElementPtr scope,
+                              const std::string& name);
 
     /// @brief Returns a boolean parameter from a scope
     ///
@@ -193,7 +129,8 @@ class SimpleParser {
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return a boolean value of the parameter
-    static bool getBoolean(isc::data::ConstElementPtr scope, const std::string& name);
+    static bool getBoolean(isc::data::ConstElementPtr scope,
+                           const std::string& name);
 };
 
 };
