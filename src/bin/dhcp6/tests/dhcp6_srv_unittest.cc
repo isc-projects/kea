@@ -2024,7 +2024,6 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
         "    \"option-def\": [ {"
         "      \"name\": \"foo\","
         "      \"code\": 120,"
-        "      \"csv-format\": false,"
         "      \"type\": \"binary\""
         "    } ],"
         "    \"option-data\": [ {"

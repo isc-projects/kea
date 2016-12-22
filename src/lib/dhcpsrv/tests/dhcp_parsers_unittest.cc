@@ -352,7 +352,7 @@ public:
             if (def_config != values_map.end()) {
 
                 CfgOptionDefPtr cfg_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
-                OptionDefListParser def_list_parser(family);
+                OptionDefListParser def_list_parser;
                 def_list_parser.parse(cfg_def, def_config->second);
             }
 
