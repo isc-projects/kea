@@ -681,11 +681,6 @@ typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionT
 /// This parser creates an instance of a single option definition.
 class OptionDefParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param address_family Address family: @c AF_INET or AF_INET6
-    OptionDefParser(const uint16_t address_family);
-
     /// @brief Parses an entry that describes single option definition.
     ///
     /// @param option_def a configuration entry to be parsed.
@@ -694,10 +689,6 @@ public:
     /// @throw DhcpConfigError if parsing was unsuccessful.
     OptionDefinitionTuple
     parse(isc::data::ConstElementPtr option_def);
-
-private:
-    /// @brief Address family: @c AF_INET or @c AF_INET6
-    uint16_t address_family_;
 };
 
 /// @brief Parser for a list of option definitions.
@@ -708,14 +699,6 @@ private:
 /// is put into the provided storage.
 class OptionDefListParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// Stores address family that will be used to make certain decisions
-    /// during parsing.
-    ///
-    /// @param address_family @c AF_INET or @c AF_INET6
-    OptionDefListParser(const uint16_t address_family);
-
     /// @brief Parses a list of option defintions, create them and store in cfg
     ///
     /// This method iterates over def_list, which is a JSON list of option defintions,
@@ -725,11 +708,6 @@ public:
     /// @param def_list JSON list describing option definitions
     /// @param cfg parsed option definitions will be stored here
     void parse(CfgOptionDefPtr cfg, isc::data::ConstElementPtr def_list);
-
-protected:
-
-    /// @brief Address family: @c AF_INET or @c AF_INET6
-    uint16_t address_family_;
 };
 
 /// @brief a collection of pools

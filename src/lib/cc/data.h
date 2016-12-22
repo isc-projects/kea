@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -277,6 +277,10 @@ public:
     /// \param i The position of the ElementPtr to return
     virtual ConstElementPtr get(const int i) const;
 
+    /// \brief returns element as non-const pointer
+    ///
+    /// \param i The position of the ElementPtr to retrieve
+    /// \return specified element pointer
     virtual ElementPtr getNonConst(const int i);
 
     /// Sets the ElementPtr at the given index. If the index is out

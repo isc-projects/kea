@@ -693,9 +693,6 @@ void OptionDataListParser::parse(const CfgOptionPtr& cfg,
 }
 
 // ******************************** OptionDefParser ****************************
-OptionDefParser::OptionDefParser(const uint16_t address_family)
-    : address_family_(address_family) {
-}
 
 std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
 OptionDefParser::parse(ConstElementPtr option_def) {
@@ -779,10 +776,6 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 }
 
 // ******************************** OptionDefListParser ************************
-OptionDefListParser::OptionDefListParser(const uint16_t address_family)
-    : address_family_(address_family) {
-}
-
 void
 OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
@@ -791,7 +784,7 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
                   << option_def_list->getPosition() << ")");
     }
 
-    OptionDefParser parser(address_family_);
+    OptionDefParser parser;
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
         OptionDefinitionTuple def;
 
