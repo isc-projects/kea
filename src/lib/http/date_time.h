@@ -35,8 +35,8 @@ public:
 /// The first format is preferred but implementations must also support
 /// remaining two obsolete formats for compatibility. This class implements
 /// parsers and generators for all three formats. It uses @c boost::posix_time
-/// to represent time and date. It uses @ref boost::date_time::time_facet
-/// and @ref boost::date_time::time_input_facet to generate and parse the
+/// to represent time and date. It uses @c boost::date_time::time_facet
+/// and @c boost::date_time::time_input_facet to generate and parse the
 /// timestamps.
 class HttpDateTime {
 public:
@@ -46,14 +46,14 @@ public:
     /// Sets current universal time as time value.
     HttpDateTime();
 
-    /// @brief Construct from @ref boost::posix_time::ptime object.
+    /// @brief Construct from @c boost::posix_time::ptime object.
     ///
     /// @param t time value to be set.
     explicit HttpDateTime(const boost::posix_time::ptime& t);
 
     /// @brief Returns time encapsulated by this class.
     ///
-    /// @return @ref boost::posix_time::ptime value encapsulated by the instance
+    /// @return @c boost::posix_time::ptime value encapsulated by the instance
     /// of this class.
     boost::posix_time::ptime getPtime() const {
         return (time_);

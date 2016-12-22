@@ -67,7 +67,7 @@ public:
 
 protected:
 
-    /// @brief Creates implentation specific HTTP 400 response..
+    /// @brief Creates implentation specific HTTP 400 response.
     ///
     /// @param request Pointer to an object representing HTTP request.
     /// @return Pointer to an object representing HTTP 400 response.
