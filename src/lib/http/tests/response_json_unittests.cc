@@ -17,11 +17,21 @@ using namespace isc::http::test;
 
 namespace {
 
+/// @brief Response type used in tests.
 typedef TestHttpResponseBase<HttpResponseJson> TestHttpResponseJson;
 
+/// @brief Test fixture class for @ref HttpResponseJson.
 class HttpResponseJsonTest : public ::testing::Test {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Initializes the following class members:
+    /// - json_string_ - which is a pretty formatted JSON content,
+    /// - json_ - A structure of Element objects representing the JSON,
+    /// - json_string_from_json_ - which is a JSON text converted back from
+    ///   the json_ data structure. It is the same content as json_string_
+    ///   but has different whitespaces.
     HttpResponseJsonTest()
         : json_(), json_string_(), json_string_from_json_() {
         json_string_ =
@@ -42,10 +52,16 @@ public:
         json_string_from_json_ = json_->str();
     }
 
+    /// @brief Test that the response format is correct.
+    ///
+    /// @param status_code HTTP status code for which the response should
+    /// be tested.
+    /// @param status_message HTTP status message.
     void testGenericResponse(const HttpStatusCode& status_code,
                              const std::string& status_message) {
         TestHttpResponseJson response(HttpVersion(1, 0), status_code);
         std::ostringstream status_message_json;
+        // Build the expected content.
         status_message_json << "{ \"result\": "
                             << static_cast<uint16_t>(status_code)
                             << ", \"text\": "
@@ -53,32 +69,40 @@ public:
         std::ostringstream response_string;
         response_string <<
             "HTTP/1.0 " << static_cast<uint16_t>(status_code) << " "
-            << status_message << "\r\n"
-            "Content-Type: application/json\r\n"
-            "Date: " << response.getDateHeaderValue() << "\r\n";
+            << status_message << "\r\n";
 
+        // The content must only be generated for error codes.
         if (HttpResponse::isClientError(status_code) ||
             HttpResponse::isServerError(status_code)) {
             response_string << "Content-Length: " << status_message_json.str().size()
                             << "\r\n";
         }
 
-        response_string << "\r\n";
+        // Content-Type and Date are automatically included.
+        response_string << "Content-Type: application/json\r\n"
+            "Date: " << response.getDateHeaderValue() << "\r\n\r\n";
 
         if (HttpResponse::isClientError(status_code) ||
             HttpResponse::isServerError(status_code)) {
             response_string << status_message_json.str();
         }
 
+        // Check that the output is as expected.
         EXPECT_EQ(response_string.str(), response.toString());
     }
 
+    /// @brief JSON content represented as structure of Element objects.
     ConstElementPtr json_;
+
+    /// @brief Pretty formatted JSON content.
     std::string json_string_;
+
+    /// @brief JSON content parsed back from json_ structure.
     std::string json_string_from_json_;
 
 };
 
+// Test that the response with custom JSON content is generated properly.
 TEST_F(HttpResponseJsonTest, responseWithContent) {
     TestHttpResponseJson response(HttpVersion(1, 1), HttpStatusCode::OK);
     ASSERT_NO_THROW(response.setBodyAsJson(json_));
@@ -86,13 +110,14 @@ TEST_F(HttpResponseJsonTest, responseWithContent) {
     std::ostringstream response_string;
     response_string <<
         "HTTP/1.1 200 OK\r\n"
+        "Content-Length: " << json_string_from_json_.length() << "\r\n"
         "Content-Type: application/json\r\n"
-        "Date: " << response.getDateHeaderValue() << "\r\n"
-        "Content-Length: " << json_string_from_json_.length()
-                    << "\r\n\r\n" << json_string_from_json_;
+        "Date: " << response.getDateHeaderValue() << "\r\n\r\n"
+                    << json_string_from_json_;
     EXPECT_EQ(response_string.str(), response.toString());
 }
 
+// Test that generic responses are created properly.
 TEST_F(HttpResponseJsonTest, genericResponse) {
     testGenericResponse(HttpStatusCode::OK, "OK");
     testGenericResponse(HttpStatusCode::CREATED, "Created");

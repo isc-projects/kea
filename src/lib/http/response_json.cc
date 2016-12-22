@@ -12,14 +12,24 @@ namespace isc {
 namespace http {
 
 HttpResponseJson::HttpResponseJson(const HttpVersion& version,
-                                   const HttpStatusCode& status_code)
-    : HttpResponse(version, status_code) {
+                                   const HttpStatusCode& status_code,
+                                   const CallSetGenericBody& generic_body)
+    : HttpResponse(version, status_code, CallSetGenericBody::no()) {
     addHeader("Content-Type", "application/json");
-    setGenericBody(status_code);
+    // This class provides its own implementation of the setGenericBody.
+    // We call it here unless the derived class calls this constructor
+    // from its own constructor and indicates that we shouldn't set the
+    // generic content in the body.
+    if (generic_body.set_) {
+        setGenericBody(status_code);
+    }
 }
 
 void
 HttpResponseJson::setGenericBody(const HttpStatusCode& status_code) {
+    // Only generate the content for the client or server errors. For
+    // other status codes (status OK in particular) the content should
+    // be created using setBodyAsJson or setBody.
     if (isClientError(status_code) || isServerError(status_code)) {
         std::map<std::string, ConstElementPtr> map_elements;
         map_elements["result"] =

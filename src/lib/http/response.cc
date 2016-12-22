@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <http/date_time.h>
 #include <http/response.h>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/time_facet.hpp>
@@ -14,6 +15,7 @@ using namespace isc::http;
 
 namespace {
 
+/// @brief A map of status codes to status names.
 const std::map<HttpStatusCode, std::string> status_code_to_description = {
     { HttpStatusCode::OK, "OK" },
     { HttpStatusCode::CREATED, "Created" },
@@ -33,6 +35,7 @@ const std::map<HttpStatusCode, std::string> status_code_to_description = {
     { HttpStatusCode::SERVICE_UNAVAILABLE, "Service Unavailable" }
 };
 
+/// @brief New line (CRLF).
 const std::string crlf = "\r\n";
 
 }
@@ -41,10 +44,15 @@ namespace isc {
 namespace http {
 
 HttpResponse::HttpResponse(const HttpVersion& version,
-                           const HttpStatusCode& status_code)
+                           const HttpStatusCode& status_code,
+                           const CallSetGenericBody& generic_body)
     : http_version_(version), status_code_(status_code), headers_(),
       body_() {
-    setGenericBody(status_code);
+    if (generic_body.set_) {
+        // This currently does nothing, but it is useful to have it here as
+        // an example how to implement it in the derived classes.
+        setGenericBody(status_code);
+    }
 }
 
 void
@@ -54,12 +62,14 @@ HttpResponse::setBody(const std::string& body) {
 
 bool
 HttpResponse::isClientError(const HttpStatusCode& status_code) {
+    // Client errors have status codes of 4XX.
     uint16_t c = statusCodeToNumber(status_code);
     return ((c >= 400) && (c < 500));
 }
 
 bool
 HttpResponse::isServerError(const HttpStatusCode& status_code) {
+    // Server errors have status codes of 5XX.
     uint16_t c = statusCodeToNumber(status_code);
     return ((c >= 500) && (c < 600));
 }
@@ -82,35 +92,43 @@ HttpResponse::statusCodeToNumber(const HttpStatusCode& status_code) {
 
 std::string
 HttpResponse::getDateHeaderValue() const {
-    local_date_time t(local_sec_clock::local_time(time_zone_ptr()));
-    std::stringstream s;
-    local_time_facet* lf(new local_time_facet("%a, %d %b %Y %H:%M:%S GMT"));
-    s.imbue(std::locale(s.getloc(), lf));
-    s << t;
-
-    return (s.str());
+    // This returns current time in the recommended format.
+    HttpDateTime date_time;
+    return (date_time.rfc1123Format());
 }
 
 std::string
 HttpResponse::toString() const {
     std::ostringstream s;
+    // HTTP version number and status code.
     s << "HTTP/" << http_version_.first << "." << http_version_.second;
     s << " " << static_cast<uint16_t>(status_code_);
     s << " " << statusCodeToString(status_code_) << crlf;
 
-    for (auto header = headers_.cbegin(); header != headers_.cend();
+    // We need to at least insert "Date" header into the HTTP headers. This
+    // method is const thus we can't insert it into the headers_ map. We'll
+    // work on the copy of the map. Admittedly, we could just append "Date"
+    // into the generated string but we prefer that headers are ordered
+    // alphabetically.
+    std::map<std::string, std::string> headers(headers_);
+
+    // Update or add "Date" header.
+    addHeaderInternal("Date", getDateHeaderValue(), headers);
+
+    // Add "Content-Length" if body present.
+    if (!body_.empty()) {
+        addHeaderInternal("Content-Length", body_.length(), headers);
+    }
+
+    // Include all headers.
+    for (auto header = headers.cbegin(); header != headers.cend();
          ++header) {
         s << header->first << ": " << header->second << crlf;
     }
 
-    s << "Date: " << getDateHeaderValue() << crlf;
-
-    if (!body_.empty()) {
-        s << "Content-Length: " << body_.length() << crlf;
-    }
-
     s << crlf;
 
+    // Include message body.
     s << body_;
 
     return (s.str());
