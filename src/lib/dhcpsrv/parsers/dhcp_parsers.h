@@ -552,7 +552,7 @@ public:
     ///
     /// Note: ElementPtr is expected to contain all fields. If your
     /// ElementPtr does not have them, please use
-    /// @ref SimpleParser::setOptionDefaults to fill the missing fields
+    /// @ref isc::data::SimpleParser::setDefaults to fill the missing fields
     /// with default values.
     ///
     /// @param single_option ElementPtr containing option defintion
