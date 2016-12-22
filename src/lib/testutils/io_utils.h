@@ -8,6 +8,7 @@
 #define TEST_IO_UTILS_H
 
 #include <string>
+#include <sys/stat.h>
 
 namespace isc {
 namespace dhcp {

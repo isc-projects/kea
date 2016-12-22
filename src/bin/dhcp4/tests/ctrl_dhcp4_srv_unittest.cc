@@ -16,6 +16,7 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+#include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 
 #include "marker_file.h"
@@ -592,7 +593,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
     EXPECT_EQ(1, subnets->size());
 
     // Create a valid config with two subnets and no command channel.
-    // It should succeed but client will not receive a the response
+    // It should succeed, client should still receive the response
     os.str("");
     os << set_config_txt << ","
         << args_txt
@@ -604,11 +605,18 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << "}\n"                      // close dhcp4
         << "}}";
 
+    /* Verify the control channel socket exists */
+    ASSERT_TRUE(fileExists(socket_path_));
+
     // Send the set-config command
     sendUnixCommand(os.str(), response);
 
-    // With no command channel, no response
-    EXPECT_EQ("", response);
+    /* Verify the control channel socket no longer exists */
+    EXPECT_FALSE(fileExists(socket_path_));
+
+    // With no command channel, should still receive the response.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();

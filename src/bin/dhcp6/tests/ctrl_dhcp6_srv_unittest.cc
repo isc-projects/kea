@@ -18,6 +18,7 @@
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
+#include <testutils/io_utils.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -26,6 +27,7 @@
 #include <gtest/gtest.h>
 
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <cstdlib>
 
@@ -468,11 +470,18 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         << "}\n"                      // close dhcp6
         << "}}";
 
+    /* Verify the control channel socket exists */
+    ASSERT_TRUE(fileExists(socket_path_));
+
     // Send the set-config command
     sendUnixCommand(os.str(), response);
 
-    // With no command channel, no response
-    EXPECT_EQ("", response);
+    /* Verify the control channel socket no longer exists */
+    EXPECT_FALSE(fileExists(socket_path_));
+
+    // With no command channel, should still receive the response.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
