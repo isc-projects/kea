@@ -1,6 +1,6 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="intro"><info><title>Introduction</title></info>
-    
+
     <para>
       Kea is the next generation of DHCP software developed by ISC.
       It supports both DHCPv4 and DHCPv6 protocols along with their
@@ -19,7 +19,6 @@
     </para>
 
     <section><info><title>Supported Platforms</title></info>
-      
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
 	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
@@ -33,8 +32,6 @@
     </section>
 
     <section xml:id="required-software"><info><title>Required Software at Run-time</title></info>
-      
-
       <para>
         Running Kea uses various extra software which may
         not be provided in the default installation of some operating systems,
@@ -92,7 +89,6 @@
     </section>
 
     <section xml:id="kea_software"><info><title>Kea Software</title></info>
-      
       <para>
         Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
@@ -151,7 +147,7 @@
               <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
-              While it can be run standalone, it is normally run as and when 
+              While it can be run standalone, it is normally run as and when
               required by the Kea DHCP servers.
             </simpara>
           </listitem>

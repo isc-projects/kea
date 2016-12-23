@@ -1,13 +1,11 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config"><info><title>Kea Configuration</title></info>
-  
 
   <para>Kea is using JSON structures to handle configuration. Previously
   we there was a concept of other configuration backends, but that never was
   implemented and the idea was abandoned.</para>
 
   <section xml:id="json"><info><title>JSON Configuration</title></info>
-    
     <para>JSON is notation used throughout the Kea project. The most obvious
     usage is for configuration file, but it is also used for sending commands
     over Management API (see <xref linkend="ctrl-channel"/>) and for
@@ -19,7 +17,6 @@
     configuration file is specified upon startup using the -c parameter.</para>
 
     <section xml:id="json-format"><info><title>JSON Syntax</title></info>
-      
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
       in an extended JSON format. Basic JSON is defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link>. Note that Kea
       1.2 introduces a new parser that is better at following the JSON spec.  In
@@ -32,27 +29,23 @@
       <itemizedlist>
         <listitem>
           <simpara>shell comments: any text after the hash (#)
-          character is ignored. Dhcp6 allows # in any column, while
-          Dhcp4 and Ddns require hash to be in the first
-          column.</simpara>
+          character is ignored. Both Dhcp4 and Dhcp6 allow # in any column,
+          while Ddns requires hash to be in the first column.</simpara>
         </listitem>
         <listitem>
           <simpara>C comments: any text after the double slashes (//)
-          character is ignored. We're in a process of
-          migrating the configuation parsers and currently only Dhcp6
-          supports this feature.</simpara>
+          character is ignored. Both Dhcp4 and Dhcp6 supports this
+          feature.</simpara>
         </listitem>
         <listitem>
           <simpara>Multiline comments: any text between /* and */ is
-          ignored. This commenting can span multiple lines. We're in a
-          process of migrating the configuation parsers and currently
-          only Dhcp6 supports this feature.</simpara>
+          ignored. This commenting can span multiple lines. Both Dhcp4 and
+          Dhcp6 supports this feature.</simpara>
         </listitem>
         <listitem>
           <simpara>File inclusion: JSON files can include other JSON
           files. This can be done by using &lt;?include
-          "file.json"?&gt;. We're in a process of migrating the
-          configuation parsers and currently only Dhcp6 supports this
+          "file.json"?&gt;. Both Dhcp4 and Dhcp6 supports this
           feature.</simpara>
         </listitem>
       </itemizedlist>
@@ -134,8 +127,6 @@
     </section>
 
     <section><info><title>Simplified Notation</title></info>
-      
-
         <para>It is sometimes convenient to refer to a specific element in the
         configuration hierarchy. Each hierarchy level is separated by a slash.
         If there is an array, a specific instance within that array is referenced by

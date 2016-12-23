@@ -1,8 +1,8 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries"><info><title>Hooks Libraries</title></info>
-    
+
     <section xml:id="hooks-libraries-introduction"><info><title>Introduction</title></info>
-      
+
       <para>
       Although Kea offers a lot of flexibility, there may be cases where
       its behavior needs customisation.  To accommodate this possibility,
@@ -34,8 +34,8 @@
       Developer's Guide</link>.
       </para>
     </section> <!-- end Introduction -->
+
     <section><info><title>Configuring Hooks Libraries</title></info>
-      
       <para>
       The hooks libraries for a given process are configured using the
       <command>hooks-libraries</command> keyword in the
@@ -135,7 +135,6 @@
     </section>
 
     <section><info><title>Available Hooks Libraries</title></info>
-      
       <para>
       As described above, the hooks functionality provides a way to customize
       a Kea server without modifying the core code.  ISC has chosen to take
@@ -158,7 +157,6 @@
       <para>Currently the following libraries are available or planned from ISC:
 
         <table frame="all" xml:id="hook-libs"><info><title>List of available hooks libraries</title></info>
-          
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="avail"/>
@@ -238,8 +236,8 @@
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
       </para>
+
       <section><info><title>user_chk: Checking User Access</title></info>
-        
         <para>
           The user_chk library is the first hooks library published by ISC. It
           attempts to serve several purposes:
@@ -265,7 +263,7 @@
           </itemizedlist>
         </para>
         <para>
-          Once loaded, the library allows segregating incomings requests into
+          Once loaded, the library allows segregating incoming requests into
           known and unknown clients. For known clients, the packets are
           processed mostly as usual, except it is possible to override certain
           options being sent. That can be done on a per host basis. Clients
@@ -300,7 +298,7 @@
             is "HW_ADDR" for IPv4 users or "DUID" for IPv6
             users</para></listitem>
             <listitem><para><command>id</command>, whose value is
-            either the hardware address or the DUID from the equest
+            either the hardware address or the DUID from the request
             formatted as a string of hex digits, with or without
             ":" delimiters.</para></listitem>
           </itemizedlist>
@@ -330,13 +328,12 @@ and may have the zero or more of the following entries:
         our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
         Framework section</link> should give you some pointers how to extend
         this library and perhaps even write your own from scratch.</para>
-
       </section>
+
       <section><info><title>Forensic Logging Hooks</title></info>
-        
         <para>
         This section describes the forensic log hooks library. This library
-        povides hooks that record a detailed log of lease assignments
+        provides hooks that record a detailed log of lease assignments
         and renewals into a set of log files.  Currently this library
         is only available to ISC customers with a support contract.
         </para>
@@ -356,8 +353,8 @@ and may have the zero or more of the following entries:
         features those users who don't need to log this information can
         leave it out and avoid any performance penalties.
         </para>
+
         <section><info><title>Log File Naming</title></info>
-        
           <para>
           The names for the log files have the following form:
           </para>
@@ -376,8 +373,8 @@ path/base-name.CCYYMMDD.txt
           be distinct.  See the examples in <xref linkend="forensic-log-configuration"/>.
           </para></note>
         </section>
+
         <section><info><title>DHCPv4 Log Entries</title></info>
-        
           <para>
           For DHCPv4 the library creates entries based on DHCPREQUEST messages
           and corresponding DHCPv4 leases intercepted by lease4_select
@@ -428,8 +425,8 @@ connected via relay at address: 192.2.16.33, identified by circuit-id:
 </screen>
           </para>
         </section>
+
         <section><info><title>DHCPv6 Log Entries</title></info>
-        
           <para>
           For DHCPv6 the library creates entries based on lease management
           actions intercepted by the lease6_select (for new leases), lease6_renew
@@ -475,8 +472,8 @@ link address: 3001::1, hop count: 1, identified by remote-id:
 </screen>
           </para>
         </section>
+
         <section xml:id="forensic-log-configuration"><info><title>Configuring the Forensic Log Hooks</title></info>
-        
           <para>
           To use this functionality the hook library must be included in the
           configuration of the desired DHCP server modules. The legal_log
@@ -537,8 +534,8 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         </section>
       </section>
     </section>
+
     <section xml:id="user-context"><info><title>User contexts</title></info>
-      
       <para>Hook libraries can have their own configuration parameters. That is
       convenient if the parameter applies to the whole library. However,
       sometimes it is very useful if certain configuration entities are extended

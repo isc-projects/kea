@@ -1,6 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="lease-expiration"><info><title>Lease Expiration in DHCPv4 and DHCPv6</title></info>
-  
 
   <para>The primary role of the DHCP server is to assign addresses and/or
   delegate prefixes to DHCP clients. These addresses and prefixes are
@@ -44,7 +43,6 @@
   </para>
 
   <section xml:id="lease-reclamation"><info><title>Lease Reclamation</title></info>
-    
     <para>Lease reclamation is the process through which an expired lease
     becomes available for assignment to the same or different client.
     This process involves the following steps for each reclaimed lease:
@@ -78,7 +76,6 @@
   </section>
 
   <section xml:id="lease-reclaim-config"><info><title>Configuring Lease Reclamation</title></info>
-    
     <para>Kea can be configured to periodically detect and reclaim expired
     leases. During this process the lease entries in the database are
     modified or removed. While this is happening the server will not process incoming DHCP
@@ -222,7 +219,6 @@
   </section>
 
   <section xml:id="lease-affinity"><info><title>Configuring Lease Affinity</title></info>
-    
     <para>Suppose that a laptop goes to a sleep mode after a period of user
     inactivity.  While the laptop is in sleep mode, its DHCP client will not
     renew leases obtained from the server and these leases will eventually
@@ -292,7 +288,6 @@
   </section>
 
   <section xml:id="lease-reclamation-defaults"><info><title>Default Configuration Values for Leases Reclamation</title></info>
-    
     <para>The following list presents all configuration parameters
     pertaining to processing expired leases with their default values:</para>
 
@@ -326,7 +321,6 @@
   </section>
 
   <section xml:id="leases-reclamation-using-command"><info><title>Reclaiming Expired Leases with Command</title></info>
-    
     <para>The <emphasis>leases-reclaim</emphasis> command can be used to trigger
     leases reclamation at any time. Please consult the
     <xref linkend="command-leases-reclaim"/> for the details about using this
