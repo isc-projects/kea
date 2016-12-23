@@ -10,6 +10,7 @@ GENHTML=@GENHTML@
 DISTCHECK_GTEST_CONFIGURE_FLAG=@DISTCHECK_GTEST_CONFIGURE_FLAG@
 DISTCHECK_CRYPTO_CONFIGURE_FLAG=@DISTCHECK_CRYPTO_CONFIGURE_FLAG@
 DISTCHECK_BOOST_CONFIGURE_FLAG=@DISTCHECK_BOOST_CONFIGURE_FLAG@
+OVERALL_COVERAGE_DIR=$(abs_top_builddir)/coverage-cpp-html
 
 DISTCLEANFILES = config.report
 
@@ -48,13 +49,14 @@ endif
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
-		rm -rf $(abs_top_srcdir)/coverage-cpp-html/; \
+		rm -rf $(OVERALL_COVERAGE_DIR); \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
 		echo "Use: ./configure --with-lcov" ; \
 	fi
 
-perform-coverage: check
+perform-coverage:
+	find -mindepth 2 -maxdepth 2 src -type d | xargs -I{} bash -c "cd {}; make check || true"
 
 report-cpp-coverage:
 if HAVE_BOTAN
@@ -68,28 +70,28 @@ else
 OPENSSL_PATH=
 endif
 	@if [ $(USE_LCOV) = yes ] ; then \
-		$(LCOV) --capture --directory . --output-file all.info ; \
+		$(LCOV) --capture --directory . \
+			--ignore-errors gcov,source,graph \
+			--output-file all.info; \
 		$(LCOV) --remove all.info \
-			c++/4.4\*/\* \
-			c++/4.4\*/backward/\* \
-			c++/4.4\*/bits/\* \
-			c++/4.4\*/ext/\* \
-			c++/4.4\*/\*-\*/bits/\* \
+			c++/* \
 			boost/\* \
 			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
+			lib/\eval/\* \
 			log4cplus/\* \
 			unittests/\* \
-			\*_unittests.cc \
-			\*_unittest.cc \
-			\*_unittests.h \
+			tests/\* \
+			testutils/\* \
+			valgrind/\* \
 			$(BOTAN_PATH) \
 			$(OPENSSL_PATH) \
-			--output report.info ; \
-		sed -e "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" < report.info > report.info.2 ; \
-		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info.2 ; \
-		echo "Generated C++ Code Coverage report in HTML at $(abs_top_builddir)/coverage-cpp-html" ; \
+			--ignore-errors gcov,source,graph \
+			--output report.info; \
+		sed --in-place --expression "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" report.info; \
+		"$(GENHTML)" --frames --show-details --title 'Kea code coverage report' --legend --function-coverage --ignore-errors source --demangle-cpp --output "$(OVERALL_COVERAGE_DIR)" report.info; \
+		printf "Generated C++ code coverage report in HTML at %s.\n" "$(OVERALL_COVERAGE_DIR)"; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
 		echo "Use: ./configure --with-lcov" ; \
