@@ -1,9 +1,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="logging"><info><title>Logging</title></info>
-  
 
   <section><info><title>Logging Configuration</title></info>
-    
     <para>
       During its operation Kea may produce many messages. They differ in
       severity (some are more important than others) and source (some are
@@ -24,7 +22,6 @@
     </para>
 
     <section><info><title>Loggers</title></info>
-      
       <para>
         Within Kea, a message is logged through an entity called a
         "logger". Different components log messages through different
@@ -44,7 +41,7 @@
         runtime) are responsible for creating the loggers used by those
         libraries. Such loggers should have unique names, different
         from the logger names used by Kea. In this way the
-        messages output by the hooks library can be distingued from
+        messages output by the hooks library can be distinguished from
         messages issued by the core Kea code. Unique names also allow
         the loggers to be configured independently of loggers used
         by Kea.  Whenever it makes sense, a hook library can use multiple
@@ -73,7 +70,6 @@
       </para>
 
       <section><info><title>name (string)</title></info>
-        
         <para>
           Each logger in the system has a name, the name being that of the
           component binary file using it to log messages. For instance, if you
@@ -133,7 +129,7 @@
           packet drops, you must create configuration entry for the
           logger called <quote>kea-dhcp4.bad-packets</quote> and specify
           severity DEBUG for this logger. All other configuration
-          parameters may be omited for this logger if the logger should
+          parameters may be omitted for this logger if the logger should
           use the default values specified in the root logger's
           configuration.
         </para>
@@ -485,7 +481,6 @@
       </section>
 
       <section><info><title>severity (string)</title></info>
-        
         <para>
           This specifies the category of messages logged.  Each message is
           logged with an associated severity which may be one of the following
@@ -552,7 +547,6 @@
       </section>
 
       <section><info><title>debuglevel (integer)</title></info>
-        
         <para>
           When a logger's severity is set to DEBUG, this value specifies what
           level of debug messages should be printed. It ranges from 0 (least
@@ -562,7 +556,6 @@
       </section>
 
       <section><info><title>output_options (list)</title></info>
-        
         <para>
           Each logger can have zero or more <option>output_options</option>.
           These specify where log messages are sent. These are explained in
@@ -570,7 +563,6 @@
         </para>
 
         <section><info><title>output (string)</title></info>
-          
           <para>
             This value determines the type of output. There are several special
             values allowed here: <command>stdout</command> (messages are printed
@@ -583,7 +575,6 @@
         </section>
 
         <section><info><title>flush (true of false)</title></info>
-          
           <para>
             Flush buffers after each log message. Doing this will reduce
             performance but will ensure that if the program terminates
@@ -593,7 +584,6 @@
         </section>
 
         <section><info><title>maxsize (integer)</title></info>
-          
           <para>
             Only relevant when destination is file, this is maximum file size of
             output files in bytes. When the maximum size is reached, the file is
@@ -620,7 +610,6 @@
         </section>
 
         <section><info><title>maxver (integer)</title></info>
-          
           <para>
             Maximum number of old log files to keep around when rolling the
             output file. Only relevant when <option>output</option> is
@@ -630,7 +619,6 @@
       </section>
 
       <section><info><title>Example Logger Configurations</title></info>
-        
         <para>
           In this example we want to set the global logging to write to the
           console using standard output.
@@ -679,7 +667,6 @@
     </section>
 
     <section xml:id="logging-message-format"><info><title>Logging Message Format</title></info>
-      
       <para>
         Each message written  to the configured logging destinations comprises a
         number of components that identify the origin of the message and, if the
@@ -770,7 +757,6 @@
     </section>
 
     <section xml:id="logging-during-startup"><info><title>Logging During Kea Startup</title></info>
-      
       <para>
         The logging configuration is specified in the configuration file.
         However, when Kea starts, the file is not read until some way into the

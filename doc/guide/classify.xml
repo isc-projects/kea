@@ -1,9 +1,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="classify"><info><title>Client Classification</title></info>
-  
 
   <section><info><title>Client Classification Overview</title></info>
-    
       <para>
       In certain cases it is useful to differentiate between different
       types of clients and treat them accordingly. Common reasons include:
@@ -91,7 +89,6 @@
   </section>
 
   <section xml:id="classification-using-host-reservations"><info><title>Using Static Host Reservations In Classification</title></info>
-    
     <para>Classes can be statically assigned to the clients using techniques described
     in <xref linkend="reservation4-client-classes"/> and
     <xref linkend="reservation6-client-classes"/>.
@@ -99,7 +96,6 @@
   </section>
 
   <section xml:id="classification-using-vendor"><info><title>Using Vendor Class Information In Classification</title></info>
-    
       <para>
       The server checks whether an incoming DHCPv4 packet includes
       the vendor class identifier option (60) or an incoming DHCPv6 packet
@@ -112,7 +108,6 @@
   </section>
 
   <section xml:id="classification-using-expressions"><info><title>Using Expressions In Classification</title></info>
-    
       <para>
       The expression portion of classification contains operators and values.
       All values are currently strings and operators take a string or strings and
@@ -148,7 +143,6 @@
 
       <para>
         <table frame="all" xml:id="classification-values-list"><info><title>List of Classification Values</title></info>
-          
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="example"/>
@@ -544,7 +538,6 @@
 
       <para>
         <table frame="all" xml:id="classification-expressions-list"><info><title>List of Classification Expressions</title></info>
-          
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="example"/>
@@ -570,7 +563,6 @@ concatenation of the strings</entry></row>
       </para>
 
       <section><info><title>Logical operators</title></info>
-        
         The Not, And and Or logical operators are the common operators. Not
         has the highest precedence and Or the lowest. And and Or are (left)
         associative, parentheses around a logical expression can be used
@@ -579,7 +571,6 @@ concatenation of the strings</entry></row>
       </section>
 
       <section><info><title>Substring</title></info>
-        
         The substring operator "substring(value, start, length)" accepts both positive and
         negative values for the starting position and the length.  For "start", a value of
         0 is the first byte in the string while -1 is the last byte.  If the starting
@@ -602,7 +593,6 @@ concatenation of the strings</entry></row>
           </screen>
       </section>
       <section><info><title>Concat</title></info>
-        
         The concat function "concat(string1, string2)" returns the
         concatenation of its two arguments. For instance:
           <screen>
@@ -620,7 +610,6 @@ concatenation of the strings</entry></row>
   </para> </note>
 
   <section xml:id="classification-configuring"><info><title>Configuring Classes</title></info>
-    
       <para>
       A class contains three items: a name, a test expression and option data.
       The name must exist and must be unique amongst all classes. The test
@@ -696,7 +685,6 @@ concatenation of the strings</entry></row>
   </section>
 
   <section xml:id="classification-subnets"><info><title>Configuring Subnets With Class Information</title></info>
-    
       <para>
         In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given class, using the "client-class"
@@ -776,7 +764,6 @@ concatenation of the strings</entry></row>
   </section>
 
   <section><info><title>Using Classes</title></info>
-    
       <para>
       Currently classes can be used for two functions.  They can supply options
       to the members of the class and they can be used to choose a subnet from which an
@@ -792,7 +779,6 @@ concatenation of the strings</entry></row>
   </section>
 
   <section><info><title>Classes and Hooks</title></info>
-    
       <para>
       You may use a hook to classify your packets. This may be useful if the
       expression would either be complex or time consuming and be easier or
@@ -806,7 +792,6 @@ concatenation of the strings</entry></row>
   </section>
 
   <section><info><title>Debugging Expressions</title></info>
-   
      <para>
      While you are constructing your classification expressions you may
      find it useful to enable logging see <xref linkend="logging"/> for
@@ -814,7 +799,7 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     To enable the debug statements in the classifciaton system you will
+     To enable the debug statements in the classification system you will
      need to set the severity to "DEBUG" and the debug level to at least 55.
      The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
      </para>

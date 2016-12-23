@@ -11,16 +11,12 @@
     Kea Administrator Reference Manual
     </title>
 
-    
-
     <releaseinfo>This is the reference guide for Kea version
         .</releaseinfo>
 
     <copyright>
       <year>2010-2016</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
-
-    
 
   </info>
 
@@ -61,8 +57,6 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
 
     <chapter xml:id="acknowledgments"><info><title>Acknowledgments</title></info>
-      
-
       <para>Kea is primarily designed, developed, and maintained by
       Internet Systems Consortium, Inc. It is an open source project
       and contributions are welcomed.</para>
@@ -95,12 +89,9 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, and
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link> were founding
       sponsors of the BIND 10 project.</para>
-
     </chapter>
 
-
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
-
 
 <!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
 

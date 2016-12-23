@@ -1,13 +1,11 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-lfc"><info><title>The LFC process</title></info>
-    
 
     <section xml:id="kea-lfc-overview"><info><title>Overview</title></info>
-      
       <para><command>kea-lfc</command> is a service process that removes
       redundant information from the files used to provide persistent storage
       for the memfile data base backend. This service is written to run as a
-      stand alone process.  
+      stand alone process.
       </para>
       <para>While <command>kea-lfc</command> can be started externally, there is
       usually no need to do this.  <command>kea-lfc</command> is run on a periodic
@@ -22,7 +20,6 @@
     </section>
 
     <section xml:id="kea-lfc-usage"><info><title>Command Line Options</title></info>
-      
       <para><command>kea-lfc</command> is run as follows:
 <screen>
 kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o output-file -f finish-file

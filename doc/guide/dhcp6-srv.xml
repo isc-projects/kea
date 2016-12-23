@@ -1,10 +1,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp6"><info><title>The DHCPv6 Server</title></info>
-    
 
     <section xml:id="dhcp6-start-stop"><info><title>Starting and Stopping the DHCPv6 Server</title></info>
-      
-
       <para>
         It is recommended that the Kea DHCPv6 server be started and stopped
         using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
@@ -116,9 +113,8 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
     </section>
 
     <section xml:id="dhcp6-configuration"><info><title>DHCPv6 Server Configuration</title></info>
-      
+
 <section><info><title>Introduction</title></info>
-  
       <para>
         This section explains how to configure the DHCPv6 server using the
         Kea configuration backend. (Kea configuration using any other
@@ -278,13 +274,11 @@ be followed by a comma and another object definition.</para>
 </section>
 
 <section><info><title>Lease Storage</title></info>
-  
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
   default backend), MySQL, PostgreSQL and Cassandra.</para>
-<section><info><title>Memfile - Basic Storage for Leases</title></info>
-  
 
+<section><info><title>Memfile - Basic Storage for Leases</title></info>
   <para>The server is able to store lease data in different repositories. Larger
   deployments may elect to store leases in a database. <xref linkend="database-configuration6"/> describes this option. In typical
   smaller deployments though, the server will store lease information in a CSV file rather
@@ -399,12 +393,9 @@ be followed by a comma and another object definition.</para>
   description of the LFC is located on the Kea wiki:
   <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/LFCDesign">http://kea.isc.org/wiki/LFCDesign</uri>.
   </para>
-
 </section>
 
 <section xml:id="database-configuration6"><info><title>Lease Database Configuration</title></info>
-  
-
   <note>
     <para>Lease database access information must be configured for the DHCPv6 server,
     even if it has already been configured for the DHCPv4 server.  The servers
@@ -456,10 +447,10 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
 </section>
 
 <section xml:id="hosts6-storage"><info><title>Hosts Storage</title></info>
-  
     <para>Kea is also able to store information about host reservations in the
     database. The hosts database configuration uses the same syntax as the lease
     database. In fact, a Kea server opens independent connections for each
@@ -479,8 +470,6 @@ If a timeout is given though, it should be an integer greater than zero.
     later, if necessary.</para>
 
 <section xml:id="hosts-database-configuration6"><info><title>DHCPv6 Hosts Database Configuration</title></info>
-  
-
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
   parameters. If enabled, the type of the database must be set to "mysql" or
   "postgresql". Other hosts backends may be added in later version of Kea.
@@ -552,7 +541,6 @@ for MySQL and PostgreSQL databases.</para></note>
 
 
 <section xml:id="dhcp6-interface-selection"><info><title>Interface Selection</title></info>
-  
   <para>The DHCPv6 server has to be configured to listen on specific network
   interfaces.  The simplest network interface configuration instructs the server to
   listen on all available interfaces:
@@ -591,7 +579,6 @@ temporarily override a list of interface names and listen on all interfaces.
 </section>
 
     <section xml:id="ipv6-subnet-id"><info><title>IPv6 Subnet Identifier</title></info>
-      
       <para>
         The subnet identifier is a unique number associated with a particular subnet.
         In principle, it is used to associate clients' leases with their respective subnets.
@@ -636,7 +623,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-unicast"><info><title>Unicast Traffic Support</title></info>
-      
       <para>
         When the DHCPv6 server starts, by default it listens to the DHCP traffic
         sent to multicast address ff02::1:2 on each interface that it is
@@ -692,7 +678,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-address-config"><info><title>Subnet and Address Pool</title></info>
-      
       <para>
         The main role of a DHCPv6 server is address assignment. For this,
         the server has to be configured with at least one subnet and one pool of dynamic
@@ -793,7 +778,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section><info><title>Subnet and Prefix Delegation Pools</title></info>
-      
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>.  A
@@ -830,7 +814,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="pd-exclude-option"><info><title>Prefix Exclude Option</title></info>
-        
         <para>
           For each delegated prefix the delegating router may choose to exclude
           a single prefix out of the delegated prefix as specified in the
@@ -865,7 +848,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-std-options"><info><title>Standard DHCPv6 Options</title></info>
-      
       <para>
         One of the major features of a DHCPv6 server is to provide configuration
         options to clients.  Although there are several options that require
@@ -1068,7 +1050,6 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>
       <table frame="all" xml:id="dhcp6-std-options-list"><info><title>List of Standard DHCPv6 Options</title></info>
-        
         <tgroup cols="4">
         <colspec colname="name"/>
         <colspec colname="code" align="center"/>
@@ -1148,7 +1129,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>s46-br</entry><entry>90</entry><entry>ipv6-address</entry><entry>false</entry></row>
 <row><entry>s46-dmr</entry><entry>91</entry><entry>ipv6-prefix</entry><entry>false</entry></row>
 <row><entry>s46-v4v6bind</entry><entry>92</entry><entry>record (ipv4-address, ipv6-prefix)</entry><entry>false</entry></row>
-<row><entry>s46-portparams</entry><entry>93</entry><entry>record(uint8, psid)</entry><entry>false</entry></row>
+<row><entry>s46-portparams</entry><entry>93</entry><entry>record (uint8, psid)</entry><entry>false</entry></row>
 <row><entry>s46-cont-mape</entry><entry>94</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>s46-cont-mapt</entry><entry>95</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>s46-cont-lw</entry><entry>96</entry><entry>empty</entry><entry>false</entry></row>
@@ -1159,7 +1140,6 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>
       <table frame="all" xml:id="dhcp6-exp-options-list"><info><title>List of Experimental DHCPv6 Options</title></info>
-        
         <tgroup cols="4">
         <colspec colname="name"/>
         <colspec colname="code" align="center"/>
@@ -1180,7 +1160,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="s46-options"><info><title>Common Softwire46 Options</title></info>
-      
       <para>
         Softwire46 options are involved in IPv4 over IPv6 provisioning by
         means of tunneling or translation as specified in the
@@ -1190,12 +1169,11 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <section xml:id="s46-containers"><info><title>Softwire46 Container Options</title></info>
-      
       <para>
         S46 container options group rules and optional port parameters
         for a specified domain. There are three container options specified
         in the "dhcp6" (top level) option space: MAP-E Container option,
-        MAP-T Container option and S46 Lieghtweight 4over6 Container option.
+        MAP-T Container option and S46 Lightweight 4over6 Container option.
         These options only contain encapsulated options specified below.
         They do not include any data fields.
       </para>
@@ -1230,7 +1208,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
       <section><info><title>S46 Rule Option</title></info>
-        
         <para>
           The S46 Rule option is used for conveying the Basic Mapping Rule (BMR)
           and Forwarding Mapping Rule (FMR).
@@ -1284,7 +1261,6 @@ temporarily override a list of interface names and listen on all interfaces.
         </para>
       </section>
         <section><info><title>S46 BR Option</title></info>
-            
             <para>
               The S46 BR option is used to convey the IPv6 address of the
               Border Relay. This option is mandatory in the MAP-E
@@ -1302,7 +1278,6 @@ temporarily override a list of interface names and listen on all interfaces.
         </section>
 
         <section><info><title>S46 DMR Option</title></info>
-            
             <para>
               The S46 DMR option is used to convey values for the Default
               Mapping Rule (DMR). This option is mandatory in the MAP-T
@@ -1320,7 +1295,6 @@ temporarily override a list of interface names and listen on all interfaces.
         </section>
 
         <section><info><title>S46 IPv4/IPv6 Address Binding option.</title></info>
-            
             <para>
               The S46 IPv4/IPv6 Address Binding option may be used to specify
               the full or shared IPv4 address of the Customer Edge (CE).
@@ -1337,7 +1311,6 @@ temporarily override a list of interface names and listen on all interfaces.
           </para>
         </section>
         <section><info><title>S46 Port Parameters</title></info>
-            
             <para>
               The S46 Port Parameters option specifies optional port set
               information that MAY be provided to CEs
@@ -1361,7 +1334,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-custom-options"><info><title>Custom DHCPv6 Options</title></info>
-      
       <para>It is possible to define options in addition to the standard ones.
       Assume that we want to define a new DHCPv6 option called "foo" which will have
       code 100 and which will convey a single unsigned 32 bit integer value. We can define
@@ -1486,7 +1458,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-vendor-opts"><info><title>DHCPv6 Vendor-Specific Options</title></info>
-      
       <para>
       Currently there are two option spaces defined for the DHCPv6
       daemon: "dhcp6" (for top level DHCPv6 options) and "vendor-opts-space",
@@ -1557,7 +1528,6 @@ temporarily override a list of interface names and listen on all interfaces.
     </section>
 
     <section xml:id="dhcp6-option-spaces"><info><title>Nested DHCPv6 Options (Custom Option Spaces)</title></info>
-      
       <para>It is sometimes useful to define completely new option
       spaces.  This is useful if the user wants their new option to
       convey sub-options that use a separate numbering scheme, for
@@ -1667,7 +1637,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="dhcp6-option-data-defaults"><info><title>Unspecified Parameters for DHCPv6 Option Configuration</title></info>
-      
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values can be used. However, it is
       important to understand the implications of not specifying some of them
@@ -1737,7 +1706,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="dhcp6-config-subnets"><info><title>IPv6 Subnet Selection</title></info>
-      
       <para>
         The DHCPv6 server may receive requests from local (connected to the
         same subnet as the server) and remote (connecting via relays) clients.
@@ -1775,7 +1743,6 @@ should include options from the isc option space:
       </section>
 
       <section xml:id="dhcp6-rapid-commit"><info><title>Rapid Commit</title></info>
-        
         <para>The Rapid Commit option, described in
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>, is supported
         by the Kea DHCPv6 server. However, support is disabled by default for
@@ -1809,7 +1776,6 @@ should include options from the isc option space:
       </section>
 
       <section xml:id="dhcp6-relays"><info><title>DHCPv6 Relays</title></info>
-        
         <para>
           A DHCPv6 server with multiple subnets defined must select the
           appropriate subnet when it receives a request from a client.  For clients
@@ -1878,7 +1844,6 @@ should include options from the isc option space:
       </section>
 
     <section xml:id="dhcp6-rsoo"><info><title>Relay-Supplied Options</title></info>
-      
       <para><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6422">RFC 6422</link>
       defines a mechanism called Relay-Supplied DHCP Options. In certain cases relay
       agents are the only entities that may have specific information. They can
@@ -1915,8 +1880,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="dhcp6-client-classifier"><info><title>Client Classification in DHCPv6</title></info>
-      
-
       <para>
       The DHCPv6 server includes support for client classification.  For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
@@ -1968,7 +1931,6 @@ should include options from the isc option space:
       </para></note>
 
       <section><info><title>Defining and Using Custom Classes</title></info>
-        
         <para>
         The following example shows how to configure a class using an expression
         and a subnet making use of that class. This configuration defines the
@@ -2035,7 +1997,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="dhcp6-ddns-config"><info><title>DDNS for DHCPv6</title></info>
-      
       <para>
       As mentioned earlier, kea-dhcp6 can be configured to generate requests to
       the DHCP-DDNS server (referred to here as "D2") to update
@@ -2121,7 +2082,6 @@ should include options from the isc option space:
 
 
       <section xml:id="dhcpv6-d2-io-config"><info><title>DHCP-DDNS Server Connectivity</title></info>
-      
       <para>
       In order for NCRs to reach the D2 server, kea-dhcp6 must be able
       to communicate with it.  kea-dhcp6 uses the following configuration
@@ -2188,7 +2148,6 @@ should include options from the isc option space:
       </para>
       </section>
       <section xml:id="dhcpv6-d2-rules-config"><info><title>When Does kea-dhcp6 Generate a DDNS Request?</title></info>
-      
       <para>kea-dhcp6 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4704">RFC 4704</link>.
       It is important to keep in mind that kea-dhcp6 provides the initial
@@ -2236,7 +2195,6 @@ should include options from the isc option space:
       as shown in the following table:
       </para>
         <table xml:id="dhcp6-fqdn-flag-table"><info><title>Default FQDN Flag Behavior</title></info>
-          
           <tgroup cols="4" align="left">
           <colspec colname="cflags"/>
           <colspec colname="meaning"/>
@@ -2325,7 +2283,6 @@ should include options from the isc option space:
 </screen>
       </section>
       <section xml:id="dhcpv6-fqdn-name-generation"><info><title>kea-dhcp6 Name Generation for DDNS Update Requests</title></info>
-      
       <para>Each NameChangeRequest must of course include the fully qualified
       domain name whose DNS entries are to be affected.  kea-dhcp6 can be
       configured to supply a portion or all of that name based upon what it
@@ -2458,7 +2415,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="dhcp6-dhcp4o6-config"><info><title>DHCPv4-over-DHCPv6: DHCPv6 Side</title></info>
-      
       <para>
       The support of DHCPv4-over-DHCPv6 transport is described in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7341">RFC 7341</link>
@@ -2548,8 +2504,6 @@ should include options from the isc option space:
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
   <section xml:id="host-reservation-v6"><info><title>Host Reservation in DHCPv6</title></info>
-    
-
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve specific, static IPv6
     address or/and prefix for exclusive use by a given client (host) ‐ returning
@@ -2663,8 +2617,6 @@ should include options from the isc option space:
     additional check incurs additional overhead.</para>
 
     <section xml:id="reservation6-types"><info><title>Address/Prefix Reservation Types</title></info>
-      
-
       <para>In a typical scenario there is an IPv6 subnet defined with a certain
       part of it dedicated for dynamic address allocation by the DHCPv6
       server. There may be an additional address space defined for prefix
@@ -2684,7 +2636,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="reservation6-conflict"><info><title>Conflicts in DHCPv6 Reservations</title></info>
-      
       <para>As reservations and lease information are stored separately,
       conflicts may arise. Consider the following series of events. The server
       has configured the dynamic pool of addresses from the range of 2001:db8::10
@@ -2733,7 +2684,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="reservation6-hostname"><info><title>Reserving a Hostname</title></info>
-      
       <para>When the reservation for the client includes the <command>hostname</command>,
       the server will assign this hostname to the client and send
       it back in the Client FQDN, if the client sent the FQDN option to the
@@ -2794,7 +2744,6 @@ should include options from the isc option space:
 </section>
 
     <section xml:id="reservation6-options"><info><title>Including Specific DHCPv6 Options in Reservations</title></info>
-      
       <para>Kea 1.1.0 introduced the ability to specify options on a
       per host basis. The options follow the same rules as any other
       options. These can be standard options (see <xref linkend="dhcp6-std-options"/>), custom options (see <xref linkend="dhcp6-custom-options"/>) or vendor specific options
@@ -2847,7 +2796,6 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="reservation6-client-classes"><info><title>Reserving Client Classes in DHCPv6</title></info>
-      
       <para>The <xref linkend="classification-using-expressions"/> explains how
       to configure the server to assign classes to a client based on the content
       of the options that this client sends to the server. Host reservations
@@ -2894,17 +2842,18 @@ should include options from the isc option space:
  }
 
 </screen>
-    <para>Static class assignments, as shown above, can be used in conjuction
+    <para>Static class assignments, as shown above, can be used in conjunction
     with classification using expressions.</para>
     </section>
 
-    <section xml:id="reservations6-mysql-pgsql"><info><title>Storing Host Reservations in MySQL or PostgreSQL</title></info>
-      
-
+    <section xml:id="reservations6-mysql-pgsql-cql"><info><title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title></info>
       <para>
-        It is possible to store host reservations in MySQL or PostgreSQL. See <xref linkend="hosts6-storage"/> for information on how to configure Kea to use
+        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        <xref linkend="hosts6-storage"/> for information on how to configure Kea to use
         reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
-        tools for managing reservations in a database. The Kea wiki <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri> provides detailed
+        tools for managing reservations in a database. The Kea wiki
+        <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri>
+        provides detailed
         information and examples of how reservations can be inserted into the
         database.
       </para>
@@ -2914,14 +2863,11 @@ should include options from the isc option space:
     </section>
 
     <section xml:id="reservations6-cql"><info><title>Storing Host Reservations in CQL (Cassandra)</title></info>
-      
       <para>Kea currently does not support storing reservations in
       Cassandra (CQL).</para>
     </section>
 
     <section xml:id="reservations6-tuning"><info><title>Fine Tuning DHCPv6 Host Reservation</title></info>
-      
-
       <para>The host reservation capability introduces additional restrictions for the
       allocation engine (the component of Kea that selects an address for a client)
       during lease selection and renewal. In particular, three
@@ -3035,7 +2981,6 @@ If not specified, the default value is:
   <!-- end of host reservations section -->
 
     <section xml:id="dhcp6-serverid"><info><title>Server Identifier in DHCPv6</title></info>
-      
       <para>The DHCPv6 protocol uses a "server identifier" (also known
       as a DUID) for clients to be able to discriminate between several
       servers present on the same link.
@@ -3269,7 +3214,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="stateless-dhcp6"><info><title>Stateless DHCPv6 (Information-Request Message)</title></info>
-      
       <para>Typically DHCPv6 is used to assign both addresses and options. These
       assignments (leases) have state that changes over time, hence
       their name, stateful. DHCPv6 also supports a stateless mode,
@@ -3314,7 +3258,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-rfc7550"><info><title>Support for RFC 7550</title></info>
-      
       <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>
       introduced some changes to the DHCPv6 protocol to resolve a few issues
       with the coexistence of multiple stateful options in the messages sent
@@ -3361,7 +3304,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-relay-override"><info><title>Using Specific Relay Agent for a Subnet</title></info>
-      
       <para>
         The relay has to have an interface connected to the link on which
         the clients are being configured. Typically the relay has a global IPv6
@@ -3411,7 +3353,6 @@ If not specified, the default value is:
     </section>
 
       <section xml:id="dhcp6-client-class-relay"><info><title>Segregating IPv6 Clients in a Cable Network</title></info>
-        
         <para>
           In certain cases, it is useful to mix relay address information,
           introduced in <xref linkend="dhcp6-relay-override"/> with client
@@ -3460,7 +3401,6 @@ If not specified, the default value is:
       </section>
 
     <section xml:id="mac-in-dhcpv6"><info><title>MAC/Hardware Addresses in DHCPv6</title></info>
-      
       <para>MAC/hardware addresses are available in DHCPv4 messages
       from the clients and administrators
       frequently use that information to perform certain tasks, like per host
@@ -3597,8 +3537,6 @@ If not specified, the default value is:
   </section>
 
     <section xml:id="dhcp6-decline"><info><title>Duplicate Addresses (DECLINE Support)</title></info>
-      
-
       <para>The DHCPv6 server is configured with a certain pool of
       addresses that it is expected to hand out to the DHCPv6 clients.
       It is assumed that the server is authoritative and has complete
@@ -3669,7 +3607,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-stats"><info><title>Statistics in the DHCPv6 Server</title></info>
-      
       <note>
         <para>This section describes DHCPv6-specific statistics. For a general
         overview and usage of statistics, see <xref linkend="stats"/>.</para>
@@ -3679,7 +3616,6 @@ If not specified, the default value is:
         The DHCPv6 server supports the following statistics:
       </para>
         <table frame="all" xml:id="dhcp6-statistics"><info><title>DHCPv6 Statistics</title></info>
-          
           <tgroup cols="3">
           <colspec colname="statistic" align="center"/>
           <colspec colname="type" align="center"/>
@@ -4023,7 +3959,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-ctrl-channel"><info><title>Management API for the DHCPv6 Server</title></info>
-      
       <para>
         The management API allows the issuing of specific
         management commands, such as statistics retrieval, reconfiguration or shutdown.
@@ -4072,7 +4007,6 @@ If not specified, the default value is:
 
 
       <section><info><title>User context in IPv6 pools</title></info>
-        
         <para>
           Kea allows loading hook libraries that sometimes could benefit from
           additional parameters. If such a parameter is specific to the whole
@@ -4130,7 +4064,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-std"><info><title>Supported DHCPv6 Standards</title></info>
-      
       <para>The following standards are currently
       supported:</para>
       <itemizedlist>
@@ -4210,7 +4143,6 @@ If not specified, the default value is:
     </section>
 
     <section xml:id="dhcp6-limit"><info><title>DHCPv6 Server Limitations</title></info>
-      
       <para> These are the current limitations of the DHCPv6 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented

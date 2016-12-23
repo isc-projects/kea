@@ -1,10 +1,7 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="stats"><info><title>Statistics</title></info>
-  
 
   <section><info><title>Statistics Overview</title></info>
-    
-
     <para>Both Kea DHCP servers support statistics gathering.
     A working DHCP server encounters various events
     that can cause certain statistics to be collected. For
@@ -60,7 +57,6 @@
   </section>
 
   <section xml:id="stats-lifecycle"><info><title>Statistics Lifecycle</title></info>
-    
     <para>
       It is useful to understand how the Statistics Manager module works. When
       the server starts operation, the manager is empty and does not have any
@@ -94,7 +90,6 @@
   </section>
 
   <section xml:id="command-stats"><info><title>Commands for Manipulating Statistics</title></info>
-    
     <para>
       There are several commands defined that can be used for accessing (-get),
       resetting to zero or neutral value (-reset) or even removing a statistic
@@ -115,8 +110,6 @@
     </para></note>
 
     <section xml:id="command-statistic-get"><info><title>statistic-get command</title></info>
-      
-
       <para>
         <emphasis>statistic-get</emphasis> command retrieves a single
         statistic. It takes a single string parameter called
@@ -141,8 +134,6 @@
     </section> <!-- end of command-statistic-get -->
 
     <section xml:id="command-statistic-reset"><info><title>statistic-reset command</title></info>
-      
-
       <para>
         <emphasis>statistic-reset</emphasis> command sets the specified statistic
         to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
@@ -168,8 +159,6 @@
     </section> <!-- end of command-statistic-reset -->
 
     <section xml:id="command-statistic-remove"><info><title>statistic-remove command</title></info>
-      
-
       <para>
         <emphasis>statistic-remove</emphasis> command attempts to delete a single
         statistic. It takes a single string parameter called
@@ -194,8 +183,6 @@
     </section> <!-- end of command-statistic-reset -->
 
     <section xml:id="command-statistic-get-all"><info><title>statistic-get-all command</title></info>
-      
-
       <para>
         <emphasis>statistic-get-all</emphasis> command retrieves all statistics
         recorded. An example command may look like this:
@@ -214,8 +201,6 @@
     </section> <!-- end of command-statistic-get-all -->
 
     <section xml:id="command-statistic-reset-all"><info><title>statistic-reset-all command</title></info>
-      
-
       <para>
         <emphasis>statistic-reset</emphasis> command sets all statistics to
         their neutral values: 0 for integer, 0.0 for float, 0h0m0s0us for time
@@ -236,8 +221,6 @@
     </section> <!-- end of command-statistic-reset-all -->
 
     <section xml:id="command-statistic-remove-all"><info><title>statistic-remove-all command</title></info>
-      
-
       <para>
         <emphasis>statistic-remove-all</emphasis> command attempts to delete all
         statistics. An example command may look like this:

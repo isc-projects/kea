@@ -1,6 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="ctrl-channel"><info><title>Management API</title></info>
-    
 
     <para>A classic approach to daemon configuration assumes that
     the server's configuration is stored in configuration files
@@ -27,7 +26,6 @@
     </para>
 
     <section xml:id="ctrl-channel-syntax"><info><title>Data Syntax</title></info>
-    
     <para>Communication over the control channel is conducted using JSON
     structures. If configured, Kea will open a socket and listen
     for incoming connections. A process connecting to this socket
@@ -74,8 +72,6 @@
     </section>
 
     <section xml:id="ctrl-channel-client"><info><title>Using the Control Channel</title></info>
-    
-
     <para>Kea does not currently provide a client for using the control channel.  The primary
     reason for this is the expectation is that the entity using the control channel
     is typically an IPAM or similar network management/monitoring software which
@@ -96,17 +92,14 @@ where <command>/path/to/the/kea/socket</command> is the path specified in the
 configuration file. Text passed to <command>socat</command>
 will be sent to Kea and the responses received from Kea printed to standard output.</para>
 
-    <para>It is also easy to open UNIX socket programmatically. An example of
+    <para>It is also easy to open UNIX socket programatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 
     </section>
 
     <section xml:id="commands-common"><info><title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title></info>
-      
-
       <section xml:id="command-leases-reclaim"><info><title>leases-reclaim</title></info>
-        
         <para>
           <emphasis>leases-reclaim</emphasis> command instructs the server to
           reclaim all expired leases immediately. The command has the following
@@ -133,8 +126,6 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       </section>
 
       <section xml:id="command-list-commands"><info><title>list-commands</title></info>
-      
-
       <para>
 	The <emphasis>list-commands</emphasis> command retrieves a list of all
 	commands supported by the server. It does not take any arguments.
@@ -154,8 +145,6 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     </section> <!-- end of command-list-commands -->
 
     <section xml:id="command-shutdown"><info><title>shutdown</title></info>
-      
-
       <para>
 	The <emphasis>shutdown</emphasis> command instructs the server to initiate
 	its shutdown procedure. It is the equivalent of sending a SIGTERM signal
