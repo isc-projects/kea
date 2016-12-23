@@ -16,7 +16,7 @@ namespace http {
 /// @brief Specifies an interface for classes creating HTTP responses
 /// from HTTP requests.
 ///
-/// HTTP is designed to carry various types of the content. Most commonly
+/// HTTP is designed to carry various content types. Most commonly
 /// this is text/html. In Kea, the application/json content type is used
 /// to carry control commands in JSON format. The libkea-http library is
 /// meant to be generic and provide means for transferring different types
@@ -67,7 +67,7 @@ public:
 
 protected:
 
-    /// @brief Creates implentation specific HTTP 400 response.
+    /// @brief Creates implementation specific HTTP 400 response.
     ///
     /// @param request Pointer to an object representing HTTP request.
     /// @return Pointer to an object representing HTTP 400 response.
