@@ -27,6 +27,7 @@ libkea_asiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libkea_asiolink_la_SOURCES += io_error.h
 libkea_asiolink_la_SOURCES += io_service.h io_service.cc
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
+libkea_asiolink_la_SOURCES += tcp_acceptor.h
 libkea_asiolink_la_SOURCES += tcp_endpoint.h
 libkea_asiolink_la_SOURCES += tcp_socket.h
 libkea_asiolink_la_SOURCES += udp_endpoint.h
