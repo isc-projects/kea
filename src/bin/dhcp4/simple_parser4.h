@@ -12,6 +12,12 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief SimpleParser specialized for DHCPv4
+///
+/// This class is a @ref isc::data::SimpleParser dedicated to DHCPv4 parser.
+/// In particular, it contains all the default values and names of the
+/// parameters that are to be derived (inherited) between scopes.
+/// For the actual values, see @file simple_parser4.cc
 class SimpleParser4 : public isc::data::SimpleParser {
 public:
     /// @brief Sets all defaults for DHCPv4 configuration
@@ -22,6 +28,7 @@ public:
     /// @return number of default values added
     static size_t setAllDefaults(isc::data::ElementPtr global);
 
+    // see simple_parser4.cc for comments for those parameters
     static const isc::data::SimpleDefaults OPTION4_DEF_DEFAULTS;
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL4_DEFAULTS;
