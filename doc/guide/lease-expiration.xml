@@ -317,7 +317,6 @@
     <command>expired-leases-processing</command> map may be omitted entirely
     in the configuration, in which case the default values are used for all
     parameters listed above.</para>
-
   </section>
 
   <section xml:id="leases-reclamation-using-command"><info><title>Reclaiming Expired Leases with Command</title></info>

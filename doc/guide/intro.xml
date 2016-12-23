@@ -21,8 +21,8 @@
     <section><info><title>Supported Platforms</title></info>
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
-	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.1.0 builds have been tested on (in no
+        CentOS, Fedora and FreeBSD systems. It is also likely to work on many
+        other platforms: Kea 1.1.0 builds have been tested on (in no
         particular order) Red Hat Enteprise Linux 6.4, Debian GNU/Linux 7,
         Ubuntu 12.04, Ubuntu 14.04, Ubuntu 16.04, Fedora Linux 19,
         Fedora 20, Fedora 22, CentOS Linux 7, NetBSD 6, FreeBSD 10.3,
@@ -64,7 +64,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a MySQL database, Kea requires MySQL
+    In order to store lease information in a MySQL database, Kea requires MySQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without MySQL support.
             </simpara>
@@ -72,7 +72,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
+    In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without PostgreSQL support.
             </simpara>
@@ -80,7 +80,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a Cassandra  database (CQL), Kea
+    In order to store lease information in a Cassandra  database (CQL), Kea
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>
@@ -162,7 +162,6 @@
 
         </itemizedlist>
       </para>
-
     </section>
 
     <para>

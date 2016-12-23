@@ -9,7 +9,6 @@
 
     <section xml:id="quick-start"><info><title>Quick Start Guide for DHCPv4 and DHCPv6 Services</title></info>
       <orderedlist inheritnum="ignore" continuation="restarts">
-
         <listitem>
           <simpara>
             Install required run-time and build dependencies. See <xref linkend="build-requirements"/> for details.
