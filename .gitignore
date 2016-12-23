@@ -4,7 +4,6 @@
 *.la
 *.lo
 *.o
-*.dirstamp
 .deps/
 .libs/
 __pycache__/
