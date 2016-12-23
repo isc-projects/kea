@@ -85,7 +85,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
     // If relayed message has been received, try to match the giaddr with the
     // relay address specified for a subnet. It is also possible that the relay
-    // address will not match with any of the relay addresses accross all
+    // address will not match with any of the relay addresses across all
     // subnets, but we need to verify that for all subnets before we can try
     // to use the giaddr to match with the subnet prefix.
     if (!selector.giaddr_.isV4Zero()) {

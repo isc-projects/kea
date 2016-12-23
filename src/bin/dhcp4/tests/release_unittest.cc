@@ -171,7 +171,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     if (expected_result == SHOULD_PASS) {
         EXPECT_FALSE(lease);
 
-        // The removal succeded, so the assigned-addresses statistic should
+        // The removal succeeded, so the assigned-addresses statistic should
         // be decreased by one
         EXPECT_EQ(before, after + 1);
     } else {

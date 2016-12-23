@@ -89,7 +89,7 @@ LoggingInfo::toSpec() const {
 
     LoggerSpecification spec(name_, severity_, debuglevel_);
 
-    // Go over logger destinations and create output options accordinly.
+    // Go over logger destinations and create output options accordingly.
     for (std::vector<LoggingDestination>::const_iterator dest =
              destinations_.begin(); dest != destinations_.end(); ++dest) {
 

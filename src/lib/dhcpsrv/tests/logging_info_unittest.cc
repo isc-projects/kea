@@ -120,7 +120,7 @@ TEST_F(LoggingInfoTest, equalityOperators) {
     EXPECT_TRUE(info1 == info2);
     EXPECT_FALSE(info1 != info2);
 
-    // Create two different desinations.
+    // Create two different destinations.
     LoggingDestination dest1;
     LoggingDestination dest2;
     dest1.output_ = "foo";

@@ -66,9 +66,9 @@ public:
     /// This is invoked by the controller after command line arguments but
     /// PRIOR to configuration reception.  The base class provides this method
     /// as a place to perform any derivation-specific initialization steps
-    /// that are inapppropriate for the constructor but necessary prior to
+    /// that are inappropriate for the constructor but necessary prior to
     /// launch.  So far, no such steps have been identified for D2, so its
-    /// implementantion is empty but required.
+    /// implementation is empty but required.
     ///
     /// @throw DProcessBaseError if the initialization fails.
     virtual void init();

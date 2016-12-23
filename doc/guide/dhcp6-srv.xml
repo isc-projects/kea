@@ -1203,7 +1203,7 @@ temporarily override a list of interface names and listen on all interfaces.
         S46 container options group rules and optional port parameters
         for a specified domain. There are three container options specified
         in the "dhcp6" (top level) option space: MAP-E Container option,
-        MAP-T Container option and S46 Lieghtweight 4over6 Container option.
+        MAP-T Container option and S46 Lightweight 4over6 Container option.
         These options only contain encapsulated options specified below.
         They do not include any data fields.
       </para>
@@ -2904,7 +2904,7 @@ should include options from the isc option space:
  }
 
 </screen>
-    <para>Static class assignments, as shown above, can be used in conjuction
+    <para>Static class assignments, as shown above, can be used in conjunction
     with classification using expressions.</para>
     </section>
 

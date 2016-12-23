@@ -86,7 +86,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -109,7 +109,7 @@ public:
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an MultipleRecords exception.
@@ -128,7 +128,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -160,7 +160,7 @@ public:
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an MultipleRecords exception.
@@ -179,7 +179,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///

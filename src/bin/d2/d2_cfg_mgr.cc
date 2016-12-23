@@ -80,7 +80,7 @@ D2CfgMgr::forwardUpdatesEnabled() {
 
 bool
 D2CfgMgr::reverseUpdatesEnabled() {
-    // Reverse updates are not enabled if no revese servers are defined.
+    // Reverse updates are not enabled if no reverse servers are defined.
     return (getD2CfgContext()->getReverseMgr()->size() > 0);
 }
 

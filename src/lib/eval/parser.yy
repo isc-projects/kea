@@ -35,7 +35,7 @@ using namespace isc::eval;
 }
 
 %define api.token.prefix {TOKEN_}
-// Tokens in an order which makes sense and related to the intented use.
+// Tokens in an order which makes sense and related to the intended use.
 %token
   END  0  "end of file"
   LPAREN  "("

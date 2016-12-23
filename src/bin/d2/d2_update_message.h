@@ -56,7 +56,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Exception indicating that a signed, inbound message failed to verfiy
+/// @brief Exception indicating that a signed, inbound message failed to verify
 ///
 /// This exception is thrown when TSIG verification of a DNS server's response
 /// fails.

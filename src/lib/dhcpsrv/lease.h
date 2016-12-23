@@ -37,7 +37,7 @@ struct Lease {
 
     /// @brief returns text representation of a lease type
     /// @param type lease or pool type to be converted
-    /// @return text decription
+    /// @return text description
     static std::string typeToText(Type type);
 
     /// @name Common lease states constants.
@@ -144,7 +144,7 @@ struct Lease {
     /// @brief Holds the lease state(s).
     ///
     /// This is the field that holds the lease state(s). Typically, a
-    /// lease remains in a single states. However, it is posible to
+    /// lease remains in a single states. However, it is possible to
     /// define a value for state which indicates that the lease remains
     /// in multiple logical states.
     ///
@@ -390,7 +390,7 @@ struct Lease4 : public Lease {
 
     /// @brief Convert lease to printable form
     ///
-    /// @return Textual represenation of lease data
+    /// @return Textual representation of lease data
     virtual std::string toText() const;
 
     /// @brief Sets IPv4 lease to declined state.
@@ -548,7 +548,7 @@ typedef std::vector<Lease6Ptr> Lease6Collection;
 /// Dumps the output of Lease::toText to the given stream.
 /// @param os output stream to which the output is
 /// @param lease reference to Lease object to dump
-/// @return a reference to the output stream paramater
+/// @return a reference to the output stream parameter
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease);
 

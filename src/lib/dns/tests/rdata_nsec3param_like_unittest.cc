@@ -244,7 +244,7 @@ TYPED_TEST(NSEC3PARAMLikeTest, toWire) {
 }
 
 TYPED_TEST(NSEC3PARAMLikeTest, compare) {
-    // test RDATAs, sorted in the ascendent order.
+    // test RDATAs, sorted in the ascending order.
     this->compare_set.push_back(this->fromText("0 0 0 D399EAAB" +
                                                this->getCommonText()));
     this->compare_set.push_back(this->fromText("1 0 0 D399EAAB" +

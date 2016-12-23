@@ -1566,7 +1566,7 @@ GenericLeaseMgrTest::testRecreateLease4() {
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
-    // Check that the lease has been successfuly added.
+    // Check that the lease has been successfully added.
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[0]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(lease, l_returned);
@@ -1606,7 +1606,7 @@ GenericLeaseMgrTest::testRecreateLease6() {
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
-    // Check that the lease has been successfuly added.
+    // Check that the lease has been successfully added.
     Lease6Ptr l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(lease, l_returned);
@@ -2535,7 +2535,7 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     // Now let's add leases to subnet 2.
     subnet_id = 2;
 
-    // Insert one delined lease.
+    // Insert one declined lease.
     makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
 
     // Update the expected stats.

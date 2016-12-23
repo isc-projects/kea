@@ -37,7 +37,7 @@ that your code compiles. This may seem obvious, but there's more to
 it. You have surely checked that it compiles on your system, but Kea
 is portable software. Besides Linux, it is compiled and used on
 relatively uncommon systems like OpenBSD. Will your code
-compile and work there? What about endianess? It is likely that you used
+compile and work there? What about endianness? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
 system specific build notes (http://kea.isc.org/wiki/Install).

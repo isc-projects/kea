@@ -46,7 +46,7 @@ public:
     // received. This allows a single DNSClientImpl instance to be used for
     // multiple, sequential IOFetch calls. (@todo Trac# 3286 has been opened
     // against dns::Message::fromWire.  Should the behavior of fromWire change
-    // the behavior here with could be rexamined).
+    // the behavior here with could be reexamined).
     D2UpdateMessagePtr& response_;
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.

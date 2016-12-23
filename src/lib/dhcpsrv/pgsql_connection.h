@@ -60,7 +60,7 @@ const size_t OID_TIMESTAMP = 1114;
 
 //@}
 
-/// @brief RAII wrapper for Posgtresql Result sets
+/// @brief RAII wrapper for PostgreSQL Result sets
 ///
 /// When a Postgresql statement is executed, the results are returned
 /// in pointer allocated structure, PGresult*. Data and status information

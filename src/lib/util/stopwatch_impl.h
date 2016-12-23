@@ -93,7 +93,7 @@ protected:
     ///
     /// This method is used internally by the @c StopwatchImpl class and
     /// its derivations. This class simply returns the value of
-    /// @c boost::posix_time::micrisec_clock::univeral_time(), which is
+    /// @c boost::posix_time::microsec_clock::univeral_time(), which is
     /// a current timestamp. The derivations may replace it with the
     /// custom implementations. The typical use case is for the unit tests
     /// to customize the behavior of this function to return well known

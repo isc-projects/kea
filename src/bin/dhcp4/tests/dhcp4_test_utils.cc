@@ -663,7 +663,7 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
     ObservationPtr tested_stat = mgr.getObservation(stat_name);
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_rcvd);
     ASSERT_TRUE(tested_stat);
 

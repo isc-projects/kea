@@ -262,7 +262,7 @@ TEST_F(DaemonTest, PIDFileCleanup) {
 }
 
 // Checks that configureLogger method is behaving properly.
-// More dedicated tests are availablef for LogConfigParser class.
+// More dedicated tests are available for LogConfigParser class.
 // See logger_unittest.cc
 TEST_F(DaemonTest, parsingConsoleOutput) {
     CfgMgr::instance().setVerbose(false);

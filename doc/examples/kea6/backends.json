@@ -26,7 +26,7 @@
 
 # 2. MySQL backend. Leases will be stored in MySQL database. Make sure it
 # is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type and name. If other parameters are not specified,
 # Kea will assume the database is avaiable on localhost, that user and
 # password is not necessary to connect and that timeout is 5 seconds.
@@ -42,7 +42,7 @@
 
 # 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
 # sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type and name. If other parameters are not specified,
 # Kea will assume the database is avaiable on localhost, that user and
 # password is not necessary to connect and that timeout is 5 seconds.
@@ -57,7 +57,7 @@
 
 # 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
 # sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type, keyspace and contact_points. At least one contact point
 # must be specified, but more than one is required for redundancy. Make sure
 # you specify the contact points without spaces. Kea must be compiled with

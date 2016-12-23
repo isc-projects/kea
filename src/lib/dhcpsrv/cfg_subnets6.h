@@ -129,7 +129,7 @@ public:
     /// This method updates statistics that are affected by the newly committed
     /// configuration. In particular, it updates the number of available addresses
     /// and prefixes in each subnet. Other statistics may be added in the future. In
-    /// general, these are statistics that are dependant only on configuration, so
+    /// general, these are statistics that are dependent only on configuration, so
     /// they are not expected to change until the next reconfiguration event.
     void updateStatistics();
 

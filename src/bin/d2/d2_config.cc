@@ -130,7 +130,7 @@ operator<<(std::ostream& os, const D2Params& config) {
 }
 
 // *********************** TSIGKeyInfo  *************************
-// Note these values match correpsonding values for Bind9's
+// Note these values match corresponding values for Bind9's
 // dnssec-keygen
 const char* TSIGKeyInfo::HMAC_MD5_STR = "HMAC-MD5";
 const char* TSIGKeyInfo::HMAC_SHA1_STR = "HMAC-SHA1";

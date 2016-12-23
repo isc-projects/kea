@@ -137,7 +137,7 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
     EXPECT_EQ("isc", opt_def_copy2.getEncapsulatedSpace());
 }
 
-// This test checks that two option definitions may be compared fot equality.
+// This test checks that two option definitions may be compared for equality.
 TEST_F(OptionDefinitionTest, equality) {
     // Equal definitions.
     EXPECT_TRUE(OptionDefinition("option-foo", 5, "uint16", false)
@@ -741,7 +741,7 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
 
 // The purpose of this test is to verify that definition can be created
 // for option that comprises record of data. In this particular test
-// the IAADDR option is used. The data for the option is speicifed as
+// the IAADDR option is used. The data for the option is specified as
 // a vector of strings. Each string carries the data for the corresponding
 // data field.
 TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {

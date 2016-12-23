@@ -119,7 +119,7 @@ TEST(IfaceTest, countActive4) {
 /// TestPktFilter::receive will never be called. The appropriate extension
 /// to IfaceMgr is planned along with implementation of other "Packet
 /// Filters" such as these supporting Linux Packet Filtering and
-/// Berkley Packet Filtering.
+/// Berkeley Packet Filtering.
 class TestPktFilter : public PktFilter {
 public:
 
@@ -210,7 +210,7 @@ public:
     /// @brief Returns the collection of existing interfaces.
     IfaceCollection& getIfacesLst() { return (ifaces_); }
 
-    /// @brief This function creates fictitious interfaces with fictious
+    /// @brief This function creates fictitious interfaces with fictitious
     /// addresses.
     ///
     /// These interfaces can be used in tests that don't actually try
@@ -390,7 +390,7 @@ public:
 #endif
     }
 
-    // Get ther number of IPv4 or IPv6 sockets on the loopback interface
+    // Get the number of IPv4 or IPv6 sockets on the loopback interface
     int getOpenSocketsCount(const Iface& iface, uint16_t family) const {
         // Get all sockets.
         Iface::SocketCollection sockets = iface.getSockets();
@@ -833,7 +833,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
         cout << "Local loopback interface not found. Skipping test. " << endl;
         return;
     }
-    // Once sockets have been sucessfully opened, they are supposed to
+    // Once sockets have been successfully opened, they are supposed to
     // be on the list. Here we start to test if all expected sockets
     // are on the list and no other (unexpected) socket is there.
     Iface::SocketCollection sockets = iface_ptr->getSockets();
@@ -874,7 +874,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     sockets = iface_ptr->getSockets();
     ASSERT_EQ(0, sockets.size());
 
-    // We are still in posession of socket descriptors that we created
+    // We are still in possession of socket descriptors that we created
     // on the beginning of this test. We can use them to check whether
     // closeSockets() only removed them from the list or they have been
     // really closed.
@@ -1209,7 +1209,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // skip checking source port of sent address.
 
     // Close the socket. Further we will test if errors are reported
-    // properly on attempt to use closed soscket.
+    // properly on attempt to use closed socket.
     close(socket1);
 
 // Warning: kernel bug on FreeBSD. The following code checks that attempt to
@@ -1226,7 +1226,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 //
 // @todo: This part of the test is currently disabled on all BSD systems as it was
 // the quick fix. We need a more elegant (config-based) solution to disable
-// this check on affected systems only. The ticket has been submited for this
+// this check on affected systems only. The ticket has been submitted for this
 // work: http://kea.isc.org/ticket/2971
 #ifndef OS_BSD
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
@@ -1399,11 +1399,11 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
 
 // Note: This test will only run on non-Linux and non-BSD systems.
 // This test checks whether it is possible to use IfaceMgr to figure
-// out which Pakcket Filter object should be used when direct responses
+// out which Packet Filter object should be used when direct responses
 // to hosts, having no address assigned are desired or not desired.
 // Since direct responses aren't supported on systems other than Linux
 // and BSD the function under test should always set object of
-// PktFilterInet type as current Packet Filter. This object does not 
+// PktFilterInet type as current Packet Filter. This object does not
 //support direct responses. Once implementation is added on systems
 // other than BSD and Linux the OS specific version of the test will
 // be removed.
@@ -1599,7 +1599,7 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     // open and bound to the same address and port. An attempt to open
     // another socket and bind to this address and port should fail.
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, error_handler));
-    // We expect that an error occured when we tried to open a socket on
+    // We expect that an error occurred when we tried to open a socket on
     // eth0, but the socket on eth1 should open just fine.
     EXPECT_EQ(1, errors_count_);
 
@@ -1712,7 +1712,7 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
 
     // Check that the number of sockets is correct on each interface.
     checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
-    // The thrid parameter specifies that the number of link-local
+    // The third parameter specifies that the number of link-local
     // addresses for eth0 is equal to 0.
     checkSocketsCount6(*ifacemgr.getIface("eth0"), 0, 0);
     checkSocketsCount6(*ifacemgr.getIface("eth1"), 0, 1);
@@ -1731,7 +1731,7 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
 
 }
 
-// This test checks that socket is open on the non-muticast-capable
+// This test checks that socket is open on the non-multicast-capable
 // interface. This socket simply doesn't join multicast group.
 TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
     NakedIfaceMgr ifacemgr;
@@ -2014,7 +2014,7 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     // opened on eth0 and an attempt to open another socket and bind to
     // the same address and port should fail.
     ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
-    // We expect that an error occured when we tried to open a socket on
+    // We expect that an error occurred when we tried to open a socket on
     // eth0, but the socket on eth1 should open just fine.
     EXPECT_EQ(1, errors_count_);
 
@@ -2387,7 +2387,7 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     NakedIfaceMgr ifacemgr;
 
     // We are using struct ifaddrs as it is the only good portable one
-    // ifreq and ioctls are far from portabe. For BSD ifreq::ifa_flags field
+    // ifreq and ioctls are far from portable. For BSD ifreq::ifa_flags field
     // is only a short which, nowadays, can be negative
     struct ifaddrs *iflist = 0, *ifptr = 0;
     ASSERT_EQ(0, getifaddrs(&iflist))

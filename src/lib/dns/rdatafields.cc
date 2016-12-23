@@ -98,7 +98,7 @@ public:
         extendData();
         return (fields_);
     }
-    // We use generict write* methods, with the exception of writeName.
+    // We use generic write* methods, with the exception of writeName.
     // So new data can arrive without us knowing it, this considers all new
     // data to be just data and extends the fields to take it into account.
     size_t last_data_pos_;

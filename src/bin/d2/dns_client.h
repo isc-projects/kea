@@ -85,7 +85,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param response_placeholder Messge object pointer which will be updated
+    /// @param response_placeholder Message object pointer which will be updated
     /// with dynamically allocated object holding the DNS server's response.
     /// @param callback Pointer to an object implementing @c DNSClient::Callback
     /// class. This object will be called when DNS message exchange completes or

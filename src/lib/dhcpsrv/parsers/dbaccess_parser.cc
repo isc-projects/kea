@@ -96,7 +96,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                   << " (" << config_value->getPosition() << ")");
     }
 
-    // c. Check that the lfc-interval is a number and it is within a resonable
+    // c. Check that the lfc-interval is a number and it is within a reasonable
     // range.
     if ((lfc_interval < 0) || (lfc_interval > std::numeric_limits<uint32_t>::max())) {
         isc_throw(BadValue, "lfc-interval value: " << lfc_interval
@@ -104,7 +104,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
                   << std::numeric_limits<uint32_t>::max());
     }
 
-    // d. Check that the timeout is a number and it is within a resonable
+    // d. Check that the timeout is a number and it is within a reasonable
     // range.
     if ((timeout < 0) || (timeout > std::numeric_limits<uint32_t>::max())) {
         isc_throw(BadValue, "timeout value: " << timeout

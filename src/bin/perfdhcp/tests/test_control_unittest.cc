@@ -32,7 +32,7 @@ using namespace isc::perfdhcp;
 
 /// \brief Test Control class with protected members made public.
 ///
-/// This class makes protected TestControl class'es member public
+/// This class makes protected TestControl class's members public
 /// to allow unit testing.
 class NakedTestControl: public TestControl {
 public:

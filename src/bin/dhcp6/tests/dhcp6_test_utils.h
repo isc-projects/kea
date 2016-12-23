@@ -376,7 +376,7 @@ public:
 // dependencies, we use forward declaration here.
 class Dhcp6Client;
 
-// Provides suport for tests against a preconfigured subnet6
+// Provides support for tests against a preconfigured subnet6
 // extends upon NakedDhcp6SrvTest
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:

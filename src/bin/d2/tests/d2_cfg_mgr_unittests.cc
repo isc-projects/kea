@@ -65,7 +65,7 @@ public:
 
     /// @brief Build JSON configuration string for a D2Params element
     ///
-    /// Constructs a JSON string for "params" element using replacable
+    /// Constructs a JSON string for "params" element using replaceable
     /// parameters.
     ///
     /// @param ip_address string to insert as ip_address value
@@ -509,7 +509,7 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
 /// -# ip_address cannot be "0.0.0.0"
 /// -# ip_address cannot be "::"
 /// -# port cannot be 0
-/// -# dns_server_timeout cannat be 0
+/// -# dns_server_timeout cannot be 0
 /// -# ncr_protocol must be valid
 /// -# ncr_format must be valid
 TEST_F(D2CfgMgrTest, invalidEntry) {
@@ -940,7 +940,7 @@ TEST_F(ConfigParseTest, validServerList) {
     isc::dhcp::ParserPtr parser;
     ASSERT_NO_THROW(parser.reset(new DnsServerInfoListParser("test", servers)));
 
-    // Verfiy that the list builds and commits without error.
+    // Verify that the list builds and commits without error.
     ASSERT_NO_THROW(parser->build(config_set_));
     ASSERT_NO_THROW(parser->commit());
 
@@ -1443,7 +1443,7 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
     EXPECT_EQ("tmark.org", match->getName());
 
-    // Verify that search is case insensisitive.
+    // Verify that search is case-insensitive.
     EXPECT_TRUE(cfg_mgr_->matchForward("TMARK.ORG", match));
     EXPECT_EQ("tmark.org", match->getName());
 

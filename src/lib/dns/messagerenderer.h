@@ -64,7 +64,7 @@ class LabelSequence;
 ///     implementation is really needed, we can make them virtual in future.
 ///     The only one that is virtual is writeName and it's because this
 ///     function is much more complicated, therefore there's a lot of space
-///     for different implementations or behaviours.
+///     for different implementations or different behavior.
 class AbstractMessageRenderer {
 public:
     /// \brief Compression mode constants.
@@ -390,6 +390,6 @@ private:
 }
 #endif // MESSAGERENDERER_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

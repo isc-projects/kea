@@ -77,7 +77,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type One of the supported identifier types.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -93,7 +93,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type One of the supported identifier types.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -181,7 +181,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -195,7 +195,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -249,7 +249,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -263,7 +263,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -340,7 +340,7 @@ private:
     /// @param identifier_type The type of the supplied identifier.
     /// @param identifier Pointer to a first byte of the identifier.
     /// @param identifier_len Length of the identifier.
-    /// @param [out] storage Container to which the retreived objects are
+    /// @param [out] storage Container to which the retrieved objects are
     /// appended.
     /// @tparam One of the @c ConstHostCollection of @c HostCollection.
     template<typename Storage>
@@ -421,7 +421,7 @@ private:
     /// @param subnet_id IPv4 or IPv6 subnet identifier.
     /// @param subnet6 A boolean flag which indicates if the subnet identifier
     /// points to a IPv4 (if false) or IPv6 subnet (if true).
-    /// @param identifier_type Indentifier type.
+    /// @param identifier_type Identifier type.
     /// @param identifier Pointer to a first byte of the buffer holding an
     /// identifier.
     /// @param identifier_len Identifier length.

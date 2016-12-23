@@ -391,7 +391,7 @@ public:
     /// true, the file will be opened and the internal pointer will be set
     /// to the end of file.
     ///
-    /// @param seek_to_end A boolean value which indicates if the intput and
+    /// @param seek_to_end A boolean value which indicates if the input and
     /// output file pointer should be set at the end of file.
     ///
     /// @throw CSVFileError when IO operation fails.

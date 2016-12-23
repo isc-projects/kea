@@ -128,7 +128,7 @@ D2UpdateMessage::fromWire(const void* received_data, size_t bytes_received,
     isc::util::InputBuffer received_data_buffer(received_data, bytes_received);
     message_.fromWire(received_data_buffer);
 
-    // If tsig_contex is not NULL, then we need to verify the message.
+    // If tsig_context is not NULL, then we need to verify the message.
     if (tsig_context) {
         TSIGError error = tsig_context->verify(message_.getTSIGRecord(),
                                                received_data, bytes_received);

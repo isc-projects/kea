@@ -109,7 +109,7 @@ public:
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
 
-    /// @name Modifiers and accesors for the configuration objects.
+    /// @name Modifiers and accessors for the configuration objects.
     ///
     /// @warning References to the objects returned by accessors are only
     /// valid during the lifetime of the @c SrvConfig object which
@@ -364,7 +364,7 @@ public:
         class_dictionary_ = dictionary;
     }
 
-    /// @brief Copies the currnet configuration to a new configuration.
+    /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
     /// an object passed as parameter. The configuration sequence is not
@@ -376,7 +376,7 @@ public:
     /// the default copy constructors can't be used. Implementing this
     /// requires quite a lot of time so this is left as is for now.
     /// The lack of ability to copy the entire configuration makes
-    /// revert function of the @c CfgMgr unsuable.
+    /// the revert function of the @c CfgMgr unusable.
     ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
@@ -481,7 +481,7 @@ public:
 
     /// @brief Returns DHCP4o6 IPC port
     ///
-    /// See @ref setDhcp4o6Port or brief discussion.                         
+    /// See @ref setDhcp4o6Port or brief discussion.
     /// @return value of DHCP4o6 IPC port
     uint32_t getDhcp4o6Port() {
         return (dhcp4o6_port_);

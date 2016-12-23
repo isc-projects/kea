@@ -91,7 +91,7 @@ public:
         : PgSqlExchange(HOST_COLUMNS + additional_columns_num) {
         // Set the column names for use by this class. This only comprises
         // names used by the PgSqlHostExchange class. Derived classes will
-        // need to set names for the columns they use.  Currenty these are
+        // need to set names for the columns they use.  Currently these are
         // only used for logging purposes.
         columns_[HOST_ID_COL] = "host_id";
         columns_[DHCP_IDENTIFIER_COL] = "dhcp_identifier";
@@ -418,7 +418,7 @@ private:
           most_recent_option_id_(0) {
         }
 
-        /// @brief Reintializes state information
+        /// @brief Reinitializes state information
         ///
         /// This function should be called prior to processing a fetched
         /// set of options.
@@ -689,8 +689,8 @@ public:
     ///
     /// The fetched row includes both host information and DHCP option
     /// information. Because the SELECT queries use one or more LEFT JOIN
-    /// clauses, the result set may contain duplicated host or options 
-    /// entries. This method detects duplicated information and discards such 
+    /// clauses, the result set may contain duplicated host or options
+    /// entries. This method detects duplicated information and discards such
     /// entries.
     ///
     /// @param [out] hosts Container holding parsed hosts and options.
@@ -901,7 +901,7 @@ public:
                       " IPv6 reservation");
         }
 
-        // If we have reservation id we havent' seen yet, retrive the
+        // If we have reservation id we havent' seen yet, retrieve the
         // the reservation, adding it to the current host
         uint64_t reservation_id = getReservationId(r, row);
         if (reservation_id && (reservation_id > most_recent_reservation_id_)) {
@@ -1164,7 +1164,7 @@ public:
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements.
-    /// It is assumed that the order is such that the indicies of statements
+    /// It is assumed that the order is such that the indices of statements
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
@@ -1277,7 +1277,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     /// @param stindex Statement index.
@@ -1517,7 +1517,7 @@ TaggedStatementArray tagged_statements = { {
 
     // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {11, 
+    {11,
      { OID_BYTEA, OID_INT2,
        OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR },

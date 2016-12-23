@@ -112,7 +112,7 @@ public:
     static bool callback_qry_options_copy_;
 };
 
-// For some reason intialization within a class makes the linker confused.
+// For some reason initialization within a class makes the linker confused.
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine6Test::addr_override_("2001:db8::abcd");
@@ -192,7 +192,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_FALSE(callback_fake_allocation_);
 
     // Check if all expected parameters are reported.  The order needs to be
-    // alphapbetical to match the order returned by
+    // alphabetical to match the order returned by
     // CallbackHandle::getAgrumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
@@ -358,7 +358,7 @@ public:
     static bool callback_qry_options_copy_;
 };
 
-// For some reason intialization within a class makes the linker confused.
+// For some reason initialization within a class makes the linker confused.
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine4Test::addr_override_("192.0.3.1");
@@ -440,7 +440,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     EXPECT_EQ(callback_fake_allocation_, false);
 
     // Check if all expected parameters are reported.  The order needs to be
-    // alphapbetical to match the order returned by
+    // alphabetical to match the order returned by
     // CallbackHandle::getAgrumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");

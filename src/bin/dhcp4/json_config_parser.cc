@@ -334,7 +334,7 @@ protected:
             subnet4->get4o6().enabled(true);
         }
 
-        // Try 4o6 specific paramter: 4o6-interface-id
+        // Try 4o6 specific parameter: 4o6-interface-id
         std::string ifaceid = string_values_->getOptionalParam("4o6-interface-id", "");
         if (!ifaceid.empty()) {
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());

@@ -36,7 +36,7 @@ public:
     enum  ResponseMode {
         USE_RCODE,    // Generate a response with a given RCODE
         CORRUPT_RESP, // Generate a corrupt response
-        INVALID_TSIG  // Generate a repsonse with the wrong TSIG key
+        INVALID_TSIG  // Generate a response with the wrong TSIG key
     };
 
     // Reference to IOService to use for IO processing.

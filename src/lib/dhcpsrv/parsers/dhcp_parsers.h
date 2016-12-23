@@ -57,7 +57,7 @@ public:
     /// otherwise its data value and the position will be updated with the
     /// given values.
     ///
-    /// @param name is the name of the paramater to store.
+    /// @param name is the name of the parameter to store.
     /// @param value is the data value to store.
     /// @param position is the position of the data element within a
     /// configuration string (file).
@@ -73,7 +73,7 @@ public:
     /// @param name is the name of the parameter for which the data
     /// value is desired.
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     /// @throw DhcpConfigError if the parameter is not found.
     ValueType getParam(const std::string& name) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -122,7 +122,7 @@ public:
     /// value is desired.
     /// @param default_value value to use the default
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     ValueType getOptionalParam(const std::string& name,
                                const ValueType& default_value) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -140,7 +140,7 @@ public:
     /// Deletes the entry for the given parameter from the store if it
     /// exists.
     ///
-    /// @param name is the name of the paramater to delete.
+    /// @param name is the name of the parameter to delete.
     void delParam(const std::string& name) {
         values_.erase(name);
         positions_.erase(name);
@@ -248,7 +248,7 @@ typedef boost::shared_ptr<ParserContext> ParserContextPtr;
 /// possible values. It provides a common constructor, commit, and templated
 /// data storage.  The "build" method implementation must be provided by a
 /// declaring type.
-/// @param ValueType is the data type of the configuration paramater value
+/// @param ValueType is the data type of the configuration parameter value
 /// the parser should handle.
 template<typename ValueType>
 class ValueParser : public DhcpConfigParser {
@@ -364,10 +364,10 @@ private:
 
 };
 
-/// @brief parser for MAC/hardware aquisition sources
+/// @brief parser for MAC/hardware acquisition sources
 ///
 /// This parser handles Dhcp6/mac-sources entry.
-/// It contains a list of MAC/hardware aquisition source, i.e. methods how
+/// It contains a list of MAC/hardware acquisition source, i.e. methods how
 /// MAC address can possibly by obtained in DHCPv6. For a currently supported
 /// methods, see @ref isc::dhcp::Pkt::getMAC.
 class MACSourcesListConfigParser : public DhcpConfigParser {
@@ -571,8 +571,8 @@ private:
 
     /// @brief Finds an option definition within an option space
     ///
-    /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the option defintion storage.
+    /// Given an option space and an option code, find the corresponding
+    /// option definition within the option definition storage.
     ///
     /// @param option_space name of the parameter option space
     /// @param search_key an option code or name to be used to lookup the
@@ -580,7 +580,7 @@ private:
     /// @tparam A numeric type for searching using an option code or the
     /// string for searching using the option name.
     ///
-    /// @return OptionDefintionPtr of the option defintion or an
+    /// @return OptionDefintionPtr of the option definition or an
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
@@ -595,7 +595,7 @@ private:
     /// are invalid or insufficient this function emits an exception.
     ///
     /// @warning this function does not check if options_ storage pointer
-    /// is intitialized but this check is not needed here because it is done
+    /// is initialized but this check is not needed here because it is done
     /// in the \ref build function.
     ///
     /// @param option_data An element holding data for a single option being
@@ -732,7 +732,7 @@ public:
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     OptionDefParser(const std::string& dummy, ParserContextPtr global_context);
 
     /// @brief Parses an entry that describes single option definition.
@@ -786,7 +786,7 @@ public:
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
+    /// stores global scope parameters, options, option definitions.
     OptionDefListParser(const std::string& dummy,
                         ParserContextPtr global_context);
 
@@ -946,7 +946,7 @@ protected:
 
 /// @brief parser for additional relay information
 ///
-/// This concrete parser handles RelayInfo structure defintions.
+/// This concrete parser handles RelayInfo structure definitions.
 /// So far that structure holds only relay IP (v4 or v6) address, but it
 /// is expected that the number of parameters will increase over time.
 ///

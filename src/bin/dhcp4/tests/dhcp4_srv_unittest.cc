@@ -2443,7 +2443,7 @@ TEST_F(Dhcpv4SrvTest, statisticsDecline) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Offer
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2451,7 +2451,7 @@ TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Ack
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2459,7 +2459,7 @@ TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Nak
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
     NakedDhcpv4Srv srv(0);
 

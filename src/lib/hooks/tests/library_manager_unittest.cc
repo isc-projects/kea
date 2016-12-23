@@ -572,7 +572,7 @@ TEST_F(LibraryManagerTest, libraryLoggerSetup) {
     EXPECT_TRUE(lib_manager.loadLibrary());
 
     // After loading the library, the global logging dictionary should
-    // contain log messages registerd for this library.
+    // contain log messages registered for this library.
     const MessageDictionaryPtr& dict = MessageDictionary::globalDictionary();
     EXPECT_EQ("basic callout load %1", dict->getText("BCL_LOAD_START"));
     EXPECT_EQ("basic callout load end", dict->getText("BCL_LOAD_END"));

@@ -307,7 +307,7 @@ public:
     /// @brief Checks that the expired DHCPv4 leases can be retrieved.
     ///
     /// This test checks the following:
-    /// - all expired and not reclaimed leases are retured
+    /// - all expired and not reclaimed leases are returned
     /// - number of leases returned can be limited
     /// - leases are returned in the order from the most expired to the
     ///   least expired
@@ -317,7 +317,7 @@ public:
     /// @brief Checks that the expired IPv6 leases can be retrieved.
     ///
     /// This test checks the following:
-    /// - all expired and not reclaimed leases are retured
+    /// - all expired and not reclaimed leases are returned
     /// - number of leases returned can be limited
     /// - leases are returned in the order from the most expired to the
     ///   least expired

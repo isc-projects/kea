@@ -861,7 +861,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
 // saying so.
 TEST_F(MasterLoaderTest, invalidFile) {
     setLoader("This file doesn't exist at all",
-              Name("exmaple.org."), RRClass::IN(), MasterLoader::MANY_ERRORS);
+              Name("example.org."), RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     // Nothing yet. The loader is dormant until invoked.
     // Is it really what we want?
@@ -941,7 +941,7 @@ struct ErrorCase {
     { "$INCLUDES " TEST_DATA_SRCDIR "/example.org",
         "Unknown directive 'INCLUDES'", "Include too long" },
     { "$INCLUDE", "unexpected end of input", "Missing include path" },
-    // The following two error messages are system dependant, omitting
+    // The following two error messages are system dependent, omitting
     { "$INCLUDE /file/not/found", NULL, "Include file not found" },
     { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
         NULL, "Include file not found and garbage at the end of line" },

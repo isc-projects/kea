@@ -187,7 +187,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     Uint32StoragePtr storage(new Uint32Storage());
     Uint32Parser parser(name, storage);
 
-    // Verify that parser with rejects a non-interger element.
+    // Verify that parser with rejects a non-integer element.
     ElementPtr wrong_element = Element::create("I am a string");
     EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
 
@@ -390,7 +390,7 @@ public:
     /// and parse them.
     /// @param config is the configuration string to parse
     ///
-    /// @return retuns 0 if the configuration parsed successfully,
+    /// @return 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
     int parseConfiguration(const std::string& config) {
         int rcode_ = 1;
@@ -1213,7 +1213,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has not changed between the two parse operations. However,
-    // the paramters (or the files they could point to) could have
+    // the parameters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
     HookLibsCollection libraries;
     bool changed;
@@ -2364,7 +2364,7 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // Let's check negative scenario (wrong family type)
     EXPECT_THROW(parser->build(json_bogus1), DhcpConfigError);
 
-    // Unparseable text that looks like IPv6 address, but has too many colons
+    // Unparsable text that looks like IPv6 address, but has too many colons
     EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
 }
 

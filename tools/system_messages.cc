@@ -486,7 +486,7 @@ void processFileContent(const std::string& filename,
         }
     }
 
-    // All done, add the last message to the global dictionaty.
+    // All done, add the last message to the global dictionary.
     if (!msgid.empty()) {
         addToDictionary(msgid, msgtext, description, filename);
     }
@@ -547,7 +547,7 @@ void processFile(const std::string& filename)
         if (line[0] != '#') {
             lines1.push_back(line);
         }
-    }  
+    }
 
     // Remove leading/trailing empty line sequences from the result
     LinesType lines2 = removeEmptyLeadingTrailing(lines1);
