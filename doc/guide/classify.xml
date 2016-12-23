@@ -592,6 +592,7 @@ concatenation of the strings</entry></row>
         substring('foobar', 10, 2) == ''
           </screen>
       </section>
+
       <section><info><title>Concat</title></info>
         The concat function "concat(string1, string2)" returns the
         concatenation of its two arguments. For instance:
@@ -599,6 +600,7 @@ concatenation of the strings</entry></row>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
+
     </section>
 
   <note>

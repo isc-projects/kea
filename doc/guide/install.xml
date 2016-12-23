@@ -133,7 +133,7 @@ Debian and Ubuntu:
           Kea 1.1.0 builds have been tested with GCC g++ 4.2.1,
           4.4.7, 4.6.3, 4.8.3, 4.8.4, 4.8.5, 5.4.0; Clang++ 3.4.1;
           and Apple Clang++ 703.0.31.
-	  <!-- @todo update this list -->
+      <!-- @todo update this list -->
         </para>
         </listitem>
 
@@ -188,7 +188,6 @@ Debian and Ubuntu:
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/SystemSpecificNotes">http://kea.isc.org/wiki/SystemSpecificNotes</uri>
           for system-specific installation tips.
         </para>
-
     </section>
 
     <section xml:id="install"><info><title>Installation from Source</title></info>
@@ -260,9 +259,7 @@ Debian and Ubuntu:
           Developer's Guide</link> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>
-
       </section>
-
 
       <section xml:id="configure"><info><title>Configure Before the Build</title></info>
         <para>
@@ -400,7 +397,6 @@ Debian and Ubuntu:
           the file <filename>config.report</filename> and is also embedded into
           the executable binaries, e.g., <userinput>kea-dhcp4</userinput>.
         </para>
-
       </section>
 
       <section><info><title>Build</title></info>
@@ -426,22 +422,22 @@ Debian and Ubuntu:
           <para>The install step may require superuser privileges.</para>
         </note>
         <para>
-	  If required, run <command>ldconfig</command> as root with
-	  <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
-	  configured with --prefix) in
-	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
-	  cache configuration file for your OS):
-	  <screen>$ <userinput>ldconfig</userinput></screen>
+      If required, run <command>ldconfig</command> as root with
+      <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
+      configured with --prefix) in
+      <filename>/etc/ld.so.conf</filename> (or the relevant linker
+      cache configuration file for your OS):
+      <screen>$ <userinput>ldconfig</userinput></screen>
         </para>
         <note>
           <para>
-	    If you do not run <command>ldconfig</command> where it is
-	    required, you may see errors like the following:
+        If you do not run <command>ldconfig</command> where it is
+        required, you may see errors like the following:
             <screen>
-	      program: error while loading shared libraries: libkea-something.so.1:
-	      cannot open shared object file: No such file or directory
-	    </screen>
-	  </para>
+          program: error while loading shared libraries: libkea-something.so.1:
+          cannot open shared object file: No such file or directory
+        </screen>
+      </para>
         </note>
       </section>
 
@@ -460,16 +456,15 @@ Debian and Ubuntu:
         <varlistentry>
           <term>JSON</term>
           <listitem>
-	    <simpara>JSON is the new default configuration backend
-	    that allows Kea to read JSON configuration files from
-	    disk. It does not require any framework and thus is
-	    considered more lightweight. It will allow dynamic
-	    on-line reconfiguration, but lacks remote capabilities
-	    (i.e. no RESTful API).</simpara>
+        <simpara>JSON is the new default configuration backend
+        that allows Kea to read JSON configuration files from
+        disk. It does not require any framework and thus is
+        considered more lightweight. It will allow dynamic
+        on-line reconfiguration, but lacks remote capabilities
+        (i.e. no RESTful API).</simpara>
           </listitem>
         </varlistentry>
       </variablelist>
-
     </section>
 
     <section xml:id="dhcp-install-configure"><info><title>DHCP Database Installation and Configuration</title></info>
@@ -506,7 +501,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-mysql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-mysql</userinput></screen>
-	      If MySQL was not installed in the default location, the location of the MySQL
+          If MySQL was not installed in the default location, the location of the MySQL
           configuration program "mysql_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
@@ -527,7 +522,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-pgsql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-pgsql</userinput></screen>
-	      If PostgreSQL was not installed in the default location, the location of the PostgreSQL
+          If PostgreSQL was not installed in the default location, the location of the PostgreSQL
           configuration program "pg_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>

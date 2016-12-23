@@ -115,6 +115,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
     <section xml:id="dhcp4-configuration"><info><title>DHCPv4 Server Configuration</title></info>
 
 <section><info><title>Introduction</title></info>
+
       <para>
         This section explains how to configure the DHCPv4 server using the
         Kea configuration backend. (Kea configuration using any other
@@ -452,6 +453,7 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
 </section>
 
 <section xml:id="hosts4-storage"><info><title>Hosts Storage</title></info>
@@ -510,7 +512,6 @@ If a timeout is given though, it should be an integer greater than zero.
 </section>
 
 <section xml:id="read-only-database-configuration4"><info><title>Using Read-Only Databases for Host Reservations</title></info>
-
 <para>
 In some deployments the database user whose name is specified in the database backend
 configuration may not have write privileges to the database. This is often
@@ -1015,6 +1016,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         <table frame="all" xml:id="dhcp4-std-options-list"><info><title>List of standard DHCPv4 options</title></info>
+
           <tgroup cols="5">
           <colspec colname="name"/>
           <colspec colname="code" align="center"/>
@@ -1083,6 +1085,7 @@ This rather belong to the DDNS configuration
 
       <para>
         <table frame="all" xml:id="dhcp4-std-options-list-part2"><info><title>List of standard DHCPv4 options (continued)</title></info>
+
           <tgroup cols="5">
           <colspec colname="name"/>
           <colspec colname="code" align="center"/>
@@ -1175,6 +1178,7 @@ It is merely echoed by the server
       </para>
       <para>
         <table frame="all" xml:id="dhcp-types"><info><title>List of standard DHCP option types</title></info>
+
           <tgroup cols="2">
           <colspec colname="name"/>
           <colspec colname="meaning"/>
@@ -1565,7 +1569,6 @@ It is merely echoed by the server
         </listitem>
       </itemizedlist>
       </para>
-
     </section>
 
     <section xml:id="dhcp4-stateless-configuration"><info><title>Stateless Configuration of DHCPv4 Clients</title></info>
@@ -1805,6 +1808,7 @@ It is merely echoed by the server
 }</screen>
         </para>
       </section>
+
     </section>
 
     <section xml:id="dhcp4-ddns-config"><info><title>DDNS for DHCPv4</title></info>
@@ -1957,6 +1961,7 @@ It is merely echoed by the server
 </screen>
       </para>
       </section>
+
       <section xml:id="dhcpv4-d2-rules-config"><info><title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title></info>
       <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4702">RFC 4702</link>.
@@ -1997,6 +2002,7 @@ It is merely echoed by the server
       in the following table:
       </para>
         <table xml:id="fqdn-flag-table"><info><title>Default FQDN Flag Behavior</title></info>
+
           <tgroup cols="4" align="left">
           <colspec colname="cflags"/>
           <colspec colname="meaning"/>
@@ -2191,6 +2197,7 @@ It is merely echoed by the server
 }
 </screen>
       </section>
+
       <para>
       When generating a name, kea-dhcp4 will construct name of the format:
       </para>
@@ -2423,7 +2430,6 @@ It is merely echoed by the server
      assumed to belong to another client and the new lease will be
      allocated.
      </para>
-
     </section>
 
      <section xml:id="dhcp4-dhcp4o6-config"><info><title>DHCPv4-over-DHCPv6: DHCPv4 Side</title></info>
@@ -2830,7 +2836,6 @@ It is merely echoed by the server
  if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
-
     </section>
 
     <section xml:id="reservation4-message-fields"><info><title>Reserving Next Server, Server Hostname and Boot File Name</title></info>
@@ -2915,7 +2920,7 @@ It is merely echoed by the server
     with classification using expressions.</para>
     </section>
 
-    <section xml:id="reservations4-mysql-pgsql"><info><title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title></info>
+    <section xml:id="reservations4-mysql-pgsql-cql"><info><title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title></info>
       <para>
         It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
         <xref linkend="hosts4-storage"/> for information on how to configure Kea to use
@@ -3057,9 +3062,6 @@ If not specified, the default value is:
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 </para>
-
-
-
    </section>
 
   </section>
@@ -3271,7 +3273,6 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       potential for major issues, we decided not to decrease assigned addresses
       immediately after receiving DHCPDECLINE, but to do it later when we
       recover the address back to the available pool.</para>
-
     </section>
 
     <section xml:id="dhcp4-stats"><info><title>Statistics in the DHCPv4 Server</title></info>
@@ -3284,6 +3285,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         The DHCPv4 server supports the following statistics:
       </para>
         <table frame="all" xml:id="dhcp4-statistics"><info><title>DHCPv4 Statistics</title></info>
+
           <tgroup cols="3">
           <colspec colname="statistic" align="center"/>
           <colspec colname="type" align="center"/>

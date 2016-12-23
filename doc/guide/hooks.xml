@@ -2,7 +2,6 @@
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries"><info><title>Hooks Libraries</title></info>
 
     <section xml:id="hooks-libraries-introduction"><info><title>Introduction</title></info>
-
       <para>
       Although Kea offers a lot of flexibility, there may be cases where
       its behavior needs customisation.  To accommodate this possibility,
@@ -157,6 +156,7 @@
       <para>Currently the following libraries are available or planned from ISC:
 
         <table frame="all" xml:id="hook-libs"><info><title>List of available hooks libraries</title></info>
+
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="avail"/>
@@ -532,7 +532,9 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           </itemizedlist>
           </para>
         </section>
+
       </section>
+
     </section>
 
     <section xml:id="user-context"><info><title>User contexts</title></info>
@@ -553,4 +555,5 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         user context capability.
       </para>
     </section>
+
    </chapter>
