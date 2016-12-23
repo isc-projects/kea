@@ -140,6 +140,35 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 
+	AC_MSG_CHECKING(cbegin/cend support)
+	feature="cbegin/cend"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <string>],
+			[const std::string& s = "abcd";
+			 unsigned count = 0;
+			 for (std::string::const_iterator i = s.cbegin();
+			      i != s.cend(); ++i)
+				if (*i == 'b')
+					++count;])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(final method support)
+	feature="final method"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[],
+			[class Foo {
+			 public:
+			 	virtual ~Foo() {};
+				virtual void bar() final;
+			 }])],
+		 [AC_MSG_RESULT([yes])],
+		 [AC_MSG_RESULT([no])
+		  continue])
+
 	AC_MSG_CHECKING(aggregate initialization support)
 	feature="aggregate initialization"
 	AC_COMPILE_IFELSE(
