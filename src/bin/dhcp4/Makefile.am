@@ -29,7 +29,7 @@ EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 
 if GENERATE_DOCS
 kea-dhcp4.8: kea-dhcp4.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp4.xml
 

@@ -30,7 +30,7 @@ EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
         $(srcdir)/kea-dhcp6.xml
 
