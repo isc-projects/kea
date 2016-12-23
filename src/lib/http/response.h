@@ -182,7 +182,7 @@ protected:
 
     /// @brief Returns current time formatted as required by RFC 1123.
     ///
-    /// This method is virtual so as it can be overriden in unit tests
+    /// This method is virtual so as it can be overridden in unit tests
     /// to return a "predictable" value of time, e.g. constant value.
     ///
     /// @return Current time formatted as required by RFC 1123.

@@ -81,7 +81,8 @@ TEST(HttpResponseCreatorTest, badRequest) {
               "Content-Length: 40\r\n"
               "Content-Type: application/json\r\n"
               "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n\r\n"
-              "{ \"result\": 400, \"text\": \"Bad Request\" }", response->toString());
+              "{ \"result\": 400, \"text\": \"Bad Request\" }",
+              response->toString());
 }
 
 // This test verifies that response is generated successfully from the
