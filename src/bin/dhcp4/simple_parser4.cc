@@ -21,7 +21,7 @@ namespace dhcp {
 /// is expected to be one centralized place to look at for
 /// the default values. This is expected to be looked at also by
 /// people who are not skilled in C or C++, so they may be
-/// confused with the differences between declaration and defintion.
+/// confused with the differences between declaration and definition.
 /// As such, there's one file to look at that hopefully is readable
 /// without any C or C++ skills.
 ///
@@ -83,7 +83,7 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
     // Set global defaults first.
     cnt = setDefaults(global, GLOBAL4_DEFAULTS);
 
-    // Now set option defintion defaults for each specified option definition
+    // Now set option definition defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
         BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {

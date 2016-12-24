@@ -21,7 +21,7 @@ namespace dhcp {
 /// is expected to be one centralized place to look at for
 /// the default values. This is expected to be looked at also by
 /// people who are not skilled in C or C++, so they may be
-/// confused with the differences between declaration and defintion.
+/// confused with the differences between declaration and definition.
 /// As such, there's one file to look at that hopefully is readable
 /// without any C or C++ skills.
 ///

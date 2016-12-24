@@ -79,7 +79,7 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
                           SimpleParser4::INHERIT_GLOBAL_TO_SUBNET4));
     EXPECT_EQ(2, num);
 
-    // Check the values. 2 of them are interited, while the third one
+    // Check the values. 2 of them are inherited, while the third one
     // was already defined in the subnet, so should not be inherited.
     checkIntegerValue(subnet, "renew-timer", 100);
     checkIntegerValue(subnet, "rebind-timer", 2);
