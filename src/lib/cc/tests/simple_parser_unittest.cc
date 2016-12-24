@@ -71,7 +71,7 @@ TEST_F(SimpleParserTest, deriveParams) {
                                                      SAMPLE_INHERITS));
     EXPECT_EQ(3, num);
 
-    // Check the values. 3 of them are interited, while the fourth one
+    // Check the values. 3 of them are inherited, while the fourth one
     // was already defined in the subnet, so should not be inherited.
     checkIntegerValue(subnet, "renew-timer", 100);
     checkIntegerValue(subnet, "rebind-timer", 2);
