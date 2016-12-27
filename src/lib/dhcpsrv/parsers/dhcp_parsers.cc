@@ -376,75 +376,30 @@ HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries,
 }
 
 // **************************** OptionDataParser *************************
-OptionDataParser::OptionDataParser(const std::string&, const CfgOptionPtr& cfg,
-                                   const uint16_t address_family)
-    : boolean_values_(new BooleanStorage()),
-      string_values_(new StringStorage()), uint32_values_(new Uint32Storage()),
-      option_descriptor_(false), cfg_(cfg),
-      address_family_(address_family) {
-    // If configuration not specified, then it is a global configuration
-    // scope.
-    if (!cfg_) {
-        cfg_ = CfgMgr::instance().getStagingCfg()->getCfgOption();
-    }
+OptionDataParser::OptionDataParser(const uint16_t address_family)
+    : address_family_(address_family) {
 }
 
-void
-OptionDataParser::build(ConstElementPtr option_data_entries) {
-    BOOST_FOREACH(ConfigPair param, option_data_entries->mapValue()) {
-        ParserPtr parser;
-        if (param.first == "name" || param.first == "data" ||
-            param.first == "space") {
-            StringParserPtr name_parser(new StringParser(param.first,
-                                        string_values_));
-            parser = name_parser;
-        } else if (param.first == "code") {
-            Uint32ParserPtr code_parser(new Uint32Parser(param.first,
-                                       uint32_values_));
-            parser = code_parser;
-        } else if (param.first == "csv-format") {
-            BooleanParserPtr value_parser(new BooleanParser(param.first,
-                                         boolean_values_));
-            parser = value_parser;
-        } else {
-            isc_throw(DhcpConfigError,
-                      "option-data parameter not supported: " << param.first
-                      << " (" << param.second->getPosition() << ")");
-        }
-
-        parser->build(param.second);
-        // Before we can create an option we need to get the data from
-        // the child parsers. The only way to do it is to invoke commit
-        // on them so as they store the values in appropriate storages
-        // that this class provided to them. Note that this will not
-        // modify values stored in the global storages so the configuration
-        // will remain consistent even parsing fails somewhere further on.
-        parser->commit();
-    }
+std::pair<OptionDescriptor, std::string>
+OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
 
     // Try to create the option instance.
-    createOption(option_data_entries);
+    std::pair<OptionDescriptor, std::string> opt = createOption(single_option);
 
-    if (!option_descriptor_.option_) {
+    if (!opt.first.option_) {
         isc_throw(isc::InvalidOperation,
             "parser logic error: no option has been configured and"
             " thus there is nothing to commit. Has build() been called?");
     }
 
-    cfg_->add(option_descriptor_.option_, option_descriptor_.persistent_,
-              option_space_);
-}
-
-void
-OptionDataParser::commit() {
-    // Does nothing
+    return (opt);
 }
 
 OptionalValue<uint32_t>
 OptionDataParser::extractCode(ConstElementPtr parent) const {
     uint32_t code;
     try {
-        code = uint32_values_->getParam("code");
+        code = getInteger(parent, "code");
 
     } catch (const exception&) {
         // The code parameter was not found. Return an unspecified
@@ -454,14 +409,14 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
 
     if (code == 0) {
         isc_throw(DhcpConfigError, "option code must not be zero "
-                  "(" << uint32_values_->getPosition("code", parent) << ")");
+                  "(" << getPosition("code", parent) << ")");
 
     } else if (address_family_ == AF_INET &&
                code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not be greater than '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
-                  << "' (" << uint32_values_->getPosition("code", parent)
+                  << "' (" << getPosition("code", parent)
                   << ")");
 
     } else if (address_family_ == AF_INET6 &&
@@ -469,7 +424,7 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
         isc_throw(DhcpConfigError, "invalid option code '" << code
                 << "', it must not exceed '"
                   << std::numeric_limits<uint16_t>::max()
-                  << "' (" << uint32_values_->getPosition("code", parent)
+                  << "' (" << getPosition("code", parent)
                   << ")");
 
     }
@@ -481,7 +436,7 @@ OptionalValue<std::string>
 OptionDataParser::extractName(ConstElementPtr parent) const {
     std::string name;
     try {
-        name = string_values_->getParam("name");
+        name = getString(parent, "name");
 
     } catch (...) {
         return (OptionalValue<std::string>());
@@ -490,17 +445,17 @@ OptionDataParser::extractName(ConstElementPtr parent) const {
     if (name.find(" ") != std::string::npos) {
         isc_throw(DhcpConfigError, "invalid option name '" << name
                   << "', space character is not allowed ("
-                  << string_values_->getPosition("name", parent) << ")");
+                  << getPosition("name", parent) << ")");
     }
 
     return (OptionalValue<std::string>(name, OptionalValueState(true)));
 }
 
 std::string
-OptionDataParser::extractData() const {
+OptionDataParser::extractData(ConstElementPtr parent) const {
     std::string data;
     try {
-        data = string_values_->getParam("data");
+        data = getString(parent, "data");
 
     } catch (...) {
         // The "data" parameter was not found. Return an empty value.
@@ -511,10 +466,10 @@ OptionDataParser::extractData() const {
 }
 
 OptionalValue<bool>
-OptionDataParser::extractCSVFormat() const {
+OptionDataParser::extractCSVFormat(ConstElementPtr parent) const {
     bool csv_format = true;
     try {
-        csv_format = boolean_values_->getParam("csv-format");
+        csv_format = getBoolean(parent, "csv-format");
 
     } catch (...) {
         return (OptionalValue<bool>(csv_format));
@@ -524,11 +479,11 @@ OptionDataParser::extractCSVFormat() const {
 }
 
 std::string
-OptionDataParser::extractSpace() const {
+OptionDataParser::extractSpace(ConstElementPtr parent) const {
     std::string space = address_family_ == AF_INET ?
         DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE;
     try {
-        space = string_values_->getParam("space");
+        space = getString(parent, "space");
 
     } catch (...) {
         return (space);
@@ -556,7 +511,7 @@ OptionDataParser::extractSpace() const {
         // should never get here. Therefore, it is ok to call getPosition for
         // the space parameter here as this parameter will always be specified.
         isc_throw(DhcpConfigError, ex.what() << " ("
-                  << string_values_->getPosition("space") << ")");
+                  << getPosition("space", parent) << ")");
     }
 
     return (space);
@@ -588,16 +543,16 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
     return (def);
 }
 
-void
+std::pair<OptionDescriptor, std::string>
 OptionDataParser::createOption(ConstElementPtr option_data) {
     const Option::Universe universe = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
 
     OptionalValue<uint32_t> code_param =  extractCode(option_data);
     OptionalValue<std::string> name_param = extractName(option_data);
-    OptionalValue<bool> csv_format_param = extractCSVFormat();
-    std::string data_param = extractData();
-    std::string space_param = extractSpace();
+    OptionalValue<bool> csv_format_param = extractCSVFormat(option_data);
+    std::string data_param = extractData(option_data);
+    std::string space_param = extractSpace(option_data);
 
     // Require that option code or option name is specified.
     if (!code_param.isSpecified() && !name_param.isSpecified()) {
@@ -622,7 +577,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                       << space_param << "." << name_param
                       << "' having code '" << code_param
                       << "' does not exist ("
-                      << string_values_->getPosition("name", option_data)
+                      << getPosition("name", option_data)
                       << ")");
 
         // If there is no option definition and the option code is not specified
@@ -631,7 +586,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << space_param << "." << name_param
                       << "' does not exist ("
-                      << string_values_->getPosition("name", option_data)
+                      << getPosition("name", option_data)
                       << ")");
         }
     }
@@ -664,12 +619,14 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
             isc_throw(DhcpConfigError, "option data is not a valid"
                       << " string of hexadecimal digits: " << data_param
                       << " ("
-                      << string_values_->getPosition("data", option_data)
+                      << getPosition("data", option_data)
                       << ")");
         }
     }
 
     OptionPtr option;
+    OptionDescriptor desc(false);
+
     if (!def) {
         // @todo We have a limited set of option definitions initalized at
         // the moment.  In the future we want to initialize option definitions
@@ -678,13 +635,9 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // ok to create generic option if definition does not exist.
         OptionPtr option(new Option(universe, static_cast<uint16_t>(code_param),
                                     binary));
-        // The created option is stored in option_descriptor_ class member
-        // until the commit stage when it is inserted into the main storage.
-        // If an option with the same code exists in main storage already the
-        // old option is replaced.
-        option_descriptor_.option_ = option;
-        option_descriptor_.persistent_ = false;
 
+        desc.option_ = option;
+        desc.persistent_ = false;
     } else {
 
         // Option name is specified it should match the name in the definition.
@@ -693,7 +646,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                       << name_param << "' does not match the "
                       << "option definition: '" << space_param
                       << "." << def->getName() << "' ("
-                      << string_values_->getPosition("name", option_data)
+                      << getPosition("name", option_data)
                       << ")");
         }
 
@@ -704,144 +657,62 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                 !csv_format_param.isSpecified() || csv_format_param ?
                 def->optionFactory(universe, def->getCode(), data_tokens) :
                 def->optionFactory(universe, def->getCode(), binary);
-            OptionDescriptor desc(option, false);
-            option_descriptor_.option_ = option;
-            option_descriptor_.persistent_ = false;
-
+            desc.option_ = option;
+            desc.persistent_ = false;
         } catch (const isc::Exception& ex) {
             isc_throw(DhcpConfigError, "option data does not match"
                       << " option definition (space: " << space_param
                       << ", code: " << def->getCode() << "): "
                       << ex.what() << " ("
-                      << string_values_->getPosition("data", option_data)
+                      << getPosition("data", option_data)
                       << ")");
         }
     }
 
     // All went good, so we can set the option space name.
-    option_space_ = space_param;
+    return make_pair(desc, space_param);
 }
 
 // **************************** OptionDataListParser *************************
-OptionDataListParser::OptionDataListParser(const std::string&,
-                                           const CfgOptionPtr& cfg,
+OptionDataListParser::OptionDataListParser(//const std::string&,
+                                           //const CfgOptionPtr& cfg,
                                            const uint16_t address_family)
-    : cfg_(cfg), address_family_(address_family) {
+    : address_family_(address_family) {
 }
 
-void
-OptionDataListParser::build(ConstElementPtr option_data_list) {
-    BOOST_FOREACH(ConstElementPtr option_value, option_data_list->listValue()) {
-        boost::shared_ptr<OptionDataParser>
-            parser(new OptionDataParser("option-data", cfg_, address_family_));
 
-        parser->build(option_value);
-        parsers_.push_back(parser);
-    }
-}
-
-void
-OptionDataListParser::commit() {
-    BOOST_FOREACH(ParserPtr parser, parsers_) {
-        parser->commit();
-    }
-    // Append suboptions to the top-level options
-    if (cfg_) {
-        cfg_->encapsulate();
-    } else {
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->encapsulate();
+void OptionDataListParser::parse(const CfgOptionPtr& cfg,
+                                 isc::data::ConstElementPtr option_data_list) {
+    OptionDataParser option_parser(address_family_);
+    BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
+        std::pair<OptionDescriptor, std::string> option =
+            option_parser.parse(data);
+        cfg->add(option.first.option_, option.first.persistent_, option.second);
+        cfg->encapsulate();
     }
 }
 
 // ******************************** OptionDefParser ****************************
-OptionDefParser::OptionDefParser(const std::string&,
-                                 ParserContextPtr global_context)
-    : boolean_values_(new BooleanStorage()),
-      string_values_(new StringStorage()),
-      uint32_values_(new Uint32Storage()),
-      global_context_(global_context) {
-}
 
-void
-OptionDefParser::build(ConstElementPtr option_def) {
-    // Parse the elements that make up the option definition.
-    BOOST_FOREACH(ConfigPair param, option_def->mapValue()) {
-        std::string entry(param.first);
-        ParserPtr parser;
-        if (entry == "name" || entry == "type" || entry == "record-types"
-            || entry == "space" || entry == "encapsulate") {
-            StringParserPtr str_parser(new StringParser(entry,
-                                       string_values_));
-            parser = str_parser;
-        } else if (entry == "code") {
-            Uint32ParserPtr code_parser(new Uint32Parser(entry,
-                                        uint32_values_));
-            parser = code_parser;
-        } else if (entry == "array") {
-            BooleanParserPtr array_parser(new BooleanParser(entry,
-                                         boolean_values_));
-            parser = array_parser;
-        } else {
-            isc_throw(DhcpConfigError, "invalid parameter '" << entry
-                      << "' (" << param.second->getPosition() << ")");
-        }
+std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
+OptionDefParser::parse(ConstElementPtr option_def) {
 
-        parser->build(param.second);
-        parser->commit();
-    }
-    // Create an instance of option definition.
-    createOptionDef(option_def);
+    // Get mandatory parameters.
+    std::string name = getString(option_def, "name");
+    uint32_t code = getInteger(option_def, "code");
+    std::string type = getString(option_def, "type");
 
-    try {
-        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->
-            add(option_definition_, option_space_name_);
-
-    } catch (const std::exception& ex) {
-        // Append position if there is a failure.
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << option_def->getPosition() << ")");
-    }
-
-    // All definitions have been prepared. Put them as runtime options into
-    // the libdhcp++.
-    const OptionDefSpaceContainer& container =
-        CfgMgr::instance().getStagingCfg()->getCfgOptionDef()->getContainer();
-    LibDHCP::setRuntimeOptionDefs(container);
-}
-
-void
-OptionDefParser::commit() {
-    // Do nothing.
-}
-
-void
-OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
-    // Check if mandatory parameters have been specified.
-    std::string name;
-    uint32_t code;
-    std::string type;
-    try {
-        name = string_values_->getParam("name");
-        code = uint32_values_->getParam("code");
-        type = string_values_->getParam("type");
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << option_def_element->getPosition() << ")");
-    }
-
-    bool array_type = boolean_values_->getOptionalParam("array", false);
-    std::string record_types =
-        string_values_->getOptionalParam("record-types", "");
-    std::string space = string_values_->getOptionalParam("space",
-              global_context_->universe_ == Option::V4 ? DHCP4_OPTION_SPACE :
-                                                         DHCP6_OPTION_SPACE);
-    std::string encapsulates =
-        string_values_->getOptionalParam("encapsulate", "");
+    // Get optional parameters. Whoever called this parser, should have
+    // called SimpleParser::setDefaults first.
+    bool array_type = getBoolean(option_def, "array");
+    std::string record_types = getString(option_def, "record-types");
+    std::string space = getString(option_def, "space");
+    std::string encapsulates = getString(option_def, "encapsulate");
 
     if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
                   << space << "' ("
-                  << string_values_->getPosition("space") << ")");
+                  << getPosition("space", option_def) << ")");
     }
 
     // Create option definition.
@@ -854,14 +725,14 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
             isc_throw(DhcpConfigError, "option '" << space << "."
                       << "name" << "', comprising an array of data"
                       << " fields may not encapsulate any option space ("
-                      << option_def_element->getPosition() << ")");
+                      << option_def->getPosition() << ")");
 
         } else if (encapsulates == space) {
             isc_throw(DhcpConfigError, "option must not encapsulate"
                       << " an option space it belongs to: '"
                       << space << "." << name << "' is set to"
                       << " encapsulate '" << space << "' ("
-                      << option_def_element->getPosition() << ")");
+                      << option_def->getPosition() << ")");
 
         } else {
             def.reset(new OptionDefinition(name, code, type,
@@ -888,7 +759,7 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
             isc_throw(DhcpConfigError, "invalid record type values"
                       << " specified for the option definition: "
                       << ex.what() << " ("
-                      << string_values_->getPosition("record-types") << ")");
+                      << getPosition("record-types", option_def) << ")");
         }
     }
 
@@ -897,38 +768,39 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
         def->validate();
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what()
-                  << " (" << option_def_element->getPosition() << ")");
+                  << " (" << option_def->getPosition() << ")");
     }
 
     // Option definition has been created successfully.
-    option_space_name_ = space;
-    option_definition_ = def;
+    return make_pair(def, space);
 }
 
 // ******************************** OptionDefListParser ************************
-OptionDefListParser::OptionDefListParser(const std::string&,
-                                         ParserContextPtr global_context)
-    : global_context_(global_context) {
-}
-
 void
-OptionDefListParser::build(ConstElementPtr option_def_list) {
+OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                   << " option definitions is NULL ("
                   << option_def_list->getPosition() << ")");
     }
 
+    OptionDefParser parser;
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
-        boost::shared_ptr<OptionDefParser>
-            parser(new OptionDefParser("single-option-def", global_context_));
-        parser->build(option_def);
-    }
-}
+        OptionDefinitionTuple def;
 
-void
-OptionDefListParser::commit() {
-    // Do nothing.
+        def = parser.parse(option_def);
+        try {
+            storage->add(def.first, def.second);
+        } catch (const std::exception& ex) {
+            // Append position if there is a failure.
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << option_def->getPosition() << ")");
+        }
+    }
+
+    // All definitions have been prepared. Put them as runtime options into
+    // the libdhcp++.
+    LibDHCP::setRuntimeOptionDefs(storage->getContainer());
 }
 
 //****************************** RelayInfoParser ********************************
@@ -1138,13 +1010,9 @@ PoolParser::build(ConstElementPtr pool_structure) {
                           " address pools");
             }
 
-            OptionDataListParserPtr option_parser(new OptionDataListParser("option-data",
-                                                                           options_,
-                                                                           address_family_));
-            option_parser->build(option_data);
-            option_parser->commit();
-            options_->copyTo(*pool->getCfgOption());;
-
+            CfgOptionPtr cfg = pool->getCfgOption();
+            OptionDataListParser option_parser(address_family_);
+            option_parser.parse(cfg, option_data);
         } catch (const std::exception& ex) {
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << option_data->getPosition() << ")");
@@ -1191,6 +1059,13 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
         // in the derived classes, i.e. Subnet4ConfigParser and
         // Subnet6ConfigParser.
         if (param.first == "reservations") {
+            continue;
+        }
+
+        if (param.first == "option-data") {
+            uint16_t family = global_context_->universe_ == Option::V4 ? AF_INET : AF_INET6;
+            OptionDataListParser opt_parser(family);
+            opt_parser.parse(options_, param.second);
             continue;
         }
 

@@ -15,7 +15,9 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
+#include <cc/simple_parser.h>
 #include <hooks/libinfo.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
@@ -534,39 +536,30 @@ private:
 /// an option the configuration will not be accepted. If parsing
 /// is successful then an instance of an option is created and
 /// added to the storage provided by the calling class.
-class OptionDataParser : public DhcpConfigParser {
+class OptionDataParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param [out] cfg Pointer to the configuration object where parsed option
-    /// should be stored or NULL if this is a global option.
     /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataParser(const std::string& dummy, const CfgOptionPtr& cfg,
-                     const uint16_t address_family);
+    OptionDataParser(const uint16_t address_family);
 
-    /// @brief Parses the single option data.
+    /// @brief Parses ElementPtr containing option definition
     ///
-    /// This method parses the data of a single option from the configuration.
-    /// The option data includes option name, option code and data being
-    /// carried by this option. Eventually it creates the instance of the
-    /// option and adds it to the Configuration Manager.
+    /// This method parses ElementPtr containing the option defintion,
+    /// instantiates the option for it and then returns a pair
+    /// of option descritor (that holds that new option) and
+    /// a string that specifies the option space.
     ///
-    /// @param option_data_entries collection of entries that define value
-    /// for a particular option.
-    /// @throw DhcpConfigError if invalid parameter specified in
-    /// the configuration.
-    /// @throw isc::InvalidOperation if failed to set storage prior to
-    /// calling build.
-    virtual void build(isc::data::ConstElementPtr option_data_entries);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-    /// @brief virtual destructor to ensure orderly destruction of derivations.
-    virtual ~OptionDataParser(){};
+    /// Note: ElementPtr is expected to contain all fields. If your
+    /// ElementPtr does not have them, please use
+    /// @ref isc::data::SimpleParser::setDefaults to fill the missing fields
+    /// with default values.
+    ///
+    /// @param single_option ElementPtr containing option defintion
+    /// @return Option object wrapped in option description and an option
+    ///         space
+    std::pair<OptionDescriptor, std::string>
+    parse(isc::data::ConstElementPtr single_option);
 private:
 
     /// @brief Finds an option definition within an option space
@@ -594,22 +587,19 @@ private:
     /// options storage. If the option data parsed by \ref build function
     /// are invalid or insufficient this function emits an exception.
     ///
-    /// @warning this function does not check if options_ storage pointer
-    /// is intitialized but this check is not needed here because it is done
-    /// in the \ref build function.
-    ///
     /// @param option_data An element holding data for a single option being
     /// created.
     ///
+    /// @return created option descriptor
+    ///
     /// @throw DhcpConfigError if parameters provided in the configuration
     /// are invalid.
-    void createOption(isc::data::ConstElementPtr option_data);
+    std::pair<OptionDescriptor, std::string>
+    createOption(isc::data::ConstElementPtr option_data);
 
     /// @brief Retrieves parsed option code as an optional value.
     ///
     /// @param parent A data element holding full option data configuration.
-    /// It is used here to log a position if the element holding a code
-    /// is not specified and its position is therefore unavailable.
     ///
     /// @return Option code, possibly unspecified.
     /// @throw DhcpConfigError if option code is invalid.
@@ -619,8 +609,6 @@ private:
     /// @brief Retrieves parsed option name as an optional value.
     ///
     /// @param parent A data element holding full option data configuration.
-    /// It is used here to log a position if the element holding a name
-    /// is not specified and its position is therefore unavailable.
     ///
     /// @return Option name, possibly unspecified.
     /// @throw DhcpConfigError if option name is invalid.
@@ -630,13 +618,14 @@ private:
     /// @brief Retrieves csv-format parameter as an optional value.
     ///
     /// @return Value of the csv-format parameter, possibly unspecified.
-    util::OptionalValue<bool> extractCSVFormat() const;
+    util::OptionalValue<bool> extractCSVFormat(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves option data as a string.
     ///
+    /// @param parent A data element holding full option data configuration.
     /// @return Option data as a string. It will return empty string if
     /// option data is unspecified.
-    std::string extractData() const;
+    std::string extractData(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves option space name.
     ///
@@ -644,27 +633,10 @@ private:
     /// 'dhcp4' or 'dhcp6' option space name is returned, depending on
     /// the universe specified in the parser context.
     ///
+    /// @param parent A data element holding full option data configuration.
+    ///
     /// @return Option space name.
-    std::string extractSpace() const;
-
-    /// Storage for boolean values.
-    BooleanStoragePtr boolean_values_;
-
-    /// Storage for string values (e.g. option name or data).
-    StringStoragePtr string_values_;
-
-    /// Storage for uint32 values (e.g. option code).
-    Uint32StoragePtr uint32_values_;
-
-    /// Option descriptor holds newly configured option.
-    OptionDescriptor option_descriptor_;
-
-    /// Option space name where the option belongs to.
-    std::string option_space_;
-
-    /// @brief Configuration holding option being parsed or NULL if the option
-    /// is global.
-    CfgOptionPtr cfg_;
+    std::string extractSpace(data::ConstElementPtr parent) const;
 
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;
@@ -680,97 +652,43 @@ typedef OptionDataParser *OptionDataParserFactory(const std::string&,
 /// data for a particular subnet and creates a collection of options.
 /// If parsing is successful, all these options are added to the Subnet
 /// object.
-class OptionDataListParser : public DhcpConfigParser {
+class OptionDataListParser : public isc::data::SimpleParser {
 public:
     /// @brief Constructor.
     ///
-    /// @param dummy nominally would be param name, this is always ignored.
-    /// @param [out] cfg Pointer to the configuration object where options
-    /// should be stored or NULL if this is global option scope.
     /// @param address_family Address family: @c AF_INET or AF_INET6
-    OptionDataListParser(const std::string& dummy, const CfgOptionPtr& cfg,
-                         const uint16_t address_family);
+    OptionDataListParser(const uint16_t address_family);
 
-    /// @brief Parses entries that define options' data for a subnet.
+    /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
-    /// This method iterates over all entries that define option data
-    /// for options within a single subnet and creates options' instances.
+    /// This method expects to get a list of options in option_data_list,
+    /// iterates over them, creates option objects, wraps them with
+    /// option descriptor and stores in specified cfg.
     ///
-    /// @param option_data_list pointer to a list of options' data sets.
-    /// @throw DhcpConfigError if option parsing failed.
-    void build(isc::data::ConstElementPtr option_data_list);
-
-    /// @brief Commit all option values.
-    ///
-    /// This function invokes commit for all option values
-    /// and append suboptions to the top-level options.
-    void commit();
-
+    /// @param cfg created options will be stored here
+    /// @param option_data_list configuration that describes the options
+    void parse(const CfgOptionPtr& cfg,
+               isc::data::ConstElementPtr option_data_list);
 private:
-
-    /// Collection of parsers;
-    ParserCollection parsers_;
-
-    /// @brief Pointer to a configuration where options are stored.
-    CfgOptionPtr cfg_;
-
     /// @brief Address family: @c AF_INET or @c AF_INET6
     uint16_t address_family_;
-
 };
 
-typedef boost::shared_ptr<OptionDataListParser> OptionDataListParserPtr;
-
+typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionTuple;
 
 /// @brief Parser for a single option definition.
 ///
 /// This parser creates an instance of a single option definition.
-class OptionDefParser : public DhcpConfigParser {
+class OptionDefParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    OptionDefParser(const std::string& dummy, ParserContextPtr global_context);
-
     /// @brief Parses an entry that describes single option definition.
     ///
     /// @param option_def a configuration entry to be parsed.
+    /// @return tuple (option definition, option space) of the parsed structure
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void build(isc::data::ConstElementPtr option_def);
-
-    /// @brief Stores the parsed option definition in a storage.
-    void commit();
-
-private:
-
-    /// @brief Create option definition from the parsed parameters.
-    ///
-    /// @param option_def_element A data element holding the configuration
-    /// for an option definition.
-    void createOptionDef(isc::data::ConstElementPtr option_def_element);
-
-    /// Instance of option definition being created by this parser.
-    OptionDefinitionPtr option_definition_;
-
-    /// Name of the space the option definition belongs to.
-    std::string option_space_name_;
-
-    /// Storage for boolean values.
-    BooleanStoragePtr boolean_values_;
-
-    /// Storage for string values.
-    StringStoragePtr string_values_;
-
-    /// Storage for uint32 values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    OptionDefinitionTuple
+    parse(isc::data::ConstElementPtr option_def);
 };
 
 /// @brief Parser for a list of option definitions.
@@ -779,37 +697,17 @@ private:
 /// option definitions and creates instances of these definitions.
 /// If the parsing is successful, the collection of created definitions
 /// is put into the provided storage.
-class OptionDefListParser : public DhcpConfigParser {
+class OptionDefListParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
+    /// @brief Parses a list of option defintions, create them and store in cfg
     ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    OptionDefListParser(const std::string& dummy,
-                        ParserContextPtr global_context);
-
-    /// @brief Parse configuration entries.
+    /// This method iterates over def_list, which is a JSON list of option defintions,
+    /// then creates corresponding option defintions and store them in the
+    /// configuration structure.
     ///
-    /// This function parses configuration entries, creates instances
-    /// of option definitions and tries to add them to the Configuration
-    /// Manager.
-    ///
-    /// @param option_def_list pointer to an element that holds entries
-    /// that define option definitions.
-    /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr option_def_list);
-
-    /// @brief Commits option definitions.
-    ///
-    /// Currently this function is no-op, because option definitions are
-    /// added to the Configuration Manager in the @c build method.
-    void commit();
-
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @param def_list JSON list describing option definitions
+    /// @param cfg parsed option definitions will be stored here
+    void parse(CfgOptionDefPtr cfg, isc::data::ConstElementPtr def_list);
 };
 
 /// @brief a collection of pools

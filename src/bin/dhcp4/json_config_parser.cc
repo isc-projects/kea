@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/simple_parser4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
@@ -190,8 +191,7 @@ protected:
             parser = new Pools4ListParser(config_id, pools_);
         } else if (config_id.compare("relay") == 0) {
             parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
-        } else if (config_id.compare("option-data") == 0) {
-            parser = new OptionDataListParser(config_id, options_, AF_INET);
+        // option-data has been converted to SimpleParser already.
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
         } else if (config_id.compare("4o6-subnet") == 0) {
@@ -424,10 +424,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
-    } else if (config_id.compare("option-data") == 0) {
-        parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET);
-    } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id, globalContext());
+    // option-data and option-def have been converted to SimpleParser already.
     } else if ((config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
                                     globalContext()->string_values_);
@@ -537,7 +534,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr option_parser;
     ParserPtr iface_parser;
     ParserPtr leases_parser;
     ParserPtr client_classes_parser;
@@ -566,10 +562,40 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // the name of the failing parser can be retrieved in the "catch" clause.
     ConfigPair config_pair;
     try {
+
+        // This is a way to convert ConstElementPtr to ElementPtr.
+        // We need a config that can be edited, because we will insert
+        // default values and will insert derived values as well.
+        ElementPtr mutable_cfg = Element::getMutableMap(config_set);
+
+        // Set all default values if not specified by the user.
+        SimpleParser4::setAllDefaults(mutable_cfg);
+
+        // We need definitions first
+        ConstElementPtr option_defs = mutable_cfg->get("option-def");
+        if (option_defs) {
+            OptionDefListParser parser;
+            CfgOptionDefPtr cfg_option_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+            parser.parse(cfg_option_def, option_defs);
+        }
+
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
-                                                        config_set->mapValue();
+                                                        mutable_cfg->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
+
+            if (config_pair.first == "option-def") {
+                // This is converted to SimpleParser and is handled already above.
+                continue;
+            }
+
+            if (config_pair.first == "option-data") {
+                OptionDataListParser parser(AF_INET);
+                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+                parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -578,8 +604,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "option-data") {
-                option_parser = parser;
             } else if (config_pair.first == "interfaces-config") {
                 // The interface parser is independent from any other
                 // parser and can be run here before any other parsers.
@@ -603,15 +627,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 // parsed data.
                 parser->commit();
             }
-        }
-
-        // The option values parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator option_config =
-            values_map.find("option-data");
-        if (option_config != values_map.end()) {
-            config_pair.first = "option-data";
-            option_parser->build(option_config->second);
-            option_parser->commit();
         }
 
         // The class definitions parser is the next one to be run.

@@ -1578,22 +1578,12 @@ It is merely echoed by the server
         </listitem>
 
         <listitem>
-          <simpara><command>csv-format</command> - if this value is not specified
-          and the definition for the particular option exists, the server will assume
-          that the option data is specified as a list of comma separated values to be
-          assigned to individual fields of the DHCP option. If the definition
-          does not exist for this option, the server will assume that the data
-          parameter contains the option payload in the binary format (represented
-          as a string of hexadecimal digits). Note that not specifying this
-          parameter doesn't imply that it defaults to a fixed value, but
-          the configuration data interpretation also depends on the presence
-          of the option definition. An administrator must be aware if the
-          definition for the particular option exists when this parameter
-          is not specified. It is generally recommended to not specify this
-          parameter only for the options for which the definition exists, e.g.
-          standard options. Setting <command>csv-format</command> to an explicit
-          value will cause the server to strictly check the format of the option
-          data specified.
+          <simpara><command>csv-format</command> - if this value is not
+          specified the server will assume that the option data is specified as
+          a list of comma separated values to be assigned to individual fields
+          of the DHCP option. This behavior has changed in Kea 1.2. Older
+          versions used additional logic to determined whether the csv-format
+          should be true or false. That is no longer the case.
           </simpara>
         </listitem>
       </itemizedlist>

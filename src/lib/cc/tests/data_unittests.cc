@@ -206,7 +206,7 @@ testGetValueInt() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1);
@@ -266,7 +266,7 @@ testGetValueDouble() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1.1);
@@ -293,7 +293,7 @@ testGetValueBool() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(true);
@@ -320,7 +320,7 @@ testGetValueString() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create("foo");
@@ -347,7 +347,7 @@ testGetValueList() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createList();
@@ -374,7 +374,7 @@ testGetValueMap() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createMap();
@@ -402,7 +402,7 @@ TEST(Element, create_and_value_throws) {
     double d = 0.0;
     bool b = false;
     std::string s("asdf");
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
     ConstElementPtr tmp;
 

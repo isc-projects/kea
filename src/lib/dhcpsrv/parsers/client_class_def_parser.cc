@@ -91,12 +91,16 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
                                                                 global_context_));
             parser = exp_parser;
         } else if (entry == "option-data") {
-            OptionDataListParserPtr opts_parser;
+
             uint16_t family = (global_context_->universe_ == Option::V4 ?
                                                              AF_INET : AF_INET6);
 
-            opts_parser.reset(new OptionDataListParser(entry, options_, family));
-            parser = opts_parser;
+            OptionDataListParser opts_parser(family);
+            opts_parser.parse(options_, param.second);
+
+            // OptionDataListParser is converted to SimpleParser already,
+            // no need to go through build/commit phases.
+            continue;
         } else if (entry == "next-server") {
             StringParserPtr str_parser(new StringParser(entry, string_values_));
             parser = str_parser;
