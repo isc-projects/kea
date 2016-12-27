@@ -56,8 +56,9 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    IfacesConfigParser parser(AF_INET);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     // Open sockets according to the parsed configuration.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
@@ -77,7 +78,8 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     config = "{ \"interfaces\": [ \"eth0\", \"*\" ] }";
     config_element = Element::fromJSON(config);
 
-    ASSERT_NO_THROW(parser.build(config_element));
+    cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_NO_THROW(cfg->getCfgIface()->openSockets(AF_INET, 10000));
@@ -100,8 +102,9 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    IfacesConfigParser parser(AF_INET);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     // Compare the resulting configuration with a reference
     // configuration using the raw socket.
@@ -125,8 +128,9 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse the configuration.
-    IfacesConfigParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    IfacesConfigParser parser(AF_INET);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     // Compare the resulting configuration with a reference
     // configuration using the raw socket.
@@ -139,18 +143,19 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
 // Test that the configuration rejects the invalid socket type.
 TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     // For DHCPv4 we only accept the raw socket or datagram socket.
-    IfacesConfigParser4 parser4;
+    IfacesConfigParser parser4(AF_INET);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     std::string config = "{ \"interfaces\": [ ],"
         "\"dhcp-socket-type\": \"default\" }";
     ElementPtr config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser4.build(config_element), DhcpConfigError);
+    ASSERT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
 
     // For DHCPv6 we don't accept any socket type.
-    IfacesConfigParser6 parser6;
+    IfacesConfigParser parser6(AF_INET6);
     config = "{ \"interfaces\": [ ],"
         " \"dhcp-socket-type\": \"udp\" }";
     config_element = Element::fromJSON(config);
-    ASSERT_THROW(parser6.build(config_element), DhcpConfigError);
+    ASSERT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
 }
 
 } // end of anonymous namespace

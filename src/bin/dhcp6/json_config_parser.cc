@@ -701,12 +701,11 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces-config") == 0) {
-        parser = new IfacesConfigParser6();
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
     // option-data and option-def are no longer needed here. They're now
-    //  converted to SimpleParser and are handled in configureDhcp6Server
+    // converted to SimpleParser and are handled in configureDhcp6Server.
+    // interfaces-config has been converted to SimpleParser.
     }  else if (config_id.compare("version") == 0) {
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
@@ -857,6 +856,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         }
 
         BOOST_FOREACH(config_pair, values_map) {
+            // In principle we could have the following code structured as a series
+            // of long if else if clauses. That would give a marginal performance
+            // boost, but would make the code less readable. We had serious issues
+            // with the parser code debuggability, so I decided to keep it as a
+            // series of independent ifs.
 
             if (config_pair.first == "option-def") {
                 // This is converted to SimpleParser and is handled already above.
@@ -867,6 +871,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 OptionDataListParser parser(AF_INET6);
                 CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "interfaces-config") {
+                IfacesConfigParser parser(AF_INET6);
+                CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+                parser.parse(cfg_iface, config_pair.second);
                 continue;
             }
 
