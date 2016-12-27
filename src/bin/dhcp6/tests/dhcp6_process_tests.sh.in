@@ -59,12 +59,50 @@ CONFIG="{
         ]
     }
 }"
+# Invalid configuration (syntax error) to check that Kea can check syntax.
+CONFIG_BAD_SYNTAX="{
+    \"Dhcp6\":
+    {
+        \"interfaces\": [ ],
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet6\": [
+        {
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pool\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
 # Invalid configuration (negative preferred-lifetime) to check that Kea
 # gracefully handles reconfiguration errors.
 CONFIG_INVALID="{
     \"Dhcp6\":
     {
-        \"interfaces\": [ ],
+        \"interfaces-config\": {
+          \"interfaces\": [ ]
+        },
         \"preferred-lifetime\": -3,
         \"valid-lifetime\": 4000,
         \"renew-timer\": 1000,
@@ -103,6 +141,36 @@ bin_path=@abs_top_builddir@/src/bin/dhcp6
 
 # Import common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# This test verifies that syntax check works properly.
+syntax_check_test() {
+    # Log the start of the test and print test name.
+    test_start "dhcpv6_srv.syntax_check"
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t -c ${CFG_FILE}\""
+    ${bin_path}/${bin} -t -c ${CFG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne 0 ]; then
+        printf "ERROR: expected exit code 0, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    # Create incorrect configuration file.
+    create_config "${CONFIG_BAD_SYNTAX}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t -c ${CFG_FILE}\""
+    printf "A syntax error should be detected\n"
+    ${bin_path}/${bin} -t -c ${CFG_FILE}
+    if [ $? -eq 0 ]; then
+        printf "ERROR: expected exit code not 0, got 0\n"
+        clean_exit 1
+    fi
+    # All ok
+    clean_exit 0
+}
 
 # This test verifies that DHCPv6 can be reconfigured with a SIGHUP signal.
 dynamic_reconfiguration_test() {
@@ -381,6 +449,7 @@ dynamic_reconfiguration_test
 shutdown_test "dhcpv6.sigterm_test" 15
 shutdown_test "dhcpv6.sigint_test" 2
 version_test "dhcpv6.version"
+syntax_check_test
 logger_vars_test "dhcpv6.variables"
 lfc_timer_test
 
