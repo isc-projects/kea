@@ -13,6 +13,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp6/simple_parser6.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -184,10 +185,12 @@ public:
                                                              uint32_values_));
                 parser = code_parser;
             } else if (entry == "option-data") {
-                OptionDataListParserPtr option_parser(new OptionDataListParser(entry,
-                                                                               options_,
-                                                                               AF_INET6));
-                parser = option_parser;
+                OptionDataListParser opts_parser(AF_INET6);
+                opts_parser.parse(options_, param.second);
+
+                // OptionDataListParser is converted to SimpleParser already,
+                // no need to go through build/commit phases.
+                continue;
             } else if (entry == "user-context") {
                 user_context_ = param.second;
                 continue; // no parser to remember, simply store the value
@@ -425,8 +428,7 @@ protected:
             parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
-        } else if (config_id.compare("option-data") == 0) {
-            parser = new OptionDataListParser(config_id, options_, AF_INET6);
+        // option-data was here, but it is now converted to SimpleParser
         } else if (config_id.compare("rapid-commit") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
         } else {
@@ -703,10 +705,11 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new IfacesConfigParser6();
     } else if (config_id.compare("subnet6") == 0) {
         parser = new Subnets6ListConfigParser(config_id);
-    } else if (config_id.compare("option-data") == 0) {
-        parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET6);
-    } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id, globalContext());
+    // option-data and option-def are no longer needed here. They're now
+    //  converted to SimpleParser and are handled in configureDhcp6Server
+    }  else if (config_id.compare("version") == 0) {
+        parser  = new StringParser(config_id,
+                                   globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
         parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
     } else if (config_id.compare("hosts-database") == 0) {
@@ -805,7 +808,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr option_parser;
     ParserPtr iface_parser;
     ParserPtr leases_parser;
     ParserPtr client_classes_parser;
@@ -835,10 +837,39 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     ConfigPair config_pair;
     try {
 
+        // This is a way to convert ConstElementPtr to ElementPtr.
+        // We need a config that can be edited, because we will insert
+        // default values and will insert derived values as well.
+        ElementPtr mutable_cfg = Element::getMutableMap(config_set);
+
+        SimpleParser6::setAllDefaults(mutable_cfg);
+
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
-            config_set->mapValue();
+            mutable_cfg->mapValue();
+
+        // We need definitions first
+        ConstElementPtr option_defs = mutable_cfg->get("option-def");
+        if (option_defs) {
+            OptionDefListParser parser;
+            CfgOptionDefPtr cfg_option_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+            parser.parse(cfg_option_def, option_defs);
+        }
+
         BOOST_FOREACH(config_pair, values_map) {
+
+            if (config_pair.first == "option-def") {
+                // This is converted to SimpleParser and is handled already above.
+                continue;
+            }
+
+            if (config_pair.first == "option-data") {
+                OptionDataListParser parser(AF_INET6);
+                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+                parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
@@ -847,8 +878,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "option-data") {
-                option_parser = parser;
             } else if (config_pair.first == "hooks-libraries") {
                 // Executing the commit will alter currently loaded hooks
                 // libraries. Check if the supplied libraries are valid,
@@ -873,15 +902,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 // parsed data.
                 parser->commit();
             }
-        }
-
-        // The option values parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator option_config =
-            values_map.find("option-data");
-        if (option_config != values_map.end()) {
-            config_pair.first = "option-data";
-            option_parser->build(option_config->second);
-            option_parser->commit();
         }
 
         // The class definitions parser is the next one to be run.

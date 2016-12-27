@@ -2030,6 +2030,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
         "    } ],"
         "    \"option-data\": [ {"
         "      \"code\": 120,"
+        "      \"csv-format\": false,"
         "      \"data\": \"05\""
         "    } ],"
         "    \"preferred-lifetime\": 3000,"

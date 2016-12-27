@@ -20,8 +20,6 @@ if HAVE_CQL
 AM_CPPFLAGS += $(CQL_CPPFLAGS)
 endif
 
-AM_CXXFLAGS = $(KEA_CXXFLAGS)
-
 # The files in the subfolder must be explicitly specified here so
 # as they are copied to the distribution. The other option would
 # be to specify a whole 'parsers' folder here but that would also

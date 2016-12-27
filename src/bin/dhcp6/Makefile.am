@@ -31,8 +31,8 @@ if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-        $(srcdir)/kea-dhcp6.xml
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/kea-dhcp6.xml
 
 else
 
@@ -63,12 +63,11 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
-
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
 libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-
 libdhcp6_la_SOURCES += kea_controller.cc
+libdhcp6_la_SOURCES += simple_parser6.cc simple_parser6.h
 
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
