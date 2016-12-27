@@ -59,7 +59,7 @@ public:
     /// otherwise its data value and the position will be updated with the
     /// given values.
     ///
-    /// @param name is the name of the paramater to store.
+    /// @param name is the name of the parameter to store.
     /// @param value is the data value to store.
     /// @param position is the position of the data element within a
     /// configuration string (file).
@@ -75,7 +75,7 @@ public:
     /// @param name is the name of the parameter for which the data
     /// value is desired.
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     /// @throw DhcpConfigError if the parameter is not found.
     ValueType getParam(const std::string& name) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -124,7 +124,7 @@ public:
     /// value is desired.
     /// @param default_value value to use the default
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     ValueType getOptionalParam(const std::string& name,
                                const ValueType& default_value) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -142,7 +142,7 @@ public:
     /// Deletes the entry for the given parameter from the store if it
     /// exists.
     ///
-    /// @param name is the name of the paramater to delete.
+    /// @param name is the name of the parameter to delete.
     void delParam(const std::string& name) {
         values_.erase(name);
         positions_.erase(name);
@@ -250,7 +250,7 @@ typedef boost::shared_ptr<ParserContext> ParserContextPtr;
 /// possible values. It provides a common constructor, commit, and templated
 /// data storage.  The "build" method implementation must be provided by a
 /// declaring type.
-/// @param ValueType is the data type of the configuration paramater value
+/// @param ValueType is the data type of the configuration parameter value
 /// the parser should handle.
 template<typename ValueType>
 class ValueParser : public DhcpConfigParser {
@@ -273,7 +273,7 @@ public:
                 << "empty parameter name provided");
         }
 
-        // NUll storage is invalid.
+        // Null storage is invalid.
         if (!storage_) {
             isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                 << "storage may not be NULL");
@@ -366,10 +366,10 @@ private:
 
 };
 
-/// @brief parser for MAC/hardware aquisition sources
+/// @brief parser for MAC/hardware acquisition sources
 ///
 /// This parser handles Dhcp6/mac-sources entry.
-/// It contains a list of MAC/hardware aquisition source, i.e. methods how
+/// It contains a list of MAC/hardware acquisition source, i.e. methods how
 /// MAC address can possibly by obtained in DHCPv6. For a currently supported
 /// methods, see @ref isc::dhcp::Pkt::getMAC.
 class MACSourcesListConfigParser : public DhcpConfigParser {
@@ -435,8 +435,8 @@ public:
 /// -# The problem faced with the hooks libraries is that we wish to avoid
 /// reloading the libraries if they have not changed.  (This would cause the
 /// "unload" and "load" methods to run.  Although libraries should be written
-/// to cope with this, it is feasible that such an action may be constly in
-/// terms of time and resources, or may cause side effects such as clearning
+/// to cope with this, it is feasible that such an action may be costly in
+/// terms of time and resources, or may cause side effects such as clearing
 /// an internal cache.)  To this end, the parser also checks the list against
 /// the list of libraries current loaded and notes if there are changes.
 /// -# If there are, the parser validates the libraries; it opens them and
@@ -545,9 +545,9 @@ public:
 
     /// @brief Parses ElementPtr containing option definition
     ///
-    /// This method parses ElementPtr containing the option defintion,
+    /// This method parses ElementPtr containing the option definition,
     /// instantiates the option for it and then returns a pair
-    /// of option descritor (that holds that new option) and
+    /// of option descriptor (that holds that new option) and
     /// a string that specifies the option space.
     ///
     /// Note: ElementPtr is expected to contain all fields. If your
@@ -555,7 +555,7 @@ public:
     /// @ref isc::data::SimpleParser::setDefaults to fill the missing fields
     /// with default values.
     ///
-    /// @param single_option ElementPtr containing option defintion
+    /// @param single_option ElementPtr containing option definition
     /// @return Option object wrapped in option description and an option
     ///         space
     std::pair<OptionDescriptor, std::string>
@@ -564,8 +564,8 @@ private:
 
     /// @brief Finds an option definition within an option space
     ///
-    /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the option defintion storage.
+    /// Given an option space and an option code, find the corresponding
+    /// option definition within the option definition storage.
     ///
     /// @param option_space name of the parameter option space
     /// @param search_key an option code or name to be used to lookup the
@@ -573,7 +573,7 @@ private:
     /// @tparam A numeric type for searching using an option code or the
     /// string for searching using the option name.
     ///
-    /// @return OptionDefintionPtr of the option defintion or an
+    /// @return OptionDefinitionPtr of the option definition or an
     /// empty OptionDefinitionPtr if not found.
     /// @throw DhcpConfigError if the option space requested is not valid
     /// for this server.
@@ -699,10 +699,10 @@ public:
 /// is put into the provided storage.
 class OptionDefListParser : public isc::data::SimpleParser {
 public:
-    /// @brief Parses a list of option defintions, create them and store in cfg
+    /// @brief Parses a list of option definitions, create them and store in cfg
     ///
-    /// This method iterates over def_list, which is a JSON list of option defintions,
-    /// then creates corresponding option defintions and store them in the
+    /// This method iterates over def_list, which is a JSON list of option definitions,
+    /// then creates corresponding option definitions and store them in the
     /// configuration structure.
     ///
     /// @param def_list JSON list describing option definitions
@@ -844,7 +844,7 @@ protected:
 
 /// @brief parser for additional relay information
 ///
-/// This concrete parser handles RelayInfo structure defintions.
+/// This concrete parser handles RelayInfo structure definitions.
 /// So far that structure holds only relay IP (v4 or v6) address, but it
 /// is expected that the number of parameters will increase over time.
 ///
@@ -922,7 +922,7 @@ public:
 protected:
     /// @brief creates parsers for entries in subnet definition
     ///
-    /// @param config_id name od the entry
+    /// @param config_id name of the entry
     ///
     /// @return parser object for specified entry name
     /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
