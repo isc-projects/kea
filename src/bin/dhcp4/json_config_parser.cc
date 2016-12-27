@@ -420,10 +420,9 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                   globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces-config") == 0) {
-        parser = new IfacesConfigParser4();
     } else if (config_id.compare("subnet4") == 0) {
         parser = new Subnets4ListConfigParser(config_id);
+    // interface-config has been migrated to SimpleParser already.
     // option-data and option-def have been converted to SimpleParser already.
     } else if ((config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
@@ -583,6 +582,11 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         const std::map<std::string, ConstElementPtr>& values_map =
                                                         mutable_cfg->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
+            // In principle we could have the following code structured as a series
+            // of long if else if clauses. That would give a marginal performance
+            // boost, but would make the code less readable. We had serious issues
+            // with the parser code debuggability, so I decided to keep it as a
+            // series of independent ifs.
 
             if (config_pair.first == "option-def") {
                 // This is converted to SimpleParser and is handled already above.
@@ -596,6 +600,14 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "interfaces-config") {
+                IfacesConfigParser parser(AF_INET);
+                CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+                parser.parse(cfg_iface, config_pair.second);
+                continue;
+            }
+
+            // Legacy DhcpConfigParser stuff below
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -604,11 +616,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "interfaces-config") {
-                // The interface parser is independent from any other
-                // parser and can be run here before any other parsers.
-                iface_parser = parser;
-                parser->build(config_pair.second);
             } else if (config_pair.first == "hooks-libraries") {
                 // Executing commit will alter currently-loaded hooks
                 // libraries.  Check if the supplied libraries are valid,
