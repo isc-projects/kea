@@ -34,6 +34,7 @@ the new parser, here's how you use it:
  // can be replaced with this:
  Parser6Context parser;
  json = parser.parseFile(file_name, Parser6Context::PARSER_DHCP6);
+@endcode
 
 Note: parsers are currently being migrated to @ref isc::data::SimpleParser. See
 @ref ccSimpleParser page for details.
