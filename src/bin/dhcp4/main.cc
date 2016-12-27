@@ -8,6 +8,7 @@
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/parser_context.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -17,6 +18,7 @@
 
 #include <iostream>
 
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace std;
 
@@ -38,11 +40,12 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-c cfgfile] [-p number]" << endl;
+         << " -[v|V|W] [-d] [-t] [-c cfgfile] [-p number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
+    cerr << "  -t: check the configuration file syntax and exit" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
@@ -56,14 +59,19 @@ main(int argc, char* argv[]) {
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
     bool verbose_mode = false; // Should server be verbose?
+    bool check_mode = false;   // Check syntax
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:")) != -1) {
+    while ((ch = getopt(argc, argv, "dtvVWc:p:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
+            break;
+
+        case 't':
+            check_mode = true;
             break;
 
         case 'v':
@@ -112,6 +120,25 @@ main(int argc, char* argv[]) {
     if (config_file.empty()) {
         cerr << "Configuration file not specified." << endl;
         usage();
+    }
+
+    if (check_mode) {
+        try {
+            Parser4Context parser;
+            ConstElementPtr json;
+            json = parser.parseFile(config_file, Parser4Context::PARSER_DHCP4);
+            if (!json) {
+                cerr << "No configuration found" << endl;
+                return (EXIT_FAILURE);
+            }
+            if (verbose_mode) {
+                cerr << "Syntax check OK" << endl;
+            }
+            return (EXIT_SUCCESS);
+        } catch (const std::exception& ex) {
+            cerr << "Syntax check failed with " << ex.what() << endl;
+        }
+        return (EXIT_FAILURE);
     }
 
     int ret = EXIT_SUCCESS;
