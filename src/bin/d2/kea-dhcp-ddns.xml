@@ -52,7 +52,8 @@
       <arg><option>-V</option></arg>
       <arg><option>-W</option></arg>
       <arg><option>-d</option></arg>
-      <arg><option>-s</option></arg>
+      <!-- not yet <arg><option>-t</option></arg> -->
+      <arg><option>-c</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -103,6 +104,16 @@
           for development purposes in stand-alone mode.
         </para></listitem>
       </varlistentry>
+
+<!-- not yet
+      <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para>
+          Check the syntax of the configuration file and report the first
+          error if any.
+        </para></listitem>
+      </varlistentry>
+-->
 
       <varlistentry>
         <term><option>-c</option></term>
