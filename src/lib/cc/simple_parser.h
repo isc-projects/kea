@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <string>
 #include <stdint.h>
+#include <vector>
 
 namespace isc {
 namespace data {
