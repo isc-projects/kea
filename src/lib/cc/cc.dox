@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
- @page libcc libcc - Kea configuration commands library
+ @page libcc libkea-cc - Kea Configuration Utilities Library
 
 @section ccSimpleParser Simple JSON Parser
 
@@ -36,7 +36,7 @@ Since each derived class will have the same parameter, but a different return
 type, it's not possible to use virtual methods mechanism. That's perfectly
 ok, though, as there is only a single instance of the class needed to parse
 arbitrary number of parameters of the same type. There is no need to
-keep pointers to the parser object. As such there's fewer incentives to have
+keep pointers to the parser object. As such there are fewer incentives to have
 one generic way to handle all parsers.
 
 @subsection ccSimpleParserDefaults Default values in Simple Parser
