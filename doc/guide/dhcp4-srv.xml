@@ -1582,7 +1582,7 @@ It is merely echoed by the server
           specified the server will assume that the option data is specified as
           a list of comma separated values to be assigned to individual fields
           of the DHCP option. This behavior has changed in Kea 1.2. Older
-          versions used additional logic to determined whether the csv-format
+          versions used additional logic to determine whether the csv-format
           should be true or false. That is no longer the case.
           </simpara>
         </listitem>
