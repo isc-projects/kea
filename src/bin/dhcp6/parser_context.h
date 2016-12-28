@@ -126,8 +126,8 @@ public:
     /// @param str string to be parsed
     /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseString(const std::string& str,
-                                           ParserType parser_type);
+    isc::data::ElementPtr parseString(const std::string& str,
+                                      ParserType parser_type);
 
     /// @brief Run the parser on the file specified.
     ///
@@ -139,8 +139,8 @@ public:
     /// @param filename file to be parsed
     /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseFile(const std::string& filename,
-                                         ParserType parser_type);
+    isc::data::ElementPtr parseFile(const std::string& filename,
+                                    ParserType parser_type);
 
     /// @brief Error handler
     ///
@@ -321,7 +321,7 @@ public:
     /// @brief Common part of parseXXX
     ///
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseCommon();
+    isc::data::ElementPtr parseCommon();
 };
 
 }; // end of isc::eval namespace
