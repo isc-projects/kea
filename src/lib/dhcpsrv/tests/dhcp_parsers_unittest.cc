@@ -428,7 +428,6 @@ public:
                           const SimpleDefaults& option_def_defaults) {
         size_t cnt = 0;
         // Set global defaults first.
-        /// @todo: Uncomment as part of the ticket 5019 work.
         cnt = SimpleParser::setDefaults(global, global_defaults);
 
         // Now set option defintion defaults for each specified option definition
