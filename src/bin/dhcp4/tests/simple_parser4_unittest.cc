@@ -7,6 +7,7 @@
 #include <config.h>
 #include <gtest/gtest.h>
 #include <dhcp4/simple_parser4.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <cc/data.h>
 
 using namespace isc::data;
@@ -44,7 +45,7 @@ public:
 // This test checks if global defaults are properly set for DHCPv4.
 TEST_F(SimpleParser4Test, globalDefaults4) {
 
-    ElementPtr empty = Element::fromJSON("{ }");
+    ElementPtr empty = parseJSON("{ }");
     size_t num = 0;
 
     EXPECT_NO_THROW(num = SimpleParser4::setAllDefaults(empty));
@@ -65,12 +66,12 @@ TEST_F(SimpleParser4Test, globalDefaults4) {
 // This test checks if the parameters can be inherited from the global
 // scope to the subnet scope.
 TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
-    ElementPtr global = Element::fromJSON("{ \"renew-timer\": 1,"
-                                          "  \"rebind-timer\": 2,"
-                                          "  \"preferred-lifetime\": 3,"
-                                          "  \"valid-lifetime\": 4"
-                                          "}");
-    ElementPtr subnet = Element::fromJSON("{ \"renew-timer\": 100 }");
+    ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
+                                  "  \"rebind-timer\": 2,"
+                                  "  \"preferred-lifetime\": 3,"
+                                  "  \"valid-lifetime\": 4"
+                                  "}");
+    ElementPtr subnet = parseJSON("{ \"renew-timer\": 100 }");
 
     // we should inherit 3 parameters. Renew-timer should remain intact,
     // as it was already defined in the subnet scope.
