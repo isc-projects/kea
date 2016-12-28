@@ -8,6 +8,7 @@
 #define SIMPLE_PARSER_H
 
 #include <cc/data.h>
+#include <vector>
 #include <string>
 #include <stdint.h>
 
@@ -33,17 +34,20 @@ typedef std::vector<std::string> ParamsList;
 
 /// @brief A simple parser
 ///
-/// This class is intended to be a simpler replacement for
-/// @ref isc::dhcp::DhcpConfigParser.
+/// This class is intended to be a simpler replacement for @ref
+/// isc::dhcp::DhcpConfigParser. This class has been initially created to
+/// facilitate DHCPv4 and DHCPv6 servers' configuration parsing. Thus examples
+/// provided herein are related to DHCP configuration. Nevertheless, this is a
+/// generic class to be used in other modules too.
+///
 /// The simplification comes from several factors:
 /// - no build/commit nonsense. There's a single step:
 ///   CfgStorage parse(ConstElementPtr json)
 ///   that converts JSON configuration into an object and returns it.
-/// - almost no state kept. The only state kept in most cases is whether the
-///   parsing is done in v4 or v6 context. This greatly simplifies the
-///   parsers (no contexts, no child parsers list, no separate storage for
-///   uint32, strings etc. In fact, there's so little state kept, that this
-///   parser is mostly a collection of static methods.
+/// - no state kept. This greatly simplifies the parsers (no contexts, no child
+///   parsers list, no separate storage for uint32, strings etc. In fact,
+///   this base class is purely static. However, some derived classes may store
+///   some state. Implementors are advised to store as little state as possible.
 /// - no optional parameters (all are mandatory). This simplifies the parser,
 ///   but introduces a new step before parsing where we insert the default
 ///   values into client configuration before parsing. This is actually a good
@@ -98,14 +102,15 @@ class SimpleParser {
 
     /// @brief Utility method that returns position of an element
     ///
-    /// It's mostly useful for logging.
+    /// It's mostly useful for logging. When any necessary parameter is
+    /// missing (either parent is null or it doesn't contain specified
+    /// name) ZERO_POSITION is returned.
     ///
     /// @param name position of that element will be returned
     /// @param parent parent element (optional)
     /// @return position of the element specified.
     static const data::Element::Position&
-    getPosition(const std::string& name, const data::ConstElementPtr parent =
-                data::ConstElementPtr());
+    getPosition(const std::string& name, const data::ConstElementPtr parent);
 
  protected:
 

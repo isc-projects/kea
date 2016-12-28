@@ -123,7 +123,7 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
 
         // ... and insert it into the provided Element tree.
         scope->set(def_value.name_, x);
-        cnt++;
+        ++cnt;
     }
 
     return (cnt);
