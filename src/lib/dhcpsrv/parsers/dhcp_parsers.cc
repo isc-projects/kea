@@ -242,10 +242,10 @@ HooksLibrariesParser::parse(ConstElementPtr value) {
     libraries_.clear();
 
     if (!value) {
-        isc_throw(DhcpConfigError, "Tried to parse null hooks libriaries");
+        isc_throw(DhcpConfigError, "Tried to parse null hooks libraries");
     }
 
-    // Let's stoer
+    // Let's store
     position_ = value->getPosition();
 
     // This is the new syntax.  Iterate through it and get each map.
@@ -259,7 +259,7 @@ HooksLibrariesParser::parse(ConstElementPtr value) {
                 " a map (" << library_entry->getPosition() << ")");
         }
 
-        // Iterate iterate through each element in the map.  We check
+        // Iterate through each element in the map.  We check
         // whether we have found a library element.
         bool lib_found = false;
 

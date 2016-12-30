@@ -450,7 +450,7 @@ public:
     /// @brief Parses parameters value
     ///
     /// Parses configuration entry (list of parameters) and adds each element
-    /// to the hooks libraries list.  The  method also checks whether the
+    /// to the hooks libraries list.  The method also checks whether the
     /// list of libraries is the same as that already loaded.  If not, it
     /// checks each of the libraries in the list for validity (they exist and
     /// have a "version" function that returns the correct value).
@@ -474,10 +474,9 @@ public:
     /// The parsing code only checks that:
     ///
     /// -# Each element in the hooks-libraries list is a map
-    /// -# The map contains an element "library" whose value is a string: all
-    ///    other elements in the map are ignored.
-    /// -# That there is an optional 'parameters' parameter.
-    /// -# That there are no other parameters.
+    /// -# The map contains an element "library" whose value is a not blank string
+    /// -# That there is an optional 'parameters' element.
+    /// -# That there are no other element.
     ///
     /// If you want to check whether the library is really present (if the file
     /// is on disk, it is really a library and that it could be loaded), call
@@ -488,17 +487,17 @@ public:
     /// @param value pointer to the content of parsed values
     void parse(isc::data::ConstElementPtr value);
 
-    /// @brief Verifies that libraries stores in libraries_ are valid.
+    /// @brief Verifies that libraries stored in libraries_ are valid.
     ///
     /// This method is a smart wrapper around @ref HooksManager::validateLibraries().
     /// It tries to validate all the libraries stored in libraries_.
-    /// @throw DhcpConfigError if any issues are discovered.
+    /// @throw DhcpConfigError if any issue is discovered.
     void verifyLibraries();
 
     /// @brief Commits hooks libraries data
     ///
     /// This method calls necessary methods in HooksManager that will load the
-    /// actual libraries.Providing that the specified libraries are valid and are different
+    /// actual libraries. Providing that the specified libraries are valid and are different
     /// to those already loaded, this method loads the new set of libraries
     /// (and unloads the existing set).
     void loadLibraries();
