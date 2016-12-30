@@ -328,6 +328,14 @@ public:
                     continue;
                 }
 
+                if (config_pair.first == "hooks-libraries") {
+                    hooks_libraries_parser_.reset(new HooksLibrariesParser());
+                    hooks_libraries_parser_->parse(config_pair.second);
+                    hooks_libraries_parser_->verifyLibraries();
+                    hooks_libraries_parser_->loadLibraries();
+                    continue;
+                }
+
                 // Remaining ones are old style parsers. Need go do
                 // the build/commit dance with them.
 
@@ -397,11 +405,7 @@ public:
         ParserPtr parser;
         // option-data and option-def converted to SimpleParser, so they
         // are no longer here.
-        if (config_id.compare("hooks-libraries") == 0) {
-            parser.reset(new HooksLibrariesParser(config_id));
-            hooks_libraries_parser_ =
-                boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
-        } else if (config_id.compare("dhcp-ddns") == 0) {
+        if (config_id.compare("dhcp-ddns") == 0) {
             parser.reset(new D2ClientConfigParser(config_id));
         } else {
             isc_throw(NotImplemented,
@@ -1249,9 +1253,7 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
 
     // Check that the parser recorded nothing.
     isc::hooks::HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     EXPECT_TRUE(libraries.empty());
 
     // Check that there are still no libraries loaded.
@@ -1274,9 +1276,7 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
 
     // Check that the parser recorded a single library.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(1, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
 
@@ -1302,9 +1302,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
 
     // Check that the parser recorded two libraries in the expected order.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1342,9 +1340,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     // the paramters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1383,9 +1379,7 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
 
     // The list has changed, and this is what we should see.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].first);
@@ -1422,9 +1416,7 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
 
     // The list has changed, and this is what we should see.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     EXPECT_TRUE(libraries.empty());
 
     // Check that no libraries are currently loaded
@@ -1456,9 +1448,7 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
     // Check that the parser recorded the names but, as they were in error,
     // does not flag them as changed.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1500,9 +1490,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     // Check that the parser recorded the names but, as the library set was
     // incorrect, did not mark the configuration as changed.
     HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1607,9 +1595,7 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
 
     // Check that the parser recorded the names.
     HookLibsCollection libraries;
-    bool changed = false;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    hooks_libraries_parser_->getLibraries(libraries);
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
