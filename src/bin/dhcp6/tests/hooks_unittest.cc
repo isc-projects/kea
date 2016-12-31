@@ -2079,8 +2079,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
 
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_basicLease6Decline) {
+TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
 
     // Install lease6_decline callout
@@ -2172,8 +2171,7 @@ TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineSkip) {
 }
 
 // Test that the lease6_decline hook point can handle DROP status.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineDrop) {
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
 
     // Install lease6_decline callout. It will set the status to skip

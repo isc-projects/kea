@@ -1603,13 +1603,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 }
 
 // Checks that decline4 hooks (lease4_decline) are triggered properly.
-/// @todo: There is a bug in HooksManager that causes the callouts installed
-/// using preCalloutsLibraryHandle() to be uninstalled when loadLibrary
-/// is called. This has changed recently (ticket #5031) as it calls the
-/// load/unload every time, regardless if the hooks-libraries clause is in the
-/// config file or not. #5095 has been submitted for this issue. Please
-/// enable this test once #5095 is fixed.
-TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDecline) {
+TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -1655,9 +1649,7 @@ TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDecline) {
 }
 
 // Checks that decline4 hook is able to drop the packet.
-/// @todo See HooksDhcpv4SrvTest.HooksDecline description for details.
-/// Please reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDeclineDrop) {
+TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
