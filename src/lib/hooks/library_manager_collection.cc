@@ -62,7 +62,15 @@ LibraryManagerCollection::loadLibraries() {
     // The upshot of this is that it is therefore safe for the CalloutManager
     // to be deleted after all associated libraries are deleted, hence this
     // link (LibraryManager -> CalloutManager) is safe.
-    callout_manager_.reset(new CalloutManager(library_names_.size()));
+    //
+    // To survive reloads an attempt to re-use the shared manager
+    // is performed when the list of library is empty.
+    if (library_names_.empty()) {
+        callout_manager_ = CalloutManager::getSharedManager();
+    }
+    if (!library_names_.empty() || !callout_manager_) {
+        callout_manager_.reset(new CalloutManager(library_names_.size()));
+    }
 
     // Now iterate through the libraries are load them one by one.  We'll
     for (size_t i = 0; i < library_names_.size(); ++i) {

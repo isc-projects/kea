@@ -13,6 +13,7 @@
 #include <config/command_mgr.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/callout_manager.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
@@ -111,6 +112,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
 
+        CalloutManager::getSharedManager().reset();
         delete srv_;
     }
 
@@ -1607,6 +1609,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
+    // Libraries will be reloaded later
+    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_decline", lease4_decline_callout));
@@ -1652,6 +1657,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
 TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
+
+    // Libraries will be reloaded later
+    CalloutManager::getSharedManager().reset(new CalloutManager(0));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
