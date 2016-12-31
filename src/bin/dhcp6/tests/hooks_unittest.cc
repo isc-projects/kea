@@ -18,6 +18,7 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <hooks/server_hooks.h>
+#include <hooks/callout_manager.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -113,10 +114,17 @@ public:
 
         // Clear static buffers
         resetCalloutBuffers();
+
+	// Reset the hook system in its original state
+	HooksManager::unloadLibraries();
     }
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
+
+        // Clear shared manager
+        CalloutManager::getSharedManager().reset();
+
     }
 
     /// @brief creates an option with specified option code
@@ -2082,6 +2090,9 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
 TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
 
+    // Libraries will be reloaded later
+    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_decline", lease6_decline_callout));
@@ -2126,9 +2137,11 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
 }
 
 // Test that the lease6_decline hook point can handle SKIP status.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineSkip) {
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
+
+    // Libraries will be reloaded later
+    CalloutManager::getSharedManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2173,6 +2186,9 @@ TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineSkip) {
 // Test that the lease6_decline hook point can handle DROP status.
 TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
+
+    // Libraries will be reloaded later
+    CalloutManager::getSharedManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
