@@ -64,7 +64,7 @@ LibraryManagerCollection::loadLibraries() {
     // link (LibraryManager -> CalloutManager) is safe.
     //
     // To survive reloads an attempt to re-use the shared manager
-    // is performed when the list of library is empty.
+    // is performed when the list of library names is empty.
     if (library_names_.empty()) {
         callout_manager_ = CalloutManager::getSharedManager();
     }
