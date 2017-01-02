@@ -138,7 +138,7 @@ public:
     /// will be called.
     /// @param callback Callback function for the asyncAccept.
     explicit Acceptor(IOService& io_service, TestTCPAcceptor& acceptor,
-             const TCPAcceptorCallback& callback)
+                      const TCPAcceptorCallback& callback)
         : socket_(io_service), acceptor_(acceptor), callback_(callback) {
     }
 
@@ -194,7 +194,8 @@ public:
           asio_endpoint_(boost::asio::ip::address::from_string(SERVER_ADDRESS),
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
-          clients_(), connections_num_(0), max_connections_(1) {
+          clients_(), connections_num_(0), aborted_connections_num_(0),
+          max_connections_(1) {
         test_timer_.setup(boost::bind(&TCPAcceptorTest::timeoutHandler, this),
                                       TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
@@ -260,18 +261,22 @@ public:
     /// @param ec Error code.
     void acceptHandler(const boost::system::error_code& ec) {
         if (ec) {
-            ADD_FAILURE() << "error occurred while accepting connection: "
-                          << ec.message();
+            if (ec != boost::asio::error::operation_aborted) {
+                ADD_FAILURE() << "error occurred while accepting connection: "
+                              << ec.message();
+            } else {
+                ++aborted_connections_num_;
+            }
             io_service_.stop();
         }
 
         // We have reached the maximum number of connections - end the test.
         if (++connections_num_ >= max_connections_) {
             io_service_.stop();
-
-        } else {
-            accept();
+            return;
         }
+
+        accept();
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -305,6 +310,9 @@ public:
 
     /// @brief Current number of established connections.
     unsigned int connections_num_;
+
+    /// @brief Current number of aborted connections.
+    unsigned int aborted_connections_num_;
 
     /// @brief Connections limit.
     unsigned int max_connections_;
@@ -381,6 +389,34 @@ TEST_F(TCPAcceptorTest, getNative) {
     // Now open the socket and make sure the returned descriptor is now valid.
     ASSERT_NO_THROW(acceptor_.open(endpoint_));
     EXPECT_GE(acceptor_.getNative(), 0);
+}
+
+
+// Test that TCPAcceptor::close works properly.
+TEST_F(TCPAcceptorTest, close) {
+    // Initialize acceptor.
+    acceptor_.open(endpoint_);
+    acceptor_.bind(endpoint_);
+    acceptor_.listen();
+
+    // Start accepting new connections.
+    accept();
+
+    // Create 10 new TCP connections (client side).
+    for (unsigned int i = 0; i < 10; ++i) {
+        connect();
+    }
+
+    // Close the acceptor before connections are accepted.
+    acceptor_.close();
+
+    // Run the IO service.
+    io_service_.run();
+
+    // The connections should have been aborted.
+    EXPECT_EQ(1, connections_num_);
+    EXPECT_EQ(1, aborted_connections_num_);
+    EXPECT_EQ(1, connections_.size());
 }
 
 }
