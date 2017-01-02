@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,48 +12,63 @@
 #endif
 
 #include <asiolink/io_service.h>
+#include <asiolink/io_socket.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
+#include <boost/shared_ptr.hpp>
+#include <netinet/in.h>
 
 namespace isc {
 namespace asiolink {
 
 template<typename C>
-class TCPAcceptor {
+class TCPAcceptor : public IOSocket{
 public:
 
     TCPAcceptor(IOService& io_service)
-        : acceptor_(io_service.get_io_service()) {
+        : IOSocket(),
+          acceptor_(new boost::asio::ip::tcp::acceptor(io_service.get_io_service())) {
+    }
+
+    virtual ~TCPAcceptor() { }
+
+    virtual int getNative() const {
+        return (acceptor_->native());
+    }
+
+    virtual int getProtocol() const {
+        return (IPPROTO_TCP);
     }
 
     void open(const TCPEndpoint& endpoint) {
-        acceptor_.open(endpoint.getASIOEndpoint().protocol());
-        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-
+        acceptor_->open(endpoint.getASIOEndpoint().protocol());
     }
 
-//    void setOption(const SettableSocketOption& socket_option);
+    template<typename SettableSocketOption>
+    void setOption(const SettableSocketOption& socket_option) {
+        acceptor_->set_option(socket_option);
+    }
 
     void bind(const TCPEndpoint& endpoint) {
-        acceptor_.bind(endpoint.getASIOEndpoint());
+        acceptor_->bind(endpoint.getASIOEndpoint());
     }
 
     void listen() {
-        acceptor_.listen();
+        acceptor_->listen();
     }
 
     template<typename SocketCallback>
     void asyncAccept(const TCPSocket<SocketCallback>& socket, C& callback) {
-        acceptor_.async_accept(socket.getASIOSocket(), callback);
+        acceptor_->async_accept(socket.getASIOSocket(), callback);
     }
 
     bool isOpen() const {
-        return (acceptor_.is_open());
+        return (acceptor_->is_open());
     }
 
 private:
 
-    boost::asio::ip::tcp::acceptor acceptor_;
+    boost::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
 
 };
 
