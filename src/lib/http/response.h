@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ enum class HttpStatusCode : std::uint16_t {
     OK = 200,
     CREATED = 201,
     ACCEPTED = 202,
-    NO_CONTENT = 203,
+    NO_CONTENT = 204,
     MULTIPLE_CHOICES = 300,
     MOVED_PERMANENTLY = 301,
     MOVED_TEMPORARILY = 302,
