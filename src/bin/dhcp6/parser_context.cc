@@ -24,14 +24,14 @@ Parser6Context::~Parser6Context()
 {
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseString(const std::string& str, ParserType parser_type)
 {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     FILE* f = fopen(filename.c_str(), "r");
     if (!f) {
@@ -41,7 +41,7 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     return (parseCommon());
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseCommon() {
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.

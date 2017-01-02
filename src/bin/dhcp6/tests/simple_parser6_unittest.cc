@@ -5,13 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <cc/data.h>
-#include <dhcp6/simple_parser6.h>
 #include <gtest/gtest.h>
+#include <dhcp6/simple_parser6.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <cc/data.h>
 
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -44,7 +46,7 @@ public:
 // This test checks if global defaults are properly set for DHCPv6.
 TEST_F(SimpleParser6Test, globalDefaults6) {
 
-    ElementPtr empty = Element::fromJSON("{ }");
+    ElementPtr empty = parseJSON("{ }");
     size_t num = 0;
 
     EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(empty));
@@ -61,12 +63,12 @@ TEST_F(SimpleParser6Test, globalDefaults6) {
 // This test checks if the parameters can be inherited from the global
 // scope to the subnet scope.
 TEST_F(SimpleParser6Test, inheritGlobalToSubnet6) {
-    ElementPtr global = Element::fromJSON("{ \"renew-timer\": 1,"
+    ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
                                           "  \"rebind-timer\": 2,"
                                           "  \"preferred-lifetime\": 3,"
                                           "  \"valid-lifetime\": 4"
                                           "}");
-    ElementPtr subnet = Element::fromJSON("{ \"renew-timer\": 100 }");
+    ElementPtr subnet = parseJSON("{ \"renew-timer\": 100 }");
 
     // we should inherit 3 parameters. Renew-timer should remain intact,
     // as it was already defined in the subnet scope.

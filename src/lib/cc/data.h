@@ -527,12 +527,6 @@ public:
     /// \return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
     //@}
-
-    /// @brief Creates mutable map based on const map
-    ///
-    /// @param const_map const map to be used as a donor
-    /// @return mutable map
-    static ElementPtr getMutableMap(ConstElementPtr& const_map);
 };
 
 /// Notes: IntElement type is changed to int64_t.

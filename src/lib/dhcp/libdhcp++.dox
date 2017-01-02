@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
-@page libdhcp libdhcp++
+@page libdhcp libkea-dhcp++ - Low Level DHCP Library
 
 @section libdhcpIntro Libdhcp++ Library Introduction
 

@@ -483,7 +483,7 @@ public:
 ///
 /// @param in string to be parsed
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseJSON(const std::string& in)
 {
     isc::dhcp::Parser4Context ctx;
@@ -498,7 +498,7 @@ parseJSON(const std::string& in)
 /// @param in string to be parsed
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseDHCP4(const std::string& in, bool verbose = false)
 {
     try {
@@ -520,7 +520,7 @@ parseDHCP4(const std::string& in, bool verbose = false)
 /// @param in string to be parsed
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseOPTION_DEF(const std::string& in, bool verbose = false)
 {
     try {
