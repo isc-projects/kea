@@ -115,6 +115,11 @@ public:
         return (acceptor_->is_open());
     }
 
+    /// @brief Closes the acceptor.
+    void close() const {
+        acceptor_->close();
+    }
+
 private:
 
     /// @brief Underlying ASIO acceptor implementation.
