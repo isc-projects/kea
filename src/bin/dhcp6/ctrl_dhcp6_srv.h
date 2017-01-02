@@ -7,6 +7,7 @@
 #ifndef CTRL_DHCPV6_SRV_H
 #define CTRL_DHCPV6_SRV_H
 
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
