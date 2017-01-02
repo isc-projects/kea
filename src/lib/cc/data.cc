@@ -1084,14 +1084,5 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
     }
 }
 
-ElementPtr Element::getMutableMap(ConstElementPtr& const_map) {
-    std::map<std::string, ConstElementPtr> values;
-    const_map->getValue(values);
-    ElementPtr mutable_map(new MapElement());
-    mutable_map->setValue(values);
-
-    return (mutable_map);
-}
-
 }
 }
