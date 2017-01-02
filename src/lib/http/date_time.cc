@@ -7,6 +7,7 @@
 #include <http/date_time.h>
 #include <boost/date_time/time_facet.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
+#include <locale>
 #include <sstream>
 
 using namespace boost::local_time;
@@ -109,7 +110,7 @@ HttpDateTime::toString(const std::string& format,
     // Create raw pointer. The output stream will take responsibility for
     // deleting the object.
     time_facet* df(new time_facet(format.c_str()));
-    s.imbue(std::locale(s.getloc(), df));
+    s.imbue(std::locale(std::locale::classic(), df));
 
     // Convert time value to a string.
     s << time_;
@@ -131,7 +132,7 @@ HttpDateTime::fromString(const std::string& time_string,
     // Create raw pointer. The input stream will take responsibility for
     // deleting the object.
     time_input_facet* tif(new time_input_facet(format));
-    s.imbue(std::locale(s.getloc(), tif));
+    s.imbue(std::locale(std::locale::classic(), tif));
 
     time_zone_ptr zone(new posix_time_zone("GMT"));
     local_date_time ldt = local_microsec_clock::local_time(zone);
