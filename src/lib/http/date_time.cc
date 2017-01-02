@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,7 +79,6 @@ HttpDateTime::fromAny(const std::string& time_string) {
         return (date_time);
     } catch (...) {
         // Ignore errors, simply try different format.
-        ;
     }
 
     // Try to parse as a timestamp specified in RFC 850 format.
@@ -88,7 +87,6 @@ HttpDateTime::fromAny(const std::string& time_string) {
         return (date_time);
     } catch (...) {
         // Ignore errors, simply try different format.
-        ;
     }
 
     // Try to parse as a timestamp output by asctime() function.

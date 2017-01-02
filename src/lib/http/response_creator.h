@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,9 +22,9 @@ namespace http {
 /// meant to be generic and provide means for transferring different types
 /// of content, depending on the use case.
 ///
-/// This class specifies a common interface for generating HTTP responses
-/// from HTTP requests using specific content type and being used in some
-/// specific context. Kea modules providing HTTP services need to
+/// This abstract class specifies a common interface for generating HTTP
+/// responses from HTTP requests using specific content type and being
+/// used in some specific context. Kea modules providing HTTP services need to
 /// implement their specific derivations of the @ref HttpResponseCreator
 /// class. These derivations use classes derived from @ref HttpRequest as
 /// an input and classes derived from @ref HttpResponse as an output of
@@ -60,10 +60,15 @@ public:
     /// @c createDynamicHttpResponse to generate implementation specific
     /// response to the received request.
     ///
+    /// This method is marked virtual final to prevent derived classes from
+    /// overriding this method. Instead, the derived classes must implement
+    /// protected methods which this method calls.
+    ///
     /// @param request Pointer to an object representing HTTP request.
     /// @return Pointer to the object encapsulating generated HTTP response.
     /// @throw HttpResponseError if request is a NULL pointer.
-    HttpResponsePtr createHttpResponse(const ConstHttpRequestPtr& request);
+    virtual HttpResponsePtr
+    createHttpResponse(const ConstHttpRequestPtr& request) final;
 
 protected:
 
