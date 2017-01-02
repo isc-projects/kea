@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
- @page libdhcpsrv libdhcpsrv - Server DHCP library
+ @page libdhcpsrv libkea-dhcpsrv - Server DHCP Library
 
 This library contains code used for the DHCPv4 and DHCPv6 servers' operations,
 including the "Lease Manager" that manages information about leases and the

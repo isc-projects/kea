@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
-  @page dhcpEval libeval - Expression evaluation and client classification
+  @page libeval libkea-eval - Expression Evaluation and Client Classification Library
 
   @section dhcpEvalIntroduction Introduction
 
