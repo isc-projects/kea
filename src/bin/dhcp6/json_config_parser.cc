@@ -840,7 +840,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
-        ElementPtr mutable_cfg = const_pointer_cast<Element>(config_set);
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
         SimpleParser6::setAllDefaults(mutable_cfg);
 
