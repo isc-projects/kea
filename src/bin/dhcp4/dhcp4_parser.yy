@@ -53,6 +53,8 @@ using namespace std;
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   DHCP_SOCKET_TYPE "dhcp-socket-type"
+  DHCP_SOCKET_TYPE_RAW "raw"
+  DHCP_SOCKET_TYPE_UDP "udp"
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
@@ -443,12 +445,18 @@ interfaces_list: INTERFACES {
     ctx.leave();
 };
 
-dhcp_socket_type: DHCP_SOCKET_TYPE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr type(new StringElement($4, ctx.loc2pos(@4)));
+dhcp_socket_type: dhcp_socket_type_raw
+                | dhcp_socket_type_udp
+                ;
+
+dhcp_socket_type_raw: DHCP_SOCKET_TYPE COLON DHCP_SOCKET_TYPE_RAW {
+    ElementPtr type(new StringElement("raw", ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp-socket-type", type);
-    ctx.leave();
+};
+
+dhcp_socket_type_udp: DHCP_SOCKET_TYPE COLON DHCP_SOCKET_TYPE_UDP {
+    ElementPtr type(new StringElement("udp", ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("dhcp-socket-type", type);
 };
 
 lease_database: LEASE_DATABASE {
