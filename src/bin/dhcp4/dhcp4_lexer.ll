@@ -196,6 +196,26 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"raw\" {
+    std::cout << "RAW regexp" << std::endl;
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE_RAW(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("raw", driver.loc_);
+    }
+}
+
+\"udp\" {
+    std::cout << "RAW regexp" << std::endl;
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE_UDP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("udp", driver.loc_);
+    }
+}
+
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:

@@ -585,7 +585,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // In principle we could have the following code structured as a series
             // of long if else if clauses. That would give a marginal performance
             // boost, but would make the code less readable. We had serious issues
-            // with the parser code debuggability, so I decided to keep it as a
+            // with the parser code debugability, so I decided to keep it as a
             // series of independent ifs.
 
             if (config_pair.first == "option-def") {

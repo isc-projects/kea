@@ -19,7 +19,7 @@ namespace dhcp {
 ///
 /// This parser parses the "interfaces-config" parameter which holds the
 /// full configuration of the DHCP server with respect to the use of
-/// interfaces, sockets and alike.
+/// interfaces, DHCP traffic sockets and alike.
 ///
 /// This parser is used in both DHCPv4 and DHCPv6. Derived parsers
 /// are not needed.

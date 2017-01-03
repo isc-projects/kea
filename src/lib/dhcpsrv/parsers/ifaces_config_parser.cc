@@ -62,7 +62,11 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                 }
             }
 
-            isc_throw(DhcpConfigError, "usupported parameter '"
+            // This should never happen as the input produced by the parser
+            // see (src/bin/dhcpX/dhcpX_parser.yy) should not produce any
+            // other parameter, so this case is only to catch bugs in
+            // the parser.
+            isc_throw(DhcpConfigError, "unsupported parameter '"
                       << element.first << "'");
         } catch (const std::exception& ex) {
             // Append line number where the error occurred.
@@ -72,8 +76,9 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     }
 
     // User hasn't specified the socket type. Log that we are using
-    // the default type.
-    if (!socket_type_specified) {
+    // the default type. Log it only if this is DHCPv4. (DHCPv6 does not use
+    // raw sockets).
+    if (!socket_type_specified && (protocol_ == AF_INET) ) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT)
             .arg(cfg->socketTypeToText());
     }
