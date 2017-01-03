@@ -3674,7 +3674,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
          it supports the following statistics related commands:
         <itemizedlist>
             <listitem>statistic-get</listitem>
-            <listitem> statistic-reset</listitem>
+            <listitem>statistic-reset</listitem>
             <listitem>statistic-remove</listitem>
             <listitem>statistic-get-all</listitem>
             <listitem>statistic-reset-all</listitem>
