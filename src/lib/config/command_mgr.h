@@ -8,7 +8,7 @@
 #define COMMAND_MGR_H
 
 #include <cc/data.h>
-#include <config/base_command_mgr.h>
+#include <config/hooked_command_mgr.h>
 #include <config/command_socket.h>
 #include <boost/noncopyable.hpp>
 #include <list>
@@ -20,7 +20,7 @@ namespace config {
 ///
 /// This class extends @ref BaseCommandMgr with the ability to receive and
 /// respond to commands over unix domain sockets.
-class CommandMgr : public BaseCommandMgr, public boost::noncopyable {
+class CommandMgr : public HookedCommandMgr, public boost::noncopyable {
 public:
 
     /// @brief CommandMgr is a singleton class. This method returns reference

@@ -20,12 +20,14 @@ libkea_cfgclient_la_SOURCES += command_mgr.cc command_mgr.h
 libkea_cfgclient_la_SOURCES += command_socket.cc command_socket.h
 libkea_cfgclient_la_SOURCES += command_socket_factory.cc command_socket_factory.h
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
+libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
 
 libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la

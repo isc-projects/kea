@@ -18,7 +18,7 @@ namespace isc {
 namespace config {
 
 CommandMgr::CommandMgr()
-    : BaseCommandMgr() {
+    : HookedCommandMgr() {
 }
 
 CommandSocketPtr

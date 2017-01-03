@@ -76,15 +76,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
-        HandlerContainer::const_iterator it = handlers_.find(name);
-        if (it == handlers_.end()) {
-            // Ok, there's no such command.
-            return (createAnswer(CONTROL_RESULT_ERROR,
-                                 "'" + name + "' command not supported."));
-        }
-
-        // Call the actual handler and return whatever it returned
-        return (it->second(name, arg));
+        return (handleCommand(name, arg));
 
     } catch (const Exception& e) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR2).arg(e.what());
@@ -92,6 +84,20 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
                              std::string("Error during command processing:")
                              + e.what()));
     }
+}
+
+ConstElementPtr
+BaseCommandMgr::handleCommand(const std::string& cmd_name,
+                              const ConstElementPtr& params) {
+    auto it = handlers_.find(cmd_name);
+    if (it == handlers_.end()) {
+        // Ok, there's no such command.
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "'" + cmd_name + "' command not supported."));
+    }
+
+    // Call the actual handler and return whatever it returned
+    return (it->second(cmd_name, params));
 }
 
 isc::data::ConstElementPtr

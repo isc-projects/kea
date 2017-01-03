@@ -96,7 +96,7 @@ public:
     ///
     /// @param cmd Pointer to the data element representing command in JSON
     /// format.
-    virtual isc::data::ConstElementPtr
+    isc::data::ConstElementPtr
     processCommand(const isc::data::ConstElementPtr& cmd);
 
     /// @brief Registers specified command handler for a given command
@@ -117,6 +117,22 @@ public:
     void deregisterAll();
 
 protected:
+
+    /// @brief Handles the command having a given name and arguments.
+    ///
+    /// This method can be overriden in the derived classes to provide
+    /// custom logic for processing commands. For example, the
+    /// @ref HookedCommandMgr extends this method to delegate commmands
+    /// processing to a hook library.
+    ///
+    /// @param cmd_name Command name.
+    /// @param params Command arguments.
+    ///
+    /// @return Pointer to the const data element representing response
+    /// to a command.
+    virtual isc::data::ConstElementPtr
+    handleCommand(const std::string& cmd_name,
+                  const isc::data::ConstElementPtr& params);
 
     /// @brief Type of the container for command handlers.
     typedef std::map<std::string, CommandHandler> HandlerContainer;
