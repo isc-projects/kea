@@ -19,23 +19,13 @@
 
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/cql_exchange.h>
 #include <inttypes.h>
 #include <cassandra.h>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief  Defines a single query
-///
-/// @param params_ Bind parameter names
-/// @param name_ Short name of the query.
-/// @param text_ Text representation of the actual query.
-struct CqlTaggedStatement {
-    const char** params_;
-    const char* name_;
-    const char* text_;
-};
 
 // Defines CQL backend version: 2.3
 const uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;

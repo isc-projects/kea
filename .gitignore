@@ -43,3 +43,6 @@ config.h.in~
 /local.zone.sqlite3
 /logger_lockfile
 /report.info
+
+*.clang_complete
+*.dirstamp

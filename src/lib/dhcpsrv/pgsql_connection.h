@@ -12,10 +12,15 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <vector>
+#include <stdint.h>
 
 
 namespace isc {
 namespace dhcp {
+
+/// Defines PostgreSQL backend version: 3.0
+const uint32_t PG_SCHEMA_VERSION_MAJOR = 3;
+const uint32_t PG_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't
@@ -57,6 +62,7 @@ const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
 const size_t OID_TIMESTAMP = 1114;
+
 
 //@}
 

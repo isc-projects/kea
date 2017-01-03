@@ -75,6 +75,10 @@ void configure(const std::string& file_name) {
         Daemon::configureLogger(json->get("Logging"),
                                 CfgMgr::instance().getStagingCfg());
 
+        // Apply the new logger configuration to log4cplus. It is done before
+        // commit in case something goes wrong.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
         // Get Dhcp4 component from the config
         dhcp4 = json->get("Dhcp4");
         if (!dhcp4) {
@@ -102,11 +106,6 @@ void configure(const std::string& file_name) {
                 "no details available";
             isc_throw(isc::BadValue, reason);
         }
-
-        // If configuration was parsed successfully, apply the new logger
-        // configuration to log4cplus. It is done before commit in case
-        // something goes wrong.
-        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Use new configuration.
         /// @todo: This commit should be moved to

@@ -991,8 +991,8 @@ AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
 mysql_config="no"
-AC_ARG_WITH([dhcp-mysql],
-  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+AC_ARG_WITH([mysql],
+  AC_HELP_STRING([--with-mysql=PATH],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
@@ -1004,7 +1004,7 @@ fi
 
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+        AC_MSG_ERROR([--with-mysql should point to a mysql_config program])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
@@ -1045,8 +1045,8 @@ AC_CHECK_HEADERS(sys/filio.h,,,)
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
-AC_ARG_WITH([dhcp-pgsql],
-  AC_HELP_STRING([--with-dhcp-pgsql=PATH],
+AC_ARG_WITH([pgsql],
+  AC_HELP_STRING([--with-pgsql=PATH],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
 
@@ -1058,7 +1058,7 @@ fi
 
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-pgsql should point to a pg_config program])
+        AC_MSG_ERROR([--with-pgsql should point to a pg_config program])
     fi
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`

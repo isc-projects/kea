@@ -126,7 +126,6 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     } else {
         cfg_db->setHostDbAccessString(getDbAccessString());
     }
-
 }
 
 // Create the database access string

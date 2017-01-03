@@ -748,7 +748,5 @@ ParserContextPtr& globalContext() {
     return (global_context_ptr);
 }
 
-
-
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

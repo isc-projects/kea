@@ -15,6 +15,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>

@@ -235,8 +235,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     }
 
-
-
     return (answer);
 }
 
