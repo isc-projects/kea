@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,7 +177,7 @@ CommandMgr::commandReader(int sockfd) {
 
     if (!rsp) {
         LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
-        // Only close the dupped socket if it's different (should be)
+        // Only close the duped socket if it's different (should be)
         if (rsp_fd != sockfd) {
             close(rsp_fd);
         }
@@ -211,7 +211,7 @@ CommandMgr::commandReader(int sockfd) {
                   .arg(len).arg(sockfd).arg(strerror(saverr));
     }
 
-    // Only close the dupped socket if it's different (should be)
+    // Only close the duped socket if it's different (should be)
     if (rsp_fd != sockfd) {
         close(rsp_fd);
     }

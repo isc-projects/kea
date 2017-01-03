@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -504,6 +504,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         "        \"valid-lifetime\": 4000, \n"
         "        \"renew-timer\": 1000, \n"
         "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
         "       \"expired-leases-processing\": { \n"
         "            \"reclaim-timer-wait-time\": 0, \n"
         "            \"hold-reclaimed-time\": 0, \n"
@@ -585,7 +590,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"unsupported parameter: BOGUS (<string>:15:26)\" }",
+              "\"text\": \"unsupported parameter: BOGUS (<string>:20:26)\" }",
               response);
 
     // Check that the config was not lost
