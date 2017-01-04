@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,9 +67,71 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr args) {
-
-    return (processConfig(args));
+    // Use set-config as it handles logging and server config
+    return (commandSetConfigHandler("set-config", args));
 }
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
+                                             ConstElementPtr args) {
+    const int status_code = 1; // 1 indicates an error
+    ConstElementPtr dhcp6;
+    string message;
+
+    // Command arguments are expected to be:
+    // { "Dhcp6": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp6 = args->get("Dhcp6");
+        if (!dhcp6) {
+            message = "Missing mandatory 'Dhcp6' parameter.";
+        } else if (dhcp6->getType() != Element::map) {
+            message = "'Dhcp6' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Logging is a sibling element and must be parsed explicitly.
+    // The call to configureLogger parses the given Logging element if
+    // not null, into the staging config.  Note this does not alter the
+    // current loggers, they remain in effect until we apply the
+    // logging config below.  If no logging is supplied logging will
+    // revert to default logging.
+    Daemon::configureLogger(args->get("Logging"),
+                            CfgMgr::instance().getStagingCfg());
+
+    // Now we configure the server proper.
+    ConstElementPtr result = processConfig(dhcp6);
+
+    // If the configuration parsed successfully, apply the new logger
+    // configuration and the commit the new configuration.  We apply
+    // the logging first in case there's a configuration failure.
+    int rcode = 0;
+    isc::config::parseAnswer(rcode, result);
+    if (rcode == 0) {
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Use new configuration.
+        CfgMgr::instance().commit();
+    }
+
+    return (result);
+}
+
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
@@ -116,11 +178,16 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         if (command == "shutdown") {
             return (srv->commandShutdownHandler(command, args));
 
+        /// @todo: register config-reload (see CtrlDhcpv6Srv::commandConfigReloadHandler)
+
         } else if (command == "libreload") {
             return (srv->commandLibReloadHandler(command, args));
 
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
+
+        } else if (command == "set-config") {
+            return (srv->commandSetConfigHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -279,10 +346,11 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
-    /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
-
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("set-config",
+        boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
@@ -327,6 +395,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // Deregister any registered commands
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
+        CommandMgr::instance().deregisterCommand("set-config");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");

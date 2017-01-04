@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 
 using namespace std;
@@ -47,6 +48,9 @@ BaseServerTest::~BaseServerTest() {
 
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
+
+    // Revert to unit test logging, in case the test reconfigured it.
+    isc::log::initLogger();
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
