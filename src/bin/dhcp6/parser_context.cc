@@ -16,7 +16,7 @@ namespace isc {
 namespace dhcp {
 
 Parser6Context::Parser6Context()
-  : trace_scanning_(false), trace_parsing_(false), ctx_(NO_KEYWORD)
+  : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
 {
 }
 
