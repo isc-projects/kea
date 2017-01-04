@@ -58,7 +58,7 @@ public:
 /// @code
 /// {
 ///     "result": 0,
-///     "observations": {
+///     "arguments": {
 ///         "received-packets": [ [ 1234, "2015-04-15 12:34:45.123" ] ]
 ///     }
 /// }
