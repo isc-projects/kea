@@ -118,6 +118,27 @@ public:
 
 protected:
 
+    /// @brief Combines lists of commands carried in two responses.
+    ///
+    /// This method is used to combine list of commands returned by the
+    /// hook library with the commands supported by the local Command
+    /// Manager. This method should also be used within the hook library
+    /// to combine commands supported by this hook library with the
+    /// commands returned by other hook libraries attached to the server
+    /// at the same time.
+    ///
+    /// If the same command appears in two responses only a single
+    /// instance is returned in the combined response.
+    ///
+    /// @param response1 First command response.
+    /// @param response2 Second command response.
+    ///
+    /// @return Pointer to the 'list-commands' response holding combined
+    /// list of commands.
+    isc::data::ConstElementPtr
+    combineCommandsLists(const isc::data::ConstElementPtr& response1,
+                         const isc::data::ConstElementPtr& response2) const;
+
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method can be overriden in the derived classes to provide

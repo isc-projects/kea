@@ -48,21 +48,33 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
                   "Manager: this is a programming error");
     }
 
+    ConstElementPtr hook_response;
     if (HooksManager::calloutsPresent(Hooks.hook_index_control_command_receive_)) {
 
         // Delete previously set arguments.
         callout_handle_->deleteAllArguments();
 
-        callout_handle_->setArgument("command", cmd_name);
-        callout_handle_->setArgument("arguments", params);
+        // Being in this function we don't have access to the original data
+        // object holding the whole command (name and arguments). Let's
+        // recreate it.
+        ElementPtr original_command = Element::createMap();
+        original_command->set("command", Element::create(cmd_name));
+        original_command->set("arguments", params);
+
+        // And pass it to the hook library.
+        callout_handle_->setArgument("command", boost::dynamic_pointer_cast<
+                                     const Element>(original_command));
+        callout_handle_->setArgument("response", hook_response);
 
         HooksManager::callCallouts(Hooks.hook_index_control_command_receive_,
                                    *callout_handle_);
 
+        // The callouts should set the response.
+        callout_handle_->getArgument("response", hook_response);
+
+        // If the hook return 'skip' status, simply return the response.
         if (callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-            ConstElementPtr response;
-            callout_handle_->getArgument("response", response);
-            return (response);
+            return (hook_response);
 
         } else {
             LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HOOK_RECEIVE_SKIP)
@@ -70,7 +82,19 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
         }
     }
 
-    return (BaseCommandMgr::handleCommand(cmd_name, params));
+    // If we're here it means that the callouts weren't called or the 'skip'
+    // status wasn't returned. The latter is the case when the 'list-commands'
+    // is being processed. Anyhow, we need to handle the command using local
+    // Command Mananger.
+    ConstElementPtr response = BaseCommandMgr::handleCommand(cmd_name, params);
+
+    // For the 'list-commands' case we will have to combine commands supported
+    // by the hook libraries with the commands that this Command Manager supports.
+    if ((cmd_name == "list-commands") && hook_response && response) {
+        response = combineCommandsLists(hook_response, response);
+    }
+
+    return (response);
 }
 
 
