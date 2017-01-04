@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>
+#include <unistd.h>
 
 using namespace isc::data;
 
@@ -145,6 +146,19 @@ CommandMgr::commandReader(int sockfd) {
         return;
     }
 
+    // Duplicate the connection's socket in the event, the command causes the
+    // channel to close (like a reconfig).  This permits us to always have
+    // a socket on which to respond. If for some reason  we can't fall back
+    // to the connection socket.
+    int rsp_fd = dup(sockfd);
+    if (rsp_fd < 0 ) {
+        // Highly unlikely
+        const char* errmsg = strerror(errno);
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_DUP_WARN)
+                  .arg(errmsg);
+        rsp_fd = sockfd;
+    }
+
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ).arg(rval).arg(sockfd);
 
     // Ok, we received something. Let's see if we can make any sense of it.
@@ -163,6 +177,11 @@ CommandMgr::commandReader(int sockfd) {
 
     if (!rsp) {
         LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
+        // Only close the duped socket if it's different (should be)
+        if (rsp_fd != sockfd) {
+            close(rsp_fd);
+        }
+
         return;
     }
 
@@ -179,7 +198,8 @@ CommandMgr::commandReader(int sockfd) {
     }
 
     // Send the data back over socket.
-    rval = write(sockfd, txt.c_str(), len);
+    rval = write(rsp_fd, txt.c_str(), len);
+    int saverr = errno;
 
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE).arg(len).arg(sockfd);
 
@@ -187,7 +207,13 @@ CommandMgr::commandReader(int sockfd) {
         // Response transmission failed. Since the response failed, it doesn't
         // make sense to send any status codes. Let's log it and be done with
         // it.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL).arg(len).arg(sockfd);
+        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+                  .arg(len).arg(sockfd).arg(strerror(saverr));
+    }
+
+    // Only close the duped socket if it's different (should be)
+    if (rsp_fd != sockfd) {
+        close(rsp_fd);
     }
 }
 

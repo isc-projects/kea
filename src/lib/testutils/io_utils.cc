@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,10 +15,8 @@ namespace dhcp {
 namespace test {
 
 bool fileExists(const std::string& file_path) {
-    std::ifstream fs(file_path.c_str());
-    const bool file_exists = fs.good();
-    fs.close();
-    return (file_exists);
+    struct stat statbuf;
+    return(stat(file_path.c_str(), &statbuf) == 0);
 }
 
 std::string readFile(const std::string& file_path) {

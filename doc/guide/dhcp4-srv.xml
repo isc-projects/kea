@@ -3649,17 +3649,30 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>
         Communication over control channel is conducted using JSON structures.
-        See the Control Channel section in the Kea Developer's Guide for more details.
+        See the Control Channel section in the Kea Developer's Guide for more
+        details.
       </para>
 
-      <para>The DHCPv4 server supports <command>statistic-get</command>,
-      <command>statistic-reset</command>, <command>statistic-remove</command>,
-      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
-      and <command>statistic-remove-all</command>, specified in
-      <xref linkend="command-stats"/>. It also supports
-      <command>list-commands</command> and <command>shutdown</command>,
-      specified in <xref linkend="command-list-commands" /> and
-      <xref linkend="command-shutdown" />, respectively.</para>
+      <para>The DHCPv4 server supports the following operational commands:
+        <itemizedlist>
+            <listitem>leases-reclaim</listitem>
+            <listitem>list-commands</listitem>
+            <listitem>set-config</listitem>
+            <listitem>shutdown</listitem>
+        </itemizedlist>
+         as described in <xref linkend="commands-common"/>.  In addition,
+         it supports the following statistics related commands:
+        <itemizedlist>
+            <listitem>statistic-get</listitem>
+            <listitem>statistic-reset</listitem>
+            <listitem>statistic-remove</listitem>
+            <listitem>statistic-get-all</listitem>
+            <listitem>statistic-reset-all</listitem>
+            <listitem>statistic-remove-all</listitem>
+        </itemizedlist>
+        as described here <xref linkend="command-stats"/>.
+      </para>
+
     </section>
 
     <section id="dhcp4-std">

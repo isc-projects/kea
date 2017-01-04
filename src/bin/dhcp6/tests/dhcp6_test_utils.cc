@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp/tests/pkt_captures.h>
+#include <log/logger_support.h>
 #include <util/pointer_util.h>
 #include <cc/command_interpreter.h>
 #include <stats/stats_mgr.h>
@@ -46,6 +47,9 @@ BaseServerTest::~BaseServerTest() {
 
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
+
+    // Revert to unit test logging in case the test reconfigured logging.
+    isc::log::initLogger();
 }
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
