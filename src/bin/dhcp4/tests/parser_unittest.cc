@@ -233,8 +233,6 @@ void testFile(const std::string& fname) {
     ASSERT_TRUE(test_json);
 
     compareJSON(reference_json, test_json);
-
-    unlink(decommented);
 }
 
 // This test loads all available existing files. Each config is loaded
@@ -526,7 +524,7 @@ TEST(ParserTest, unicodeEscapes) {
     }
 }
 
-// This test checks that all representations of a slash is recognized properly.
+// This test checks that all representations of a slash are recognized properly.
 TEST(ParserTest, unicodeSlash) {
     // check the 4 possible encodings of solidus '/'
     ConstElementPtr result;
