@@ -1,4 +1,10 @@
-1200	[func]		tmark
+1201.	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 now support the "set-config" command.
+	The command causes the server to replace its current configuration
+	with the configuration supplied as the command's argument.
+	(Trac #5046, git 4afbdcf89c9f83d944f774d05bd401d3f2768d10)
+
+1200.	[func]		tmark
 	kea-dhcp4 and kea-dhcp6 now support the Command Channel "libreload"
 	command.  The command causes the server to unload and then load all
 	currently loaded hook libraries.
@@ -18,7 +24,7 @@
 	Created kea-ctrl-agent. This application currently doesn't
 	do anything. Future tickets will add REST API to allow for
 	managing Kea services.
-        (Trac #5075, git 1ec7586da5ae1474b52d5a395fb80ee37d6d568e)
+	(Trac #5075, git 1ec7586da5ae1474b52d5a395fb80ee37d6d568e)
 
 1197.	[doc]		tomek
 	Configuration examples now set lfc-interval to a default
