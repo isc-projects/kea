@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -762,7 +762,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-                    
+
     // returned value should be 0 (success)
     checkResult(status, 0);
 }
@@ -4327,11 +4327,9 @@ TEST_F(Dhcp6ParserTest, macSources) {
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[5]);
 }
 
-/// The goal of this test is to verify that MAC sources configuration can be
-/// empty.
-/// Note the Dhcp6 parser requires the list to NOT be empty?!
+/// The goal of this test is to verify that empty MAC sources configuration
+/// is rejected. If specified, this has to have at least one value.
 TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
-
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
@@ -4343,11 +4341,9 @@ TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
                               "\"subnet6\": [  ], "
                               "\"valid-lifetime\": 4000 }")));
 
-    // returned value should be 0 (success)
-    checkResult(status, 0);
-
-    CfgMACSources mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
-    EXPECT_EQ(0, mac_sources.size());
+    // returned value should be 1 (failure), because the mac-sources must not
+    // be empty when specified.
+    checkResult(status, 1);
 }
 
 /// The goal of this test is to verify that MAC sources configuration can

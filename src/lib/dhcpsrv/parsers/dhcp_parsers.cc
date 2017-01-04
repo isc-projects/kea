@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,62 +177,45 @@ template <> void ValueParser<std::string>::build(ConstElementPtr value) {
 
 // ******************** MACSourcesListConfigParser *************************
 
-MACSourcesListConfigParser::
-MACSourcesListConfigParser(const std::string& param_name,
-                           ParserContextPtr global_context)
-    : param_name_(param_name), global_context_(global_context) {
-    if (param_name_ != "mac-sources") {
-        isc_throw(BadValue, "Internal error. MAC sources configuration "
-            "parser called for the wrong parameter: " << param_name);
-    }
-}
-
 void
-MACSourcesListConfigParser::build(ConstElementPtr value) {
+MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr value) {
     CfgIface cfg_iface;
     uint32_t source = 0;
+    size_t cnt = 0;
 
     // By default, there's only one source defined: ANY.
     // If user specified anything, we need to get rid of that default.
-    CfgMgr::instance().getStagingCfg()->getMACSources().clear();
+    mac_sources.clear();
 
     BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
         std::string source_str = source_elem->stringValue();
         try {
             source = CfgMACSource::MACSourceFromText(source_str);
-            CfgMgr::instance().getStagingCfg()->getMACSources().add(source);
+            mac_sources.add(source);
+            ++cnt;
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to convert '"
                       << source_str << "' to any recognized MAC source:"
                       << ex.what() << " (" << value->getPosition() << ")");
         }
     }
-}
 
-void
-MACSourcesListConfigParser::commit() {
-    // Nothing to do.
+    if (!cnt) {
+        isc_throw(DhcpConfigError, "If specified, MAC Sources cannot be empty");
+    }
 }
 
 // ******************** ControlSocketParser *************************
-ControlSocketParser::ControlSocketParser(const std::string& param_name) {
-    if (param_name != "control-socket") {
-        isc_throw(BadValue, "Internal error. Control socket parser called "
-                  " for wrong parameter:" << param_name);
+void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value) {
+    if (!value) {
+        isc_throw(DhcpConfigError, "Logic error: specified control-socket is null");
     }
-}
 
-void ControlSocketParser::build(isc::data::ConstElementPtr value) {
     if (value->getType() != Element::map) {
-        isc_throw(BadValue, "Specified control-socket is expected to be a map"
+        isc_throw(DhcpConfigError, "Specified control-socket is expected to be a map"
                   ", i.e. a structure defined within { }");
     }
-    CfgMgr::instance().getStagingCfg()->setControlSocketInfo(value);
-}
-
-/// @brief Does nothing.
-void ControlSocketParser::commit() {
-    // Nothing to do.
+    srv_cfg.setControlSocketInfo(value);
 }
 
 // ******************** HooksLibrariesParser *************************
@@ -804,66 +787,57 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
 }
 
 //****************************** RelayInfoParser ********************************
-RelayInfoParser::RelayInfoParser(const std::string&,
-                                 const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                                 const Option::Universe& family)
-    :storage_(relay_info), local_(isc::asiolink::IOAddress(
-                                  family == Option::V4 ? "0.0.0.0" : "::")),
-     string_values_(new StringStorage()), family_(family) {
-    if (!relay_info) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-                  << "relay-info storage may not be NULL");
-    }
-
+RelayInfoParser::RelayInfoParser(const Option::Universe& family)
+    : family_(family) {
 };
 
 void
-RelayInfoParser::build(ConstElementPtr relay_info) {
+RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
+                       ConstElementPtr relay_info) {
+    // Let's start with some sanity checks.
+    if (!relay_info || !cfg) {
+        isc_throw(DhcpConfigError, "Logic error: RelayInfoParser::parse() called "
+                  "with at least one NULL parameter.");
+    }
 
+    if (relay_info->getType() != Element::map) {
+        isc_throw(DhcpConfigError, "Configuration error: RelayInfoParser::parse() "
+                  "called with non-map parameter");
+    }
+
+    // Now create the default value.
+    isc::asiolink::IOAddress ip(family_ == Option::V4 ? "0.0.0.0" : "::");
+
+    // Now iterate over all parameters. Currently there's only one supported
+    // parameter, so it should be an easy thing to check.
     BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
-        ParserPtr parser(createConfigParser(param.first));
-        parser->build(param.second);
-        parser->commit();
+        if (param.first == "ip-address") {
+            try {
+                ip = asiolink::IOAddress(param.second->stringValue());
+            } catch (...)  {
+                isc_throw(DhcpConfigError, "Failed to parse ip-address "
+                          "value: " << param.second
+                          << " (" << param.second->getPosition() << ")");
+            }
+
+            // Check if the address family matches.
+            if ( (ip.isV4() && family_ != Option::V4) ||
+                 (ip.isV6() && family_ != Option::V6) ) {
+                isc_throw(DhcpConfigError, "ip-address field " << ip.toText()
+                          << " does not have IP address of expected family type: "
+                          << (family_ == Option::V4 ? "IPv4" : "IPv6")
+                          << " (" << param.second->getPosition() << ")");
+            }
+        } else {
+            isc_throw(NotImplemented,
+                      "parser error: RelayInfoParser parameter not supported: "
+                      << param.second);
+        }
     }
 
-    // Get the IP address
-    boost::scoped_ptr<asiolink::IOAddress> ip;
-    try {
-        ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
-    } catch (...)  {
-        isc_throw(DhcpConfigError, "Failed to parse ip-address "
-                  "value: " << string_values_->getParam("ip-address")
-                  << " (" << string_values_->getPosition("ip-address") << ")");
-    }
-
-    if ( (ip->isV4() && family_ != Option::V4) ||
-         (ip->isV6() && family_ != Option::V6) ) {
-        isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
-                  << " does not have IP address of expected family type: "
-                  << (family_ == Option::V4 ? "IPv4" : "IPv6")
-                  << " (" << string_values_->getPosition("ip-address") << ")");
-    }
-
-    local_.addr_ = *ip;
-}
-
-isc::dhcp::ParserPtr
-RelayInfoParser::createConfigParser(const std::string& parameter) {
-    DhcpConfigParser* parser = NULL;
-    if (parameter.compare("ip-address") == 0) {
-        parser = new StringParser(parameter, string_values_);
-    } else {
-        isc_throw(NotImplemented,
-                  "parser error: RelayInfoParser parameter not supported: "
-                  << parameter);
-    }
-
-    return (isc::dhcp::ParserPtr(parser));
-}
-
-void
-RelayInfoParser::commit() {
-    *storage_ = local_;
+    // Ok, we're done with parsing. Let's store the result in the structure
+    // we were given as configuration storage.
+    *cfg = isc::dhcp::Subnet::RelayInfo(ip);
 }
 
 //****************************** PoolsListParser ********************************
@@ -1066,6 +1040,12 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
             uint16_t family = global_context_->universe_ == Option::V4 ? AF_INET : AF_INET6;
             OptionDataListParser opt_parser(family);
             opt_parser.parse(options_, param.second);
+            continue;
+        }
+
+        if (param.first == "relay") {
+            RelayInfoParser parser(global_context_->universe_);
+            parser.parse(relay_info_, param.second);
             continue;
         }
 

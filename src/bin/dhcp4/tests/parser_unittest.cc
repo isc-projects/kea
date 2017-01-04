@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,14 +7,14 @@
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <dhcp4/parser_context.h>
-#include <fstream>
-#include <cstdio>
-#include <exceptions/exceptions.h>
+#include <testutils/io_utils.h>
 
 using namespace isc::data;
 using namespace std;
 
-namespace {
+namespace isc {
+namespace dhcp {
+namespace test {
 
 /// @brief compares two JSON trees
 ///
@@ -128,6 +128,8 @@ TEST(ParserTest, keywordDhcp4) {
      testParser(txt, Parser4Context::PARSER_DHCP4);
 }
 
+// Tests if bash (#) comments are supported. That's the only comment type that
+// was supported by the old parser.
 TEST(ParserTest, bashComments) {
     string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -146,7 +148,8 @@ TEST(ParserTest, bashComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
-TEST(ParserTest, cComments) {
+// Tests if C++ (//) comments can start anywhere, not just in the first line.
+TEST(ParserTest, cppComments) {
     string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
@@ -161,6 +164,7 @@ TEST(ParserTest, cComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+// Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
     string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -176,6 +180,7 @@ TEST(ParserTest, bashCommentsInline) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+// Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
     string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -193,89 +198,13 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
-/// @brief removes comments from a JSON file
-///
-/// This is rather naive implementation, but it's probably sufficient for
-/// testing. It won't be able to pick any trickier cases, like # or //
-/// appearing in strings, nested C++ comments etc.
-///
-/// @param input_file file to be stripped of comments
-/// @return a new file that has comments stripped from it
-std::string decommentJSONfile(const std::string& input_file) {
-    ifstream f(input_file);
-    if (!f.is_open()) {
-        isc_throw(isc::BadValue, "can't open input file for reading: " + input_file);
-    }
-
-    string outfile;
-    size_t last_slash = input_file.find_last_of("/");
-    if (last_slash != string::npos) {
-        outfile = input_file.substr(last_slash + 1);
-    } else {
-        outfile = input_file;
-    }
-    outfile += "-decommented";
-
-    ofstream out(outfile);
-    if (!out.is_open()) {
-        isc_throw(isc::BadValue, "can't open output file for writing: " + input_file);
-    }
-
-    bool in_comment = false;
-    string line;
-    while (std::getline(f, line)) {
-        // First, let's get rid of the # comments
-        size_t hash_pos = line.find("#");
-        if (hash_pos != string::npos) {
-            line = line.substr(0, hash_pos);
-        }
-
-        // Second, let's get rid of the // comments
-        size_t dblslash_pos = line.find("//");
-        if (dblslash_pos != string::npos) {
-            line = line.substr(0, dblslash_pos);
-        }
-
-        // Now the tricky part: c comments.
-        size_t begin_pos = line.find("/*");
-        size_t end_pos = line.find("*/");
-        if (in_comment && end_pos == string::npos) {
-            // we continue through multiline comment
-            line = "";
-        } else {
-
-            if (begin_pos != string::npos) {
-                in_comment = true;
-                if (end_pos != string::npos) {
-                    // sigle line comment. Let's get rid of the content in between
-                    line = line.replace(begin_pos, end_pos + 2, end_pos + 2 - begin_pos, ' ');
-                    in_comment = false;
-                } else {
-                    line = line.substr(0, begin_pos);
-                }
-            } else {
-                if (in_comment && end_pos != string::npos) {
-                    line = line.replace(0, end_pos +2 , end_pos + 2, ' ');
-                    in_comment = false;
-                }
-            }
-        }
-
-        // Finally, write the line to the output file.
-        out << line << endl;
-    }
-    f.close();
-    out.close();
-
-    return (outfile);
-}
 
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy
 /// JSON file and then second time using bison parser. Two created Element
 /// trees are then compared. The input is decommented before it is passed
-/// to legacy parser (as its support for comments is very limited).
+/// to legacy parser (as legacy support for comments is very limited).
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
@@ -284,8 +213,7 @@ void testFile(const std::string& fname) {
 
     string decommented = decommentJSONfile(fname);
 
-    cout << "Attempting to load file " << fname << " (" << decommented
-         << ")" << endl;
+    cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
     EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
 
@@ -305,6 +233,8 @@ void testFile(const std::string& fname) {
     ASSERT_TRUE(test_json);
 
     compareJSON(reference_json, test_json);
+
+    unlink(decommented);
 }
 
 // This test loads all available existing files. Each config is loaded
@@ -329,6 +259,11 @@ TEST(ParserTest, file) {
     }
 }
 
+/// @brief Tests error conditions in Dhcp4Parser
+///
+/// @param txt text to be parsed
+/// @param parser_type type of the parser to be used in the test
+/// @param msg expected content of the exception
 void testError(const std::string& txt,
                Parser4Context::ParserType parser_type,
                const std::string& msg)
@@ -347,7 +282,7 @@ void testError(const std::string& txt,
     }
 }
 
-// Check errors
+// Verify that error conditions are handled correctly.
 TEST(ParserTest, errors) {
     // no input
     testError("", Parser4Context::PARSER_JSON,
@@ -608,4 +543,6 @@ TEST(ParserTest, unicodeSlash) {
     EXPECT_EQ("////", result->stringValue());
 }
 
+};
+};
 };

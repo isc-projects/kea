@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,46 +226,70 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     EXPECT_EQ(test_value, actual_value);
 }
 
-/// @brief Check MACSourcesListConfigParser  basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Does not allow name other than "mac-sources"
-/// 3. Parses list of mac sources and adds them to CfgMgr
-TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
-
-    const std::string valid_name = "mac-sources";
-    const std::string bogus_name = "bogus-name";
-
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    // Verify that parser constructor fails if parameter name isn't "mac-sources"
-    EXPECT_THROW(MACSourcesListConfigParser(bogus_name, parser_context),
-                 isc::BadValue);
+/// Verifies the code that parses mac sources and adds them to CfgMgr
+TEST_F(DhcpParserTest, MacSources) {
 
     // That's an equivalent of the following snippet:
     // "mac-sources: [ \"duid\", \"ipv6\" ]";
-    ElementPtr config = Element::createList();
-    config->add(Element::create("duid"));
-    config->add(Element::create("ipv6-link-local"));
+    ElementPtr values = Element::createList();
+    values->add(Element::create("duid"));
+    values->add(Element::create("ipv6-link-local"));
 
-    boost::scoped_ptr<MACSourcesListConfigParser>
-        parser(new MACSourcesListConfigParser(valid_name, parser_context));
-
-    // This should parse the configuration and add eth0 and eth1 to the list
-    // of interfaces that server should listen on.
-    EXPECT_NO_THROW(parser->build(config));
-    EXPECT_NO_THROW(parser->commit());
-
-    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
-    // eth2 was not added.
+    // Let's grab server configuration from CfgMgr
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    CfgMACSources configured_sources =  cfg->getMACSources().get();
+    CfgMACSource& sources = cfg->getMACSources();
 
+    // This should parse the configuration and check that it doesn't throw.
+    MACSourcesListConfigParser parser;
+    EXPECT_NO_THROW(parser.parse(sources, values));
+
+    // Finally, check the sources that were configured
+    CfgMACSources configured_sources =  cfg->getMACSources().get();
     ASSERT_EQ(2, configured_sources.size());
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
+}
+
+/// @brief Check MACSourcesListConfigParser rejecting empty list
+///
+/// Verifies that the code rejects an empty mac-sources list.
+TEST_F(DhcpParserTest, MacSourcesEmpty) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should throw, because if specified, at least one MAC source
+    // has to be specified.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
+}
+
+/// @brief Check MACSourcesListConfigParser rejecting empty list
+///
+/// Verifies that the code rejects fake mac source.
+TEST_F(DhcpParserTest, MacSourcesBogus) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+    values->add(Element::create("from-ebay"));
+    values->add(Element::create("just-guess-it"));
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should throw, because these are not valid sources.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
 }
 
 /// @brief Test Fixture class which provides basic structure for testing
@@ -2433,21 +2457,17 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
     // We need to set the default ip-address to something.
     Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
 
-    boost::shared_ptr<RelayInfoParser> parser;
+    RelayInfoParser parser(Option::V4);
 
     // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
-    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
-                                                     Option::V4)));
-    EXPECT_NO_THROW(parser->build(json));
-    EXPECT_NO_THROW(parser->commit());
-
+    EXPECT_NO_THROW(parser.parse(result, json));
     EXPECT_EQ("192.0.2.1", result->addr_.toText());
 
     // Let's check negative scenario (wrong family type)
-    EXPECT_THROW(parser->build(json_bogus1), DhcpConfigError);
+    EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
     // Let's check negative scenario (too large byte values in pseudo-IPv4 addr)
-    EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 }
 
 /// @brief Checks that a valid relay info structure for IPv6 can be handled
@@ -2477,20 +2497,16 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // We need to set the default ip-address to something.
     Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
 
-    boost::shared_ptr<RelayInfoParser> parser;
+    RelayInfoParser parser(Option::V6);
     // Subnet4 parser will pass :: to the RelayInfoParser
-    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
-                                                     Option::V6)));
-    EXPECT_NO_THROW(parser->build(json));
-    EXPECT_NO_THROW(parser->commit());
-
+    EXPECT_NO_THROW(parser.parse(result, json));
     EXPECT_EQ("2001:db8::1", result->addr_.toText());
 
     // Let's check negative scenario (wrong family type)
-    EXPECT_THROW(parser->build(json_bogus1), DhcpConfigError);
+    EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
     // Unparseable text that looks like IPv6 address, but has too many colons
-    EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
