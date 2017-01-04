@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -424,8 +424,7 @@ protected:
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools6ListParser(config_id, pools_);
-        } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
+        // relay has been converted to SimpleParser.
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
         // option-data was here, but it is now converted to SimpleParser
@@ -718,13 +717,10 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
-    } else if (config_id.compare("mac-sources") == 0) {
-        parser = new MACSourcesListConfigParser(config_id,
-                                                globalContext());
+    // mac-source has been converted to SimpleParser.
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
-    } else if (config_id.compare("control-socket") == 0) {
-        parser = new ControlSocketParser(config_id);
+    // control-socket has been converted to SimpleParser.
     } else if (config_id.compare("expired-leases-processing") == 0) {
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
@@ -867,6 +863,20 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 OptionDataListParser parser(AF_INET6);
                 CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "mac-sources") {
+                MACSourcesListConfigParser parser;
+                CfgMACSource& mac_source = CfgMgr::instance().getStagingCfg()->getMACSources();
+                parser.parse(mac_source, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "control-socket") {
+                ControlSocketParser parser;
+                SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
+                parser.parse(*srv_config, config_pair.second);
                 continue;
             }
 

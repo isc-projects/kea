@@ -3500,7 +3500,8 @@ If not specified, the default value is:
 
     When not specified, a special value of "any" is used, which
     instructs the server to attempt to use all the methods in sequence and use
-    value returned by the first one that succeeds.</para>
+    value returned by the first one that succeeds. If specified, it
+    has to have at least one value.</para>
 
     <para>Supported methods are:
     <itemizedlist>
