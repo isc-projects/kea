@@ -93,7 +93,7 @@
             "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
             "subnet": "192.0.4.0/24",
 
-            // Sometimes the relay may use an IPv4 address that's not matching
+            // Sometimes the relay may use an IPv4 address that does not match
             // the subnet. This is discouraged, but there are valid cases when it
             // makes sense. One case is when there is a shared subnet.
             "relay": {
