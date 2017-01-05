@@ -39,11 +39,10 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param txt text to be compared
 /// @param parser_type bison parser type to be instantiated
 /// @param compare whether to compare the output with legacy JSON parser
-void testParser(const std::string& txt, Parser6Context::ParserType parser_type) {
-    ElementPtr reference_json;
+void testParser(const std::string& txt, Parser6Context::ParserType parser_type,
+    bool compare = true) {
     ConstElementPtr test_json;
 
-    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     ASSERT_NO_THROW({
             try {
                 Parser6Context ctx;
@@ -55,7 +54,13 @@ void testParser(const std::string& txt, Parser6Context::ParserType parser_type) 
 
     });
 
+    if (!compare) {
+        return;
+    }
+
     // Now compare if both representations are the same.
+    ElementPtr reference_json;
+    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     compareJSON(reference_json, test_json);
 }
 
@@ -159,7 +164,7 @@ TEST(ParserTest, cppComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
@@ -176,7 +181,7 @@ TEST(ParserTest, bashCommentsInline) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if multi-line C style comments are handled correctly.
@@ -194,7 +199,7 @@ TEST(ParserTest, multilineComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 /// @brief Loads specified example config file
@@ -215,6 +220,9 @@ void testFile(const std::string& fname) {
 
     EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
 
+    // remove the temporary file
+    EXPECT_NO_THROW(::remove(decommented.c_str()));
+
     EXPECT_NO_THROW(
     try {
         Parser6Context ctx;
@@ -228,8 +236,6 @@ void testFile(const std::string& fname) {
     ASSERT_TRUE(test_json);
 
     compareJSON(reference_json, test_json);
-
-    unlink(decommented.c_str());
 }
 
 // This test loads all available existing files. Each config is loaded
