@@ -193,6 +193,9 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
             source = CfgMACSource::MACSourceFromText(source_str);
             mac_sources.add(source);
             ++cnt;
+        } catch (const InvalidParameter& ex) {
+            isc_throw(DhcpConfigError, "The mac-sources value '" << source_str
+                      << "' was specified twice (" << value->getPosition() << ")");
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to convert '"
                       << source_str << "' to any recognized MAC source:"
