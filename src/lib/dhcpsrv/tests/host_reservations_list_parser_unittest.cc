@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <gtest/gtest.h>
@@ -86,7 +87,7 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationsListParser<HostReservationParser4> parser(SubnetID(1));
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -139,7 +140,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
         ElementPtr config_element = Element::fromJSON(config.str());
 
         HostReservationsListParser<HostReservationParser4> parser(SubnetID(1));
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
     }
 }
 
@@ -164,7 +165,7 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
 
     // Parse configuration.
     HostReservationsListParser<HostReservationParser6> parser(SubnetID(2));
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -231,7 +232,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
         ElementPtr config_element = Element::fromJSON(config.str());
 
         HostReservationsListParser<HostReservationParser6> parser(SubnetID(1));
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
     }
 }
 
