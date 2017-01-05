@@ -18,22 +18,19 @@ namespace dhcp {
 class HostReservationParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    explicit HostReservationParser(const SubnetID& subnet_id);
-
     /// @brief Destructor.
     virtual ~HostReservationParser() { }
 
     /// @brief Parses a single entry for host reservation.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    void parse(isc::data::ConstElementPtr reservation_data);
+    void parse(const SubnetID& subnet_id,
+               isc::data::ConstElementPtr reservation_data);
 
 protected:
 
@@ -42,11 +39,14 @@ protected:
     /// This method is called by @ref parse and it can be overriden in the
     /// derived classes to provide class specific parsing logic.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(isc::data::ConstElementPtr reservation_data);
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Inserts @c host_ object to the staging configuration.
     ///
@@ -84,9 +84,6 @@ protected:
     virtual const std::set<std::string>&
     getSupportedParameters(const bool identifiers_only) const = 0;
 
-    /// @brief Identifier of the subnet that the host is connected to.
-    SubnetID subnet_id_;
-
     /// @brief Holds a pointer to @c Host object representing a parsed
     /// host reservation configuration.
     HostPtr host_;
@@ -95,23 +92,18 @@ protected:
 
 /// @brief Parser for a single host reservation for DHCPv4.
 class HostReservationParser4 : public HostReservationParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    HostReservationParser4(const SubnetID& subnet_id);
-
 protected:
 
     /// @brief Parses a single host reservation for DHCPv4.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(isc::data::ConstElementPtr reservation_data);
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv4.
     ///
@@ -126,23 +118,18 @@ protected:
 
 /// @brief Parser for a single host reservation for DHCPv6.
 class HostReservationParser6 : public HostReservationParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    HostReservationParser6(const SubnetID& subnet_id);
-
 protected:
 
     /// @brief Parses a single host reservation for DHCPv6.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(isc::data::ConstElementPtr reservation_data);
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv6.
     ///

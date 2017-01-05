@@ -24,33 +24,21 @@ template<typename HostReservationParserType>
 class HostReservationsListParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor.
+    /// @brief Parses a list of host reservation entries for a subnet.
     ///
     /// @param subnet_id Identifier of the subnet to which the reservations
     /// belong.
-    HostReservationsListParser(const SubnetID& subnet_id)
-        : subnet_id_(subnet_id) {
-    }
-
-    /// @brief Parses a list of host reservation entries for a subnet.
-    ///
     /// @param hr_list Data element holding a list of host reservations.
     /// Each host reservation is described by a map object.
     ///
     /// @throw DhcpConfigError If the configuration if any of the reservations
     /// is invalid.
-    void parse(isc::data::ConstElementPtr hr_list) {
+    void parse(const SubnetID& subnet_id, isc::data::ConstElementPtr hr_list) {
         BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
-            HostReservationParserType parser(subnet_id_);
-            parser.parse(reservation);
+            HostReservationParserType parser;
+            parser.parse(subnet_id, reservation);
         }
     }
-
-private:
-
-    /// @brief Identifier of the subnet to whic the reservations belong.
-    SubnetID subnet_id_;
-
 };
 
 }

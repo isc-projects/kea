@@ -152,9 +152,8 @@ public:
         // Parse Host Reservations for this subnet if any.
         ConstElementPtr reservations = subnet->get("reservations");
         if (reservations) {
-            HostReservationsListParser<HostReservationParser4>
-                parser(subnet_->getID());
-            parser.parse(reservations);
+            HostReservationsListParser<HostReservationParser4> parser;
+            parser.parse(subnet_->getID(), reservations);
         }
     }
 

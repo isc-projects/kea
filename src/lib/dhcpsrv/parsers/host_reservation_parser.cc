@@ -94,18 +94,15 @@ getSupportedParams6(const bool identifiers_only = false) {
 namespace isc {
 namespace dhcp {
 
-HostReservationParser::HostReservationParser(const SubnetID& subnet_id)
-    : SimpleParser(), subnet_id_(subnet_id) {
-}
-
-
 void
-HostReservationParser::parse(isc::data::ConstElementPtr reservation_data) {
-    parseInternal(reservation_data);
+HostReservationParser::parse(const SubnetID& subnet_id,
+                             isc::data::ConstElementPtr reservation_data) {
+    parseInternal(subnet_id, reservation_data);
 }
 
 void
-HostReservationParser::parseInternal(isc::data::ConstElementPtr reservation_data) {
+HostReservationParser::parseInternal(const SubnetID& subnet_id,
+                                     isc::data::ConstElementPtr reservation_data) {
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
@@ -186,15 +183,12 @@ HostReservationParser::isSupportedParameter(const std::string& param_name) const
     return (getSupportedParameters(false).count(param_name) > 0);
 }
 
-HostReservationParser4::HostReservationParser4(const SubnetID& subnet_id)
-    : HostReservationParser(subnet_id) {
-}
-
 void
-HostReservationParser4::parseInternal(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::parseInternal(reservation_data);
+HostReservationParser4::parseInternal(const SubnetID& subnet_id,
+                                      isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv4SubnetID(subnet_id_);
+    host_->setIPv4SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // For 'option-data' element we will use another parser which
@@ -248,15 +242,12 @@ HostReservationParser4::getSupportedParameters(const bool identifiers_only) cons
     return (getSupportedParams4(identifiers_only));
 }
 
-HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
-    : HostReservationParser(subnet_id) {
-}
-
 void
-HostReservationParser6::parseInternal(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::parseInternal(reservation_data);
+HostReservationParser6::parseInternal(const SubnetID& subnet_id,
+                                      isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv6SubnetID(subnet_id_);
+    host_->setIPv6SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // Parse option values. Note that the configuration option parser
