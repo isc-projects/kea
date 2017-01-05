@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,6 +57,13 @@ This error message indicates that the server failed to set non-blocking mode
 on just created socket. That socket was created for accepting specific
 incoming connection. Additional information may be provided as third parameter.
 
+% COMMAND_SOCKET_DUP_WARN Failed to duplicate socket for response: %1
+This debug message indicates that the commandReader was unable to duplicate
+the connection socket prior to executing the command. This is most likely a
+system resource issue.  The command should still be processed and the response
+sent, unless the command caused the command channel to be closed (e.g. a
+reconfiguration command).
+
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
 This debug message indicates that specified number of bytes was received
 over command socket identified by specified file descriptor.
@@ -86,6 +93,6 @@ descriptor and path specified.
 This debug message indicates that the specified number of bytes was sent
 over command socket identifier by the specified file descriptor.
 
-% COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2
+% COMMAND_SOCKET_WRITE_FAIL Error while writing %1 bytes to command socket %2 : %3
 This error message indicates that an error was encountered while
 attempting to send a response to the command socket.

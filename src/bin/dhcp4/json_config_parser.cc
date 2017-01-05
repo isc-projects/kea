@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -189,8 +189,7 @@ protected:
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools4ListParser(config_id, pools_);
-        } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
+            // relay has been converted to SimpleParser already.
         // option-data has been converted to SimpleParser already.
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
@@ -440,8 +439,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new D2ClientConfigParser(config_id);
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
-    } else if (config_id.compare("control-socket") == 0) {
-        parser = new ControlSocketParser(config_id);
+    // control-socket has been converted to SimpleParser already.
     } else if (config_id.compare("expired-leases-processing") == 0) {
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
@@ -494,6 +492,47 @@ void setGlobalParameters4() {
         CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
     } catch (...) {
         // Ignore errors. This flag is optional
+    }
+}
+
+/// @brief Initialize the command channel based on the staging configuration
+///
+/// Only close the current channel, if the new channel configuration is
+/// different.  This avoids disconnecting a client and hence not sending them
+/// a command result, unless they specifically alter the channel configuration.
+/// In that case the user simply has to accept they'll be disconnected.
+///
+void configureCommandChannel() {
+    // Get new socket configuration.
+    ConstElementPtr sock_cfg =
+        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+
+    // Get current socket configuration.
+    ConstElementPtr current_sock_cfg =
+            CfgMgr::instance().getCurrentCfg()->getControlSocketInfo();
+
+    // Determine if the socket configuration has changed. It has if
+    // both old and new configuration is specified but respective
+    // data elements are't equal.
+    bool sock_changed = (sock_cfg && current_sock_cfg &&
+                         !sock_cfg->equals(*current_sock_cfg));
+
+    // If the previous or new socket configuration doesn't exist or
+    // the new configuration differs from the old configuration we
+    // close the exisitng socket and open a new socket as appropriate.
+    // Note that closing an existing socket means the clien will not
+    // receive the configuration result.
+    if (!sock_cfg || !current_sock_cfg || sock_changed) {
+        // Close the existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+
+        if (sock_cfg) {
+            // This will create a control socket and install the external
+            // socket in IfaceMgr. That socket will be monitored when
+            // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
+            // callback in CommandMgr will be called, if necessary.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
     }
 }
 
@@ -596,6 +635,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "control-socket") {
+                ControlSocketParser parser;
+                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+                parser.parse(*srv_cfg, config_pair.second);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -646,25 +692,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             subnet_parser->build(subnet_config->second);
         }
 
-        // Get command socket configuration from the config file.
-        // This code expects the following structure:
-        // {
-        //     "socket-type": "unix",
-        //     "socket-name": "/tmp/kea4.sock"
-        // }
-        ConstElementPtr sock_cfg =
-            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
-
-        // Close existing socket (if any).
-        isc::config::CommandMgr::instance().closeCommandSocket();
-        if (sock_cfg) {
-            // This will create a control socket and will install external socket
-            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
-            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
-            // if necessary. If there were previously open command socket, it will
-            // be closed.
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
-        }
+        // Setup the command channel.
+        configureCommandChannel();
 
         // the leases database parser is the last to be run.
         std::map<std::string, ConstElementPtr>::const_iterator leases_config =

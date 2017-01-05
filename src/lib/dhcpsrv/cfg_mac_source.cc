@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,16 @@ uint32_t CfgMACSource::MACSourceFromText(const std::string& name) {
     isc_throw(BadValue, "Can't convert '" << name << "' to any known MAC source.");
 }
 
+void CfgMACSource::add(uint32_t source) {
+    for (CfgMACSources::const_iterator it = mac_sources_.begin();
+         it != mac_sources_.end(); ++it) {
+        if (*it == source) {
+            isc_throw(InvalidParameter, "mac-source paramter " << source
+                      << "' specified twice.");
+        }
+    }
+    mac_sources_.push_back(source);
+}
 
 };
 };
