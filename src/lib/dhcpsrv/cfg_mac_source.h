@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,10 +52,8 @@ class CfgMACSource {
     /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
     ///
     /// Specified source is being added to the mac_sources_ array.
-    /// @todo implement add(string) version of this method.
-    void add(uint32_t source) {
-        mac_sources_.push_back(source);
-    }
+    /// @throw InvalidParameter if such a source is already defined.
+    void add(uint32_t source);
 
     /// @brief Provides access to the configure MAC/Hardware address sources.
     ///

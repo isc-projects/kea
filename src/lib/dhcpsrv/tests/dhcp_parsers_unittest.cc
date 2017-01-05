@@ -292,6 +292,29 @@ TEST_F(DhcpParserTest, MacSourcesBogus) {
     EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
 }
 
+/// Verifies the code that properly catches duplicate entries
+/// in mac-sources definition.
+TEST_F(DhcpParserTest, MacSourcesDuplicate) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+    values->add(Element::create("ipv6-link-local"));
+    values->add(Element::create("duid"));
+    values->add(Element::create("duid"));
+    values->add(Element::create("duid"));
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should parse the configuration and check that it throws.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
+}
+
+
 /// @brief Test Fixture class which provides basic structure for testing
 /// configuration parsing.  This is essentially the same structure provided
 /// by dhcp servers.
