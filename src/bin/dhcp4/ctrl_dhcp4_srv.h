@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,19 @@ private:
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
+    /// @brief handler for processing 'set-config' command
+    ///
+    /// This handler processes set-config command, which processes
+    /// configuration specified in args parameter.
+    /// @param command (parameter ignored)
+    /// @param args configuration to be processed. Expected format:
+    /// map containing Dhcp4 map that contains DHCPv4 server configuration.
+    /// May also contain Logging map that specifies logging configuration.
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandSetConfigHandler(const std::string& command,
+                            isc::data::ConstElementPtr args);
 
     /// @brief Handler for processing 'leases-reclaim' command
     ///
