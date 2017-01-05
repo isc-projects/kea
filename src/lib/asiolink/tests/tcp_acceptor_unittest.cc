@@ -37,7 +37,7 @@ const long TEST_TIMEOUT = 10000;
 class SocketCallback {
 public:
 
-    /// @brief Implements callback for the asynchornous operation on the socket.
+    /// @brief Implements callback for the asynchronous operation on the socket.
     ///
     /// This callback merely checks if error has occurred and reports this
     /// error. It does nothing in case of success.
@@ -109,7 +109,7 @@ private:
     /// @brief Holds reference to the IO service.
     boost::asio::io_service& io_service_;
 
-    /// @brief A socket used for the connecion.
+    /// @brief A socket used for the connection.
     boost::asio::ip::tcp::socket socket_;
 
 };
@@ -296,7 +296,7 @@ public:
     /// @brief Server endpoint.
     boost::asio::ip::tcp::endpoint asio_endpoint_;
 
-    /// @brief asiolink server endpont (uses asio_endpoint_).
+    /// @brief asiolink server endpoint (uses asio_endpoint_).
     TCPEndpoint endpoint_;
 
     /// @brief Asynchronous timer service to detect timeouts.
