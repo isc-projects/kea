@@ -725,8 +725,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
-    } else if (config_id.compare("server-id") == 0) {
-        parser = new DUIDConfigParser();
+    // server-id has been migrated to SimpleParser
     } else if (config_id.compare("host-reservation-identifiers") == 0) {
         parser = new HostReservationIdsParser6();
     } else {
@@ -918,6 +917,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 ControlSocketParser parser;
                 SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
                 parser.parse(*srv_config, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "server-id") {
+                DUIDConfigParser parser;
+                const CfgDUIDPtr& cfg = CfgMgr::instance().getStagingCfg()->getCfgDUID();
+                parser.parse(cfg, config_pair.second);
                 continue;
             }
 
