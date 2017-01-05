@@ -3203,6 +3203,9 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 </screen>
       </para>
 
+      <para>If "relay" is specified, the "ip-address" parameter within
+      it is mandatory.</para>
+
     </section>
 
       <section id="dhcp4-srv-example-client-class-relay">

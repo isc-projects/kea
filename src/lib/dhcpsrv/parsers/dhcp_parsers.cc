@@ -809,12 +809,16 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
     }
 
     // Now create the default value.
-    isc::asiolink::IOAddress ip(family_ == Option::V4 ? "0.0.0.0" : "::");
+    isc::asiolink::IOAddress ip(family_ == Option::V4 ? IOAddress::IPV4_ZERO_ADDRESS()
+                                : IOAddress::IPV6_ZERO_ADDRESS());
 
     // Now iterate over all parameters. Currently there's only one supported
     // parameter, so it should be an easy thing to check.
+    bool ip_address_specified = false;
     BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
         if (param.first == "ip-address") {
+            ip_address_specified = true;
+
             try {
                 ip = asiolink::IOAddress(param.second->stringValue());
             } catch (...)  {
@@ -836,6 +840,11 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
                       "parser error: RelayInfoParser parameter not supported: "
                       << param.second);
         }
+    }
+
+    if (!ip_address_specified) {
+        isc_throw(DhcpConfigError, "'relay' specified, but mandatory 'ip-address' "
+                  "paramter in it is missing");
     }
 
     // Ok, we're done with parsing. Let's store the result in the structure

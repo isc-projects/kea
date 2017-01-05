@@ -2463,6 +2463,19 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+
+    RelayInfoParser parser(Option::V4);
+
+    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
+    EXPECT_NO_THROW(parser.parse(result, json));
+    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+}
+
+/// @brief Checks that a bogus relay info structure for IPv4 is rejected.
+TEST_F(ParseConfigTest, bogusRelayInfo4) {
+
     // Invalid config (wrong family type of the ip-address field)
     std::string config_str_bogus1 =
         "    {"
@@ -2477,19 +2490,24 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 
+    // Invalid config (ip-address is mandatory)
+    std::string config_str_bogus3 =
+        "    {"
+        "    }";
+    ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
+
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
 
     RelayInfoParser parser(Option::V4);
 
-    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
-    EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("192.0.2.1", result->addr_.toText());
-
-    // Let's check negative scenario (wrong family type)
+    // wrong family type
     EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
-    // Let's check negative scenario (too large byte values in pseudo-IPv4 addr)
+    // Too large byte values in pseudo-IPv4 addr
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
+
+    // Mandatory ip-address is missing. What a pity.
     EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 }
 
@@ -2502,6 +2520,18 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "     \"ip-address\" : \"2001:db8::1\""
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
+
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+
+    RelayInfoParser parser(Option::V6);
+    // Subnet4 parser will pass :: to the RelayInfoParser
+    EXPECT_NO_THROW(parser.parse(result, json));
+    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+}
+
+/// @brief Checks that a valid relay info structure for IPv6 can be handled
+TEST_F(ParseConfigTest, bogusRelayInfo6) {
 
     // Invalid config (wrong family type of the ip-address field
     std::string config_str_bogus1 =
@@ -2517,19 +2547,25 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 
+    // Missing mandatory ip-address field.
+    std::string config_str_bogus3 =
+        "    {"
+        "    }";
+    ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
+
     // We need to set the default ip-address to something.
     Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
 
     RelayInfoParser parser(Option::V6);
-    // Subnet4 parser will pass :: to the RelayInfoParser
-    EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("2001:db8::1", result->addr_.toText());
 
-    // Let's check negative scenario (wrong family type)
+    // Negative scenario (wrong family type)
     EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
-    // Unparseable text that looks like IPv6 address, but has too many colons
+    // Looks like IPv6 address, but has too many colons
     EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
+
+    // Mandatory ip-address is missing. What a pity.
+    EXPECT_THROW(parser.parse(result, json_bogus3), DhcpConfigError);
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
