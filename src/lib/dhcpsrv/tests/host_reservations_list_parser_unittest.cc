@@ -86,8 +86,8 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationsListParser<HostReservationParser4> parser(SubnetID(1));
-    ASSERT_NO_THROW(parser.parse(config_element));
+    HostReservationsListParser<HostReservationParser4> parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -139,8 +139,8 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
-        HostReservationsListParser<HostReservationParser4> parser(SubnetID(1));
-        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+        HostReservationsListParser<HostReservationParser4> parser;
+        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
     }
 }
 
@@ -164,8 +164,8 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration.
-    HostReservationsListParser<HostReservationParser6> parser(SubnetID(2));
-    ASSERT_NO_THROW(parser.parse(config_element));
+    HostReservationsListParser<HostReservationParser6> parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -231,8 +231,8 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
-        HostReservationsListParser<HostReservationParser6> parser(SubnetID(1));
-        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+        HostReservationsListParser<HostReservationParser6> parser;
+        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
     }
 }
 
