@@ -25,7 +25,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief HTTP status codes.
+/// @brief HTTP status codes (cf RFC 2068)
 enum class HttpStatusCode : std::uint16_t {
     OK = 200,
     CREATED = 201,
@@ -49,7 +49,7 @@ enum class HttpStatusCode : std::uint16_t {
 /// constructor should call its @c setGenericBody method during construction.
 struct CallSetGenericBody {
 
-    /// @brief Contrsuctor.
+    /// @brief Constructor.
     ///
     /// @param set A boolean value indicating if the method should be called
     /// or not.
