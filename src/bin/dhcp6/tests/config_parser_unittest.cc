@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -251,6 +251,9 @@ public:
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
         EXPECT_EQ(expected_code, rcode_);
+        if (expected_code != rcode_) {
+            cout << "The comment returned was: [" << comment_->stringValue() << "]" << endl;
+        }
     }
 
     /// @brief Returns an interface configuration used by the most of the
@@ -762,7 +765,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-                    
+
     // returned value should be 0 (success)
     checkResult(status, 0);
 }
@@ -4292,16 +4295,15 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
 }
 
 /// The goal of this test is to verify that configuration can include
-/// MAC/Hardware sources. This test also checks if the aliases are
-/// handled properly (rfc6939 = client-addr-relay, rfc4649 = remote-id,
-/// rfc4580 = subscriber-id).
-TEST_F(Dhcp6ParserTest, macSources) {
+/// MAC/Hardware sources. This case uses RFC numbers to reference methods.
+/// Also checks if the aliases are handled properly (rfc6939 = client-addr-relay,
+/// rfc4649 = remote-id, rfc4580 = subscriber-id).
+TEST_F(Dhcp6ParserTest, macSources1) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json =
         parseDHCP6("{ " + genIfaceConfig() + ","
-                   "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\","
-                   "\"client-link-addr-option\", \"remote-id\", \"subscriber-id\"],"
+                   "\"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\" ],"
                    "\"preferred-lifetime\": 3000,"
                    "\"rebind-timer\": 2000, "
                    "\"renew-timer\": 1000, "
@@ -4310,28 +4312,49 @@ TEST_F(Dhcp6ParserTest, macSources) {
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-
-    // returned value should be 0 (success)
     checkResult(status, 0);
 
-    CfgMACSources mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
-    ASSERT_EQ(6, mac_sources.size());
-    // Let's check the aliases. They should be recognized to their base methods.
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, mac_sources[0]);
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, mac_sources[1]);
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[2]);
+    CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
 
-    // Let's check if the actual methods are recognized properly.
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, mac_sources[3]);
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, mac_sources[4]);
-    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, mac_sources[5]);
+    ASSERT_EQ(3, sources.size());
+    // Let's check the aliases. They should be recognized to their base methods.
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, sources[0]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, sources[1]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, sources[2]);
 }
 
-/// The goal of this test is to verify that MAC sources configuration can be
-/// empty.
-/// Note the Dhcp6 parser requires the list to NOT be empty?!
-TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
+/// The goal of this test is to verify that configuration can include
+/// MAC/Hardware sources. This uses specific method names.
+TEST_F(Dhcp6ParserTest, macSources2) {
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json =
+        parseDHCP6("{ " + genIfaceConfig() + ","
+                   "\"mac-sources\": [ \"client-link-addr-option\", \"remote-id\", "
+                   "                   \"subscriber-id\"],"
+                   "\"preferred-lifetime\": 3000,"
+                   "\"rebind-timer\": 2000, "
+                   "\"renew-timer\": 1000, "
+                   "\"subnet6\": [  ], "
+                   "\"valid-lifetime\": 4000 }"));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
+
+    ASSERT_EQ(3, sources.size());
+    // Let's check the aliases. They should be recognized to their base methods.
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, sources[0]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, sources[1]);
+    EXPECT_EQ(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID, sources[2]);
+}
+
+
+/// The goal of this test is to verify that empty MAC sources configuration
+/// is rejected. If specified, this has to have at least one value.
+TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
@@ -4343,11 +4366,9 @@ TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
                               "\"subnet6\": [  ], "
                               "\"valid-lifetime\": 4000 }")));
 
-    // returned value should be 0 (success)
-    checkResult(status, 0);
-
-    CfgMACSources mac_sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
-    EXPECT_EQ(0, mac_sources.size());
+    // returned value should be 1 (failure), because the mac-sources must not
+    // be empty when specified.
+    checkResult(status, 1);
 }
 
 /// The goal of this test is to verify that MAC sources configuration can

@@ -3410,6 +3410,9 @@ If not specified, the default value is:
 </screen>
       </para>
 
+      <para>If "relay" is specified, the "ip-address" parameter within
+      it is mandatory.</para>
+
     </section>
 
       <section id="dhcp6-client-class-relay">
@@ -3500,7 +3503,8 @@ If not specified, the default value is:
 
     When not specified, a special value of "any" is used, which
     instructs the server to attempt to use all the methods in sequence and use
-    value returned by the first one that succeeds.</para>
+    value returned by the first one that succeeds. If specified, it
+    has to have at least one value.</para>
 
     <para>Supported methods are:
     <itemizedlist>
