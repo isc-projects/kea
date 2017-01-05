@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,8 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <cc/simple_parser.h>
 #include <hooks/libinfo.h>
@@ -372,56 +374,33 @@ private:
 /// It contains a list of MAC/hardware acquisition source, i.e. methods how
 /// MAC address can possibly by obtained in DHCPv6. For a currently supported
 /// methods, see @ref isc::dhcp::Pkt::getMAC.
-class MACSourcesListConfigParser : public DhcpConfigParser {
+class MACSourcesListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "mac-sources" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param global_context Global parser context.
-    /// @throw BadValue if supplied parameter name is not "mac-sources"
-    MACSourcesListConfigParser(const std::string& param_name,
-                               ParserContextPtr global_context);
-
     /// @brief parses parameters value
     ///
     /// Parses configuration entry (list of sources) and adds each element
     /// to the sources list.
     ///
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-private:
-
-    // Parsed parameter name
-    std::string param_name_;
-
-    /// Global parser context.
-    ParserContextPtr global_context_;
+    void parse(CfgMACSource& mac_sources, isc::data::ConstElementPtr value);
 };
 
 /// @brief Parser for the control-socket structure
 ///
 /// It does not parse anything, simply stores the element in
 /// the staging config.
-class ControlSocketParser : public DhcpConfigParser {
+class ControlSocketParser : public isc::data::SimpleParser {
 public:
-
-    ControlSocketParser(const std::string& param_name);
-
-    /// @brief Stores contents of the control-socket map in the staging config.
+    /// @brief "Parses" control-socket structure
     ///
+    /// Since the SrvConfig structure takes the socket definition
+    /// as ConstElementPtr, there's really nothing to parse here.
+    /// It only does basic sanity checks and throws DhcpConfigError
+    /// if the value is null or is not a map.
+    ///
+    /// @param srv_cfg parsed values will be stored here
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
+    void parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value);
 };
 
 /// @brief Parser for hooks library list
@@ -849,48 +828,24 @@ protected:
 /// is expected that the number of parameters will increase over time.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[x]/relay parameters.
-class RelayInfoParser : public DhcpConfigParser {
+class RelayInfoParser : public isc::data::SimpleParser {
 public:
 
     /// @brief constructor
-    /// @param unused first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param relay_info is the storage in which to store the parsed
     /// @param family specifies protocol family (IPv4 or IPv6)
-    RelayInfoParser(const std::string& unused,
-                    const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                    const isc::dhcp::Option::Universe& family);
+    RelayInfoParser(const isc::dhcp::Option::Universe& family);
 
     /// @brief parses the actual relay parameters
-    /// @param relay_info JSON structure holding relay parameters to parse
-    virtual void build(isc::data::ConstElementPtr relay_info);
-
-    /// @brief stores parsed info in relay_info
-    virtual void commit();
-
-protected:
-
-    /// @brief Creates a parser for the given "relay" member element id.
     ///
     /// The elements currently supported are:
     /// -# ip-address
     ///
-    /// @param parser is the "item_name" for a specific member element of
-    /// the "relay" specification.
-    ///
-    /// @return returns a pointer to newly created parser.
-    isc::dhcp::ParserPtr
-    createConfigParser(const std::string& parser);
+    /// @param cfg configuration will be stored here
+    /// @param relay_info JSON structure holding relay parameters to parse
+    void parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
+               isc::data::ConstElementPtr relay_info);
 
-    /// Parsed data will be stored there on commit()
-    isc::dhcp::Subnet::RelayInfoPtr storage_;
-
-    /// Local storage information (for temporary values)
-    isc::dhcp::Subnet::RelayInfo local_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
+protected:
     /// Protocol family (IPv4 or IPv6)
     Option::Universe family_;
 };

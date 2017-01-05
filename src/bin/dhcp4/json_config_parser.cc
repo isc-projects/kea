@@ -189,8 +189,7 @@ protected:
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pools") == 0) {
             parser = new Pools4ListParser(config_id, pools_);
-        } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
+            // relay has been converted to SimpleParser already.
         // option-data has been converted to SimpleParser already.
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);
@@ -440,8 +439,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new D2ClientConfigParser(config_id);
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
-    } else if (config_id.compare("control-socket") == 0) {
-        parser = new ControlSocketParser(config_id);
+    // control-socket has been converted to SimpleParser already.
     } else if (config_id.compare("expired-leases-processing") == 0) {
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
@@ -634,6 +632,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 OptionDataListParser parser(AF_INET);
                 CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "control-socket") {
+                ControlSocketParser parser;
+                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+                parser.parse(*srv_cfg, config_pair.second);
                 continue;
             }
 
