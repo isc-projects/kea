@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -420,7 +420,12 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 
     // All is good, so we can convert the PSID value read from the buffer to
     // the port set number.
-    psid = psid >> (sizeof(psid) * 8 - psid_len);
+    if (psid_len == sizeof(psid) * 8) {
+        // Shift by 16 always gives zero (CID 1398333)
+        psid = 0;
+    } else {
+        psid = psid >> (sizeof(psid) * 8 - psid_len);
+    }
     return (std::make_pair(PSIDLen(psid_len), PSID(psid)));
 }
 

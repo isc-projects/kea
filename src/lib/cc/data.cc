@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -798,11 +798,13 @@ StringElement::toJSON(std::ostream& ss) const {
             break;
         default:
             if ((c >= 0) && (c < 0x20)) {
-                ss << "\\u"
-                   << hex
-                   << setw(4)
-                   << setfill('0')
-                   << (static_cast<unsigned>(c) & 0xff);
+                std::ostringstream esc;
+                esc << "\\u"
+                    << hex
+                    << setw(4)
+                    << setfill('0')
+                    << (static_cast<unsigned>(c) & 0xff);
+                ss << esc.str();
             } else {
                 ss << c;
             }
