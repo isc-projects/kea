@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,11 +95,17 @@ namespace isc {
 namespace dhcp {
 
 HostReservationParser::HostReservationParser(const SubnetID& subnet_id)
-    : DhcpConfigParser(), subnet_id_(subnet_id) {
+    : SimpleParser(), subnet_id_(subnet_id) {
+}
+
+
+void
+HostReservationParser::parse(isc::data::ConstElementPtr reservation_data) {
+    parseInternal(reservation_data);
 }
 
 void
-HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
+HostReservationParser::parseInternal(isc::data::ConstElementPtr reservation_data) {
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
@@ -185,8 +191,8 @@ HostReservationParser4::HostReservationParser4(const SubnetID& subnet_id)
 }
 
 void
-HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::build(reservation_data);
+HostReservationParser4::parseInternal(isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(reservation_data);
 
     host_->setIPv4SubnetID(subnet_id_);
 
@@ -247,8 +253,8 @@ HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
 }
 
 void
-HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::build(reservation_data);
+HostReservationParser6::parseInternal(isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(reservation_data);
 
     host_->setIPv6SubnetID(subnet_id_);
 
@@ -359,7 +365,12 @@ HostReservationIdsParser::HostReservationIdsParser()
 }
 
 void
-HostReservationIdsParser::build(isc::data::ConstElementPtr ids_list) {
+HostReservationIdsParser::parse(isc::data::ConstElementPtr ids_list) {
+    parseInternal(ids_list);
+}
+
+void
+HostReservationIdsParser::parseInternal(isc::data::ConstElementPtr ids_list) {
     // Remove existing identifier types.
     staging_cfg_->clearIdentifierTypes();
 

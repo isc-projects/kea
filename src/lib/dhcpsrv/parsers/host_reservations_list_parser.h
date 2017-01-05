@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,8 @@
 #define HOST_RESERVATIONS_LIST_PARSER_H
 
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <boost/foreach.hpp>
 
 namespace isc {
@@ -21,7 +21,7 @@ namespace dhcp {
 /// parse individual reservations: @c HostReservationParser4 or
 /// @c HostReservationParser6.
 template<typename HostReservationParserType>
-class HostReservationsListParser : public DhcpConfigParser {
+class HostReservationsListParser : public isc::data::SimpleParser {
 public:
 
     /// @brief Constructor.
@@ -39,15 +39,12 @@ public:
     ///
     /// @throw DhcpConfigError If the configuration if any of the reservations
     /// is invalid.
-    virtual void build(isc::data::ConstElementPtr hr_list) {
+    void parse(isc::data::ConstElementPtr hr_list) {
         BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
-            ParserPtr parser(new HostReservationParserType(subnet_id_));
-            parser->build(reservation);
+            HostReservationParserType parser(subnet_id_);
+            parser.parse(reservation);
         }
     }
-
-    /// @brief Commit, unused.
-    virtual void commit() { }
 
 private:
 

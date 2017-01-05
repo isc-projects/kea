@@ -385,9 +385,9 @@ public:
             // Parse Host Reservations for this subnet if any.
             ConstElementPtr reservations = subnet->get("reservations");
             if (reservations) {
-                ParserPtr parser(new HostReservationsListParser<
-                                 HostReservationParser6>(subnet_->getID()));
-                parser->build(reservations);
+                HostReservationsListParser<HostReservationParser6>
+                    parser(subnet_->getID());
+                parser.parse(reservations);
             }
         }
     }
@@ -731,8 +731,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new ClientClassDefListParser(config_id, globalContext());
     } else if (config_id.compare("server-id") == 0) {
         parser = new DUIDConfigParser();
-    } else if (config_id.compare("host-reservation-identifiers") == 0) {
-        parser = new HostReservationIdsParser6();
+    // host-reservation-identifiers have been converted to SimpleParser already.
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -908,6 +907,12 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 OptionDataListParser parser(AF_INET6);
                 CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "host-reservation-identifiers") {
+                HostReservationIdsParser6 parser;
+                parser.parse(config_pair.second);
                 continue;
             }
 
