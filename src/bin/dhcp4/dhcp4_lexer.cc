@@ -1061,17 +1061,17 @@ int parser4__flex_debug = 1;
 static yyconst flex_int16_t yy_rule_linenum[110] =
     {   0,
       128,  130,  132,  137,  138,  143,  144,  145,  157,  160,
-      165,  172,  181,  190,  199,  209,  219,  228,  237,  246,
-      255,  267,  277,  287,  297,  308,  318,  328,  338,  348,
-      357,  366,  375,  389,  404,  413,  422,  431,  440,  449,
-      458,  467,  476,  485,  495,  504,  513,  522,  531,  540,
-      549,  558,  568,  578,  588,  597,  607,  617,  627,  637,
-      646,  656,  665,  674,  683,  692,  701,  711,  721,  730,
-      739,  748,  757,  766,  775,  784,  793,  802,  811,  820,
-      829,  838,  847,  856,  865,  874,  883,  893,  903,  915,
-      926,  939, 1037, 1042, 1047, 1052, 1053, 1054, 1055, 1056,
+      165,  172,  181,  190,  199,  208,  217,  226,  235,  244,
+      253,  265,  275,  285,  295,  306,  316,  326,  336,  346,
+      355,  364,  373,  387,  402,  411,  420,  429,  438,  447,
+      456,  465,  474,  483,  493,  502,  511,  520,  529,  538,
+      547,  556,  566,  576,  586,  595,  605,  615,  625,  635,
+      644,  654,  663,  672,  681,  690,  699,  709,  719,  728,
+      737,  746,  755,  764,  773,  782,  791,  800,  809,  818,
+      827,  836,  845,  854,  863,  872,  881,  891,  901,  913,
+      924,  937, 1035, 1040, 1045, 1050, 1051, 1052, 1053, 1054,
 
-     1057, 1059, 1077, 1090, 1095, 1099, 1101, 1103, 1105
+     1055, 1057, 1075, 1088, 1093, 1097, 1099, 1101, 1103
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1083,7 +1083,7 @@ static yyconst flex_int16_t yy_rule_linenum[110] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *parser4_text;
 #line 1 "dhcp4_lexer.ll"
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1680,7 +1680,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 209 "dhcp4_lexer.ll"
+#line 208 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
@@ -1692,7 +1692,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 219 "dhcp4_lexer.ll"
+#line 217 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
@@ -1704,7 +1704,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 228 "dhcp4_lexer.ll"
+#line 226 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1716,7 +1716,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 237 "dhcp4_lexer.ll"
+#line 235 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1728,7 +1728,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 246 "dhcp4_lexer.ll"
+#line 244 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
@@ -1740,7 +1740,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 255 "dhcp4_lexer.ll"
+#line 253 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1755,7 +1755,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 267 "dhcp4_lexer.ll"
+#line 265 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1768,7 +1768,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 277 "dhcp4_lexer.ll"
+#line 275 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1781,7 +1781,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 287 "dhcp4_lexer.ll"
+#line 285 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1794,7 +1794,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 297 "dhcp4_lexer.ll"
+#line 295 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1808,7 +1808,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 308 "dhcp4_lexer.ll"
+#line 306 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1821,7 +1821,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 318 "dhcp4_lexer.ll"
+#line 316 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1834,7 +1834,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 328 "dhcp4_lexer.ll"
+#line 326 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1847,7 +1847,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 338 "dhcp4_lexer.ll"
+#line 336 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1860,7 +1860,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 348 "dhcp4_lexer.ll"
+#line 346 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1872,7 +1872,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 357 "dhcp4_lexer.ll"
+#line 355 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1884,7 +1884,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 366 "dhcp4_lexer.ll"
+#line 364 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1896,7 +1896,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 375 "dhcp4_lexer.ll"
+#line 373 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1913,7 +1913,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 389 "dhcp4_lexer.ll"
+#line 387 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -1931,7 +1931,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 404 "dhcp4_lexer.ll"
+#line 402 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DATA:
@@ -1943,7 +1943,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 413 "dhcp4_lexer.ll"
+#line 411 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -1955,7 +1955,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 422 "dhcp4_lexer.ll"
+#line 420 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::POOLS:
@@ -1967,7 +1967,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 431 "dhcp4_lexer.ll"
+#line 429 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -1979,7 +1979,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 440 "dhcp4_lexer.ll"
+#line 438 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -1991,7 +1991,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 449 "dhcp4_lexer.ll"
+#line 447 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2003,7 +2003,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 458 "dhcp4_lexer.ll"
+#line 456 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2015,7 +2015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 467 "dhcp4_lexer.ll"
+#line 465 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2027,7 +2027,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 476 "dhcp4_lexer.ll"
+#line 474 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2039,7 +2039,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 485 "dhcp4_lexer.ll"
+#line 483 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -2052,7 +2052,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 495 "dhcp4_lexer.ll"
+#line 493 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2064,7 +2064,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 504 "dhcp4_lexer.ll"
+#line 502 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -2076,7 +2076,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 513 "dhcp4_lexer.ll"
+#line 511 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGING:
@@ -2088,7 +2088,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 522 "dhcp4_lexer.ll"
+#line 520 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -2100,7 +2100,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 531 "dhcp4_lexer.ll"
+#line 529 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -2112,7 +2112,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 540 "dhcp4_lexer.ll"
+#line 538 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -2124,7 +2124,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 549 "dhcp4_lexer.ll"
+#line 547 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -2136,7 +2136,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 558 "dhcp4_lexer.ll"
+#line 556 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2149,7 +2149,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 568 "dhcp4_lexer.ll"
+#line 566 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2162,7 +2162,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 578 "dhcp4_lexer.ll"
+#line 576 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
@@ -2175,7 +2175,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 588 "dhcp4_lexer.ll"
+#line 586 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2187,7 +2187,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 597 "dhcp4_lexer.ll"
+#line 595 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -2200,7 +2200,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 607 "dhcp4_lexer.ll"
+#line 605 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -2213,7 +2213,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 617 "dhcp4_lexer.ll"
+#line 615 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -2226,7 +2226,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 627 "dhcp4_lexer.ll"
+#line 625 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -2239,7 +2239,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 637 "dhcp4_lexer.ll"
+#line 635 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATIONS:
@@ -2251,7 +2251,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 646 "dhcp4_lexer.ll"
+#line 644 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -2264,7 +2264,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 656 "dhcp4_lexer.ll"
+#line 654 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DATA:
@@ -2276,7 +2276,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 665 "dhcp4_lexer.ll"
+#line 663 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -2288,7 +2288,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 674 "dhcp4_lexer.ll"
+#line 672 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -2300,7 +2300,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 683 "dhcp4_lexer.ll"
+#line 681 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -2312,7 +2312,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 692 "dhcp4_lexer.ll"
+#line 690 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2324,7 +2324,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 701 "dhcp4_lexer.ll"
+#line 699 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RELAY:
@@ -2337,7 +2337,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 711 "dhcp4_lexer.ll"
+#line 709 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2349,7 +2349,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 721 "dhcp4_lexer.ll"
+#line 719 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
@@ -2361,7 +2361,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 730 "dhcp4_lexer.ll"
+#line 728 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
@@ -2373,7 +2373,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 739 "dhcp4_lexer.ll"
+#line 737 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2385,7 +2385,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 748 "dhcp4_lexer.ll"
+#line 746 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SERVER_ID:
@@ -2397,7 +2397,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 757 "dhcp4_lexer.ll"
+#line 755 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SERVER_ID:
@@ -2409,7 +2409,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 766 "dhcp4_lexer.ll"
+#line 764 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SERVER_ID:
@@ -2421,7 +2421,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 775 "dhcp4_lexer.ll"
+#line 773 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SERVER_ID:
@@ -2433,7 +2433,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 784 "dhcp4_lexer.ll"
+#line 782 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2445,7 +2445,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 793 "dhcp4_lexer.ll"
+#line 791 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2457,7 +2457,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 802 "dhcp4_lexer.ll"
+#line 800 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2469,7 +2469,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 811 "dhcp4_lexer.ll"
+#line 809 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
@@ -2481,7 +2481,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 820 "dhcp4_lexer.ll"
+#line 818 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
@@ -2493,7 +2493,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 829 "dhcp4_lexer.ll"
+#line 827 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2505,7 +2505,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 838 "dhcp4_lexer.ll"
+#line 836 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -2517,7 +2517,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 847 "dhcp4_lexer.ll"
+#line 845 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -2529,7 +2529,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 856 "dhcp4_lexer.ll"
+#line 854 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2541,7 +2541,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 865 "dhcp4_lexer.ll"
+#line 863 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2553,7 +2553,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 874 "dhcp4_lexer.ll"
+#line 872 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2565,7 +2565,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 883 "dhcp4_lexer.ll"
+#line 881 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2578,7 +2578,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 893 "dhcp4_lexer.ll"
+#line 891 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2591,7 +2591,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 903 "dhcp4_lexer.ll"
+#line 901 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -2606,7 +2606,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 915 "dhcp4_lexer.ll"
+#line 913 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2620,7 +2620,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 926 "dhcp4_lexer.ll"
+#line 924 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -2634,7 +2634,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 939 "dhcp4_lexer.ll"
+#line 937 "dhcp4_lexer.ll"
 {
     // A string has been matched. It contains the actual string and single quotes.
     // We need to get those quotes out of the way and just use its content, e.g.
@@ -2736,7 +2736,7 @@ YY_RULE_SETUP
 case 93:
 /* rule 93 can match eol */
 YY_RULE_SETUP
-#line 1037 "dhcp4_lexer.ll"
+#line 1035 "dhcp4_lexer.ll"
 {
     // Bad string with a forbidden control character inside
     driver.error(driver.loc_, "Invalid control in " + std::string(parser4_text));
@@ -2745,7 +2745,7 @@ YY_RULE_SETUP
 case 94:
 /* rule 94 can match eol */
 YY_RULE_SETUP
-#line 1042 "dhcp4_lexer.ll"
+#line 1040 "dhcp4_lexer.ll"
 {
     // Bad string with a bad escape inside
     driver.error(driver.loc_, "Bad escape in " + std::string(parser4_text));
@@ -2753,7 +2753,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 1047 "dhcp4_lexer.ll"
+#line 1045 "dhcp4_lexer.ll"
 {
     // Bad string with an open escape at the end
     driver.error(driver.loc_, "Overflow escape in " + std::string(parser4_text));
@@ -2761,37 +2761,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 1052 "dhcp4_lexer.ll"
+#line 1050 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 1053 "dhcp4_lexer.ll"
+#line 1051 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 1054 "dhcp4_lexer.ll"
+#line 1052 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 1055 "dhcp4_lexer.ll"
+#line 1053 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 1056 "dhcp4_lexer.ll"
+#line 1054 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 1057 "dhcp4_lexer.ll"
+#line 1055 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 1059 "dhcp4_lexer.ll"
+#line 1057 "dhcp4_lexer.ll"
 {
     // An integer was found.
     std::string tmp(parser4_text);
@@ -2812,7 +2812,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 1077 "dhcp4_lexer.ll"
+#line 1075 "dhcp4_lexer.ll"
 {
     // A floating point was found.
     std::string tmp(parser4_text);
@@ -2828,7 +2828,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 1090 "dhcp4_lexer.ll"
+#line 1088 "dhcp4_lexer.ll"
 {
     string tmp(parser4_text);
     return isc::dhcp::Dhcp4Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2836,33 +2836,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 1095 "dhcp4_lexer.ll"
+#line 1093 "dhcp4_lexer.ll"
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 1099 "dhcp4_lexer.ll"
+#line 1097 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 1101 "dhcp4_lexer.ll"
+#line 1099 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 1103 "dhcp4_lexer.ll"
+#line 1101 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 1105 "dhcp4_lexer.ll"
+#line 1103 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(parser4_text));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1107 "dhcp4_lexer.ll"
+#line 1105 "dhcp4_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp4Parser::make_END(driver.loc_);
@@ -2888,10 +2888,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 1130 "dhcp4_lexer.ll"
+#line 1128 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2897 "dhcp4_lexer.cc"
+#line 2895 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3994,7 +3994,7 @@ void parser4_free (void * ptr )
 
 /* %ok-for-header */
 
-#line 1130 "dhcp4_lexer.ll"
+#line 1128 "dhcp4_lexer.ll"
 
 
 
