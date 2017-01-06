@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,34 +8,45 @@
 #define HOST_RESERVATION_PARSER_H
 
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 
 namespace isc {
 namespace dhcp {
 
 /// @brief Parser for a single host reservation entry.
-class HostReservationParser : public DhcpConfigParser {
+class HostReservationParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    HostReservationParser(const SubnetID& subnet_id);
+    /// @brief Destructor.
+    virtual ~HostReservationParser() { }
 
     /// @brief Parses a single entry for host reservation.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void build(isc::data::ConstElementPtr reservation_data);
-
-    /// @brief Commit, unused.
-    virtual void commit() { }
+    void parse(const SubnetID& subnet_id,
+               isc::data::ConstElementPtr reservation_data);
 
 protected:
+
+    /// @brief Parses a single entry for host reservation.
+    ///
+    /// This method is called by @ref parse and it can be overriden in the
+    /// derived classes to provide class specific parsing logic.
+    ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
+    /// @param reservation_data Data element holding map with a host
+    /// reservation configuration.
+    ///
+    /// @throw DhcpConfigError If the configuration is invalid.
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Inserts @c host_ object to the staging configuration.
     ///
@@ -73,9 +84,6 @@ protected:
     virtual const std::set<std::string>&
     getSupportedParameters(const bool identifiers_only) const = 0;
 
-    /// @brief Identifier of the subnet that the host is connected to.
-    SubnetID subnet_id_;
-
     /// @brief Holds a pointer to @c Host object representing a parsed
     /// host reservation configuration.
     HostPtr host_;
@@ -84,23 +92,18 @@ protected:
 
 /// @brief Parser for a single host reservation for DHCPv4.
 class HostReservationParser4 : public HostReservationParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    HostReservationParser4(const SubnetID& subnet_id);
+protected:
 
     /// @brief Parses a single host reservation for DHCPv4.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void build(isc::data::ConstElementPtr reservation_data);
-
-protected:
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv4.
     ///
@@ -111,28 +114,22 @@ protected:
     /// @return Set of supported parameter names.
     virtual const std::set<std::string>&
     getSupportedParameters(const bool identifiers_only) const;
-
 };
 
 /// @brief Parser for a single host reservation for DHCPv6.
 class HostReservationParser6 : public HostReservationParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet that the host is
-    /// connected to.
-    HostReservationParser6(const SubnetID& subnet_id);
+protected:
 
     /// @brief Parses a single host reservation for DHCPv6.
     ///
+    /// @param subnet_id Identifier of the subnet that the host is
+    /// connected to.
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void build(isc::data::ConstElementPtr reservation_data);
-
-protected:
+    virtual void parseInternal(const SubnetID& subnet_id,
+                               isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv6.
     ///
@@ -151,11 +148,14 @@ protected:
 /// This is a parent parser class for parsing "host-reservation-identifiers"
 /// global configuration parmeter. The DHCPv4 and DHCPv6 specific parsers
 /// derive from this class.
-class HostReservationIdsParser : public DhcpConfigParser {
+class HostReservationIdsParser : public isc::data::SimpleParser {
 public:
 
     /// @brief Constructor.
     HostReservationIdsParser();
+
+    /// @brief Destructor.
+    virtual ~HostReservationIdsParser() { }
 
     /// @brief Parses a list of host identifiers.
     ///
@@ -163,12 +163,20 @@ public:
     /// identifier names.
     ///
     /// @throw DhcpConfigError If specified configuration is invalid.
-    virtual void build(isc::data::ConstElementPtr ids_list);
-
-    /// @brief Commit, unused.
-    virtual void commit() { }
+    void parse(isc::data::ConstElementPtr ids_list);
 
 protected:
+
+    /// @brief Parses a list of host identifiers.
+    ///
+    /// This method is called by @ref parse and it can be overriden in the
+    /// derived classes to provide class specific parsing logic.
+    ///
+    /// @param ids_list Data element pointing to an ordered list of host
+    /// identifier names.
+    ///
+    /// @throw DhcpConfigError If specified configuration is invalid.
+    virtual void parseInternal(isc::data::ConstElementPtr ids_list);
 
     /// @brief Checks if specified identifier name is supported in the
     /// context of the parser.

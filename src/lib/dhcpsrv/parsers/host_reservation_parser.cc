@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,12 +94,15 @@ getSupportedParams6(const bool identifiers_only = false) {
 namespace isc {
 namespace dhcp {
 
-HostReservationParser::HostReservationParser(const SubnetID& subnet_id)
-    : DhcpConfigParser(), subnet_id_(subnet_id) {
+void
+HostReservationParser::parse(const SubnetID& subnet_id,
+                             isc::data::ConstElementPtr reservation_data) {
+    parseInternal(subnet_id, reservation_data);
 }
 
 void
-HostReservationParser::build(isc::data::ConstElementPtr reservation_data) {
+HostReservationParser::parseInternal(const SubnetID& subnet_id,
+                                     isc::data::ConstElementPtr reservation_data) {
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
@@ -180,15 +183,12 @@ HostReservationParser::isSupportedParameter(const std::string& param_name) const
     return (getSupportedParameters(false).count(param_name) > 0);
 }
 
-HostReservationParser4::HostReservationParser4(const SubnetID& subnet_id)
-    : HostReservationParser(subnet_id) {
-}
-
 void
-HostReservationParser4::build(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::build(reservation_data);
+HostReservationParser4::parseInternal(const SubnetID& subnet_id,
+                                      isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv4SubnetID(subnet_id_);
+    host_->setIPv4SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // For 'option-data' element we will use another parser which
@@ -242,15 +242,12 @@ HostReservationParser4::getSupportedParameters(const bool identifiers_only) cons
     return (getSupportedParams4(identifiers_only));
 }
 
-HostReservationParser6::HostReservationParser6(const SubnetID& subnet_id)
-    : HostReservationParser(subnet_id) {
-}
-
 void
-HostReservationParser6::build(isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::build(reservation_data);
+HostReservationParser6::parseInternal(const SubnetID& subnet_id,
+                                      isc::data::ConstElementPtr reservation_data) {
+    HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv6SubnetID(subnet_id_);
+    host_->setIPv6SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // Parse option values. Note that the configuration option parser
@@ -359,7 +356,12 @@ HostReservationIdsParser::HostReservationIdsParser()
 }
 
 void
-HostReservationIdsParser::build(isc::data::ConstElementPtr ids_list) {
+HostReservationIdsParser::parse(isc::data::ConstElementPtr ids_list) {
+    parseInternal(ids_list);
+}
+
+void
+HostReservationIdsParser::parseInternal(isc::data::ConstElementPtr ids_list) {
     // Remove existing identifier types.
     staging_cfg_->clearIdentifierTypes();
 
