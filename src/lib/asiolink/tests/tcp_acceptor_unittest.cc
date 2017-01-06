@@ -261,7 +261,7 @@ public:
     /// @param ec Error code.
     void acceptHandler(const boost::system::error_code& ec) {
         if (ec) {
-            if (ec != boost::asio::error::operation_aborted) {
+            if (ec.value() != boost::asio::error::operation_aborted) {
                 ADD_FAILURE() << "error occurred while accepting connection: "
                               << ec.message();
             } else {
