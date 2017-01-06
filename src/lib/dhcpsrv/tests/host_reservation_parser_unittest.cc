@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <boost/pointer_cast.hpp>
@@ -115,8 +116,8 @@ protected:
 
         ElementPtr config_element = Element::fromJSON(config);
 
-        ParserType parser(SubnetID(10));
-        ASSERT_NO_THROW(parser.build(config_element));
+        ParserType parser;
+        ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
         // Retrieve a host.
         HostCollection hosts;
@@ -146,8 +147,8 @@ protected:
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
-        HostReservationParser4 parser(SubnetID(10));
-        ASSERT_NO_THROW(parser.build(config_element));
+        HostReservationParser4 parser;
+        ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
         CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
         HostCollection hosts;
@@ -171,8 +172,8 @@ protected:
     template<typename ParserType>
     void testInvalidConfig(const std::string& config) const {
         ElementPtr config_element = Element::fromJSON(config);
-        ParserType parser(SubnetID(10));
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        ParserType parser;
+        EXPECT_THROW(parser.parse(SubnetID(10), config_element), DhcpConfigError);
     }
 
     /// @brief HW Address object used by tests.
@@ -285,8 +286,8 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -308,8 +309,8 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -334,8 +335,8 @@ TEST_F(HostReservationParserTest, dhcp4MessageFields) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -421,8 +422,8 @@ TEST_F(HostReservationParserTest, noIPAddress) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -516,8 +517,8 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -563,8 +564,8 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(12));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(12), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -622,8 +623,8 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(12));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(12), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -658,8 +659,8 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -769,8 +770,8 @@ TEST_F(HostReservationParserTest, options4) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
     HostCollection hosts;
@@ -826,8 +827,8 @@ TEST_F(HostReservationParserTest, options6) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(10), config_element));
 
     // One host should have been added to the configuration.
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
@@ -981,7 +982,7 @@ public:
     void testInvalidConfig(const std::string& config) const {
         ElementPtr config_element = Element::fromJSON(config);
         ParserType parser;
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
     }
 
 };
@@ -995,7 +996,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
@@ -1017,7 +1018,7 @@ TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser6 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
@@ -1051,7 +1052,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
@@ -1094,7 +1095,7 @@ TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser6 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();

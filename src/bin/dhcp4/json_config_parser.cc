@@ -152,9 +152,8 @@ public:
         // Parse Host Reservations for this subnet if any.
         ConstElementPtr reservations = subnet->get("reservations");
         if (reservations) {
-            ParserPtr parser(new HostReservationsListParser<
-                             HostReservationParser4>(subnet_->getID()));
-            parser->build(reservations);
+            HostReservationsListParser<HostReservationParser4> parser;
+            parser.parse(subnet_->getID(), reservations);
         }
     }
 
@@ -444,8 +443,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
-    } else if (config_id.compare("host-reservation-identifiers") == 0) {
-        parser = new HostReservationIdsParser4();
+    // host-reservation-identifiers have been converted to SimpleParser already.
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -639,6 +637,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 ControlSocketParser parser;
                 SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
                 parser.parse(*srv_cfg, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "host-reservation-identifiers") {
+                HostReservationIdsParser4 parser;
+                parser.parse(config_pair.second);
                 continue;
             }
 
