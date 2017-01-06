@@ -153,6 +153,9 @@ public:
     /// \brief Close socket
     virtual void close();
 
+    /// \brief Returns reference to the underlying ASIO socket.
+    ///
+    /// \return Reference to underlying ASIO socket.
     virtual boost::asio::ip::tcp::socket& getASIOSocket() const {
         return (socket_);
     }

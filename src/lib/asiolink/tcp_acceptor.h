@@ -26,7 +26,7 @@ namespace asiolink {
 /// Internally it uses @c boost::asio::ip::tcp::acceptor class to implement
 /// the acceptor service.
 ///
-/// @tparam Acceptor callback type.
+/// @tparam C Acceptor callback type.
 template<typename C>
 class TCPAcceptor : public IOSocket {
 public:
