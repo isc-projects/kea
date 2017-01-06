@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,7 +101,7 @@ std::string
 HttpResponse::toString() const {
     std::ostringstream s;
     // HTTP version number and status code.
-    s << "HTTP/" << http_version_.first << "." << http_version_.second;
+    s << "HTTP/" << http_version_.major_ << "." << http_version_.minor_;
     s << " " << static_cast<uint16_t>(status_code_);
     s << " " << statusCodeToString(status_code_) << crlf;
 

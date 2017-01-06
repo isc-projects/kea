@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <http/http_types.h>
 #include <http/request_parser.h>
 #include <http/post_request_json.h>
 #include <gtest/gtest.h>
@@ -118,8 +119,8 @@ TEST_F(HttpRequestParserTest, postHttpRequestWithJson) {
     EXPECT_EQ("/foo/bar", request.getUri());
     EXPECT_EQ("application/json", request.getHeaderValue("Content-Type"));
     EXPECT_EQ(json.length(), request.getHeaderValueAsUint64("Content-Length"));
-    EXPECT_EQ(1, request.getHttpVersion().first);
-    EXPECT_EQ(0, request.getHttpVersion().second);
+    EXPECT_EQ(1, request.getHttpVersion().major_);
+    EXPECT_EQ(0, request.getHttpVersion().minor_);
 
     // Try to retrieve values carried in JSON payload.
     ConstElementPtr json_element;
@@ -190,8 +191,8 @@ TEST_F(HttpRequestParserTest, getLWS) {
     EXPECT_EQ("text/html", request_.getHeaderValue("Content-Type"));
     EXPECT_EQ("Kea/1.2 Command Control Client",
               request_.getHeaderValue("User-Agent"));
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(1, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that the HTTP request with no headers is
@@ -204,8 +205,8 @@ TEST_F(HttpRequestParserTest, noHeaders) {
     // Verify the values.
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/foo/bar", request_.getUri());
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(1, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that the HTTP method can be specified in lower
@@ -219,8 +220,8 @@ TEST_F(HttpRequestParserTest, getLowerCase) {
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/foo/bar", request_.getUri());
     EXPECT_EQ("text/html", request_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(1, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that other value of the HTTP version can be
@@ -234,8 +235,8 @@ TEST_F(HttpRequestParserTest, http20) {
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/foo/bar", request_.getUri());
     EXPECT_EQ("text/html", request_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(2, request_.getHttpVersion().first);
-    EXPECT_EQ(0, request_.getHttpVersion().second);
+    EXPECT_EQ(2, request_.getHttpVersion().major_);
+    EXPECT_EQ(0, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that the header with no whitespace between the
@@ -249,8 +250,8 @@ TEST_F(HttpRequestParserTest, noHeaderWhitespace) {
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/foo/bar", request_.getUri());
     EXPECT_EQ("text/html", request_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(0, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(0, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that the header value preceded with multiple
@@ -264,8 +265,8 @@ TEST_F(HttpRequestParserTest, multipleLeadingHeaderWhitespaces) {
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/foo/bar", request_.getUri());
     EXPECT_EQ("text/html", request_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(0, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(0, request_.getHttpVersion().minor_);
 }
 
 // This test verifies that error is reported when unsupported HTTP

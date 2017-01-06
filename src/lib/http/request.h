@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define HTTP_REQUEST_H
 
 #include <exceptions/exceptions.h>
+#include <http/http_types.h>
 #include <http/request_context.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
@@ -59,9 +60,6 @@ typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
 /// methods to parse the JSON body.
 class HttpRequest {
 public:
-
-    /// @brief Type of HTTP version, including major and minor version number.
-    typedef std::pair<unsigned int, unsigned int> HttpVersion;
 
     /// @brief HTTP methods.
     enum class Method {
