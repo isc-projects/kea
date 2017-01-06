@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,8 +53,8 @@ using namespace std;
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   DHCP_SOCKET_TYPE "dhcp-socket-type"
-  DHCP_SOCKET_TYPE_RAW "raw"
-  DHCP_SOCKET_TYPE_UDP "udp"
+  RAW "raw"
+  UDP "udp"
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
@@ -187,6 +187,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> socket_type
 
 %printer { yyoutput << $$; } <*>;
 
@@ -445,19 +446,16 @@ interfaces_list: INTERFACES {
     ctx.leave();
 };
 
-dhcp_socket_type: dhcp_socket_type_raw
-                | dhcp_socket_type_udp
-                ;
-
-dhcp_socket_type_raw: DHCP_SOCKET_TYPE COLON DHCP_SOCKET_TYPE_RAW {
-    ElementPtr type(new StringElement("raw", ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("dhcp-socket-type", type);
+dhcp_socket_type: DHCP_SOCKET_TYPE {
+    ctx.enter(ctx.DHCP_SOCKET_TYPE);
+} COLON socket_type {
+    ctx.stack_.back()->set("dhcp-socket-type", $4);
+    ctx.leave();
 };
 
-dhcp_socket_type_udp: DHCP_SOCKET_TYPE COLON DHCP_SOCKET_TYPE_UDP {
-    ElementPtr type(new StringElement("udp", ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("dhcp-socket-type", type);
-};
+socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
+           | UDP { $$ = ElementPtr(new StringElement("udp", ctx.loc2pos(@1))); }
+           ;
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -1371,11 +1369,11 @@ control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      ;
 
-control_socket_param: socket_type
-                    | socket_name
+control_socket_param: control_socket_type
+                    | control_socket_name
                     ;
 
-socket_type: SOCKET_TYPE {
+control_socket_type: SOCKET_TYPE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
@@ -1383,7 +1381,7 @@ socket_type: SOCKET_TYPE {
     ctx.leave();
 };
 
-socket_name: SOCKET_NAME {
+control_socket_name: SOCKET_NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
