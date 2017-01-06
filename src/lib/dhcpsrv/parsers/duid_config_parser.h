@@ -38,7 +38,7 @@ private:
     /// @brief Validate and set DUID type.
     ///
     /// @param cfg parsed information will be stored here
-    /// @param duid_type DUID type in textfual format.
+    /// @param duid_type DUID type in textual format.
     void setType(const CfgDUIDPtr& cfg, const std::string& duid_type) const;
 
     /// @brief Validate and set identifier.
