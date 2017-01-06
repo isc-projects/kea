@@ -40,7 +40,7 @@
 #ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 # define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp4_parser.yy" // lalr1.cc:377
+#line 17 "dhcp4_parser.yy" // lalr1.cc:392
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp4_parser.h" // lalr1.cc:377
+#line 56 "dhcp4_parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 namespace isc { namespace dhcp {
-#line 141 "dhcp4_parser.h" // lalr1.cc:377
+#line 141 "dhcp4_parser.h" // lalr1.cc:392
 
 
 
@@ -305,6 +305,7 @@ namespace isc { namespace dhcp {
     union union_type
     {
       // value
+      // socket_type
       char dummy1[sizeof(ElementPtr)];
 
       // "boolean"
@@ -352,8 +353,8 @@ namespace isc { namespace dhcp {
         TOKEN_INTERFACES_CONFIG = 266,
         TOKEN_INTERFACES = 267,
         TOKEN_DHCP_SOCKET_TYPE = 268,
-        TOKEN_DHCP_SOCKET_TYPE_RAW = 269,
-        TOKEN_DHCP_SOCKET_TYPE_UDP = 270,
+        TOKEN_RAW = 269,
+        TOKEN_UDP = 270,
         TOKEN_ECHO_CLIENT_ID = 271,
         TOKEN_MATCH_CLIENT_ID = 272,
         TOKEN_NEXT_SERVER = 273,
@@ -606,11 +607,11 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_DHCP_SOCKET_TYPE_RAW (const location_type& l);
+    make_RAW (const location_type& l);
 
     static inline
     symbol_type
-    make_DHCP_SOCKET_TYPE_UDP (const location_type& l);
+    make_UDP (const location_type& l);
 
     static inline
     symbol_type
@@ -1262,6 +1263,7 @@ namespace isc { namespace dhcp {
       switch (other.type_get ())
     {
       case 116: // value
+      case 155: // socket_type
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1299,6 +1301,7 @@ namespace isc { namespace dhcp {
       switch (this->type_get ())
     {
       case 116: // value
+      case 155: // socket_type
         value.copy< ElementPtr > (v);
         break;
 
@@ -1395,6 +1398,7 @@ namespace isc { namespace dhcp {
     switch (yytype)
     {
       case 116: // value
+      case 155: // socket_type
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1438,6 +1442,7 @@ namespace isc { namespace dhcp {
       switch (this->type_get ())
     {
       case 116: // value
+      case 155: // socket_type
         value.move< ElementPtr > (s.value);
         break;
 
@@ -1600,15 +1605,15 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_SOCKET_TYPE_RAW (const location_type& l)
+  Dhcp4Parser::make_RAW (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE_RAW, l);
+    return symbol_type (token::TOKEN_RAW, l);
   }
 
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_SOCKET_TYPE_UDP (const location_type& l)
+  Dhcp4Parser::make_UDP (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE_UDP, l);
+    return symbol_type (token::TOKEN_UDP, l);
   }
 
   Dhcp4Parser::symbol_type
@@ -2140,9 +2145,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 } } // isc::dhcp
-#line 2146 "dhcp4_parser.h" // lalr1.cc:377
+#line 2151 "dhcp4_parser.h" // lalr1.cc:392
 
 
 
