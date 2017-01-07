@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,8 +66,8 @@ HttpRequest::create() {
         }
 
         // Check if the HTTP version is allowed for this request.
-        if (!inRequiredSet(std::make_pair(context_->http_version_major_,
-                                          context_->http_version_minor_),
+        if (!inRequiredSet(HttpVersion(context_->http_version_major_,
+                                       context_->http_version_minor_),
                            required_versions_)) {
             isc_throw(BadValue, "use of HTTP version "
                       << context_->http_version_major_ << "."
@@ -144,11 +144,11 @@ HttpRequest::getUri() const {
     return (context_->uri_);
 }
 
-HttpRequest::HttpVersion
+HttpVersion
 HttpRequest::getHttpVersion() const {
     checkCreated();
-    return (std::make_pair(context_->http_version_major_,
-                           context_->http_version_minor_));
+    return (HttpVersion(context_->http_version_major_,
+                        context_->http_version_minor_));
 }
 
 std::string

@@ -128,6 +128,14 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		AC_MSG_WARN([unsupported C++11 feature])
 		AC_MSG_NOTICE([retrying by adding $retry to $CXX])
 		CXX="$CXX_SAVED $retry"
+		AC_MSG_CHECKING($retry support)
+		AC_COMPILE_IFELSE(
+			[AC_LANG_PROGRAM(
+				[],
+				[int myincr = 1;])],
+			[AC_MSG_RESULT([yes])],
+			[AC_MSG_RESULT([no])
+			 continue])
 	fi
 
 	AC_MSG_CHECKING(std::unique_ptr support)
@@ -139,6 +147,35 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([yes])],
 		[AC_MSG_RESULT([no])
 		 continue])
+
+	AC_MSG_CHECKING(cbegin/cend support)
+	feature="cbegin/cend"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <string>],
+			[const std::string& s = "abcd";
+			 unsigned count = 0;
+			 for (std::string::const_iterator i = s.cbegin();
+			      i != s.cend(); ++i)
+				if (*i == 'b')
+					++count;])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(final method support)
+	feature="final method"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[],
+			[class Foo {
+			 public:
+			 	virtual ~Foo() {};
+				virtual void bar() final;
+			 }])],
+		 [AC_MSG_RESULT([yes])],
+		 [AC_MSG_RESULT([no])
+		  continue])
 
 	AC_MSG_CHECKING(aggregate initialization support)
 	feature="aggregate initialization"
@@ -155,7 +192,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM(
 			[],
-			[auto incr = [[]](int x) { return x + 1; };])],
+			[auto myincr = [[]](int x) { return x + 1; };])],
 		[AC_MSG_RESULT([yes])
 		 break],
 		[AC_MSG_RESULT([no])
@@ -1280,7 +1317,7 @@ if test "x$enable_gtest" = "xyes" ; then
                 [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
         fi
         have_gtest_source=yes
-        GTEST_LDFLAGS="\$(top_builddir)/ext/gtest/libgtest.a"
+        GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
     fi

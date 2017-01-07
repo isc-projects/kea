@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <http/http_types.h>
 #include <http/post_request_json.h>
 #include <http/tests/request_test.h>
 #include <gtest/gtest.h>
@@ -49,14 +50,14 @@ public:
 // POST messages.
 TEST_F(PostHttpRequestJsonTest, requiredPost) {
     // Use a GET method that is not supported.
-    setContextBasics("GET", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
     ASSERT_THROW(request_.create(), HttpRequestError);
 
     // Now use POST. It should be accepted.
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
@@ -67,14 +68,14 @@ TEST_F(PostHttpRequestJsonTest, requiredPost) {
 // header equal to "application/json".
 TEST_F(PostHttpRequestJsonTest, requireContentTypeJson) {
     // Specify "Content-Type" other than "application/json".
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "text/html");
 
     ASSERT_THROW(request_.create(), HttpRequestError);
 
     // This time specify correct "Content-Type". It should pass.
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
@@ -85,13 +86,13 @@ TEST_F(PostHttpRequestJsonTest, requireContentTypeJson) {
 // header.
 TEST_F(PostHttpRequestJsonTest, requireContentLength) {
     // "Content-Length" is not specified initially. It should fail.
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
 
     ASSERT_THROW(request_.create(), HttpRequestError);
 
     // Specify "Content-Length". It should pass.
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 }
@@ -100,7 +101,7 @@ TEST_F(PostHttpRequestJsonTest, requireContentLength) {
 // HTTP request.
 TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
     // Create HTTP POST request with JSON body.
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
     setBody();
@@ -129,7 +130,7 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
 // This test verifies that an attempt to parse/retrieve malformed
 // JSON structure will cause an exception.
 TEST_F(PostHttpRequestJsonTest, getBodyAsJsonMalformed) {
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
     // No colon before 123.
@@ -141,7 +142,7 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJsonMalformed) {
 // This test verifies that NULL pointer is returned when trying to
 // retrieve root element of the empty JSON structure.
 TEST_F(PostHttpRequestJsonTest, getEmptyJsonBody) {
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
@@ -153,7 +154,7 @@ TEST_F(PostHttpRequestJsonTest, getEmptyJsonBody) {
 
 // This test verifies that the specific JSON element can be retrieved.
 TEST_F(PostHttpRequestJsonTest, getJsonElement) {
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
     setBody();
