@@ -337,7 +337,7 @@ to the end of this list.
 @subsection dhcpv6HooksControlCommandReceive control_command_receive
 
  - @b Arguments:
-   - name: @b command, type: ConstElementPtr, direction: <b>in</b>
+   - name: @b command, type: ConstElementPtr, direction: <b>in/out</b>
    - name: @b response, type: ConstElementPtr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when DHCPv4 server receives a
@@ -355,6 +355,10 @@ to the end of this list.
    by the callouts with the list of commands supported by the server. If
    the callout sets the next step action to SKIP in this case, the server
    will only return the list of commands supported by the hook library.
+   The callout can modify the command arguments to influence the command
+   processing by the Command Manager. For example, it may freely modify
+   the configuration received in 'set-config' before it is processed by
+   the server. The SKIP action is not set in this case.
 
  - <b>Next step status</b>: if any callout sets the next step action to SKIP,
    the server will assume that the command has been handled by the callouts
