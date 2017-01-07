@@ -439,8 +439,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     // control-socket has been converted to SimpleParser already.
-    } else if (config_id.compare("expired-leases-processing") == 0) {
-        parser = new ExpirationConfigParser();
+    // expired-leases-processing has been converted to SimpleParser already.
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
     // host-reservation-identifiers have been converted to SimpleParser already.
@@ -642,6 +641,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "host-reservation-identifiers") {
                 HostReservationIdsParser4 parser;
+                parser.parse(config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "expired-leases-processing") {
+                ExpirationConfigParser parser;
                 parser.parse(config_pair.second);
                 continue;
             }
