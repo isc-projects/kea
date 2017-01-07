@@ -1,3 +1,9 @@
+1203.   [func]         marcin
+	Implemented TCPAcceptor class in libkea-asiolink. This class
+	provides means to listen and asynchronously accept new TCP
+	connections.
+        (Trac #5094, git 920ba90696ba9d8579a7db5e1efcf955d6654a96)
+
 1202.	[func]		tomek
 	Parsers for mac-sources, control-socket, and relay-info converted
 	to SimpleParser. It is no longer accepted to specify empty
