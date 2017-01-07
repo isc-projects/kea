@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -227,6 +227,9 @@ public:
 
         /// Used while parsing Dhcp6/server-id structures.
         SERVER_ID,
+
+        /// Used while parsing Dhcp6/server-id/type structures.
+        DUID_TYPE,
 
         /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
