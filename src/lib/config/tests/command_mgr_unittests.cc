@@ -93,7 +93,7 @@ public:
         return (0);
     }
 
-    /// @brief Text callback which stores callout name and passed arguments and
+    /// @brief Test callback which stores callout name and passed arguments and
     /// which handles the command.
     ///
     /// This callout returns the skip status to indicate the the command has
@@ -122,6 +122,38 @@ public:
         if (command_name != "list-commands") {
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
         }
+
+        callout_argument_names = callout_handle.getArgumentNames();
+        // Sort arguments alphabetically, so as we can access them on
+        // expected positions and verify.
+        std::sort(callout_argument_names.begin(), callout_argument_names.end());
+        return (0);
+    }
+
+    /// @brief Test callback which modifies parameters of the command and
+    /// does not return skip status.
+    ///
+    /// This callout is used to test the case when the callout modifies the
+    /// received command and does not set next state SKIP to propagate the
+    /// command with modified parameters to the local command handler.
+    ///
+    /// @param callout_handle Handle passed by the hooks framework.
+    /// @return Always 0.
+    static int
+    control_command_receive_modify_callout(CalloutHandle& callout_handle) {
+        callout_name = "control_command_receive";
+
+        ConstElementPtr command;
+        callout_handle.getArgument("command", command);
+
+        ConstElementPtr arg;
+        std::string command_name = parseCommand(arg, command);
+
+        ElementPtr new_arg = Element::createList();
+        new_arg->add(Element::create("hook-param"));
+        command = createCommand(command_name, new_arg);
+
+        callout_handle.setArgument("command", command);
 
         callout_argument_names = callout_handle.getArgumentNames();
         // Sort arguments alphabetically, so as we can access them on
@@ -407,4 +439,54 @@ TEST_F(CommandMgrTest, delegateListCommands) {
     EXPECT_EQ("list-commands", command_names_list[0]);
     EXPECT_EQ("my-command", command_names_list[1]);
     EXPECT_EQ("my-command-bis", command_names_list[2]);
+}
+
+// This test verifies the scenario in which the hook library influences the
+// command processing by the Kea server. In this test, the callout modifies
+// the arguments of the command and passes the command on to the Command
+// Manager for processing.
+TEST_F(CommandMgrTest, modifyCommandArgsInHook) {
+    // Register callout so as we can check that it is called before
+    // processing the command by the manager.
+    HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "control_command_receive", control_command_receive_modify_callout);
+
+    // Install local handler
+    EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
+                                                           my_handler));
+
+    // Now tell CommandMgr to process a command 'my-command' with the
+    // specified parameter.
+    ElementPtr my_params = Element::fromJSON("[ \"just\", \"some\", \"data\" ]");
+    ConstElementPtr command = createCommand("my-command", my_params);
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = CommandMgr::instance().processCommand(command));
+
+    // There should be an answer.
+    ASSERT_TRUE(answer);
+
+    // Returned status should be unique for the my_handler.
+    ConstElementPtr answer_arg;
+    int status_code;
+    ASSERT_NO_THROW(answer_arg = parseAnswer(status_code, answer));
+    EXPECT_EQ(123, status_code);
+
+    // Local handler should have been called after the callout.
+    ASSERT_TRUE(handler_called);
+    EXPECT_EQ("my-command", handler_name);
+    ASSERT_TRUE(handler_params);
+    // Check that the local handler received the command with arguments
+    // set by the callout.
+    EXPECT_EQ("[ \"hook-param\" ]", handler_params->str());
+
+
+    // Check that the callout has been called with appropriate parameters.
+    EXPECT_EQ("control_command_receive", callout_name);
+
+    // Check that the appropriate arguments have been set. Include the
+    // 'response' which should have been set by the callout.
+    ASSERT_EQ(2, callout_argument_names.size());
+    EXPECT_EQ("command", callout_argument_names[0]);
+    EXPECT_EQ("response", callout_argument_names[1]);
+
 }

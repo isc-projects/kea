@@ -4,9 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <cc/command_interpreter.h>
 #include <config/hooked_command_mgr.h>
 #include <config/config_log.h>
 #include <hooks/hooks_manager.h>
+#include <boost/pointer_cast.hpp>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -48,6 +50,9 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
                   "Manager: this is a programming error");
     }
 
+    std::string final_cmd_name = cmd_name;
+    ConstElementPtr final_params = boost::const_pointer_cast<Element>(params);
+
     ConstElementPtr hook_response;
     if (HooksManager::calloutsPresent(Hooks.hook_index_control_command_receive_)) {
 
@@ -57,13 +62,10 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
         // Being in this function we don't have access to the original data
         // object holding the whole command (name and arguments). Let's
         // recreate it.
-        ElementPtr original_command = Element::createMap();
-        original_command->set("command", Element::create(cmd_name));
-        original_command->set("arguments", params);
+        ConstElementPtr original_command = createCommand(cmd_name, params);
 
         // And pass it to the hook library.
-        callout_handle_->setArgument("command", boost::dynamic_pointer_cast<
-                                     const Element>(original_command));
+        callout_handle_->setArgument("command", original_command);
         callout_handle_->setArgument("response", hook_response);
 
         HooksManager::callCallouts(Hooks.hook_index_control_command_receive_,
@@ -74,23 +76,31 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
 
         // If the hook return 'skip' status, simply return the response.
         if (callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-            return (hook_response);
-
-        } else {
             LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HOOK_RECEIVE_SKIP)
                 .arg(cmd_name);
+
+            return (hook_response);
+
         }
+
+        // The hook library can modify the command or arguments. Thus, we
+        // retrieve the command returned by the callouts and use it as input
+        // to the local command handler.
+        ConstElementPtr hook_command;
+        callout_handle_->getArgument("command", hook_command);
+        final_cmd_name = parseCommand(final_params, hook_command);
     }
 
     // If we're here it means that the callouts weren't called or the 'skip'
     // status wasn't returned. The latter is the case when the 'list-commands'
     // is being processed. Anyhow, we need to handle the command using local
     // Command Mananger.
-    ConstElementPtr response = BaseCommandMgr::handleCommand(cmd_name, params);
+    ConstElementPtr response = BaseCommandMgr::handleCommand(final_cmd_name,
+                                                             final_params);
 
     // For the 'list-commands' case we will have to combine commands supported
     // by the hook libraries with the commands that this Command Manager supports.
-    if ((cmd_name == "list-commands") && hook_response && response) {
+    if ((final_cmd_name == "list-commands") && hook_response && response) {
         response = combineCommandsLists(hook_response, response);
     }
 
