@@ -101,7 +101,7 @@ HostReservationParser::parse(const SubnetID& subnet_id,
 }
 
 void
-HostReservationParser::parseInternal(const SubnetID& subnet_id,
+HostReservationParser::parseInternal(const SubnetID&,
                                      isc::data::ConstElementPtr reservation_data) {
     std::string identifier;
     std::string identifier_name;
