@@ -11,6 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1229,6 +1230,37 @@ TEST_F(ParseConfigTest, optionDataNoSubOpion) {
     const OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getOptions().size());
+}
+
+// This tests option-data in CSV format and embedded commas.
+TEST_F(ParseConfigTest, commaCSVFormatOptionData) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "     \"csv-format\": true,"
+        "     \"code\": 41,"
+        "     \"data\": \"EST5EDT4\\\\,M3.2.0/02:00\\\\,M11.1.0/02:00\","
+        "     \"space\": \"dhcp6\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 41);
+    ASSERT_TRUE(opt);
+
+    // Get the option as an option string.
+    OptionStringPtr opt_str = boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(opt_str);
+
+
+    // Verify that the option data is correct.
+    string val = "EST5EDT4,M3.2.0/02:00,M11.1.0/02:00";
+    EXPECT_EQ(val, opt_str->getValue());
 }
 
 /// The next set of tests check basic operation of the HooksLibrariesParser.
