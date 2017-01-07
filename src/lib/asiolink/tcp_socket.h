@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -153,6 +153,12 @@ public:
     /// \brief Close socket
     virtual void close();
 
+    /// \brief Returns reference to the underlying ASIO socket.
+    ///
+    /// \return Reference to underlying ASIO socket.
+    virtual boost::asio::ip::tcp::socket& getASIOSocket() const {
+        return (socket_);
+    }
 
 private:
     // Two variables to hold the socket - a socket and a pointer to it.  This

@@ -78,6 +78,7 @@ class IOEndpoint;
 
 template <typename C>
 class IOAsioSocket : public IOSocket {
+
     ///
     /// \name Constructors and Destructor
     ///

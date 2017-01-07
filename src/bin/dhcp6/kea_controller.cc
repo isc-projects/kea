@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/asiolink.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
