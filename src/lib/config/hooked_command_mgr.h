@@ -49,7 +49,7 @@ private:
     /// @ref BaseCommandMgr::handleCommand is called.
     ///
     /// This method is private because it is its final implementation which
-    /// should not be overriden in the derived classes.
+    /// should not be overridden in the derived classes.
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.

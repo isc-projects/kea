@@ -82,7 +82,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
     } catch (const Exception& e) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR2).arg(e.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             std::string("Error during command processing:")
+                             std::string("Error during command processing: ")
                              + e.what()));
     }
 }
@@ -154,7 +154,7 @@ BaseCommandMgr::handleCommand(const std::string& cmd_name,
 
 isc::data::ConstElementPtr
 BaseCommandMgr::listCommandsHandler(const std::string& name,
-                                    const isc::data::ConstElementPtr& params) {
+                                    const isc::data::ConstElementPtr& ) {
     using namespace isc::data;
     ElementPtr commands = Element::createList();
     for (HandlerContainer::const_iterator it = handlers_.begin();
