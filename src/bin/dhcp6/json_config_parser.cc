@@ -720,8 +720,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
     // control-socket has been converted to SimpleParser.
-    } else if (config_id.compare("expired-leases-processing") == 0) {
-        parser = new ExpirationConfigParser();
+    // expired-leases-processing has been converted to SimpleParser.
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
     } else if (config_id.compare("server-id") == 0) {
@@ -921,6 +920,12 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "host-reservation-identifiers") {
                 HostReservationIdsParser6 parser;
+                parser.parse(config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "expired-leases-processing") {
+                ExpirationConfigParser parser;
                 parser.parse(config_pair.second);
                 continue;
             }
