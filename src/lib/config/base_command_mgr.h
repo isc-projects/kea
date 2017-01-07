@@ -141,9 +141,9 @@ protected:
 
     /// @brief Handles the command having a given name and arguments.
     ///
-    /// This method can be overriden in the derived classes to provide
+    /// This method can be overridden in the derived classes to provide
     /// custom logic for processing commands. For example, the
-    /// @ref HookedCommandMgr extends this method to delegate commmands
+    /// @ref HookedCommandMgr extends this method to delegate commands
     /// processing to a hook library.
     ///
     /// @param cmd_name Command name.
