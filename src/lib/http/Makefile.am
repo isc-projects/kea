@@ -22,13 +22,18 @@ EXTRA_DIST = http_messages.mes
 CLEANFILES = *.gcno *.gcda http_messages.h http_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-http.la
-libkea_http_la_SOURCES  = http_log.cc http_log.h
+libkea_http_la_SOURCES  = date_time.cc date_time.h
+libkea_http_la_SOURCES += http_log.cc http_log.h
 libkea_http_la_SOURCES += header_context.h
+libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += post_request.cc post_request.h
 libkea_http_la_SOURCES += post_request_json.cc post_request_json.h
 libkea_http_la_SOURCES += request.cc request.h
 libkea_http_la_SOURCES += request_context.h
 libkea_http_la_SOURCES += request_parser.cc request_parser.h
+libkea_http_la_SOURCES += response.cc response.h
+libkea_http_la_SOURCES += response_creator.cc response_creator.h
+libkea_http_la_SOURCES += response_json.cc response_json.h
 
 nodist_libkea_http_la_SOURCES = http_messages.cc http_messages.h
 

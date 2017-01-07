@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,9 @@
 #define HTTP_REQUEST_H
 
 #include <exceptions/exceptions.h>
+#include <http/http_types.h>
 #include <http/request_context.h>
+#include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
 #include <stdint.h>
@@ -34,6 +36,14 @@ public:
         HttpRequestError(file, line, what) { };
 };
 
+class HttpRequest;
+
+/// @brief Pointer to the @ref HttpRequest object.
+typedef boost::shared_ptr<HttpRequest> HttpRequestPtr;
+
+/// @brief Pointer to the const @ref HttpRequest object.
+typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
+
 /// @brief Represents HTTP request message.
 ///
 /// This object represents parsed HTTP message. The @ref HttpRequestContext
@@ -50,9 +60,6 @@ public:
 /// methods to parse the JSON body.
 class HttpRequest {
 public:
-
-    /// @brief Type of HTTP version, including major and minor version number.
-    typedef std::pair<unsigned int, unsigned int> HttpVersion;
 
     /// @brief HTTP methods.
     enum class Method {
@@ -189,6 +196,16 @@ public:
 
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
+
+    /// @brief Checks if the request has been successfully finalized.
+    ///
+    /// The request is gets finalized on successfull call to
+    /// @ref HttpRequest::finalize.
+    ///
+    /// @return true if the request has been finalized, false otherwise.
+    bool isFinalized() const {
+        return (finalized_);
+    }
 
     //@}
 

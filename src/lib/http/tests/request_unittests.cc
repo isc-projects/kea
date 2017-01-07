@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <http/request.h>
+#include <http/http_types.h>
 #include <http/tests/request_test.h>
 #include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
@@ -20,28 +21,28 @@ namespace {
 typedef HttpRequestTestBase<HttpRequest> HttpRequestTest;
 
 TEST_F(HttpRequestTest, minimal) {
-    setContextBasics("GET", "/isc/org", std::make_pair(1, 1));
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
     ASSERT_NO_THROW(request_.create());
 
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
     EXPECT_EQ("/isc/org", request_.getUri());
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(1, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
 
     EXPECT_THROW(request_.getHeaderValue("Content-Length"),
                  HttpRequestNonExistingHeader);
 }
 
 TEST_F(HttpRequestTest, includeHeaders) {
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", "1024");
     addHeaderToContext("Content-Type", "application/json");
     ASSERT_NO_THROW(request_.create());
 
     EXPECT_EQ(HttpRequest::Method::HTTP_POST, request_.getMethod());
     EXPECT_EQ("/isc/org", request_.getUri());
-    EXPECT_EQ(1, request_.getHttpVersion().first);
-    EXPECT_EQ(0, request_.getHttpVersion().second);
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(0, request_.getHttpVersion().minor_);
 
     std::string content_type;
     ASSERT_NO_THROW(content_type = request_.getHeaderValue("Content-Type"));
@@ -58,7 +59,7 @@ TEST_F(HttpRequestTest, requiredMethods) {
     request_.requireHttpMethod(HttpRequest::Method::HTTP_GET);
     request_.requireHttpMethod(HttpRequest::Method::HTTP_POST);
 
-    setContextBasics("GET", "/isc/org", std::make_pair(1, 1));
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
 
     ASSERT_NO_THROW(request_.create());
 
@@ -70,22 +71,22 @@ TEST_F(HttpRequestTest, requiredMethods) {
 }
 
 TEST_F(HttpRequestTest, requiredHttpVersion) {
-    request_.requireHttpVersion(std::make_pair(1, 0));
-    request_.requireHttpVersion(std::make_pair(1, 1));
+    request_.requireHttpVersion(HttpVersion(1, 0));
+    request_.requireHttpVersion(HttpVersion(1, 1));
 
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     EXPECT_NO_THROW(request_.create());
 
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 1));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 1));
     EXPECT_NO_THROW(request_.create());
 
-    setContextBasics("POST", "/isc/org", std::make_pair(2, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(2, 0));
     EXPECT_THROW(request_.create(), HttpRequestError);
 }
 
 TEST_F(HttpRequestTest, requiredHeader) {
     request_.requireHeader("Content-Length");
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
 
     ASSERT_THROW(request_.create(), HttpRequestError);
 
@@ -98,7 +99,7 @@ TEST_F(HttpRequestTest, requiredHeader) {
 
 TEST_F(HttpRequestTest, requiredHeaderValue) {
     request_.requireHeaderValue("Content-Type", "application/json");
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
 
     ASSERT_THROW(request_.create(), HttpRequestError);
@@ -109,7 +110,7 @@ TEST_F(HttpRequestTest, requiredHeaderValue) {
 }
 
 TEST_F(HttpRequestTest, notCreated) {
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
     addHeaderToContext("Content-Length", "1024");
 
@@ -138,7 +139,7 @@ TEST_F(HttpRequestTest, notCreated) {
 TEST_F(HttpRequestTest, getBody) {
     std::string json_body = "{ \"param1\": \"foo\" }";
 
-    setContextBasics("POST", "/isc/org", std::make_pair(1, 0));
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body.length());
 
     request_.context()->body_ = json_body;
