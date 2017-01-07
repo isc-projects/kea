@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -767,6 +767,60 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("expired-leases-processing", driver.loc_);
+    }
+}
+
+\"reclaim-timer-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_RECLAIM_TIMER_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("reclaim-timer-wait-time", driver.loc_);
+    }
+}
+
+\"flush-reclaimed-timer-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("flush-reclaimed-timer-wait-time", driver.loc_);
+    }
+}
+
+\"hold-reclaimed-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_HOLD_RECLAIMED_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("hold-reclaimed-time", driver.loc_);
+    }
+}
+
+\"max-reclaim-leases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_MAX_RECLAIM_LEASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max-reclaim-leases", driver.loc_);
+    }
+}
+
+\"max-reclaim-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_MAX_RECLAIM_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max-reclaim-time", driver.loc_);
+    }
+}
+
+\"unwarned-reclaim-cycles\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("unwarned-reclaim-cycles", driver.loc_);
     }
 }
 

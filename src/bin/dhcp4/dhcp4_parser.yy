@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,6 +120,12 @@ using namespace std;
   PARAMETERS "parameters"
 
   EXPIRED_LEASES_PROCESSING "expired-leases-processing"
+  RECLAIM_TIMER_WAIT_TIME "reclaim-timer-wait-time"
+  FLUSH_RECLAIMED_TIMER_WAIT_TIME "flush-reclaimed-timer-wait-time"
+  HOLD_RECLAIMED_TIME "hold-reclaimed-time"
+  MAX_RECLAIM_LEASES "max-reclaim-leases"
+  MAX_RECLAIM_TIME "max-reclaim-time"
+  UNWARNED_RECLAIM_CYCLES "unwarned-reclaim-cycles"
 
   SERVER_ID "server-id"
   IDENTIFIER "identifier"
@@ -644,7 +650,7 @@ expired_leases_processing: EXPIRED_LEASES_PROCESSING {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 } COLON LCURLY_BRACKET expired_leases_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -654,12 +660,42 @@ expired_leases_params: expired_leases_param
                      | expired_leases_params COMMA expired_leases_param
                      ;
 
-// This is a bit of a simplification. But it can also serve as an example.
-// Instead of explicitly listing all allowed expired leases parameters, we
-// simply say that all of them as integers.
-expired_leases_param: STRING COLON INTEGER {
+expired_leases_param: reclaim_timer_wait_time
+                    | flush_reclaimed_timer_wait_time
+                    | hold_reclaimed_time
+                    | max_reclaim_leases
+                    | max_reclaim_time
+                    | unwarned_reclaim_cycles
+                    ;
+
+reclaim_timer_wait_time: RECLAIM_TIMER_WAIT_TIME COLON INTEGER {
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set($1, value);
+    ctx.stack_.back()->set("reclaim-timer-wait-time", value);
+};
+
+flush_reclaimed_timer_wait_time: FLUSH_RECLAIMED_TIMER_WAIT_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
+};
+
+hold_reclaimed_time: HOLD_RECLAIMED_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("hold-reclaimed-time", value);
+};
+
+max_reclaim_leases: MAX_RECLAIM_LEASES COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reclaim-leases", value);
+};
+
+max_reclaim_time: MAX_RECLAIM_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reclaim-time", value);
+};
+
+unwarned_reclaim_cycles: UNWARNED_RECLAIM_CYCLES COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 };
 
 // --- subnet4 ------------------------------------------

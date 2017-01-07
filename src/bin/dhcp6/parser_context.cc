@@ -145,6 +145,8 @@ Parser6Context::contextName()
         return ("option-data");
     case CLIENT_CLASSES:
         return ("client-classes");
+    case EXPIRED_LEASES_PROCESSING:
+        return ("expired-leases-processing");
     case SERVER_ID:
         return ("server-id");
     case CONTROL_SOCKET:
