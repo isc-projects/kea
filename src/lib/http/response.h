@@ -216,7 +216,7 @@ private:
     ///
     /// @param status_code Status code for which the body should be
     /// generated.
-    void setGenericBody(const HttpStatusCode& status_code) { };
+    void setGenericBody(const HttpStatusCode& /*status_code*/) { };
 
     /// @brief Holds HTTP version for the response.
     HttpVersion http_version_;
