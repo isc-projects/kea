@@ -40,7 +40,7 @@
 #ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 # define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp4_parser.yy" // lalr1.cc:377
+#line 17 "dhcp4_parser.yy" // lalr1.cc:392
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp4_parser.h" // lalr1.cc:377
+#line 56 "dhcp4_parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 namespace isc { namespace dhcp {
-#line 141 "dhcp4_parser.h" // lalr1.cc:377
+#line 141 "dhcp4_parser.h" // lalr1.cc:392
 
 
 
@@ -1159,8 +1159,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 624,     ///< Last index in yytable_.
-      yynnts_ = 267,  ///< Number of nonterminal symbols.
+      yylast_ = 628,     ///< Last index in yytable_.
+      yynnts_ = 269,  ///< Number of nonterminal symbols.
       yyfinal_ = 22, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -2118,9 +2118,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 } } // isc::dhcp
-#line 2124 "dhcp4_parser.h" // lalr1.cc:377
+#line 2124 "dhcp4_parser.h" // lalr1.cc:392
 
 
 
