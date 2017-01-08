@@ -1,12 +1,13 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <cc/data.h>
+#include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <eval/eval_context.h>
 #include <asiolink/io_address.h>
@@ -18,7 +19,7 @@ using namespace isc::data;
 using namespace isc::asiolink;
 using namespace std;
 
-/// @file client_class_def.cc
+/// @file client_class_def_parser.cc
 ///
 /// @brief Method implementations for client class definition parsing
 
@@ -27,14 +28,12 @@ namespace dhcp {
 
 // ********************** ExpressionParser ****************************
 
-ExpressionParser::ExpressionParser(const std::string&,
-    ExpressionPtr& expression, ParserContextPtr global_context)
-    : local_expression_(ExpressionPtr()), expression_(expression),
-      global_context_(global_context) {
+ExpressionParser::ExpressionParser(ExpressionPtr& expression)
+    : local_expression_(ExpressionPtr()), expression_(expression) {
 }
 
 void
-ExpressionParser::build(ConstElementPtr expression_cfg) {
+ExpressionParser::parse(ConstElementPtr expression_cfg, uint16_t family) {
     if (expression_cfg->getType() != Element::string) {
         isc_throw(DhcpConfigError, "expression ["
             << expression_cfg->str() << "] must be a string, at ("
@@ -46,7 +45,7 @@ ExpressionParser::build(ConstElementPtr expression_cfg) {
     std::string value;
     expression_cfg->getValue(value);
     try {
-        EvalContext eval_ctx(global_context_->universe_);
+        EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6);
         eval_ctx.parseString(value);
         local_expression_.reset(new Expression());
         *local_expression_ = eval_ctx.expression;
@@ -57,76 +56,63 @@ ExpressionParser::build(ConstElementPtr expression_cfg) {
                   <<  "] error: " << ex.what() << " at ("
                   <<  expression_cfg->getPosition() << ")");
     }
-}
 
-void
-ExpressionParser::commit() {
+    // Success so commit.
     expression_ = local_expression_;
 }
 
 // ********************** ClientClassDefParser ****************************
 
-ClientClassDefParser::ClientClassDefParser(const std::string&,
-    ClientClassDictionaryPtr& class_dictionary, ParserContextPtr global_context)
-    : string_values_(new StringStorage()),
-      match_expr_(ExpressionPtr()),
+ClientClassDefParser::ClientClassDefParser(ClientClassDictionaryPtr& class_dictionary)
+    : match_expr_(ExpressionPtr()),
       options_(new CfgOption()),
-      class_dictionary_(class_dictionary),
-      global_context_(global_context) {
+      class_dictionary_(class_dictionary) {
 }
 
 void
-ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
+ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
 
-    // Parse the elements that make up the option definition.
-    BOOST_FOREACH(ConfigPair param, class_def_cfg->mapValue()) {
-        std::string entry(param.first);
-        ParserPtr parser;
-        if (entry == "name") {
-            StringParserPtr str_parser(new StringParser(entry, string_values_));
-            parser = str_parser;
-        } else if (entry == "test") {
-            ExpressionParserPtr exp_parser(new ExpressionParser(entry,
-                                                                match_expr_,
-                                                                global_context_));
-            parser = exp_parser;
-        } else if (entry == "option-data") {
+    try {
+        std::string name;
+        std::string next_server_txt = "0.0.0.0";
+        std::string sname;
+        std::string filename;
 
-            uint16_t family = (global_context_->universe_ == Option::V4 ?
-                                                             AF_INET : AF_INET6);
+        // Parse the elements that make up the client class definition.
+        BOOST_FOREACH(ConfigPair param, class_def_cfg->mapValue()) {
+            std::string entry(param.first);
+            ConstElementPtr value(param.second);
 
-            OptionDataListParser opts_parser(family);
-            opts_parser.parse(options_, param.second);
+            if (entry == "name") {
+                name = value->stringValue();
 
-            // OptionDataListParser is converted to SimpleParser already,
-            // no need to go through build/commit phases.
-            continue;
-        } else if (entry == "next-server") {
-            StringParserPtr str_parser(new StringParser(entry, string_values_));
-            parser = str_parser;
-        } else if (entry == "server-hostname") {
-            StringParserPtr str_parser(new StringParser(entry, string_values_));
-            parser = str_parser;
+            } else if (entry == "test") {
+                ExpressionParser parser(match_expr_);
+                parser.parse(value, family);
+                
+            } else if (entry == "option-data") {
+                OptionDataListParser opts_parser(family);
+                opts_parser.parse(options_, value);
 
-        } else if (entry == "boot-file-name") {
-            StringParserPtr str_parser(new StringParser(entry, string_values_));
-            parser = str_parser;
-        } else {
-            isc_throw(DhcpConfigError, "invalid parameter '" << entry
-                      << "' (" << param.second->getPosition() << ")");
+            } else if (entry == "next-server") {
+                next_server_txt = value->stringValue();
+
+            } else if (entry == "server-hostname") {
+                sname = value->stringValue();
+
+            } else if (entry == "boot-file-name") {
+                filename = value->stringValue();
+
+            } else {
+                isc_throw(DhcpConfigError, "invalid parameter '" << entry
+                          << "' (" << value->getPosition() << ")");
+            }
         }
 
-        parser->build(param.second);
-        parser->commit();
-    }
-
-    std::string name;
-    try {
-        name = string_values_->getParam("name");
+        // Make name mandatory?
 
         // Let's parse the next-server field
         IOAddress next_server("0.0.0.0");
-        string next_server_txt = string_values_->getOptionalParam("next-server", "0.0.0.0");
         try {
             next_server = IOAddress(next_server_txt);
         } catch (const IOError& ex) {
@@ -144,22 +130,21 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
                       << next_server_txt << "', must not be a broadcast");
         }
 
-        // Let's try to parse sname
-        string sname = string_values_->getOptionalParam("server-hostname", "");
+        // Let's try to parse server-hostname
         if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
             isc_throw(DhcpConfigError, "server-hostname must be at most "
                       << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
                       << sname.length());
         }
 
-        string filename = string_values_->getOptionalParam("boot-file-name", "");
+        // Let's try to parse boot-file-name
         if (filename.length() > Pkt4::MAX_FILE_LEN) {
             isc_throw(DhcpConfigError, "boot-file-name must be at most "
                       << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
                       << filename.length());
         }
 
-        // an OptionCollectionPtr
+        // Add the client class definition
         class_dictionary_->addClass(name, match_expr_, options_, next_server,
                                     sname, filename);
     } catch (const std::exception& ex) {
@@ -170,33 +155,19 @@ ClientClassDefParser::build(ConstElementPtr class_def_cfg) {
 
 // ****************** ClientClassDefListParser ************************
 
-ClientClassDefListParser::ClientClassDefListParser(const std::string&,
-                                                   ParserContextPtr
-                                                   global_context)
-    : local_dictionary_(new ClientClassDictionary()),
-      global_context_(global_context) {
+ClientClassDefListParser::ClientClassDefListParser()
+    : local_dictionary_(new ClientClassDictionary()) {
 }
 
 void
-ClientClassDefListParser::build(ConstElementPtr client_class_def_list) {
-    if (!client_class_def_list) {
-        isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
-                  << " client class definitions is NULL ("
-                  << client_class_def_list->getPosition() << ")");
-    }
-
+ClientClassDefListParser::parse(ConstElementPtr client_class_def_list,
+                                uint16_t family) {
     BOOST_FOREACH(ConstElementPtr client_class_def,
                   client_class_def_list->listValue()) {
-        boost::shared_ptr<ClientClassDefParser>
-            parser(new ClientClassDefParser("client-class-def",
-                                            local_dictionary_,
-                                            global_context_));
-        parser->build(client_class_def);
+        ClientClassDefParser parser(local_dictionary_);
+        parser.parse(client_class_def, family);
     }
-}
-
-void
-ClientClassDefListParser::commit() {
+    // Success so commit
     CfgMgr::instance().getStagingCfg()->setClientClassDictionary(local_dictionary_);
 }
 
