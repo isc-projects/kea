@@ -724,9 +724,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new ExpirationConfigParser();
     } else if (config_id.compare("client-classes") == 0) {
         parser = new ClientClassDefListParser(config_id, globalContext());
-    } else if (config_id.compare("server-id") == 0) {
-        parser = new DUIDConfigParser();
     // host-reservation-identifiers have been converted to SimpleParser already.
+    // server-id has been migrated to SimpleParser
     } else {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
@@ -922,6 +921,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (config_pair.first == "host-reservation-identifiers") {
                 HostReservationIdsParser6 parser;
                 parser.parse(config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "server-id") {
+                DUIDConfigParser parser;
+                const CfgDUIDPtr& cfg = CfgMgr::instance().getStagingCfg()->getCfgDUID();
+                parser.parse(cfg, config_pair.second);
                 continue;
             }
 

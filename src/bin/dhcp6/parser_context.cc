@@ -147,6 +147,8 @@ Parser6Context::contextName()
         return ("client-classes");
     case SERVER_ID:
         return ("server-id");
+    case DUID_TYPE:
+        return ("duid-type");
     case CONTROL_SOCKET:
         return ("control-socket");
     case POOLS:
