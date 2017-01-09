@@ -533,7 +533,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr iface_parser;
     ParserPtr leases_parser;
     ParserPtr client_classes_parser;
 
