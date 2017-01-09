@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,15 +31,20 @@ void
 CtrlAgentProcess::run() {
     LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
 
-    while (!shouldShutdown()) {
-        try {
+    try {
+        while (!shouldShutdown()) {
             getIoService()->run_one();
-
-        } catch (const std::exception& ex) {
-            LOG_FATAL(agent_logger, CTRL_AGENT_FAILED).arg(ex.what());
-            isc_throw(DProcessBaseError,
-                      "Process run method failed: " << ex.what());
         }
+        stopIOService();
+    } catch (const std::exception& ex) {
+        LOG_FATAL(agent_logger, CTRL_AGENT_FAILED).arg(ex.what());
+        try {
+            stopIOService();
+        } catch (...) {
+            // Ignore double errors
+        }
+        isc_throw(DProcessBaseError,
+                  "Process run method failed: " << ex.what());
     }
 
     LOG_DEBUG(agent_logger, DBGLVL_START_SHUT, CTRL_AGENT_RUN_EXIT);
