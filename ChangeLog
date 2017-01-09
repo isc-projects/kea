@@ -1,3 +1,8 @@
+1204.   [func]         marcin
+	Added 'control_command_receive' hook point to Kea Command
+	Manager.
+        (Trac #5100, git d0c7cb29a7df3588c540afb4ca56de55f26142e0)
+
 1203.   [func]         marcin
 	Implemented TCPAcceptor class in libkea-asiolink. This class
 	provides means to listen and asynchronously accept new TCP
