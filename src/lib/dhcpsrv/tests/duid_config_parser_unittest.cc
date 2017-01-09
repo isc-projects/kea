@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
@@ -25,6 +26,13 @@ namespace {
 /// @brief Test fixture class for @c DUIDConfigParser
 class DUIDConfigParserTest : public ::testing::Test {
 public:
+
+    /// @brief constructor
+    ///
+    /// Initializes cfg_duid_ to a new empty object
+    DUIDConfigParserTest()
+        :cfg_duid_(new CfgDUID()){
+    }
 
     /// @brief Creates simple configuration with DUID type only.
     ///
@@ -82,9 +90,12 @@ public:
     /// @param vec Input vector.
     /// @return String of hexadecimal digits converted from vector.
     std::string toString(const std::vector<uint8_t>& vec) const;
+
+    /// Config DUID pointer
+    CfgDUIDPtr cfg_duid_;
 };
 
-std::string 
+std::string
 DUIDConfigParserTest::createConfigWithType(const std::string& duid_type) const {
     std::ostringstream s;
     s << "{ \"type\": \"" << duid_type << "\" }";
@@ -103,9 +114,8 @@ void
 DUIDConfigParserTest::build(const std::string& config) const {
     ElementPtr config_element = Element::fromJSON(config);
     DUIDConfigParser parser;
-    parser.build(config_element);
+    parser.parse(cfg_duid_, config_element);
 }
-
 
 void
 DUIDConfigParserTest::testTypeOnly(const DUID::DUIDType& duid_type,
@@ -115,12 +125,12 @@ DUIDConfigParserTest::testTypeOnly(const DUID::DUIDType& duid_type,
 
     // Make sure that the type is correct and that other parameters are set
     // to their defaults.
-    CfgDUIDPtr cfg_duid = CfgMgr::instance().getStagingCfg()->getCfgDUID();
-    EXPECT_EQ(duid_type, cfg_duid->getType());
-    EXPECT_TRUE(cfg_duid->getIdentifier().empty());
-    EXPECT_EQ(0, cfg_duid->getHType());
-    EXPECT_EQ(0, cfg_duid->getTime());
-    EXPECT_EQ(0, cfg_duid->getEnterpriseId());
+    ASSERT_TRUE(cfg_duid_);
+    EXPECT_EQ(duid_type, cfg_duid_->getType());
+    EXPECT_TRUE(cfg_duid_->getIdentifier().empty());
+    EXPECT_EQ(0, cfg_duid_->getHType());
+    EXPECT_EQ(0, cfg_duid_->getTime());
+    EXPECT_EQ(0, cfg_duid_->getEnterpriseId());
 }
 
 void
@@ -181,13 +191,13 @@ TEST_F(DUIDConfigParserTest, allParameters) {
                           "}"));
 
     // Verify that parameters have been set correctly.
-    CfgDUIDPtr cfg_duid = CfgMgr::instance().getStagingCfg()->getCfgDUID();
-    EXPECT_EQ(DUID::DUID_EN, cfg_duid->getType());
-    EXPECT_EQ("ABCDEF", toString(cfg_duid->getIdentifier()));
-    EXPECT_EQ(8, cfg_duid->getHType());
-    EXPECT_EQ(100, cfg_duid->getTime());
-    EXPECT_EQ(2024, cfg_duid->getEnterpriseId());
-    EXPECT_FALSE(cfg_duid->persist());
+    ASSERT_TRUE(cfg_duid_);
+    EXPECT_EQ(DUID::DUID_EN, cfg_duid_->getType());
+    EXPECT_EQ("ABCDEF", toString(cfg_duid_->getIdentifier()));
+    EXPECT_EQ(8, cfg_duid_->getHType());
+    EXPECT_EQ(100, cfg_duid_->getTime());
+    EXPECT_EQ(2024, cfg_duid_->getEnterpriseId());
+    EXPECT_FALSE(cfg_duid_->persist());
 }
 
 // Test out of range values for time.
