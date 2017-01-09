@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -291,6 +291,39 @@ to the end of this list.
   the lease as is. This is not recommended in general, as the declined
   expired leases will remain in the database and their recovery will
   be attempted during the next reclaim cycle.
+
+@subsection dhcpv4HooksControlCommandReceive control_command_receive
+
+ - @b Arguments:
+   - name: @b command, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+   - name: @b response, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when DHCPv4 server receives a
+   control command over the command channel (typically unix domain socket).
+   The "command" argument is a pointer to the parsed JSON structure
+   including command name and command arguments. If the callout implements
+   the specified command, it handles the command and creates appropriate
+   response. The response should be returned in the "response" argument.
+   In most cases, the callout which handles the command will set the next
+   step action to SKIP, to prevent the server from trying to handle the
+   command on its own and overriding the response created by the callouts.
+   A notable exception is the 'list-commands' command for which the callouts
+   should not set the next step action to SKIP. The server has a special
+   code path for this command which combines the list of commands returned
+   by the callouts with the list of commands supported by the server. If
+   the callout sets the next step action to SKIP in this case, the server
+   will only return the list of commands supported by the hook library.
+   The callout can modify the command arguments to influence the command
+   processing by the Command Manager. For example, it may freely modify
+   the configuration received in 'set-config' before it is processed by
+   the server. The SKIP action is not set in this case.
+
+ - <b>Next step status</b>: if any callout sets the next step action to SKIP,
+   the server will assume that the command has been handled by the callouts
+   and will expect that the response is provided in the "response" argument.
+   The server will not handle the command in this case but simply return the
+   response returned by the callout to the caller.
+
 
 @section dhcpv4HooksOptionsAccess Accessing DHCPv4 Options within a Packet
 When the server constructs a response message to a client it includes
