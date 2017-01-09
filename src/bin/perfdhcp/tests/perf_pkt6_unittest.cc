@@ -275,6 +275,9 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
     const uint8_t *out_buf_data = static_cast<const uint8_t*>
         (out_buf.getData());
 
+    // Try to make clang static analyzer happy.
+    ASSERT_LE(offset_transid[0], out_buf.getLength());
+
     // Validate transaction id.
     EXPECT_EQ(0, memcmp(out_buf_data + offset_transid[0], ref_data, 3));
 
