@@ -9,9 +9,15 @@
 
 #include <http/request.h>
 #include <http/response.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace http {
+
+class HttpResponseCreator;
+
+/// @brief Pointer to the @ref HttpResponseCreator object.
+typedef boost::shared_ptr<HttpResponseCreator> HttpResponseCreatorPtr;
 
 /// @brief Specifies an interface for classes creating HTTP responses
 /// from HTTP requests.
@@ -69,6 +75,17 @@ public:
     /// @throw HttpResponseError if request is a NULL pointer.
     virtual HttpResponsePtr
     createHttpResponse(const ConstHttpRequestPtr& request) final;
+
+    /// @brief Create a new request.
+    ///
+    /// This method creates an instance of the @ref HttpRequest or derived
+    /// class. The type of the object is compatible with the instance of
+    /// the @ref HttpResponseCreator implementation which creates it, i.e.
+    /// can be used as an argument in the call to @ref createHttpResponse.
+    ///
+    /// @return Pointer to the new instance of the @ref HttpRequest.
+    virtual HttpRequestPtr
+    createNewHttpRequest() const = 0;
 
 protected:
 

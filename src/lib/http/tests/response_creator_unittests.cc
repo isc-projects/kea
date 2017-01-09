@@ -27,6 +27,16 @@ typedef boost::shared_ptr<Response> ResponsePtr;
 
 /// @brief Implementation of the @ref HttpResponseCreator.
 class TestHttpResponseCreator : public HttpResponseCreator {
+public:
+
+    /// @brief Create a new request.
+    ///
+    /// @return Pointer to the new instance of the @ref HttpRequest.
+    virtual HttpRequestPtr
+    createNewHttpRequest() const {
+        return (HttpRequestPtr(new HttpRequest()));
+    }
+
 private:
 
     /// @brief Creates HTTP 400 response.
