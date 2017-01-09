@@ -807,7 +807,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr iface_parser;
     ParserPtr leases_parser;
     ParserPtr client_classes_parser;
 
@@ -896,11 +895,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 // committed.
                 hooks_parser = parser;
                 hooks_parser->build(config_pair.second);
-            } else if (config_pair.first == "interfaces-config") {
-                // The interface parser is independent from any other parser and
-                // can be run here before other parsers.
-                parser->build(config_pair.second);
-                iface_parser = parser;
             } else if (config_pair.first == "client-classes") {
                 client_classes_parser = parser;
             } else {
