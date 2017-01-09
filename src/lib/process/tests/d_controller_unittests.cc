@@ -189,7 +189,7 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
 }
 
 /// @brief Tests launch with an non-existing configuration file.
-TEST_F(DStubControllerTest, non-existingConfigFile) {
+TEST_F(DStubControllerTest, nonExistingConfigFile) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
