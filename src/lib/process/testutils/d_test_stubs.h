@@ -181,7 +181,7 @@ public:
         return ("");
     }
 
-    // @brief Destructor
+    /// @brief Destructor
     virtual ~DStubProcess();
 };
 

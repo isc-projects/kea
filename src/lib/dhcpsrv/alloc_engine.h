@@ -1473,13 +1473,12 @@ private:
     /// @brief Number of consecutive DHCPv6 leases' reclamations after
     /// which there are still expired leases in the database.
     uint16_t incomplete_v6_reclamations_;
-
 };
 
 /// @brief A pointer to the @c AllocEngine object.
 typedef boost::shared_ptr<AllocEngine> AllocEnginePtr;
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // ALLOC_ENGINE_H

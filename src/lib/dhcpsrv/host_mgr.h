@@ -284,7 +284,8 @@ private:
     static boost::scoped_ptr<HostMgr>& getHostMgrPtr();
 
 };
-}
-}
+
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // HOST_MGR_H

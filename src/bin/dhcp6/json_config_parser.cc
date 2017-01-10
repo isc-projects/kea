@@ -230,7 +230,7 @@ public:
         }
     }
 
-    // @brief Commits the constructed local pool to the pool storage.
+    /// @brief Commits the constructed local pool to the pool storage.
     virtual void commit() {
         // Add the local pool to the external storage ptr.
         pools_->push_back(pool_);

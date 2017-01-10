@@ -36,8 +36,7 @@ const char* TEST_ADDRESS = "127.0.0.1";
 const uint16_t TEST_PORT = 5301;
 const size_t MAX_SIZE = 1024;
 const long TEST_TIMEOUT = 5 * 1000;
-
-// @brief Test Fixture class.
+/// @brief Test Fixture class.
 //
 // This test fixture class implements DNSClient::Callback so as it can be
 // installed as a completion callback for tests it implements. This callback
@@ -64,7 +63,7 @@ public:
     int received_;
     int expected_;
 
-    // @brief Constructor.
+    /// @brief Constructor.
     //
     // This constructor overrides the default logging level of asiodns logger to
     // prevent it from emitting debug messages from IOFetch class. Such an error
@@ -88,14 +87,14 @@ public:
                           TEST_TIMEOUT);
     }
 
-    // @brief Destructor.
+    /// @brief Destructor.
     //
     // Sets the asiodns logging level back to DEBUG.
     virtual ~DNSClientTest() {
         asiodns::logger.setSeverity(isc::log::DEBUG);
     };
 
-    // @brief Exchange completion callback.
+    /// @brief Exchange completion callback.
     //
     // This callback is called when the exchange with the DNS server is
     // complete or an error occurred. This includes the occurrence of a timeout.
@@ -133,7 +132,7 @@ public:
         }
     }
 
-    // @brief Handler invoked when test timeout is hit.
+    /// @brief Handler invoked when test timeout is hit.
     //
     // This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
@@ -141,7 +140,7 @@ public:
         FAIL() << "Test timeout hit.";
     }
 
-    // @brief Handler invoked when test request is received.
+    /// @brief Handler invoked when test request is received.
     //
     // This callback handler is installed when performing async read on a
     // socket to emulate reception of the DNS Update request by a server.
@@ -180,7 +179,7 @@ public:
                         *remote);
     }
 
-    // @brief Request handler for testing clients using TSIG
+    /// @brief Request handler for testing clients using TSIG
     //
     // This callback handler is installed when performing async read on a
     // socket to emulate reception of the DNS Update request with TSIG by a
@@ -219,7 +218,7 @@ public:
         dns::Message request(Message::PARSE);
         request.fromWire(received_data_buffer);
 
-        // If contex is not NULL, then we need to verify the message.
+        // If context is not NULL, then we need to verify the message.
         if (context) {
             TSIGError error = context->verify(request.getTSIGRecord(),
                                               receive_buffer_, receive_length);
@@ -502,7 +501,7 @@ TEST_F(DNSClientTest, runTSIGTest) {
     // Neither client nor server will attempt to sign or verify.
     runTSIGTest(nokey, nokey);
 
-    // Client signs the request, server verfies but doesn't sign.
+    // Client signs the request, server verifies but doesn't sign.
     runTSIGTest(key_one, nokey, false);
 
     // Client and server use the same key to sign and verify.

@@ -1233,8 +1233,7 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
 
 Subnet::HRMode
 SubnetConfigParser::hrModeFromText(const std::string& txt) {
-    if ( (txt.compare("disabled") == 0) ||
-         (txt.compare("off") == 0) )  {
+    if ( (txt.compare("disabled") == 0) || (txt.compare("off") == 0) )  {
         return (Subnet::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
         return (Subnet::HR_OUT_OF_POOL);

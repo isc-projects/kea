@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_pdexclude.h>
 #include <exceptions/exceptions.h>

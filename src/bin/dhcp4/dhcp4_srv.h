@@ -225,7 +225,7 @@ public:
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
- 
+
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Call the processing step routine
