@@ -1,3 +1,8 @@
+1205.	[func]		tomek
+	Parsers for interfaces configuration converted to SimpleParser.
+	Removed obsolete 'version' parameter in Dhcp6.
+	(Trac #5020, #5038, git 3d8e48c640e302670c04907468d11faafbe9fe7b)
+
 1204.   [func]         marcin
 	Added 'control_command_receive' hook point to Kea Command
 	Manager.
