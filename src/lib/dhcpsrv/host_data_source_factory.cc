@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include "config.h"
-
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/hosts_log.h>
