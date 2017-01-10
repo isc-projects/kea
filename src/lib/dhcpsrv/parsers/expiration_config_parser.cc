@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -15,12 +16,8 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-ExpirationConfigParser::ExpirationConfigParser()
-    : DhcpConfigParser() {
-}
-
 void
-ExpirationConfigParser::build(ConstElementPtr expiration_config) {
+ExpirationConfigParser::parse(ConstElementPtr expiration_config) {
     CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
 
     BOOST_FOREACH(ConfigPair config_element, expiration_config->mapValue()) {
@@ -61,11 +58,6 @@ ExpirationConfigParser::build(ConstElementPtr expiration_config) {
                       << param_value->getPosition() << ")");
         }
     }
-}
-
-void
-ExpirationConfigParser::commit() {
-    // Nothing to do.
 }
 
 } // end of namespace isc::dhcp

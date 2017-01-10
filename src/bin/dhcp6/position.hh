@@ -1,4 +1,3 @@
-// Generated 201701070039
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Positions for Bison parsers in C++
@@ -51,9 +50,9 @@
 #  endif
 # endif
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp6_parser.yy" // location.cc:337
 namespace isc { namespace dhcp {
-#line 56 "position.hh" // location.cc:296
+#line 56 "position.hh" // location.cc:337
   /// Abstract a position.
   class position
   {
@@ -175,7 +174,7 @@ namespace isc { namespace dhcp {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp6_parser.yy" // location.cc:337
 } } // isc::dhcp
-#line 180 "position.hh" // location.cc:296
+#line 180 "position.hh" // location.cc:337
 #endif // !YY_PARSER6_POSITION_HH_INCLUDED

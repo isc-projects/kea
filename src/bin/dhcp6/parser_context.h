@@ -225,6 +225,9 @@ public:
         /// Used while parsing Dhcp6/client-classes structures.
         CLIENT_CLASSES,
 
+        /// Used while parsing Dhcp6/expired-leases-processing.
+        EXPIRED_LEASES_PROCESSING,
+
         /// Used while parsing Dhcp6/server-id structures.
         SERVER_ID,
 
