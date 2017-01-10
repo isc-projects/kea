@@ -871,6 +871,60 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"reclaim-timer-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_RECLAIM_TIMER_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("reclaim-timer-wait-time", driver.loc_);
+    }
+}
+
+\"flush-reclaimed-timer-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("flush-reclaimed-timer-wait-time", driver.loc_);
+    }
+}
+
+\"hold-reclaimed-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_HOLD_RECLAIMED_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hold-reclaimed-time", driver.loc_);
+    }
+}
+
+\"max-reclaim-leases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_MAX_RECLAIM_LEASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-reclaim-leases", driver.loc_);
+    }
+}
+
+\"max-reclaim-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_MAX_RECLAIM_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-reclaim-time", driver.loc_);
+    }
+}
+
+\"unwarned-reclaim-cycles\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
+        return isc::dhcp::Dhcp6Parser::make_UNWARNED_RECLAIM_CYCLES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("unwarned-reclaim-cycles", driver.loc_);
+    }
+}
+
 \"dhcp4o6-port\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
