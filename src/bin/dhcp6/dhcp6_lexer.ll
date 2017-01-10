@@ -264,6 +264,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"cql\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DATABASE_TYPE:
+        return isc::dhcp::Dhcp6Parser::make_CQL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cql", driver.loc_);
+    }
+}
+
 \"user\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
