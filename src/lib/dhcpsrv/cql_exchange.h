@@ -39,7 +39,7 @@ typedef CassError (*CqlBindFunction)(CassStatement* statement,
 ///     SELECT statements.
 typedef CassError (*CqlGetFunction)(const CassValue* value, void* data);
 
-/// @brief Pair containing major and minor versions.
+/// @brief Pair containing major and minor versions
 typedef std::pair<uint32_t, uint32_t> VersionPair;
 
 /// @brief Wrapper over the bind and get functions that interface with Cassandra
