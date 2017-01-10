@@ -143,8 +143,6 @@ Parser4Context::contextName()
         return ("option-data");
     case CLIENT_CLASSES:
         return ("client-classes");
-    case SERVER_ID:
-        return ("server-id");
     case CONTROL_SOCKET:
         return ("control-socket");
     case POOLS:
