@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,12 +120,6 @@ using namespace std;
   PARAMETERS "parameters"
 
   EXPIRED_LEASES_PROCESSING "expired-leases-processing"
-
-  SERVER_ID "server-id"
-  IDENTIFIER "identifier"
-  HTYPE "htype"
-  TIME "time"
-  ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
 
@@ -366,7 +360,6 @@ global_param: valid_lifetime
             | option_data_list
             | hooks_libraries
             | expired_leases_processing
-            | server_id
             | dhcp4o6_port
             | control_socket
             | dhcp_ddns
@@ -475,7 +468,7 @@ database_map_params: database_map_param
                    | database_map_params COMMA database_map_param
                    ;
 
-database_map_param: type
+database_map_param: database_type
                   | user
                   | password
                   | host
@@ -486,7 +479,7 @@ database_map_param: type
                   | unknown_map_entry
 ;
 
-type: TYPE {
+database_type: TYPE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
@@ -897,7 +890,13 @@ code: CODE COLON INTEGER {
 
 option_def_code: code;
 
-option_def_type: type;
+option_def_type: TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("type", prf);
+    ctx.leave();
+};
 
 option_def_record_types: RECORD_TYPES {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1293,54 +1292,7 @@ client_class_test: TEST {
 
 // --- end of client classes ---------------------------------
 
-// --- server-id ---------------------------------------------
-server_id: SERVER_ID {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("server-id", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.SERVER_ID);
-} COLON LCURLY_BRACKET server_id_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-server_id_params: server_id_param
-                | server_id_params COMMA server_id_param
-                ;
-
-server_id_param: type
-               | identifier
-               | time
-               | htype
-               | enterprise_id
-               | persist
-               | unknown_map_entry
-               ;
-
-htype: HTYPE COLON INTEGER {
-    ElementPtr htype(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("htype", htype);
-};
-
-identifier: IDENTIFIER {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr id(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("identifier", id);
-    ctx.leave();
-};
-
-time: TIME COLON INTEGER {
-    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("time", time);
-};
-
-enterprise_id: ENTERPRISE_ID COLON INTEGER {
-    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enterprise-id", time);
-};
-
-// --- end of server-id --------------------------------------
+// was server-id but in is DHCPv6-only
 
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));

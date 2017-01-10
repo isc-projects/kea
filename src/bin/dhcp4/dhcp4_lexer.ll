@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -237,7 +237,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::OPTION_DEF:
-    case isc::dhcp::Parser4Context::SERVER_ID:
         return isc::dhcp::Dhcp4Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("type", driver.loc_);
@@ -278,7 +277,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser4Context::SERVER_ID:
         return isc::dhcp::Dhcp4Parser::make_PERSIST(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("persist", driver.loc_);
@@ -713,51 +711,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_LIBRARY(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("library", driver.loc_);
-    }
-}
-
-\"server-id\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP4:
-        return isc::dhcp::Dhcp4Parser::make_SERVER_ID(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("server-id", driver.loc_);
-    }
-}
-
-\"identifier\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SERVER_ID:
-        return isc::dhcp::Dhcp4Parser::make_IDENTIFIER(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("identifier", driver.loc_);
-    }
-}
-
-\"htype\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SERVER_ID:
-        return isc::dhcp::Dhcp4Parser::make_HTYPE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("htype", driver.loc_);
-    }
-}
-
-\"time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SERVER_ID:
-        return isc::dhcp::Dhcp4Parser::make_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("time", driver.loc_);
-    }
-}
-
-\"enterprise-id\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SERVER_ID:
-        return isc::dhcp::Dhcp4Parser::make_ENTERPRISE_ID(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("enterprise-id", driver.loc_);
     }
 }
 
