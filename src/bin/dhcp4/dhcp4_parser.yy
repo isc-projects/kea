@@ -66,6 +66,7 @@ using namespace std;
   MEMFILE "memfile"
   MYSQL "mysql"
   POSTGRESQL "postgresql"
+  CQL "cql"
   USER "user"
   PASSWORD "password"
   HOST "host"
@@ -495,6 +496,7 @@ database_type: TYPE {
 db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
        | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
        | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
+       | CQL { $$ = ElementPtr(new StringElement("cql", ctx.loc2pos(@1))); }
        ;
 
 user: USER {
