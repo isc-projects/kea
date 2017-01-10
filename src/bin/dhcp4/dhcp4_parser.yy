@@ -63,12 +63,16 @@ using namespace std;
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   TYPE "type"
+  MEMFILE "memfile"
+  MYSQL "mysql"
+  POSTGRESQL "postgresql"
   USER "user"
   PASSWORD "password"
   HOST "host"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
+  CONNECT_TIMEOUT "connect-timeout"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -179,6 +183,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> db_type
 
 %printer { yyoutput << $$; } <*>;
 
@@ -476,16 +481,21 @@ database_map_param: database_type
                   | persist
                   | lfc_interval
                   | readonly
+                  | connect_timeout
                   | unknown_map_entry
 ;
 
 database_type: TYPE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("type", prf);
+    ctx.enter(ctx.DATABASE_TYPE);
+} COLON db_type {
+    ctx.stack_.back()->set("type", $4);
     ctx.leave();
 };
+
+db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
+       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
+       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
+       ;
 
 user: USER {
     ctx.enter(ctx.NO_KEYWORD);
@@ -534,9 +544,9 @@ readonly: READONLY COLON BOOLEAN {
     ctx.stack_.back()->set("readonly", n);
 };
 
-duid_id : DUID {
-    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(duid);
+connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("connect-timeout", n);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
@@ -558,6 +568,11 @@ host_reservation_identifier: duid_id
                            | circuit_id
                            | client_id
                            ;
+
+duid_id : DUID {
+    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(duid);
+};
 
 hw_address_id : HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));

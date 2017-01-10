@@ -243,6 +243,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"memfile\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DATABASE_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_MEMFILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("memfile", driver.loc_);
+    }
+}
+
+\"mysql\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DATABASE_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_MYSQL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("mysql", driver.loc_);
+    }
+}
+
+\"postgresql\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DATABASE_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_POSTGRESQL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("postgresql", driver.loc_);
+    }
+}
+
 \"user\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -290,6 +317,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_LFC_INTERVAL(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("lfc-interval", driver.loc_);
+    }
+}
+
+\"connect-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_CONNECT_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("connect-timeout", driver.loc_);
     }
 }
 
