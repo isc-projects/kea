@@ -172,7 +172,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 			 public:
 			 	virtual ~Foo() {};
 				virtual void bar() final;
-			 }])],
+			 };])],
 		 [AC_MSG_RESULT([yes])],
 		 [AC_MSG_RESULT([no])
 		  continue])
