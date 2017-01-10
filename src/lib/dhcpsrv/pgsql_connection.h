@@ -23,7 +23,7 @@ namespace dhcp {
 // statement.
 const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 
-/// @brief  Defines a Postgresql SQL statement
+/// @brief Define a PostgreSQL statement
 ///
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
@@ -45,8 +45,9 @@ struct PgSqlTaggedStatement {
     const char* text;
 };
 
+/// @{
 /// @brief Constants for PostgreSQL data types
-/// This are defined by PostreSQL in <catalog/pg_type.h>, but including
+/// This are defined by PostgreSQL in <catalog/pg_type.h>, but including
 /// this file is extraordinarily convoluted, so we'll use these to fill-in.
 const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
@@ -57,8 +58,7 @@ const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
 const size_t OID_TIMESTAMP = 1114;
-
-//@}
+/// @}
 
 /// @brief RAII wrapper for Posgtresql Result sets
 ///
@@ -289,7 +289,7 @@ private:
 /// that use instances of PgSqlConnection.
 class PgSqlConnection : public DatabaseConnection {
 public:
-    /// @brief Defines the PgSql error state for a duplicate key error
+    /// @brief Define the PgSql error state for a duplicate key error.
     static const char DUPLICATE_KEY[];
 
     /// @brief Constructor

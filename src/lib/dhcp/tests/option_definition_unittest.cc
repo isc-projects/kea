@@ -37,7 +37,7 @@ namespace {
 /// it around for the future.
 class OptionDefinitionTest : public ::testing::Test {
 public:
-    // @brief Constructor.
+    /// @brief Constructor.
     OptionDefinitionTest() { }
 
 };

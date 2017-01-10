@@ -7,11 +7,14 @@
 #ifndef BASE_HOST_DATA_SOURCE_H
 #define BASE_HOST_DATA_SOURCE_H
 
-#include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/host.h>
+
+#include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
+#include <stdint.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -60,7 +63,7 @@ public:
     /// @brief Specifies the type of an identifier.
     ///
     /// This is currently used only by MySQL host data source for now, but
-    /// it is envisagad that it will be used by other host data sources
+    /// it is envisaged that it will be used by other host data sources
     /// in the future. Also, this list will grow over time. It is likely
     /// that we'll implement other identifiers in the future, e.g. remote-id.
     ///
@@ -95,8 +98,8 @@ public:
     /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const = 0;
+    virtual ConstHostCollection getAll(const HWAddrPtr& hwaddr,
+                                       const DuidPtr& duid = DuidPtr()) const = 0;
 
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
@@ -106,15 +109,14 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const Host::IdentifierType& identifier_type,
-           const uint8_t* identifier_begin,
-           const size_t identifier_len) const = 0;
+    virtual ConstHostCollection getAll(const Host::IdentifierType& identifier_type,
+                                       const uint8_t* identifier_begin,
+                                       const size_t identifier_len) const = 0;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -124,13 +126,12 @@ public:
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll4(const asiolink::IOAddress& address) const = 0;
+    virtual ConstHostCollection getAll4(const asiolink::IOAddress& address) const = 0;
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an exception.
@@ -141,26 +142,24 @@ public:
     /// @param duid client id or NULL if not available.
     ///
     /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr()) const = 0;
+    virtual ConstHostPtr get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
+                              const DuidPtr& duid = DuidPtr()) const = 0;
 
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id,
-         const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin,
-         const size_t identifier_len) const = 0;
+    virtual ConstHostPtr get4(const SubnetID& subnet_id,
+                              const Host::IdentifierType& identifier_type,
+                              const uint8_t* identifier_begin,
+                              const size_t identifier_len) const = 0;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -178,14 +177,13 @@ public:
     /// @param address reserved IPv4 address.
     ///
     /// @return Const @c Host object using a specified IPv4 address.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id,
-         const asiolink::IOAddress& address) const = 0;
+    virtual ConstHostPtr get4(const SubnetID& subnet_id,
+                              const asiolink::IOAddress& address) const = 0;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an exception.
@@ -196,25 +194,24 @@ public:
     /// @param duid DUID or NULL if not available.
     ///
     /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr()) const = 0;
+    virtual ConstHostPtr get6(const SubnetID& subnet_id,
+                              const DuidPtr& duid,
+                              const HWAddrPtr& hwaddr = HWAddrPtr()) const = 0;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id,
-         const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin,
-         const size_t identifier_len) const = 0;
+    virtual ConstHostPtr get6(const SubnetID& subnet_id,
+                              const Host::IdentifierType& identifier_type,
+                              const uint8_t* identifier_begin,
+                              const size_t identifier_len) const = 0;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
@@ -222,8 +219,8 @@ public:
     /// @param prefix_len IPv6 prefix length.
     ///
     /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const = 0;
+    virtual ConstHostPtr get6(const asiolink::IOAddress& prefix,
+                              const uint8_t prefix_len) const = 0;
 
     /// @brief Returns a host connected to the IPv6 subnet and having
     /// a reservation for a specified IPv6 address or prefix.
@@ -270,7 +267,7 @@ public:
 /// @brief HostDataSource pointer
 typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // BASE_HOST_DATA_SOURCE_H

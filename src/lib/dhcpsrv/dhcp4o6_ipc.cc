@@ -151,7 +151,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
             option_vendor.reset();
         }
     }
-         
+
     // Vendor option must exist.
     if (!option_vendor) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)

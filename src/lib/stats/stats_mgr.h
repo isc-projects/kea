@@ -327,7 +327,7 @@ class StatsMgr : public boost::noncopyable {
 
     /// @}
 
- private:
+private:
 
     /// @brief Private constructor.
     /// StatsMgr is a singleton. It should be accessed using @ref instance

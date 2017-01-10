@@ -149,7 +149,7 @@ public:
         return (option_universe_);
     }
 
- private:
+private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
