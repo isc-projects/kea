@@ -127,6 +127,8 @@ Parser4Context::contextName()
         return ("Logging");
     case INTERFACES_CONFIG:
         return ("interfaces-config");
+    case DHCP_SOCKET_TYPE:
+        return ("dhcp-socket-type");
     case LEASE_DATABASE:
         return ("lease-database");
     case HOSTS_DATABASE:

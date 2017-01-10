@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -193,6 +193,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return  isc::dhcp::Dhcp4Parser::make_DHCP_SOCKET_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("dhcp-socket-type", driver.loc_);
+    }
+}
+
+\"raw\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
+        return  isc::dhcp::Dhcp4Parser::make_RAW(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("raw", driver.loc_);
+    }
+}
+
+\"udp\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
+        return  isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("udp", driver.loc_);
     }
 }
 
