@@ -18,11 +18,11 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_lease_mgr.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/cql_schema.h>
 #include <exceptions/exceptions.h>
 
@@ -53,7 +53,6 @@ public:
     ///
     /// Deletes everything from the database and opens it.
     CqlLeaseMgrTest() {
-
         // Ensure schema is the correct one.
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -95,13 +94,13 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
-    // This is the CQL implementation for GenericLeaseMgrTest::testGetExpiredLeases4().
+    // This is the CQL implementation for
+    // GenericLeaseMgrTest::testGetExpiredLeases4().
     // The GenericLeaseMgrTest implementation checks for the order of expired
     // leases to be from the most expired to the least expired. Cassandra
     // doesn't support ORDER BY without imposing a EQ / IN restriction on the
     // columns. Because of that, the order check has been excluded.
-    void
-    testCqlGetExpiredLeases4() {
+    void testCqlGetExpiredLeases4() {
         // Get the leases to be used for the test.
         vector<Lease4Ptr> leases = createLeases4();
         // Make sure we have at least 6 leases there.
@@ -118,10 +117,12 @@ public:
                 // valid lifetime to make it expired. The expiration time also
                 // depends on the lease index, so as we can later check that the
                 // leases are ordered by the expiration time.
-                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+                leases[i]->cltt_ =
+                    current_time - leases[i]->valid_lft_ - 10 - i;
 
             } else {
-                // Set current time as cltt for remaining leases. These leases are
+                // Set current time as cltt for remaining leases. These leases
+                // are
                 // not expired.
                 leases[i]->cltt_ = current_time;
             }
@@ -132,19 +133,22 @@ public:
         Lease4Collection expired_leases;
         ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 1000));
         // Leases with even indexes should be returned as expired.
-        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U),
+                  expired_leases.size());
 
         // Update current time for the next test.
         current_time = time(NULL);
         // Also, remove expired leases collected during the previous test.
         expired_leases.clear();
 
-        // This time let's reverse the expiration time and see if they will be returned
+        // This time let's reverse the expiration time and see if they will be
+        // returned
         // in the correct order.
         for (size_t i = 0U; i < leases.size(); ++i) {
             // Update the time of expired leases with even indexes.
             if (i % 2U == 0U) {
-                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+                leases[i]->cltt_ =
+                    current_time - leases[i]->valid_lft_ - 1000 + i;
             } else {
                 // Make sure remaining leases remain unexpired.
                 leases[i]->cltt_ = current_time + 100;
@@ -152,11 +156,13 @@ public:
             ASSERT_NO_THROW(lmptr_->updateLease4(leases[i]));
         }
 
-        // Retrieve expired leases again. The limit of 0 means return all expired
+        // Retrieve expired leases again. The limit of 0 means return all
+        // expired
         // leases.
         ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 0));
         // The same leases should be returned.
-        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U),
+                  expired_leases.size());
 
         // Remember expired leases returned.
         std::vector<Lease4Ptr> saved_expired_leases = expired_leases;
@@ -173,7 +179,8 @@ public:
         // Mark every other expired lease as reclaimed.
         for (size_t i = 0U; i < saved_expired_leases.size(); ++i) {
             if (i % 2U != 0U) {
-                saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+                saved_expired_leases[i]->state_ =
+                    Lease::STATE_EXPIRED_RECLAIMED;
             }
             ASSERT_NO_THROW(lmptr_->updateLease4(saved_expired_leases[i]));
         }
@@ -190,18 +197,19 @@ public:
         // those that have even index.
         for (Lease4Collection::iterator lease = expired_leases.begin();
              lease != expired_leases.end(); ++lease) {
-            int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+            int index =
+                static_cast<int>(std::distance(expired_leases.begin(), lease));
             EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
         }
     }
 
-    // This is the CQL implementation for GenericLeaseMgrTest::testGetExpiredLeases4().
+    // This is the CQL implementation for
+    // GenericLeaseMgrTest::testGetExpiredLeases4().
     // The GenericLeaseMgrTest implementation checks for the order of expired
     // leases to be from the most expired to the least expired. Cassandra
     // doesn't support ORDER BY without imposing a EQ / IN restriction on the
     // columns. Because of that, the order check has been excluded.
-    void
-    testCqlGetExpiredLeases6() {
+    void testCqlGetExpiredLeases6() {
         // Get the leases to be used for the test.
         vector<Lease6Ptr> leases = createLeases6();
         // Make sure we have at least 6 leases there.
@@ -218,10 +226,12 @@ public:
                 // valid lifetime to make it expired. The expiration time also
                 // depends on the lease index, so as we can later check that the
                 // leases are ordered by the expiration time.
-                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 10 - i;
+                leases[i]->cltt_ =
+                    current_time - leases[i]->valid_lft_ - 10 - i;
 
             } else {
-                // Set current time as cltt for remaining leases. These leases are
+                // Set current time as cltt for remaining leases. These leases
+                // are
                 // not expired.
                 leases[i]->cltt_ = current_time;
             }
@@ -232,19 +242,22 @@ public:
         Lease6Collection expired_leases;
         ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 1000));
         // Leases with even indexes should be returned as expired.
-        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U),
+                  expired_leases.size());
 
         // Update current time for the next test.
         current_time = time(NULL);
         // Also, remove expired leases collected during the previous test.
         expired_leases.clear();
 
-        // This time let's reverse the expiration time and see if they will be returned
+        // This time let's reverse the expiration time and see if they will be
+        // returned
         // in the correct order.
         for (size_t i = 0U; i < leases.size(); ++i) {
             // Update the time of expired leases with even indexes.
             if (i % 2U == 0U) {
-                leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
+                leases[i]->cltt_ =
+                    current_time - leases[i]->valid_lft_ - 1000 + i;
 
             } else {
                 // Make sure remaining leases remain unexpired.
@@ -253,11 +266,13 @@ public:
             ASSERT_NO_THROW(lmptr_->updateLease6(leases[i]));
         }
 
-        // Retrieve expired leases again. The limit of 0 means return all expired
+        // Retrieve expired leases again. The limit of 0 means return all
+        // expired
         // leases.
         ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
         // The same leases should be returned.
-        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U), expired_leases.size());
+        ASSERT_EQ(static_cast<size_t>(leases.size() / 2U),
+                  expired_leases.size());
 
         // Remember expired leases returned.
         std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
@@ -274,7 +289,8 @@ public:
         // Mark every other expired lease as reclaimed.
         for (size_t i = 0U; i < saved_expired_leases.size(); ++i) {
             if (i % 2U != 0U) {
-                saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+                saved_expired_leases[i]->state_ =
+                    Lease::STATE_EXPIRED_RECLAIMED;
             }
             ASSERT_NO_THROW(lmptr_->updateLease6(saved_expired_leases[i]));
         }
@@ -289,7 +305,8 @@ public:
         // those that have even index.
         for (Lease6Collection::iterator lease = expired_leases.begin();
              lease != expired_leases.end(); ++lease) {
-            int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+            int index =
+                static_cast<int>(std::distance(expired_leases.begin(), lease));
             EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
         }
     }
@@ -304,7 +321,6 @@ public:
 /// Unlike other backend implementations, this one doesn't check for lacking
 /// parameters. In that scenario, Cassandra defaults to configured parameters.
 TEST(CqlOpenTest, OpenDatabase) {
-
     // Schema needs to be created for the test to work.
     destroyCqlSchema(false, true);
     createCqlSchema(false, true);
@@ -313,7 +329,7 @@ TEST(CqlOpenTest, OpenDatabase) {
     // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validCqlConnectionString());
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -325,10 +341,11 @@ TEST(CqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout. If it fails, print the error message.
     try {
-        string connection_string = validCqlConnectionString() + string(" ") +
-                                   string(VALID_TIMEOUT);
+        std::string connection_string = validCqlConnectionString() +
+                                        std::string(" ") +
+                                        std::string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -344,12 +361,13 @@ TEST(CqlOpenTest, OpenDatabase) {
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+    EXPECT_THROW(
+        LeaseMgrFactory::create(connectionString(NULL, VALID_NAME, VALID_HOST,
+                                                 INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+    EXPECT_THROW(
+        LeaseMgrFactory::create(connectionString(
+            INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data does not cause an exception, CQL should use
@@ -514,7 +532,8 @@ TEST_F(CqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 
 /// @brief Basic Lease4 Checks
 ///
-/// Checks that the addLease, getLease4(by address), getLease4(hwaddr, subnet_id),
+/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,
+/// subnet_id),
 /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(CqlLeaseMgrTest, lease4NullClientId) {

@@ -590,11 +590,11 @@ private:
     /// declare them as "mutable".)
     /// @brief Exchange object for IPv4
     boost::scoped_ptr<CqlLease4Exchange> exchange4_;
-    /// @brief Exchange object for IPv4
+    /// @brief Exchange object for IPv6
     boost::scoped_ptr<CqlLease6Exchange> exchange6_;
     /// @brief Exchange object for version
     boost::scoped_ptr<CqlVersionExchange> versionExchange_;
-    //// @}
+    /// @}
 };
 
 }  // namespace dhcp
