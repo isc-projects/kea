@@ -202,6 +202,9 @@ public:
         /// Used while parsing Dhcp6/hosts-database structures.
         HOSTS_DATABASE,
 
+        /// Used while parsing Dhcp6/*-database/type.
+        DATABASE_TYPE,
+
         /// Used while parsing Dhcp6/mac-sources structures.
         MAC_SOURCES,
 
