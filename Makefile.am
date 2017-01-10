@@ -56,7 +56,7 @@ clean-cpp-coverage:
 	fi
 
 perform-coverage:
-	find -mindepth 2 -maxdepth 2 src -type d | xargs -I{} bash -c "cd {}; make check || true"
+	find src -mindepth 2 -maxdepth 2 -type d | xargs -I{} bash -c "cd {}; make check || true"
 
 report-cpp-coverage:
 if HAVE_BOTAN
