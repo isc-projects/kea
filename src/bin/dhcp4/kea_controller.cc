@@ -25,7 +25,7 @@ namespace {
 /// This function is used to both configure the DHCP server on its startup
 /// and dynamically reconfigure the server when SIGHUP signal is received.
 ///
-/// It fetches DHCPv6 server's configuration from the 'Dhcp4' section of
+/// It fetches DHCPv4 server's configuration from the 'Dhcp4' section of
 /// the JSON configuration file.
 ///
 /// @param file_name Configuration file location.
@@ -40,7 +40,6 @@ void configure(const std::string& file_name) {
 
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp4;
-    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -74,8 +73,8 @@ void configure(const std::string& file_name) {
                                 CfgMgr::instance().getStagingCfg());
 
         // Apply the new logger configuration to log4cplus. It is done before
-        // commit in case something goes wrong and before configuration load
-        // in order to log possible configuration problems.
+        // commit in case something goes wrong and before configuration load in
+        // order to log possible configuration problems.
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Get Dhcp4 component from the config

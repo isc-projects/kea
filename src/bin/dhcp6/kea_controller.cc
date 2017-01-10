@@ -45,7 +45,6 @@ void configure(const std::string& file_name) {
 
     isc::data::ConstElementPtr json;
     isc::data::ConstElementPtr dhcp6;
-    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -82,8 +81,8 @@ void configure(const std::string& file_name) {
                                 CfgMgr::instance().getStagingCfg());
 
         // Apply the new logger configuration to log4cplus. It is done before
-        // commit in case something goes wrong and before configuration load
-        // in order to log possible configuration problems.
+        // commit in case something goes wrong and before configuration load in
+        // order to log possible configuration problems.
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Get Dhcp6 component from the config
