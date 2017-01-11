@@ -114,25 +114,22 @@ public:
         close();
     }
 
-    void startRequest() {
+    void startRequest(const std::string& request) {
         boost::asio::ip::tcp::endpoint
             endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
                      SERVER_PORT);
-        socket_.async_connect(endpoint, [this](const boost::system::error_code& ec) {
+        socket_.async_connect(endpoint,
+                              [this, request](const boost::system::error_code& ec) {
             if (ec) {
                 ADD_FAILURE() << "error occurred while connecting: "
                               << ec.message();
                 io_service_.stop();
             }
-            sendRequest();
+            sendRequest(request);
         });
     }
 
-    void sendRequest() {
-        const std::string request = "POST /foo/bar HTTP/1.1\r\n"
-            "Content-Type: application/json\r\n"
-            "Content-Length: 3\r\n\r\n"
-            "{ }";
+    void sendRequest(const std::string& request) {
         sendPartialRequest(request);
     }
 
@@ -215,19 +212,26 @@ public:
 
     HttpListenerTest()
         : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
-          test_timer_(io_service_) {
+          test_timer_(io_service_), clients_() {
         test_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler, this),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+    }
+
+    ~HttpListenerTest() {
+        for (auto client = clients_.begin(); client != clients_.end();
+             ++client) {
+            (*client)->close();
+        }
     }
 
     /// @brief Connect to the endpoint.
     ///
     /// This method creates HttpClient instance and retains it in the clients_
     /// list.
-    void startRequest() {
+    void startRequest(const std::string& request) {
         HttpClientPtr client(new HttpClient(io_service_));
         clients_.push_back(client);
-        clients_.back()->startRequest();
+        clients_.back()->startRequest(request);
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -250,10 +254,15 @@ public:
 };
 
 TEST_F(HttpListenerTest, listen) {
+    const std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n\r\n"
+        "{ }";
+
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                           factory_);
     ASSERT_NO_THROW(listener.start());
-    ASSERT_NO_THROW(startRequest());
+    ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(io_service_.run());
     ASSERT_EQ(1, clients_.size());
     HttpClientPtr client = *clients_.begin();
@@ -262,6 +271,31 @@ TEST_F(HttpListenerTest, listen) {
               "Content-Type: application/json\r\n"
               "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
               "\r\n",
+              client->getResponse());
+    listener.stop();
+    io_service_.poll();
+}
+
+TEST_F(HttpListenerTest, badRequest) {
+    const std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: foo\r\n"
+        "Content-Length: 3\r\n\r\n"
+        "{ }";
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_);
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(io_service_.run());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
+              "Content-Length: 40\r\n"
+              "Content-Type: application/json\r\n"
+              "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
+              "\r\n"
+              "{ \"result\": 400, \"text\": \"Bad Request\" }",
               client->getResponse());
 }
 

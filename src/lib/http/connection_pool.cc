@@ -22,6 +22,15 @@ HttpConnectionPool::stop(const HttpConnectionPtr& connection) {
     connection->close();
 }
 
+void
+HttpConnectionPool::stopAll() {
+    for (auto connection = connections_.begin();
+         connection != connections_.end();
+         ++connection) {
+        (*connection)->close();
+    }
+    connections_.clear();
+}
 
 }
 }

@@ -26,7 +26,11 @@ public:
                  const unsigned short server_port,
                  const HttpResponseCreatorFactoryPtr& creator_factory);
 
+    ~HttpListener();
+
     void start();
+
+    void stop();
 
 private:
 
