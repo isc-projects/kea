@@ -14,6 +14,7 @@
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
 #include <boost/asio/buffer.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <list>
@@ -297,6 +298,25 @@ TEST_F(HttpListenerTest, badRequest) {
               "\r\n"
               "{ \"result\": 400, \"text\": \"Bad Request\" }",
               client->getResponse());
+}
+
+TEST_F(HttpListenerTest, invalidFactory) {
+    EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
+                              SERVER_PORT, HttpResponseCreatorFactoryPtr()),
+                 HttpListenerError);
+}
+
+TEST_F(HttpListenerTest, addressInUse) {
+    boost::asio::ip::tcp::acceptor acceptor(io_service_.get_io_service());;
+    boost::asio::ip::tcp::endpoint
+        endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
+                 SERVER_PORT + 1);
+    acceptor.open(endpoint.protocol());
+    acceptor.bind(endpoint);
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
+                          SERVER_PORT + 1, factory_);
+    EXPECT_THROW(listener.start(), HttpListenerError);
 }
 
 }

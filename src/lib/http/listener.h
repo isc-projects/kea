@@ -10,13 +10,21 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
+#include <exceptions/exceptions.h>
 #include <http/connection.h>
 #include <http/connection_pool.h>
 #include <http/http_acceptor.h>
 #include <http/response_creator_factory.h>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace http {
+
+class HttpListenerError : public Exception {
+public:
+    HttpListenerError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 class HttpListener {
 public:
@@ -40,7 +48,7 @@ private:
 
     asiolink::IOService& io_service_;
     HttpAcceptor acceptor_;
-    asiolink::TCPEndpoint endpoint_;
+    boost::scoped_ptr<asiolink::TCPEndpoint> endpoint_;
     HttpConnectionPool connections_;
     HttpResponseCreatorFactoryPtr creator_factory_;
 
