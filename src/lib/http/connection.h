@@ -20,6 +20,13 @@
 namespace isc {
 namespace http {
 
+class HttpConnectionError : public Exception {
+public:
+    HttpConnectionError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+
 class HttpConnectionPool;
 
 class HttpConnection;

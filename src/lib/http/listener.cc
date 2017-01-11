@@ -17,8 +17,18 @@ HttpListener::HttpListener(IOService& io_service,
                            const unsigned short server_port,
                            const HttpResponseCreatorFactoryPtr& creator_factory)
     : io_service_(io_service), acceptor_(io_service),
-      endpoint_(server_address, server_port),
-      creator_factory_(creator_factory) {
+      endpoint_(), creator_factory_(creator_factory) {
+    try {
+        endpoint_.reset(new TCPEndpoint(server_address, server_port));
+
+    } catch (...) {
+        isc_throw(HttpListenerError, "unable to create TCP endpoint for "
+                  << server_address << ":" << server_port);
+    }
+    if (!creator_factory_) {
+        isc_throw(HttpListenerError, "HttpResponseCreatorFactory must not"
+                  " be null");
+    }
 }
 
 HttpListener::~HttpListener() {
@@ -27,10 +37,16 @@ HttpListener::~HttpListener() {
 
 void
 HttpListener::start() {
-    acceptor_.open(endpoint_);
-    acceptor_.setOption(HttpAcceptor::ReuseAddress(true));
-    acceptor_.bind(endpoint_);
-    acceptor_.listen();
+    try {
+        acceptor_.open(*endpoint_);
+        acceptor_.setOption(HttpAcceptor::ReuseAddress(true));
+        acceptor_.bind(*endpoint_);
+        acceptor_.listen();
+
+    } catch (const boost::system::system_error& ex) {
+        isc_throw(HttpListenerError, "unable to setup TCP acceptor for "
+                  "listening to the incoming HTTP requests: " << ex.what());
+    } 
 
     accept();
 }
@@ -55,9 +71,7 @@ HttpListener::accept() {
 
 void
 HttpListener::acceptHandler(const boost::system::error_code& ec) {
-    if (!ec) {
-        accept();
-    }
+    accept();
 }
 
 

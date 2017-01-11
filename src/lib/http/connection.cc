@@ -49,7 +49,13 @@ void
 HttpConnection::asyncAccept() {
     HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
                                           this, _1);
-    acceptor_.asyncAccept(socket_, cb);
+    try {
+        acceptor_.asyncAccept(socket_, cb);
+
+    } catch (const std::exception& ex) {
+        isc_throw(HttpConnectionError, "unable to start accepting TCP "
+                  "connections: " << ex.what());
+    }
 }
 
 void
@@ -59,17 +65,29 @@ HttpConnection::close() {
 
 void
 HttpConnection::doRead() {
-    TCPEndpoint endpoint;
-    socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(), 0, &endpoint,
-                         socket_callback_);
+    try {
+        TCPEndpoint endpoint;
+        socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(),
+                             0, &endpoint, socket_callback_);
+
+    } catch (const std::exception& ex) {
+        isc_throw(HttpConnectionError, "unable to start asynchronous HTTP message"
+                  " receive over TCP socket: " << ex.what());
+    }
 }
 
 void
 HttpConnection::doWrite() {
     if (!output_buf_.empty()) {
-        socket_.asyncSend(output_buf_.data(),
-                          output_buf_.length(),
-                          socket_write_callback_);
+        try {
+            socket_.asyncSend(output_buf_.data(),
+                              output_buf_.length(),
+                              socket_write_callback_);
+
+        } catch (const std::exception& ex) {
+            isc_throw(HttpConnectionError, "unable to start asynchronous HTTP"
+                      " message write over TCP socket: " << ex.what());
+        }
     }
 }
 
@@ -79,14 +97,24 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
         return;
     }
 
-    if (ec) {
-        connection_pool_.stop(shared_from_this());
+    try {
+        if (ec) {
+            connection_pool_.stop(shared_from_this());
+        }
+    } catch (...) {
     }
 
     acceptor_callback_(ec);
 
-    if (!ec) {
-        doRead();
+    try {
+        if (!ec) {
+            doRead();
+        }
+    } catch (const std::exception& ex) {
+        try {
+            connection_pool_.stop(shared_from_this());
+        } catch (...) {
+        }
     }
 
 }
@@ -97,7 +125,14 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
     parser_->postBuffer(static_cast<void*>(buf_.data()), length);
     parser_->poll();
     if (parser_->needData()) {
-        doRead();
+        try {
+            doRead();
+        } catch (const std::exception& ex) {
+            try {
+                connection_pool_.stop(shared_from_this());
+            } catch (...) {
+            }
+        }
 
     } else {
         try {
@@ -106,7 +141,15 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         }
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
         output_buf_ = response->toString();
-        doWrite();
+        try {
+            doWrite();
+
+        } catch (const std::exception& ex) {
+            try {
+                connection_pool_.stop(shared_from_this());
+            } catch (...) {
+            }
+        }
     }
 }
 
@@ -115,7 +158,15 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec,
                                     size_t length) {
     if (length <= output_buf_.size()) {
         output_buf_.erase(0, length);
-        doWrite();
+        try {
+            doWrite();
+
+        } catch (const std::exception& ex) {
+            try {
+                connection_pool_.stop(shared_from_this());
+            } catch (...) {
+            }
+        }
 
     } else {
         output_buf_.clear();
