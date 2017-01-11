@@ -742,12 +742,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 hooks_parser->commit();
             }
 
-            {
-                // Used to be done by parser commit
-                D2ClientConfigPtr cfg;
-                cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
-                CfgMgr::instance().setD2ClientConfig(cfg);
-            }
+            // Apply the staged D2ClientConfig, used to be done by parser commit
+            D2ClientConfigPtr cfg;
+            cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            CfgMgr::instance().setD2ClientConfig(cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
