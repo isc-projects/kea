@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,6 +147,11 @@ public:
     }
 
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
+    ///
+    /// Passes the new configuration to the D2ClientMgr instance,
+    /// d2_client_mgr_, which will attempt to apply the new configuration
+    /// by shutting down its sender and opening a new connection per the new
+    /// configuration (see @c D2ClientMgr::setD2ClientConfig()).
     ///
     /// @param new_config pointer to the new client configuration.
     ///

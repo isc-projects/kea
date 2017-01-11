@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,8 @@ SrvConfig::SrvConfig()
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0) {
+      decline_timer_(0), dhcp4o6_port_(0),
+      d2_client_config_(new D2ClientConfig()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -42,7 +43,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0) {
+      decline_timer_(0), dhcp4o6_port_(0),
+      d2_client_config_(new D2ClientConfig()) {
 }
 
 std::string
@@ -70,7 +72,7 @@ SrvConfig::getConfigSummary(const uint32_t selection) const {
     }
 
     if ((selection & CFGSEL_DDNS) == CFGSEL_DDNS) {
-        bool ddns_enabled = CfgMgr::instance().ddnsEnabled();
+        bool ddns_enabled = getD2ClientConfig()->getEnableUpdates();
         s << "DDNS: " << (ddns_enabled ? "enabled" : "disabled") << "; ";
     }
 
@@ -106,7 +108,8 @@ SrvConfig::copy(SrvConfig& new_config) const {
     cfg_option_->copyTo(*new_config.cfg_option_);
     // Replace the client class dictionary
     new_config.class_dictionary_.reset(new ClientClassDictionary(*class_dictionary_));
-
+    // Replace the D2 client configuration
+    new_config.setD2ClientConfig(getD2ClientConfig());
 }
 
 void
@@ -151,7 +154,8 @@ SrvConfig::equals(const SrvConfig& other) const {
     return ((*cfg_iface_ == *other.cfg_iface_) &&
             (*cfg_option_def_ == *other.cfg_option_def_) &&
             (*cfg_option_ == *other.cfg_option_) &&
-            (*class_dictionary_ == *other.class_dictionary_));
+            (*class_dictionary_ == *other.class_dictionary_) &&
+            (*d2_client_config_ == *other.d2_client_config_));
 }
 
 void

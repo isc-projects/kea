@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1551,8 +1551,6 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
 // the supported modes.
 TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 
-    // We pass mode labels in with enclosing quotes so we can also test
-    // unquoted boolean literals true/false
     testReplaceClientNameMode("\"never\"",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
     testReplaceClientNameMode("\"never\"",
@@ -1572,18 +1570,6 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
     testReplaceClientNameMode("\"when-not-present\"",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean false produces the same result as RCM_NEVER
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean true produces the same result as RCM_WHEN_PRESENT
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_PRESENT, NAME_REPLACED);
 }
 
 } // end of anonymous namespace

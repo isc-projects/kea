@@ -314,17 +314,18 @@ public:
 
                 // These are the simple parsers. No need to go through
                 // the ParserPtr hooplas with them.
-                if ( (config_pair.first == "option-data") ||
-                     (config_pair.first == "option-def")) {
+                if ((config_pair.first == "option-data") ||
+                    (config_pair.first == "option-def") ||
+                    (config_pair.first == "dhcp-ddns")) {
                     continue;
                 }
 
                 // We also don't care about the default values that may be been
                 // inserted
-                if ( (config_pair.first == "preferred-lifetime") ||
-                     (config_pair.first == "valid-lifetime") ||
-                     (config_pair.first == "renew-timer") ||
-                     (config_pair.first == "rebind-timer")) {
+                if ((config_pair.first == "preferred-lifetime") ||
+                    (config_pair.first == "valid-lifetime") ||
+                    (config_pair.first == "renew-timer") ||
+                    (config_pair.first == "rebind-timer")) {
                     continue;
                 }
 
@@ -366,6 +367,16 @@ public:
                 option_list_parser.parse(cfg_option, option_config->second);
             }
 
+            // The dhcp-ddns parser is the next one to be run.
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                d2_client_config = values_map.find("dhcp-ddns");
+            if (d2_client_config != values_map.end()) {
+                // Used to be done by parser commit
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(d2_client_config->second);
+                CfgMgr::instance().setD2ClientConfig(cfg);
+            }
+
             // Everything was fine. Configuration is successful.
             answer = isc::config::createAnswer(0, "Configuration committed.");
         } catch (const isc::Exception& ex) {
@@ -401,8 +412,6 @@ public:
             parser.reset(new HooksLibrariesParser(config_id));
             hooks_libraries_parser_ =
                 boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
-        } else if (config_id.compare("dhcp-ddns") == 0) {
-            parser.reset(new D2ClientConfigParser(config_id));
         } else {
             isc_throw(NotImplemented,
                 "Parser error: configuration parameter not supported: "
@@ -425,7 +434,8 @@ public:
     size_t setAllDefaults(isc::data::ElementPtr global,
                           const SimpleDefaults& global_defaults,
                           const SimpleDefaults& option_defaults,
-                          const SimpleDefaults& option_def_defaults) {
+                          const SimpleDefaults& option_def_defaults,
+                          const SimpleDefaults& d2_client_defaults) {
         size_t cnt = 0;
         // Set global defaults first.
         cnt = SimpleParser::setDefaults(global, global_defaults);
@@ -445,6 +455,23 @@ public:
             }
         }
 
+        ConstElementPtr d2_client = global->get("dhcp-ddns");
+        /// @todo - what if it's not in global? should we add it?
+        if (d2_client) {
+            // Because "dhcp-ddns" is a MapElement and global->get()
+            // returns a ConstElementPtr, then we get a map we can't
+            // change.  So go thru gyrations to create a non-const
+            // map, update it with default values and then replace
+            // the one in global with the new one. Ick.
+            std::map<std::string, ConstElementPtr> d2_map;
+            d2_client->getValue(d2_map);
+            ElementPtr new_map(new MapElement());
+            new_map->setValue(d2_map);
+            cnt += SimpleParser::setDefaults(new_map, d2_client_defaults);
+            global->set("dhcp-ddns", new_map);
+        }
+
+
         return (cnt);
     }
 
@@ -455,6 +482,10 @@ public:
     /// this functionality and there are good reasons to keep those classes in
     /// src/bin/dhcp{4,6}, the most straightforward way is to simply copy the
     /// minimum code here. Hence this method.
+    ///
+    /// @todo - TKM, I think this is fairly hideous and we should figure out a
+    /// a way to not have to replicate in this fashion.  It may be minimum code
+    /// now, but it won't be fairly soon.
     ///
     /// @param config configuration structure to be filled with default values
     /// @param v6 true = DHCPv6, false = DHCPv4
@@ -497,12 +528,31 @@ public:
             { "valid-lifetime",     Element::integer, "7200" }
         };
 
+        /// @brief This table defines default values for D2 client configuration
+        const SimpleDefaults D2_CLIENT_CFG_DEFAULTS = {
+            { "server-ip", Element::string, "127.0.0.1" },
+            { "server-port", Element::integer, "53001" },
+            // default sender-ip depends on server-ip family, so we leave default blank
+            // parser knows to use the appropriate ZERO address based on server-ip
+            { "sender-ip", Element::string, "" },
+            { "sender-port", Element::integer, "0" },
+            { "max-queue-size", Element::integer, "1024" },
+            { "ncr-protocol", Element::string, "UDP" },
+            { "ncr-format", Element::string, "JSON" },
+            { "always-include-fqdn", Element::boolean, "false" },
+            { "override-no-update", Element::boolean, "false" },
+            { "override-client-update", Element::boolean, "false" },
+            { "replace-client-name", Element::string, "NEVER" },
+            { "generated-prefix", Element::string, "myhost" },
+            { "qualifying-suffix", Element::string, "" }
+        };
+
         if (v6) {
             setAllDefaults(config, GLOBAL6_DEFAULTS, OPTION6_DEFAULTS,
-                           OPTION6_DEF_DEFAULTS);
+                           OPTION6_DEF_DEFAULTS, D2_CLIENT_CFG_DEFAULTS);
         } else {
             setAllDefaults(config, GLOBAL6_DEFAULTS, OPTION4_DEFAULTS,
-                           OPTION4_DEF_DEFAULTS);
+                           OPTION4_DEF_DEFAULTS, D2_CLIENT_CFG_DEFAULTS);
         }
     }
 
@@ -529,6 +579,7 @@ public:
             // If error was reported, the error string should contain
             // position of the data element which caused failure.
             if (rcode_ != 0) {
+                std::cout << "Error text:" << error_text_ << std::endl;
                 EXPECT_TRUE(errorContainsPosition(status, "<string>"));
             }
         }
@@ -801,7 +852,6 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
         "    \"data\": \"\\\\SMSBoot\\\\x64\\\\wdsnbp.com\""
         " } ]"
         "}";
-    std::cout << config << std::endl;
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
@@ -1826,17 +1876,6 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
     std::string invalid_configs[] = {
-        // Must supply at least enable-updates
-        "{ \"dhcp-ddns\" :"
-        "    {"
-        "    }"
-        "}",
-        // Must supply qualifying-suffix when updates are enabled
-        "{ \"dhcp-ddns\" :"
-        "    {"
-        "     \"enable-updates\" : true"
-        "    }"
-        "}",
         // Invalid server ip value
         "{ \"dhcp-ddns\" :"
         "    {"
