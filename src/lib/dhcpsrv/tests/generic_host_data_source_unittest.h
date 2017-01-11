@@ -555,8 +555,8 @@ public:
 
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

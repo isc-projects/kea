@@ -847,7 +847,8 @@ CqlHostExchange::createBindForSend(const HostPtr& host,
             reserved_ipv6_prefix_address_ = reservation->getPrefix().toText();
 
             // reserved_ipv6_prefix_length: int
-            reserved_ipv6_prefix_length_ = static_cast<cass_int32_t>(reservation->getPrefixLen());
+            reserved_ipv6_prefix_length_ =
+                static_cast<cass_int32_t>(reservation->getPrefixLen());
 
             // reserved_ipv6_prefix_address: int
             reserved_ipv6_prefix_address_type_ =

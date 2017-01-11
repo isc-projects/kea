@@ -1499,6 +1499,6 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
