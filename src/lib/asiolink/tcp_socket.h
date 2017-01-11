@@ -113,6 +113,19 @@ public:
     virtual void asyncSend(const void* data, size_t length,
                            const IOEndpoint* endpoint, C& callback);
 
+    /// \brief Send Asynchronously without count.
+    ///
+    /// This variant of the method sends data over the TCP socket without
+    /// preceding the data with a data count. Eventually, we should migrate
+    /// the virtual method to not insert the count but there are existing
+    /// classes using the count. Once this migration is done, the existing
+    /// virtual method should be replaced by this method.
+    ///
+    /// \param data Data to send
+    /// \param length Length of data to send
+    /// \param callback Callback object.
+    void asyncSend(const void* data, size_t length, C& callback);
+
     /// \brief Receive Asynchronously
     ///
     /// Calls the underlying socket's async_receive() method to read a packet
@@ -249,6 +262,30 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
+TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
+{
+    if (socket_.is_open()) {
+
+        try {
+            send_buffer_.reset(new isc::util::OutputBuffer(length));
+            send_buffer_->writeData(data, length);
+
+            // Send the data.
+            socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
+                                                   send_buffer_->getLength()),
+                               callback);
+        } catch (boost::numeric::bad_numeric_cast&) {
+            isc_throw(BufferTooLarge,
+                      "attempt to send buffer larger than 64kB");
+        }
+
+    } else {
+        isc_throw(SocketNotOpen,
+            "attempt to send on a TCP socket that is not open");
+    }
+}
+
+template <typename C> void
 TCPSocket<C>::asyncSend(const void* data, size_t length,
     const IOEndpoint*, C& callback)
 {
@@ -262,7 +299,8 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
             uint16_t count = boost::numeric_cast<uint16_t>(length);
 
             // Copy data into a buffer preceded by the count field.
-            send_buffer_.reset(new isc::util::OutputBuffer(length));
+            send_buffer_.reset(new isc::util::OutputBuffer(length + 2));
+            send_buffer_->writeUint16(count);
             send_buffer_->writeData(data, length);
 
             // ... and send it

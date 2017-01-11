@@ -67,9 +67,8 @@ HttpConnection::doRead() {
 void
 HttpConnection::doWrite() {
     if (!output_buf_.empty()) {
-        TCPEndpoint endpoint;
         socket_.asyncSend(output_buf_.data(),
-                          output_buf_.length(), &endpoint,
+                          output_buf_.length(),
                           socket_write_callback_);
     }
 }
