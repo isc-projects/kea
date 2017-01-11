@@ -502,4 +502,4 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
         DbOperationError);
 }
 
-};  // anonymous namespace
+}  // namespace
