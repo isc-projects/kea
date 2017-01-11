@@ -436,8 +436,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("echo-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
-    } else if (config_id.compare("dhcp-ddns") == 0) {
-        parser = new D2ClientConfigParser(config_id);
+    // dhcp-ddns has been converted to SimpleParser.
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("control-socket") == 0) {
@@ -637,6 +636,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "dhcp-ddns") {
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -734,6 +740,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // change causes problems when trying to roll back.
             if (hooks_parser) {
                 hooks_parser->commit();
+            }
+
+            {
+                // Used to be done by parser commit
+                D2ClientConfigPtr cfg;
+                cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+                CfgMgr::instance().setD2ClientConfig(cfg);
             }
         }
         catch (const isc::Exception& ex) {

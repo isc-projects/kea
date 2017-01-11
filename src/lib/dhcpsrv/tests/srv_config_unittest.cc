@@ -141,8 +141,7 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
 
 void
 SrvConfigTest::enableDDNS(const bool enable) {
-    // D2 configuration should always be non-NULL.
-    CfgMgr::instance().getD2ClientConfig()->enableUpdates(enable);
+    conf_.getD2ClientConfig()->enableUpdates(enable);
 }
 
 // Check that by default there are no logging entries

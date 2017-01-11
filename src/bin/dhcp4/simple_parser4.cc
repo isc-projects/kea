@@ -71,6 +71,27 @@ const ParamsList SimpleParser4::INHERIT_GLOBAL_TO_SUBNET4 = {
     "rebind-timer",
     "valid-lifetime"
 };
+
+/// @brief This table defines default values for D2 client configuration
+///
+const SimpleDefaults SimpleParser4::D2_CLIENT_CONFIG_DEFAULTS = {
+    { "server-ip", Element::string, "127.0.0.1" },
+    { "server-port", Element::integer, "53001" },
+    // default sender-ip depends on server-ip family, so we leave default blank
+    // parser knows to use the appropriate ZERO address based on server-ip
+    { "sender-ip", Element::string, "" },
+    { "sender-port", Element::integer, "0" },
+    { "max-queue-size", Element::integer, "1024" },
+    { "ncr-protocol", Element::string, "UDP" },
+    { "ncr-format", Element::string, "JSON" },
+    { "always-include-fqdn", Element::boolean, "false" },
+    { "override-no-update", Element::boolean, "false" },
+    { "override-client-update", Element::boolean, "false" },
+    { "replace-client-name", Element::string, "NEVER" },
+    { "generated-prefix", Element::string, "myhost" },
+    { "qualifying-suffix", Element::string, "" }
+};
+
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -97,6 +118,22 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
         BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
             cnt += SimpleParser::setDefaults(single_option, OPTION4_DEFAULTS);
         }
+    }
+
+    ConstElementPtr d2_client = global->get("dhcp-ddns");
+    /// @todo - what if it's not in global? should we add it?
+    if (d2_client) {
+        // Because "dhcp-ddns" is a MapElement and global->get()
+        // returns a ConstElementPtr, then we get a map we can't
+        // change.  So go thru gyrations to create a non-const
+        // map, update it with default values and then replace
+        // the one in global with the new one. Ick.
+        std::map<std::string, ConstElementPtr> d2_map;
+        d2_client->getValue(d2_map);
+        ElementPtr new_map(new MapElement());
+        new_map->setValue(d2_map);
+        cnt += SimpleParser::setDefaults(new_map, D2_CLIENT_CONFIG_DEFAULTS);
+        global->set("dhcp-ddns", new_map);
     }
 
     return (cnt);

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,12 +65,6 @@ bool errorContainsPosition(ConstElementPtr error_element,
                 int i = 0;
                 while (isdigit(split_pos[2][i])) {
                     ++i;
-                }
-
-                // Make sure that there has been at least one digit and that the
-                // position is followed by the paren.
-                if ((i == 0) || (split_pos[2][i] != ')')) {
-                    return (false);
                 }
 
                 // All checks passed.

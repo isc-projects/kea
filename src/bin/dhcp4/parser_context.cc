@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -159,6 +159,8 @@ Parser4Context::contextName()
         return ("loggers");
     case OUTPUT_OPTIONS:
         return ("output-options");
+    case DHCP_DDNS:
+        return ("dhcp-ddns");
     default:
         return ("__unknown__");
     }

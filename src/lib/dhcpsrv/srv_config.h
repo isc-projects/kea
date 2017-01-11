@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
 #include <cc/data.h>
 #include <boost/shared_ptr.hpp>
@@ -481,10 +482,26 @@ public:
 
     /// @brief Returns DHCP4o6 IPC port
     ///
-    /// See @ref setDhcp4o6Port or brief discussion.                         
+    /// See @ref setDhcp4o6Port or brief discussion.
     /// @return value of DHCP4o6 IPC port
     uint32_t getDhcp4o6Port() {
         return (dhcp4o6_port_);
+    }
+
+    /// @brief Returns pointer to the D2 client configuration
+    D2ClientConfigPtr getD2ClientConfig() {
+        return (d2_client_config_);
+    }
+
+    /// @brief Returns pointer to const D2 client configuration
+    const D2ClientConfigPtr getD2ClientConfig() const {
+        return (d2_client_config_);
+    }
+
+    /// @brief Sets the D2 client configuration
+    /// @param dictionary pointer to the new D2 client configuration
+    void setD2ClientConfig(const D2ClientConfigPtr& d2_client_config) {
+        d2_client_config_ = d2_client_config;
     }
 
 private:
@@ -570,6 +587,8 @@ private:
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
     uint32_t dhcp4o6_port_;
+
+    D2ClientConfigPtr d2_client_config_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

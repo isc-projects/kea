@@ -33,6 +33,7 @@ public:
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL4_DEFAULTS;
     static const isc::data::ParamsList INHERIT_GLOBAL_TO_SUBNET4;
+    static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;
 };
 
 };

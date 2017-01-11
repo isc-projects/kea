@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,10 @@ public:
         PARSER_OPTION_DATA,
 
         /// This will parse the input as hooks-library.
-        PARSER_HOOKS_LIBRARY
+        PARSER_HOOKS_LIBRARY,
+
+        /// This will parse the input as dhcp-ddns.
+        PARSER_DHCP_DDNS
     } ParserType;
 
     /// @brief Default constructor.
@@ -184,9 +187,6 @@ public:
         ///< Used while parsing content of Dhcp4.
         DHCP4,
 
-        // not yet DHCP6,
-        // not yet DHCP_DDNS,
-
         ///< Used while parsing content of Logging
         LOGGING,
 
@@ -241,7 +241,10 @@ public:
         LOGGERS,
 
         /// Used while parsing Logging/loggers/output_options structures.
-        OUTPUT_OPTIONS
+        OUTPUT_OPTIONS,
+
+        /// Used while parsing Dhcp4/dhcp-ddns
+        DHCP_DDNS
     } ParserContext;
 
     /// @brief File name
