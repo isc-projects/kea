@@ -716,8 +716,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
-    } else if (config_id.compare("dhcp-ddns") == 0) {
-        parser = new D2ClientConfigParser(config_id);
+    // dhcp-ddns has been converted to SimpleParser
     } else if (config_id.compare("mac-sources") == 0) {
         parser = new MACSourcesListConfigParser(config_id,
                                                 globalContext());
@@ -911,6 +910,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "dhcp-ddns") {
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
@@ -1012,6 +1018,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (hooks_parser) {
                 hooks_parser->commit();
             }
+
+            // Apply staged D2ClientConfig, used to be done by parser commit
+            D2ClientConfigPtr cfg;
+            cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            CfgMgr::instance().setD2ClientConfig(cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
