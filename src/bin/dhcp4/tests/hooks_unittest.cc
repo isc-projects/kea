@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,7 +112,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
 
-        CalloutManager::getSharedManager().reset();
+        HooksManager::getSharedCalloutManager().reset();
         delete srv_;
     }
 
@@ -1610,7 +1610,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgr::instance().openSockets4();
 
     // Libraries will be reloaded later
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1659,7 +1659,7 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgr::instance().openSockets4();
 
     // Libraries will be reloaded later
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(

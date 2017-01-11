@@ -1,10 +1,11 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
 
@@ -66,7 +67,7 @@ LibraryManagerCollection::loadLibraries() {
     // To survive reloads an attempt to re-use the shared manager
     // is performed when the list of library names is empty.
     if (library_names_.empty()) {
-        callout_manager_ = CalloutManager::getSharedManager();
+        callout_manager_ = HooksManager::getSharedCalloutManager();
     }
     if (!library_names_.empty() || !callout_manager_) {
         callout_manager_.reset(new CalloutManager(library_names_.size()));

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -199,6 +199,14 @@ public:
     static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
     static const int CONTEXT_DESTROY = ServerHooks::CONTEXT_DESTROY;
 
+    /// @brief Return the shared callout manager
+    ///
+    /// Declared as static as other methods but only one for the
+    /// singleton will be created.
+    ///
+    /// @return A reference to the shared callout manager
+    static boost::shared_ptr<CalloutManager>& getSharedCalloutManager();
+
 private:
 
     /// @brief Constructor
@@ -312,6 +320,10 @@ private:
 
     /// Callout manager for the set of library managers.
     boost::shared_ptr<CalloutManager> callout_manager_;
+
+    /// Shared callout manager to survive library reloads.
+    boost::shared_ptr<CalloutManager> shared_callout_manager_;
+
 };
 
 } // namespace util

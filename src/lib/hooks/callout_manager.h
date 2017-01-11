@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -298,13 +298,6 @@ public:
 
     //@}
 
-    /// @brief Return the shared manager
-    ///
-    /// @return A reference to the shared manager
-    static boost::shared_ptr<CalloutManager>& getSharedManager() {
-        return (shared_manager_);
-    }
-
 private:
     /// @brief Check library index
     ///
@@ -375,9 +368,6 @@ private:
 
     /// Number of libraries.
     int num_libraries_;
-
-    /// Shared manager to survive library reloads
-    static boost::shared_ptr<CalloutManager> shared_manager_;
 };
 
 } // namespace util

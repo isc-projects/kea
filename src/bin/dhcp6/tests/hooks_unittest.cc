@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -115,15 +115,15 @@ public:
         // Clear static buffers
         resetCalloutBuffers();
 
-	// Reset the hook system in its original state
-	HooksManager::unloadLibraries();
+        // Reset the hook system in its original state
+        HooksManager::unloadLibraries();
     }
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
 
         // Clear shared manager
-        CalloutManager::getSharedManager().reset();
+        HooksManager::getSharedCalloutManager().reset();
 
     }
 
@@ -2091,7 +2091,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2141,7 +2141,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2188,7 +2188,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
 
     // Libraries will be reloaded later
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
