@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,7 @@ public:
     /// Unload all libraries and reset the shared manager.
     ~HooksManagerTest() {
         HooksManager::unloadLibraries();
-        CalloutManager::getSharedManager().reset();
+        HooksManager::getSharedCalloutManager().reset();
     }
 
 
@@ -400,7 +400,7 @@ TEST_F(HooksManagerTest, PrePostCalloutShared) {
     HookLibsCollection library_names;
 
     // Initialize the shared manager.
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -447,7 +447,7 @@ TEST_F(HooksManagerTest, PrePostCalloutSharedNotEmpty) {
                                       data::ConstElementPtr()));
 
     // Initialize the shared manager.
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -493,7 +493,7 @@ TEST_F(HooksManagerTest, PrePostCalloutSharedTooLate) {
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Initialize the shared manager (after loadLibraries so too late)
-    CalloutManager::getSharedManager().reset(new CalloutManager(0));
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
