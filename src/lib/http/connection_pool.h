@@ -20,6 +20,8 @@ public:
 
     void stop(const HttpConnectionPtr& connection);
 
+    void stopAll();
+
 private:
 
     std::set<HttpConnectionPtr> connections_;

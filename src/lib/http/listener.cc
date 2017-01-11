@@ -21,13 +21,24 @@ HttpListener::HttpListener(IOService& io_service,
       creator_factory_(creator_factory) {
 }
 
+HttpListener::~HttpListener() {
+    stop();
+}
+
 void
 HttpListener::start() {
     acceptor_.open(endpoint_);
+    acceptor_.setOption(HttpAcceptor::ReuseAddress(true));
     acceptor_.bind(endpoint_);
     acceptor_.listen();
 
     accept();
+}
+
+void
+HttpListener::stop() {
+    connections_.stopAll();
+    acceptor_.close();
 }
 
 void

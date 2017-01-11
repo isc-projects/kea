@@ -100,7 +100,10 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         doRead();
 
     } else {
-        request_->finalize();
+        try {
+            request_->finalize();
+        } catch (...) {
+        }
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
         output_buf_ = response->toString();
         doWrite();
