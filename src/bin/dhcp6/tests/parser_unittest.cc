@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -241,6 +241,7 @@ TEST(ParserTest, file) {
     configs.push_back("several-subnets.json");
     configs.push_back("simple.json");
     configs.push_back("stateless.json");
+    configs.push_back("with-ddns.json");
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i], false);
