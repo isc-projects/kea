@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -572,8 +572,9 @@ public:
     void getPool(const std::string& config, size_t subnet_index,
                  size_t pool_index, PoolPtr& pool) {
         ConstElementPtr status;
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json;
 
+        EXPECT_NO_THROW(json = parseDHCP4(config, true));
         EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
         ASSERT_TRUE(status);
         checkResult(status, 0);
