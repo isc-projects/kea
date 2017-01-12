@@ -357,7 +357,9 @@ HooksLibrariesParser::loadLibraries() {
     /// the list of libraries has changed.
     /// @todo: Delete any stored CalloutHandles before reloading the
     /// libraries
-    HooksManager::loadLibraries(libraries_);
+    if (!HooksManager::loadLibraries(libraries_)) {
+        isc_throw(DhcpConfigError, "One or more hook libraries failed to load");
+    }
 }
 
 // Method for testing
