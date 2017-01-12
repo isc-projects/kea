@@ -458,17 +458,10 @@ public:
         ConstElementPtr d2_client = global->get("dhcp-ddns");
         /// @todo - what if it's not in global? should we add it?
         if (d2_client) {
-            // Because "dhcp-ddns" is a MapElement and global->get()
-            // returns a ConstElementPtr, then we get a map we can't
-            // change.  So go thru gyrations to create a non-const
-            // map, update it with default values and then replace
-            // the one in global with the new one. Ick.
-            std::map<std::string, ConstElementPtr> d2_map;
-            d2_client->getValue(d2_map);
-            ElementPtr new_map(new MapElement());
-            new_map->setValue(d2_map);
-            cnt += SimpleParser::setDefaults(new_map, d2_client_defaults);
-            global->set("dhcp-ddns", new_map);
+            // Get the mutable form of d2 client config
+            ElementPtr mutable_d2 =
+                boost::const_pointer_cast<Element>(d2_client);
+            cnt += SimpleParser::setDefaults(mutable_d2, d2_client_defaults);
         }
 
 

@@ -1335,7 +1335,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         qualifying_suffix = getString(client_config, current_param);
     } catch (const std::exception& ex) {
         isc_throw(D2ClientError, "D2ClientConfig error: " << ex.what()
-                   << " " << getPosition(current_param, client_config));
+                  << " (" << getPosition(current_param, client_config) << ")");
     }
 
     // Now we check for logical errors. This repeats what is done in
@@ -1343,16 +1343,16 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     // emit meaningful parameter position info in the error.
     if (ncr_format != dhcp_ddns::FMT_JSON) {
         isc_throw(D2ClientError, "D2ClientConfig error: NCR Format: "
-                    << dhcp_ddns::ncrFormatToString(ncr_format)
-                    << " is not supported."
-                    << " " << getPosition("ncr-format", client_config));
+                  << dhcp_ddns::ncrFormatToString(ncr_format)
+                  << " is not supported. ("
+                  << getPosition("ncr-format", client_config) << ")");
     }
 
     if (ncr_protocol != dhcp_ddns::NCR_UDP) {
         isc_throw(D2ClientError, "D2ClientConfig error: NCR Protocol: "
                   << dhcp_ddns::ncrProtocolToString(ncr_protocol)
-                  << " is not supported."
-                  << " " << getPosition("ncr-protocol", client_config));
+                  << " is not supported. ("
+                  << getPosition("ncr-protocol", client_config) << ")");
     }
 
     if (sender_ip.getFamily() != server_ip.getFamily()) {
@@ -1361,14 +1361,14 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                   << " is: " << (server_ip.isV4() ? "IPv4" : "IPv6")
                   << " while sender-ip: "  << sender_ip.toText()
                   << " is: " << (sender_ip.isV4() ? "IPv4" : "IPv6")
-                  << " " << getPosition("sender-ip", client_config));
+                  << " (" << getPosition("sender-ip", client_config) << ")");
     }
 
     if (server_ip == sender_ip && server_port == sender_port) {
         isc_throw(D2ClientError, "D2ClientConfig error: server and sender cannot"
                   " share the exact same IP address/port: "
                   << server_ip.toText() << "/" << server_port
-                  << " " << getPosition("sender-ip", client_config));
+                  << " (" << getPosition("sender-ip", client_config) << ")");
     }
 
     try {
