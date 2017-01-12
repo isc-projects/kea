@@ -1,3 +1,8 @@
+1206.	[func]		tomek
+	'hooks-libraries' parser migrated to SimpleParser. The code will
+	now refuse a configuration if a hook library fails to load.
+	(Trac #5031, #5041, git 1bbaf4cbcf6fda59bacdf526a6c762315fdd88a1)
+
 1205.	[func]		tomek
 	Parsers for interfaces configuration converted to SimpleParser.
 	Removed obsolete 'version' parameter in Dhcp6.
