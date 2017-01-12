@@ -432,16 +432,28 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
+  For Cassandra:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"keyspace": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
+</screen>
   If the database is located on a different system to the DHCPv6 server, the
   database host name must also be specified. (It should be noted that this
   configuration may have a severe impact on server performance.):
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"host": "<replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
+</screen>
+  For Cassandra, multiple contact points can be provided:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"contact_points": "<replaceable>remote-host-name[, ...]</replaceable>" </userinput>, ... }, ... }
 </screen>
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv6 server.  In this case, set the value to the empty string:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
+</screen>
+  For Cassandra:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"contact_points": ""</userinput>, ... }, ... }
 </screen>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
@@ -555,7 +567,6 @@ for MySQL and PostgreSQL databases.</para></note>
 </section>
 
 </section>
-
 
 <section id="dhcp6-interface-selection">
   <title>Interface Selection</title>
@@ -956,7 +967,6 @@ temporarily override a list of interface names and listen on all interfaces.
         <xref linkend="dhcp6-option-data-defaults"/>.
       </para>
 
-
     <para>
       It is possible to override options on a per-subnet basis.  If
       clients connected to most of your subnets are expected to get the
@@ -1072,7 +1082,6 @@ temporarily override a list of interface names and listen on all interfaces.
         RFC but the configuration mechanism would allow any option format as it has
         no means to validate the format at the moment.
       </para>
-
 
     <para>
       <table frame="all" id="dhcp6-std-options-list">
@@ -2126,7 +2135,6 @@ should include options from the isc option space:
       </simpara></listitem>
       </itemizedlist>
       </para>
-
 
       <section id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
@@ -4081,7 +4089,6 @@ If not specified, the default value is:
       specified in <xref linkend="command-list-commands" /> and
       <xref linkend="command-shutdown" />, respectively.</para>
     </section>
-
 
       <section>
         <title>User context in IPv6 pools</title>
