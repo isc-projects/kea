@@ -1524,6 +1524,15 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
+    // out of range prefix length (new check)
+    string config_bogus7 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.128/1052\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
     ConstElementPtr json1;
     ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
     ConstElementPtr json2;
@@ -1536,6 +1545,8 @@ TEST_F(Dhcp4ParserTest, badPools) {
     ASSERT_NO_THROW(json5 = parseDHCP4(config_bogus5));
     ConstElementPtr json6;
     ASSERT_NO_THROW(json6 = parseDHCP4(config_bogus6));
+    ConstElementPtr json7;
+    ASSERT_NO_THROW(json7 = parseDHCP4(config_bogus7));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
@@ -1571,6 +1582,12 @@ TEST_F(Dhcp4ParserTest, badPools) {
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json6));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json7));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
