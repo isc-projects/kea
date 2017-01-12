@@ -118,7 +118,31 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 3: pd-pool without any user-context
+    // Configuration 3: one min-max pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"2001:db8:: - 2001:db8::ffff:ffff:ffff:ffff\","
+    "                \"user-context\": {"
+    "                    \"lw4over6-sharing-ratio\": 64,"
+    "                    \"lw4over6-v4-pool\": \"192.0.2.0/24\","
+    "                    \"lw4over6-sysports-exclude\": true,"
+    "                    \"lw4over6-bind-prefix-len\": 56"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 4: pd-pool without any user-context
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -137,7 +161,7 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 4: pd-pool with empty user-context
+    // Configuration 5: pd-pool with empty user-context
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -158,7 +182,7 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 5: pd-pool with user-context with lw4over6 parameters
+    // Configuration 6: pd-pool with user-context with lw4over6 parameters
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -4866,11 +4890,50 @@ TEST_F(Dhcp6ParserTest, poolUserContextlw4over6) {
     EXPECT_EQ(56L, int_value);
 }
 
+// Test verifies that it's possible to specify parameters in the user context
+// in the min-max address pool.
+TEST_F(Dhcp6ParserTest, poolMinMaxUserContext) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[3]), 0, 0, Lease::TYPE_NA, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(4, ctx->size());
+    ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
+    ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
+    ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
+    ConstElementPtr v6len   = ctx->get("lw4over6-bind-prefix-len");
+
+    ASSERT_TRUE(ratio);
+    ASSERT_EQ(Element::integer, ratio->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(ratio->getValue(int_value));
+    EXPECT_EQ(64L, int_value);
+
+    ASSERT_TRUE(v4pool);
+    ASSERT_EQ(Element::string, v4pool->getType());
+    EXPECT_EQ("192.0.2.0/24", v4pool->stringValue());
+
+    ASSERT_TRUE(exclude);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, exclude->getType());
+    EXPECT_NO_THROW(exclude->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+
+    ASSERT_TRUE(v6len);
+    ASSERT_EQ(Element::integer, v6len->getType());
+    EXPECT_NO_THROW(v6len->getValue(int_value));
+    EXPECT_EQ(56L, int_value);
+}
+
 // Test verifies that regular configuration does not provide any user context
 // in the address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextMissing) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[3]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[4]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     EXPECT_FALSE(pool->getContext());
 }
@@ -4879,7 +4942,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextMissing) {
 // address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[4]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[5]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);
@@ -4893,7 +4956,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
 // in the address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[5]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[6]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);

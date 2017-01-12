@@ -107,6 +107,28 @@ const char* PARSER_CONFIGS[] = {
     "        ],"
     "        \"subnet\": \"192.0.2.0/24\""
     "     } ]"
+    "}",
+
+    // Configuration 3: one min-max pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"192.0.2.0 - 192.0.2.15\","
+    "                \"user-context\": {"
+    "                    \"integer-param\": 42,"
+    "                    \"string-param\": \"Sagittarius\","
+    "                    \"bool-param\": true"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"192.0.2.0/24\""
+    "     } ]"
     "}"
 };
 
@@ -4453,6 +4475,39 @@ TEST_F(Dhcp4ParserTest, poolUserContextEmpty) {
 TEST_F(Dhcp4ParserTest, poolUserContextData) {
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[2]), 0, 0, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(3, ctx->size());
+    ConstElementPtr int_param  = ctx->get("integer-param");
+    ConstElementPtr str_param  = ctx->get("string-param");
+    ConstElementPtr bool_param = ctx->get("bool-param");
+
+    ASSERT_TRUE(int_param);
+    ASSERT_EQ(Element::integer, int_param->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(int_param->getValue(int_value));
+    EXPECT_EQ(42L, int_value);
+
+    ASSERT_TRUE(str_param);
+    ASSERT_EQ(Element::string, str_param->getType());
+    EXPECT_EQ("Sagittarius", str_param->stringValue());
+
+    ASSERT_TRUE(bool_param);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, bool_param->getType());
+    EXPECT_NO_THROW(bool_param->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+}
+
+// Test verifies that it's possible to specify parameters in the user context
+// in the min-max address pool.
+TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[3]), 0, 0, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);
