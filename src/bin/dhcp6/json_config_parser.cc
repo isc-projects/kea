@@ -171,12 +171,9 @@ public:
     void parse(ConstElementPtr pd_pool_) {
         std::string addr_str;
         std::string excluded_prefix_str = "::";
-        int64_t prefix_len;
-        int64_t delegated_len;
-        int64_t excluded_prefix_len = 0;
-        bool got_prefix = false;
-        bool got_prefix_len = false;
-        bool got_delegated_len = false;
+        uint8_t prefix_len = 0;
+        uint8_t delegated_len = 0;
+        uint8_t excluded_prefix_len = 0;
 
         // Parse the elements that make up the option definition.
         BOOST_FOREACH(ConfigPair param, pd_pool_->mapValue()) {
@@ -185,24 +182,21 @@ public:
             try {
                 if (entry == "prefix") {
                     addr_str = value->stringValue();
-                    got_prefix = true;
                 } else if (entry == "excluded-prefix") {
                     excluded_prefix_str = value->stringValue();
                 } else if (entry == "prefix-len") {
-                    prefix_len = value->intValue();
-                    got_prefix_len = true;
+                    prefix_len = getUint8(entry, value);
                 } else if (entry == "delegated-len") {
-                    delegated_len = value->intValue();
-                    got_delegated_len = true;
+                    delegated_len = getUint8(entry, value);
                 } else if (entry == "excluded-prefix-len") {
-                    excluded_prefix_len = value->intValue();
+                    excluded_prefix_len = getUint8(entry, value);
                 } else if (entry == "option-data") {
                     OptionDataListParser opts_parser(AF_INET6);
                     opts_parser.parse(options_, value);
                 } else if (entry == "user-context") {
                     user_context_ = value;
                 } else {
-                    isc_throw(DhcpConfigError,
+                    isc_throw(isc::dhcp::DhcpConfigError,
                               "unsupported parameter: " << entry
                               << " (" << value->getPosition() << ")");
                 }
@@ -216,13 +210,9 @@ public:
 
         // Check the pool parameters. It will throw an exception if any
         // of the required parameters are not present or invalid.
-        if (!got_prefix || !got_prefix_len || !got_delegated_len) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "Missing parameter '"
-                      << (!got_prefix ? "prefix" :
-                          (!got_prefix_len ? "prefix-len" : "delegated-len"))
-                      << "' (" << pd_pool_->getPosition() << ")");
-        }
+        require_("prefix", pd_pool_);
+        require_("prefix-len", pd_pool_);
+        require_("delegated-len", pd_pool_);
         try {
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(IOAddress(addr_str),
@@ -248,7 +238,39 @@ public:
         pools_->push_back(pool_);
     }
 
-protected:
+private:
+
+    /// @brief Require a mandatory element
+    ///
+    /// @param name Entry name
+    /// @param config Pools configuration
+    /// @throw isc::dhcp::DhcpConfigError if not present
+    void require_(const std::string& name, ConstElementPtr config) const {
+        if (!config->contains(name)) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "Missing parameter '" << name << "' ("
+                      << config->getPosition() << ")");
+        }
+    }
+
+    /// @brief Get an uint8_t value
+    ///
+    /// @param name Entry name
+    /// @param value Integer element value
+    /// @return uint8_t value
+    /// @throw isc::data::TypeError when it is not an integer
+    /// isc::dhcp::DhcpConfigError when it does not fit in an uint8_t
+    uint8_t getUint8(const std::string& name, ConstElementPtr value) const {
+        int64_t val_int = value->intValue();
+        if ((val_int < std::numeric_limits<uint8_t>::min()) ||
+            (val_int > std::numeric_limits<uint8_t>::max())) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "out of range value (" << val_int
+                      << ") specified for parameter '"
+                      << name << "' (" << value->getPosition() << ")");
+        }
+        return (static_cast<uint8_t>(val_int));
+    }
 
     /// Pointer to the created pool object.
     isc::dhcp::Pool6Ptr pool_;
