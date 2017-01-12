@@ -423,23 +423,13 @@ public:
 ///
 /// Only if the library list has changed and the libraries are valid will the
 /// change be applied.
-class HooksLibrariesParser : public DhcpConfigParser {
+class HooksLibrariesParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief Constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "hooks-libraries" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed.
-    ///
-    /// @throw BadValue if supplied parameter name is not "hooks-libraries"
-    HooksLibrariesParser(const std::string& param_name);
 
     /// @brief Parses parameters value
     ///
     /// Parses configuration entry (list of parameters) and adds each element
-    /// to the hooks libraries list.  The  method also checks whether the
+    /// to the hooks libraries list.  The method also checks whether the
     /// list of libraries is the same as that already loaded.  If not, it
     /// checks each of the libraries in the list for validity (they exist and
     /// have a "version" function that returns the correct value).
@@ -460,22 +450,39 @@ public:
     ///      ]
     /// @endcode
     ///
-    /// As Kea has not yet implemented parameters, the parsing code only checks
-    /// that:
+    /// The parsing code only checks that:
     ///
     /// -# Each element in the hooks-libraries list is a map
-    /// -# The map contains an element "library" whose value is a string: all
-    ///    other elements in the map are ignored.
+    /// -# The map contains an element "library" whose value is a not blank string
+    /// -# That there is an optional 'parameters' element.
+    /// -# That there are no other element.
+    ///
+    /// If you want to check whether the library is really present (if the file
+    /// is on disk, it is really a library and that it could be loaded), call
+    /// @ref verifyLibraries().
+    ///
+    /// This method stores parsed libraries in @ref libraries_.
     ///
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
+    void parse(isc::data::ConstElementPtr value);
+
+    /// @brief Verifies that libraries stored in libraries_ are valid.
+    ///
+    /// This method is a smart wrapper around @ref HooksManager::validateLibraries().
+    /// It tries to validate all the libraries stored in libraries_.
+    /// @throw DhcpConfigError if any issue is discovered.
+    void verifyLibraries();
 
     /// @brief Commits hooks libraries data
     ///
-    /// Providing that the specified libraries are valid and are different
-    /// to those already loaded, this method loads the new set of libraries
-    /// (and unloads the existing set).
-    virtual void commit();
+    /// This method calls necessary methods in HooksManager that will unload
+    /// any libraries that may be currently loaded and will load the actual
+    /// libraries. Providing that the specified libraries are valid and are
+    /// different to those already loaded, this method loads the new set of
+    /// libraries (and unloads the existing set).
+    ///
+    /// @throw DhcpConfigError if the call to HooksManager fails.
+    void loadLibraries();
 
     /// @brief Returns list of parsed libraries
     ///
@@ -485,16 +492,15 @@ public:
     ///
     /// @param [out] libraries List of libraries that were specified in the
     ///        new configuration.
-    /// @param [out] changed true if the list is different from that currently
-    ///        loaded.
-    void getLibraries(isc::hooks::HookLibsCollection& libraries, bool& changed);
+    void getLibraries(isc::hooks::HookLibsCollection& libraries);
 
 private:
     /// List of hooks libraries with their configuration parameters
     isc::hooks::HookLibsCollection libraries_;
 
-    /// Indicator flagging that the list of libraries has changed.
-    bool changed_;
+    /// Position of the original element is stored in case we need to report an
+    /// error later.
+    isc::data::Element::Position position_;
 };
 
 /// @brief Parser for option data value.

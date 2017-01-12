@@ -709,8 +709,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
     } else if (config_id.compare("hosts-database") == 0) {
         parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
-    } else if (config_id.compare("hooks-libraries") == 0) {
-        parser = new HooksLibrariesParser(config_id);
+    // hooks-libraries is now converted to SimpleParser.
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
     // mac-source has been converted to SimpleParser.
@@ -844,7 +843,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
     // has the same risk of failure as doing the change.)
-    ParserPtr hooks_parser;
+    HooksLibrariesParser hooks_parser;
 
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
@@ -944,6 +943,12 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "hooks-libraries") {
+                hooks_parser.parse(config_pair.second);
+                hooks_parser.verifyLibraries();
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
@@ -952,13 +957,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "hooks-libraries") {
-                // Executing the commit will alter currently loaded hooks
-                // libraries. Check if the supplied libraries are valid,
-                // but defer the commit until after everything else has
-                // committed.
-                hooks_parser = parser;
-                hooks_parser->build(config_pair.second);
             } else if (config_pair.first == "client-classes") {
                 client_classes_parser = parser;
             } else {
@@ -1037,9 +1035,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            if (hooks_parser) {
-                hooks_parser->commit();
-            }
+            hooks_parser.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
