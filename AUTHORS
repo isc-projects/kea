@@ -123,7 +123,7 @@ We have received the following contributions:
 
  - Andrei Pavel, Qualitance
    2016-10: Support for DHCPv6 options defined in RFC6603 and RFC7598
-   2016-12: Cassandra Host Data Source
+   2017-01: Cassandra Host Data Source
 
  - Vincent Legout
    2016-11: Fixed serveral spelling mistakes
