@@ -707,8 +707,9 @@ public:
     void getPool(const std::string& config, size_t subnet_index,
                  size_t pool_index, Lease::Type type, PoolPtr& pool) {
         ConstElementPtr status;
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json;
 
+        EXPECT_NO_THROW(json = parseDHCP6(config, true));
         EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(status);
         checkResult(status, 0);
