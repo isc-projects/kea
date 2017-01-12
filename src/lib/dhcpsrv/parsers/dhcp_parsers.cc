@@ -903,34 +903,42 @@ PoolParser::parse(ConstElementPtr pool_structure,
             len = boost::lexical_cast<int>(prefix_len);
         } catch (...)  {
             isc_throw(DhcpConfigError, "Failed to parse pool "
-                      "definition: " << text_pool->stringValue()
-                      << " (" << text_pool->getPosition() << ")");
+                      "definition: " << txt << " ("
+                      << text_pool->getPosition() << ")");
         }
 
-        pool = poolMaker(addr, len);
-        pools_->push_back(pool);
-
-        // If there's user-context specified, store it.
-        ConstElementPtr user_context = pool_structure->get("user-context");
-        if (user_context) {
-            if (user_context->getType() != Element::map) {
-                isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
-                          << user_context->getPosition() << ")");
-            }
-            pool->setUserContext(user_context);
+        try {
+            pool = poolMaker(addr, len);
+            pools_->push_back(pool);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "Failed to create pool defined by: "
+                      << txt << " (" << text_pool->getPosition() << ")");
         }
 
     } else {
+        isc::asiolink::IOAddress min("::");
+        isc::asiolink::IOAddress max("::");
 
         // Is this min-max notation?
         pos = txt.find("-");
         if (pos != string::npos) {
             // using min-max notation
-            isc::asiolink::IOAddress min(txt.substr(0,pos));
-            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+            try {
+                min = isc::asiolink::IOAddress(txt.substr(0, pos));
+                max = isc::asiolink::IOAddress(txt.substr(pos + 1));
+            } catch (...)  {
+                isc_throw(DhcpConfigError, "Failed to parse pool "
+                          "definition: " << txt << " ("
+                          << text_pool->getPosition() << ")");
+            }
 
-            pool = poolMaker(min, max);
-            pools_->push_back(pool);
+            try {
+                pool = poolMaker(min, max);
+                pools_->push_back(pool);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, "Failed to create pool defined by: "
+                          << txt << " (" << text_pool->getPosition() << ")");
+            }
         }
     }
 
@@ -940,6 +948,16 @@ PoolParser::parse(ConstElementPtr pool_structure,
                   ". There are two acceptable formats <min address-max address>"
                   " or <prefix/len> ("
                   << text_pool->getPosition() << ")");
+    }
+
+    // If there's user-context specified, store it.
+    ConstElementPtr user_context = pool_structure->get("user-context");
+    if (user_context) {
+        if (user_context->getType() != Element::map) {
+            isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                      << user_context->getPosition() << ")");
+        }
+        pool->setUserContext(user_context);
     }
 
     // Parser pool specific options.
