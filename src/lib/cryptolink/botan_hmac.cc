@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ public:
                       "Unknown hash algorithm: " <<
                       static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
 
         hmac_.reset(new Botan::HMAC(hash));
@@ -94,7 +94,7 @@ public:
         } catch (const Botan::Invalid_Key_Length& ikl) {
             isc_throw(BadKey, ikl.what());
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 
@@ -129,7 +129,7 @@ public:
         try {
             hmac_->update(static_cast<const Botan::byte*>(data), len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 
@@ -145,7 +145,7 @@ public:
             }
             result.writeData(&b_result[0], len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 
@@ -161,7 +161,7 @@ public:
             }
             std::memcpy(result, &b_result[0], output_size);
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 
@@ -176,7 +176,7 @@ public:
             }
             return (std::vector<uint8_t>(&b_result[0], &b_result[len]));
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 
@@ -203,7 +203,7 @@ public:
                                     static_cast<const unsigned char*>(sig),
                                     len));
         } catch (const Botan::Exception& exc) {
-            isc_throw(LibraryError, exc.what());
+            isc_throw(LibraryError, "Botan error: " << exc.what());
         }
     }
 

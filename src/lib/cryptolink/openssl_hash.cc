@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,8 @@ public:
 
         md_ = EVP_MD_CTX_new();
         if (md_ == 0) {
-            isc_throw(isc::cryptolink::LibraryError, "EVP_MD_CTX_new");
+            isc_throw(isc::cryptolink::LibraryError,
+                      "OpenSSL EVP_MD_CTX_new() failed");
         }
 
         EVP_DigestInit_ex(md_, algo, NULL);

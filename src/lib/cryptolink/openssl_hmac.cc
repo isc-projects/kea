@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,13 +46,13 @@ public:
 
         md_ = HMAC_CTX_new();
         if (md_ == 0) {
-            isc_throw(LibraryError, "HMAC_CTX_new");
+            isc_throw(LibraryError, "OpenSSL HMAC_CTX_new() failed");
         }
 
         if (!HMAC_Init_ex(md_, secret,
                           static_cast<int>(secret_len),
                           algo, NULL)) {
-            isc_throw(LibraryError, "HMAC_Init_ex");
+            isc_throw(LibraryError, "OpenSSL HMAC_Init_ex() failed");
         }
     }
 
@@ -75,7 +75,7 @@ public:
     size_t getOutputLength() const {
         int size = HMAC_size(md_);
         if (size < 0) {
-            isc_throw(LibraryError, "HMAC_size");
+            isc_throw(LibraryError, "OpenSSL HMAC_size() failed");
         }
         return (static_cast<size_t>(size));
     }
@@ -87,7 +87,7 @@ public:
         if (!HMAC_Update(md_,
                          static_cast<const unsigned char*>(data),
                          len)) {
-            isc_throw(LibraryError, "HMAC_Update");
+            isc_throw(LibraryError, "OpenSSLHMAC_Update() failed");
         }
     }
 
@@ -98,7 +98,7 @@ public:
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
         if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "HMAC_Final");
+            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
         }
         if (len > size) {
             len = size;
@@ -113,7 +113,7 @@ public:
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
         if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "HMAC_Final");
+            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
         }
         if (len > size) {
             len = size;
@@ -128,7 +128,7 @@ public:
         size_t size = getOutputLength();
         ossl::SecBuf<unsigned char> digest(size);
         if (!HMAC_Final(md_, &digest[0], NULL)) {
-            isc_throw(LibraryError, "HMAC_Final");
+            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
         }
         if (len < size) {
             digest.resize(len);
@@ -148,16 +148,16 @@ public:
         // Get the digest from a copy of the context
         HMAC_CTX* tmp = HMAC_CTX_new();
         if (tmp == 0) {
-            isc_throw(LibraryError, "HMAC_CTX_new");
+            isc_throw(LibraryError, "OpenSSL HMAC_CTX_new() failed");
         }
         if (!HMAC_CTX_copy(tmp, md_)) {
             HMAC_CTX_free(tmp);
-            isc_throw(LibraryError, "HMAC_CTX_copy");
+            isc_throw(LibraryError, "OpenSSL HMAC_CTX_copy() failed");
         }
         ossl::SecBuf<unsigned char> digest(size);
         if (!HMAC_Final(tmp, &digest[0], NULL)) {
             HMAC_CTX_free(tmp);
-            isc_throw(LibraryError, "HMAC_Final");
+            isc_throw(LibraryError, "OpenSSL HMAC_Final() failed");
         }
         HMAC_CTX_free(tmp);
         if (len > size) {
