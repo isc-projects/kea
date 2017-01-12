@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -624,7 +624,7 @@ private:
     /// This function performs lexical cast of a string value to integer
     /// value and checks if the resulting value is within a range of a
     /// target type. The target type should be one of the supported
-    /// integer types.
+    /// integer types. Hexadecimal input is supported.
     ///
     /// @param value_str input value given as string.
     /// @tparam T target integer type for lexical cast.

@@ -1190,7 +1190,8 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
     OptionPtr option_v6;
     std::vector<std::string> str_values;
     str_values.push_back("123456");
-    str_values.push_back("7");
+    // Try with hexadecimal
+    str_values.push_back("0x7");
     str_values.push_back("256");
     str_values.push_back("1111");
 
