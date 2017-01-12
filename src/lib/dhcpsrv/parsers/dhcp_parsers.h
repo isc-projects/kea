@@ -496,10 +496,13 @@ public:
 
     /// @brief Commits hooks libraries data
     ///
-    /// This method calls necessary methods in HooksManager that will load the
-    /// actual libraries. Providing that the specified libraries are valid and are different
-    /// to those already loaded, this method loads the new set of libraries
-    /// (and unloads the existing set).
+    /// This method calls necessary methods in HooksManager that will unload
+    /// any libraries that may be currently loaded and will load the actual
+    /// libraries. Providing that the specified libraries are valid and are
+    /// different to those already loaded, this method loads the new set of
+    /// libraries (and unloads the existing set).
+    ///
+    /// @throw DhcpConfigError if the call to HooksManager fails.
     void loadLibraries();
 
     /// @brief Returns list of parsed libraries
