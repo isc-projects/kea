@@ -429,8 +429,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
     } else if (config_id.compare("hosts-database") == 0) {
         parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
-    } else if (config_id.compare("hooks-libraries") == 0) {
-        parser = new HooksLibrariesParser(config_id);
+        // hooks-libraries are now migrated to SimpleParser.
     } else if (config_id.compare("echo-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else if (config_id.compare("dhcp-ddns") == 0) {
@@ -575,7 +574,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
     // the same risk of failure as doing the change.)
-    ParserPtr hooks_parser;
+    HooksLibrariesParser hooks_parser;
 
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
@@ -661,6 +660,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "hooks-libraries") {
+                hooks_parser.parse(config_pair.second);
+                hooks_parser.verifyLibraries();
+                continue;
+            }
+            
             // Legacy DhcpConfigParser stuff below
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
@@ -670,12 +675,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "hooks-libraries") {
-                // Executing commit will alter currently-loaded hooks
-                // libraries.  Check if the supplied libraries are valid,
-                // but defer the commit until everything else has committed.
-                hooks_parser = parser;
-                parser->build(config_pair.second);
             } else if (config_pair.first == "client-classes") {
                 client_classes_parser = parser;
             } else {
@@ -752,9 +751,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            if (hooks_parser) {
-                hooks_parser->commit();
-            }
+            hooks_parser.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());

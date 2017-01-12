@@ -222,28 +222,17 @@ void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr v
 }
 
 // ******************** HooksLibrariesParser *************************
-
-HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
-    : libraries_(), changed_(false)
-{
-    // Sanity check on the name.
-    if (param_name != "hooks-libraries") {
-        isc_throw(BadValue, "Internal error. Hooks libraries "
-            "parser called for the wrong parameter: " << param_name);
-    }
-}
-
-// Parse the configuration.  As Kea has not yet implemented parameters, the
-// parsing code only checks that:
-//
-// 1. Each element in the hooks-libraries list is a map
-// 2. The map contains an element "library" whose value is a string: all
-//    other elements in the map are ignored.
 void
-HooksLibrariesParser::build(ConstElementPtr value) {
+HooksLibrariesParser::parse(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
-    changed_ = false;
+
+    if (!value) {
+        isc_throw(DhcpConfigError, "Tried to parse null hooks libraries");
+    }
+
+    // Let's store
+    position_ = value->getPosition();
 
     // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
@@ -256,7 +245,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
                 " a map (" << library_entry->getPosition() << ")");
         }
 
-        // Iterate iterate through each element in the map.  We check
+        // Iterate through each element in the map.  We check
         // whether we have found a library element.
         bool lib_found = false;
 
@@ -292,13 +281,21 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
                 // Note we have found the library name.
                 lib_found = true;
-            } else {
-                // If there are parameters, let's remember them.
-                if (entry_item.first == "parameters") {
-                    parameters = entry_item.second;
-                }
+                continue;
             }
+
+            // If there are parameters, let's remember them.
+            if (entry_item.first == "parameters") {
+                parameters = entry_item.second;
+                continue;
+            }
+
+            // For all other parameters we will throw.
+            isc_throw(DhcpConfigError, "unknown hooks library parameter: "
+                      << entry_item.first << "("
+                      << library_entry->getPosition() << ")");
         }
+
         if (! lib_found) {
             isc_throw(DhcpConfigError, "hooks library configuration error:"
                 " one or more hooks-libraries elements are missing the"
@@ -308,7 +305,9 @@ HooksLibrariesParser::build(ConstElementPtr value) {
 
         libraries_.push_back(make_pair(libname, parameters));
     }
+}
 
+void HooksLibrariesParser::verifyLibraries() {
     // Check if the list of libraries has changed.  If not, nothing is done
     // - the command "DhcpN libreload" is required to reload the same
     // libraries (this prevents needless reloads when anything else in the
@@ -334,31 +333,25 @@ HooksLibrariesParser::build(ConstElementPtr value) {
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
                   "library or libraries in error are: " << error_list
-                  << " (" << value->getPosition() << ")");
+                  << "(" << position_ << ")");
     }
-
-    // The library list has changed and the libraries are valid, so flag for
-    // update when commit() is called.
-    changed_ = true;
 }
 
 void
-HooksLibrariesParser::commit() {
+HooksLibrariesParser::loadLibraries() {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
-    if (changed_) {
-        /// @todo: Delete any stored CalloutHandles before reloading the
-        /// libraries
-        HooksManager::loadLibraries(libraries_);
+    /// @todo: Delete any stored CalloutHandles before reloading the
+    /// libraries
+    if (!HooksManager::loadLibraries(libraries_)) {
+        isc_throw(DhcpConfigError, "One or more hook libraries failed to load");
     }
 }
 
 // Method for testing
 void
-HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries,
-                                   bool& changed) {
+HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries) {
     libraries = libraries_;
-    changed = changed_;
 }
 
 // **************************** OptionDataParser *************************
