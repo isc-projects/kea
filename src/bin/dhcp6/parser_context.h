@@ -191,7 +191,6 @@ public:
         DHCP6,
 
         // not yet DHCP4,
-        // not yet DHCP_DDNS,
 
         ///< Used while parsing content of Logging
         LOGGING,
