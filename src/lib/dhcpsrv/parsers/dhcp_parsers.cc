@@ -900,7 +900,12 @@ PoolParser::parse(ConstElementPtr pool_structure,
 
             // No checks for values over 128. Range correctness will
             // be checked in Pool4 constructor.
-            len = boost::lexical_cast<int>(prefix_len);
+            int val_len = boost::lexical_cast<int>(prefix_len);
+            if ((val_len < std::numeric_limits<uint8_t>::min()) ||
+                (val_len > std::numeric_limits<uint8_t>::max())) {
+                isc_throw(OutOfRange, "");
+            }
+            len = static_cast<uint8_t>(val_len);
         } catch (...)  {
             isc_throw(DhcpConfigError, "Failed to parse pool "
                       "definition: " << txt << " ("

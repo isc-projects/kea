@@ -1572,7 +1572,17 @@ TEST_F(Dhcp6ParserTest, badPools) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8::ff:ffff - 2001:db8::\" } ],"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::ffff - 2001:db8:1::\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // out of range prefix length (new check)
+    string config_bogus7 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/1104\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1588,6 +1598,8 @@ TEST_F(Dhcp6ParserTest, badPools) {
     ASSERT_NO_THROW(json5 = parseDHCP6(config_bogus5));
     ConstElementPtr json6;
     ASSERT_NO_THROW(json6 = parseDHCP6(config_bogus6));
+    ConstElementPtr json7;
+    ASSERT_NO_THROW(json7 = parseDHCP6(config_bogus7));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json1));
@@ -1623,6 +1635,12 @@ TEST_F(Dhcp6ParserTest, badPools) {
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json6));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json7));
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
