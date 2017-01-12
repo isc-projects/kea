@@ -382,6 +382,7 @@ public:
     /// to the sources list.
     ///
     /// @param value pointer to the content of parsed values
+    /// @param mac_sources parsed sources will be stored here
     void parse(CfgMACSource& mac_sources, isc::data::ConstElementPtr value);
 };
 
@@ -461,14 +462,15 @@ public:
     /// is on disk, it is really a library and that it could be loaded), call
     /// @ref verifyLibraries().
     ///
-    /// This method stores parsed libraries in @ref libraries_.
+    /// This method stores parsed libraries in libraries_.
     ///
     /// @param value pointer to the content of parsed values
     void parse(isc::data::ConstElementPtr value);
 
     /// @brief Verifies that libraries stored in libraries_ are valid.
     ///
-    /// This method is a smart wrapper around @ref HooksManager::validateLibraries().
+    /// This method is a smart wrapper around @ref
+    /// isc::hooks::HooksManager::validateLibraries().
     /// It tries to validate all the libraries stored in libraries_.
     /// @throw DhcpConfigError if any issue is discovered.
     void verifyLibraries();
