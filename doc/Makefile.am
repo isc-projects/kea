@@ -20,6 +20,7 @@ nobase_dist_doc_DATA += examples/kea4/pgsql-reservations.json
 nobase_dist_doc_DATA += examples/kea4/reservations.json
 nobase_dist_doc_DATA += examples/kea4/several-subnets.json
 nobase_dist_doc_DATA += examples/kea4/single-subnet.json
+nobase_dist_doc_DATA += examples/kea4/with-ddns.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
 nobase_dist_doc_DATA += examples/kea6/backends.json
 nobase_dist_doc_DATA += examples/kea6/classify.json
@@ -35,6 +36,7 @@ nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 
 devel:
 	mkdir -p html

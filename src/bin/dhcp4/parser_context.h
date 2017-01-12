@@ -187,6 +187,8 @@ public:
         ///< Used while parsing content of Dhcp4.
         DHCP4,
 
+        // not yet DHCP6,
+
         ///< Used while parsing content of Logging
         LOGGING,
 
