@@ -482,7 +482,7 @@ public:
 
     /// @brief Returns DHCP4o6 IPC port
     ///
-    /// See @ref setDhcp4o6Port or brief discussion.
+    /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
     uint32_t getDhcp4o6Port() {
         return (dhcp4o6_port_);

@@ -39,8 +39,9 @@
       "subnet": "2001:db8:1::/64",
       "interface": "ethX"
     }
-  ]
+  ],
 
+# Enable dynamic DNS updates
   "dhcp-ddns" : {
         "enable-updates" : true,
         "server-ip" : "3001::1",
@@ -56,7 +57,7 @@
         "replace-client-name" : "when-present",
         "generated-prefix" : "test.prefix",
         "qualifying-suffix" : "test.suffix."
-  },
+  }
 
 },
 

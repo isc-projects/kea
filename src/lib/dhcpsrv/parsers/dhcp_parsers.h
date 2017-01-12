@@ -1024,16 +1024,10 @@ protected:
 /// @brief Parser for  D2ClientConfig
 ///
 /// This class parses the configuration element "dhcp-ddns" common to the
-/// spec files for both dhcp4 and dhcp6. It creates an instance of a
+/// config files for both dhcp4 and dhcp6. It creates an instance of a
 /// D2ClientConfig.
 class D2ClientConfigParser : public  isc::data::SimpleParser {
 public:
-    /// @brief Constructor
-    ///
-    D2ClientConfigParser(){};
-
-    /// @brief Destructor
-    virtual ~D2ClientConfigParser(){};
 
     /// @brief Parses a given dhcp-ddns element into D2ClientConfig.
     ///
@@ -1045,9 +1039,11 @@ public:
     /// -# qualifying-suffix
     /// -# server-ip
     /// -# server-port
+    /// -# sender-ip
+    /// -# sender-port
+    /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# remove-on-renew
     /// -# always-include-fqdn
     /// -# allow-client-update
     /// -# override-no-update
