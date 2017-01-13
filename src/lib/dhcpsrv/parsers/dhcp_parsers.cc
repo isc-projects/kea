@@ -1238,25 +1238,81 @@ SubnetConfigParser::getOptionalParam(const std::string& name) {
 
 //**************************** D2ClientConfigParser **********************
 
+namespace {
+
+template <typename int_type> int_type
+getInt(const std::string& name, ConstElementPtr value) {
+    int64_t val_int = value->intValue();
+    if ((val_int < std::numeric_limits<int_type>::min()) ||
+        (val_int > std::numeric_limits<int_type>::max())) {
+        isc_throw(DhcpConfigError, "out of range value (" << val_int
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+    return (static_cast<int_type>(val_int));
+}
+
+uint32_t
+getUint32(const std::string& name, ConstElementPtr value) {
+    return (getInt<uint32_t>(name, value));
+}
+
+IOAddress
+getIOAddress(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (IOAddress(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, "invalid address (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+dhcp_ddns::NameChangeProtocol
+getProtocol(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (dhcp_ddns::stringToNcrProtocol(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid NameChangeRequest protocol (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+dhcp_ddns::NameChangeFormat
+getFormat(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (dhcp_ddns::stringToNcrFormat(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid NameChangeRequest format (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+D2ClientConfig::ReplaceClientNameMode
+getMode(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (D2ClientConfig::stringToReplaceClientNameMode(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid ReplaceClientName mode (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+};
+
 D2ClientConfigPtr
 D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     D2ClientConfigPtr new_config;
-    bool enable_updates;
-    IOAddress server_ip(0);
-    uint32_t server_port;
-    IOAddress sender_ip(0);
-    uint32_t sender_port;
-    uint32_t max_queue_size;
-    dhcp_ddns::NameChangeProtocol ncr_protocol;
-    dhcp_ddns::NameChangeFormat ncr_format;
-    bool always_include_fqdn;
-    bool override_no_update;
-    bool override_client_update;
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
-    std::string generated_prefix;
-    std::string qualifying_suffix;
-    std::string current_param;
-
     
     if (isShortCutDisabled(client_config)) {
       // If enable-updates is the only parameter and it is false then
@@ -1267,82 +1323,96 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
       return (new_config);
     }
 
+    // As isShortCutDisabled() was called this cannot fail
+    bool enable_updates = client_config->get("enable-updates")->boolValue();
+
     // Get all parameters that are needed to create the D2ClientConfig.
-    // We fetch all the parameters inside their own try clause so we
-    // spit out an error with an accurate text position.  Use the
-    // local, current_param, to keep track of the parameter involved.
-    try {
-        current_param = "enable-updates";
-        enable_updates = getBoolean(client_config, current_param);
+    std::string qualifying_suffix;
+    bool found_qualifying_suffix = false;
+    IOAddress server_ip(0);
+    uint32_t server_port;
+    std::string sender_ip_str;
+    uint32_t sender_port;
+    uint32_t max_queue_size;
+    dhcp_ddns::NameChangeProtocol ncr_protocol;
+    dhcp_ddns::NameChangeFormat ncr_format;
+    bool always_include_fqdn;
+    bool allow_client_update;
+    bool override_no_update;
+    bool override_client_update;
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
+    std::string generated_prefix;
 
-        current_param = "server-ip";
-        server_ip = IOAddress(getString(client_config, (current_param)));
-
-        current_param = "server-port";
-        server_port = getInteger(client_config, current_param);
-
-        current_param = "sender-ip";
-        std::string sender_ip_str(getString(client_config, current_param));
-        if (sender_ip_str.empty()) {
-            // The default sender IP depends on the server IP family
-            sender_ip = (server_ip.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() :
-                                            IOAddress::IPV6_ZERO_ADDRESS());
-        }
-        else {
-            sender_ip = IOAddress(sender_ip_str);
-        }
-
-        current_param = "sender-port";
-        sender_port = getInteger(client_config, current_param);
-
-        current_param = "max-queue-size";
-        max_queue_size = getInteger(client_config, current_param);
-
-        current_param = "ncr-protocol";
-        ncr_protocol = dhcp_ddns::stringToNcrProtocol(getString(client_config,
-                                                                current_param));
-        current_param = "ncr-format";
-        ncr_format = dhcp_ddns::stringToNcrFormat(getString(client_config,
-                                                            current_param));
-
-        current_param = "always-include-fqdn";
-        always_include_fqdn = getBoolean(client_config, current_param);
-
-        current_param = "override-no-update";
-        override_no_update = getBoolean(client_config, current_param);
-
-        current_param = "override-client-update";
-        override_client_update = getBoolean(client_config, current_param);
-
-        // Formerly, replace-client-name was boolean, so for now we'll support
-        // boolean values by mapping them to the appropriate mode
-        current_param = "replace-client-name";
-        std::string mode_str = getString(client_config, current_param);
-        if (boost::iequals(mode_str, "false")) {
-            // @todo add a debug log
-            replace_client_name_mode = D2ClientConfig::RCM_NEVER;
-        }
-        else if (boost::iequals(mode_str, "true")) {
-            // @todo add a debug log
-            replace_client_name_mode = D2ClientConfig::RCM_WHEN_PRESENT;
-        } else {
-            replace_client_name_mode = D2ClientConfig::
-                                       stringToReplaceClientNameMode(mode_str);
-        }
-
-        current_param = "generated-prefix";
-        generated_prefix = getString(client_config, current_param);
-
-        // temporary fix
+    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
+        std::string entry(param.first);
+        ConstElementPtr value(param.second);
         try {
-            current_param = "qualifying-suffix";
-            qualifying_suffix = getString(client_config, current_param);
-        } catch (const std::exception&) {
-            if (enable_updates) throw;
+            if (entry == "enable-updates") {
+                // already done.
+            } else if (entry == "qualifying-suffix") {
+                qualifying_suffix = value->stringValue();
+                found_qualifying_suffix = true;
+            } else if (entry == "server-ip") {
+                server_ip = getIOAddress("server-ip", value);
+            } else if (entry == "server-port") {
+                server_port = getUint32("server-port", value);
+            } else if (entry == "sender-ip") {
+                sender_ip_str = value->stringValue();
+            } else if (entry == "sender-port") {
+                sender_port = getUint32("sender-port", value);
+            } else if (entry == "max-queue-size") {
+                max_queue_size = getUint32("max-queue-size", value);
+            } else if (entry == "ncr-protocol") {
+                ncr_protocol = getProtocol("ncr-protocol", value);
+            } else if (entry == "ncr-format") {
+                ncr_format = getFormat("ncr-format", value);
+            } else if (entry == "always-include-fqdn") {
+                always_include_fqdn = value->boolValue();
+            } else if (entry == "allow-client-update") {
+                allow_client_update = value->boolValue();
+                // currently unused
+                (void)allow_client_update;
+            } else if (entry == "override-no-update") {
+                override_no_update = value->boolValue();
+            } else if (entry == "override-client-update") {
+                override_client_update = value->boolValue();
+            } else if (entry == "replace-client-name") {
+                replace_client_name_mode = getMode("replace-client-name", value);
+            } else if (entry == "generated-prefix") {
+                generated_prefix = value->stringValue();
+            } else {
+                isc_throw(DhcpConfigError,
+                          "unsupported parameter '" << entry
+                          << " (" << value->getPosition() << ")");
+            }
+        } catch (const isc::data::TypeError&) {
+            isc_throw(DhcpConfigError,
+                      "invalid value type specified for parameter '" << entry
+                      << " (" << value->getPosition() << ")");
         }
-    } catch (const std::exception& ex) {
-        isc_throw(D2ClientError, "D2ClientConfig error: " << ex.what()
-                  << " (" << getPosition(current_param, client_config) << ")");
+    }
+
+    // Qualifying-suffix is required when updates are enabled
+    if (enable_updates && !found_qualifying_suffix) {
+        isc_throw(DhcpConfigError,
+                  "parameter 'qualifying-suffix' is required when "
+                  "updates are enabled ("
+                  << client_config->getPosition() << ")");
+    }
+
+    IOAddress sender_ip(0);
+    if (sender_ip_str.empty()) {
+        // The default sender IP depends on the server IP family
+        sender_ip = (server_ip.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() :
+                                        IOAddress::IPV6_ZERO_ADDRESS());
+    } else {
+        try {
+            sender_ip = IOAddress(sender_ip_str);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "invalid address (" << sender_ip_str
+                      << ") specified for parameter 'sender-ip' ("
+                      << getPosition("sender-ip", client_config) << ")");
+        }
     }
 
     // Now we check for logical errors. This repeats what is done in
@@ -1363,7 +1433,8 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     }
 
     if (sender_ip.getFamily() != server_ip.getFamily()) {
-        isc_throw(D2ClientError, "D2ClientConfig error: address family mismatch: "
+        isc_throw(D2ClientError,
+                  "D2ClientConfig error: address family mismatch: "
                   << "server-ip: " << server_ip.toText()
                   << " is: " << (server_ip.isV4() ? "IPv4" : "IPv6")
                   << " while sender-ip: "  << sender_ip.toText()
@@ -1372,7 +1443,8 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     }
 
     if (server_ip == sender_ip && server_port == sender_port) {
-        isc_throw(D2ClientError, "D2ClientConfig error: server and sender cannot"
+        isc_throw(D2ClientError,
+                  "D2ClientConfig error: server and sender cannot"
                   " share the exact same IP address/port: "
                   << server_ip.toText() << "/" << server_port
                   << " (" << getPosition("sender-ip", client_config) << ")");
