@@ -7,6 +7,7 @@
 #ifndef HTTP_CONNECTION_H
 #define HTTP_CONNECTION_H
 
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <http/http_acceptor.h>
 #include <http/request_parser.h>
@@ -58,7 +59,8 @@ public:
                    HttpAcceptor& acceptor,
                    HttpConnectionPool& connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
-                   const HttpAcceptorCallback& callback);
+                   const HttpAcceptorCallback& callback,
+                   const long request_timeout);
 
     ~HttpConnection();
 
@@ -78,7 +80,17 @@ public:
     void socketWriteCallback(boost::system::error_code ec,
                              size_t length);
 
+    void requestTimeoutCallback();
+
 private:
+
+    void asyncSendResponse(const ConstHttpResponsePtr& response);
+
+    void stopThisConnection();
+
+    asiolink::IntervalTimer request_timer_;
+
+    long request_timeout_;
 
     asiolink::TCPSocket<SocketCallback> socket_;
 

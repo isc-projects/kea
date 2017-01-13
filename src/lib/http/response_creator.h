@@ -87,14 +87,16 @@ public:
     virtual HttpRequestPtr
     createNewHttpRequest() const = 0;
 
-protected:
-
-    /// @brief Creates implementation specific HTTP 400 response.
+    /// @brief Creates implementation specific HTTP response.
     ///
     /// @param request Pointer to an object representing HTTP request.
-    /// @return Pointer to an object representing HTTP 400 response.
+    /// @param status_code Status code of the response.
+    /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createStockBadRequest(const ConstHttpRequestPtr& request) const = 0;
+    createStockHttpResponse(const ConstHttpRequestPtr& request,
+                            const HttpStatusCode& status_code) const = 0;
+
+protected:
 
     /// @brief Creates implementation specific HTTP response.
     ///

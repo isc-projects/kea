@@ -32,7 +32,8 @@ public:
     HttpListener(asiolink::IOService& io_service,
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
-                 const HttpResponseCreatorFactoryPtr& creator_factory);
+                 const HttpResponseCreatorFactoryPtr& creator_factory,
+                 const long request_timeout);
 
     ~HttpListener();
 
@@ -51,7 +52,7 @@ private:
     boost::scoped_ptr<asiolink::TCPEndpoint> endpoint_;
     HttpConnectionPool connections_;
     HttpResponseCreatorFactoryPtr creator_factory_;
-
+    long request_timeout_;
 };
 
 } // end of namespace isc::http

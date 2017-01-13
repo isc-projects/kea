@@ -135,6 +135,7 @@ TEST_F(HttpResponseJsonTest, genericResponse) {
     testGenericResponse(HttpStatusCode::UNAUTHORIZED, "Unauthorized");
     testGenericResponse(HttpStatusCode::FORBIDDEN, "Forbidden");
     testGenericResponse(HttpStatusCode::NOT_FOUND, "Not Found");
+    testGenericResponse(HttpStatusCode::REQUEST_TIMEOUT, "Request Timeout");
     testGenericResponse(HttpStatusCode::INTERNAL_SERVER_ERROR,
                         "Internal Server Error");
     testGenericResponse(HttpStatusCode::NOT_IMPLEMENTED, "Not Implemented");

@@ -28,6 +28,7 @@ namespace {
 
 const std::string SERVER_ADDRESS = "127.0.0.1";
 const unsigned short SERVER_PORT = 18123;
+const long REQUEST_TIMEOUT = 20000;
 
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
@@ -52,12 +53,13 @@ public:
 
 private:
 
-    /// @brief Creates HTTP 400 response.
+    /// @brief Creates HTTP response.
     ///
     /// @param request Pointer to the HTTP request.
-    /// @return Pointer to the generated HTTP 400 response.
+    /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
-    createStockBadRequest(const ConstHttpRequestPtr& request) const {
+    createStockHttpResponse(const ConstHttpRequestPtr& request,
+                            const HttpStatusCode& status_code) const {
         // The request hasn't been finalized so the request object
         // doesn't contain any information about the HTTP version number
         // used. But, the context should have this data (assuming the
@@ -65,8 +67,7 @@ private:
         HttpVersion http_version(request->context()->http_version_major_,
                                  request->context()->http_version_minor_);
         // This will generate the response holding JSON content.
-        ResponsePtr response(new Response(http_version,
-                                          HttpStatusCode::BAD_REQUEST));
+        ResponsePtr response(new Response(http_version, status_code));
         return (response);
     }
 
@@ -261,7 +262,7 @@ TEST_F(HttpListenerTest, listen) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_);
+                          factory_, REQUEST_TIMEOUT);
     ASSERT_NO_THROW(listener.start());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(io_service_.run());
@@ -284,7 +285,7 @@ TEST_F(HttpListenerTest, badRequest) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_);
+                          factory_, REQUEST_TIMEOUT);
     ASSERT_NO_THROW(listener.start());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(io_service_.run());
@@ -302,7 +303,14 @@ TEST_F(HttpListenerTest, badRequest) {
 
 TEST_F(HttpListenerTest, invalidFactory) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, HttpResponseCreatorFactoryPtr()),
+                              SERVER_PORT, HttpResponseCreatorFactoryPtr(),
+                              REQUEST_TIMEOUT),
+                 HttpListenerError);
+}
+
+TEST_F(HttpListenerTest, invalidRequestTimeout) {
+    EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
+                              SERVER_PORT, factory_, 0),
                  HttpListenerError);
 }
 
@@ -315,8 +323,30 @@ TEST_F(HttpListenerTest, addressInUse) {
     acceptor.bind(endpoint);
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
-                          SERVER_PORT + 1, factory_);
+                          SERVER_PORT + 1, factory_, REQUEST_TIMEOUT);
     EXPECT_THROW(listener.start(), HttpListenerError);
+}
+
+TEST_F(HttpListenerTest, requestTimeout) {
+    const std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: foo\r\n"
+        "Content-Length:";
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, 1000);
+    ASSERT_NO_THROW(listener.start());
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(io_service_.run());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ("HTTP/1.1 408 Request Timeout\r\n"
+              "Content-Length: 44\r\n"
+              "Content-Type: application/json\r\n"
+              "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
+              "\r\n"
+              "{ \"result\": 408, \"text\": \"Request Timeout\" }",
+              client->getResponse());
 }
 
 }
