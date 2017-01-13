@@ -276,7 +276,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     case DUID::DUID_LLT: {
         // DUID must contain at least 6 bytes long MAC
         // + 8 bytes of fixed header
-        EXPECT_GE(14, len);
+        EXPECT_GE(len, 14);
 
         uint16_t hw_type = data.readUint16();
         // there's no real way to find out "correct"
