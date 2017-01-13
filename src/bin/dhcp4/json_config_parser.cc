@@ -637,10 +637,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             }
 
             if (config_pair.first == "dhcp-ddns") {
-		// Apply defaults if not in short cut
-		if (!!D2ClientConfigParser::isShortCutDisabled(config_pair.second)) {
-		    D2ClientConfigParser::setAllDefaults(config_pair.second);
-		}
+                // Apply defaults if not in short cut
+                if (!D2ClientConfigParser::isShortCutDisabled(config_pair.second)) {
+                    D2ClientConfigParser::setAllDefaults(config_pair.second);
+                }
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(config_pair.second);
                 CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);

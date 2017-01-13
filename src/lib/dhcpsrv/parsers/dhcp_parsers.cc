@@ -1333,8 +1333,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         current_param = "generated-prefix";
         generated_prefix = getString(client_config, current_param);
 
-        current_param = "qualifying-suffix";
-        qualifying_suffix = getString(client_config, current_param);
+        // temporary fix
+        try {
+            current_param = "qualifying-suffix";
+            qualifying_suffix = getString(client_config, current_param);
+        } catch (const std::exception&) {
+            if (enable_updates) throw;
+        }
     } catch (const std::exception& ex) {
         isc_throw(D2ClientError, "D2ClientConfig error: " << ex.what()
                   << " (" << getPosition(current_param, client_config) << ")");
