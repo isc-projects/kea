@@ -1264,14 +1264,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     try {
         current_param = "enable-updates";
         enable_updates = getBoolean(client_config, current_param);
-        if (!enable_updates && (client_config->mapValue().size() == 1)) {
-            // If enable-updates is the only parameter and it is false then
-            // we're done.  This allows for an abbreviated configuration entry
-            // that only contains that flag.  Use the default D2ClientConfig
-            // constructor to a create a disabled instance.
-            new_config.reset(new D2ClientConfig());
-            return (new_config);
-        }
 
         current_param = "server-ip";
         server_ip = IOAddress(getString(client_config, (current_param)));
