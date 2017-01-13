@@ -1053,6 +1053,30 @@ public:
     ///
     /// @return returns a pointer to newly created D2ClientConfig.
     D2ClientConfigPtr parse(isc::data::ConstElementPtr d2_client_cfg);
+
+    /// @brief Check the short cut disabled updates condition
+    ///
+    /// The condition is that the d2 client configuration is
+    /// reduced to "enable-updates": false
+    ///
+    /// @param d2_config d2 client configuration
+    /// @return true if and only if the condition matches.
+    /// @throw DhcpConfigError if enable-updates is not present or
+    /// is not a boolean
+    static bool isShortCutDisabled(isc::data::ConstElementPtr d2_config);
+
+    /// @brief Defaults for the D2 client configuration.
+    static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;
+
+    /// @brief Sets all defaults for D2 client configuration.
+    ///
+    /// This method sets defaults value. It must not be called
+    /// before the short cut disabled updates condition was checked.
+    ///
+    /// @param d2_config d2 client configuration (will be const cast
+    //  to ElementPtr)
+    /// @return number of parameters inserted
+    static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
 };
 
 // Pointers to various parser objects.

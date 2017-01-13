@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,27 +73,6 @@ const ParamsList SimpleParser6::INHERIT_GLOBAL_TO_SUBNET6 = {
     "preferred-lifetime",
     "valid-lifetime"
 };
-
-/// @brief This table defines default values for D2 client configuration
-///
-const SimpleDefaults SimpleParser6::D2_CLIENT_CONFIG_DEFAULTS = {
-    { "server-ip", Element::string, "127.0.0.1" },
-    { "server-port", Element::integer, "53001" },
-    // default sender-ip depends on server-ip family, so we leave default blank
-    // parser knows to use the appropriate ZERO address based on server-ip
-    { "sender-ip", Element::string, "" },
-    { "sender-port", Element::integer, "0" },
-    { "max-queue-size", Element::integer, "1024" },
-    { "ncr-protocol", Element::string, "UDP" },
-    { "ncr-format", Element::string, "JSON" },
-    { "always-include-fqdn", Element::boolean, "false" },
-    { "override-no-update", Element::boolean, "false" },
-    { "override-client-update", Element::boolean, "false" },
-    { "replace-client-name", Element::string, "NEVER" },
-    { "generated-prefix", Element::string, "myhost" },
-    { "qualifying-suffix", Element::string, "" }
-};
-
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -120,14 +99,6 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
         BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
             cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
         }
-    }
-
-    ConstElementPtr d2_client = global->get("dhcp-ddns");
-    /// @todo - what if it's not in global? should we add it?
-    if (d2_client) {
-        // Get the mutable form of d2 client config
-        ElementPtr mutable_d2 = boost::const_pointer_cast<Element>(d2_client);
-        cnt += SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS);
     }
 
     return (cnt);

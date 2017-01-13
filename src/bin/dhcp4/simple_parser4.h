@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,6 @@ public:
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL4_DEFAULTS;
     static const isc::data::ParamsList INHERIT_GLOBAL_TO_SUBNET4;
-    static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;
 };
 
 };

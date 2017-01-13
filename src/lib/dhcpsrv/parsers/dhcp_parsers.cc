@@ -1257,6 +1257,16 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string qualifying_suffix;
     std::string current_param;
 
+    
+    if (isShortCutDisabled(client_config)) {
+      // If enable-updates is the only parameter and it is false then
+      // we're done.  This allows for an abbreviated configuration entry
+      // that only contains that flag.  Use the default D2ClientConfig
+      // constructor to a create a disabled instance.
+      new_config.reset(new D2ClientConfig());
+      return (new_config);
+    }
+
     // Get all parameters that are needed to create the D2ClientConfig.
     // We fetch all the parameters inside their own try clause so we
     // spit out an error with an accurate text position.  Use the
@@ -1386,6 +1396,48 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     }
 
     return(new_config);
+}
+
+bool
+D2ClientConfigParser::isShortCutDisabled(isc::data::ConstElementPtr d2_config) {
+    if (!d2_config->contains("enable-updates")) {
+        isc_throw(DhcpConfigError,
+                  "Mandatory parameter 'enable-updates' missing ("
+                  << d2_config->getPosition() << ")");
+    }
+    ConstElementPtr enable = d2_config->get("enable-updates");
+    if (enable->getType() != Element::boolean) {
+        isc_throw(DhcpConfigError,
+                  "invalid value type specified for parameter"
+                  " 'enable-updates' (" << enable->getPosition() << ")");
+    }
+    return (!enable->boolValue() && (d2_config->mapValue().size() == 1));
+}
+
+/// @brief This table defines default values for D2 client configuration
+const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
+    // enable-updates is unconditionally required
+    { "server-ip", Element::string, "127.0.0.1" },
+    { "server-port", Element::integer, "53001" },
+    // default sender-ip depends on server-ip family, so we leave default blank
+    // parser knows to use the appropriate ZERO address based on server-ip
+    { "sender-ip", Element::string, "" },
+    { "sender-port", Element::integer, "0" },
+    { "max-queue-size", Element::integer, "1024" },
+    { "ncr-protocol", Element::string, "UDP" },
+    { "ncr-format", Element::string, "JSON" },
+    { "always-include-fqdn", Element::boolean, "false" },
+    { "override-no-update", Element::boolean, "false" },
+    { "override-client-update", Element::boolean, "false" },
+    { "replace-client-name", Element::string, "never" },
+    { "generated-prefix", Element::string, "myhost" }
+    // qualifying-suffix has no default
+};
+
+size_t
+D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
+    ElementPtr mutable_d2 = boost::const_pointer_cast<Element>(d2_config);
+    return (SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS));
 }
 
 };  // namespace dhcp
