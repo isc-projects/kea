@@ -15,9 +15,11 @@ namespace http {
 HttpListener::HttpListener(IOService& io_service,
                            const asiolink::IOAddress& server_address,
                            const unsigned short server_port,
-                           const HttpResponseCreatorFactoryPtr& creator_factory)
+                           const HttpResponseCreatorFactoryPtr& creator_factory,
+                           const long request_timeout)
     : io_service_(io_service), acceptor_(io_service),
-      endpoint_(), creator_factory_(creator_factory) {
+      endpoint_(), creator_factory_(creator_factory),
+      request_timeout_(request_timeout) {
     try {
         endpoint_.reset(new TCPEndpoint(server_address, server_port));
 
@@ -28,6 +30,11 @@ HttpListener::HttpListener(IOService& io_service,
     if (!creator_factory_) {
         isc_throw(HttpListenerError, "HttpResponseCreatorFactory must not"
                   " be null");
+    }
+
+    if (request_timeout_ <= 0) {
+        isc_throw(HttpListenerError, "Invalid desired HTTP request timeout "
+                  << request_timeout_);
     }
 }
 
@@ -65,7 +72,8 @@ HttpListener::accept() {
     HttpConnectionPtr conn(new HttpConnection(io_service_, acceptor_,
                                               connections_,
                                               response_creator,
-                                              acceptor_callback));
+                                              acceptor_callback,
+                                              request_timeout_));
     connections_.start(conn);
 }
 

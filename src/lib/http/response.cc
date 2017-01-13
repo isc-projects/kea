@@ -29,6 +29,7 @@ const std::map<HttpStatusCode, std::string> status_code_to_description = {
     { HttpStatusCode::UNAUTHORIZED, "Unauthorized" },
     { HttpStatusCode::FORBIDDEN, "Forbidden" },
     { HttpStatusCode::NOT_FOUND, "Not Found" },
+    { HttpStatusCode::REQUEST_TIMEOUT, "Request Timeout" },
     { HttpStatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error" },
     { HttpStatusCode::NOT_IMPLEMENTED, "Not Implemented" },
     { HttpStatusCode::BAD_GATEWAY, "Bad Gateway" },

@@ -18,6 +18,9 @@ namespace http {
 void
 HttpConnection::
 SocketCallback::operator()(boost::system::error_code ec, size_t length) {
+    if (ec.value() == boost::asio::error::operation_aborted) {
+        return;
+    }
     callback_(ec, length);
 }
 
@@ -25,8 +28,11 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
                                 HttpAcceptor& acceptor,
                                 HttpConnectionPool& connection_pool,
                                 const HttpResponseCreatorPtr& response_creator,
-                                const HttpAcceptorCallback& callback)
-    : socket_(io_service),
+                                const HttpAcceptorCallback& callback,
+                                const long request_timeout)
+    : request_timer_(io_service),
+      request_timeout_(request_timeout),
+      socket_(io_service),
       socket_callback_(boost::bind(&HttpConnection::socketReadCallback, this,
                                    _1, _2)),
       socket_write_callback_(boost::bind(&HttpConnection::socketWriteCallback,
@@ -46,6 +52,19 @@ HttpConnection::~HttpConnection() {
 }
 
 void
+HttpConnection::close() {
+    socket_.close();
+}
+
+void
+HttpConnection::stopThisConnection() {
+    try {
+        connection_pool_.stop(shared_from_this());
+    } catch (...) {
+    }
+}
+
+void
 HttpConnection::asyncAccept() {
     HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
                                           this, _1);
@@ -59,11 +78,6 @@ HttpConnection::asyncAccept() {
 }
 
 void
-HttpConnection::close() {
-    socket_.close();
-}
-
-void
 HttpConnection::doRead() {
     try {
         TCPEndpoint endpoint;
@@ -71,25 +85,29 @@ HttpConnection::doRead() {
                              0, &endpoint, socket_callback_);
 
     } catch (const std::exception& ex) {
-        isc_throw(HttpConnectionError, "unable to start asynchronous HTTP message"
-                  " receive over TCP socket: " << ex.what());
+        stopThisConnection();
     }
 }
 
 void
 HttpConnection::doWrite() {
-    if (!output_buf_.empty()) {
-        try {
+    try {
+        if (!output_buf_.empty()) {
             socket_.asyncSend(output_buf_.data(),
                               output_buf_.length(),
                               socket_write_callback_);
-
-        } catch (const std::exception& ex) {
-            isc_throw(HttpConnectionError, "unable to start asynchronous HTTP"
-                      " message write over TCP socket: " << ex.what());
         }
+    } catch (const std::exception& ex) {
+        stopThisConnection();
     }
 }
+
+void
+HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response) {
+    output_buf_ = response->toString();
+    doWrite();
+}
+
 
 void
 HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
@@ -97,26 +115,17 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
         return;
     }
 
-    try {
-        if (ec) {
-            connection_pool_.stop(shared_from_this());
-        }
-    } catch (...) {
+    if (ec) {
+        stopThisConnection();
     }
 
     acceptor_callback_(ec);
 
-    try {
-        if (!ec) {
-            doRead();
-        }
-    } catch (const std::exception& ex) {
-        try {
-            connection_pool_.stop(shared_from_this());
-        } catch (...) {
-        }
+    if (!ec) {
+        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback, this),
+                             request_timeout_, IntervalTimer::ONE_SHOT);
+        doRead();
     }
-
 }
 
 void
@@ -125,31 +134,16 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
     parser_->postBuffer(static_cast<void*>(buf_.data()), length);
     parser_->poll();
     if (parser_->needData()) {
-        try {
-            doRead();
-        } catch (const std::exception& ex) {
-            try {
-                connection_pool_.stop(shared_from_this());
-            } catch (...) {
-            }
-        }
+        doRead();
 
     } else {
         try {
             request_->finalize();
         } catch (...) {
         }
-        HttpResponsePtr response = response_creator_->createHttpResponse(request_);
-        output_buf_ = response->toString();
-        try {
-            doWrite();
 
-        } catch (const std::exception& ex) {
-            try {
-                connection_pool_.stop(shared_from_this());
-            } catch (...) {
-            }
-        }
+        HttpResponsePtr response = response_creator_->createHttpResponse(request_);
+        asyncSendResponse(response);
     }
 }
 
@@ -158,20 +152,21 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec,
                                     size_t length) {
     if (length <= output_buf_.size()) {
         output_buf_.erase(0, length);
-        try {
-            doWrite();
-
-        } catch (const std::exception& ex) {
-            try {
-                connection_pool_.stop(shared_from_this());
-            } catch (...) {
-            }
-        }
+        doWrite();
 
     } else {
         output_buf_.clear();
     }
 }
+
+void
+HttpConnection::requestTimeoutCallback() {
+    HttpResponsePtr response =
+        response_creator_->createStockHttpResponse(request_,
+                                                   HttpStatusCode::REQUEST_TIMEOUT);
+    asyncSendResponse(response);
+}
+
 
 } // end of namespace isc::http
 } // end of namespace isc
