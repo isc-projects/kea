@@ -190,7 +190,7 @@ public:
         ///< Used while parsing content of Dhcp6.
         DHCP6,
 
-        // not yet DHCP4,
+        // not yet Dhcp4, DhcpDdns,
 
         ///< Used while parsing content of Logging
         LOGGING,
@@ -254,8 +254,18 @@ public:
         /// Used while parsing Logging/loggers/output_options structures.
         OUTPUT_OPTIONS,
 
-        /// Used while parsing Dhcp6/dhcp-ddns
-        DHCP_DDNS
+        /// Used while parsing Dhcp6/dhcp-ddns.
+        DHCP_DDNS,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/ncr-protocol
+        NCR_PROTOCOL,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/ncr-format
+        NCR_FORMAT,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/replace-client-name.
+        REPLACE_CLIENT_NAME
+
     } ParserContext;
 
     /// @brief File name
