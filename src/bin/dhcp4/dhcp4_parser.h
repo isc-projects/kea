@@ -305,6 +305,8 @@ namespace isc { namespace dhcp {
     union union_type
     {
       // value
+      // ncr_protocol_value
+      // replace_client_name_value
       char dummy1[sizeof(ElementPtr)];
 
       // "boolean"
@@ -418,28 +420,51 @@ namespace isc { namespace dhcp {
         TOKEN_SOCKET_TYPE = 332,
         TOKEN_SOCKET_NAME = 333,
         TOKEN_DHCP_DDNS = 334,
-        TOKEN_LOGGING = 335,
-        TOKEN_LOGGERS = 336,
-        TOKEN_OUTPUT_OPTIONS = 337,
-        TOKEN_OUTPUT = 338,
-        TOKEN_DEBUGLEVEL = 339,
-        TOKEN_SEVERITY = 340,
-        TOKEN_DHCP6 = 341,
-        TOKEN_DHCPDDNS = 342,
-        TOKEN_TOPLEVEL_JSON = 343,
-        TOKEN_TOPLEVEL_DHCP4 = 344,
-        TOKEN_SUB_DHCP4 = 345,
-        TOKEN_SUB_INTERFACES4 = 346,
-        TOKEN_SUB_SUBNET4 = 347,
-        TOKEN_SUB_POOL4 = 348,
-        TOKEN_SUB_RESERVATION = 349,
-        TOKEN_SUB_OPTION_DEF = 350,
-        TOKEN_SUB_OPTION_DATA = 351,
-        TOKEN_SUB_HOOKS_LIBRARY = 352,
-        TOKEN_STRING = 353,
-        TOKEN_INTEGER = 354,
-        TOKEN_FLOAT = 355,
-        TOKEN_BOOLEAN = 356
+        TOKEN_ENABLE_UPDATES = 335,
+        TOKEN_QUALIFYING_SUFFIX = 336,
+        TOKEN_SERVER_IP = 337,
+        TOKEN_SERVER_PORT = 338,
+        TOKEN_SENDER_IP = 339,
+        TOKEN_SENDER_PORT = 340,
+        TOKEN_MAX_QUEUE_SIZE = 341,
+        TOKEN_NCR_PROTOCOL = 342,
+        TOKEN_NCR_FORMAT = 343,
+        TOKEN_ALWAYS_INCLUDE_FQDN = 344,
+        TOKEN_ALLOW_CLIENT_UPDATE = 345,
+        TOKEN_OVERRIDE_NO_UPDATE = 346,
+        TOKEN_OVERRIDE_CLIENT_UPDATE = 347,
+        TOKEN_REPLACE_CLIENT_NAME = 348,
+        TOKEN_GENERATED_PREFIX = 349,
+        TOKEN_UDP = 350,
+        TOKEN_TCP = 351,
+        TOKEN_JSON = 352,
+        TOKEN_WHEN_PRESENT = 353,
+        TOKEN_NEVER = 354,
+        TOKEN_ALWAYS = 355,
+        TOKEN_WHEN_NOT_PRESENT = 356,
+        TOKEN_LOGGING = 357,
+        TOKEN_LOGGERS = 358,
+        TOKEN_OUTPUT_OPTIONS = 359,
+        TOKEN_OUTPUT = 360,
+        TOKEN_DEBUGLEVEL = 361,
+        TOKEN_SEVERITY = 362,
+        TOKEN_DHCP6 = 363,
+        TOKEN_DHCPDDNS = 364,
+        TOKEN_TOPLEVEL_JSON = 365,
+        TOKEN_TOPLEVEL_DHCP4 = 366,
+        TOKEN_SUB_DHCP4 = 367,
+        TOKEN_SUB_INTERFACES4 = 368,
+        TOKEN_SUB_SUBNET4 = 369,
+        TOKEN_SUB_POOL4 = 370,
+        TOKEN_SUB_RESERVATION = 371,
+        TOKEN_SUB_OPTION_DEF = 372,
+        TOKEN_SUB_OPTION_DATA = 373,
+        TOKEN_SUB_HOOKS_LIBRARY = 374,
+        TOKEN_SUB_DHCP_DDNS = 375,
+        TOKEN_STRING = 376,
+        TOKEN_INTEGER = 377,
+        TOKEN_FLOAT = 378,
+        TOKEN_BOOLEAN = 379
       };
     };
 
@@ -868,6 +893,94 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_ENABLE_UPDATES (const location_type& l);
+
+    static inline
+    symbol_type
+    make_QUALIFYING_SUFFIX (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SERVER_IP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SERVER_PORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SENDER_IP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SENDER_PORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MAX_QUEUE_SIZE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NCR_PROTOCOL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NCR_FORMAT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ALWAYS_INCLUDE_FQDN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ALLOW_CLIENT_UPDATE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OVERRIDE_NO_UPDATE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_OVERRIDE_CLIENT_UPDATE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_REPLACE_CLIENT_NAME (const location_type& l);
+
+    static inline
+    symbol_type
+    make_GENERATED_PREFIX (const location_type& l);
+
+    static inline
+    symbol_type
+    make_UDP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TCP (const location_type& l);
+
+    static inline
+    symbol_type
+    make_JSON (const location_type& l);
+
+    static inline
+    symbol_type
+    make_WHEN_PRESENT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NEVER (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ALWAYS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_WHEN_NOT_PRESENT (const location_type& l);
+
+    static inline
+    symbol_type
     make_LOGGING (const location_type& l);
 
     static inline
@@ -937,6 +1050,10 @@ namespace isc { namespace dhcp {
     static inline
     symbol_type
     make_SUB_HOOKS_LIBRARY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_DHCP_DDNS (const location_type& l);
 
     static inline
     symbol_type
@@ -1159,12 +1276,12 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 624,     ///< Last index in yytable_.
-      yynnts_ = 267,  ///< Number of nonterminal symbols.
-      yyfinal_ = 22, ///< Termination state number.
+      yylast_ = 705,     ///< Last index in yytable_.
+      yynnts_ = 296,  ///< Number of nonterminal symbols.
+      yyfinal_ = 24, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 102  ///< Number of tokens.
+      yyntokens_ = 125  ///< Number of tokens.
     };
 
 
@@ -1216,9 +1333,11 @@ namespace isc { namespace dhcp {
       65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
       75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
       85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,    96,    97,    98,    99,   100,   101
+      95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
+     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
+     115,   116,   117,   118,   119,   120,   121,   122,   123,   124
     };
-    const unsigned int user_token_number_max_ = 356;
+    const unsigned int user_token_number_max_ = 379;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1251,23 +1370,25 @@ namespace isc { namespace dhcp {
   {
       switch (other.type_get ())
     {
-      case 114: // value
+      case 138: // value
+      case 383: // ncr_protocol_value
+      case 392: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 101: // "boolean"
+      case 124: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 100: // "floating point"
+      case 123: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 99: // "integer"
+      case 122: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 98: // "constant string"
+      case 121: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1288,23 +1409,25 @@ namespace isc { namespace dhcp {
     (void) v;
       switch (this->type_get ())
     {
-      case 114: // value
+      case 138: // value
+      case 383: // ncr_protocol_value
+      case 392: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 101: // "boolean"
+      case 124: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 100: // "floating point"
+      case 123: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 99: // "integer"
+      case 122: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 98: // "constant string"
+      case 121: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1384,23 +1507,25 @@ namespace isc { namespace dhcp {
     // Type destructor.
     switch (yytype)
     {
-      case 114: // value
+      case 138: // value
+      case 383: // ncr_protocol_value
+      case 392: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 101: // "boolean"
+      case 124: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 100: // "floating point"
+      case 123: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 99: // "integer"
+      case 122: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 98: // "constant string"
+      case 121: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1427,23 +1552,25 @@ namespace isc { namespace dhcp {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 114: // value
+      case 138: // value
+      case 383: // ncr_protocol_value
+      case 392: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 101: // "boolean"
+      case 124: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 100: // "floating point"
+      case 123: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 99: // "integer"
+      case 122: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 98: // "constant string"
+      case 121: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1512,7 +1639,9 @@ namespace isc { namespace dhcp {
      325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
      335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
      345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
-     355,   356
+     355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
+     365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
+     375,   376,   377,   378,   379
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1986,6 +2115,138 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENABLE_UPDATES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ENABLE_UPDATES, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_QUALIFYING_SUFFIX (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_IP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_IP, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_PORT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_IP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SENDER_IP, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SENDER_PORT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_QUEUE_SIZE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAX_QUEUE_SIZE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_PROTOCOL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NCR_PROTOCOL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_FORMAT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NCR_FORMAT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALWAYS_INCLUDE_FQDN (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ALWAYS_INCLUDE_FQDN, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALLOW_CLIENT_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ALLOW_CLIENT_UPDATE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_NO_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_NO_UPDATE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_CLIENT_UPDATE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REPLACE_CLIENT_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REPLACE_CLIENT_NAME, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GENERATED_PREFIX (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_GENERATED_PREFIX, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_UDP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_UDP, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TCP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TCP, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_JSON (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_JSON, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_PRESENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_WHEN_PRESENT, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NEVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NEVER, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALWAYS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ALWAYS, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_NOT_PRESENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, l);
+  }
+
+  Dhcp4Parser::symbol_type
   Dhcp4Parser::make_LOGGING (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGING, l);
@@ -2094,6 +2355,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP_DDNS, l);
+  }
+
+  Dhcp4Parser::symbol_type
   Dhcp4Parser::make_STRING (const std::string& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_STRING, v, l);
@@ -2120,7 +2387,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp4_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2124 "dhcp4_parser.h" // lalr1.cc:377
+#line 2391 "dhcp4_parser.h" // lalr1.cc:377
 
 
 
