@@ -1860,14 +1860,12 @@ TEST_F(ParseConfigTest, invalidD2Config) {
     }
 
     std::string invalid_configs[] = {
-#if simple_parser_get_position_got_fixed
         // Must supply qualifying-suffix when updates are enabled
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true"
         "    }"
         "}",
-#endif
         // Invalid server ip value
         "{ \"dhcp-ddns\" :"
         "    {"
