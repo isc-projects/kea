@@ -499,7 +499,7 @@ public:
     }
 
     /// @brief Sets the D2 client configuration
-    /// @param dictionary pointer to the new D2 client configuration
+    /// @param d2_client_config pointer to the new D2 client configuration
     void setD2ClientConfig(const D2ClientConfigPtr& d2_client_config) {
         d2_client_config_ = d2_client_config;
     }
