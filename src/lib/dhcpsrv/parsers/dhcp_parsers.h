@@ -987,31 +987,14 @@ protected:
 /// @brief Parser for  D2ClientConfig
 ///
 /// This class parses the configuration element "dhcp-ddns" common to the
-/// spec files for both dhcp4 and dhcp6. It creates an instance of a
+/// config files for both dhcp4 and dhcp6. It creates an instance of a
 /// D2ClientConfig.
-class D2ClientConfigParser : public  isc::dhcp::DhcpConfigParser {
+class D2ClientConfigParser : public  isc::data::SimpleParser {
 public:
-    /// @brief Constructor
-    ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition.
-    D2ClientConfigParser(const std::string& entry_name);
 
-    /// @brief Destructor
-    virtual ~D2ClientConfigParser();
-
-    /// @brief Performs the parsing of the given dhcp-ddns element.
-    ///
-    /// The results of the parsing are retained internally for use during
-    /// commit.
-    /// @todo This parser supplies hard-coded default values for all
-    /// optional parameters.  This should be changed once a new plan
-    /// for configuration is determined.
+    /// @brief Parses a given dhcp-ddns element into D2ClientConfig.
     ///
     /// @param client_config is the "dhcp-ddns" configuration to parse
-    virtual void build(isc::data::ConstElementPtr client_config);
-
-    /// @brief Creates a parser for the given "dhcp-ddns" member element id.
     ///
     /// The elements currently supported are (see isc::dhcp::D2ClientConfig
     /// for details on each):
@@ -1019,9 +1002,11 @@ public:
     /// -# qualifying-suffix
     /// -# server-ip
     /// -# server-port
+    /// -# sender-ip
+    /// -# sender-port
+    /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# remove-on-renew
     /// -# always-include-fqdn
     /// -# allow-client-update
     /// -# override-no-update
@@ -1029,33 +1014,32 @@ public:
     /// -# replace-client-name
     /// -# generated-prefix
     ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the "dns_server" specification.
+    /// @return returns a pointer to newly created D2ClientConfig.
+    D2ClientConfigPtr parse(isc::data::ConstElementPtr d2_client_cfg);
+
+    /// @brief Check the short cut disabled updates condition
     ///
-    /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    /// The condition is that the d2 client configuration is
+    /// reduced to "enable-updates": false
+    ///
+    /// @param d2_config d2 client configuration
+    /// @return true if and only if the condition matches.
+    /// @throw DhcpConfigError if enable-updates is not present or
+    /// is not a boolean
+    static bool isShortCutDisabled(isc::data::ConstElementPtr d2_config);
 
-    /// @brief Instantiates a D2ClientConfig from internal data values
-    /// passes to CfgMgr singleton.
-    virtual void commit();
+    /// @brief Defaults for the D2 client configuration.
+    static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;
 
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    /// Primarily used for diagnostics.
-    std::string entry_name_;
-
-    /// Storage for subnet-specific boolean values.
-    BooleanStoragePtr boolean_values_;
-
-    /// Storage for subnet-specific integer values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
-    /// @brief Pointer to temporary local instance created during build.
-    D2ClientConfigPtr local_client_config_ ;
+    /// @brief Sets all defaults for D2 client configuration.
+    ///
+    /// This method sets defaults value. It must not be called
+    /// before the short cut disabled updates condition was checked.
+    ///
+    /// @param d2_config d2 client configuration (will be const cast
+    //  to ElementPtr)
+    /// @return number of parameters inserted
+    static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
 };
 
 // Pointers to various parser objects.

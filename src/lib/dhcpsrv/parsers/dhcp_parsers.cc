@@ -1222,133 +1222,222 @@ SubnetConfigParser::getOptionalParam(const std::string& name) {
 }
 
 //**************************** D2ClientConfigParser **********************
-D2ClientConfigParser::D2ClientConfigParser(const std::string& entry_name)
-    : entry_name_(entry_name), boolean_values_(new BooleanStorage()),
-      uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
-      local_client_config_() {
+
+namespace {
+
+template <typename int_type> int_type
+getInt(const std::string& name, ConstElementPtr value) {
+    int64_t val_int = value->intValue();
+    if ((val_int < std::numeric_limits<int_type>::min()) ||
+        (val_int > std::numeric_limits<int_type>::max())) {
+        isc_throw(DhcpConfigError, "out of range value (" << val_int
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+    return (static_cast<int_type>(val_int));
 }
 
-D2ClientConfigParser::~D2ClientConfigParser() {
+uint32_t
+getUint32(const std::string& name, ConstElementPtr value) {
+    return (getInt<uint32_t>(name, value));
 }
 
-void
-D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
-    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
-        ParserPtr parser;
-        try {
-            parser = createConfigParser(param.first);
-        } catch (std::exception& ex) {
-            // Catch exception in case the configuration contains the
-            // unsupported parameter. In this case, we will need to
-            // append the position of this element.
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << param.second->getPosition() << ")");
-        }
+IOAddress
+getIOAddress(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (IOAddress(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, "invalid address (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
 
-        parser->build(param.second);
-        parser->commit();
+dhcp_ddns::NameChangeProtocol
+getProtocol(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (dhcp_ddns::stringToNcrProtocol(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid NameChangeRequest protocol (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+dhcp_ddns::NameChangeFormat
+getFormat(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (dhcp_ddns::stringToNcrFormat(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid NameChangeRequest format (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+D2ClientConfig::ReplaceClientNameMode
+getMode(const std::string& name, ConstElementPtr value) {
+    std::string str = value->stringValue();
+    try {
+        return (D2ClientConfig::stringToReplaceClientNameMode(str));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "invalid ReplaceClientName mode (" << str
+                  << ") specified for parameter '" << name
+                  << "' (" << value->getPosition() << ")");
+    }
+}
+
+};
+
+D2ClientConfigPtr
+D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
+    D2ClientConfigPtr new_config;
+    
+    if (isShortCutDisabled(client_config)) {
+      // If enable-updates is the only parameter and it is false then
+      // we're done.  This allows for an abbreviated configuration entry
+      // that only contains that flag.  Use the default D2ClientConfig
+      // constructor to a create a disabled instance.
+      new_config.reset(new D2ClientConfig());
+      return (new_config);
     }
 
-    /// @todo Create configuration from the configuration parameters. Because
-    /// the validation of the D2 configuration is atomic, there is no way to
-    /// tell which parameter is invalid. Therefore, we catch all exceptions
-    /// and append the line number of the parent element. In the future we
-    /// may should extend D2ClientConfig code so as it returns the name of
-    /// the invalid parameter.
-    try {
-        bool enable_updates = boolean_values_->getParam("enable-updates");
-        if (!enable_updates && (client_config->mapValue().size() == 1)) {
-            // If enable-updates is the only parameter and it is false then
-            // we're done.  This allows for an abbreviated configuration entry
-            // that only contains that flag.  Use the default D2ClientConfig
-            // constructor to a create a disabled instance.
-            local_client_config_.reset(new D2ClientConfig());
+    // As isShortCutDisabled() was called this cannot fail
+    bool enable_updates = client_config->get("enable-updates")->boolValue();
 
-            return;
+    // Get all parameters that are needed to create the D2ClientConfig.
+    std::string qualifying_suffix;
+    bool found_qualifying_suffix = false;
+    IOAddress server_ip(0);
+    uint32_t server_port;
+    std::string sender_ip_str;
+    uint32_t sender_port;
+    uint32_t max_queue_size;
+    dhcp_ddns::NameChangeProtocol ncr_protocol;
+    dhcp_ddns::NameChangeFormat ncr_format;
+    bool always_include_fqdn;
+    bool allow_client_update;
+    bool override_no_update;
+    bool override_client_update;
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
+    std::string generated_prefix;
+
+    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
+        std::string entry(param.first);
+        ConstElementPtr value(param.second);
+        try {
+            if (entry == "enable-updates") {
+                // already done.
+            } else if (entry == "qualifying-suffix") {
+                qualifying_suffix = value->stringValue();
+                found_qualifying_suffix = true;
+            } else if (entry == "server-ip") {
+                server_ip = getIOAddress("server-ip", value);
+            } else if (entry == "server-port") {
+                server_port = getUint32("server-port", value);
+            } else if (entry == "sender-ip") {
+                sender_ip_str = value->stringValue();
+            } else if (entry == "sender-port") {
+                sender_port = getUint32("sender-port", value);
+            } else if (entry == "max-queue-size") {
+                max_queue_size = getUint32("max-queue-size", value);
+            } else if (entry == "ncr-protocol") {
+                ncr_protocol = getProtocol("ncr-protocol", value);
+            } else if (entry == "ncr-format") {
+                ncr_format = getFormat("ncr-format", value);
+            } else if (entry == "always-include-fqdn") {
+                always_include_fqdn = value->boolValue();
+            } else if (entry == "allow-client-update") {
+                allow_client_update = value->boolValue();
+                // currently unused
+                (void)allow_client_update;
+            } else if (entry == "override-no-update") {
+                override_no_update = value->boolValue();
+            } else if (entry == "override-client-update") {
+                override_client_update = value->boolValue();
+            } else if (entry == "replace-client-name") {
+                replace_client_name_mode = getMode("replace-client-name", value);
+            } else if (entry == "generated-prefix") {
+                generated_prefix = value->stringValue();
+            } else {
+                isc_throw(DhcpConfigError,
+                          "unsupported parameter '" << entry
+                          << " (" << value->getPosition() << ")");
+            }
+        } catch (const isc::data::TypeError&) {
+            isc_throw(DhcpConfigError,
+                      "invalid value type specified for parameter '" << entry
+                      << " (" << value->getPosition() << ")");
         }
+    }
 
-        // Get all parameters that are needed to create the D2ClientConfig.
+    // Qualifying-suffix is required when updates are enabled
+    if (enable_updates && !found_qualifying_suffix) {
+        isc_throw(DhcpConfigError,
+                  "parameter 'qualifying-suffix' is required when "
+                  "updates are enabled ("
+                  << client_config->getPosition() << ")");
+    }
 
-        // The qualifying suffix is mandatory when updates are enabled
-        std::string qualifying_suffix =
-            string_values_->getParam("qualifying-suffix");
-
-        IOAddress server_ip =
-            IOAddress(string_values_->getOptionalParam("server-ip",
-                                                       D2ClientConfig::
-                                                       DFT_SERVER_IP));
-
-        uint32_t server_port =
-            uint32_values_->getOptionalParam("server-port",
-                                             D2ClientConfig::DFT_SERVER_PORT);
-
+    IOAddress sender_ip(0);
+    if (sender_ip_str.empty()) {
         // The default sender IP depends on the server IP family
-        asiolink::IOAddress
-            sender_ip(string_values_->
-                      getOptionalParam("sender-ip",
-                                       (server_ip.isV4() ?
-                                        D2ClientConfig::DFT_V4_SENDER_IP :
-                                        D2ClientConfig::DFT_V6_SENDER_IP)));
-
-        uint32_t sender_port =
-            uint32_values_->getOptionalParam("sender-port",
-                                             D2ClientConfig::
-                                             DFT_SENDER_PORT);
-        uint32_t max_queue_size
-            = uint32_values_->getOptionalParam("max-queue-size",
-                                               D2ClientConfig::
-                                               DFT_MAX_QUEUE_SIZE);
-
-        dhcp_ddns::NameChangeProtocol ncr_protocol =
-            dhcp_ddns::stringToNcrProtocol(string_values_->
-                                           getOptionalParam("ncr-protocol",
-                                                            D2ClientConfig::
-                                                            DFT_NCR_PROTOCOL));
-        dhcp_ddns::NameChangeFormat ncr_format
-            = dhcp_ddns::stringToNcrFormat(string_values_->
-                                           getOptionalParam("ncr-format",
-                                                            D2ClientConfig::
-                                                            DFT_NCR_FORMAT));
-        std::string generated_prefix =
-            string_values_->getOptionalParam("generated-prefix",
-                                             D2ClientConfig::
-                                             DFT_GENERATED_PREFIX);
-        bool always_include_fqdn =
-            boolean_values_->getOptionalParam("always-include-fqdn",
-                                                D2ClientConfig::
-                                                DFT_ALWAYS_INCLUDE_FQDN);
-
-        bool override_no_update =
-            boolean_values_->getOptionalParam("override-no-update",
-                                              D2ClientConfig::
-                                              DFT_OVERRIDE_NO_UPDATE);
-
-        bool override_client_update =
-            boolean_values_->getOptionalParam("override-client-update",
-                                              D2ClientConfig::
-                                              DFT_OVERRIDE_CLIENT_UPDATE);
-
-        // Formerly, replace-client-name was boolean, so for now we'll support boolean
-        // values by mapping them to the appropriate mode
-        D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
-        std::string mode_str;
-        mode_str  = string_values_->getOptionalParam("replace-client-name",
-                                                     D2ClientConfig::
-                                                     DFT_REPLACE_CLIENT_NAME_MODE);
-        if (boost::iequals(mode_str, "false")) {
-            // @todo add a debug log
-            replace_client_name_mode = D2ClientConfig::RCM_NEVER;
+        sender_ip = (server_ip.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() :
+                                        IOAddress::IPV6_ZERO_ADDRESS());
+    } else {
+        try {
+            sender_ip = IOAddress(sender_ip_str);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "invalid address (" << sender_ip_str
+                      << ") specified for parameter 'sender-ip' ("
+                      << getPosition("sender-ip", client_config) << ")");
         }
-        else if (boost::iequals(mode_str, "true")) {
-            // @todo add a debug log
-            replace_client_name_mode = D2ClientConfig::RCM_WHEN_PRESENT;
-        } else {
-            replace_client_name_mode = D2ClientConfig::
-                                       stringToReplaceClientNameMode(mode_str);
-        }
+    }
 
+    // Now we check for logical errors. This repeats what is done in
+    // D2ClientConfig::validate(), but doing it here permits us to
+    // emit meaningful parameter position info in the error.
+    if (ncr_format != dhcp_ddns::FMT_JSON) {
+        isc_throw(D2ClientError, "D2ClientConfig error: NCR Format: "
+                  << dhcp_ddns::ncrFormatToString(ncr_format)
+                  << " is not supported. ("
+                  << getPosition("ncr-format", client_config) << ")");
+    }
+
+    if (ncr_protocol != dhcp_ddns::NCR_UDP) {
+        isc_throw(D2ClientError, "D2ClientConfig error: NCR Protocol: "
+                  << dhcp_ddns::ncrProtocolToString(ncr_protocol)
+                  << " is not supported. ("
+                  << getPosition("ncr-protocol", client_config) << ")");
+    }
+
+    if (sender_ip.getFamily() != server_ip.getFamily()) {
+        isc_throw(D2ClientError,
+                  "D2ClientConfig error: address family mismatch: "
+                  << "server-ip: " << server_ip.toText()
+                  << " is: " << (server_ip.isV4() ? "IPv4" : "IPv6")
+                  << " while sender-ip: "  << sender_ip.toText()
+                  << " is: " << (sender_ip.isV4() ? "IPv4" : "IPv6")
+                  << " (" << getPosition("sender-ip", client_config) << ")");
+    }
+
+    if (server_ip == sender_ip && server_port == sender_port) {
+        isc_throw(D2ClientError,
+                  "D2ClientConfig error: server and sender cannot"
+                  " share the exact same IP address/port: "
+                  << server_ip.toText() << "/" << server_port
+                  << " (" << getPosition("sender-ip", client_config) << ")");
+    }
+
+    try {
         // Attempt to create the new client config.
-        local_client_config_.reset(new D2ClientConfig(enable_updates,
+        new_config.reset(new D2ClientConfig(enable_updates,
                                                       server_ip,
                                                       server_port,
                                                       sender_ip,
@@ -1367,49 +1456,50 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
     }
+
+    return(new_config);
 }
 
-isc::dhcp::ParserPtr
-D2ClientConfigParser::createConfigParser(const std::string& config_id) {
-    DhcpConfigParser* parser = NULL;
-    if ((config_id.compare("server-port") == 0) ||
-        (config_id.compare("sender-port") == 0) ||
-        (config_id.compare("max-queue-size") == 0)) {
-        parser = new Uint32Parser(config_id, uint32_values_);
-    } else if ((config_id.compare("server-ip") == 0) ||
-        (config_id.compare("ncr-protocol") == 0) ||
-        (config_id.compare("ncr-format") == 0) ||
-        (config_id.compare("generated-prefix") == 0) ||
-        (config_id.compare("sender-ip") == 0) ||
-        (config_id.compare("qualifying-suffix") == 0) ||
-        (config_id.compare("replace-client-name") == 0)) {
-        parser = new StringParser(config_id, string_values_);
-    } else if ((config_id.compare("enable-updates") == 0) ||
-        (config_id.compare("always-include-fqdn") == 0) ||
-        (config_id.compare("allow-client-update") == 0) ||
-        (config_id.compare("override-no-update") == 0) ||
-        (config_id.compare("override-client-update") == 0)) {
-        parser = new BooleanParser(config_id, boolean_values_);
-    } else {
-        isc_throw(NotImplemented,
-            "parser error: D2ClientConfig parameter not supported: "
-            << config_id);
+bool
+D2ClientConfigParser::isShortCutDisabled(isc::data::ConstElementPtr d2_config) {
+    if (!d2_config->contains("enable-updates")) {
+        isc_throw(DhcpConfigError,
+                  "Mandatory parameter 'enable-updates' missing ("
+                  << d2_config->getPosition() << ")");
     }
-
-    return (isc::dhcp::ParserPtr(parser));
+    ConstElementPtr enable = d2_config->get("enable-updates");
+    if (enable->getType() != Element::boolean) {
+        isc_throw(DhcpConfigError,
+                  "invalid value type specified for parameter"
+                  " 'enable-updates' (" << enable->getPosition() << ")");
+    }
+    return (!enable->boolValue() && (d2_config->mapValue().size() == 1));
 }
 
-void
-D2ClientConfigParser::commit() {
-    // @todo if local_client_config_ is empty then shutdown the listener...
-    // @todo Should this also attempt to start a listener?
-    // In keeping with Interface, Subnet, and Hooks parsers, then this
-    // should initialize the listener.  Failure to init it, should cause
-    // rollback.  This gets sticky, because who owns the listener instance?
-    // Does CfgMgr maintain it or does the server class?  If the latter
-    // how do we get that value here?
-    // I'm thinkikng D2ClientConfig could contain the listener instance
-    CfgMgr::instance().setD2ClientConfig(local_client_config_);
+/// @brief This table defines default values for D2 client configuration
+const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
+    // enable-updates is unconditionally required
+    { "server-ip", Element::string, "127.0.0.1" },
+    { "server-port", Element::integer, "53001" },
+    // default sender-ip depends on server-ip family, so we leave default blank
+    // parser knows to use the appropriate ZERO address based on server-ip
+    { "sender-ip", Element::string, "" },
+    { "sender-port", Element::integer, "0" },
+    { "max-queue-size", Element::integer, "1024" },
+    { "ncr-protocol", Element::string, "UDP" },
+    { "ncr-format", Element::string, "JSON" },
+    { "always-include-fqdn", Element::boolean, "false" },
+    { "override-no-update", Element::boolean, "false" },
+    { "override-client-update", Element::boolean, "false" },
+    { "replace-client-name", Element::string, "never" },
+    { "generated-prefix", Element::string, "myhost" }
+    // qualifying-suffix has no default
+};
+
+size_t
+D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
+    ElementPtr mutable_d2 = boost::const_pointer_cast<Element>(d2_config);
+    return (SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS));
 }
 
 };  // namespace dhcp

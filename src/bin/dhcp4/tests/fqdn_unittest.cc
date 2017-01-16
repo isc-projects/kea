@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -427,10 +427,7 @@ public:
     // in a client request correctly, according to the replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use client-name-replacment parameter - for
-    // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
-    // "\"NEVER\"".  This allows us to also pass in boolean literals which
-    // are unquoted.
+    // @param mode - value to use for replace-client-name
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
     // @param exp_replacement_flag - specifies whether or not the server is
@@ -452,7 +449,7 @@ public:
             "\"dhcp-ddns\": {"
             "\"enable-updates\": true,"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\","
-            "\"replace-client-name\": %s"
+            "\"replace-client-name\": \"%s\""
             "}}";
 
         // Create the configuration and configure the server
@@ -1551,39 +1548,25 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
 // the supported modes.
 TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 
-    // We pass mode labels in with enclosing quotes so we can also test
-    // unquoted boolean literals true/false
-    testReplaceClientNameMode("\"never\"",
+    testReplaceClientNameMode("never",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"never\"",
+    testReplaceClientNameMode("never",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
-    testReplaceClientNameMode("\"always\"",
+    testReplaceClientNameMode("always",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"always\"",
+    testReplaceClientNameMode("always",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"when-present\"",
+    testReplaceClientNameMode("when-present",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"when-present\"",
+    testReplaceClientNameMode("when-present",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"when-not-present\"",
+    testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"when-not-present\"",
+    testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean false produces the same result as RCM_NEVER
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean true produces the same result as RCM_WHEN_PRESENT
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_PRESENT, NAME_REPLACED);
 }
 
 } // end of anonymous namespace

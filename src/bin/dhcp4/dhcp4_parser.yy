@@ -142,26 +142,28 @@ using namespace std;
   SOCKET_NAME "socket-name"
 
   DHCP_DDNS "dhcp-ddns"
-
- /// @todo: Implement proper parsing for those parameters in Dhcp4/dhcp-ddns/*.
- /// This should be part of the #5043 ticket. Listing the keywords here for
- /// completeness.
-
- // These are tokens defined in Dhcp4/dhcp-ddns/*
- // They're not
- //  ENABLE_UPDATES "enable-updates"
- //  SERVER_IP "server-ip"
- //  SENDER_IP "sender-ip"
- //  SENDER_PORT "sender-port"
- //  MAX_QUEUE_SIZE "max-queue-size"
- //  NCR_PROTOCOL "ncr-protocol"
- //  NCR_FORMAT "ncr-format"
- //  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
- //  OVERRDIDE_NO_UPDATE "override-no-update"
- //  OVERRDIDE_CLIENT_UPDATE "override-client-update"
- //  REPLACE_CLIENT_NAME "replace-client-name"
- //  GENERATED_PREFIX "generated-prefix"
- //  QUALIFYING_SUFFIX "qualifying-suffix"
+  ENABLE_UPDATES "enable-updates"
+  QUALIFYING_SUFFIX "qualifying-suffix"
+  SERVER_IP "server-ip"
+  SERVER_PORT "server-port"
+  SENDER_IP "sender-ip"
+  SENDER_PORT "sender-port"
+  MAX_QUEUE_SIZE "max-queue-size"
+  NCR_PROTOCOL "ncr-protocol"
+  NCR_FORMAT "ncr-format"
+  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
+  ALLOW_CLIENT_UPDATE "allow-client-update"
+  OVERRIDE_NO_UPDATE "override-no-update"
+  OVERRIDE_CLIENT_UPDATE "override-client-update"
+  REPLACE_CLIENT_NAME "replace-client-name"
+  GENERATED_PREFIX "generated-prefix"
+  UDP "UDP"
+  TCP "TCP"
+  JSON "JSON"
+  WHEN_PRESENT "when-present"
+  NEVER "never"
+  ALWAYS "always"
+  WHEN_NOT_PRESENT "when-not-present"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -185,6 +187,7 @@ using namespace std;
   SUB_OPTION_DEF
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
+  SUB_DHCP_DDNS
 ;
 
 %token <std::string> STRING "constant string"
@@ -194,6 +197,8 @@ using namespace std;
 
 %type <ElementPtr> value
 %type <ElementPtr> socket_type
+%type <ElementPtr> ncr_protocol_value
+%type <ElementPtr> replace_client_name_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -214,6 +219,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
+     | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -1431,9 +1437,157 @@ dhcp_ddns: DHCP_DDNS {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON LCURLY_BRACKET not_empty_map RCURLY_BRACKET {
+    ctx.enter(ctx.DHCP_DDNS);
+} COLON LCURLY_BRACKET dhcp_ddns_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_dhcp_ddns: LCURLY_BRACKET {
+    // Parse the dhcp-ddns map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} dhcp_ddns_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+dhcp_ddns_params: dhcp_ddns_param
+                | dhcp_ddns_params COMMA dhcp_ddns_param
+                ;
+
+dhcp_ddns_param: enable_updates
+               | qualifying_suffix
+               | server_ip
+               | server_port
+               | sender_ip
+               | sender_port
+               | max_queue_size
+               | ncr_protocol
+               | ncr_format
+               | always_include_fqdn
+               | allow_client_update
+               | override_no_update
+               | override_client_update
+               | replace_client_name
+               | generated_prefix
+               | unknown_map_entry
+               ;
+
+enable_updates: ENABLE_UPDATES COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-updates", b);
+};
+
+qualifying_suffix: QUALIFYING_SUFFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("qualifying-suffix", s);
+    ctx.leave();
+};
+
+server_ip: SERVER_IP {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-ip", s);
+    ctx.leave();
+};
+
+server_port: SERVER_PORT COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("server-port", i);
+};
+
+sender_ip: SENDER_IP {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("sender-ip", s);
+    ctx.leave();
+};
+
+sender_port: SENDER_PORT COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("sender-port", i);
+};
+
+max_queue_size: MAX_QUEUE_SIZE COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-queue-size", i);
+};
+
+ncr_protocol: NCR_PROTOCOL {
+    ctx.enter(ctx.NCR_PROTOCOL);
+} COLON ncr_protocol_value {
+    ctx.stack_.back()->set("ncr-protocol", $4);
+    ctx.leave();
+};
+
+ncr_protocol_value:
+    UDP { $$ = ElementPtr(new StringElement("UDP", ctx.loc2pos(@1))); }
+  | TCP { $$ = ElementPtr(new StringElement("TCP", ctx.loc2pos(@1))); }
+  ;
+
+ncr_format: NCR_FORMAT {
+    ctx.enter(ctx.NCR_FORMAT);
+} COLON JSON {
+    ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ncr-format", json);
+    ctx.leave();
+};
+
+always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("always-include-fqdn", b);
+};
+
+allow_client_update: ALLOW_CLIENT_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("allow-client-update",  b);
+};
+
+override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("override-no-update", b);
+};
+
+override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("override-client-update", b);
+};
+
+replace_client_name: REPLACE_CLIENT_NAME {
+    ctx.enter(ctx.REPLACE_CLIENT_NAME);
+} COLON replace_client_name_value {
+    ctx.stack_.back()->set("replace-client-name", $4);
+    ctx.leave();
+};
+
+replace_client_name_value:
+    WHEN_PRESENT {
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      }
+  | NEVER {
+      $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
+      }
+  | ALWAYS {
+      $$ = ElementPtr(new StringElement("always", ctx.loc2pos(@1)));
+      }
+  | WHEN_NOT_PRESENT {
+      $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
+      }
+  | BOOLEAN  {
+      error(@1, "boolean values for the replace-client-name are "
+                "no longer supported");
+      }
+  ;
+
+generated_prefix: GENERATED_PREFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 };
 
