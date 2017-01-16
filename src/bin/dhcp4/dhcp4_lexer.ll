@@ -1019,7 +1019,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     /* dhcp-ddns value keywords are case insensitive */
     if ((driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) ||
         ((driver.ctx_ == isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE) &&
-	 (yytext == "\"udp\"")) {
+	 (yytext == "\"udp\""))) {
 	 return isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
     }
     std::string tmp(yytext+1);
