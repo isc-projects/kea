@@ -380,14 +380,6 @@ public:
                     hooks_libraries_parser_->loadLibraries();
                     continue;
                 }
-
-                // Remaining ones are old style parsers. Need go do
-                // the build/commit dance with them.
-
-                // Create the parser based on element name.
-                ParserPtr parser(createConfigParser(config_pair.first));
-                parser->build(config_pair.second);
-                parser->commit();
             }
 
             int family = parser_context_->universe_ == Option::V4
@@ -435,36 +427,6 @@ public:
         }
 
         return (answer);
-    }
-
-    /// @brief Create an element parser based on the element name.
-    ///
-    /// Creates a parser for the appropriate element and stores a pointer to it
-    /// in the appropriate class variable.
-    ///
-    /// Note that the method currently it only supports option-defs, option-data
-    /// and hooks-libraries.
-    ///
-    /// @param config_id is the name of the configuration element.
-    ///
-    /// @return returns a shared pointer to DhcpConfigParser.
-    ///
-    /// @throw throws NotImplemented if element name isn't supported.
-    ParserPtr createConfigParser(const std::string& config_id) {
-        ParserPtr parser;
-        // option-data and option-def converted to SimpleParser, so they
-        // are no longer here.
-        if (config_id.compare("hooks-libraries") == 0) {
-            parser.reset(new HooksLibrariesParser(config_id));
-            hooks_libraries_parser_ =
-                boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
-        } else {
-            isc_throw(NotImplemented,
-                "Parser error: configuration parameter not supported: "
-                << config_id);
-        }
-
-        return (parser);
     }
 
     /// @brief DHCP-specific method that sets global, and option specific defaults

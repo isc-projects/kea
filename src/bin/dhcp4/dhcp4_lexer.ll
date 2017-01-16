@@ -207,15 +207,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"udp\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE:
-        return  isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("udp", driver.loc_);
-    }
-}
-
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
@@ -1026,8 +1017,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 (?i:\"UDP\") {
     /* dhcp-ddns value keywords are case insensitive */
-    if (driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) {
-        return isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
+    if ((driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) ||
+        ((driver.ctx_ == isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE) &&
+	 (yytext == "\"udp\"")) {
+	 return isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
     }
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
