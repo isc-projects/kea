@@ -710,9 +710,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     } else if (config_id.compare("hosts-database") == 0) {
         parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
     // hooks-libraries is now converted to SimpleParser.
-    } else if (config_id.compare("dhcp-ddns") == 0) {
-        parser = new D2ClientConfigParser(config_id);
     // mac-source has been converted to SimpleParser.
+    // dhcp-ddns has been converted to SimpleParser
     } else if (config_id.compare("relay-supplied-options") == 0) {
         parser = new RSOOListConfigParser(config_id);
     // control-socket has been converted to SimpleParser.
@@ -949,6 +948,17 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "dhcp-ddns") {
+                // Apply defaults if not in short cut
+                if (!D2ClientConfigParser::isShortCutDisabled(config_pair.second)) {
+                    D2ClientConfigParser::setAllDefaults(config_pair.second);
+                }
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
@@ -1036,6 +1046,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
             hooks_parser.loadLibraries();
+
+            // Apply staged D2ClientConfig, used to be done by parser commit
+            D2ClientConfigPtr cfg;
+            cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            CfgMgr::instance().setD2ClientConfig(cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());

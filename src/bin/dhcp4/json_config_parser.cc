@@ -432,8 +432,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         // hooks-libraries are now migrated to SimpleParser.
     } else if (config_id.compare("echo-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
-    } else if (config_id.compare("dhcp-ddns") == 0) {
-        parser = new D2ClientConfigParser(config_id);
+    // dhcp-ddns has been converted to SimpleParser.
     } else if (config_id.compare("match-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     // control-socket has been converted to SimpleParser already.
@@ -667,6 +666,17 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             }
             
             // Legacy DhcpConfigParser stuff below
+            if (config_pair.first == "dhcp-ddns") {
+                // Apply defaults if not in short cut
+                if (!D2ClientConfigParser::isShortCutDisabled(config_pair.second)) {
+                    D2ClientConfigParser::setAllDefaults(config_pair.second);
+                }
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -752,6 +762,11 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
             hooks_parser.loadLibraries();
+
+            // Apply the staged D2ClientConfig, used to be done by parser commit
+            D2ClientConfigPtr cfg;
+            cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            CfgMgr::instance().setD2ClientConfig(cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());

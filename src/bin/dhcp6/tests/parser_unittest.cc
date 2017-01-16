@@ -257,6 +257,7 @@ TEST(ParserTest, file) {
     configs.push_back("several-subnets.json");
     configs.push_back("simple.json");
     configs.push_back("stateless.json");
+    configs.push_back("with-ddns.json");
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);

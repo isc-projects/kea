@@ -349,9 +349,6 @@ public:
             return (answer);
         }
 
-        // option parsing must be done last, so save it if we hit if first
-        ParserPtr option_parser;
-
         ConfigPair config_pair;
         try {
             // Iterate over the config elements.
@@ -361,17 +358,18 @@ public:
 
                 // These are the simple parsers. No need to go through
                 // the ParserPtr hooplas with them.
-                if ( (config_pair.first == "option-data") ||
-                     (config_pair.first == "option-def")) {
+                if ((config_pair.first == "option-data") ||
+                    (config_pair.first == "option-def") ||
+                    (config_pair.first == "dhcp-ddns")) {
                     continue;
                 }
 
                 // We also don't care about the default values that may be been
                 // inserted
-                if ( (config_pair.first == "preferred-lifetime") ||
-                     (config_pair.first == "valid-lifetime") ||
-                     (config_pair.first == "renew-timer") ||
-                     (config_pair.first == "rebind-timer")) {
+                if ((config_pair.first == "preferred-lifetime") ||
+                    (config_pair.first == "valid-lifetime") ||
+                    (config_pair.first == "renew-timer") ||
+                    (config_pair.first == "rebind-timer")) {
                     continue;
                 }
 
@@ -388,14 +386,8 @@ public:
 
                 // Create the parser based on element name.
                 ParserPtr parser(createConfigParser(config_pair.first));
-                // Options must be parsed last
-                if (config_pair.first == "option-data") {
-                    option_parser = parser;
-                } else {
-                    // Anything else  we can call build straight away.
-                    parser->build(config_pair.second);
-                    parser->commit();
-                }
+                parser->build(config_pair.second);
+                parser->commit();
             }
 
             int family = parser_context_->universe_ == Option::V4
@@ -419,6 +411,16 @@ public:
 
                 OptionDataListParser option_list_parser(family);
                 option_list_parser.parse(cfg_option, option_config->second);
+            }
+
+            // The dhcp-ddns parser is the next one to be run.
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                d2_client_config = values_map.find("dhcp-ddns");
+            if (d2_client_config != values_map.end()) {
+                // Used to be done by parser commit
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(d2_client_config->second);
+                CfgMgr::instance().setD2ClientConfig(cfg);
             }
 
             // Everything was fine. Configuration is successful.
@@ -452,8 +454,10 @@ public:
         ParserPtr parser;
         // option-data and option-def converted to SimpleParser, so they
         // are no longer here.
-        if (config_id.compare("dhcp-ddns") == 0) {
-            parser.reset(new D2ClientConfigParser(config_id));
+        if (config_id.compare("hooks-libraries") == 0) {
+            parser.reset(new HooksLibrariesParser(config_id));
+            hooks_libraries_parser_ =
+                boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
         } else {
             isc_throw(NotImplemented,
                 "Parser error: configuration parameter not supported: "
@@ -507,6 +511,10 @@ public:
     /// src/bin/dhcp{4,6}, the most straightforward way is to simply copy the
     /// minimum code here. Hence this method.
     ///
+    /// @todo - TKM, I think this is fairly hideous and we should figure out a
+    /// a way to not have to replicate in this fashion.  It may be minimum code
+    /// now, but it won't be fairly soon.
+    ///
     /// @param config configuration structure to be filled with default values
     /// @param v6 true = DHCPv6, false = DHCPv4
     void setAllDefaults(ElementPtr config, bool v6) {
@@ -555,6 +563,13 @@ public:
             setAllDefaults(config, GLOBAL6_DEFAULTS, OPTION4_DEFAULTS,
                            OPTION4_DEF_DEFAULTS);
         }
+
+        /// D2 client configuration code is in this library
+        ConstElementPtr d2_client = config->get("dhcp-ddns");
+        if (d2_client &&
+            !D2ClientConfigParser::isShortCutDisabled(d2_client)) {
+            D2ClientConfigParser::setAllDefaults(d2_client);
+        }
     }
 
     /// @brief Convenience method for parsing a configuration
@@ -580,6 +595,7 @@ public:
             // If error was reported, the error string should contain
             // position of the data element which caused failure.
             if (rcode_ != 0) {
+                std::cout << "Error text:" << error_text_ << std::endl;
                 EXPECT_TRUE(errorContainsPosition(status, "<string>"));
             }
         }
@@ -852,7 +868,6 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
         "    \"data\": \"\\\\SMSBoot\\\\x64\\\\wdsnbp.com\""
         " } ]"
         "}";
-    std::cout << config << std::endl;
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
@@ -1858,12 +1873,30 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
-    std::string invalid_configs[] = {
+    std::string invalid_shortcuts[] = {
         // Must supply at least enable-updates
         "{ \"dhcp-ddns\" :"
         "    {"
         "    }"
         "}",
+        // Enable-updates must be a boolean
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : 0"
+        "    }"
+        "}",
+        // stop
+        ""
+    };
+    int i = 0;
+    while (!invalid_shortcuts[i].empty()) {
+        // Verify that the configuration string parsing throws
+        EXPECT_THROW(parseConfiguration(invalid_shortcuts[i]),
+                     DhcpConfigError);
+        i++;
+    }
+
+    std::string invalid_configs[] = {
         // Must supply qualifying-suffix when updates are enabled
         "{ \"dhcp-ddns\" :"
         "    {"
@@ -2018,7 +2051,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
     // Iterate through the invalid configuration strings, attempting to
     // parse each one.  They should fail to parse, but fail gracefully.
     D2ClientConfigPtr current_config;
-    int i = 0;
+    i = 0;
     while (!invalid_configs[i].empty()) {
         // Verify that the configuration string parses without throwing.
         int rcode = parseConfiguration(invalid_configs[i]);

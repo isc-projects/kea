@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,7 +82,17 @@ CfgMgr::isDuplicate(const Subnet6& subnet) const {
 
 void
 CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
+    ensureCurrentAllocated();
+    // Note that D2ClientMgr::setD2Config() actually attempts to apply the
+    // configuration by stopping its sender and opening a new one and so
+    // forth per the new configuration.
     d2_client_mgr_.setD2ClientConfig(new_config);
+
+    // Manager will throw if the set fails, if it succeeds
+    // we'll update our SrvConfig, configuration_, with the D2ClientConfig
+    // used. This is largely bookkeeping in case we ever want to compare
+    // configuration_ to another SrvConfig.
+    configuration_->setD2ClientConfig(new_config);
 }
 
 bool

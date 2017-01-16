@@ -3301,7 +3301,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
 
     // Convert the JSON string to configuration elements.
     ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCP4(config_str));
+    ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
 
     // Pass the configuration in for parsing.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));

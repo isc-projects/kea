@@ -163,6 +163,14 @@ Parser4Context::contextName()
         return ("loggers");
     case OUTPUT_OPTIONS:
         return ("output-options");
+    case DHCP_DDNS:
+        return ("dhcp-ddns");
+    case NCR_PROTOCOL:
+        return ("ncr-protocol");
+    case NCR_FORMAT:
+        return ("ncr-format");
+    case REPLACE_CLIENT_NAME:
+        return ("replace-client-name");
     default:
         return ("__unknown__");
     }

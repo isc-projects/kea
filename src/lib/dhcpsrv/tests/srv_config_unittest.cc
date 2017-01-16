@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,8 +141,9 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
 
 void
 SrvConfigTest::enableDDNS(const bool enable) {
-    // D2 configuration should always be non-NULL.
-    CfgMgr::instance().getD2ClientConfig()->enableUpdates(enable);
+    const D2ClientConfigPtr& d2_config = conf_.getD2ClientConfig();
+    ASSERT_TRUE(d2_config);
+    d2_config->enableUpdates(enable);
 }
 
 // Check that by default there are no logging entries

@@ -2174,9 +2174,10 @@ It is merely echoed by the server
     <note>
     Note that formerly, this parameter was a boolean and permitted only values
     of <command>true</command> and <command>false</command>.  Boolean values
-    will still be accepted but may eventually be deprecated. A value of
-    <command>true</command> equates to <command>when-present</command>,
-    <command>false</command> equates to <command>never</command>.
+    have been deprecated and are no longer accepted.  If you are currently using
+    booleans, you must replace them with the desired mode name. A value of
+    <command>true</command> maps to <command>"when-present"</command>, while
+    <command>false</command> maps to <command>"never"</command>.
     </note>
 
       For example, To instruct kea-dhcp4 to always generate the FQDN for a
