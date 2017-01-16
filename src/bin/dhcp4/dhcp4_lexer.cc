@@ -2969,7 +2969,7 @@ YY_RULE_SETUP
     /* dhcp-ddns value keywords are case insensitive */
     if ((driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) ||
         ((driver.ctx_ == isc::dhcp::Parser4Context::DHCP_SOCKET_TYPE) &&
-	 (parser4_text == "\"udp\"")) {
+	 (parser4_text == "\"udp\""))) {
 	 return isc::dhcp::Dhcp4Parser::make_UDP(driver.loc_);
     }
     std::string tmp(parser4_text+1);
