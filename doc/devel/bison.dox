@@ -1,0 +1,473 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page parser Flex/Bison parsers
+
+@section parserIntro Parser background
+
+Kea's format of choice is JSON, which is used in configuration files, in the
+command channel and also when communicating between DHCP servers and DHCP-DDNS
+component. It is almost certain that it will be used as the syntax for any
+upcoming features.
+
+Historically, Kea used @ref isc::data::Element::fromJSON and @ref
+isc::data::Element::fromJSONFile methods to parse received data that is expected
+to be in JSON syntax. This in-house parser was developed back in early BIND10
+days. Its two main advantages were that it didn't have any external dependencies
+and that it was already available in the source tree when the Kea project
+started. On the other hand, it was very difficult to modify (several attempts to
+implement more robust comments had failed) and not well implemented. Also, it
+was pure JSON parser, so it accepted anything as long as the content was correct
+JSON. This has led to other problems - the syntactic checks were conducted much
+later, when some of the information (e.g. line numbers) was no longer
+available. To print meaningful error messages for example, we had to develop a
+way to store filename,line and column information. This on the other hand, led
+to duplication. Anyway, this part of the processing is something we can refer to
+as phase 1: get input string, parse it and generate a tree of @ref
+isc::data::Element objects.
+
+That Element tree was then processed by set of dedicated parsers.  Each parser
+was able to handle its own context, e.g. global, subnet list, subnet, pool
+etc. This step took the tree generated in the earlier step, parsed it and
+generated output configuration (e.g. @ref isc::dhcp::SrvConfig) or dynamic
+structures (e.g. isc::data::Host). There were a large number of parser objects
+derived from @ref isc::dhcp::DhcpConfigParser) instantiated for each scope and
+isntance of data (e.g. to parse 1000 host reservation entries a thousand of
+dedicated parsers were created).  For convenience, this step is called phase 2.
+
+Other issues with the old parsers are discussed here: @ref dhcpv6ConfigParserBison
+(this section is focused on DHCPv6, but the same issues affected DHCPv4 and D2)
+and here: http://kea.isc.org/wiki/SimpleParser.
+
+
+@section parserBisonIntro Flex/Bison based parser
+
+To solve the issue of phase 1 mentioned earlier, a new parser has been developed
+that is based on flex and bison tools. The following text uses DHCPv6 as an
+example, but the same principle applies to DHCPv4 and D2 and CA will likely to
+follow. The new parser consists of two core elements (the following description
+is slightly oversimplified to convey the intent, more detailed description
+is available in the following sections):
+
+-# Flex lexer (src/bin/dhcp6/dhcp6_lexer.ll) that is essentially a set of
+   regular expressions with C++ code that creates new tokens that represent whatever
+   was just parsed. This lexer will be called iteratively by bison until the whole
+   input text is parsed or an error is encountered. For example, a snippet of the
+   code could look like this:
+   @code
+   \"socket-type\" {
+        return isc::dhcp::Dhcp6Parser::make_SOCKET_TYPE(driver.loc_);
+   }
+   @endcode
+   This tells the flex that if encounters "socket-type" (quoted), then it should
+   create a token SOCKET_TYPE and pass to it its current location (that's the
+   file name, line and column number).
+
+-# Bison grammar (src/bin/dhcp6/dhcp6_parser.yy) that defines the syntax.
+   Grammar and syntax are perhaps fancy words, but they simply define what is
+   allowed and where. Bison grammar starts with a list of tokens. Those tokens
+   are defined only by name ("here's the list of possible tokens that could
+   appear"). What consitutes a token is actually defined in the lexer. The
+   grammar define how the incoming tokens are expected to fall into their
+   places together. Let's take an example of the following input text:
+   @code
+   {
+      "Dhcp6":
+      {
+          "renew-timer": 100
+      }
+   }
+   @endcode
+   this code would return the following sentence of tokens: LCURLY_BRACKET,
+   DHCP6, COLON, LCURLY_BRACKET, RENEW_TIMER, COLON, INTEGER
+   (a token with a value of 100), RCURLY_BRACKET, RCURLY_BRACKET, END
+
+-# Parser context. As there is some information that needs to be passed between
+   parser and lexer, @ref isc::dhcp::Parser6Context is a convenient to wrapper
+   around those two bundled together. It also works as a nice encapsulation,
+   hiding all the flex/bison details underneath.
+
+@section parserBuild Building flex/bison code
+
+The only input file used by flex is the .ll file. The only input file used
+by bison is the .yy file. When processed, those two tools will generate
+a number of .hh and .cc files. The major ones are names the same as their
+.ll and .yy counterparts (e.g. dhcp6_lexer.cc, dhcp6_parser.cc and dhcp6_parser.h),
+but there's a number of additional files created: location.hh, position.hh
+and stack.hh. Those are internal bison headers that are needed. To avoid every
+user to have flex and bison installed, we chose to generate the files and
+add them to the Kea repository. To generate those files, do the following:
+
+@code
+./configure --enable-generate-parser
+cd src/bin/dhcp6
+make parser
+@endcode
+
+Strictly speaking, make parser is not necessary. If you updated .ll or .yy file,
+regular make command should pick those changes up. However, since one source
+file generates multiple output files and you are likely using multi-process
+build (make -j), there may be odd side effects, so I found it more convenient
+to explicitly rebuild the files manually by using "make parser".
+
+One problem flex/bison brings is the tool version dependency. If one developer
+uses version A of those tools and another developer uses B, then the files
+generated may be different and cause unnecessarily large diffs, may cause
+coverity/cpp-check issues appear and disappear and cause general unhappiness.
+To avoid those problems, we will introduce a requirement to generate flex/bison
+files on one dedicated machine. This machine will likely be docs. Currently Ops
+is working on installing the necessary versions of flex/bison required
+
+Note: the above applies only to the code being merged on master. It is probably
+ok to generate the files on your development branch with whatever version you
+have as long as it is not too old. In particular, the bison version needs to be
+at least 3.0.0 and Mac OS has 2.x version installed by default. When reviewing
+tickets that have flex/bison changes, please review .ll and .yy files and ignore
+the files generated from them. If you really insist, you're welcome to review
+them, but in most cases that will be an exercise in futility.
+
+@section parserFlex Flex detailed
+
+Earlier sections described the lexer in a bit over-simplified way. The .ll file
+contains a number of additional elements in addition to the regular expressions
+and they're not as simple as described.
+
+First, there's a number of sections separated by percent (%) signs. Depending
+on which section the code is written in, it may be interpreted by flex, copied
+verbatim to output .cc file, copied to output .h file or copied to both.
+
+There is an initial section that defines flex options. These are somewhat
+documented, but the docs for it may be a bit cryptic. When developing new
+parsers, it's best to start by copying whatever we have for DHCPv6 and tweak as
+needed.
+
+Second addition are flex conditions. They're defined with %x and they define a
+state of the lexer. A good example of a state may be comment. Once the lexer
+detects that a comment has started, it switches to certain condition (by calling
+BEGIN(COMMENT) for example) and the code should ignore whatever follows
+(especially strings that look like valid tokens) until the comment is closed
+(when it returns to the default condition by calling BEGIN(INITIAL)). This is
+something that is not frequently used and the only use cases for it are the
+forementioned comments and file inclusions.
+
+Second addition are parser contexts. Let's assume we have a parser that uses
+"ip-address" regexp that would return IP_ADDRESS token. Whenever we want to
+allow "ip-address", the grammar allows IP_ADDRESS token to appear. When the
+lexer is called, it will match the regexp, will generate IP_ADDRESS token and
+the parser will carry out its duty. This works fine as long as you have very
+specific grammar that defines everything. Sadly, that's not the case in DHCP as
+we have hooks. Hook libraries can have parameters that are defined by third
+party developers and they can pick whatever parameter names they want, including
+"ip-address". Another example may be Dhcp4 and Dhcp6 configurations defined in a
+single file. When parsed by Dhcp6 server, its grammar has a clause that says
+"Dhcp4" may contain any generic JSON. However, the lexer will likely find the
+"ip-address" string and will say that it's not a part of generic JSON, but a
+dedicated IP_ADDRESS token. The parser would then complain and the whole thing
+would end up in failure. To solve this problem parser contexts were introduced.
+They tell the lexer whether input strings have specific or generic meaning.
+For example, when detecting "ip-address" string when parsing host reservation,
+the lexer is expected to report IP_ADDRESS token. However, when parsing generic
+JSON, it should return STRING with a value of "ip-address". The list of all
+contexts is enumerated in @ref isc::dhcp::Parser6Context::ParserContext.
+
+@section parserGrammar Bison grammar
+
+Bison has much better documentation than flex. Its latest version seems to be
+available here: https://www.gnu.org/software/bison/manual/ Bison is a LALR(1)
+parser, which essentially means that it is able to parse (separate and analyze)
+any text that is described by set of rules. You can see the more formal
+description here: https://en.wikipedia.org/wiki/LALR_parser, but the plain
+English explanation is that you define a set of rules and bison will walk
+through input text trying to match the content to those rules. While doing
+so, it will be allowed to peek at most one symbol (token) ahead.
+
+Let's take a closer look at the bison grammar we have for DHCPv6. It is defined
+in src/bin/dhcp6/dhcp6_parser.yy. Here's a simplified excerpt of it:
+
+@code
+// This defines a global Dhcp6 object.
+dhcp6_object: DHCP6 COLON LCURLY_BRACKET global_params RCURLY_BRACKET;
+
+// This defines all parameters that may appear in the Dhcp6 object.
+// It can either contain a global_param (defined below) or a 
+// global_params list, followed by a comma followed by a global_param.
+// Note this definition is recursive and can expand to a single
+// instance of global_param or multiple instances separated by commas.
+// This is how bison handles variable number of parameters.
+global_params: global_param
+             | global_params COMMA global_param
+             ;
+    
+// These are the parameters that are allowed in the top-level for
+// Dhcp6.
+global_param: preferred_lifetime
+            | valid_lifetime
+            | renew_timer
+            | rebind_timer
+            | subnet6_list
+            | interfaces_config
+            | lease_database
+            | hosts_database
+            | mac_sources
+            | relay_supplied_options
+            | host_reservation_identifiers
+            | client_classes
+            | option_data_list
+            | hooks_libraries
+            | expired_leases_processing
+            | server_id
+            | dhcp4o6_port
+            ;
+    
+renew_timer: RENEW_TIMER COLON INTEGER;
+   
+// Many other definitions follow.
+@endcode
+
+The code above defines parameters that may appear in the Dhcp6 object
+declaration. One important trick to understand is to get the way to handle
+variable number of parameters. In bison it is most convenient to present them as
+recursive lists (global_params in this example) and allow any number of
+global_param instances. This way the grammar is very easily extensible. If one
+needs to add a new global parameter, he or she just needs to add it to the
+global_param list.
+
+This type of definitions has several levels, each representing logical
+structure of the configuration data. We start with global scope, then step
+into Dhcp6 object that has Subnet6 list, which has Subnet6 instances,
+which has pools list and so on. Each of those is represented as a separate
+rule.
+
+The "leaf" rules that don't contain any other rules, must be defined by a
+series of tokens. An example of such a rule is renew_timer above. It is defined
+as a series of 3 tokens: RENEW_TIMER, COLON and INTEGER. 
+
+Speaking of integers, it is worth noting that some tokens can have values. Those
+values are defined using %token clause.  For example, dhcp6_parser.yy has the
+following:
+
+@code
+%token <std::string> STRING "constant string"
+%token <int64_t> INTEGER "integer"
+%token <double> FLOAT "floating point"
+%token <bool> BOOLEAN "boolean"
+@endcode
+
+The first line says that the token STRING has a type of std::string and when
+referring to this token in error messages, it should be printed as "constant
+string".
+
+In principle, it is valid to define just the grammar without any corresponding
+C++ code to it. Bison will go through the whole input text, match the
+rules and will either say the input adhered to the rules (parsing successful)
+or not (parsing failed). This may be a useful step when developing new parser,
+but it has no practical value. To perform specific actions, bison allows
+injecting C++ code at almost any moment. For example we could augment the
+renew_timer with some extra code:
+
+@code
+renew_timer: RENEW_TIMER {
+   cout << "renew-timer token detected, so far so good" << endl;
+} COLON { 
+   cout << "colon detected!" << endl;
+} INTEGER {
+    uint32_t timer = $3;
+    cout << "Got the renew-timer value: " << time << endl;
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("renew-timer", prf);
+};
+@endcode
+
+This example showcases several important things. First, the ability to insert
+code at almost any step is very useful. It's also a powerful debugging tool.
+
+Second, some tokens are valueless (e.g. "renew-timer" when represented as
+RENEW_TIMER token has no value), but some have values. In particular, INTEGER
+token has value which can be extracted by $ followed by a number that
+represents its order, so $3 means "a value of third token in this rule".
+
+Also, some rules may have values. This is not used often, but there are specific
+cases when it's convenient. Let's take a look at the following excerpt:
+
+@code
+ncr_protocol: NCR_PROTOCOL {
+    ctx.enter(ctx.NCR_PROTOCOL); (1)
+} COLON ncr_protocol_value {
+    ctx.stack_.back()->set("ncr-protocol", $4); (3)
+    ctx.leave();
+};
+
+ncr_protocol_value:
+    UDP { $$ = ElementPtr(new StringElement("UDP", ctx.loc2pos(@1))); } 
+  | TCP { $$ = ElementPtr(new StringElement("TCP", ctx.loc2pos(@1))); } (2)
+  ;
+@endcode
+
+
+There's a "ncr-protocol" parameter that accepts one of two values: either tcp or
+udp. To handle such a case, we first enter the NCR_PROTOCOL context to tell the
+lexer that we're in this scope. Lexer will then know that any incoming string of
+text that is either "UDP" or "TCP" should be represented as one of TCP or UDP
+tokens. Parser knows that after NCR_PROTOCOL there will be a colon followed
+by ncr_protocol_value. The rule for ncr_protocol_value says it can be either
+TCP token or UDP token. Let's assume the input text has the following:
+@code
+"ncr-protocol": "TCP"
+@endcode
+
+Here's how the parser will handle it. First, it will attempt to match the rule
+for ncr_protocol. It will discover the first token is NCR_PROTOCOL. As a result,
+it will run the code (1), which will tell lexer to parse incoming tokens
+as ncr protocol values. The next token will be COLON. The next one expected
+after that is ncr_protocol_value. Lexer is already switched into NCR_PROTOCOL
+context, so it will recognize "TCP" as TCP token, not as a string of value of "TCP".
+Parser will receive that token and match the line (2). It will create appropriate
+representation that will be used a the rule's value ($$). Finally, parser
+will unroll back to ncr_protocol rule and execute the code in line (3) and (4).
+Line (3) will pick the value set up in line 2 and add it to the stack of
+values. Finally, line (4) will tell the lexer that we finished the NCR protocol
+parsing and it can go back to whatever state it was before.
+
+@section parserBisonStack Generating Element tree in Bison
+
+Bison parser keeps matching rules until it reaches the end of input file. During
+that process the code needs to build a hierarchy (a tree) of inter-connected
+Element objects that represents parsed text. @ref isc::data::Element has a
+complex structure that defines parent-child relation differently depending on
+the type of parent (maps refer to its children differently than lists).  This
+requires the code to be aware of the parent content. In general, every time a
+new scope (an opening curly bracket in input text) is encountered, the code
+pushes new Element to the stack (see @ref isc::dhcp::Parser6Context::stack_)
+and every time the scope closes (a closing curly bracket in input text) the
+element is removed from the stack. With this approach, we always have access
+to the parent element as it's the last element on the stack. For example, when
+parsing preferred-lifetime, the code does the following:
+
+@code
+preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3))); (1)
+    ctx.stack_.back()->set("preferred-lifetime", prf);   (2)
+}
+@endcode
+
+The first line creates an instance of IntElement with a value of the token.  The
+second line adds it to the current map (current = the last on the stack).  This
+approach has a very nice property of being generic. This rule can be referenced
+from global and subnet scope (and possibly other scopes as well) and the code
+will add the IntElement object to whatever is last on the stack, be it
+global, subnet or perhaps even something else (maybe we will allow preferred
+lifetime to be defined on a per pool or per host basis?).
+
+@section parserSubgrammar Parsing partial grammar
+
+All the explanations so far assumed that we're operating in a default case of
+receiving the configuration as a whole. That is the case during startup and
+reconfiguration. However, both DHCPv4 and DHCPv6 support certain cases when the
+input text is not the whole configuration, but rather certain parts of it. There
+are several examples of such cases. The most common are unit-tests. They
+typically don't have the outermost { } or Dhcp6 object, but simply define
+whatever parameters are being tested. Second, we have command channel that will
+in the near future contain parts of the configuration, depending on the
+command. For example, add-reservation will contain host reservation only.
+
+Bison by default does not support multiple start rules, but there's a trick
+that can provide such capability. The trick assumes that the starting
+rule may allow one of artificial tokens that represent the scope that is
+expected. For example, when called from add-reservation command, the
+artificial token will be SUB_RESERVATION and it will trigger the parser
+to bypass the global { }, Dhcp6 and jump immediately to sub_reservation.
+
+This trick is also implemented in the lexer. There's a flag called start_token_flag.
+When initially set to true, it will cause the lexer to emit an artificial
+token once, before parsing any input whatsoever.
+
+@section parserBisonExtend Extending grammar
+
+Adding new parameters to existing parsers is very easy once you get hold of the
+concept of what the grammar rules represent. The first step is to understand
+where the parameter is to be allowed. Typically a new parameter is allowed
+in one scope and only over time it is added in other scopes. Recently a support
+for 4o6-interface-id parameter has been added. That's parameter that can
+be defined in a subnet and takes a string argument. You can see the actual
+change conducted in this commit:
+(https://github.com/isc-projects/kea/commit/9fccdbf54c4611dc10111ad8ff96d36cad59e1d6).
+
+Here's the complete set of necessary changes.
+
+1. Define a new token in dhcp6_parser.yy:
+   @code
+   SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
+   @endcode
+   This defines a token called SUBNET_4O6_INTERFACE_ID that, when needed to 
+   be printed, will be represented as "4o6-interface-id".
+
+2. Tell lexer how to recognize the new parameter:
+   @code
+   \"4o6-interface-id\" {
+       switch(driver.ctx_) {
+       case isc::dhcp::Parser4Context::SUBNET4:
+           return isc::dhcp::Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID(driver.loc_);
+       default:
+           return isc::dhcp::Dhcp4Parser::make_STRING("4o6-interface-id", driver.loc_);
+       }
+   }
+   @endcode
+   It tells the parser that when in Subnet4 context, incoming "4o6-interface-id" string
+   should be represented as SUBNET_4O6_INTERFACE_ID token. In any other context,
+   it should be represented as a string.
+
+3. Add the rule that will define the value. A user is expected to add something like
+   @code
+   "4o6-interface-id": "whatevah"
+   @endcode
+   The rule to match this and similar statements looks as follows:
+   @code
+   subnet_4o6_interface_id: SUBNET_4O6_INTERFACE_ID {
+       ctx.enter(ctx.NO_KEYWORD);
+   } COLON STRING {
+       ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
+       ctx.stack_.back()->set("4o6-interface-id", iface);
+       ctx.leave();
+   };
+   @endcode
+   Here's a good example of the context use. We have no idea what sort of interface-id
+   the user will use. Typically that will be an integer, but it may be something
+   weird that happens to match our reserved keywords. Therefore we switch to
+   no keyword context. This tells the lexer to interpret everything as string,
+   integer or float.
+   
+4. Finally, extend the existing subnet4_param that defines all allowed parameters
+   in Subnet4 scope to also cover our new parameter (the new line marked with *):
+   @code
+   subnet4_param: valid_lifetime
+                | renew_timer
+                | rebind_timer
+                | option_data_list
+                | pools_list
+                | subnet
+                | interface
+                | interface_id
+                | id
+                | rapid_commit
+                | client_class
+                | reservations
+                | reservation_mode
+                | relay
+                | match_client_id
+                | next_server
+                | subnet_4o6_interface
+                | subnet_4o6_interface_id (*)
+                | subnet_4o6_subnet
+                | unknown_map_entry
+                ;
+   @endcode
+
+5. Regenerate flex/bison files by typing make parser.
+
+6. Run unit-tests that you wrote before touch any bison stuff. You did write them
+   in advance, right?
+*/
