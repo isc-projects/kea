@@ -71,14 +71,6 @@ typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 ///
 /// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
 class Pool6Parser : public PoolParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param pools storage container in which to store the parsed pool.
-    Pool6Parser(PoolStoragePtr pools) : PoolParser(pools) {
-    }
-
 protected:
     /// @brief Creates a Pool6 object given a IPv6 prefix and the prefix length.
     ///
@@ -112,22 +104,19 @@ protected:
 /// @brief Specialization of the pool list parser for DHCPv6
 class Pools6ListParser : PoolsListParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param pools storage container in which to store the parsed pool.
-    Pools6ListParser(PoolStoragePtr pools) : PoolsListParser(pools) {
-    }
 
     /// @brief parses the actual structure
     ///
     /// This method parses the actual list of pools.
     ///
+    /// @param pools storage container in which to store the parsed pool.
     /// @param pools_list a list of pool structures
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    void parse(isc::data::ConstElementPtr pools_list) {
+    void parse(PoolStoragePtr pools,
+               isc::data::ConstElementPtr pools_list) {
         BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
-            Pool6Parser parser(pools_);
-            parser.parse(pool, AF_INET6);
+            Pool6Parser parser;
+            parser.parse(pools, pool, AF_INET6);
         }
     }
 };
@@ -154,9 +143,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param pools storage container in which to store the parsed pool.
-    PdPoolParser(PoolStoragePtr pools)
-        : pools_(pools), options_(new CfgOption()) {
+    PdPoolParser() : options_(new CfgOption()) {
     }
 
     /// @brief Builds a prefix delegation pool from the given configuration
@@ -164,11 +151,13 @@ public:
     /// This function parses configuration entries and creates an instance
     /// of a dhcp::Pool6 configured for prefix delegation.
     ///
+    /// @param pools storage container in which to store the parsed pool.
     /// @param pd_pool_ pointer to an element that holds configuration entries
     /// that define a prefix delegation pool.
     ///
     /// @throw DhcpConfigError if configuration parsing fails.
-    void parse(ConstElementPtr pd_pool_) {
+  void parse(PoolStoragePtr pools,
+             ConstElementPtr pd_pool_) {
         std::string addr_str;
         std::string excluded_prefix_str = "::";
         uint8_t prefix_len = 0;
@@ -235,7 +224,7 @@ public:
         }
 
         // Add the local pool to the external storage ptr.
-        pools_->push_back(pool_);
+        pools->push_back(pool_);
     }
 
 private:
@@ -261,22 +250,11 @@ private:
     /// @throw isc::data::TypeError when it is not an integer
     /// isc::dhcp::DhcpConfigError when it does not fit in an uint8_t
     uint8_t getUint8(const std::string& name, ConstElementPtr value) const {
-        int64_t val_int = value->intValue();
-        if ((val_int < std::numeric_limits<uint8_t>::min()) ||
-            (val_int > std::numeric_limits<uint8_t>::max())) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "out of range value (" << val_int
-                      << ") specified for parameter '"
-                      << name << "' (" << value->getPosition() << ")");
-        }
-        return (static_cast<uint8_t>(val_int));
+        return (extractInt<uint8_t, DhcpConfigError>(name, value));
     }
 
     /// Pointer to the created pool object.
     isc::dhcp::Pool6Ptr pool_;
-
-    /// Pointer to storage to which the local pool is written upon commit.
-    isc::dhcp::PoolStoragePtr pools_;
 
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
@@ -289,29 +267,25 @@ private:
 /// This parser iterates over a list of prefix delegation pool entries and
 /// creates pool instances for each one. If the parsing is successful, the
 /// collection of pools is committed to the provided storage.
-class PdPoolListParser : public PoolsListParser {
+class PdPoolsListParser : public PoolsListParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param storage is the pool storage in which to store the parsed
-    /// pools in this list
-    PdPoolListParser(PoolStoragePtr pools) : PoolsListParser(pools) {
-    }
 
     /// @brief Parse configuration entries.
     ///
     /// This function parses configuration entries and creates instances
     /// of prefix delegation pools .
     ///
+    /// @param storage is the pool storage in which to store the parsed
     /// @param pd_pool_list pointer to an element that holds entries
     /// that define a prefix delegation pool.
     ///
     /// @throw DhcpConfigError if configuration parsing fails.
-    void parse(isc::data::ConstElementPtr pd_pool_list) {
+    void parse(PoolStoragePtr pools,
+               isc::data::ConstElementPtr pd_pool_list) {
         // Loop through the list of pd pools.
         BOOST_FOREACH(ConstElementPtr pd_pool, pd_pool_list->listValue()) {
-            PdPoolParser parser(pools_);
-            parser.parse(pd_pool);
+            PdPoolParser parser;
+            parser.parse(pools, pd_pool);
         }
     }
 };
@@ -341,13 +315,13 @@ public:
         /// Parse all pools first.
         ConstElementPtr pools = subnet->get("pools");
         if (pools) {
-            Pools6ListParser parser(pools_);
-            parser.parse(pools);
+            Pools6ListParser parser;
+            parser.parse(pools_, pools);
         }
         ConstElementPtr pd_pools = subnet->get("pd-pools");
         if (pd_pools) {
-            PdPoolListParser parser(pools_);
-            parser.parse(pd_pools);
+            PdPoolsListParser parser;
+            parser.parse(pools_, pd_pools);
         }
 
         SubnetConfigParser::build(subnet);

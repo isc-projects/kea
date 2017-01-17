@@ -706,23 +706,21 @@ typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 class PoolParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param pools is the storage in which to store the parsed pool
-    PoolParser(PoolStoragePtr pools);
-
     /// @brief destructor.
-    virtual ~PoolParser();
+    virtual ~PoolParser() {
+    }
 
     /// @brief parses the actual structure
     ///
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
+    /// @param pools is the storage in which to store the parsed pool
     /// @param pool_structure a single entry on a list of pools
     /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void parse(isc::data::ConstElementPtr pool_structure,
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pool_structure,
                        const uint16_t address_family);
 
 protected:
@@ -744,12 +742,6 @@ protected:
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &min,
                               isc::asiolink::IOAddress &max,
                               int32_t ptype = 0) = 0;
-
-    /// @brief pointer to the actual Pools storage
-    ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
 };
 
 /// @brief Parser for a list of pools
@@ -760,12 +752,6 @@ protected:
 class PoolsListParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param pools is the storage in which to store the parsed pools.
-    PoolsListParser(PoolStoragePtr pools) : pools_(pools) {
-    }
-
     /// @brief destructor.
     virtual ~PoolsListParser() {
     }
@@ -774,17 +760,11 @@ public:
     ///
     /// This method parses the actual list of pools.
     ///
+    /// @param pools is the storage in which to store the parsed pools.
     /// @param pools_list a list of pool structures
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void parse(isc::data::ConstElementPtr pools_list) = 0;
-
-protected:
-
-    /// @brief pointer to the actual Pools storage
-    ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pools_list) = 0;
 };
 
 /// @brief parser for additional relay information
