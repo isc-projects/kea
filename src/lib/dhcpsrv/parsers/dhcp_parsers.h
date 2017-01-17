@@ -994,7 +994,7 @@ public:
 
     /// @brief Parses a given dhcp-ddns element into D2ClientConfig.
     ///
-    /// @param client_config is the "dhcp-ddns" configuration to parse
+    /// @param d2_client_cfg is the "dhcp-ddns" configuration to parse
     ///
     /// The elements currently supported are (see isc::dhcp::D2ClientConfig
     /// for details on each):
