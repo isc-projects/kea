@@ -36,7 +36,7 @@ etc. This step took the tree generated in the earlier step, parsed it and
 generated output configuration (e.g. @ref isc::dhcp::SrvConfig) or dynamic
 structures (e.g. isc::data::Host). There were a large number of parser objects
 derived from @ref isc::dhcp::DhcpConfigParser) instantiated for each scope and
-isntance of data (e.g. to parse 1000 host reservation entries a thousand of
+instance of data (e.g. to parse 1000 host reservation entries a thousand of
 dedicated parsers were created).  For convenience, this step is called phase 2.
 
 Other issues with the old parsers are discussed here: @ref dhcpv6ConfigParserBison
@@ -71,7 +71,7 @@ detailed description is available in the following sections):
    Grammar and syntax are perhaps fancy words, but they simply define what is
    allowed and where. Bison grammar starts with a list of tokens. Those tokens
    are defined only by name ("here's the list of possible tokens that could
-   appear"). What consitutes a token is actually defined in the lexer. The
+   appear"). What constitutes a token is actually defined in the lexer. The
    grammar define how the incoming tokens are expected to fall into their
    places together. Let's take an example of the following input text:
    @code
