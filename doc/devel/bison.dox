@@ -179,6 +179,8 @@ the lexer is expected to report IP_ADDRESS token. However, when parsing generic
 JSON, it should return STRING with a value of "ip-address". The list of all
 contexts is enumerated in @ref isc::dhcp::Parser6Context::ParserContext.
 
+For DHCPv6-specific description of the conflict avoidance, see @ref dhcp6ParserConflicts.
+
 @section parserGrammar Bison grammar
 
 Bison has much better documentation than flex. Its latest version seems to be
@@ -367,7 +369,7 @@ will add the IntElement object to whatever is last on the stack, be it global,
 subnet or perhaps even something else (maybe one day we will allow preferred
 lifetime to be defined on a per pool or per host basis?).
 
-@section parserSubgrammar Parsing partial grammar
+@section parserSubgrammar Parsing Partial Configuration
 
 All the explanations so far assumed that we're operating in a default case of
 receiving the configuration as a whole. That is the case during startup and
