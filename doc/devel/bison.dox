@@ -25,10 +25,10 @@ was pure JSON parser, so it accepted anything as long as the content was correct
 JSON. This has led to other problems - the syntactic checks were conducted much
 later, when some of the information (e.g. line numbers) was no longer
 available. To print meaningful error messages for example, we had to develop a
-way to store filename,line and column information. This on the other hand, led
+way to store filename, line and column information. This on the other hand, led
 to duplication. Anyway, this part of the processing is something we can refer to
 as phase 1: get input string, parse it and generate a tree of @ref
-isc::data::Element objects.
+isc::data::Element objects using shared pointers.
 
 That Element tree was then processed by set of dedicated parsers.  Each parser
 was able to handle its own context, e.g. global, subnet list, subnet, pool
@@ -65,7 +65,7 @@ detailed description is available in the following sections):
    @endcode
    This tells the flex that if encounters "socket-type" (quoted), then it should
    create a token SOCKET_TYPE and pass to it its current location (that's the
-   file name, line and column number).
+   file name, line and column numbers).
 
 -# Bison grammar (src/bin/dhcp6/dhcp6_parser.yy) that defines the syntax.
    Grammar and syntax are perhaps fancy words, but they simply define what is
@@ -96,7 +96,7 @@ detailed description is available in the following sections):
 The only input file used by flex is the .ll file. The only input file used by
 bison is the .yy file. When making changes to the lexer or parser, only those
 two files are edited. When processed, those two tools will generate a number of
-.hh and .cc files. The major ones are named the same as their .ll and .yy
+.h, .hh and .cc files. The major ones are named the same as their .ll and .yy
 counterparts (e.g. dhcp6_lexer.cc, dhcp6_parser.cc and dhcp6_parser.h), but
 there's a number of additional files created: location.hh, position.hh and
 stack.hh. Those are internal bison headers that are needed for compilation.
