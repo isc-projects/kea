@@ -54,14 +54,6 @@ namespace {
 ///
 /// It is useful for parsing Dhcp4/subnet4[X]/pool parameters.
 class Pool4Parser : public PoolParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param pools storage container in which to store the parsed pool.
-    Pool4Parser(PoolStoragePtr pools) : PoolParser(pools) {
-    }
-
 protected:
     /// @brief Creates a Pool4 object given a IPv4 prefix and the prefix length.
     ///
@@ -89,22 +81,19 @@ protected:
 /// @brief Specialization of the pool list parser for DHCPv4
 class Pools4ListParser : PoolsListParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param pools storage container in which to store the parsed pool.
-    Pools4ListParser(PoolStoragePtr pools) : PoolsListParser(pools) {
-    }
 
     /// @brief parses the actual structure
     ///
     /// This method parses the actual list of pools.
     ///
+    /// @param pools storage container in which to store the parsed pool.
     /// @param pools_list a list of pool structures
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    void parse(isc::data::ConstElementPtr pools_list) {
+    void parse(PoolStoragePtr pools,
+               isc::data::ConstElementPtr pools_list) {
         BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
-            Pool4Parser parser(pools_);
-            parser.parse(pool, AF_INET);
+            Pool4Parser parser;
+            parser.parse(pools, pool, AF_INET);
         }
     }
 };
@@ -133,8 +122,8 @@ public:
         /// Parse Pools first.
         ConstElementPtr pools = subnet->get("pools");
         if (pools) {
-            Pools4ListParser parser(pools_);
-            parser.parse(pools);
+            Pools4ListParser parser;
+            parser.parse(pools_, pools);
         }
 
         SubnetConfigParser::build(subnet);

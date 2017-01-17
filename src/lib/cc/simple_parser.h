@@ -147,6 +147,28 @@ class SimpleParser {
     /// @return a boolean value of the parameter
     static bool getBoolean(isc::data::ConstElementPtr scope,
                            const std::string& name);
+
+    /// @brief Returns an integer value with range checking
+    ///
+    /// This template should be instantied in parsers when useful
+    ///
+    /// @tparam int_type the integer type e.g. uint32_t
+    /// @tparam out_of_range always @c isc::dhcp::DhcpConfigError
+    /// @param name name of the parameter for error report
+    /// @param value value of the parameter
+    /// @throw isc::data::TypeError when the value is not an integer
+    /// @throw out_of_range when the value does not fit in int_type
+    template <typename int_type, class out_of_range> int_type
+    extractInt(const std::string& name, ConstElementPtr value) const {
+        int64_t val_int = value->intValue();
+        if ((val_int < std::numeric_limits<int_type>::min()) ||
+            (val_int > std::numeric_limits<int_type>::max())) {
+            isc_throw(out_of_range, "out of range value (" << val_int
+                  << ") specified for parameter '" << name
+                      << "' (" << value->getPosition() << ")");
+        }
+        return (static_cast<int_type>(val_int));
+    }
 };
 
 };

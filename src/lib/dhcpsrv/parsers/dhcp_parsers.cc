@@ -853,14 +853,10 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
 }
 
 //****************************** PoolParser ********************************
-PoolParser::PoolParser(PoolStoragePtr pools) : pools_(pools) {
-}
-
-PoolParser::~PoolParser() {
-}
 
 void
-PoolParser::parse(ConstElementPtr pool_structure,
+PoolParser::parse(PoolStoragePtr pools,
+                  ConstElementPtr pool_structure,
                   const uint16_t address_family) {
 
     ConstElementPtr text_pool = pool_structure->get("pool");
@@ -899,10 +895,13 @@ PoolParser::parse(ConstElementPtr pool_structure,
             // digits (because there are extra characters left over).
 
             // No checks for values over 128. Range correctness will
-            // be checked in Pool4 constructor.
+            // be checked in Pool4 constructor, here we only check
+            // the representation fits in an uint8_t as this can't
+            // be done by a direct lexical cast as explained...
             int val_len = boost::lexical_cast<int>(prefix_len);
             if ((val_len < std::numeric_limits<uint8_t>::min()) ||
                 (val_len > std::numeric_limits<uint8_t>::max())) {
+                // This exception will be handled 4 line later!
                 isc_throw(OutOfRange, "");
             }
             len = static_cast<uint8_t>(val_len);
@@ -914,7 +913,7 @@ PoolParser::parse(ConstElementPtr pool_structure,
 
         try {
             pool = poolMaker(addr, len);
-            pools_->push_back(pool);
+            pools->push_back(pool);
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, "Failed to create pool defined by: "
                       << txt << " (" << text_pool->getPosition() << ")");
@@ -939,7 +938,7 @@ PoolParser::parse(ConstElementPtr pool_structure,
 
             try {
                 pool = poolMaker(min, max);
-                pools_->push_back(pool);
+                pools->push_back(pool);
             } catch (const std::exception& ex) {
                 isc_throw(DhcpConfigError, "Failed to create pool defined by: "
                           << txt << " (" << text_pool->getPosition() << ")");
