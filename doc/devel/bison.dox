@@ -159,7 +159,7 @@ BEGIN(COMMENT) for example) and the code then ignores whatever follows
 something that is not frequently used and the only use cases for it are the
 forementioned comments and file inclusions.
 
-Second addition are parser contexts. Let's assume we have a parser that uses
+Second addition are syntactic contexts. Let's assume we have a parser that uses
 "ip-address" regexp that would return IP_ADDRESS token. Whenever we want to
 allow "ip-address", the grammar allows IP_ADDRESS token to appear. When the
 lexer is called, it will match the regexp, will generate the IP_ADDRESS token and
@@ -172,7 +172,7 @@ single file. When parsed by Dhcp6 server, its grammar has a clause that says
 "Dhcp4" may contain any generic JSON. However, the lexer will likely find the
 "ip-address" string and will say that it's not a part of generic JSON, but a
 dedicated IP_ADDRESS token. The parser would then complain and the whole thing
-would end up in failure. To solve this problem parser contexts were introduced.
+would end up in failure. To solve this problem syntactic contexts were introduced.
 They tell the lexer whether input strings have specific or generic meaning.
 For example, when detecting "ip-address" string when parsing host reservation,
 the lexer is expected to report IP_ADDRESS token. However, when parsing generic
@@ -295,7 +295,8 @@ code at almost any step is very useful. It's also a powerful debugging tool.
 Second, some tokens are valueless (e.g. "renew-timer" when represented as
 RENEW_TIMER token has no value), but some have values. In particular, INTEGER
 token has value which can be extracted by $ followed by a number that
-represents its order, so $3 means "a value of third token in this rule".
+represents its order, so $3 means "a value of third token or action
+in this rule".
 
 Also, some rules may have values. This is not used often, but there are specific
 cases when it's convenient. Let's take a look at the following excerpt:
@@ -369,7 +370,7 @@ will add the IntElement object to whatever is last on the stack, be it global,
 subnet or perhaps even something else (maybe one day we will allow preferred
 lifetime to be defined on a per pool or per host basis?).
 
-@section parserSubgrammar Parsing Partial Configuration
+@section parserSubgrammar Parsing partial configuration
 
 All the explanations so far assumed that we're operating in a default case of
 receiving the configuration as a whole. That is the case during startup and
@@ -413,7 +414,7 @@ Here's the complete set of necessary changes.
    SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
    @endcode
    This defines a token called SUBNET_4O6_INTERFACE_ID that, when needed to
-   be printed, will be represented as "4o6-interface-id".
+   be printed, e.g. in an error message, will be represented as "4o6-interface-id".
 
 2. Tell lexer how to recognize the new parameter:
    @code
