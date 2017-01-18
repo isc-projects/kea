@@ -28,12 +28,10 @@ namespace dhcp {
 
 // ********************** ExpressionParser ****************************
 
-ExpressionParser::ExpressionParser(ExpressionPtr& expression)
-    : local_expression_(ExpressionPtr()), expression_(expression) {
-}
-
 void
-ExpressionParser::parse(ConstElementPtr expression_cfg, uint16_t family) {
+ExpressionParser::parse(ExpressionPtr& expression,
+                        ConstElementPtr expression_cfg,
+                        uint16_t family) {
     if (expression_cfg->getType() != Element::string) {
         isc_throw(DhcpConfigError, "expression ["
             << expression_cfg->str() << "] must be a string, at ("
@@ -47,8 +45,8 @@ ExpressionParser::parse(ConstElementPtr expression_cfg, uint16_t family) {
     try {
         EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6);
         eval_ctx.parseString(value);
-        local_expression_.reset(new Expression());
-        *local_expression_ = eval_ctx.expression;
+        expression.reset(new Expression());
+        *expression = eval_ctx.expression;
     } catch (const std::exception& ex) {
         // Append position if there is a failure.
         isc_throw(DhcpConfigError,
@@ -56,27 +54,22 @@ ExpressionParser::parse(ConstElementPtr expression_cfg, uint16_t family) {
                   <<  "] error: " << ex.what() << " at ("
                   <<  expression_cfg->getPosition() << ")");
     }
-
-    // Success so commit.
-    expression_ = local_expression_;
 }
 
 // ********************** ClientClassDefParser ****************************
 
-ClientClassDefParser::ClientClassDefParser(ClientClassDictionaryPtr& class_dictionary)
-    : match_expr_(ExpressionPtr()),
-      options_(new CfgOption()),
-      class_dictionary_(class_dictionary) {
-}
-
 void
-ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
+ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
+                            ConstElementPtr class_def_cfg,
+                            uint16_t family) {
 
     try {
         std::string name;
         std::string next_server_txt = "0.0.0.0";
         std::string sname;
         std::string filename;
+        ExpressionPtr match_expr;
+        CfgOptionPtr options(new CfgOption());
 
         // Parse the elements that make up the client class definition.
         BOOST_FOREACH(ConfigPair param, class_def_cfg->mapValue()) {
@@ -87,12 +80,12 @@ ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
                 name = value->stringValue();
 
             } else if (entry == "test") {
-                ExpressionParser parser(match_expr_);
-                parser.parse(value, family);
+                ExpressionParser parser;
+                parser.parse(match_expr, value, family);
                 
             } else if (entry == "option-data") {
                 OptionDataListParser opts_parser(family);
-                opts_parser.parse(options_, value);
+                opts_parser.parse(options, value);
 
             } else if (entry == "next-server") {
                 next_server_txt = value->stringValue();
@@ -109,7 +102,11 @@ ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
             }
         }
 
-        // Make name mandatory?
+        // name is now mandatory
+        if (name.empty()) {
+            isc_throw(DhcpConfigError,
+                      "not empty parameter 'name' is required");
+        }
 
         // Let's parse the next-server field
         IOAddress next_server("0.0.0.0");
@@ -145,8 +142,8 @@ ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
         }
 
         // Add the client class definition
-        class_dictionary_->addClass(name, match_expr_, options_, next_server,
-                                    sname, filename);
+        class_dictionary->addClass(name, match_expr, options, next_server,
+                                   sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");
@@ -155,20 +152,16 @@ ClientClassDefParser::parse(ConstElementPtr class_def_cfg, uint16_t family) {
 
 // ****************** ClientClassDefListParser ************************
 
-ClientClassDefListParser::ClientClassDefListParser()
-    : local_dictionary_(new ClientClassDictionary()) {
-}
-
-void
+ClientClassDictionaryPtr
 ClientClassDefListParser::parse(ConstElementPtr client_class_def_list,
                                 uint16_t family) {
+    ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
     BOOST_FOREACH(ConstElementPtr client_class_def,
                   client_class_def_list->listValue()) {
-        ClientClassDefParser parser(local_dictionary_);
-        parser.parse(client_class_def, family);
+        ClientClassDefParser parser;
+        parser.parse(dictionary, client_class_def, family);
     }
-    // Success so commit
-    CfgMgr::instance().getStagingCfg()->setClientClassDictionary(local_dictionary_);
+    return (dictionary);
 }
 
 } // end of namespace isc::dhcp

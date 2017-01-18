@@ -51,13 +51,13 @@ protected:
                              const std::string& expression,
                              const std::string& option_string) {
         ExpressionPtr parsed_expr;
-        ExpressionParser parser(parsed_expr);
+        ExpressionParser parser;
 
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(expression);
 
         // Expression should parse.
-        ASSERT_NO_THROW(parser.parse(config_element, family));
+        ASSERT_NO_THROW(parser.parse(parsed_expr, config_element, family));
 
         // Parsed expression should exist.
         ASSERT_TRUE(parsed_expr);
@@ -98,15 +98,15 @@ protected:
     /// or by the parsing itself are not caught
     ClientClassDefPtr parseClientClassDef(const std::string& config,
                                           uint16_t family) {
-        // Create local dicitonary to which the parser add the class.
+        // Create local dictionary to which the parser add the class.
         ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
 
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(config);
 
         // Parse the configuration. This may emit exceptions.
-        ClientClassDefParser parser(dictionary);
-        parser.parse(config_element, family);
+        ClientClassDefParser parser;
+        parser.parse(dictionary, config_element, family);
 
         // If we didn't throw, then return the first and only class
         ClientClassDefMapPtr classes = dictionary->getClasses();
@@ -144,10 +144,7 @@ protected:
 
         // Parse the configuration. This may emit exceptions.
         ClientClassDefListParser parser;
-        parser.parse(config_element, family);
-
-        // Return the parser's local dicationary
-        return (parser.local_dictionary_);
+        return (parser.parse(config_element, family));
     }
 };
 
@@ -223,10 +220,11 @@ TEST_F(ExpressionParserTest, invalidExpressionElement) {
 
     // Create the parser.
     ExpressionPtr parsed_expr;
-    ExpressionParser parser(parsed_expr);
+    ExpressionParser parser;
 
     // Expression parsing should fail.
-    ASSERT_THROW(parser.parse(config_element, AF_INET), DhcpConfigError);
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET6),
+                 DhcpConfigError);
 }
 
 // Verifies that given an invalid expression with a syntax error,
@@ -241,10 +239,25 @@ TEST_F(ExpressionParserTest, expressionSyntaxError) {
 
     // Create the parser.
     ExpressionPtr parsed_expr;
-    ExpressionParser parser(parsed_expr);
+    ExpressionParser parser;
 
     // Expression parsing should fail.
-    ASSERT_THROW(parser.parse(config_element, AF_INET), DhcpConfigError);
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET),
+                 DhcpConfigError);
+}
+
+// Verifies that the name parameter is required and must not be empty
+TEST_F(ExpressionParserTest, nameEmpty) {
+    std::string cfg_txt = "{ \"name\": \"\" }";
+    ElementPtr config_element = Element::fromJSON(cfg_txt);
+
+    // Create the parser.
+    ExpressionPtr parsed_expr;
+    ExpressionParser parser;
+
+    // Expression parsing should fail.
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET6),
+                 DhcpConfigError);
 }
 
 // Verifies you can create a class with only a name
@@ -279,6 +292,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
 
 // Verifies you can create a class with a name, expression,
 // but no options.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
     std::string cfg_text =
@@ -320,6 +334,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
 // Verifies you can create a class with a name and options,
 // but no expression.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
 
     std::string cfg_text =
@@ -355,6 +370,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
 
 // Verifies you can create a class with a name, expression,
 // and options.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, basicValidClass) {
 
     std::string cfg_text =
@@ -466,7 +482,7 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
                  DhcpConfigError);
 }
 
@@ -503,7 +519,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
 
     // Parsing the list should succeed.
     ClientClassDictionaryPtr dictionary;
-    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET));
+    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
     ASSERT_TRUE(dictionary);
 
     // We should have three classes in the dictionary.
@@ -526,13 +542,6 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     // For good measure, make sure we can't find a non-existant class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
-
-    // Verify that the dictionary was pushed to the CfgMgr's staging config.
-    SrvConfigPtr staging = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(staging);
-    ClientClassDictionaryPtr staged_dictionary = staging->getClientClassDictionary();
-    ASSERT_TRUE(staged_dictionary);
-    EXPECT_TRUE(*staged_dictionary == *dictionary);
 }
 
 // Verifies that class list containing a duplicate class entries, fails
@@ -568,12 +577,13 @@ TEST_F(ClientClassDefListParserTest, invalidClass) {
         "] \n";
 
     ClientClassDictionaryPtr dictionary;
-    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET),
+    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6),
                  DhcpConfigError);
 }
 
 // Test verifies that without any class specified, the fixed fields have their
 // default, empty value.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, noFixedFields) {
 
     std::string cfg_text =

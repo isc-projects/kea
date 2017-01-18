@@ -647,7 +647,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "client-classes") {
                 ClientClassDefListParser parser;
-                parser.parse(config_pair.second, AF_INET);
+                ClientClassDictionaryPtr dictionary =
+                    parser.parse(config_pair.second, AF_INET);
+                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
                 continue;
             }
 
