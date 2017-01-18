@@ -923,11 +923,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
-	    if (config_pair.first =="client-classes") {
-		ClientClassDefListParser parser;
-		parser.parse(config_pair.second, AF_INET6);
-		continue;
-	    }
+            if (config_pair.first =="client-classes") {
+                ClientClassDefListParser parser;
+                ClientClassDictionaryPtr dictionary =
+                    parser.parse(config_pair.second, AF_INET6);
+                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
+                continue;
+            }
 
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));

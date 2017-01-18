@@ -53,25 +53,16 @@ namespace dhcp {
 /// stored into the ExpressionPtr reference passed into the constructor.
 class ExpressionParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param expression variable in which to store the new expression
-    ExpressionParser(ExpressionPtr& expression);
 
     /// @brief Parses an expression configuration element into an Expression
     ///
+    /// @param expression variable in which to store the new expression
     /// @param expression_cfg the configuration entry to be parsed.
     /// @param family the address family of the expression.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void parse(isc::data::ConstElementPtr expression_cfg, uint16_t family);
-
-private:
-    /// @brief Local storage for the parsed expression
-    ExpressionPtr local_expression_;
-
-    /// @brief Storage into which the parsed expression should be committed
-    ExpressionPtr& expression_;
+    void parse(ExpressionPtr& expression,
+               isc::data::ConstElementPtr expression_cfg, uint16_t family);
 };
 
 /// @brief Parser for a single client class definition.
@@ -79,31 +70,18 @@ private:
 /// This parser creates an instance of a client class definition.
 class ClientClassDefParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param class_dictionary dictionary into which the class should be added
-    ClientClassDefParser(ClientClassDictionaryPtr& class_dictionary);
 
     /// @brief Parses an entry that describes single client class definition.
     ///
     /// Attempts to add the new class directly into the given dictionary.
     /// This done here to detect duplicate classes prior to commit().
+    /// @param class_dictionary dictionary into which the class should be added
     /// @param client_class_def a configuration entry to be parsed.
     /// @param family the address family of the client class.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void parse(isc::data::ConstElementPtr client_class_def, uint16_t family);
-
-private:
-
-    /// @brief Storage for the class match expression
-    ExpressionPtr match_expr_;
-
-    /// @brief Storage for the class options
-    CfgOptionPtr options_;
-
-    /// @brief Dictionary to which the new class should be added
-    ClientClassDictionaryPtr& class_dictionary_;
+    void parse(ClientClassDictionaryPtr& class_dictionary,
+               isc::data::ConstElementPtr client_class_def, uint16_t family);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
@@ -118,26 +96,19 @@ typedef boost::shared_ptr<ClientClassDefParser> ClientClassDefParserPtr;
 class ClientClassDefListParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief Constructor.
-    ClientClassDefListParser();
-
     /// @brief Parse configuration entries.
     ///
     /// This function parses configuration entries, creates instances
-    /// of client class definitions and tries to adds them to the a
-    /// local dictionary. At the end class definitions are committed
-    /// to CfgMgr's global storage.
+    /// of client class definitions and tries to adds them to the
+    /// local dictionary. At the end the dictionary is returned.
     ///
     /// @param class_def_list pointer to an element that holds entries
     /// for client class definitions.
     /// @param family the address family of the client class definitions.
+    /// @return a pointer to the filled dictionary
     /// @throw DhcpConfigError if configuration parsing fails.
-    void parse(isc::data::ConstElementPtr class_def_list, uint16_t family);
-
-    /// @brief Local class dictionary to store classes as they are being parsed
-    ///
-    /// Left public for easier unit testing.
-    ClientClassDictionaryPtr local_dictionary_;
+    ClientClassDictionaryPtr
+    parse(isc::data::ConstElementPtr class_def_list, uint16_t family);
 };
 
 } // end of namespace isc::dhcp
