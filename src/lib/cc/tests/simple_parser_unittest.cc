@@ -61,10 +61,35 @@ public:
     ///
     /// @param name name of the parameter for error report
     /// @param value value of the parameter
+    /// @return an uint8_t value
     uint8_t extractUint8(const std::string& name, ConstElementPtr value) const {
         return (extractInt<uint8_t, isc::OutOfRange>(name, value));
     }
 
+    /// @brief Instantiation of extractConvert
+    ///
+    /// @param name name of the parameter for error report
+    /// @param value value of the parameter
+    /// @return a bool value
+    bool extractBool(const std::string& name, ConstElementPtr value) const {
+        return (extractConvert<bool, toBool, isc::BadValue>
+                    (name, "boolean", value));
+    }
+
+    /// @brief Convert to boolean
+    ///
+    /// @param str the string "false" or "true"
+    /// @return false for "false" and true for "true"
+    /// @thrown isc::OutOfRange if not "false" or "true'
+    static bool toBool(const std::string& str) {
+        if (str == "false") {
+            return (false);
+        } else if (str == "true") {
+            return (true);
+        } else {
+            isc_throw(TypeError, "not a boolean: " << str);
+        }
+    }
 };
 
 // This test checks if the parameters can be inherited from the global
@@ -165,3 +190,24 @@ TEST_F(SimpleParserTest, extractInt) {
     EXPECT_NO_THROW(val = parser.extractUint8("foo", hundred));
     EXPECT_EQ(100, val);
 }
+
+// This test exercises the extractConvert template
+TEST_F(SimpleParserTest, extractConvert) {
+
+    SimpleParserClassTest parser;
+
+    // extractConvert checks if it is a string
+    ConstElementPtr not_bool(new IntElement(1));
+    EXPECT_THROW(parser.extractBool("foo", not_bool), TypeError);
+
+    // checks if extractConvert can return the expected value
+    ConstElementPtr a_bool(new StringElement("false"));
+    bool val = true;
+    EXPECT_NO_THROW(val = parser.extractBool("foo", a_bool));
+    EXPECT_FALSE(val);
+
+    // extractConvert checks convertion
+    ConstElementPtr bad_bool(new StringElement("foo"));
+    EXPECT_THROW(parser.extractBool("bar", bad_bool), isc::BadValue);
+}
+

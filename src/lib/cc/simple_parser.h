@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -156,6 +156,7 @@ class SimpleParser {
     /// @tparam out_of_range always @c isc::dhcp::DhcpConfigError
     /// @param name name of the parameter for error report
     /// @param value value of the parameter
+    /// @return a value of int_type
     /// @throw isc::data::TypeError when the value is not an integer
     /// @throw out_of_range when the value does not fit in int_type
     template <typename int_type, class out_of_range> int_type
@@ -168,6 +169,35 @@ class SimpleParser {
                       << "' (" << value->getPosition() << ")");
         }
         return (static_cast<int_type>(val_int));
+    }
+
+    /// @brief Returns a converted value
+    ///
+    /// This template should be instantied in parsers when useful
+    ///
+    /// @tparam target_type the type of the result
+    /// @tparam convert the conversion function std::string -> target_type
+    /// @tparam exception_type always @c isc::dhcp::DhcpConfigError
+    /// @param name name of the parameter for error report
+    /// @param type_name name of target_type for error report
+    /// @param value value of the parameter
+    /// @return a converted value of target_type
+    /// @throw isc::data::TypeError when the value is not an integer
+    /// @throw exception_type when the value cannot be converted
+    template <typename target_type,
+              target_type convert(const std::string&),
+              class exception_type> target_type
+    extractConvert(const std::string& name,
+                   const std::string& type_name,
+                   ConstElementPtr value) const {
+        std::string str = value->stringValue();
+        try {
+            return (convert(str));
+        } catch (const std::exception&) {
+            isc_throw(exception_type, "invalid " << type_name << " (" << str
+                      << ") specified for parameter '" << name
+                      << "' (" << value->getPosition() << ")");
+        }
     }
 };
 
