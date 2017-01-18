@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
-#include <vector>
+#include <limits>
 
 namespace isc {
 namespace data {

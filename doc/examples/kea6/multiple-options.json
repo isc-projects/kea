@@ -39,6 +39,8 @@
 # addresses from the other pool, or the clients obtaining
 # stateless configuration will be assigned subnet specific value
 # of option 12, i.e. 2001:db8:1:0:ff00::1.
+# For DHCPv6 subnets can have prefix delegation pools too so
+# a pd-pools with an option-data is defined too.
   "subnet6": [
     {
       "option-data": [
@@ -64,6 +66,19 @@
         {
             "pool": "2001:db8:1::500 - 2001:db8:2::1000"
         }
+      ],
+      "pd-pools": [
+        {
+             "prefix": "2001:2b8:2::",
+             "prefix-len": 56,
+             "delegated-len": 64,
+             "option-data": [
+               {
+                   "code": 12,
+                   "data": "3001:cafe::12:"
+               }
+             ]
+         }
       ],
       "subnet": "2001:db8:1::/64",
       "interface": "ethX"

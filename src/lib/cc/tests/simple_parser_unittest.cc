@@ -1,9 +1,10 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <stdint.h>
 #include <cc/simple_parser.h>
 #include <gtest/gtest.h>
 
@@ -52,6 +53,18 @@ public:
         // Finally, check if its value meets expectation.
         EXPECT_EQ(exp_value, elem->intValue());
     }
+};
+
+class SimpleParserClassTest : public SimpleParser {
+public:
+    /// @brief Instantiation of extractInt for uint8_t
+    ///
+    /// @param name name of the parameter for error report
+    /// @param value value of the parameter
+    uint8_t extractUint8(const std::string& name, ConstElementPtr value) const {
+        return (extractInt<uint8_t, isc::OutOfRange>(name, value));
+    }
+
 };
 
 // This test checks if the parameters can be inherited from the global
@@ -129,4 +142,26 @@ TEST_F(SimpleParserTest, setListDefaults) {
     checkIntegerValue(third, "preferred-lifetime", 3600);
     checkIntegerValue(third, "rebind-timer", 1800);
     checkIntegerValue(third, "renew-timer", 900);
+}
+
+// This test exercises the extractInt template
+TEST_F(SimpleParserTest, extractInt) {
+
+    SimpleParserClassTest parser;
+
+    // extractInt checks if it is an integer
+    ConstElementPtr not_int(new StringElement("xyz"));
+    EXPECT_THROW(parser.extractUint8("foo", not_int), TypeError);
+
+    // extractInt checks bounds
+    ConstElementPtr negative(new IntElement(-1));
+    EXPECT_THROW(parser.extractUint8("foo", negative), isc::OutOfRange);
+    ConstElementPtr too_large(new IntElement(1024));
+    EXPECT_THROW(parser.extractUint8("foo", too_large),isc::OutOfRange);
+
+    // checks if extractInt can return the expected value
+    ConstElementPtr hundred(new IntElement(100));
+    uint8_t val = 0;
+    EXPECT_NO_THROW(val = parser.extractUint8("foo", hundred));
+    EXPECT_EQ(100, val);
 }
