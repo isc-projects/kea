@@ -8,6 +8,7 @@
 
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
+#include <d2/parser_context.h>
 #include <process/spec_config.h>
 
 #include <stdlib.h>
@@ -52,6 +53,20 @@ D2Controller::D2Controller()
     } else {
         setSpecFileName(D2_SPECFILE_LOCATION);
     }
+}
+
+isc::data::ConstElementPtr 
+D2Controller::parseFile(const std::string& file_name) {
+    isc::data::ConstElementPtr elements;
+
+    // Read contents of the file and parse it as JSON
+    D2ParserContext parser;
+    elements = parser.parseFile(file_name, D2ParserContext::PARSER_JSON);
+    if (!elements) {
+        isc_throw(isc::BadValue, "no configuration found in file");
+    }
+
+    return (elements);
 }
 
 D2Controller::~D2Controller() {

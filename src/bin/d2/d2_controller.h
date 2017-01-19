@@ -53,6 +53,16 @@ private:
     /// pointer.
     virtual process::DProcessBase* createProcess();
 
+    ///@brief Parse a given file into Elements
+    ///
+    /// Uses bison parsing to parse a JSON configruation file into an
+    /// a element map.
+    ///
+    /// @param file_name pathname of the file to parse
+    ///
+    /// @return pointer to the map of elements created
+    virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
+
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
     D2Controller();
