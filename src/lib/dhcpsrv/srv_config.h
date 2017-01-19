@@ -365,7 +365,7 @@ public:
         class_dictionary_ = dictionary;
     }
 
-    /// @brief Copies the currnet configuration to a new configuration.
+    /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
     /// an object passed as parameter. The configuration sequence is not

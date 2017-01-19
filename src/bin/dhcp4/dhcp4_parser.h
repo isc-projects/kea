@@ -40,7 +40,7 @@
 #ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 # define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp4_parser.yy" // lalr1.cc:377
+#line 17 "dhcp4_parser.yy" // lalr1.cc:392
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp4_parser.h" // lalr1.cc:377
+#line 56 "dhcp4_parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 namespace isc { namespace dhcp {
-#line 141 "dhcp4_parser.h" // lalr1.cc:377
+#line 141 "dhcp4_parser.h" // lalr1.cc:392
 
 
 
@@ -1312,8 +1312,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 728,     ///< Last index in yytable_.
-      yynnts_ = 303,  ///< Number of nonterminal symbols.
+      yylast_ = 732,     ///< Last index in yytable_.
+      yynnts_ = 305,  ///< Number of nonterminal symbols.
       yyfinal_ = 24, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1408,9 +1408,9 @@ namespace isc { namespace dhcp {
       switch (other.type_get ())
     {
       case 145: // value
-      case 184: // socket_type
-      case 397: // ncr_protocol_value
-      case 406: // replace_client_name_value
+      case 186: // socket_type
+      case 399: // ncr_protocol_value
+      case 408: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1448,9 +1448,9 @@ namespace isc { namespace dhcp {
       switch (this->type_get ())
     {
       case 145: // value
-      case 184: // socket_type
-      case 397: // ncr_protocol_value
-      case 406: // replace_client_name_value
+      case 186: // socket_type
+      case 399: // ncr_protocol_value
+      case 408: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1547,9 +1547,9 @@ namespace isc { namespace dhcp {
     switch (yytype)
     {
       case 145: // value
-      case 184: // socket_type
-      case 397: // ncr_protocol_value
-      case 406: // replace_client_name_value
+      case 186: // socket_type
+      case 399: // ncr_protocol_value
+      case 408: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1593,9 +1593,9 @@ namespace isc { namespace dhcp {
       switch (this->type_get ())
     {
       case 145: // value
-      case 184: // socket_type
-      case 397: // ncr_protocol_value
-      case 406: // replace_client_name_value
+      case 186: // socket_type
+      case 399: // ncr_protocol_value
+      case 408: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
@@ -2469,9 +2469,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:377
+#line 14 "dhcp4_parser.yy" // lalr1.cc:392
 } } // isc::dhcp
-#line 2475 "dhcp4_parser.h" // lalr1.cc:377
+#line 2475 "dhcp4_parser.h" // lalr1.cc:392
 
 
 

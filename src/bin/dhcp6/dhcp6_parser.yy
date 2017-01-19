@@ -277,14 +277,6 @@ list_generic: LSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
 };
 
-// This one is used in syntax parser.
-list2: LSQUARE_BRACKET {
-    // List parsing about to start
-} list_content RSQUARE_BRACKET {
-    // list parsing complete. Put any sanity checking here
-    //ctx.stack_.pop_back();
-};
-
 list_content: %empty // Empty list
             | not_empty_list
             ;
@@ -298,6 +290,28 @@ not_empty_list: value {
                   ctx.stack_.back()->add($3);
                   }
               ;
+
+// This one is used in syntax parser and is restricted to strings.
+list_strings: LSQUARE_BRACKET {
+    // List parsing about to start
+} list_strings_content RSQUARE_BRACKET {
+    // list parsing complete. Put any sanity checking here
+    //ctx.stack_.pop_back();
+};
+
+list_strings_content: %empty // Empty list
+                    | not_empty_list_strings
+                    ;
+
+not_empty_list_strings: STRING {
+                          ElementPtr s(new StringElement($1, ctx.loc2pos(@1)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      | not_empty_list_strings COMMA STRING {
+                          ElementPtr s(new StringElement($3, ctx.loc2pos(@3)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      ;
 
 // ---- generic JSON parser ends here ----------------------------------
 
@@ -441,7 +455,7 @@ interface_config_map: INTERFACES {
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -587,12 +601,14 @@ hw_address_id : HW_ADDRESS {
     ctx.stack_.back()->add(hwaddr);
 };
 
+// list_content below accepts any value when options are by name (string)
+// or by code (number)
 relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("relay-supplied-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON LSQUARE_BRACKET list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1244,7 +1260,7 @@ ip_addresses: IP_ADDRESSES {
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1254,7 +1270,7 @@ prefixes: PREFIXES  {
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1288,7 +1304,7 @@ reservation_client_classes: CLIENT_CLASSES {
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };

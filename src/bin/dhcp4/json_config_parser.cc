@@ -437,8 +437,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     // control-socket has been converted to SimpleParser already.
     // expired-leases-processing has been converted to SimpleParser already.
-    } else if (config_id.compare("client-classes") == 0) {
-        parser = new ClientClassDefListParser(config_id, globalContext());
+    // client-classes has been converted to SimpleParser already.
     // host-reservation-identifiers have been converted to SimpleParser already.
     } else {
         isc_throw(DhcpConfigError,
@@ -568,7 +567,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr leases_parser;
-    ParserPtr client_classes_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -677,6 +675,14 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "client-classes") {
+                ClientClassDefListParser parser;
+                ClientClassDictionaryPtr dictionary =
+                    parser.parse(config_pair.second, AF_INET);
+                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -685,8 +691,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "client-classes") {
-                client_classes_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -697,15 +701,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 // parsed data.
                 parser->commit();
             }
-        }
-
-        // The class definitions parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator cc_config =
-            values_map.find("client-classes");
-        if (cc_config != values_map.end()) {
-            config_pair.first = "client-classes";
-            client_classes_parser->build(cc_config->second);
-            client_classes_parser->commit();
         }
 
         // The subnet parser is the next one to be run.

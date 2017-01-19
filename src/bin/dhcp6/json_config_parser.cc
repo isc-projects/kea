@@ -716,8 +716,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         parser = new RSOOListConfigParser(config_id);
     // control-socket has been converted to SimpleParser.
     // expired-leases-processing has been converted to SimpleParser.
-    } else if (config_id.compare("client-classes") == 0) {
-        parser = new ClientClassDefListParser(config_id, globalContext());
+    // client-classes has been converted to SimpleParser.
     // host-reservation-identifiers have been converted to SimpleParser already.
     // server-id has been migrated to SimpleParser
     } else {
@@ -837,7 +836,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
     ParserPtr leases_parser;
-    ParserPtr client_classes_parser;
 
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
@@ -959,6 +957,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first =="client-classes") {
+                ClientClassDefListParser parser;
+                ClientClassDictionaryPtr dictionary =
+                    parser.parse(config_pair.second, AF_INET6);
+                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
@@ -967,8 +973,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "lease-database") {
                 leases_parser = parser;
-            } else if (config_pair.first == "client-classes") {
-                client_classes_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -979,15 +983,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 // parsed data.
                 parser->commit();
             }
-        }
-
-        // The class definitions parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator cc_config =
-            values_map.find("client-classes");
-        if (cc_config != values_map.end()) {
-            config_pair.first = "client-classes";
-            client_classes_parser->build(cc_config->second);
-            client_classes_parser->commit();
         }
 
         // The subnet parser is the next one to be run.
