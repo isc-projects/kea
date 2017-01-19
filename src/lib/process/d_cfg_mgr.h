@@ -320,13 +320,33 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
 protected:
+
+    /// @brief Parses the an element using an alternate parsing mechanism
+    ///
+    /// Each element to be parsed is passed first into this method to allow
+    /// alternate parsing mechanisms to process specific elements.  The method
+    /// should return true if it has processed the element or false if the
+    /// element should be passed onto the original parsing mechanisms.
+    /// The default implementation simply returns false.
+    ///
+    /// @param element_id name of the element as it is expected in the cfg
+    /// @param element value of the element as ElementPtr
+    ///
+    /// @return true if the element was parsed, false otherwise
+    virtual bool parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element) {
+        return (false);
+    };
+
     /// @brief Parses a set of scalar configuration elements into global
     /// parameters
     ///
     /// For each scalar element in the set:
-    ///  - create a parser for the element
-    ///  - invoke the parser's build method
-    ///  - invoke the parser's commit method
+    /// - Invoke parseElement
+    /// - If it returns true go to the next element othewise:
+    ///     - create a parser for the element
+    ///     - invoke the parser's build method
+    ///     - invoke the parser's commit method
     ///
     /// This will commit the values to context storage making them accessible
     /// during object parsing.
@@ -377,8 +397,10 @@ private:
 
     /// @brief Parse a configuration element.
     ///
-    /// Given an element_id and data value, instantiate the appropriate
-    /// parser,  parse the data value, and commit the results.
+    /// Given an element_id and data value, invoke parseElement. If
+    /// it returns true the return, otherwise created the appropriate
+    /// parser, parse the data value, and commit the results.
+    ///
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.

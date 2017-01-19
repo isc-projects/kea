@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -235,6 +235,19 @@ public:
        record_signal_only_ = value;
     }
 
+    /// @brief Determines if parseFile() implementation is used
+    ///
+    /// If true, parseFile() will return a Map of elements with fixed content,
+    /// mimicking a controller which is using alternate JSON parsing.
+    /// If false, parseFile() will return an empty pointer mimicking a
+    /// controller which is using original JSON parsing supplied by the
+    /// Element class.
+    ///
+    /// @param value boolean which if true enables record-only behavior
+    void useAlternateParser(bool value) {
+       use_alternate_parser_ = value;
+    }
+
 protected:
     /// @brief Handles additional command line options that are supported
     /// by DStubController.  This implementation supports an option "-x".
@@ -291,6 +304,25 @@ protected:
     /// @param signum OS signal value received
     virtual void processSignal(int signum);
 
+    /// @brief Provides alternate parse file implementation
+    ///
+    /// Overrides the base class implementation to mimick controllers which
+    /// implement alternate file parsing.  If enabled via useAlternateParser()
+    /// the method will return a fixed map of elements reflecting the following
+    /// JSON:
+    ///
+    /// @code
+    ///     { "<name>getController()->getAppName()" :
+    ///          { "string_test": "alt value" };
+    ///     }
+    ///
+    /// @endcode
+    ///
+    ///  where <name> is getController()->getAppName()
+    ///
+    /// otherwise it return an empty pointer.
+    virtual isc::data::ConstElementPtr parseFile(const std::string&);
+
 private:
     /// @brief Constructor is private to protect singleton integrity.
     DStubController();
@@ -300,6 +332,9 @@ private:
 
     /// @brief Boolean for controlling if signals are merely recorded.
     bool record_signal_only_;
+
+    /// @brief Boolean for controlling if parseFile is "implemented"
+    bool use_alternate_parser_;
 
 public:
     virtual ~DStubController();
