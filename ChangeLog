@@ -1,7 +1,7 @@
 1207.	[func]		fdupont
 	Client classes parser migrated to SimpleParser. The 'name'
 	parameter in 'client-classes' definitions is now mandatory.
-	(Trac #5098, git xxx)
+	(Trac #5098, git e93906e48a6e2b0ff78c5e37dca642646fe47d43)
 
 1206.	[func]		tomek
 	'hooks-libraries' parser migrated to SimpleParser. The code will
