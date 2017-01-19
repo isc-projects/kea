@@ -105,8 +105,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         // name is now mandatory
         if (name.empty()) {
             isc_throw(DhcpConfigError,
-                      "not empty parameter 'name' is required" << "("
-                      << class_def_cfg->getPosition() << ")" );
+                      "not empty parameter 'name' is required");
         }
 
         // Let's parse the next-server field
