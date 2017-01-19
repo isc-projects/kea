@@ -257,9 +257,13 @@ DControllerBase::configFromFile() {
                                 "use -c command line option.");
         }
 
-        // Read contents of the file and parse it as JSON
-        isc::data::ConstElementPtr whole_config =
-            isc::data::Element::fromJSONFile(config_file, true);
+        // If parseFile returns an empty pointer, then pass the file onto the
+        // original JSON parser.
+        isc::data::ConstElementPtr whole_config = parseFile(config_file);
+        if (!whole_config) {
+            // Read contents of the file and parse it as JSON
+            whole_config = isc::data::Element::fromJSONFile(config_file, true);
+        }
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.

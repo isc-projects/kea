@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,7 +149,7 @@ DStubController::instance() {
 
 DStubController::DStubController()
     : DControllerBase(stub_app_name_, stub_bin_name_),
-      processed_signals_(), record_signal_only_(false) {
+      processed_signals_(), record_signal_only_(false), use_alternate_parser_(false) {
 
     if (getenv("KEA_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
@@ -216,6 +216,22 @@ DStubController::processSignal(int signum){
     }
 
     DControllerBase::processSignal(signum);
+}
+
+isc::data::ConstElementPtr
+DStubController::parseFile(const std::string& file_name) {
+    isc::data::ConstElementPtr elements;
+    if (use_alternate_parser_) {
+        std::ostringstream os;
+
+        os << "{ \"" << getController()->getAppName()
+            << "\": " << std::endl;
+        os <<  "{ \"string_test\": \"alt value\" } ";
+        os << " } " << std::endl;
+        elements = isc::data::Element::fromJSON(os.str());
+    }
+
+    return (elements);
 }
 
 DStubController::~DStubController() {

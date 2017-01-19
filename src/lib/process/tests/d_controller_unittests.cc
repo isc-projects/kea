@@ -396,6 +396,35 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     EXPECT_EQ(SIGHUP, signals[0]);
 }
 
+// Tests that the original configuration is retained after a SIGHUP triggered
+// reconfiguration fails due to invalid config content.
+TEST_F(DStubControllerTest, alternateParsing) {
+    controller_->useAlternateParser(true);
+
+    // Setup to raise SIGHUP in 200 ms.
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Write the config and then run launch() for 500 ms
+    // After startup, which will load the initial configuration this enters
+    // the process's runIO() loop. We will first rewrite the config file.
+    // Next we process the SIGHUP signal which should cause us to reconfigure.
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
+
+    // Context is still available post launch. Check to see that our
+    // configuration value is still the original value.
+    std::string  actual_value = "";
+    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
+    EXPECT_EQ("alt value", actual_value);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGHUP, signals[0]);
+}
+
+
+
 // Tests that the original configuration is replaced after a SIGHUP triggered
 // reconfiguration succeeds.
 TEST_F(DStubControllerTest, validConfigReload) {

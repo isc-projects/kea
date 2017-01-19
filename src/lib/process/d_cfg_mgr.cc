@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -259,6 +259,12 @@ void
 DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
+        // Call derivation's element parser, if it handled the element
+        // go on to the next one, otherwise use the old methods
+        if (parseElement(param.first, param.second)) {
+            continue;
+        }
+
         // Call derivation's method to create the proper parser.
         dhcp::ParserPtr parser(createConfigParser(param.first,
                                                   param.second->getPosition()));
@@ -269,6 +275,12 @@ DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
 
 void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
+    // Call derivation's element parser, if it handled the element
+    // go on to the next one, otherwise use the old methods
+    if (parseElement(element_id, value)) {
+        return;
+    }
+
     // Call derivation's implementation to create the appropriate parser
     // based on the element id.
     ParserPtr parser = createConfigParser(element_id, value->getPosition());
