@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <asiolink/io_address.h>
 #include <eval/evaluate.h>
 #include <gtest/gtest.h>
@@ -39,35 +40,30 @@ protected:
     /// produces an Expression which can be evaluated against a v4 or v6
     /// packet.
     ///
-    /// @param universe V4 or V6.
+    /// @param family AF_INET or AF_INET6
     /// @param expression Textual representation of the expression to be
     /// evaluated.
     /// @param option_string String data to be placed in the hostname
     /// option, being placed in the packet used for evaluation.
     /// @tparam Type of the packet: @c Pkt4 or @c Pkt6.
     template<typename PktType>
-    void testValidExpression(const Option::Universe& universe,
+    void testValidExpression(uint16_t family,
                              const std::string& expression,
                              const std::string& option_string) {
-        ParserContextPtr context(new ParserContext(universe));
-        ExpressionParserPtr parser;
         ExpressionPtr parsed_expr;
+        ExpressionParser parser;
 
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(expression);
 
-        // Create the parser.
-        ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
-                                                      context)));
-        // Expression should parse and commit.
-        ASSERT_NO_THROW(parser->build(config_element));
-        ASSERT_NO_THROW(parser->commit());
+        // Expression should parse.
+        ASSERT_NO_THROW(parser.parse(parsed_expr, config_element, family));
 
         // Parsed expression should exist.
         ASSERT_TRUE(parsed_expr);
 
         // Build a packet that will fail evaluation.
-        boost::shared_ptr<PktType> pkt(new PktType(universe == Option::V4 ?
+        boost::shared_ptr<PktType> pkt(new PktType(family == AF_INET ?
                                                    DHCPDISCOVER : DHCPV6_SOLICIT,
                                                    123));
         EXPECT_FALSE(evaluate(*parsed_expr, *pkt));
@@ -75,7 +71,8 @@ protected:
         // Now add the option so it will pass. Use a standard option carrying a
         // single string value, i.e. hostname for DHCPv4 and bootfile url for
         // DHCPv6.
-        OptionPtr opt(new OptionString(universe, universe == Option::V4 ?
+        Option::Universe universe(family == AF_INET ? Option::V4 : Option::V6);
+        OptionPtr opt(new OptionString(universe, family == AF_INET ?
                                        DHO_HOST_NAME : D6O_BOOTFILE_URL,
                                        option_string));
         pkt->addOption(opt);
@@ -93,25 +90,23 @@ protected:
     ///
     /// @param config - JSON string containing the client class configuration
     /// to parse.
-    /// @param universe - the universe in which the parsing context should
+    /// @param family - the address family in which the parsing should
     /// occur.
     /// @return Returns a pointer to class instance created, or NULL if
     /// for some unforeseen reason it wasn't created in the local dictionary
     /// @throw indirectly, exceptions convertring the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDefPtr parseClientClassDef(const std::string& config,
-                                          Option::Universe universe) {
-        // Create local dicitonary to which the parser add the class.
+                                          uint16_t family) {
+        // Create local dictionary to which the parser add the class.
         ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
-        // Create the "global" context for the parser.
-        ParserContextPtr context(new ParserContext(universe));
 
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(config);
 
         // Parse the configuration. This may emit exceptions.
-        ClientClassDefParser parser("", dictionary, context);
-        parser.build(config_element);
+        ClientClassDefParser parser;
+        parser.parse(dictionary, config_element, family);
 
         // If we didn't throw, then return the first and only class
         ClientClassDefMapPtr classes = dictionary->getClasses();
@@ -136,42 +131,34 @@ protected:
     /// ClientClassDictionary.
     ///
     /// @param config - JSON string containing the list of definitions to parse.
-    /// @param universe - the universe in which the parsing context should
+    /// @param family - the address family in which the parsing should
     /// occur.
     /// @return Returns a pointer to class dictionary created
     /// @throw indirectly, execptions convertring the JSON text to elements,
     /// or by the parsing itself are not caught
     ClientClassDictionaryPtr parseClientClassDefList(const std::string& config,
-                                                     Option::Universe universe)
+                                                     uint16_t family)
     {
-        // Create the "global" context for the parser.
-        ParserContextPtr context(new ParserContext(universe));
-
         // Turn config into elements.  This may emit exceptions.
         ElementPtr config_element = Element::fromJSON(config);
 
         // Parse the configuration. This may emit exceptions.
-        ClientClassDefListParser parser("", context);
-        parser.build(config_element);
-
-        // Commit should push it to CfgMgr staging
-        parser.commit();
-
-        // Return the parser's local dicationary
-        return (parser.local_dictionary_);
+        ClientClassDefListParser parser;
+        return (parser.parse(config_element, family));
     }
 };
 
 // Verifies that given a valid expression, the ExpressionParser
 // produces an Expression which can be evaluated against a v4 packet.
 TEST_F(ExpressionParserTest, validExpression4) {
-    testValidExpression<Pkt4>(Option::V4, "\"option[12].text == 'hundred4'\"",
+    testValidExpression<Pkt4>(AF_INET,
+                              "\"option[12].text == 'hundred4'\"",
                               "hundred4");
 }
 
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
-    testValidExpression<Pkt4>(Option::V4,
+    testValidExpression<Pkt4>(AF_INET,
                               "\"option[host-name].text == 'hundred4'\"",
                               "hundred4");
 }
@@ -180,14 +167,15 @@ TEST_F(ExpressionParserTest, validExpressionWithOptionName4) {
 // ExpressionParser produces an Expression which can be evaluated against
 // a v4 packet.
 TEST_F(ExpressionParserTest, validExpressionWithHex4) {
-    testValidExpression<Pkt4>(Option::V4, "\"option[12].hex == 0x68756E6472656434\"",
+    testValidExpression<Pkt4>(AF_INET,
+                              "\"option[12].hex == 0x68756E6472656434\"",
                               "hundred4");
 }
 
 // Verifies that the option name can be used together with .hex operator in
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
-    testValidExpression<Pkt6>(Option::V4,
+    testValidExpression<Pkt6>(AF_INET,
                               "\"option[host-name].text == 0x68756E6472656434\"",
                               "hundred4");
 }
@@ -195,13 +183,14 @@ TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex4) {
 // Verifies that given a valid expression, the ExpressionParser
 // produces an Expression which can be evaluated against a v6 packet.
 TEST_F(ExpressionParserTest, validExpression6) {
-    testValidExpression<Pkt6>(Option::V6, "\"option[59].text == 'hundred6'\"",
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[59].text == 'hundred6'\"",
                               "hundred6");
 }
 
 // Verifies that the option name can be used in the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
-    testValidExpression<Pkt6>(Option::V6,
+    testValidExpression<Pkt6>(AF_INET6,
                               "\"option[bootfile-url].text == 'hundred6'\"",
                               "hundred6");
 }
@@ -210,33 +199,32 @@ TEST_F(ExpressionParserTest, validExpressionWithOptionName6) {
 // ExpressionParser produces an Expression which can be evaluated against
 // a v6 packet.
 TEST_F(ExpressionParserTest, validExpressionWithHex6) {
-    testValidExpression<Pkt6>(Option::V6, "\"option[59].hex == 0x68756E6472656436\"",
+    testValidExpression<Pkt6>(AF_INET6,
+                              "\"option[59].hex == 0x68756E6472656436\"",
                               "hundred6");
 }
 
 // Verifies that the option name can be used together with .hex operator in
 // the evaluated expression.
 TEST_F(ExpressionParserTest, validExpressionWithOptionNameAndHex6) {
-    testValidExpression<Pkt6>(Option::V6,
+    testValidExpression<Pkt6>(AF_INET6,
                               "\"option[bootfile-url].text == 0x68756E6472656436\"",
                               "hundred6");
 }
 
 // Verifies that an the ExpressionParser only accepts StringElements.
 TEST_F(ExpressionParserTest, invalidExpressionElement) {
-    ParserContextPtr context(new ParserContext(Option::V4));
-    ExpressionParserPtr parser;
-    ExpressionPtr parsed_expr;
-
     // This will create an integer element should fail.
     std::string cfg_txt = "777";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
-    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
-                                                      context)));
-    // Expressionn build() should fail.
-    ASSERT_THROW(parser->build(config_element), DhcpConfigError);
+    ExpressionPtr parsed_expr;
+    ExpressionParser parser;
+
+    // Expression parsing should fail.
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET6),
+                 DhcpConfigError);
 }
 
 // Verifies that given an invalid expression with a syntax error,
@@ -245,19 +233,31 @@ TEST_F(ExpressionParserTest, invalidExpressionElement) {
 // It is simply to ensure that if the parser fails, it does so
 // Properly.
 TEST_F(ExpressionParserTest, expressionSyntaxError) {
-    ParserContextPtr context(new ParserContext(Option::V4));
-    ExpressionParserPtr parser;
-    ExpressionPtr parsed_expr;
-
     // Turn config into elements.
     std::string cfg_txt = "\"option 'bogus'\"";
     ElementPtr config_element = Element::fromJSON(cfg_txt);
 
     // Create the parser.
-    ASSERT_NO_THROW(parser.reset(new ExpressionParser("", parsed_expr,
-                                                      context)));
-    // Expressionn build() should fail.
-    ASSERT_THROW(parser->build(config_element), DhcpConfigError);
+    ExpressionPtr parsed_expr;
+    ExpressionParser parser;
+
+    // Expression parsing should fail.
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET),
+                 DhcpConfigError);
+}
+
+// Verifies that the name parameter is required and must not be empty
+TEST_F(ExpressionParserTest, nameEmpty) {
+    std::string cfg_txt = "{ \"name\": \"\" }";
+    ElementPtr config_element = Element::fromJSON(cfg_txt);
+
+    // Create the parser.
+    ExpressionPtr parsed_expr;
+    ExpressionParser parser;
+
+    // Expression parsing should fail.
+    ASSERT_THROW(parser.parse(parsed_expr, config_element, AF_INET6),
+                 DhcpConfigError);
 }
 
 // Verifies you can create a class with only a name
@@ -270,7 +270,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -292,6 +292,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
 
 // Verifies you can create a class with a name, expression,
 // but no options.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
     std::string cfg_text =
@@ -301,7 +302,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -333,6 +334,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
 // Verifies you can create a class with a name and options,
 // but no expression.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
 
     std::string cfg_text =
@@ -350,7 +352,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -368,6 +370,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass) {
 
 // Verifies you can create a class with a name, expression,
 // and options.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, basicValidClass) {
 
     std::string cfg_text =
@@ -386,7 +389,7 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -429,7 +432,7 @@ TEST_F(ClientClassDefParserTest, noClassName) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -452,7 +455,7 @@ TEST_F(ClientClassDefParserTest, blankClassName) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -466,7 +469,7 @@ TEST_F(ClientClassDefParserTest, unknownElement) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -479,7 +482,7 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET6),
                  DhcpConfigError);
 }
 
@@ -494,7 +497,7 @@ TEST_F(ClientClassDefParserTest, invalidOptionData) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, Option::V4),
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -516,7 +519,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
 
     // Parsing the list should succeed.
     ClientClassDictionaryPtr dictionary;
-    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, Option::V4));
+    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
     ASSERT_TRUE(dictionary);
 
     // We should have three classes in the dictionary.
@@ -539,13 +542,6 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     // For good measure, make sure we can't find a non-existant class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
-
-    // Verify that the dictionary was pushed to the CfgMgr's staging config.
-    SrvConfigPtr staging = CfgMgr::instance().getStagingCfg();
-    ASSERT_TRUE(staging);
-    ClientClassDictionaryPtr staged_dictionary = staging->getClientClassDictionary();
-    ASSERT_TRUE(staged_dictionary);
-    EXPECT_TRUE(*staged_dictionary == *dictionary);
 }
 
 // Verifies that class list containing a duplicate class entries, fails
@@ -565,7 +561,7 @@ TEST_F(ClientClassDefListParserTest, duplicateClass) {
         "] \n";
 
     ClientClassDictionaryPtr dictionary;
-    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, Option::V4),
+    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET),
                  DhcpConfigError);
 }
 
@@ -581,12 +577,13 @@ TEST_F(ClientClassDefListParserTest, invalidClass) {
         "] \n";
 
     ClientClassDictionaryPtr dictionary;
-    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, Option::V4),
+    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6),
                  DhcpConfigError);
 }
 
 // Test verifies that without any class specified, the fixed fields have their
 // default, empty value.
+// @todo same with AF_INET6
 TEST_F(ClientClassDefParserTest, noFixedFields) {
 
     std::string cfg_text =
@@ -601,7 +598,7 @@ TEST_F(ClientClassDefParserTest, noFixedFields) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -629,7 +626,7 @@ TEST_F(ClientClassDefParserTest, nextServer) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -666,8 +663,8 @@ TEST_F(ClientClassDefParserTest, nextServerBogus) {
         "      ] \n"
         "} \n";
 
-    EXPECT_THROW(parseClientClassDef(bogus_v6, Option::V4), DhcpConfigError);
-    EXPECT_THROW(parseClientClassDef(bogus_junk, Option::V4), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(bogus_v6, AF_INET), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(bogus_junk, AF_INET), DhcpConfigError);
 }
 
 // Test verifies that it is possible to define server-hostname field and it
@@ -687,7 +684,7 @@ TEST_F(ClientClassDefParserTest, serverName) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -714,7 +711,7 @@ TEST_F(ClientClassDefParserTest, serverNameInvalid) {
         "      ] \n"
         "} \n";
 
-    EXPECT_THROW(parseClientClassDef(cfg_too_long, Option::V4), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(cfg_too_long, AF_INET), DhcpConfigError);
 }
 
 
@@ -735,7 +732,7 @@ TEST_F(ClientClassDefParserTest, filename) {
         "} \n";
 
     ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, Option::V4));
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // We should find our class.
     ASSERT_TRUE(cclass);
@@ -767,7 +764,7 @@ TEST_F(ClientClassDefParserTest, filenameBogus) {
         "      ] \n"
         "} \n";
 
-    EXPECT_THROW(parseClientClassDef(cfg_too_long, Option::V4), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(cfg_too_long, AF_INET), DhcpConfigError);
 }
 
 
