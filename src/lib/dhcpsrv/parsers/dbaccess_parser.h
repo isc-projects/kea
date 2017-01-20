@@ -17,16 +17,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown when 'type' keyword is missing from string
-///
-/// This condition is checked, but should never occur because 'type' is marked
-/// as mandatory in the .spec file for the server.
-class TypeKeywordMissing : public isc::Exception {
-public:
-    TypeKeywordMissing(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 /// @brief Parse Lease Database Parameters
 ///
 /// This class is the parser for the lease database configuration.  This is a

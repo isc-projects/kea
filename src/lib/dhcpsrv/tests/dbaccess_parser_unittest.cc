@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
@@ -332,7 +333,7 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 // This test checks that the parser rejects the too large (greater than
@@ -348,7 +349,7 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 // This test checks that the parser accepts the valid value of the
@@ -382,7 +383,7 @@ TEST_F(DbAccessParserTest, negativeTimeout) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 // This test checks that the parser rejects a too large (greater than
@@ -398,7 +399,7 @@ TEST_F(DbAccessParserTest, largeTimeout) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 // Check that the parser works with a valid MySQL configuration
@@ -432,7 +433,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), TypeKeywordMissing);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 // Check reconfiguration.  Checks that incremental changes applied to the
@@ -517,7 +518,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
     checkAccessString("Incompatible incremental change", parser.getDbAccessParameters(),
                       config3);
 
@@ -592,7 +593,7 @@ TEST_F(DbAccessParserTest, invalidReadOnly) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), BadValue);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
 
