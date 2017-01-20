@@ -77,7 +77,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
             }
         } catch (const isc::data::TypeError& ex) {
             // Append position of the element.
-            isc_throw(BadValue, "invalid value type specified for "
+            isc_throw(DhcpConfigError, "invalid value type specified for "
                       "parameter '" << param.first << "' ("
                       << param.second->getPosition() << ")");
         }
@@ -88,36 +88,44 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
-        isc_throw(TypeKeywordMissing, (type_ == LEASE_DB ? "lease" : "host")
+        isc_throw(DhcpConfigError, (type_ == LEASE_DB ? "lease" : "host")
                   << " database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << database_config->getPosition() << ")");
     }
 
     // b. Check if the 'type' keyword known and throw an exception if not.
+    //
+    // Please note when you add a new database backend you have to add
+    // the new type here and in server grammars.
     string dbtype = type_ptr->second;
     if ((dbtype != "memfile") &&
         (dbtype != "mysql") &&
         (dbtype != "postgresql") &&
         (dbtype != "cql")) {
-        isc_throw(BadValue, "unknown backend database type: " << dbtype
-                  << " (" << database_config->getPosition() << ")");
+        ConstElementPtr value = database_config->get("type");
+        isc_throw(DhcpConfigError, "unknown backend database type: " << dbtype
+                  << " (" << value->getPosition() << ")");
     }
 
     // c. Check that the lfc-interval is within a reasonable range.
     if ((lfc_interval < 0) ||
         (lfc_interval > std::numeric_limits<uint32_t>::max())) {
-        isc_throw(BadValue, "lfc-interval value: " << lfc_interval
+        ConstElementPtr value = database_config->get("lfc-interval");
+        isc_throw(DhcpConfigError, "lfc-interval value: " << lfc_interval
                   << " is out of range, expected value: 0.."
-                  << std::numeric_limits<uint32_t>::max());
+                  << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
     }
 
     // d. Check that the timeout is within a reasonable range.
     if ((timeout < 0) ||
         (timeout > std::numeric_limits<uint32_t>::max())) {
-        isc_throw(BadValue, "timeout value: " << timeout
+        ConstElementPtr value = database_config->get("connect-timeout");
+        isc_throw(DhcpConfigError, "connect-timeout value: " << timeout
                   << " is out of range, expected value: 0.."
-                  << std::numeric_limits<uint32_t>::max());
+                  << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
     }
 
     // 4. If all is OK, update the stored keyword/value pairs.  We do this by

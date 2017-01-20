@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -116,7 +116,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-	string connection_string = validMySQLConnectionString() + string(" ") +
+        string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
