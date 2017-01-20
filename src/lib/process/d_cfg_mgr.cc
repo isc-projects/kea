@@ -147,6 +147,11 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     std::string element_id;
 
     try {
+
+        // Make the configuration mutable so we can then insert default values.
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        setCfgDefaults(mutable_cfg);
+
         // Split the configuration into two maps. The first containing only
         // top-level scalar parameters (i.e. globals), the second containing
         // non-scalar or object elements (maps, lists, etc...).  This allows
@@ -156,7 +161,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         ElementMap objects_map;
 
         isc::dhcp::ConfigPair config_pair;
-        BOOST_FOREACH(config_pair, config_set->mapValue()) {
+        BOOST_FOREACH(config_pair, mutable_cfg->mapValue()) {
             std::string element_id = config_pair.first;
             isc::data::ConstElementPtr element = config_pair.second;
             switch (element->getType()) {
@@ -203,7 +208,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                     isc_throw(DCfgMgrBaseError,
                                "Element required by parsing order is missing: "
                                << element_id << " ("
-                               << config_set->getPosition() << ")");
+                               << mutable_cfg->getPosition() << ")");
                 }
             }
 
