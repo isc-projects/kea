@@ -125,6 +125,20 @@ public:
         return (false);
     }
 
+    /// @brief Adds default elements to the given config
+    ///
+    /// Overrides the DCfgMgrBase implementation.
+    /// Adds the string parameter, "defaulted_parm" with a
+    /// value of "default value" to mutable_cfg if isn't
+    /// already there.
+    ///
+    /// @param mutable_cfg config to modify
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_cfg) {
+        if (!mutable_cfg->contains("defaulted_parm")) {
+            ConstElementPtr def(new StringElement("default value"));
+            mutable_cfg->set("defaulted_parm", def);
+        }
+    }
 
     /// @brief List of element ids which should be parsed by parseElement
     ElementIdList parsable_elements_;
@@ -556,8 +570,12 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
 }
 
-// Tests that elements not handled by the parseElement() method are
+// Tests that:
+//
+// 1. Elements not handled by the parseElement() method are
 // handled by the old parsing mechanisms
+// 2. Default values are supplied for elements not supplied in
+// the configuration
 TEST_F(ParseElementMgrTest, basic) {
     // Create the test config
     string config = "{ \"bool_test\": true , \n"
@@ -570,7 +588,7 @@ TEST_F(ParseElementMgrTest, basic) {
 
     // Add two elements to the list of elements handled by parseElement
     addToParsableElements("parse_one");
-    addToParsableElements("parse_three");
+    addToParsableElements("defaulted_parm");
 
     // Verify that the configuration parses without error.
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -579,7 +597,7 @@ TEST_F(ParseElementMgrTest, basic) {
     ASSERT_TRUE(context);
 
     // Verify that the list of parsed elements is as expected
-    // It should have two entries: "parse_one" and "parse_three"
+    // It should have two entries: "parse_one" and "defaulted_parm"
     ASSERT_EQ(cfg_mgr_->parsed_elements_.size(), 2);
     EXPECT_TRUE(cfg_mgr_->parsed_elements_.contains("parse_one"));
     ConstElementPtr element = cfg_mgr_->parsed_elements_.get("parse_one");
@@ -589,9 +607,9 @@ TEST_F(ParseElementMgrTest, basic) {
     EXPECT_FALSE(cfg_mgr_->parsed_elements_.contains("parse_two"));
 
     // "parse_three" should be there
-    EXPECT_TRUE(cfg_mgr_->parsed_elements_.contains("parse_three"));
-    element = cfg_mgr_->parsed_elements_.get("parse_three");
-    EXPECT_EQ(element->stringValue(), "3");
+    EXPECT_TRUE(cfg_mgr_->parsed_elements_.contains("defaulted_parm"));
+    element = cfg_mgr_->parsed_elements_.get("defaulted_parm");
+    EXPECT_EQ(element->stringValue(), "default value");
 
     // Now verify the original mechanism elements were parsed correctly
     // Verify that the boolean parameter was parsed correctly by retrieving

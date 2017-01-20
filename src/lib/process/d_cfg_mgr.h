@@ -320,6 +320,14 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
 protected:
+    /// @brief Adds default values to the given config
+    ///
+    /// Provides derviations a means to add defaults to a configuration
+    /// Element map prior to parsing it.
+    ///
+    /// @param mutable_config - configuration to which defaults should be added
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config) {
+    }
 
     /// @brief Parses the an element using an alternate parsing mechanism
     ///
