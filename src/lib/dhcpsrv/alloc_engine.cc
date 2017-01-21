@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -710,6 +710,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 leases.push_back(lease);
                 return (leases);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() ==
+                        CalloutHandle::NEXT_STEP_SKIP)) {
+                // Don't retry when the callout status is next step skip.
+                break;
             }
 
             // Although the address was free just microseconds ago, it may have
@@ -2841,6 +2846,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             new_lease = allocateOrReuseLease4(candidate, ctx);
             if (new_lease) {
                 return (new_lease);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() ==
+                        CalloutHandle::NEXT_STEP_SKIP)) {
+                // Don't retry when the callout status is next step skip.
+                break;
             }
         }
     }
