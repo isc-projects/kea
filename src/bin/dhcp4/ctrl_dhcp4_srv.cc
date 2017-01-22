@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <config/command_mgr.h>
 #include <stats/stats_mgr.h>
+#include <cfgrpt/config_report.h>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -128,6 +129,27 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandConfigGetVersion(const string&,
+                                             ConstElementPtr args) {
+    std::ostringstream msg;
+    if (args && (args->getType() == Element::string)) {
+        string what = args->stringValue();
+        if (what == "extended") {
+            msg << Dhcpv4Srv::getVersion(true);
+        } else if (what == "report") {
+            msg << isc::detail::getConfigReport();
+        } else {
+            msg << Dhcpv4Srv::getVersion(false);
+        }
+    } else {
+        msg << Dhcpv4Srv::getVersion(false);
+    }
+
+    ConstElementPtr answer = isc::config::createAnswer(0, msg.str());
+    return (answer);
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
@@ -180,6 +202,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
+
+        } else if (command == "get-version") {
+            return (srv->commandConfigGetVersion(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -323,6 +348,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("get-version",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigGetVersion, this, _1, _2));
+
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
@@ -367,6 +395,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");
+        CommandMgr::instance().deregisterCommand("get-version");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");

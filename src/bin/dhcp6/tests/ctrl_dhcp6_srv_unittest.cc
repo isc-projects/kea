@@ -559,6 +559,46 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
 }
 
+// This test verifies that the DHCP server handles get-version commands
+TEST_F(CtrlChannelDhcpv6SrvTest, getversion) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the command without arguments
+    sendUnixCommand("{ \"command\": \"get-version\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_FALSE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the command with not string argument
+    sendUnixCommand("{ \"command\": \"get-version\", "
+                    "\"arguments\": { } }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_FALSE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the command with a junk string argument
+    sendUnixCommand("{ \"command\": \"get-version\", "
+                    "\"arguments\": \"foo\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_FALSE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the command with the "extended" argument
+    sendUnixCommand("{ \"command\": \"get-version\", "
+                    "\"arguments\": \"extended\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the command with the "report" argument
+    sendUnixCommand("{ \"command\": \"get-version\", "
+                    "\"arguments\": \"report\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
 // This test verifies that the DHCP server immediately reclaims expired
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {

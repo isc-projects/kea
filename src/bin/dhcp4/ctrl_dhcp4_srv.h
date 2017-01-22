@@ -158,6 +158,20 @@ private:
     commandSetConfigHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
+    /// @brief handler for processing 'get-version' command
+    ///
+    /// This handler processes get-version command, which returns
+    /// over the control channel one of -v/-V/-W command line
+    /// arguments.
+    /// @param command (parameter ignored)
+    /// @param args version kind. One of "" (-v), "extended" (-V)
+    /// or report (-W).
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandConfigGetVersion(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
     /// @brief Handler for processing 'leases-reclaim' command
     ///
     /// This handler processes leases-reclaim command, which triggers
