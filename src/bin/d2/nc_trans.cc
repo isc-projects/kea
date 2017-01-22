@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,10 +9,12 @@
 #include <d2/d2_log.h>
 #include <d2/nc_trans.h>
 #include <dns/rdata.h>
+#include <util/random/qid_gen.h>
 
 #include <sstream>
 
 using namespace isc::util;
+using namespace isc::util::random;
 
 namespace isc {
 namespace d2 {
@@ -321,6 +323,8 @@ NameChangeTransaction::prepNewRequest(DdnsDomainPtr domain) {
         // Create a "blank" update request.
         D2UpdateMessagePtr request(new D2UpdateMessage(D2UpdateMessage::
                                                        OUTBOUND));
+        // Set the query id
+        request->setId(QidGenerator::getInstance().generateQid());
         // Construct the Zone Section.
         dns::Name zone_name(domain->getName());
         request->setZone(zone_name, dns::RRClass::IN());

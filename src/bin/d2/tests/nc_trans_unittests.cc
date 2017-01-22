@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1195,6 +1195,15 @@ TEST_F(NameChangeTransactionTest, prepNewRequest) {
     // valid input.
     ASSERT_NO_THROW(request = name_change->prepNewRequest(forward_domain_));
     checkZone(request, forward_domain_->getName());
+
+    // The query id is random so 0 is not impossible
+    for (unsigned i = 0; i < 10; ++i) {
+        if (request->getId() == 0) {
+            request = name_change->prepNewRequest(forward_domain_);
+        }
+    }
+
+    EXPECT_NE(0, request->getId());
 }
 
 /// @brief Tests the addLeaseAddressRData method
