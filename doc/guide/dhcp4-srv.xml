@@ -3659,6 +3659,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>The DHCPv4 server supports the following operational commands:
         <itemizedlist>
+            <listitem>get-version</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
             <listitem>set-config</listitem>
