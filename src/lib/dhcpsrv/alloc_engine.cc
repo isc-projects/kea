@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -253,7 +253,7 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
     // Choose the basic (normal address) lease type
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
 
-    // Initalize normal address allocators
+    // Initialize normal address allocators
     switch (engine_type) {
     case ALLOC_ITERATIVE:
         allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
@@ -268,7 +268,7 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
         isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
     }
 
-    // If this is IPv6 allocation engine, initalize also temporary addrs
+    // If this is IPv6 allocation engine, initialize also temporary addrs
     // and prefixes
     if (ipv6) {
         switch (engine_type) {
@@ -427,7 +427,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //       assign new leases
         //
         // We could implement those checks as nested ifs, but the performance
-        // gain would be minimal and the code readibility loss would be substantial.
+        // gain would be minimal and the code readability loss would be substantial.
         // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
@@ -1840,7 +1840,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     if (!skipped) {
 
         // Generate removal name change request for D2, if required.
-        // This will return immediatelly if the DNS wasn't updated
+        // This will return immediately if the DNS wasn't updated
         // when the lease was created.
         queueNCR(CHG_REMOVE, lease);
 
