@@ -66,7 +66,7 @@ TEST_F(SimpleParser6Test, inheritGlobalToSubnet6) {
     ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
                                           "  \"rebind-timer\": 2,"
                                           "  \"preferred-lifetime\": 3,"
-                                          "  \"valid-lifetime\": 4"
+                                          "  \"valid-lifetime\": 4,"
                                           "  \"subnet6\": [ { \"renew-timer\": 100 } ] "
                                           "}");
 
