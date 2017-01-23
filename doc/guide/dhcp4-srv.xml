@@ -2411,7 +2411,7 @@ It is merely echoed by the server
      indicates that the server will use the "client identifier" for lease
      lookups and "chaddr" if the first lookup returns no results. The
      <command>false</command> means that the server will only
-     use the "chaddr" to search for client"s lease. Whether the DHCID for
+     use the "chaddr" to search for client's lease. Whether the DHCID for
      DNS updates is generated from the "client identifier" or "chaddr" is
      controlled through the same parameter accordingly.</para>
 
@@ -3659,6 +3659,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>The DHCPv4 server supports the following operational commands:
         <itemizedlist>
+            <listitem>get-config-report</listitem>
+            <listitem>get-extended-version</listitem>
             <listitem>get-version</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>

@@ -2830,7 +2830,7 @@ should include options from the isc option space:
     <userinput>"option-data": [
     {
         "name": "vendor-opts",
-        "data": 4491"
+        "data": 4491
     },
     {
         "name": "tftp-servers",
@@ -4069,6 +4069,8 @@ If not specified, the default value is:
 
       <para>The DHCPv6 server supports the following operational commands:
         <itemizedlist>
+            <listitem>get-config-report</listitem>
+            <listitem>get-extended-version</listitem>
             <listitem>get-version</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>

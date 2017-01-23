@@ -402,36 +402,20 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
 
     std::string response;
 
-    // Send the command without arguments
+    // Send the get-version command
     sendUnixCommand("{ \"command\": \"get-version\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_FALSE(response.find("log4cplus") != string::npos);
     EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
 
-    // Send the command with not string argument
-    sendUnixCommand("{ \"command\": \"get-version\", "
-                    "\"arguments\": { } }", response);
-    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_FALSE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
-
-    // Send the command with a junk string argument
-    sendUnixCommand("{ \"command\": \"get-version\", "
-                    "\"arguments\": \"foo\" }", response);
-    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_FALSE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
-
-    // Send the command with the "extended" argument
-    sendUnixCommand("{ \"command\": \"get-version\", "
-                    "\"arguments\": \"extended\" }", response);
+    // Send the get-extended-version command
+    sendUnixCommand("{ \"command\": \"get-extended-version\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
     EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
 
-    // Send the command with the "report" argument
-    sendUnixCommand("{ \"command\": \"get-version\", "
-                    "\"arguments\": \"report\" }", response);
+    // Send the get-config-report command
+    sendUnixCommand("{ \"command\": \"get-config-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }

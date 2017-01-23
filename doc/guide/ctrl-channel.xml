@@ -55,7 +55,7 @@
     <command>command</command> is the name of command to execute and
     is mandatory. <command>arguments</command> is a map of parameters
     required to carry out the given command.  The exact content and
-    format of parameters is command specific.</para>
+    format of the map is command specific.</para>
 
     <para>The server will process the incoming command and then send a
     response of the form:
@@ -113,27 +113,31 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     <section id="commands-common">
       <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
 
+      <section id="command-get-config-report">
+        <title>get-config-report</title>
+        <para>
+          The <emphasis>get-config-report</emphasis> command returns
+          on the control channel what the command line
+          <command>-W</command> argument displays, i.e. the embedded
+          content of the <filename>config.report</filename> file.
+        </para>
+      </section> <!-- end of command-get-config-report -->
+
+      <section id="command-get-extended-version">
+        <title>get-extended-version</title>
+        <para>
+          The <emphasis>get-extended-version</emphasis> command returns
+          on the control channel what the command line
+          <command>-V</command> argument displays.
+        </para>
+      </section> <!-- end of command-get-extended-version -->
+
       <section id="command-get-version">
         <title>get-version</title>
         <para>
           The <emphasis>get-version</emphasis> command returns on the control
-          channel what the command line <command>-v</command>,
-          <command>-V</command> and <command>-W</command> arguments display.
-          The command takes an optional string parameter in JSON syntax:
-<screen>
-{
-    "command": "get-version",
-    "arguments": "extended"
-}
-</screen>
-        </para>
-
-        <para>
-          The <emphasis>extended</emphasis> argument returns the
-          extended report (<command>-V</command>), the
-          <emphasis>report</emphasis> argument return the configuration
-          report (<command>-W</command>), and any other argument
-          the version (<command>-v</command>).
+          channel what the command line <command>-v</command> argument
+          displays.
         </para>
       </section> <!-- end of command-get-version -->
 

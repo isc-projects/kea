@@ -161,16 +161,38 @@ private:
     /// @brief handler for processing 'get-version' command
     ///
     /// This handler processes get-version command, which returns
-    /// over the control channel one of -v/-V/-W command line
-    /// arguments.
+    /// over the control channel the -v command line argument.
     /// @param command (parameter ignored)
-    /// @param args version kind. One of "" (-v), "extended" (-V)
-    /// or report (-W).
+    /// @param args (parameter ignored) 
     ///
-    /// @return status of the command
+    /// @return status of the command with the version
     isc::data::ConstElementPtr
     commandConfigGetVersion(const std::string& command,
                             isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'get-extended-version' command
+    ///
+    /// This handler processes get-version command, which returns
+    /// over the control channel the -V command line argument.
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored) 
+    ///
+    /// @return status of the command with the extended version
+    isc::data::ConstElementPtr
+    commandConfigGetExtendedVersion(const std::string& command,
+                                    isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'get-config-report' command
+    ///
+    /// This handler processes get-version command, which returns
+    /// over the control channel the -W command line argument.
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored) 
+    ///
+    /// @return status of the command with the config report
+    isc::data::ConstElementPtr
+    commandConfigGetConfigReport(const std::string& command,
+                                 isc::data::ConstElementPtr args);
 
     /// @brief Handler for processing 'leases-reclaim' command
     ///
