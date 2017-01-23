@@ -15,7 +15,7 @@ EXTRA_DIST = $(DOCBOOK)
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
 kea-messages.xml:
-	$(top_srcdir)/tools/system_messages -o $@ \
+	$(top_builddir)/tools/system_messages -o $@ \
 	`find $(top_srcdir) -name "*.mes" -print`
 
 # This is not a "man" manual, but reuse this for now for docbook.
