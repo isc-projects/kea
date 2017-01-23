@@ -104,5 +104,19 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     return (cnt);
 }
 
+size_t SimpleParser6::deriveParameters(isc::data::ElementPtr global) {
+    size_t cnt = 0;
+    // Now derive global parameters into subnets.
+    ConstElementPtr subnets = global->get("subnet6");
+    if (subnets) {
+        BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+            cnt += SimpleParser::deriveParams(global, single_subnet,
+                                              INHERIT_GLOBAL_TO_SUBNET6);
+        }
+    }
+
+    return (cnt);
+}
+
 };
 };

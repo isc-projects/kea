@@ -808,7 +808,7 @@ protected:
 ///
 /// This class parses the whole subnet definition. It creates parsers
 /// for received configuration parameters as needed.
-class SubnetConfigParser : public DhcpConfigParser {
+class SubnetConfigParser : public isc::data::SimpleParser {
 public:
 
     /// @brief constructor
@@ -818,17 +818,21 @@ public:
     SubnetConfigParser(const std::string&, ParserContextPtr global_context,
                        const isc::asiolink::IOAddress& default_addr);
 
-    /// @brief parses parameter value
-    ///
-    /// @param subnet pointer to the content of subnet definition
-    ///
-    /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    virtual void build(isc::data::ConstElementPtr subnet);
-
-    /// @brief Adds the created subnet to a server's configuration.
-    virtual void commit() = 0;
+    /// @brief virtual destuctor (does nothing)
+    virtual ~SubnetConfigParser() { }
 
 protected:
+    /// @brief parses a subnet description and returns Subnet{4,6} structure
+    ///
+    /// This method is called from specialized (Subnet4ConfigParser or
+    /// Subnet6ConfigParser) classes.
+    ///
+    /// @param subnet pointer to the content of subnet definition
+    /// @return a pointer to newly created subnet
+    ///
+    /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
+    virtual SubnetPtr build(isc::data::ConstElementPtr subnet);
+
     /// @brief creates parsers for entries in subnet definition
     ///
     /// @param config_id name of the entry

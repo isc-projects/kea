@@ -998,7 +998,7 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 
 }
 
-void
+SubnetPtr
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
         // Pools has been converted to SimpleParser.
@@ -1068,6 +1068,8 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
                   "subnet configuration failed (" << subnet->getPosition()
                   << "): " << ex.what());
     }
+
+    return (subnet_);
 }
 
 Subnet::HRMode

@@ -69,15 +69,18 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
     ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
                                   "  \"rebind-timer\": 2,"
                                   "  \"preferred-lifetime\": 3,"
-                                  "  \"valid-lifetime\": 4"
+                                  "  \"valid-lifetime\": 4,"
+                                  "  \"subnet4\": [ { \"renew-timer\": 100 } ] "
                                   "}");
-    ElementPtr subnet = parseJSON("{ \"renew-timer\": 100 }");
+    ConstElementPtr subnets = global->find("subnet4");
+    ASSERT_TRUE(subnets);
+    ConstElementPtr subnet = subnets->get(0);
+    ASSERT_TRUE(subnet);
 
     // we should inherit 3 parameters. Renew-timer should remain intact,
     // as it was already defined in the subnet scope.
     size_t num;
-    EXPECT_NO_THROW(num = SimpleParser4::deriveParams(global, subnet,
-                          SimpleParser4::INHERIT_GLOBAL_TO_SUBNET4));
+    EXPECT_NO_THROW(num = SimpleParser4::deriveParameters(global));
     EXPECT_EQ(2, num);
 
     // Check the values. 2 of them are inherited, while the third one
@@ -86,6 +89,7 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
     checkIntegerValue(subnet, "rebind-timer", 2);
     checkIntegerValue(subnet, "valid-lifetime", 4);
 }
+
 
 };
 };
