@@ -301,9 +301,8 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param ignored first parameter
     /// stores global scope parameters, options, option definitions.
-    Subnet6ConfigParser(const std::string&)
+    Subnet6ConfigParser()
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
@@ -311,7 +310,8 @@ public:
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
-    void build(ConstElementPtr subnet) {
+    /// @return a pointer to created Subnet6 object
+    Subnet6Ptr parse(ConstElementPtr subnet) {
         /// Parse all pools first.
         ConstElementPtr pools = subnet->get("pools");
         if (pools) {
@@ -324,45 +324,36 @@ public:
             parser.parse(pools_, pd_pools);
         }
 
-        SubnetConfigParser::build(subnet);
+        SubnetPtr generic = SubnetConfigParser::build(subnet);
 
-        if (subnet_) {
-            Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
-            if (!sub6ptr) {
-                // If we hit this, it is a programming error.
-                isc_throw(Unexpected,
-                          "Invalid cast in Subnet6ConfigParser::commit");
-            }
-
-            // Set relay information if it was provided
-            if (relay_info_) {
-                sub6ptr->setRelayInfo(*relay_info_);
-            }
-
-            // Adding a subnet to the Configuration Manager may fail if the
-            // subnet id is invalid (duplicate). Thus, we catch exceptions
-            // here to append a position in the configuration string.
-            try {
-                CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(sub6ptr);
-            } catch (const std::exception& ex) {
-                isc_throw(DhcpConfigError, ex.what() << " ("
-                          << subnet->getPosition() << ")");
-            }
-
-            // Parse Host Reservations for this subnet if any.
-            ConstElementPtr reservations = subnet->get("reservations");
-            if (reservations) {
-                HostReservationsListParser<HostReservationParser6> parser;
-                parser.parse(subnet_->getID(), reservations);
-            }
+        if (!generic) {
+            isc_throw(DhcpConfigError,
+                      "Failed to create an IPv6 subnet (" <<
+                      subnet->getPosition() << ")");
         }
-    }
 
-    /// @brief Commits subnet configuration.
-    ///
-    /// This function is currently no-op because subnet should already
-    /// be added into the Config Manager in the build().
-    void commit() { }
+        Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
+        if (!sub6ptr) {
+            // If we hit this, it is a programming error.
+            isc_throw(Unexpected,
+                      "Invalid Subnet6 cast in Subnet6ConfigParser::parse");
+        }
+
+        // Set relay information if it was provided
+        if (relay_info_) {
+            sub6ptr->setRelayInfo(*relay_info_);
+        }
+
+
+        // Parse Host Reservations for this subnet if any.
+        ConstElementPtr reservations = subnet->get("reservations");
+        if (reservations) {
+            HostReservationsListParser<HostReservationParser6> parser;
+            parser.parse(subnet_->getID(), reservations);
+        }
+
+        return (sub6ptr);
+    }
 
 protected:
 
@@ -509,51 +500,38 @@ protected:
 /// This is a wrapper parser that handles the whole list of Subnet6
 /// definitions. It iterates over all entries and creates Subnet6ConfigParser
 /// for each entry.
-class Subnets6ListConfigParser : public DhcpConfigParser {
+class Subnets6ListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// @param dummy first argument, always ignored. All parsers accept a
-    /// string parameter "name" as their first argument.
-    Subnets6ListConfigParser(const std::string&) {
-    }
 
     /// @brief parses contents of the list
     ///
-    /// Iterates over all entries on the list and creates a Subnet6ConfigParser
-    /// for each entry.
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
     ///
+    /// @param cfg configuration (parsed subnets will be stored here)
     /// @param subnets_list pointer to a list of IPv6 subnets
-    void build(ConstElementPtr subnets_list) {
-        BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet6ConfigParser("subnet"));
-            parser->build(subnet);
-            subnets_.push_back(parser);
+    /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
+    size_t parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+        size_t cnt = 0;
+        BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(subnet_json);
+
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                cfg->getCfgSubnets6()->add(subnet);
+                cnt++;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
         }
-
+        return (cnt);
     }
-
-    /// @brief commits subnets definitions.
-    ///
-    /// Iterates over all Subnet6 parsers. Each parser contains definitions of
-    /// a single subnet and its parameters and commits each subnet separately.
-    void commit() {
-        BOOST_FOREACH(ParserPtr subnet, subnets_) {
-            subnet->commit();
-        }
-
-    }
-
-    /// @brief Returns Subnet6ListConfigParser object
-    /// @param param_name name of the parameter
-    /// @return Subnets6ListConfigParser object
-    static DhcpConfigParser* factory(const std::string& param_name) {
-        return (new Subnets6ListConfigParser(param_name));
-    }
-
-    /// @brief collection of subnet parsers.
-    ParserCollection subnets_;
 };
 
 /// @brief Parser for list of RSOO options
@@ -664,8 +642,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
         (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                  globalContext()->uint32_values_);
-    } else if (config_id.compare("subnet6") == 0) {
-        parser = new Subnets6ListConfigParser(config_id);
+    // subnet6 has been converted to SimpleParser.
     // option-data and option-def are no longer needed here. They're now
     // converted to SimpleParser and are handled in configureDhcp6Server.
     // interfaces-config has been converted to SimpleParser.
@@ -796,7 +773,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // lease-database parser.
     // Please do not change this order!
     ParserCollection independent_parsers;
-    ParserPtr subnet_parser;
 
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
@@ -830,7 +806,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         // default values and will insert derived values as well.
         ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
+        // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
+
+        // And now derive (inherit) global parameters to subnets, if not specified.
+        SimpleParser6::deriveParameters(mutable_cfg);
 
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
@@ -942,30 +922,27 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "subnet6") {
+                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+                Subnets6ListConfigParser subnets_parser;
+                // parse() returns number of subnets parsed. We may log it one day.
+                subnets_parser.parse(srv_cfg, config_pair.second);
+                continue;
+            }
+
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
                       .arg(config_pair.first);
-            if (config_pair.first == "subnet6") {
-                subnet_parser = parser;
-            } else {
-                // Those parsers should be started before other
-                // parsers so we can call build straight away.
-                independent_parsers.push_back(parser);
-                parser->build(config_pair.second);
-                // The commit operation here may modify the global storage
-                // but we need it so as the subnet6 parser can access the
-                // parsed data.
-                parser->commit();
-            }
-        }
 
-        // The subnet parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
-            values_map.find("subnet6");
-        if (subnet_config != values_map.end()) {
-            config_pair.first = "subnet6";
-            subnet_parser->build(subnet_config->second);
+            // Those parsers should be started before other
+            // parsers so we can call build straight away.
+            independent_parsers.push_back(parser);
+            parser->build(config_pair.second);
+            // The commit operation here may modify the global storage
+            // but we need it so as the subnet6 parser can access the
+            // parsed data.
+            parser->commit();
         }
 
         // Setup the command channel.
@@ -993,9 +970,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            if (subnet_parser) {
-                subnet_parser->commit();
-            }
 
             // Apply global options in the staging config.
             setGlobalParameters6();

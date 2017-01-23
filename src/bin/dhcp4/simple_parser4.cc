@@ -98,6 +98,20 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
             cnt += SimpleParser::setDefaults(single_option, OPTION4_DEFAULTS);
         }
     }
+    return (cnt);
+}
+
+size_t SimpleParser4::deriveParameters(isc::data::ElementPtr global) {
+    size_t cnt = 0;
+
+    // Now derive global parameters into subnets.
+    ConstElementPtr subnets = global->get("subnet4");
+    if (subnets) {
+        BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+            cnt += SimpleParser::deriveParams(global, single_subnet,
+                                              INHERIT_GLOBAL_TO_SUBNET4);
+        }
+    }
 
     return (cnt);
 }

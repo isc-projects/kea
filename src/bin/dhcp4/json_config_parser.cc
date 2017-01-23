@@ -108,9 +108,8 @@ class Subnet4ConfigParser : public SubnetConfigParser {
 public:
     /// @brief Constructor
     ///
-    /// @param ignored first parameter
     /// stores global scope parameters, options, option definitions.
-    Subnet4ConfigParser(const std::string&)
+    Subnet4ConfigParser()
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
 
@@ -118,7 +117,8 @@ public:
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
-    void build(ConstElementPtr subnet) {
+    /// @return a pointer to created Subnet4 object
+    Subnet4Ptr parse(ConstElementPtr subnet) {
         /// Parse Pools first.
         ConstElementPtr pools = subnet->get("pools");
         if (pools) {
@@ -126,30 +126,18 @@ public:
             parser.parse(pools_, pools);
         }
 
-        SubnetConfigParser::build(subnet);
+        SubnetPtr generic = SubnetConfigParser::build(subnet);
 
-        if (subnet_) {
-            Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
-            if (!sub4ptr) {
-                // If we hit this, it is a programming error.
-                isc_throw(Unexpected,
-                          "Invalid cast in Subnet4ConfigParser::commit");
-            }
+        Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(generic);
+        if (!sub4ptr) {
+            // If we hit this, it is a programming error.
+            isc_throw(Unexpected,
+                      "Invalid Subnet4 cast in Subnet4ConfigParser::parse");
+        }
 
-            // Set relay information if it was parsed
-            if (relay_info_) {
-                sub4ptr->setRelayInfo(*relay_info_);
-            }
-
-            // Adding a subnet to the Configuration Manager may fail if the
-            // subnet id is invalid (duplicate). Thus, we catch exceptions
-            // here to append a position in the configuration string.
-            try {
-                CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(sub4ptr);
-            } catch (const std::exception& ex) {
-                isc_throw(DhcpConfigError, ex.what() << " ("
-                          << subnet->getPosition() << ")");
-            }
+        // Set relay information if it was parsed
+        if (relay_info_) {
+            sub4ptr->setRelayInfo(*relay_info_);
         }
 
         // Parse Host Reservations for this subnet if any.
@@ -158,13 +146,9 @@ public:
             HostReservationsListParser<HostReservationParser4> parser;
             parser.parse(subnet_->getID(), reservations);
         }
-    }
 
-    /// @brief Commits subnet configuration.
-    ///
-    /// This function is currently no-op because subnet should already
-    /// be added into the Config Manager in the build().
-    void commit() { }
+        return (sub4ptr);
+    }
 
 protected:
 
@@ -358,40 +342,38 @@ protected:
 /// This is a wrapper parser that handles the whole list of Subnet4
 /// definitions. It iterates over all entries and creates Subnet4ConfigParser
 /// for each entry.
-class Subnets4ListConfigParser : public DhcpConfigParser {
+class Subnets4ListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// @param dummy first argument, always ignored. All parsers accept a
-    /// string parameter "name" as their first argument.
-    Subnets4ListConfigParser(const std::string&) {
-    }
 
     /// @brief parses contents of the list
     ///
-    /// Iterates over all entries on the list and creates Subnet4ConfigParser
-    /// for each entry.
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
     ///
     /// @param subnets_list pointer to a list of IPv4 subnets
-    void build(ConstElementPtr subnets_list) {
-        BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet4ConfigParser("subnet"));
-            parser->build(subnet);
+    /// @return number of subnets created
+    size_t parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+        size_t cnt = 0;
+        BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+            Subnet4ConfigParser parser;
+            Subnet4Ptr subnet = parser.parse(subnet_json);
+            if (subnet) {
+
+                // Adding a subnet to the Configuration Manager may fail if the
+                // subnet id is invalid (duplicate). Thus, we catch exceptions
+                // here to append a position in the configuration string.
+                try {
+                    cfg->getCfgSubnets4()->add(subnet);
+                    cnt++;
+                } catch (const std::exception& ex) {
+                    isc_throw(DhcpConfigError, ex.what() << " ("
+                              << subnet_json->getPosition() << ")");
+                }
+            }
         }
-    }
-
-    /// @brief commits subnets definitions.
-    ///
-    /// Does nothing.
-    void commit() {
-    }
-
-    /// @brief Returns Subnet4ListConfigParser object
-    /// @param param_name name of the parameter
-    /// @return Subnets4ListConfigParser object
-    static DhcpConfigParser* factory(const std::string& param_name) {
-        return (new Subnets4ListConfigParser(param_name));
+        return (cnt);
     }
 };
 
@@ -420,8 +402,7 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
         (config_id.compare("dhcp4o6-port") == 0) )  {
         parser = new Uint32Parser(config_id,
                                   globalContext()->uint32_values_);
-    } else if (config_id.compare("subnet4") == 0) {
-        parser = new Subnets4ListConfigParser(config_id);
+    // subnet4 has been migrated to SimpleParser already.
     // interface-config has been migrated to SimpleParser already.
     // option-data and option-def have been converted to SimpleParser already.
     } else if ((config_id.compare("next-server") == 0)) {
@@ -564,7 +545,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // then: option-data parser, subnet4 parser, lease-database parser.
     // Please do not change this order!
     ParserCollection independent_parsers;
-    ParserPtr subnet_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -600,6 +580,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
+
+        // And now derive (inherit) global parameters to subnets, if not specified.
+        SimpleParser4::deriveParameters(mutable_cfg);
 
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
@@ -660,7 +643,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 hooks_parser.verifyLibraries();
                 continue;
             }
-            
+
             // Legacy DhcpConfigParser stuff below
             if (config_pair.first == "dhcp-ddns") {
                 // Apply defaults if not in short cut
@@ -696,30 +679,27 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "subnet4") {
+                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+                Subnets4ListConfigParser subnets_parser;
+                // parse() returns number of subnets parsed. We may log it one day.
+                subnets_parser.parse(srv_cfg, config_pair.second);
+                continue;
+            }
+
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
                       .arg(config_pair.first);
-            if (config_pair.first == "subnet4") {
-                subnet_parser = parser;
-            } else {
-                // Those parsers should be started before other
-                // parsers so we can call build straight away.
-                independent_parsers.push_back(parser);
-                parser->build(config_pair.second);
-                // The commit operation here may modify the global storage
-                // but we need it so as the subnet6 parser can access the
-                // parsed data.
-                parser->commit();
-            }
-        }
 
-        // The subnet parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
-            values_map.find("subnet4");
-        if (subnet_config != values_map.end()) {
-            config_pair.first = "subnet4";
-            subnet_parser->build(subnet_config->second);
+            // Those parsers should be started before other
+            // parsers so we can call build straight away.
+            independent_parsers.push_back(parser);
+            parser->build(config_pair.second);
+            // The commit operation here may modify the global storage
+            // but we need it so as the subnet6 parser can access the
+            // parsed data.
+            parser->commit();
         }
 
         // Setup the command channel.

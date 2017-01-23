@@ -29,6 +29,14 @@ public:
     /// @return number of default values added
     static size_t setAllDefaults(isc::data::ElementPtr global);
 
+    /// @brief Derives (inherits) all parameters from global to more specific scopes.
+    ///
+    /// This method currently does the following:
+    /// - derives global parameters to subnets (lifetimes for now)
+    /// @param global scope to be modified if needed (subnet4 will be extracted)
+    /// @return number of default values derived
+    static size_t deriveParameters(isc::data::ElementPtr global);
+
     // see simple_parser6.cc for comments for those parameters
     static const isc::data::SimpleDefaults OPTION6_DEF_DEFAULTS;
     static const isc::data::SimpleDefaults OPTION6_DEFAULTS;
