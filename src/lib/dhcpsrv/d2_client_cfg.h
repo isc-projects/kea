@@ -254,7 +254,7 @@ private:
     /// @brief IP port on which the client should send
     size_t sender_port_;
 
-    /// @brief Maxium number of NCRs allowed to queue waiting to send
+    /// @brief Maximum number of NCRs allowed to queue waiting to send
     size_t max_queue_size_;
 
     /// @brief The socket protocol to use with kea-dhcp-ddns.

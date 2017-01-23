@@ -1315,17 +1315,18 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string qualifying_suffix;
     bool found_qualifying_suffix = false;
     IOAddress server_ip(0);
-    uint32_t server_port;
+    uint32_t server_port = 0;
     std::string sender_ip_str;
     uint32_t sender_port;
-    uint32_t max_queue_size;
+    uint32_t max_queue_size = 1024;
     dhcp_ddns::NameChangeProtocol ncr_protocol;
     dhcp_ddns::NameChangeFormat ncr_format;
-    bool always_include_fqdn;
+    bool always_include_fqdn = false;
     bool allow_client_update;
-    bool override_no_update;
-    bool override_client_update;
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode;
+    bool override_no_update = false;
+    bool override_client_update = false;
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode =
+        D2ClientConfig::ReplaceClientNameMode::RCM_NEVER;
     std::string generated_prefix;
 
     BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
