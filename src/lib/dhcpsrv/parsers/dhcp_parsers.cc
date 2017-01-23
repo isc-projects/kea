@@ -1317,7 +1317,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     IOAddress server_ip(0);
     uint32_t server_port = 0;
     std::string sender_ip_str;
-    uint32_t sender_port;
+    uint32_t sender_port = 0;
     uint32_t max_queue_size = 1024;
     dhcp_ddns::NameChangeProtocol ncr_protocol;
     dhcp_ddns::NameChangeFormat ncr_format;
