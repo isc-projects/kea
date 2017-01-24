@@ -55,9 +55,14 @@ const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
 /// in Dhcp4) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
-    { "renew-timer",        Element::integer, "900" },
-    { "rebind-timer",       Element::integer, "1800" },
-    { "valid-lifetime",     Element::integer, "7200" }
+    { "renew-timer",              Element::integer, "900" },
+    { "rebind-timer",             Element::integer, "1800" },
+    { "valid-lifetime",           Element::integer, "7200" },
+    { "decline-probation-period", Element::integer, "86400" }, // 24h
+    { "dhcp4o6-port",             Element::integer, "0" },
+    { "echo-client-id",           Element::boolean, "true" },
+    { "match-client-id",          Element::boolean, "true" },
+    { "next-server",              Element::string, "0.0.0.0" }
 };
 
 /// @brief List of parameters that can be inherited from the global to subnet4 scope.
@@ -69,7 +74,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
 const ParamsList SimpleParser4::INHERIT_GLOBAL_TO_SUBNET4 = {
     "renew-timer",
     "rebind-timer",
-    "valid-lifetime"
+    "valid-lifetime",
+    "match-client-id",
+    "next-server"
 };
 /// @}
 

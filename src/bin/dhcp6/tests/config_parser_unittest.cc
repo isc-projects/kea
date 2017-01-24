@@ -25,7 +25,6 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
-#include <defaults.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -4749,7 +4748,8 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
-/// Check that the decline-probation-period value can be set properly.
+/// Check that the decline-probation-period value has a default value if not
+/// specified explicitly.
 TEST_F(Dhcp6ParserTest, declineTimerDefault) {
 
     string config_txt = "{ " + genIfaceConfig() + ","
@@ -4765,9 +4765,31 @@ TEST_F(Dhcp6ParserTest, declineTimerDefault) {
     checkResult(status, 0);
 
     // The value of decline-probation-period must be equal to the
-    // default value.
-    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
-              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+    // default value (86400). The default value is defined in GLOBAL6_DEFAULTS in
+    // simple_parser6.cc.
+    EXPECT_EQ(86400, CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+}
+
+/// Check that the dhcp4o6-port default value has a default value if not
+/// specified explicitly.
+TEST_F(Dhcp6ParserTest, dhcp4o6portDefault) {
+
+    string config_txt = "{ " + genIfaceConfig() + ","
+        "\"subnet6\": [  ] "
+        "}";
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-period must be equal to the
+    // default value (0). The default value is defined in GLOBAL6_DEFAULTS in
+    // simple_parser6.cc.
+    EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getDhcp4o6Port());
 }
 
 /// Check that the decline-probation-period value can be set properly.

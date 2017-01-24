@@ -26,7 +26,6 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
-#include <defaults.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -654,10 +653,6 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
 
     // returned value should be 0 (success)
     checkResult(status, 0);
-
-    checkGlobalUint32("rebind-timer", 2000);
-    checkGlobalUint32("renew-timer", 1000);
-    checkGlobalUint32("valid-lifetime", 4000);
 }
 
 /// Check that the renew-timer doesn't have to be specified, in which case
@@ -679,8 +674,6 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 
     // returned value should be 0 (success)
     checkResult(status, 0);
-    checkGlobalUint32("rebind-timer", 2000);
-    checkGlobalUint32("valid-lifetime", 4000);
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
@@ -715,8 +708,6 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
 
     // returned value should be 0 (success)
     checkResult(status, 0);
-    checkGlobalUint32("renew-timer", 1000);
-    checkGlobalUint32("valid-lifetime", 4000);
 
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
@@ -4127,10 +4118,33 @@ TEST_F(Dhcp4ParserTest, declineTimerDefault) {
     checkResult(status, 0);
 
     // The value of decline-probation-period must be equal to the
-    // default value.
-    EXPECT_EQ(DEFAULT_DECLINE_PROBATION_PERIOD,
-              CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+    // default value (86400). The default value is defined in GLOBAL6_DEFAULTS in
+    // simple_parser6.cc.
+    EXPECT_EQ(86400, CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
 }
+
+/// Check that the dhcp4o6-port default value has a default value if not
+/// specified explicitly.
+TEST_F(Dhcp4ParserTest, dhcp4o6portDefault) {
+
+    string config_txt = "{ " + genIfaceConfig() + ","
+        "\"subnet4\": [  ] "
+        "}";
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_txt));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // The value of decline-probation-period must be equal to the
+    // default value (0). The default value is defined in GLOBAL4_DEFAULTS in
+    // simple_parser4.cc.
+    EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getDhcp4o6Port());
+}
+
 
 /// Check that the decline-probation-period value can be set properly.
 TEST_F(Dhcp4ParserTest, declineTimer) {

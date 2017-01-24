@@ -25,7 +25,6 @@
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
-#include <defaults.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -395,77 +394,71 @@ namespace dhcp {
 DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
                                                 ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
-    if ((config_id.compare("valid-lifetime") == 0)  ||
-        (config_id.compare("renew-timer") == 0)  ||
-        (config_id.compare("rebind-timer") == 0) ||
-        (config_id.compare("decline-probation-period") == 0) ||
-        (config_id.compare("dhcp4o6-port") == 0) )  {
-        parser = new Uint32Parser(config_id,
-                                  globalContext()->uint32_values_);
+    // valife-lifetime, renew-timer, rebind-timer, decline-probation-period
+    // have been migrated to SimpleParser already.
     // subnet4 has been migrated to SimpleParser already.
     // interface-config has been migrated to SimpleParser already.
     // option-data and option-def have been converted to SimpleParser already.
-    } else if ((config_id.compare("next-server") == 0)) {
-        parser  = new StringParser(config_id,
-                                    globalContext()->string_values_);
-    // hooks-libraries are now migrated to SimpleParser.
-    // lease-database and hosts-database have been converted to SimpleParser already.
-     } else if (config_id.compare("echo-client-id") == 0) {
-        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
+
+    // next-server migrated
+    // echo-client-id migrated
+    // lease-database migrated
+    // hosts-database migrated
+
     // dhcp-ddns has been converted to SimpleParser.
-    } else if (config_id.compare("match-client-id") == 0) {
-        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
+    // match-client-id has been migrated to SimpleParser already.
     // control-socket has been converted to SimpleParser already.
     // expired-leases-processing has been converted to SimpleParser already.
     // client-classes has been converted to SimpleParser already.
     // host-reservation-identifiers have been converted to SimpleParser already.
-    } else {
-        isc_throw(DhcpConfigError,
-                "unsupported global configuration parameter: "
-                  << config_id << " (" << element->getPosition() << ")");
-    }
+    isc_throw(DhcpConfigError,
+              "unsupported global configuration parameter: "
+              << config_id << " (" << element->getPosition() << ")");
 
     return (parser);
 }
 
 /// @brief Sets global parameters in staging configuration
 ///
+/// @param global global configuration scope
+///
 /// Currently this method sets the following global parameters:
 ///
 /// - echo-client-id
 /// - decline-probation-period
 /// - dhcp4o6-port
-void setGlobalParameters4() {
-    // Although the function is modest for now, it is certain that the number
-    // of global switches will increase over time, hence the name.
-
+void setGlobalParameters4(ConstElementPtr global) {
     // Set whether v4 server is supposed to echo back client-id (yes = RFC6842
     // compatible, no = backward compatibility)
-    try {
-        bool echo_client_id = globalContext()->boolean_values_->getParam("echo-client-id");
-        CfgMgr::instance().echoClientId(echo_client_id);
-    } catch (...) {
-        // Ignore errors. This flag is optional
-    }
+    bool echo_client_id = SimpleParser::getBoolean(global, "echo-client-id");
+    CfgMgr::instance().echoClientId(echo_client_id);
 
-    // Set the probation period for decline handling.
-    try {
-        uint32_t probation_period = globalContext()->uint32_values_
-            ->getOptionalParam("decline-probation-period",
-                               DEFAULT_DECLINE_PROBATION_PERIOD);
-        CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
-    } catch (...) {
-        // That's not really needed.
+    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
+    /// This will be done as part of #5116.
+    int64_t probation_period = SimpleParser::getInteger(global,
+                                                        "decline-probation-period");
+    if (probation_period < std::numeric_limits<uint32_t>::min() ||
+        probation_period > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(DhcpConfigError, "Invalid decline-probation-period value: "
+                  << probation_period << ", allowed range: "
+                  << std::numeric_limits<uint32_t>::min() << ".."
+                  << std::numeric_limits<uint32_t>::max());
     }
+    CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
 
     // Set the DHCPv4-over-DHCPv6 interserver port.
-    try {
-        uint32_t dhcp4o6_port = globalContext()->uint32_values_
-            ->getOptionalParam("dhcp4o6-port", 0);
-        CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
-    } catch (...) {
-        // Ignore errors. This flag is optional
+
+    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
+    /// This will be done as part of #5116.
+    uint32_t dhcp4o6_port = SimpleParser::getInteger(global, "dhcp4o6-port");
+    if (dhcp4o6_port < std::numeric_limits<uint16_t>::min() ||
+        dhcp4o6_port > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "Invalid dhcp4o6-port value: "
+                  << dhcp4o6_port << ", allowed range: "
+                  << std::numeric_limits<uint16_t>::min() << ".."
+                  << std::numeric_limits<uint16_t>::max());
     }
+    CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
 }
 
 /// @brief Initialize the command channel based on the staging configuration
@@ -687,6 +680,24 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            // Timers are not used in the global scope. Their values are derived
+            // to specific subnets (see SimpleParser6::deriveParameters).
+            // decline-probation-period, dhcp4o6-port, echo-client-id are
+            // handlded in the setGlobalParameters4.
+            // match-client-id is derived to subnet scope level.
+            if ( (config_pair.first == "renew-timer") ||
+                 (config_pair.first == "rebind-timer") ||
+                 (config_pair.first == "valid-lifetime") ||
+                 (config_pair.first == "decline-probation-period") ||
+                 (config_pair.first == "dhcp4o6-port") ||
+                 (config_pair.first == "echo-client-id") ||
+                 (config_pair.first == "match-client-id") ||
+                 (config_pair.first == "next-server")) {
+                continue;
+            }
+
+            /// @todo: 5116 ticket: remove this chunk below once all parser
+            /// tickets are done.
             ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
                                                            config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
@@ -731,9 +742,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         try {
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
-
-            // Apply global options in the staging config.
-            setGlobalParameters4();
 
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
