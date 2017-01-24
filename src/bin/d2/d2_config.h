@@ -36,10 +36,6 @@ namespace d2 {
 /// a name, the algorithm method name, optionally the minimum truncated
 /// length, and its secret key component.
 ///
-/// @todo  NOTE that TSIG configuration parsing is functional, the use of
-/// TSIG Keys during the actual DNS update transactions is not.  This will be
-/// implemented in a future release.
-///
 /// Each managed domain list consists of a list one or more domains and is
 /// represented by the class DdnsDomainListMgr.
 ///
@@ -140,13 +136,12 @@ public:
 /// @brief Acts as a storage vault for D2 global scalar parameters
 class D2Params {
 public:
+
     /// @brief Default configuration constants.
     //@{
-    /// @todo For now these are hard-coded as configuration layer cannot
-    /// readily provide them (see Trac #3358).
     static const char *DFT_IP_ADDRESS;
-    static const size_t DFT_PORT;
-    static const size_t DFT_DNS_SERVER_TIMEOUT;
+    static const char *DFT_PORT;
+    static const char *DFT_DNS_SERVER_TIMEOUT;
     static const char *DFT_NCR_PROTOCOL;
     static const char *DFT_NCR_FORMAT;
     //@}

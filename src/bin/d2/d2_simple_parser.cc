@@ -4,9 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <d2/d2_config.h>
 #include <d2/d2_simple_parser.h>
 #include <cc/data.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace isc::data;
 
@@ -27,17 +29,17 @@ namespace d2 {
 ///
 /// @{
 
-/// @brief This table defines default global values for D2 
+/// @brief This table defines default global values for D2
 ///
 /// Some of the global parameters defined in the global scope (i.e. directly
 /// in DhcpDdns) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
-    { "ip-address",         Element::string, "127.0.0.1" },
-    { "port",               Element::integer, "53001" },
-    { "dns-server-timeout", Element::integer, "100" },
-    { "ncr-protocol",       Element::string, "UDP" },
-    { "ncr-format",         Element::string, "JSON" }
+    { "ip-address",         Element::string, D2Params::DFT_IP_ADDRESS },
+    { "port",               Element::integer, D2Params::DFT_PORT },
+    { "dns-server-timeout", Element::integer, D2Params::DFT_DNS_SERVER_TIMEOUT },
+    { "ncr-protocol",       Element::string, D2Params::DFT_NCR_PROTOCOL },
+    { "ncr-format",         Element::string, D2Params::DFT_NCR_FORMAT }
 };
 
 /// @}
