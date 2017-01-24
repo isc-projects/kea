@@ -681,7 +681,7 @@ TEST_F(HooksManagerTest, validateLibraries) {
 // This test verifies that the specified parameters are accessed properly.
 TEST_F(HooksManagerTest, LibraryParameters) {
 
-    // Prepare paramters for the callout parameters library.
+    // Prepare parameters for the callout parameters library.
     ElementPtr params = Element::createMap();
     params->set("svalue", Element::create("string value"));
     params->set("ivalue", Element::create(42));
