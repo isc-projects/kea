@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -899,7 +899,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
                 .arg(query->getIface())
                 .arg(e.what());
 
-            // Increase the statistics of parse failues and dropped packets.
+            // Increase the statistics of parse failures and dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
                                                       static_cast<int64_t>(1));
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -2044,7 +2044,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             getClientClassDictionary()->getClasses();
 
         // Now we need to iterate over the classes assigned to the
-        // query packet and find corresponding class defintions for it.
+        // query packet and find corresponding class definitions for it.
         for (ClientClasses::const_iterator name = classes.begin();
              name != classes.end(); ++name) {
 
@@ -2065,7 +2065,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             const string& sname = cl->second->getSname();
             if (!sname.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reineterpret_cast is not the most elegant solution,
+                // tricky. reinterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
                 // sname and file fields in Pkt4 to string one day and life
                 // will be easier.
@@ -2076,7 +2076,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             const string& filename = cl->second->getFilename();
             if (!filename.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reineterpret_cast is not the most elegant solution,
+                // tricky. reinterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
                 // sname and file fields in Pkt4 to string one day and life
                 // will be easier.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,7 +82,7 @@ public:
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
 
-    /// @brief Returns server-indentifier option.
+    /// @brief Returns server-identifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -692,7 +692,7 @@ protected:
     /// This method iterates over all IA_NA options and calls @ref declineIA on
     /// each of them.
     ///
-    /// @param decline Decline messege sent by a client
+    /// @param decline Decline message sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
     /// @param ctx context
     /// @return true when expected to continue, false when hooks told us to drop
@@ -722,7 +722,7 @@ protected:
     /// - cleans up DNS, if necessary
     /// - updates subnet[X].declined-addresses (per subnet stat)
     /// - updates declined-addresses (global stat)
-    /// - deassociates client information from the lease
+    /// - disassociates client information from the lease
     /// - moves the lease to DECLINED state
     /// - sets lease expiration time to decline-probation-period
     /// - adds status-code success
