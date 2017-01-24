@@ -61,7 +61,7 @@ D2Controller::parseFile(const std::string& file_name) {
 
     // Read contents of the file and parse it as JSON
     D2ParserContext parser;
-    elements = parser.parseFile(file_name, D2ParserContext::PARSER_JSON);
+    elements = parser.parseFile(file_name, D2ParserContext::PARSER_DHCPDDNS);
     if (!elements) {
         isc_throw(isc::BadValue, "no configuration found in file");
     }

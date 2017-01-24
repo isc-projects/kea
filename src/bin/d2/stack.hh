@@ -32,7 +32,7 @@
 
 /**
  ** \file stack.hh
- ** Define the isc::dhcp::stack class.
+ ** Define the isc::d2::stack class.
  */
 
 #ifndef YY_D2_PARSER_STACK_HH_INCLUDED
@@ -41,7 +41,7 @@
 # include <vector>
 
 #line 14 "d2_parser.yy" // stack.hh:151
-namespace isc { namespace dhcp {
+namespace isc { namespace d2 {
 #line 46 "stack.hh" // stack.hh:151
   template <class T, class S = std::vector<T> >
   class stack
@@ -151,7 +151,7 @@ namespace isc { namespace dhcp {
   };
 
 #line 14 "d2_parser.yy" // stack.hh:151
-} } // isc::dhcp
+} } // isc::d2
 #line 156 "stack.hh" // stack.hh:151
 
 #endif // !YY_D2_PARSER_STACK_HH_INCLUDED

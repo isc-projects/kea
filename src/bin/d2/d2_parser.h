@@ -32,7 +32,7 @@
 
 /**
  ** \file d2_parser.h
- ** Define the isc::dhcp::parser class.
+ ** Define the isc::d2::parser class.
  */
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
@@ -48,7 +48,7 @@
 #include <boost/lexical_cast.hpp>
 #include <d2/parser_context_decl.h>
 
-using namespace isc::dhcp;
+using namespace isc::d2;
 using namespace isc::data;
 using namespace std;
 
@@ -136,7 +136,7 @@ using namespace std;
 #endif  /* ! defined D2_PARSER_DEBUG */
 
 #line 14 "d2_parser.yy" // lalr1.cc:392
-namespace isc { namespace dhcp {
+namespace isc { namespace d2 {
 #line 141 "d2_parser.h" // lalr1.cc:392
 
 
@@ -360,20 +360,23 @@ namespace isc { namespace dhcp {
         TOKEN_TCP = 273,
         TOKEN_NCR_FORMAT = 274,
         TOKEN_JSON = 275,
-        TOKEN_LOGGING = 276,
-        TOKEN_LOGGERS = 277,
-        TOKEN_NAME = 278,
-        TOKEN_OUTPUT_OPTIONS = 279,
-        TOKEN_OUTPUT = 280,
-        TOKEN_DEBUGLEVEL = 281,
-        TOKEN_SEVERITY = 282,
-        TOKEN_TOPLEVEL_JSON = 283,
-        TOKEN_TOPLEVEL_DHCPDDNS = 284,
-        TOKEN_SUB_DHCPDDNS = 285,
-        TOKEN_STRING = 286,
-        TOKEN_INTEGER = 287,
-        TOKEN_FLOAT = 288,
-        TOKEN_BOOLEAN = 289
+        TOKEN_FORWARD_DDNS = 276,
+        TOKEN_REVERSE_DDNS = 277,
+        TOKEN_TSIG_KEYS = 278,
+        TOKEN_LOGGING = 279,
+        TOKEN_LOGGERS = 280,
+        TOKEN_NAME = 281,
+        TOKEN_OUTPUT_OPTIONS = 282,
+        TOKEN_OUTPUT = 283,
+        TOKEN_DEBUGLEVEL = 284,
+        TOKEN_SEVERITY = 285,
+        TOKEN_TOPLEVEL_JSON = 286,
+        TOKEN_TOPLEVEL_DHCPDDNS = 287,
+        TOKEN_SUB_DHCPDDNS = 288,
+        TOKEN_STRING = 289,
+        TOKEN_INTEGER = 290,
+        TOKEN_FLOAT = 291,
+        TOKEN_BOOLEAN = 292
       };
     };
 
@@ -566,6 +569,18 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_FORWARD_DDNS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_REVERSE_DDNS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TSIG_KEYS (const location_type& l);
+
+    static inline
+    symbol_type
     make_LOGGING (const location_type& l);
 
     static inline
@@ -622,7 +637,7 @@ namespace isc { namespace dhcp {
 
 
     /// Build a parser object.
-    D2Parser (isc::dhcp::D2ParserContext& ctx_yyarg);
+    D2Parser (isc::d2::D2ParserContext& ctx_yyarg);
     virtual ~D2Parser ();
 
     /// Parse.
@@ -825,17 +840,17 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 111,     ///< Last index in yytable_.
-      yynnts_ = 63,  ///< Number of nonterminal symbols.
+      yylast_ = 126,     ///< Last index in yytable_.
+      yynnts_ = 69,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 35  ///< Number of tokens.
+      yyntokens_ = 38  ///< Number of tokens.
     };
 
 
     // User arguments.
-    isc::dhcp::D2ParserContext& ctx;
+    isc::d2::D2ParserContext& ctx;
   };
 
   // Symbol number corresponding to token number t.
@@ -875,9 +890,10 @@ namespace isc { namespace dhcp {
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37
     };
-    const unsigned int user_token_number_max_ = 289;
+    const unsigned int user_token_number_max_ = 292;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -910,24 +926,24 @@ namespace isc { namespace dhcp {
   {
       switch (other.type_get ())
     {
-      case 40: // value
-      case 67: // ncr_protocol_value
+      case 43: // value
+      case 70: // ncr_protocol_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 34: // "boolean"
+      case 37: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 33: // "floating point"
+      case 36: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 32: // "integer"
+      case 35: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 31: // "constant string"
+      case 34: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -948,24 +964,24 @@ namespace isc { namespace dhcp {
     (void) v;
       switch (this->type_get ())
     {
-      case 40: // value
-      case 67: // ncr_protocol_value
+      case 43: // value
+      case 70: // ncr_protocol_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 34: // "boolean"
+      case 37: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 33: // "floating point"
+      case 36: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 32: // "integer"
+      case 35: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 31: // "constant string"
+      case 34: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1045,24 +1061,24 @@ namespace isc { namespace dhcp {
     // Type destructor.
     switch (yytype)
     {
-      case 40: // value
-      case 67: // ncr_protocol_value
+      case 43: // value
+      case 70: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 34: // "boolean"
+      case 37: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 33: // "floating point"
+      case 36: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 32: // "integer"
+      case 35: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 31: // "constant string"
+      case 34: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1089,24 +1105,24 @@ namespace isc { namespace dhcp {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 40: // value
-      case 67: // ncr_protocol_value
+      case 43: // value
+      case 70: // ncr_protocol_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 34: // "boolean"
+      case 37: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 33: // "floating point"
+      case 36: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 32: // "integer"
+      case 35: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 31: // "constant string"
+      case 34: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1168,7 +1184,7 @@ namespace isc { namespace dhcp {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289
+     285,   286,   287,   288,   289,   290,   291,   292
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1288,6 +1304,24 @@ namespace isc { namespace dhcp {
   }
 
   D2Parser::symbol_type
+  D2Parser::make_FORWARD_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FORWARD_DDNS, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_REVERSE_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REVERSE_DDNS, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_TSIG_KEYS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TSIG_KEYS, l);
+  }
+
+  D2Parser::symbol_type
   D2Parser::make_LOGGING (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGING, l);
@@ -1373,8 +1407,8 @@ namespace isc { namespace dhcp {
 
 
 #line 14 "d2_parser.yy" // lalr1.cc:392
-} } // isc::dhcp
-#line 1378 "d2_parser.h" // lalr1.cc:392
+} } // isc::d2
+#line 1412 "d2_parser.h" // lalr1.cc:392
 
 
 

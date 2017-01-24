@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,8 +101,16 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
             break;
         }
         case Element::integer: {
-            int int_value = boost::lexical_cast<int>(def_value.value_);
-            x.reset(new IntElement(int_value, pos));
+            try {
+                int int_value = boost::lexical_cast<int>(def_value.value_);
+                x.reset(new IntElement(int_value, pos));
+            }
+            catch (const std::exception& ex) {
+                isc_throw(BadValue, "Internal error. Integer value expected for: "
+                                    << def_value.name_ << ", value is: "
+                                    << def_value.value_ );
+            }
+
             break;
         }
         case Element::boolean: {

@@ -32,7 +32,7 @@
 
 /**
  ** \file position.hh
- ** Define the isc::dhcp::position class.
+ ** Define the isc::d2::position class.
  */
 
 #ifndef YY_D2_PARSER_POSITION_HH_INCLUDED
@@ -51,7 +51,7 @@
 # endif
 
 #line 14 "d2_parser.yy" // location.cc:337
-namespace isc { namespace dhcp {
+namespace isc { namespace d2 {
 #line 56 "position.hh" // location.cc:337
   /// Abstract a position.
   class position
@@ -175,6 +175,6 @@ namespace isc { namespace dhcp {
   }
 
 #line 14 "d2_parser.yy" // location.cc:337
-} } // isc::dhcp
+} } // isc::d2
 #line 180 "position.hh" // location.cc:337
 #endif // !YY_D2_PARSER_POSITION_HH_INCLUDED

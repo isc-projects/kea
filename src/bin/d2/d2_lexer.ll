@@ -25,13 +25,13 @@ namespace {
 
 bool start_token_flag = false;
 
-isc::dhcp::D2ParserContext::ParserType start_token_value;
+isc::d2::D2ParserContext::ParserType start_token_value;
 unsigned int comment_start_line = 0;
 
 };
 
 // To avoid the call to exit... oops!
-#define YY_FATAL_ERROR(msg) isc::dhcp::D2ParserContext::fatal(msg)
+#define YY_FATAL_ERROR(msg) isc::d2::D2ParserContext::fatal(msg)
 %}
 
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
@@ -104,9 +104,11 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         switch (start_token_value) {
         case D2ParserContext::PARSER_JSON:
         default:
-            return isc::dhcp::D2Parser::make_TOPLEVEL_JSON(driver.loc_);
+            return isc::d2::D2Parser::make_TOPLEVEL_JSON(driver.loc_);
         case D2ParserContext::PARSER_DHCPDDNS:
-            return isc::dhcp::D2Parser::make_TOPLEVEL_DHCPDDNS(driver.loc_);
+            return isc::d2::D2Parser::make_TOPLEVEL_DHCPDDNS(driver.loc_);
+        case D2ParserContext::PARSER_SUB_DHCPDDNS:
+            return isc::d2::D2Parser::make_SUB_DHCPDDNS(driver.loc_);
         }
     }
 %}
@@ -154,125 +156,199 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     driver.loc_.step();
 }
 
+\"DhcpDdns\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONFIG:
+        return isc::d2::D2Parser::make_DHCPDDNS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("DhcpDdns", driver.loc_);
+    }
+}
+
 \"ip-address\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::DHCPDDNS:
-        return isc::dhcp::D2Parser::make_IP_ADDRESS(driver.loc_);
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_IP_ADDRESS(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("ip-address", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("ip-address", driver.loc_);
     }
 }
 
 \"port\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::DHCPDDNS:
-        return isc::dhcp::D2Parser::make_PORT(driver.loc_);
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_PORT(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("port", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("port", driver.loc_);
+    }
+}
+
+\"dns-server-timeout\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_DNS_SERVER_TIMEOUT(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("dns-server-timeout", driver.loc_);
     }
 }
 
 \"ncr-protocol\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::DHCPDDNS:
-        return isc::dhcp::D2Parser::make_NCR_PROTOCOL(driver.loc_);
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_NCR_PROTOCOL(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("ncr-protocol", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("ncr-protocol", driver.loc_);
     }
 }
 
 \"ncr-format\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::DHCPDDNS:
-        return isc::dhcp::D2Parser::make_NCR_FORMAT(driver.loc_);
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_NCR_FORMAT(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("ncr-format", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("ncr-format", driver.loc_);
     }
 }
 
 (?i:\"UDP\") {
     /* dhcp-ddns value keywords are case insensitive */
-    if (driver.ctx_ == isc::dhcp::D2ParserContext::NCR_PROTOCOL) {
-        return isc::dhcp::D2Parser::make_UDP(driver.loc_);
+    if (driver.ctx_ == isc::d2::D2ParserContext::NCR_PROTOCOL) {
+        return isc::d2::D2Parser::make_UDP(driver.loc_);
     }
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
-    return isc::dhcp::D2Parser::make_STRING(tmp, driver.loc_);
+    return isc::d2::D2Parser::make_STRING(tmp, driver.loc_);
 }
 
 (?i:\"TCP\") {
     /* dhcp-ddns value keywords are case insensitive */
-    if (driver.ctx_ == isc::dhcp::D2ParserContext::NCR_PROTOCOL) {
-        return isc::dhcp::D2Parser::make_TCP(driver.loc_);
+    if (driver.ctx_ == isc::d2::D2ParserContext::NCR_PROTOCOL) {
+        return isc::d2::D2Parser::make_TCP(driver.loc_);
     }
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
-    return isc::dhcp::D2Parser::make_STRING(tmp, driver.loc_);
+    return isc::d2::D2Parser::make_STRING(tmp, driver.loc_);
 }
 
 (?i:\"JSON\") {
     /* dhcp-ddns value keywords are case insensitive */
-    if (driver.ctx_ == isc::dhcp::D2ParserContext::NCR_FORMAT) {
-        return isc::dhcp::D2Parser::make_JSON(driver.loc_);
+    if (driver.ctx_ == isc::d2::D2ParserContext::NCR_FORMAT) {
+        return isc::d2::D2Parser::make_JSON(driver.loc_);
     }
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
-    return isc::dhcp::D2Parser::make_STRING(tmp, driver.loc_);
+    return isc::d2::D2Parser::make_STRING(tmp, driver.loc_);
 }
+
+\"forward-ddns\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_FORWARD_DDNS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("forward-ddns", driver.loc_);
+    }
+}
+
+\"reverse-ddns\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_REVERSE_DDNS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("reverse-ddns", driver.loc_);
+    }
+}
+
+\"tsig-keys\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_TSIG_KEYS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("tsig-keys", driver.loc_);
+    }
+}
+
 
 \"Logging\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::CONFIG:
-        return isc::dhcp::D2Parser::make_LOGGING(driver.loc_);
+    case isc::d2::D2ParserContext::CONFIG:
+        return isc::d2::D2Parser::make_LOGGING(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("Logging", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("Logging", driver.loc_);
     }
 }
 
 \"loggers\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::LOGGING:
-        return isc::dhcp::D2Parser::make_LOGGERS(driver.loc_);
+    case isc::d2::D2ParserContext::LOGGING:
+        return isc::d2::D2Parser::make_LOGGERS(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("loggers", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("loggers", driver.loc_);
     }
 }
 
 \"output_options\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::LOGGERS:
-        return isc::dhcp::D2Parser::make_OUTPUT_OPTIONS(driver.loc_);
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_OUTPUT_OPTIONS(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("output_options", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("output_options", driver.loc_);
     }
 }
 
 \"output\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::OUTPUT_OPTIONS:
-        return isc::dhcp::D2Parser::make_OUTPUT(driver.loc_);
+    case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
+        return isc::d2::D2Parser::make_OUTPUT(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("output", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("output", driver.loc_);
+    }
+}
+
+\"name\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_NAME(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("name", driver.loc_);
     }
 }
 
 \"debuglevel\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::LOGGERS:
-        return isc::dhcp::D2Parser::make_DEBUGLEVEL(driver.loc_);
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_DEBUGLEVEL(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("debuglevel", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("debuglevel", driver.loc_);
     }
 }
 
 \"severity\" {
     switch(driver.ctx_) {
-    case isc::dhcp::D2ParserContext::LOGGERS:
-        return isc::dhcp::D2Parser::make_SEVERITY(driver.loc_);
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_SEVERITY(driver.loc_);
     default:
-        return isc::dhcp::D2Parser::make_STRING("severity", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("severity", driver.loc_);
     }
 }
+
+\"Dhcp4\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONFIG:
+        return isc::d2::D2Parser::make_DHCP4(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("Dhcp4", driver.loc_);
+    }
+}
+
+\"Dhcp6\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONFIG:
+        return isc::d2::D2Parser::make_DHCP6(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("Dhcp6", driver.loc_);
+    }
+}
+
 
 {JSONString} {
     // A string has been matched. It contains the actual string and single quotes.
@@ -369,7 +445,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         }
     }
 
-    return isc::dhcp::D2Parser::make_STRING(decoded, driver.loc_);
+    return isc::d2::D2Parser::make_STRING(decoded, driver.loc_);
 }
 
 \"{JSONStringCharacter}*{ControlCharacter}{ControlCharacterFill}*\" {
@@ -387,12 +463,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
 }
 
-"["    { return isc::dhcp::D2Parser::make_LSQUARE_BRACKET(driver.loc_); }
-"]"    { return isc::dhcp::D2Parser::make_RSQUARE_BRACKET(driver.loc_); }
-"{"    { return isc::dhcp::D2Parser::make_LCURLY_BRACKET(driver.loc_); }
-"}"    { return isc::dhcp::D2Parser::make_RCURLY_BRACKET(driver.loc_); }
-","    { return isc::dhcp::D2Parser::make_COMMA(driver.loc_); }
-":"    { return isc::dhcp::D2Parser::make_COLON(driver.loc_); }
+"["    { return isc::d2::D2Parser::make_LSQUARE_BRACKET(driver.loc_); }
+"]"    { return isc::d2::D2Parser::make_RSQUARE_BRACKET(driver.loc_); }
+"{"    { return isc::d2::D2Parser::make_LCURLY_BRACKET(driver.loc_); }
+"}"    { return isc::d2::D2Parser::make_RCURLY_BRACKET(driver.loc_); }
+","    { return isc::d2::D2Parser::make_COMMA(driver.loc_); }
+":"    { return isc::d2::D2Parser::make_COLON(driver.loc_); }
 
 {int} {
     // An integer was found.
@@ -409,7 +485,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 
     // The parser needs the string form as double conversion is no lossless
-    return isc::dhcp::D2Parser::make_INTEGER(integer, driver.loc_);
+    return isc::d2::D2Parser::make_INTEGER(integer, driver.loc_);
 }
 
 [-+]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)? {
@@ -422,16 +498,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         driver.error(driver.loc_, "Failed to convert " + tmp + " to a floating point.");
     }
 
-    return isc::dhcp::D2Parser::make_FLOAT(fp, driver.loc_);
+    return isc::d2::D2Parser::make_FLOAT(fp, driver.loc_);
 }
 
 true|false {
     string tmp(yytext);
-    return isc::dhcp::D2Parser::make_BOOLEAN(tmp == "true", driver.loc_);
+    return isc::d2::D2Parser::make_BOOLEAN(tmp == "true", driver.loc_);
 }
 
 null {
-   return isc::dhcp::D2Parser::make_NULL_TYPE(driver.loc_);
+   return isc::d2::D2Parser::make_NULL_TYPE(driver.loc_);
 }
 
 (?i:true) driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
@@ -444,7 +520,7 @@ null {
 
 <<EOF>> {
     if (driver.states_.empty()) {
-        return isc::dhcp::D2Parser::make_END(driver.loc_);
+        return isc::d2::D2Parser::make_END(driver.loc_);
     }
     driver.loc_ = driver.locs_.back();
     driver.locs_.pop_back();
