@@ -271,7 +271,7 @@
           </itemizedlist>
         </para>
         <para>
-          Once loaded, the library allows segregating incomings requests into
+          Once loaded, the library allows segregating incoming requests into
           known and unknown clients. For known clients, the packets are
           processed mostly as usual, except it is possible to override certain
           options being sent. That can be done on a per host basis. Clients
@@ -306,7 +306,7 @@
             is "HW_ADDR" for IPv4 users or "DUID" for IPv6
             users</para></listitem>
             <listitem><para><command>id</command>, whose value is
-            either the hardware address or the DUID from the equest
+            either the hardware address or the DUID from the request
             formatted as a string of hex digits, with or without
             ":" delimiters.</para></listitem>
           </itemizedlist>

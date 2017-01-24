@@ -1,5 +1,5 @@
 # This is an example configuration file for the DHCPv6 server in Kea.
-# It is a basic scenario with one IPv6 subnet configured. It demnstrates
+# It is a basic scenario with one IPv6 subnet configured. It demonstrates
 # how to configure Kea to use various backends to store leases:
 # - memfile
 # - MySQL
@@ -26,9 +26,9 @@
 
 # 2. MySQL backend. Leases will be stored in MySQL database. Make sure it
 # is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type and name. If other parameters are not specified,
-# Kea will assume the database is avaiable on localhost, that user and
+# Kea will assume the database is available on localhost, that user and
 # password is not necessary to connect and that timeout is 5 seconds.
 # Kea must be compiled with --with-dhcp-mysql option to use this backend.
 #  "lease-database": {
@@ -42,9 +42,9 @@
 
 # 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
 # sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type and name. If other parameters are not specified,
-# Kea will assume the database is avaiable on localhost, that user and
+# Kea will assume the database is available on localhost, that user and
 # password is not necessary to connect and that timeout is 5 seconds.
 # Kea must be compiled with --with-dhcp-pgsql option to use this backend.
 #  "lease-database": {
@@ -57,7 +57,7 @@
 
 # 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
 # sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
+# for details on how to initialize the database. The only strictly required
 # parameters are type, keyspace and contact_points. At least one contact point
 # must be specified, but more than one is required for redundancy. Make sure
 # you specify the contact points without spaces. Kea must be compiled with
