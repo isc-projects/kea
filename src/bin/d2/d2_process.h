@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,7 +68,7 @@ public:
     /// as a place to perform any derivation-specific initialization steps
     /// that are inapppropriate for the constructor but necessary prior to
     /// launch.  So far, no such steps have been identified for D2, so its
-    /// implementantion is empty but required.
+    /// implementation is empty but required.
     ///
     /// @throw DProcessBaseError if the initialization fails.
     virtual void init();

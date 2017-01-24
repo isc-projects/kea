@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +49,7 @@ usage() {
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
-    printf " - lease-init: Initalizes new lease database. Useful for first time installation.\n"
+    printf " - lease-init: Initializes new lease database. Useful for first time installation.\n"
     printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
     printf " -                for checking lease DB version when preparing for an upgrade.\n"
     printf " - lease-upgrade: Upgrades your lease database scheme\n"

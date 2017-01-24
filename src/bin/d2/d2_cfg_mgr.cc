@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ D2CfgMgr::forwardUpdatesEnabled() {
 
 bool
 D2CfgMgr::reverseUpdatesEnabled() {
-    // Reverse updates are not enabled if no revese servers are defined.
+    // Reverse updates are not enabled if no reverse servers are defined.
     return (getD2CfgContext()->getReverseMgr()->size() > 0);
 }
 

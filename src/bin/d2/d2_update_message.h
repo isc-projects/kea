@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Exception indicating that a signed, inbound message failed to verfiy
+/// @brief Exception indicating that a signed, inbound message failed to verify
 ///
 /// This exception is thrown when TSIG verification of a DNS server's response
 /// fails.
@@ -126,7 +126,7 @@ public:
     /// (either outgoing or incoming).
     ///
     /// This constructor is used to create an instance of either incoming or
-    /// outgoing DNS Update message. The boolean argument indicates wheteher it
+    /// outgoing DNS Update message. The boolean argument indicates whether it
     /// is incoming (true) or outgoing (false) message. For incoming messages
     /// the @c D2UpdateMessage::fromWire function is used to parse on-wire data.
     /// For outgoing messages, modifier functions should be used to set the

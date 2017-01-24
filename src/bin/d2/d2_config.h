@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,10 +213,10 @@ public:
     /// @return Configuration summary in the textual format.
     std::string getConfigSummary() const;
 
-    /// @brief Compares two D2Paramss for equality
+    /// @brief Compares two D2Params's for equality
     bool operator == (const D2Params& other) const;
 
-    /// @brief Compares two D2Paramss for inequality
+    /// @brief Compares two D2Params's for inequality
     bool operator != (const D2Params& other) const;
 
     /// @brief Generates a string representation of the class contents.
@@ -258,7 +258,7 @@ private:
 /// @brief Dumps the contents of a D2Params as text to an output stream
 ///
 /// @param os output stream to which text should be sent
-/// @param config D2Param instnace to dump
+/// @param config D2Param instance to dump
 std::ostream&
 operator<<(std::ostream& os, const D2Params& config);
 
@@ -287,7 +287,7 @@ public:
     /// @brief Constructor
     ///
     /// @param name the unique label used to identify this key
-    /// @param algorithm the id of the encryption alogirthm this key uses.
+    /// @param algorithm the id of the encryption algorithm this key uses.
     /// Currently supported values are (case insensitive):
     /// -# "HMAC-MD5"
     /// -# "HMAC-SHA1"
