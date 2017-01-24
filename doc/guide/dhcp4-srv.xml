@@ -2488,7 +2488,7 @@ It is merely echoed by the server
       With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
       to several of the identifiers it would normally use to select a
       subnet.  In order to address this issue three new configuration
-      entires have been added.  The presence of any of these allows the
+      entries have been added.  The presence of any of these allows the
       subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
       <itemizedlist>
         <listitem>
@@ -2629,12 +2629,12 @@ It is merely echoed by the server
     0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.) The third
     example reserves address 192.0.3.203 to a client whose request
-    would be relayed by a relay agent that inserts a circuid-it option
+    would be relayed by a relay agent that inserts a circuit-it option
     with the value 'charter950'. The fourth entry reserves address
     192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
 
-    <para>The above example is used for ilustrational purposes only
+    <para>The above example is used for illustrational purposes only
     and in actual deployments it is recommended to use as few types as possible
     (preferably just one). See <xref linkend="reservations4-tuning"/> for a detailed
     discussion of this point.</para>

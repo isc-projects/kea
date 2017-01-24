@@ -1203,7 +1203,7 @@ temporarily override a list of interface names and listen on all interfaces.
         S46 container options group rules and optional port parameters
         for a specified domain. There are three container options specified
         in the "dhcp6" (top level) option space: MAP-E Container option,
-        MAP-T Container option and S46 Lieghtweight 4over6 Container option.
+        MAP-T Container option and S46 Lightweight 4over6 Container option.
         These options only contain encapsulated options specified below.
         They do not include any data fields.
       </para>
@@ -3839,7 +3839,7 @@ If not specified, the default value is:
                 statistic is expected to grow if there are devices
                 that are using DHCPv4-over-DHCPv6. DHCPv4-QUERY
                 messages are used by DHCPv4 clients on an IPv6 only
-                line which encapsulatesi the requests over DHCPv6.
+                line which encapsulates the requests over DHCPv6.
               </entry>
             </row>
 

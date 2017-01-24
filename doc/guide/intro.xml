@@ -31,7 +31,7 @@
         Kea is officially supported on Red Hat Enterprise Linux,
 	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
 	    other platforms: Kea 1.1.0 builds have been tested on (in no
-        particular order) Red Hat Enteprise Linux 6.4, Debian GNU/Linux 7,
+        particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
         Ubuntu 12.04, Ubuntu 14.04, Ubuntu 16.04, Fedora Linux 19,
         Fedora 20, Fedora 22, CentOS Linux 7, NetBSD 6, FreeBSD 10.3,
         OpenBSD 5.7, OpenBSD 6.0, OS X 10.10, OS X 10.11.
