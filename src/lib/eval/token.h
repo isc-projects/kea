@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -342,7 +342,7 @@ protected:
 class TokenRelay6Option : public TokenOption {
 public:
     /// @brief Constructor that takes a nesting level and an option
-    /// code as paramaters.
+    /// code as parameters.
     ///
     /// @param nest_level the nesting for which relay to examine.
     /// @param option_code code of the option.
@@ -499,7 +499,7 @@ public:
 
     /// @brief Gets a value of the specified packet.
     ///
-    /// The evaluation uses fields that are availabe in the packet.  It does not
+    /// The evaluation uses fields that are available in the packet.  It does not
     /// require any values to be present on the stack.
     ///
     /// @throw EvalTypeError when called for a DHCPv4 packet

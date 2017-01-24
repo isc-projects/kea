@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,7 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 /// @brief Creates a standard config/command level answer message
 ///
 /// @param status_code The return code (0 for success)
-/// @param status textual represenation of the status (used mostly for errors)
+/// @param status textual representation of the status (used mostly for errors)
 /// @param arg The optional argument for the answer. This can be of
 ///        any Element type. May be NULL.
 /// @return Standard command/config answer message

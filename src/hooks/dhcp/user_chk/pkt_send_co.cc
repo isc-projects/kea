@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -259,7 +259,7 @@ void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
 /// - DOCSIS3_V6_CONFIG_FILE from user property "bootfile"
 /// - DOCSIS3_V6_TFTP_SERVERS from user property "tftp_server"
 ///
-/// @param response IPv5 reponse packet
+/// @param response IPv5 response packet
 /// @param user User from whom properties are sourced
 void add6Options(Pkt6Ptr& response, const UserPtr& user) {
     if (!user) {

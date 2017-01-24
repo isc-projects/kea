@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,7 +154,7 @@ public:
 private:
     /// Version of the DHCP protocol used, i.e. 4 or 6.
     int protocol_version_;
-    /// When true output the result of parsing the comamnd line
+    /// When true output the result of parsing the command line
     bool verbose_;
     std::string config_file_;   ///< The path to the config file
     std::string previous_file_; ///< The path to the previous LFC file (if any)

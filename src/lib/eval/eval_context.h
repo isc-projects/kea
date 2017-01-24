@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ YY_DECL;
 namespace isc {
 namespace eval {
 
-/// @brief Evaluation error exception raised when trying to parse an axceptions.
+/// @brief Evaluation error exception raised when trying to parse an exceptions.
 class EvalParseError : public isc::Exception {
 public:
     EvalParseError(const char* file, size_t line, const char* what) :
@@ -153,7 +153,7 @@ public:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
-    /// @brief Flag determing parser debugging.
+    /// @brief Flag determining parser debugging.
     bool trace_parsing_;
 
     /// @brief Option universe: DHCPv4 or DHCPv6.
