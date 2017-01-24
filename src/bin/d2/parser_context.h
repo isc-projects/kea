@@ -14,13 +14,13 @@
 #include <exceptions/exceptions.h>
 
 // Tell Flex the lexer's prototype ...
-#define YY_DECL isc::dhcp::D2Parser::symbol_type d2_parser_lex (D2ParserContext& driver)
+#define YY_DECL isc::d2::D2Parser::symbol_type d2_parser_lex (D2ParserContext& driver)
 
 // ... and declare it for the parser's sake.
 YY_DECL;
 
 namespace isc {
-namespace dhcp {
+namespace d2 {
 
 /// @brief Evaluation error exception raised when trying to parse.
 ///
@@ -49,10 +49,10 @@ public:
         PARSER_JSON,
 
         ///< Used while parsing top level (contains DhcpDdns, Logging, others)
-        PARSER_CONFIG,
+        PARSER_DHCPDDNS,
 
         ///< Used while parsing content of DhcpDdns.
-        PARSER_DHCPDDNS
+        PARSER_SUB_DHCPDDNS
     } ParserType;
 
     /// @brief Default constructor.
@@ -116,7 +116,7 @@ public:
     /// @param loc location within the parsed file when experienced a problem.
     /// @param what string explaining the nature of the error.
     /// @throw D2ParseError
-    void error(const isc::dhcp::location& loc, const std::string& what);
+    void error(const isc::d2::location& loc, const std::string& what);
 
     /// @brief Error handler
     ///
@@ -143,7 +143,7 @@ public:
     ///
     /// @param loc location in bison format
     /// @return Position in format accepted by Element
-    isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
+    isc::data::Element::Position loc2pos(isc::d2::location& loc);
 
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
@@ -183,10 +183,10 @@ public:
     ///
     /// The lexer will keep updating it. This variable will be useful
     /// for logging errors.
-    isc::dhcp::location loc_;
+    isc::d2::location loc_;
 
     /// @brief Location stack
-    std::vector<isc::dhcp::location> locs_;
+    std::vector<isc::d2::location> locs_;
 
     /// @brief Lexer state stack
     std::vector<struct yy_buffer_state*> states_;

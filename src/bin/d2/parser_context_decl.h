@@ -10,7 +10,7 @@
 /// @file d2/parser_context_decl.h Forward declaration of the ParserContext class
 
 namespace isc {
-namespace dhcp {
+namespace d2 {
 
 class D2ParserContext;
 

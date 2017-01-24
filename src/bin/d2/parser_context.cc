@@ -13,7 +13,7 @@
 #include <limits>
 
 namespace isc {
-namespace dhcp {
+namespace d2 {
 
 D2ParserContext::D2ParserContext()
   : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
@@ -43,7 +43,7 @@ D2ParserContext::parseFile(const std::string& filename, ParserType parser_type) 
 
 isc::data::ElementPtr
 D2ParserContext::parseCommon() {
-    isc::dhcp::D2Parser parser(*this);
+    isc::d2::D2Parser parser(*this);
     // Uncomment this to get detailed parser logs.
     // trace_parsing_ = true;
     parser.set_debug_level(trace_parsing_);
@@ -68,7 +68,7 @@ D2ParserContext::parseCommon() {
 
 
 void
-D2ParserContext::error(const isc::dhcp::location& loc, const std::string& what)
+D2ParserContext::error(const isc::d2::location& loc, const std::string& what)
 {
     isc_throw(D2ParseError, loc << ": " << what);
 }
@@ -86,7 +86,7 @@ D2ParserContext::fatal (const std::string& what)
 }
 
 isc::data::Element::Position
-D2ParserContext::loc2pos(isc::dhcp::location& loc)
+D2ParserContext::loc2pos(isc::d2::location& loc)
 {
     const std::string& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;

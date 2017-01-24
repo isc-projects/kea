@@ -186,7 +186,7 @@ public:
         if ((position_.file_ != "") ||          \
             (position_.line_ != 0) ||           \
             (position_.pos_ != 0)) {            \
-            msg_ += " in " + position_.str();   \
+            msg_ += " in (" + position_.str() + ")";   \
         }                                       \
         isc_throw(TypeError, msg_);             \
     }

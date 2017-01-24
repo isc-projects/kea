@@ -11,7 +11,7 @@
 %define api.prefix {d2_parser_}
 %define api.token.constructor
 %define api.value.type variant
-%define api.namespace {isc::dhcp}
+%define api.namespace {isc::d2}
 %define parse.assert
 %code requires
 {
@@ -21,12 +21,12 @@
 #include <boost/lexical_cast.hpp>
 #include <d2/parser_context_decl.h>
 
-using namespace isc::dhcp;
+using namespace isc::d2;
 using namespace isc::data;
 using namespace std;
 }
 // The parsing context.
-%param { isc::dhcp::D2ParserContext& ctx }
+%param { isc::d2::D2ParserContext& ctx }
 %locations
 %define parse.trace
 %define parse.error verbose
@@ -38,7 +38,7 @@ using namespace std;
 
 %define api.token.prefix {TOKEN_}
 // Tokens in an order which makes sense and related to the intented use.
-// Actual regexps for tokens are defined in dhcp6_lexer.ll.
+// Actual regexps for tokens are defined in d2_lexer.ll.
 %token
   END  0  "end of file"
   COMMA ","
@@ -61,6 +61,9 @@ using namespace std;
   TCP "TCP"
   NCR_FORMAT "ncr-format"
   JSON "JSON"
+  FORWARD_DDNS "forward-ddns"
+  REVERSE_DDNS "reverse-ddns"
+  TSIG_KEYS "tsig-keys"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -242,6 +245,9 @@ dhcpddns_param: ip_address
                | dns_server_timeout
                | ncr_protocol
                | ncr_format
+               | forward_ddns
+               | reverse_ddns
+               | tsig_keys
                | unknown_map_entry
                ;
 
@@ -254,13 +260,20 @@ ip_address: IP_ADDRESS {
 };
 
 port: PORT COLON INTEGER {
+    if ($3 <= 0) {
+        error(@3, "port must be greater than zero");
+    } 
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", i);
 };
 
 dns_server_timeout: DNS_SERVER_TIMEOUT COLON INTEGER {
-    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("dns-server-timeout", i);
+    if ($3 <= 0) {
+        error(@3, "dns-server-timeout must be greater than zero");
+    } else { 
+        ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+        ctx.stack_.back()->set("dns-server-timeout", i);
+    }
 };
 
 ncr_protocol: NCR_PROTOCOL {
@@ -280,6 +293,27 @@ ncr_format: NCR_FORMAT {
 } COLON JSON {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
+    ctx.leave();
+};
+
+forward_ddns : FORWARD_DDNS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("forward-ddns", $4);
+    ctx.leave();
+};
+
+reverse_ddns : REVERSE_DDNS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("reverse-ddns", $4);
+    ctx.leave();
+};
+
+tsig_keys : TSIG_KEYS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("tsig-keys", $4);
     ctx.leave();
 };
 
@@ -417,7 +451,7 @@ output_param: OUTPUT {
 %%
 
 void
-isc::dhcp::D2Parser::error(const location_type& loc,
+isc::d2::D2Parser::error(const location_type& loc,
                               const std::string& what)
 {
     ctx.error(loc, what);

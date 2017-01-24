@@ -10,7 +10,7 @@
 #include <cc/simple_parser.h>
 
 namespace isc {
-namespace dhcp {
+namespace d2 {
 
 /// @brief SimpleParser specialized for D2
 ///

@@ -239,6 +239,31 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection);
 
 protected:
+
+    /// @brief Parses an element using alternate parsers
+    ///
+    /// Each element to be parsed is passed first into this method to allow
+    /// it to be processed by SimpleParser derivations if they've been
+    /// implemented. The method should return true if it has processed the
+    /// element or false if the element should be passed onto the original
+    /// DhcpConfigParer mechanisms.  This method is invoked in both
+    /// @c DCfgMgrBase::buildParams() and DCfgMgrBase::buildAndCommit().
+    ///
+    /// @param element_id name of the element as it is expected in the cfg
+    /// @param element value of the element as ElementPtr
+    ///
+    /// @return true if the element was parsed, false otherwise
+    virtual bool parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element);
+
+    /// @brief Adds default values to the given config
+    ///
+    /// Adds the D2 default values to the configuration Element map. This
+    /// method is invoked by @c DCfgMgrBase::paserConfig().
+    ///
+    /// @param mutable_config - configuration to which defaults should be added
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
+
     /// @brief Performs the parsing of the given "params" element.
     ///
     /// Iterates over the set of parameters, creating a parser based on the
