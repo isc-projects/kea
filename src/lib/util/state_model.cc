@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,7 +84,7 @@ StateModel::~StateModel(){
 
 void
 StateModel::startModel(const int start_state) {
-    // Intialize dictionaries of events and states.
+    // Initialize dictionaries of events and states.
     initDictionaries();
 
     // Set the current state to starting state and enter the run loop.
@@ -232,7 +232,7 @@ StateModel::verifyStates() {
     getState(END_ST);
 }
 
-void 
+void
 StateModel::onModelFailure(const std::string&) {
     // Empty implementation to make deriving classes simpler.
 }

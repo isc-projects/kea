@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,7 +179,7 @@ public:
     ///
     /// The method extracts the set of configuration elements for the
     /// module-name which matches the controller's app_name_ and passes that
-    /// set into @c udpateConfig().
+    /// set into @c updateConfig().
     ///
     /// The file may contain an arbitrary number of other modules.
     ///
