@@ -113,8 +113,6 @@ class SimpleParser {
     static const data::Element::Position&
     getPosition(const std::string& name, const data::ConstElementPtr parent);
 
- protected:
-
     /// @brief Returns a string parameter from a scope
     ///
     /// Unconditionally returns a parameter. If the parameter is not there or
