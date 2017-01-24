@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,19 +59,19 @@ void StatsMgr::addValue(const std::string& name, const std::string& value) {
 
 ObservationPtr StatsMgr::getObservation(const std::string& name) const {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->get(name));
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->add(stat));
 }
 
 bool StatsMgr::deleteObservation(const std::string& name) {
     /// @todo: Implement contexts.
-    // Currently we keep everyting in a global context.
+    // Currently we keep everything in a global context.
     return (global_->del(name));
 }
 

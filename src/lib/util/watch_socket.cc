@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,7 +131,7 @@ WatchSocket::closeSocket(std::string& error_string) {
     // destructors that throw.
     if (source_ != SOCKET_NOT_VALID) {
         if (close(source_)) {
-            // An error occured.
+            // An error occurred.
             s << "Could not close source: " << strerror(errno);
         }
 
@@ -140,7 +140,7 @@ WatchSocket::closeSocket(std::string& error_string) {
 
     if (sink_ != SOCKET_NOT_VALID) {
         if (close(sink_)) {
-            // An error occured.
+            // An error occurred.
             if (error_string.empty()) {
                 s << "could not close sink: " << strerror(errno);
             }
