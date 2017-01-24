@@ -72,7 +72,7 @@
         <listitem>
           <simpara>
             <command>lease-init</command> &mdash;
-            Initializes a new lease database. This is useful during a new 
+            Initializes a new lease database. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
             installed.
