@@ -28,8 +28,8 @@ namespace d2 {
 // *********************** D2Params  *************************
 
 const char *D2Params::DFT_IP_ADDRESS = "127.0.0.1";
-const size_t D2Params::DFT_PORT = 53001;
-const size_t D2Params::DFT_DNS_SERVER_TIMEOUT = 100;
+const char *D2Params::DFT_PORT = "53001";
+const char *D2Params::DFT_DNS_SERVER_TIMEOUT = "100";
 const char *D2Params::DFT_NCR_PROTOCOL = "UDP";
 const char *D2Params::DFT_NCR_FORMAT = "JSON";
 
@@ -48,8 +48,8 @@ D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
 
 D2Params::D2Params()
     : ip_address_(isc::asiolink::IOAddress(DFT_IP_ADDRESS)),
-     port_(DFT_PORT),
-     dns_server_timeout_(DFT_DNS_SERVER_TIMEOUT),
+     port_(boost::lexical_cast<size_t>(DFT_PORT)),
+     dns_server_timeout_(boost::lexical_cast<size_t>(DFT_DNS_SERVER_TIMEOUT)),
      ncr_protocol_(dhcp_ddns::NCR_UDP),
      ncr_format_(dhcp_ddns::FMT_JSON) {
     validateContents();

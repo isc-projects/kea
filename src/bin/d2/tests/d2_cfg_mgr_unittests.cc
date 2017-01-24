@@ -9,7 +9,9 @@
 #include <config/module_spec.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/d2_simple_parser.h>
 #include <d2/parser_context.h>
+#include <d2/tests/parser_unittest.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
@@ -388,6 +390,9 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
 /// Currently they are all optional.
 TEST_F(D2CfgMgrTest, defaultValues) {
 
+    ElementPtr defaults = isc::d2::test::parseJSON("{ }");
+    ASSERT_NO_THROW(D2SimpleParser::setAllDefaults(defaults));
+
     // Check that omitting ip_address gets you its default
     std::string config =
             "{"
@@ -401,8 +406,10 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "}";
 
     runConfig(config);
-    EXPECT_EQ(isc::asiolink::IOAddress(D2Params::DFT_IP_ADDRESS),
-              d2_params_->getIpAddress());
+    ConstElementPtr deflt;
+    ASSERT_NO_THROW(deflt = defaults->get("ip-address"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->stringValue(), d2_params_->getIpAddress().toText());
 
     // Check that omitting port gets you its default
     config =
@@ -417,7 +424,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "}";
 
     runConfig(config);
-    EXPECT_EQ(D2Params::DFT_PORT, d2_params_->getPort());
+    ASSERT_NO_THROW(deflt = defaults->get("port"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->intValue(), d2_params_->getPort());
 
     // Check that omitting timeout gets you its default
     config =
@@ -432,8 +441,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "}";
 
     runConfig(config);
-    EXPECT_EQ(D2Params::DFT_DNS_SERVER_TIMEOUT,
-              d2_params_->getDnsServerTimeout());
+    ASSERT_NO_THROW(deflt = defaults->get("dns-server-timeout"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->intValue(), d2_params_->getDnsServerTimeout());
 
     // Check that omitting protocol gets you its default
     config =
@@ -448,7 +458,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "}";
 
     runConfig(config);
-    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(D2Params::DFT_NCR_PROTOCOL),
+    ASSERT_NO_THROW(deflt = defaults->get("ncr-protocol"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(deflt->stringValue()),
               d2_params_->getNcrProtocol());
 
     // Check that omitting format gets you its default
@@ -464,7 +476,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "}";
 
     runConfig(config);
-    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2Params::DFT_NCR_FORMAT),
+    ASSERT_NO_THROW(deflt = defaults->get("ncr-format"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(deflt->stringValue()),
               d2_params_->getNcrFormat());
 }
 
