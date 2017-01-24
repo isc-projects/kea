@@ -55,10 +55,12 @@ const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
 /// in Dhcp6) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
-    { "renew-timer",        Element::integer, "900" },
-    { "rebind-timer",       Element::integer, "1800" },
-    { "preferred-lifetime", Element::integer, "3600" },
-    { "valid-lifetime",     Element::integer, "7200" }
+    { "renew-timer",              Element::integer, "900" },
+    { "rebind-timer",             Element::integer, "1800" },
+    { "preferred-lifetime",       Element::integer, "3600" },
+    { "valid-lifetime",           Element::integer, "7200" },
+    { "decline-probation-period", Element::integer, "86400" }, // 24h
+    { "dhcp4o6-port",             Element::integer, "0" }
 };
 
 /// @brief List of parameters that can be inherited from the global to subnet6 scope.
