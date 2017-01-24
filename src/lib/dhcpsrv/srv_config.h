@@ -477,6 +477,7 @@ public:
     ///
     /// @param port port and port + 1 to use
     void setDhcp4o6Port(uint32_t port) {
+        /// @todo: Port is supposed to be uint16_t, not uint32_t
         dhcp4o6_port_ = port;
     }
 
