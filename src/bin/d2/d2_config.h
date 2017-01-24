@@ -538,7 +538,7 @@ public:
     ///
     /// @param name is the domain name of the domain.
     /// @param servers is the list of server(s) supporting this domain.
-    /// @param tsig_key_info pointer to the TSIGKeyInfo for the dommain's key
+    /// @param tsig_key_info pointer to the TSIGKeyInfo for the domain's key
     /// It defaults to an empty pointer, signifying the domain has no key.
     DdnsDomain(const std::string& name,
                DnsServerInfoStoragePtr servers,

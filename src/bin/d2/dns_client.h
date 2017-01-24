@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,7 +85,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param response_placeholder Messge object pointer which will be updated
+    /// @param response_placeholder Message object pointer which will be updated
     /// with dynamically allocated object holding the DNS server's response.
     /// @param callback Pointer to an object implementing @c DNSClient::Callback
     /// class. This object will be called when DNS message exchange completes or

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -153,7 +153,7 @@ D2QueueMgr::stopListening(const State target_stop_state) {
                       << target_stop_state);
         }
 
-        // Remember the state we want to acheive.
+        // Remember the state we want to achieve.
         target_stop_state_ = target_stop_state;
 
         // Instruct the listener to stop.  If the listener reports that  it

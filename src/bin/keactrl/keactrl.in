@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,7 +57,7 @@ usage() {
 }
 
 ### Functions managing Kea processes ###
-# Contructs a server's PID file based on its binary name, the config file,
+# Constructs a server's PID file based on its binary name, the config file,
 # and the --localstatedir and returns the contents as $_pid.   If the file
 # does not exist, the value of $_pid is 0.  If the file exists but cannot
 # be read the function exists with a error message. Note the PID file name

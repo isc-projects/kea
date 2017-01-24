@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,7 +130,7 @@ operator<<(std::ostream& os, const D2Params& config) {
 }
 
 // *********************** TSIGKeyInfo  *************************
-// Note these values match correpsonding values for Bind9's
+// Note these values match corresponding values for Bind9's
 // dnssec-keygen
 const char* TSIGKeyInfo::HMAC_MD5_STR = "HMAC-MD5";
 const char* TSIGKeyInfo::HMAC_SHA1_STR = "HMAC-SHA1";

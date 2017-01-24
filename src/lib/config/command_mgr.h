@@ -29,7 +29,7 @@ public:
     /// @return the only existing instance of the manager
     static CommandMgr& instance();
 
-    /// @brief Opens control socket with paramters specified in socket_info
+    /// @brief Opens control socket with parameters specified in socket_info
     ///
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)

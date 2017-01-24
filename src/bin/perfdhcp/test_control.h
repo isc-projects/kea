@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -660,7 +660,7 @@ protected:
     /// being sent to the server. It collects first packets of each
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
-    /// been already stored this function perfroms no operation.
+    /// been already stored this function performs no operation.
     /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///
@@ -675,7 +675,7 @@ protected:
     /// being sent to the server. It collects first packets of each
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
-    /// been already stored this function perfroms no operation.
+    /// been already stored this function performs no operation.
     /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,7 @@ protected:
     /// used by the public iterator.  Derived classes of
     /// \c RRsetCollectionBase are supposed to implement this class and
     /// the \c getBeginning() and \c getEnd() methods, so that the
-    /// public interator interface can be provided. This is a forward
+    /// public iterator interface can be provided. This is a forward
     /// iterator only.
     class Iter {
     public:

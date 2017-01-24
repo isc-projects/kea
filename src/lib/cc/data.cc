@@ -1078,7 +1078,7 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
             line = "";
         }
 
-        // getline() removes end line charaters. Unfortunately, we need
+        // getline() removes end line characters. Unfortunately, we need
         // it for getting the line numbers right (in case we report an
         // error.
         out << line;

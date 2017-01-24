@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,7 +85,7 @@ public:
     /// \brief Handles limited binary packet parsing for packets with
     /// custom offsets of options and transaction id
     ///
-    /// This methoid handles the parsing of packets that have custom offsets
+    /// This method handles the parsing of packets that have custom offsets
     /// of options or transaction ID. Use
     /// \ref isc::dhcp::Pkt4::addOption to specify which options to parse.
     /// Options should be of the \ref isc::perfdhcp::LocalizedOption

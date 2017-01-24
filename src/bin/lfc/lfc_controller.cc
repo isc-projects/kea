@@ -311,7 +311,7 @@ LFCController::usage(const std::string& text) {
               << "   -f <file>: finish file" << std::endl
               << "   -c <file>: configuration file" << std::endl
               << "   -v: print version number and exit" << std::endl
-              << "   -V: print extended version inforamtion and exit" << std::endl
+              << "   -V: print extended version information and exit" << std::endl
               << "   -d: optional, verbose output " << std::endl
               << "   -h: print this message " << std::endl
               << std::endl;
