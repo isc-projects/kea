@@ -19,10 +19,12 @@ std::string
 SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "Element " << name << " not found");
+        isc_throw(BadValue, "String parameter " << name << " not found"
+                  << "(" << scope->getPosition() << ")");
     }
     if (x->getType() != Element::string) {
-        isc_throw(BadValue, "Element " << name << " found, but is not a string");
+        isc_throw(BadValue, "Element " << name << " found, but is not a string"
+                  << "(" << x->getPosition() << ")");
     }
 
     return (x->stringValue());
@@ -32,10 +34,12 @@ int64_t
 SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "Element " << name << " not found");
+        isc_throw(BadValue, "Integer parameter " << name << " not found "
+                  << "(" << scope->getPosition() << ")");
     }
     if (x->getType() != Element::integer) {
-        isc_throw(BadValue, "Element " << name << " found, but is not an integer");
+        isc_throw(BadValue, "Element " << name << " found, but is not an integer"
+                  << "(" << x->getPosition() << ")");
     }
 
     return (x->intValue());
@@ -45,10 +49,13 @@ bool
 SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "Element " << name << " not found");
+        isc_throw(BadValue, "Boolean element " << name << " not found "
+                  << "(" << scope->getPosition() << ")");
+
     }
     if (x->getType() != Element::boolean) {
-        isc_throw(BadValue, "Element " << name << " found, but is not a boolean");
+        isc_throw(BadValue, "Element " << name << " found, but is not a boolean"
+                  << "(" << x->getPosition() << ")");
     }
 
     return (x->boolValue());
