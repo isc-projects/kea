@@ -705,11 +705,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     // converted to SimpleParser and are handled in configureDhcp6Server.
     // interfaces-config has been converted to SimpleParser.
     // version was removed - it was a leftover from bindctrl.
-    } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
-    } else if (config_id.compare("hosts-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
     // hooks-libraries is now converted to SimpleParser.
+    // lease-database and hosts-database have been converted to SimpleParser already.
     // mac-source has been converted to SimpleParser.
     // dhcp-ddns has been converted to SimpleParser
     } else if (config_id.compare("relay-supplied-options") == 0) {
@@ -835,7 +832,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr leases_parser;
 
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
@@ -862,6 +858,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     ConfigPair config_pair;
     try {
 
+        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
+
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
@@ -877,7 +875,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
             OptionDefListParser parser;
-            CfgOptionDefPtr cfg_option_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+            CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }
 
@@ -895,21 +893,20 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "option-data") {
                 OptionDataListParser parser(AF_INET6);
-                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+                CfgOptionPtr cfg_option = srv_config->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "mac-sources") {
                 MACSourcesListConfigParser parser;
-                CfgMACSource& mac_source = CfgMgr::instance().getStagingCfg()->getMACSources();
+                CfgMACSource& mac_source = srv_config->getMACSources();
                 parser.parse(mac_source, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "control-socket") {
                 ControlSocketParser parser;
-                SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
                 parser.parse(*srv_config, config_pair.second);
                 continue;
             }
@@ -922,14 +919,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "server-id") {
                 DUIDConfigParser parser;
-                const CfgDUIDPtr& cfg = CfgMgr::instance().getStagingCfg()->getCfgDUID();
+                const CfgDUIDPtr& cfg = srv_config->getCfgDUID();
                 parser.parse(cfg, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "interfaces-config") {
                 IfacesConfigParser parser(AF_INET6);
-                CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+                CfgIfacePtr cfg_iface = srv_config->getCfgIface();
                 parser.parse(cfg_iface, config_pair.second);
                 continue;
             }
@@ -953,7 +950,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 }
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(config_pair.second);
-                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                srv_config->setD2ClientConfig(cfg);
                 continue;
             }
 
@@ -961,7 +958,22 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 ClientClassDefListParser parser;
                 ClientClassDictionaryPtr dictionary =
                     parser.parse(config_pair.second, AF_INET6);
-                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
+                srv_config->setClientClassDictionary(dictionary);
+                continue;
+            }
+
+            // Please move at the end when migration will be finished.
+            if (config_pair.first == "lease-database") {
+                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "host-database") {
+                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
@@ -971,8 +983,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                       .arg(config_pair.first);
             if (config_pair.first == "subnet6") {
                 subnet_parser = parser;
-            } else if (config_pair.first == "lease-database") {
-                leases_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -995,15 +1005,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
         // Setup the command channel.
         configureCommandChannel();
-
-        // The lease database parser is the last to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
-            values_map.find("lease-database");
-        if (leases_config != values_map.end()) {
-            config_pair.first = "lease-database";
-            leases_parser->build(leases_config->second);
-            leases_parser->commit();
-        }
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)

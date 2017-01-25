@@ -204,6 +204,9 @@ public:
         /// Used while parsing Dhcp4/hosts-database structures.
         HOSTS_DATABASE,
 
+        /// Used while parsing Dhcp4/*-database/type.
+        DATABASE_TYPE,
+
         /// Used while parsing Dhcp4/host-reservation-identifiers.
         HOST_RESERVATION_IDENTIFIERS,
 
