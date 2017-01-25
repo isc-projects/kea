@@ -1202,77 +1202,53 @@ SubnetConfigParser::getOptionalParam(const std::string& name) {
 
 //**************************** D2ClientConfigParser **********************
 
-namespace {
-
-template <typename int_type> int_type
-getInt(const std::string& name, ConstElementPtr value) {
-    int64_t val_int = value->intValue();
-    if ((val_int < std::numeric_limits<int_type>::min()) ||
-        (val_int > std::numeric_limits<int_type>::max())) {
-        isc_throw(DhcpConfigError, "out of range value (" << val_int
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
-    return (static_cast<int_type>(val_int));
-}
-
 uint32_t
-getUint32(const std::string& name, ConstElementPtr value) {
-    return (getInt<uint32_t>(name, value));
+D2ClientConfigParser::getUint32(const std::string& name,
+                                ConstElementPtr value) const {
+    return (extractInt<uint32_t, DhcpConfigError>(name, value));
 }
+
+namespace {
+IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
+};
 
 IOAddress
-getIOAddress(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (IOAddress(str));
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, "invalid address (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
+D2ClientConfigParser::getIOAddress(const std::string& name,
+                                   ConstElementPtr value) const {
+    return (extractConvert<IOAddress,
+                           buildIOAddress,
+                           DhcpConfigError>(name, "address", value));
 }
 
 dhcp_ddns::NameChangeProtocol
-getProtocol(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (dhcp_ddns::stringToNcrProtocol(str));
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError,
-                  "invalid NameChangeRequest protocol (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
+D2ClientConfigParser::getProtocol(const std::string& name,
+                                  ConstElementPtr value) const {
+    return (extractConvert<dhcp_ddns::NameChangeProtocol,
+                           dhcp_ddns::stringToNcrProtocol,
+                            DhcpConfigError>(name,
+                                             "NameChangeRequest protocol",
+                                             value));
 }
 
 dhcp_ddns::NameChangeFormat
-getFormat(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (dhcp_ddns::stringToNcrFormat(str));
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError,
-                  "invalid NameChangeRequest format (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
+D2ClientConfigParser::getFormat(const std::string& name,
+                                ConstElementPtr value) const {
+    return (extractConvert<dhcp_ddns::NameChangeFormat,
+                           dhcp_ddns::stringToNcrFormat,
+                           DhcpConfigError>(name,
+                                            "NameChangeRequest format",
+                                            value));
 }
 
 D2ClientConfig::ReplaceClientNameMode
-getMode(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (D2ClientConfig::stringToReplaceClientNameMode(str));
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError,
-                  "invalid ReplaceClientName mode (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
+D2ClientConfigParser::getMode(const std::string& name,
+                              ConstElementPtr value) const {
+    return (extractConvert<D2ClientConfig::ReplaceClientNameMode,
+                           D2ClientConfig::stringToReplaceClientNameMode,
+                           DhcpConfigError>(name,
+                                            "ReplaceClientName mode",
+                                            value));
 }
-
-};
 
 D2ClientConfigPtr
 D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {

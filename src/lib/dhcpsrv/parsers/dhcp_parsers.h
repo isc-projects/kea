@@ -986,6 +986,57 @@ public:
     //  to ElementPtr)
     /// @return number of parameters inserted
     static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
+
+private:
+
+    /// @brief Returns a value converted to uint32_t
+    ///
+    /// Instantiation of extractInt() to uint32_t
+    ///
+    /// @param value value of the parameter
+    /// @return an uint32_t value
+    uint32_t
+    getUint32(const std::string& name, isc::data::ConstElementPtr value) const;
+
+    /// @brief Returns a value converted to IOAddress
+    ///
+    /// Instantiation of extractConvert() to IOAddress
+    ///
+    /// @param value value of the parameter
+    /// @return an IOAddress value
+    isc::asiolink::IOAddress
+    getIOAddress(const std::string& name,
+                 isc::data::ConstElementPtr value) const;
+
+    /// @brief Returns a value converted to NameChangeProtocol
+    ///
+    /// Instantiation of extractInt() to NameChangeProtocol
+    ///
+    /// @param value value of the parameter
+    /// @return a NameChangeProtocol value
+    dhcp_ddns::NameChangeProtocol
+    getProtocol(const std::string& name,
+                isc::data::ConstElementPtr value) const;
+
+    /// @brief Returns a value converted to NameChangeFormat
+    ///
+    /// Instantiation of extractConvert() to NameChangeFormat
+    ///
+    /// @param value value of the parameter
+    /// @return a NameChangeFormat value
+    dhcp_ddns::NameChangeFormat
+    getFormat(const std::string& name,
+              isc::data::ConstElementPtr value) const;
+
+    /// @brief Returns a value converted to ReplaceClientNameMode
+    ///
+    /// Instantiation of extractConvert() to ReplaceClientNameMode
+    ///
+    /// @param value value of the parameter
+    /// @return a NameChangeFormat value
+    D2ClientConfig::ReplaceClientNameMode
+    getMode(const std::string& name,
+            isc::data::ConstElementPtr value) const;
 };
 
 // Pointers to various parser objects.
