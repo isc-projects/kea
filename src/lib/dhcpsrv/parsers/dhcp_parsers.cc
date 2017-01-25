@@ -845,60 +845,12 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
     *cfg = isc::dhcp::Subnet::RelayInfo(ip);
 }
 
-//****************************** PoolsListParser ********************************
-PoolsListParser::PoolsListParser(const std::string&, PoolStoragePtr pools)
-    :pools_(pools), local_pools_(new PoolStorage()) {
-    if (!pools_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-                  << "storage may not be NULL");
-    }
-}
-
-void
-PoolsListParser::build(ConstElementPtr pools) {
-    BOOST_FOREACH(ConstElementPtr pool, pools->listValue()) {
-
-        // Iterate over every structure on the pools list and invoke
-        // a separate parser for it.
-        ParserPtr parser = poolParserMaker(local_pools_);
-
-        parser->build(pool);
-
-        // Let's store the parser, but do not commit anything yet
-        parsers_.push_back(parser);
-    }
-}
-
-void PoolsListParser::commit() {
-
-    // Commit each parser first. It will store the pool structure
-    // in pools_.
-    BOOST_FOREACH(ParserPtr parser, parsers_) {
-        parser->commit();
-    }
-
-    if (pools_) {
-        // local_pools_ holds the values produced by the build function.
-        // At this point parsing should have completed successfuly so
-        // we can append new data to the supplied storage.
-        pools_->insert(pools_->end(), local_pools_->begin(), local_pools_->end());
-    }
-}
-
 //****************************** PoolParser ********************************
-PoolParser::PoolParser(const std::string&, PoolStoragePtr pools,
-                       const uint16_t address_family)
-        :pools_(pools), options_(new CfgOption()),
-         address_family_(address_family) {
-
-    if (!pools_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-                  << "storage may not be NULL");
-    }
-}
 
 void
-PoolParser::build(ConstElementPtr pool_structure) {
+PoolParser::parse(PoolStoragePtr pools,
+                  ConstElementPtr pool_structure,
+                  const uint16_t address_family) {
 
     ConstElementPtr text_pool = pool_structure->get("pool");
 
@@ -936,38 +888,54 @@ PoolParser::build(ConstElementPtr pool_structure) {
             // digits (because there are extra characters left over).
 
             // No checks for values over 128. Range correctness will
-            // be checked in Pool4 constructor.
-            len = boost::lexical_cast<int>(prefix_len);
+            // be checked in Pool4 constructor, here we only check
+            // the representation fits in an uint8_t as this can't
+            // be done by a direct lexical cast as explained...
+            int val_len = boost::lexical_cast<int>(prefix_len);
+            if ((val_len < std::numeric_limits<uint8_t>::min()) ||
+                (val_len > std::numeric_limits<uint8_t>::max())) {
+                // This exception will be handled 4 line later!
+                isc_throw(OutOfRange, "");
+            }
+            len = static_cast<uint8_t>(val_len);
         } catch (...)  {
             isc_throw(DhcpConfigError, "Failed to parse pool "
-                      "definition: " << text_pool->stringValue()
-                      << " (" << text_pool->getPosition() << ")");
+                      "definition: " << txt << " ("
+                      << text_pool->getPosition() << ")");
         }
 
-        pool = poolMaker(addr, len);
-        local_pools_.push_back(pool);
-
-        // If there's user-context specified, store it.
-        ConstElementPtr user_context = pool_structure->get("user-context");
-        if (user_context) {
-            if (user_context->getType() != Element::map) {
-                isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
-                          << user_context->getPosition() << ")");
-            }
-            pool->setUserContext(user_context);
+        try {
+            pool = poolMaker(addr, len);
+            pools->push_back(pool);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "Failed to create pool defined by: "
+                      << txt << " (" << text_pool->getPosition() << ")");
         }
 
     } else {
+        isc::asiolink::IOAddress min("::");
+        isc::asiolink::IOAddress max("::");
 
         // Is this min-max notation?
         pos = txt.find("-");
         if (pos != string::npos) {
             // using min-max notation
-            isc::asiolink::IOAddress min(txt.substr(0,pos));
-            isc::asiolink::IOAddress max(txt.substr(pos + 1));
+            try {
+                min = isc::asiolink::IOAddress(txt.substr(0, pos));
+                max = isc::asiolink::IOAddress(txt.substr(pos + 1));
+            } catch (...)  {
+                isc_throw(DhcpConfigError, "Failed to parse pool "
+                          "definition: " << txt << " ("
+                          << text_pool->getPosition() << ")");
+            }
 
-            pool = poolMaker(min, max);
-            local_pools_.push_back(pool);
+            try {
+                pool = poolMaker(min, max);
+                pools->push_back(pool);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, "Failed to create pool defined by: "
+                          << txt << " (" << text_pool->getPosition() << ")");
+            }
         }
     }
 
@@ -979,33 +947,33 @@ PoolParser::build(ConstElementPtr pool_structure) {
                   << text_pool->getPosition() << ")");
     }
 
+    // If there's user-context specified, store it.
+    ConstElementPtr user_context = pool_structure->get("user-context");
+    if (user_context) {
+        if (user_context->getType() != Element::map) {
+            isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                      << user_context->getPosition() << ")");
+        }
+        pool->setUserContext(user_context);
+    }
+
     // Parser pool specific options.
     ConstElementPtr option_data = pool_structure->get("option-data");
     if (option_data) {
         try {
             // Currently we don't support specifying options for the DHCPv4 server.
-            if (address_family_ == AF_INET) {
+            if (address_family == AF_INET) {
                 isc_throw(DhcpConfigError, "option-data is not supported for DHCPv4"
                           " address pools");
             }
 
             CfgOptionPtr cfg = pool->getCfgOption();
-            OptionDataListParser option_parser(address_family_);
+            OptionDataListParser option_parser(address_family);
             option_parser.parse(cfg, option_data);
         } catch (const std::exception& ex) {
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << option_data->getPosition() << ")");
         }
-    }
-}
-
-void
-PoolParser::commit() {
-    if (pools_) {
-        // local_pools_ holds the values produced by the build function.
-        // At this point parsing should have completed successfuly so
-        // we can append new data to the supplied storage.
-        pools_->insert(pools_->end(), local_pools_.begin(), local_pools_.end());
     }
 }
 
@@ -1033,6 +1001,17 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
+        // Pools has been converted to SimpleParser.
+        if (param.first == "pools") {
+            continue;
+        }
+
+        // PdPools has been converted to SimpleParser.
+        if ((param.first == "pd-pools") &&
+            (global_context_->universe_ == Option::V6)) {
+            continue;
+        }
+
         // Host reservations must be parsed after subnet specific parameters.
         // Note that the reservation parsing will be invoked by the build()
         // in the derived classes, i.e. Subnet4ConfigParser and

@@ -118,7 +118,31 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 3: pd-pool without any user-context
+    // Configuration 3: one min-max pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet6\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"2001:db8:: - 2001:db8::ffff:ffff:ffff:ffff\","
+    "                \"user-context\": {"
+    "                    \"lw4over6-sharing-ratio\": 64,"
+    "                    \"lw4over6-v4-pool\": \"192.0.2.0/24\","
+    "                    \"lw4over6-sysports-exclude\": true,"
+    "                    \"lw4over6-bind-prefix-len\": 56"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"2001:db8::/32\""
+    "     } ]"
+    "}",
+
+    // Configuration 4: pd-pool without any user-context
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -137,7 +161,7 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 4: pd-pool with empty user-context
+    // Configuration 5: pd-pool with empty user-context
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -158,7 +182,7 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 5: pd-pool with user-context with lw4over6 parameters
+    // Configuration 6: pd-pool with user-context with lw4over6 parameters
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -707,8 +731,9 @@ public:
     void getPool(const std::string& config, size_t subnet_index,
                  size_t pool_index, Lease::Type type, PoolPtr& pool) {
         ConstElementPtr status;
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json;
 
+        EXPECT_NO_THROW(json = parseDHCP6(config, true));
         EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(status);
         checkResult(status, 0);
@@ -1485,6 +1510,139 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+}
+
+// Goal of this test is to verify if invalid pool definitions
+// return a location in the error message.
+TEST_F(Dhcp6ParserTest, badPools) {
+
+    // not a prefix
+    string config_bogus1 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not a length
+    string config_bogus2 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/foo\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // invalid prefix length
+    string config_bogus3 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/200\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not a prefix nor a min-max
+    string config_bogus4 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not an address
+    string config_bogus5 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo - bar\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // min > max
+    string config_bogus6 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::ffff - 2001:db8:1::\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // out of range prefix length (new check)
+    string config_bogus7 = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/1104\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json1;
+    ASSERT_NO_THROW(json1 = parseDHCP6(config_bogus1));
+    ConstElementPtr json2;
+    ASSERT_NO_THROW(json2 = parseDHCP6(config_bogus2));
+    ConstElementPtr json3;
+    ASSERT_NO_THROW(json3 = parseDHCP6(config_bogus3));
+    ConstElementPtr json4;
+    ASSERT_NO_THROW(json4 = parseDHCP6(config_bogus4));
+    ConstElementPtr json5;
+    ASSERT_NO_THROW(json5 = parseDHCP6(config_bogus5));
+    ConstElementPtr json6;
+    ASSERT_NO_THROW(json6 = parseDHCP6(config_bogus6));
+    ConstElementPtr json7;
+    ASSERT_NO_THROW(json7 = parseDHCP6(config_bogus7));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json1));
+
+    // check if returned status is always a failure
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json2));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json3));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json4));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json5));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json6));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json7));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // Goal of this test is to verify the basic parsing of a prefix delegation
@@ -4865,11 +5023,50 @@ TEST_F(Dhcp6ParserTest, poolUserContextlw4over6) {
     EXPECT_EQ(56L, int_value);
 }
 
+// Test verifies that it's possible to specify parameters in the user context
+// in the min-max address pool.
+TEST_F(Dhcp6ParserTest, poolMinMaxUserContext) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[3]), 0, 0, Lease::TYPE_NA, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(4, ctx->size());
+    ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
+    ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
+    ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
+    ConstElementPtr v6len   = ctx->get("lw4over6-bind-prefix-len");
+
+    ASSERT_TRUE(ratio);
+    ASSERT_EQ(Element::integer, ratio->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(ratio->getValue(int_value));
+    EXPECT_EQ(64L, int_value);
+
+    ASSERT_TRUE(v4pool);
+    ASSERT_EQ(Element::string, v4pool->getType());
+    EXPECT_EQ("192.0.2.0/24", v4pool->stringValue());
+
+    ASSERT_TRUE(exclude);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, exclude->getType());
+    EXPECT_NO_THROW(exclude->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+
+    ASSERT_TRUE(v6len);
+    ASSERT_EQ(Element::integer, v6len->getType());
+    EXPECT_NO_THROW(v6len->getValue(int_value));
+    EXPECT_EQ(56L, int_value);
+}
+
 // Test verifies that regular configuration does not provide any user context
 // in the address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextMissing) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[3]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[4]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     EXPECT_FALSE(pool->getContext());
 }
@@ -4878,7 +5075,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextMissing) {
 // address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[4]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[5]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);
@@ -4892,7 +5089,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
 // in the address pool.
 TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
     PoolPtr pool;
-    getPool(string(PARSER_CONFIGS[5]), 0, 0, Lease::TYPE_PD, pool);
+    getPool(string(PARSER_CONFIGS[6]), 0, 0, Lease::TYPE_PD, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);
