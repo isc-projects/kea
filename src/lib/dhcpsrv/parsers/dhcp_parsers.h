@@ -818,7 +818,7 @@ public:
     SubnetConfigParser(const std::string&, ParserContextPtr global_context,
                        const isc::asiolink::IOAddress& default_addr);
 
-    /// @brief virtual destuctor (does nothing)
+    /// @brief virtual destructor (does nothing)
     virtual ~SubnetConfigParser() { }
 
 protected:
