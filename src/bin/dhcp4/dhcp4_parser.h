@@ -306,6 +306,7 @@ namespace isc { namespace dhcp {
     {
       // value
       // socket_type
+      // db_type
       // ncr_protocol_value
       // replace_client_name_value
       char dummy1[sizeof(ElementPtr)];
@@ -365,65 +366,65 @@ namespace isc { namespace dhcp {
         TOKEN_LEASE_DATABASE = 276,
         TOKEN_HOSTS_DATABASE = 277,
         TOKEN_TYPE = 278,
-        TOKEN_USER = 279,
-        TOKEN_PASSWORD = 280,
-        TOKEN_HOST = 281,
-        TOKEN_PERSIST = 282,
-        TOKEN_LFC_INTERVAL = 283,
-        TOKEN_READONLY = 284,
-        TOKEN_VALID_LIFETIME = 285,
-        TOKEN_RENEW_TIMER = 286,
-        TOKEN_REBIND_TIMER = 287,
-        TOKEN_DECLINE_PROBATION_PERIOD = 288,
-        TOKEN_SUBNET4 = 289,
-        TOKEN_SUBNET_4O6_INTERFACE = 290,
-        TOKEN_SUBNET_4O6_INTERFACE_ID = 291,
-        TOKEN_SUBNET_4O6_SUBNET = 292,
-        TOKEN_OPTION_DEF = 293,
-        TOKEN_OPTION_DATA = 294,
-        TOKEN_NAME = 295,
-        TOKEN_DATA = 296,
-        TOKEN_CODE = 297,
-        TOKEN_SPACE = 298,
-        TOKEN_CSV_FORMAT = 299,
-        TOKEN_RECORD_TYPES = 300,
-        TOKEN_ENCAPSULATE = 301,
-        TOKEN_ARRAY = 302,
-        TOKEN_POOLS = 303,
-        TOKEN_POOL = 304,
-        TOKEN_SUBNET = 305,
-        TOKEN_INTERFACE = 306,
-        TOKEN_INTERFACE_ID = 307,
-        TOKEN_ID = 308,
-        TOKEN_RAPID_COMMIT = 309,
-        TOKEN_RESERVATION_MODE = 310,
-        TOKEN_HOST_RESERVATION_IDENTIFIERS = 311,
-        TOKEN_CLIENT_CLASSES = 312,
-        TOKEN_TEST = 313,
-        TOKEN_CLIENT_CLASS = 314,
-        TOKEN_RESERVATIONS = 315,
-        TOKEN_DUID = 316,
-        TOKEN_HW_ADDRESS = 317,
-        TOKEN_CIRCUIT_ID = 318,
-        TOKEN_CLIENT_ID = 319,
-        TOKEN_HOSTNAME = 320,
-        TOKEN_RELAY = 321,
-        TOKEN_IP_ADDRESS = 322,
-        TOKEN_HOOKS_LIBRARIES = 323,
-        TOKEN_LIBRARY = 324,
-        TOKEN_PARAMETERS = 325,
-        TOKEN_EXPIRED_LEASES_PROCESSING = 326,
-        TOKEN_RECLAIM_TIMER_WAIT_TIME = 327,
-        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 328,
-        TOKEN_HOLD_RECLAIMED_TIME = 329,
-        TOKEN_MAX_RECLAIM_LEASES = 330,
-        TOKEN_MAX_RECLAIM_TIME = 331,
-        TOKEN_UNWARNED_RECLAIM_CYCLES = 332,
-        TOKEN_SERVER_ID = 333,
-        TOKEN_IDENTIFIER = 334,
-        TOKEN_HTYPE = 335,
-        TOKEN_TIME = 336,
-        TOKEN_ENTERPRISE_ID = 337,
+        TOKEN_MEMFILE = 279,
+        TOKEN_MYSQL = 280,
+        TOKEN_POSTGRESQL = 281,
+        TOKEN_CQL = 282,
+        TOKEN_USER = 283,
+        TOKEN_PASSWORD = 284,
+        TOKEN_HOST = 285,
+        TOKEN_PERSIST = 286,
+        TOKEN_LFC_INTERVAL = 287,
+        TOKEN_READONLY = 288,
+        TOKEN_CONNECT_TIMEOUT = 289,
+        TOKEN_VALID_LIFETIME = 290,
+        TOKEN_RENEW_TIMER = 291,
+        TOKEN_REBIND_TIMER = 292,
+        TOKEN_DECLINE_PROBATION_PERIOD = 293,
+        TOKEN_SUBNET4 = 294,
+        TOKEN_SUBNET_4O6_INTERFACE = 295,
+        TOKEN_SUBNET_4O6_INTERFACE_ID = 296,
+        TOKEN_SUBNET_4O6_SUBNET = 297,
+        TOKEN_OPTION_DEF = 298,
+        TOKEN_OPTION_DATA = 299,
+        TOKEN_NAME = 300,
+        TOKEN_DATA = 301,
+        TOKEN_CODE = 302,
+        TOKEN_SPACE = 303,
+        TOKEN_CSV_FORMAT = 304,
+        TOKEN_RECORD_TYPES = 305,
+        TOKEN_ENCAPSULATE = 306,
+        TOKEN_ARRAY = 307,
+        TOKEN_POOLS = 308,
+        TOKEN_POOL = 309,
+        TOKEN_SUBNET = 310,
+        TOKEN_INTERFACE = 311,
+        TOKEN_INTERFACE_ID = 312,
+        TOKEN_ID = 313,
+        TOKEN_RAPID_COMMIT = 314,
+        TOKEN_RESERVATION_MODE = 315,
+        TOKEN_HOST_RESERVATION_IDENTIFIERS = 316,
+        TOKEN_CLIENT_CLASSES = 317,
+        TOKEN_TEST = 318,
+        TOKEN_CLIENT_CLASS = 319,
+        TOKEN_RESERVATIONS = 320,
+        TOKEN_DUID = 321,
+        TOKEN_HW_ADDRESS = 322,
+        TOKEN_CIRCUIT_ID = 323,
+        TOKEN_CLIENT_ID = 324,
+        TOKEN_HOSTNAME = 325,
+        TOKEN_RELAY = 326,
+        TOKEN_IP_ADDRESS = 327,
+        TOKEN_HOOKS_LIBRARIES = 328,
+        TOKEN_LIBRARY = 329,
+        TOKEN_PARAMETERS = 330,
+        TOKEN_EXPIRED_LEASES_PROCESSING = 331,
+        TOKEN_RECLAIM_TIMER_WAIT_TIME = 332,
+        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 333,
+        TOKEN_HOLD_RECLAIMED_TIME = 334,
+        TOKEN_MAX_RECLAIM_LEASES = 335,
+        TOKEN_MAX_RECLAIM_TIME = 336,
+        TOKEN_UNWARNED_RECLAIM_CYCLES = 337,
         TOKEN_DHCP4O6_PORT = 338,
         TOKEN_CONTROL_SOCKET = 339,
         TOKEN_SOCKET_TYPE = 340,
@@ -677,6 +678,22 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_MEMFILE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MYSQL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_POSTGRESQL (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CQL (const location_type& l);
+
+    static inline
+    symbol_type
     make_USER (const location_type& l);
 
     static inline
@@ -698,6 +715,10 @@ namespace isc { namespace dhcp {
     static inline
     symbol_type
     make_READONLY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CONNECT_TIMEOUT (const location_type& l);
 
     static inline
     symbol_type
@@ -890,26 +911,6 @@ namespace isc { namespace dhcp {
     static inline
     symbol_type
     make_UNWARNED_RECLAIM_CYCLES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SERVER_ID (const location_type& l);
-
-    static inline
-    symbol_type
-    make_IDENTIFIER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HTYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TIME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_ENTERPRISE_ID (const location_type& l);
 
     static inline
     symbol_type
@@ -1312,8 +1313,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 732,     ///< Last index in yytable_.
-      yynnts_ = 305,  ///< Number of nonterminal symbols.
+      yylast_ = 713,     ///< Last index in yytable_.
+      yynnts_ = 299,  ///< Number of nonterminal symbols.
       yyfinal_ = 24, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1409,8 +1410,9 @@ namespace isc { namespace dhcp {
     {
       case 145: // value
       case 186: // socket_type
-      case 399: // ncr_protocol_value
-      case 408: // replace_client_name_value
+      case 195: // db_type
+      case 393: // ncr_protocol_value
+      case 402: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1449,8 +1451,9 @@ namespace isc { namespace dhcp {
     {
       case 145: // value
       case 186: // socket_type
-      case 399: // ncr_protocol_value
-      case 408: // replace_client_name_value
+      case 195: // db_type
+      case 393: // ncr_protocol_value
+      case 402: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1548,8 +1551,9 @@ namespace isc { namespace dhcp {
     {
       case 145: // value
       case 186: // socket_type
-      case 399: // ncr_protocol_value
-      case 408: // replace_client_name_value
+      case 195: // db_type
+      case 393: // ncr_protocol_value
+      case 402: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1594,8 +1598,9 @@ namespace isc { namespace dhcp {
     {
       case 145: // value
       case 186: // socket_type
-      case 399: // ncr_protocol_value
-      case 408: // replace_client_name_value
+      case 195: // db_type
+      case 393: // ncr_protocol_value
+      case 402: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
@@ -1821,6 +1826,30 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MEMFILE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MEMFILE, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MYSQL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MYSQL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POSTGRESQL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_POSTGRESQL, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CQL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CQL, l);
+  }
+
+  Dhcp4Parser::symbol_type
   Dhcp4Parser::make_USER (const location_type& l)
   {
     return symbol_type (token::TOKEN_USER, l);
@@ -1854,6 +1883,12 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::make_READONLY (const location_type& l)
   {
     return symbol_type (token::TOKEN_READONLY, l);
+  }
+
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONNECT_TIMEOUT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONNECT_TIMEOUT, l);
   }
 
   Dhcp4Parser::symbol_type
@@ -2142,36 +2177,6 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES (const location_type& l)
   {
     return symbol_type (token::TOKEN_UNWARNED_RECLAIM_CYCLES, l);
-  }
-
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SERVER_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SERVER_ID, l);
-  }
-
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_IDENTIFIER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_IDENTIFIER, l);
-  }
-
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HTYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HTYPE, l);
-  }
-
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TIME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_TIME, l);
-  }
-
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ENTERPRISE_ID (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_ENTERPRISE_ID, l);
   }
 
   Dhcp4Parser::symbol_type
@@ -2471,7 +2476,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp4_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2475 "dhcp4_parser.h" // lalr1.cc:377
+#line 2480 "dhcp4_parser.h" // lalr1.cc:377
 
 
 
