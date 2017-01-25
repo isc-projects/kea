@@ -334,7 +334,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank key name",
-"logic-error" : true,
+"syntax-error" : "<string>:1.95: name cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -377,7 +377,7 @@
 #----- D2.tsig-keys, algorithm tests
 
 ,{
-"description" : "D2.tsig-keys, all valid algorthms",
+"description" : "D2.tsig-keys, all valid algorithms",
 "data" :
     {
     "forward-ddns" : {},
@@ -439,7 +439,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank algorithm",
-"logic-error" : true,
+"syntax-error" : "<string>:1.75: algorithm cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -476,7 +476,7 @@
 
 #----- D2.tsig-keys, digest-bits tests
 ,{
-"description" : "D2.tsig-keys, all valid algorthms",
+"description" : "D2.tsig-keys, all valid algorthims",
 "data" :
     {
     "forward-ddns" : {},
@@ -526,7 +526,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid digest-bits",
-"logic-error" : true,
+"syntax-error" : "<string>:1.104-105: digest-bits must either be zero or a positive, multiple of eight",
 "data" :
     {
     "forward-ddns" : {},
@@ -538,7 +538,7 @@
             "algorithm" : "HMAC-MD5",
             "digest-bits" : 84,
             "secret" : "LSWXnfkKZjdPJI5QxlpnfQ=="
-            },
+            }
         ]
     }
 }
@@ -684,7 +684,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank secret",
-"logic-error" : true,
+"syntax-error" : "<string>:1.118: secret cannot be blank",
 "data" :
     {
     "forward-ddns" : {},

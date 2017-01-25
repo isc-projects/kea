@@ -123,6 +123,8 @@ D2ParserContext::contextName()
         return ("toplevel");
     case DHCPDDNS:
         return ("DhcpDdns");
+    case TSIG_KEYS:
+        return ("tsig-keys");
     case LOGGING:
         return ("Logging");
     case LOGGERS:

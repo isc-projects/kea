@@ -9,6 +9,7 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
 #include <exceptions/exceptions.h>
@@ -731,69 +732,25 @@ typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 ///
 /// This class parses the configuration element "tsig-key" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
-class TSIGKeyInfoParser : public  isc::dhcp::DhcpConfigParser {
+class TSIGKeyInfoParser : public  isc::data::SimpleParser { 
 public:
     /// @brief Constructor
-    ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition. Since servers are specified in a list this value is likely
-    /// be something akin to "key:0", set during parsing.
-    /// @param keys is a pointer to the storage area to which the parser
-    /// should commit the newly created TSIGKeyInfo instance.
-    TSIGKeyInfoParser(const std::string& entry_name, TSIGKeyInfoMapPtr keys);
-
+    TSIGKeyInfoParser(){};    
+    
     /// @brief Destructor
-    virtual ~TSIGKeyInfoParser();
+    virtual ~TSIGKeyInfoParser(){};
 
     /// @brief Performs the actual parsing of the given  "tsig-key" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// TSIGKeyInfo, validates those entries, creates a TSIGKeyInfo instance
-    /// then attempts to add to a list of keys
     ///
     /// @param key_config is the "tsig-key" configuration to parse
-    virtual void build(isc::data::ConstElementPtr key_config);
-
-    /// @brief Creates a parser for the given "tsig-key" member element id.
     ///
-    /// The key elements currently supported are(see dhcp-ddns.spec):
-    ///   1. name
-    ///   2. algorithm
-    ///   3. digestbits
-    ///   4. secret
-    ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the "tsig-key" specification.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a pointer to newly created parser.
-    ///
-    /// @throw D2CfgError if configuration contains an unknown parameter
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& config_id,
-                       const isc::data::Element::Position& pos =
-                       isc::data::Element::ZERO_POSITION());
-
-    /// @brief Commits the TSIGKeyInfo configuration
-    /// Currently this method is a NOP, as the key instance is created and
-    /// then added to a local list of keys in build().
-    virtual void commit();
+    /// @return pointer to the new TSIGKeyInfo instance
+    TSIGKeyInfoPtr parse(isc::data::ConstElementPtr key_config);
 
 private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    /// Since servers are specified in a list this value is likely be something
-    /// akin to "key:0", set during parsing.  Primarily here for diagnostics.
-    std::string entry_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the newly created TSIGKeyInfo instance. This is given to us as a
-    /// constructor argument by an upper level.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Local storage area for scalar parameter values. Use to hold
-    /// data until time to commit.
-    DScalarContext local_scalars_;
 };
 
 /// @brief Parser for a list of TSIGKeyInfos
@@ -801,53 +758,27 @@ private:
 /// This class parses a list of "tsig-key" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The TSIGKeyInfo instances are added
 /// to the given storage upon commit.
-class TSIGKeyInfoListParser : public isc::dhcp::DhcpConfigParser {
+class TSIGKeyInfoListParser : public isc::data::SimpleParser {
 public:
-
     /// @brief Constructor
-    ///
-    /// @param list_name is an arbitrary label assigned to this parser instance.
-    /// @param keys is a pointer to the storage area to which the parser
-    /// should commit the newly created TSIGKeyInfo instance.
-    TSIGKeyInfoListParser(const std::string& list_name, TSIGKeyInfoMapPtr keys);
+    TSIGKeyInfoListParser(){};
 
     /// @brief Destructor
-    virtual ~TSIGKeyInfoListParser();
+    virtual ~TSIGKeyInfoListParser(){};
 
     /// @brief Performs the parsing of the given list "tsig-key" elements.
     ///
+    /// Creates an emtpy TSIGKeyInfoMap
+    ///
     /// It iterates over each key entry in the list:
     ///   1. Instantiate a TSIGKeyInfoParser for the entry
-    ///   2. Pass the element configuration to the parser's build method
-    ///   3. Add the parser instance to local storage
-    ///
-    /// The net effect is to parse all of the key entries in the list
-    /// prepping them for commit.
+    ///   2. Pass the element configuration to the parser's parse method
+    ///   3. Add the new TSIGKeyInfo instance to the key map
     ///
     /// @param key_list_config is the list of "tsig_key" elements to parse.
-    virtual void build(isc::data::ConstElementPtr key_list_config);
-
-    /// @brief Commits the list of TSIG keys
     ///
-    /// Iterates over the internal list of TSIGKeyInfoParsers, invoking
-    /// commit on each one.  Then commits the local list of keys to
-    /// storage.
-    virtual void commit();
-
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    std::string list_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the list of newly created TSIGKeyInfo instances. This is given to us
-    /// as a constructor argument by an upper level.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Local storage area to which individual key parsers commit.
-    TSIGKeyInfoMapPtr local_keys_;
-
-    /// @brief Local storage of TSIGKeyInfoParser instances
-    isc::dhcp::ParserCollection parsers_;
+    /// @return a map containing the TSIGKeyInfo instances 
+    TSIGKeyInfoMapPtr parse(isc::data::ConstElementPtr key_list_config);
 };
 
 /// @brief Parser for  DnsServerInfo

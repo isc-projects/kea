@@ -64,6 +64,9 @@ using namespace std;
   FORWARD_DDNS "forward-ddns"
   REVERSE_DDNS "reverse-ddns"
   TSIG_KEYS "tsig-keys"
+  ALGORITHM "algorithm"
+  DIGEST_BITS "digest-bits"
+  SECRET "secret"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -310,12 +313,90 @@ reverse_ddns : REVERSE_DDNS {
     ctx.leave();
 };
 
-tsig_keys : TSIG_KEYS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("tsig-keys", $4);
+// --- tsig-keys ----------------------------------------
+// "tsig-keys" : [ ... ]
+tsig_keys: TSIG_KEYS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("tsig-keys", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.TSIG_KEYS);
+} COLON LSQUARE_BRACKET tsig_keys_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
+
+tsig_keys_list: %empty
+              | not_empty_tsig_keys_list
+              ;
+
+not_empty_tsig_keys_list: tsig_key
+                        | not_empty_tsig_keys_list COMMA tsig_key
+                        ;
+
+tsig_key: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} tsig_key_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+tsig_key_params: tsig_key_param 
+               | tsig_key_params COMMA tsig_key_param
+               ;
+
+tsig_key_param: tsig_key_name
+              | tsig_key_algorithm
+              | tsig_key_digest_bits
+              | tsig_key_secret
+              | unknown_map_entry
+              ;
+
+tsig_key_name: NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "name cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("name", name);
+    ctx.leave();
+};
+
+tsig_key_algorithm: ALGORITHM {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "algorithm cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("algorithm", elem);
+    ctx.leave();
+};
+
+tsig_key_digest_bits: DIGEST_BITS COLON INTEGER {
+    if ($3 < 0 || ($3 > 0  && ($3 % 8 != 0))) {
+        error(@3, "digest-bits must either be zero or a positive, multiple of eight");
+    } 
+    ElementPtr elem(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("digest-bits", elem);
+};
+
+tsig_key_secret: SECRET {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "secret cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("secret", elem);
+    ctx.leave();
+};
+
+
+// --- end of tsig-keys ---------------------------------
+
 
 dhcp6_json_object: DHCP6 {
     ctx.enter(ctx.NO_KEYWORD);
