@@ -65,12 +65,17 @@ using namespace std;
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   TYPE "type"
+  MEMFILE "memfile"
+  MYSQL "mysql"
+  POSTGRESQL "postgresql"
+  CQL "cql"
   USER "user"
   PASSWORD "password"
   HOST "host"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
+  CONNECT_TIMEOUT "connect-timeout"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -128,12 +133,6 @@ using namespace std;
   MAX_RECLAIM_LEASES "max-reclaim-leases"
   MAX_RECLAIM_TIME "max-reclaim-time"
   UNWARNED_RECLAIM_CYCLES "unwarned-reclaim-cycles"
-
-  SERVER_ID "server-id"
-  IDENTIFIER "identifier"
-  HTYPE "htype"
-  TIME "time"
-  ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
 
@@ -196,6 +195,7 @@ using namespace std;
 
 %type <ElementPtr> value
 %type <ElementPtr> socket_type
+%type <ElementPtr> db_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> replace_client_name_value
 
@@ -394,7 +394,6 @@ global_param: valid_lifetime
             | option_data_list
             | hooks_libraries
             | expired_leases_processing
-            | server_id
             | dhcp4o6_port
             | control_socket
             | dhcp_ddns
@@ -506,7 +505,7 @@ database_map_params: database_map_param
                    | database_map_params COMMA database_map_param
                    ;
 
-database_map_param: type
+database_map_param: database_type
                   | user
                   | password
                   | host
@@ -514,16 +513,22 @@ database_map_param: type
                   | persist
                   | lfc_interval
                   | readonly
+                  | connect_timeout
                   | unknown_map_entry
 ;
 
-type: TYPE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("type", prf);
+database_type: TYPE {
+    ctx.enter(ctx.DATABASE_TYPE);
+} COLON db_type {
+    ctx.stack_.back()->set("type", $4);
     ctx.leave();
 };
+
+db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
+       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
+       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
+       | CQL { $$ = ElementPtr(new StringElement("cql", ctx.loc2pos(@1))); }
+       ;
 
 user: USER {
     ctx.enter(ctx.NO_KEYWORD);
@@ -572,9 +577,9 @@ readonly: READONLY COLON BOOLEAN {
     ctx.stack_.back()->set("readonly", n);
 };
 
-duid_id : DUID {
-    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(duid);
+connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("connect-timeout", n);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
@@ -596,6 +601,11 @@ host_reservation_identifier: duid_id
                            | circuit_id
                            | client_id
                            ;
+
+duid_id : DUID {
+    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(duid);
+};
 
 hw_address_id : HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
@@ -958,7 +968,13 @@ code: CODE COLON INTEGER {
 
 option_def_code: code;
 
-option_def_type: type;
+option_def_type: TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("type", prf);
+    ctx.leave();
+};
 
 option_def_record_types: RECORD_TYPES {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1354,54 +1370,7 @@ client_class_test: TEST {
 
 // --- end of client classes ---------------------------------
 
-// --- server-id ---------------------------------------------
-server_id: SERVER_ID {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("server-id", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.SERVER_ID);
-} COLON LCURLY_BRACKET server_id_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-server_id_params: server_id_param
-                | server_id_params COMMA server_id_param
-                ;
-
-server_id_param: type
-               | identifier
-               | time
-               | htype
-               | enterprise_id
-               | persist
-               | unknown_map_entry
-               ;
-
-htype: HTYPE COLON INTEGER {
-    ElementPtr htype(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("htype", htype);
-};
-
-identifier: IDENTIFIER {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr id(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("identifier", id);
-    ctx.leave();
-};
-
-time: TIME COLON INTEGER {
-    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("time", time);
-};
-
-enterprise_id: ENTERPRISE_ID COLON INTEGER {
-    ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enterprise-id", time);
-};
-
-// --- end of server-id --------------------------------------
+// was server-id but in is DHCPv6-only
 
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));

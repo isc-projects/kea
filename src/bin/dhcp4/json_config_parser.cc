@@ -425,12 +425,9 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
     } else if ((config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
                                     globalContext()->string_values_);
-    } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
-    } else if (config_id.compare("hosts-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
-        // hooks-libraries are now migrated to SimpleParser.
-    } else if (config_id.compare("echo-client-id") == 0) {
+    // hooks-libraries are now migrated to SimpleParser.
+    // lease-database and hosts-database have been converted to SimpleParser already.
+     } else if (config_id.compare("echo-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     // dhcp-ddns has been converted to SimpleParser.
     } else if (config_id.compare("match-client-id") == 0) {
@@ -566,7 +563,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Please do not change this order!
     ParserCollection independent_parsers;
     ParserPtr subnet_parser;
-    ParserPtr leases_parser;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -593,6 +589,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     ConfigPair config_pair;
     try {
 
+        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
@@ -605,7 +603,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
             OptionDefListParser parser;
-            CfgOptionDefPtr cfg_option_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+            CfgOptionDefPtr cfg_option_def = srv_cfg->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }
 
@@ -618,7 +616,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // boost, but would make the code less readable. We had serious issues
             // with the parser code debugability, so I decided to keep it as a
             // series of independent ifs.
-
             if (config_pair.first == "option-def") {
                 // This is converted to SimpleParser and is handled already above.
                 continue;
@@ -626,14 +623,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "option-data") {
                 OptionDataListParser parser(AF_INET);
-                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+                CfgOptionPtr cfg_option = srv_cfg->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "control-socket") {
                 ControlSocketParser parser;
-                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
                 parser.parse(*srv_cfg, config_pair.second);
                 continue;
             }
@@ -646,7 +642,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
             if (config_pair.first == "interfaces-config") {
                 IfacesConfigParser parser(AF_INET);
-                CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+                CfgIfacePtr cfg_iface = srv_cfg->getCfgIface();
                 parser.parse(cfg_iface, config_pair.second);
                 continue;
             }
@@ -671,7 +667,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 }
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(config_pair.second);
-                CfgMgr::instance().getStagingCfg()->setD2ClientConfig(cfg);
+                srv_cfg->setD2ClientConfig(cfg);
                 continue;
             }
 
@@ -679,7 +675,22 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 ClientClassDefListParser parser;
                 ClientClassDictionaryPtr dictionary =
                     parser.parse(config_pair.second, AF_INET);
-                CfgMgr::instance().getStagingCfg()->setClientClassDictionary(dictionary);
+                srv_cfg->setClientClassDictionary(dictionary);
+                continue;
+            }
+
+            // Please move at the end when migration will be finished.
+            if (config_pair.first == "lease-database") {
+                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "host-database") {
+                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
@@ -689,8 +700,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
                 subnet_parser = parser;
-            } else if (config_pair.first == "lease-database") {
-                leases_parser = parser;
             } else {
                 // Those parsers should be started before other
                 // parsers so we can call build straight away.
@@ -713,15 +722,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
         // Setup the command channel.
         configureCommandChannel();
-
-        // the leases database parser is the last to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
-            values_map.find("lease-database");
-        if (leases_config != values_map.end()) {
-            config_pair.first = "lease-database";
-            leases_parser->build(leases_config->second);
-            leases_parser->commit();
-        }
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)

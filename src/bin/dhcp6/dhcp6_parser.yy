@@ -56,12 +56,17 @@ using namespace std;
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   TYPE "type"
+  MEMFILE "memfile"
+  MYSQL "mysql"
+  POSTGRESQL "postgresql"
+  CQL "cql"
   USER "user"
   PASSWORD "password"
   HOST "host"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
+  CONNECT_TIMEOUT "connect-timeout"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -197,6 +202,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> db_type
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> replace_client_name_value
@@ -492,16 +498,22 @@ database_map_param: database_type
                   | persist
                   | lfc_interval
                   | readonly
+                  | connect_timeout
                   | unknown_map_entry
 ;
 
 database_type: TYPE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("type", prf);
+    ctx.enter(ctx.DATABASE_TYPE);
+} COLON db_type {
+    ctx.stack_.back()->set("type", $4);
     ctx.leave();
 };
+
+db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
+       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
+       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
+       | CQL { $$ = ElementPtr(new StringElement("cql", ctx.loc2pos(@1))); }
+       ;
 
 user: USER {
     ctx.enter(ctx.NO_KEYWORD);
@@ -548,6 +560,11 @@ lfc_interval: LFC_INTERVAL COLON INTEGER {
 readonly: READONLY COLON BOOLEAN {
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("readonly", n);
+};
+
+connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("connect-timeout", n);
 };
 
 mac_sources: MAC_SOURCES {

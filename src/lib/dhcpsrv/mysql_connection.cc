@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,8 @@ const my_bool MLM_TRUE = 1;
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 const int MLM_MYSQL_FETCH_FAILURE = 1;
 
-const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5;	// seconds
+/// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
+const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 MySqlTransaction::MySqlTransaction(MySqlConnection& conn)
     : conn_(conn), committed_(false) {
