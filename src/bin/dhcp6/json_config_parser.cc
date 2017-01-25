@@ -199,9 +199,9 @@ public:
 
         // Check the pool parameters. It will throw an exception if any
         // of the required parameters are not present or invalid.
-        require_("prefix", pd_pool_);
-        require_("prefix-len", pd_pool_);
-        require_("delegated-len", pd_pool_);
+        requireParam("prefix", pd_pool_);
+        requireParam("prefix-len", pd_pool_);
+        requireParam("delegated-len", pd_pool_);
         try {
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(IOAddress(addr_str),
@@ -234,7 +234,7 @@ private:
     /// @param name Entry name
     /// @param config Pools configuration
     /// @throw isc::dhcp::DhcpConfigError if not present
-    void require_(const std::string& name, ConstElementPtr config) const {
+    void requireParam(const std::string& name, ConstElementPtr config) const {
         if (!config->contains(name)) {
             isc_throw(isc::dhcp::DhcpConfigError,
                       "Missing parameter '" << name << "' ("
