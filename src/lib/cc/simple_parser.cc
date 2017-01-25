@@ -137,7 +137,7 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
 }
 
 size_t
-SimpleParser::setListDefaults(isc::data::ElementPtr list,
+SimpleParser::setListDefaults(isc::data::ConstElementPtr list,
                               const SimpleDefaults& default_values) {
     size_t cnt = 0;
     BOOST_FOREACH(ElementPtr entry, list->listValue()) {
