@@ -98,6 +98,7 @@ using namespace std;
 
   POOLS "pools"
   POOL "pool"
+  USER_CONTEXT "user-context"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -194,6 +195,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> map_value
 %type <ElementPtr> socket_type
 %type <ElementPtr> db_type
 %type <ElementPtr> ncr_protocol_value
@@ -250,6 +252,8 @@ map2: LCURLY_BRACKET {
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
+
+map_value: map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); };
 
 // Assignments rule
 map_content: %empty // empty map
@@ -1141,6 +1145,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
+          | user_context
           | unknown_map_entry
           ;
 
@@ -1149,6 +1154,13 @@ pool_entry: POOL {
 } COLON STRING {
     ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pool", pool);
+    ctx.leave();
+};
+
+user_context: USER_CONTEXT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ctx.stack_.back()->set("user-context", $4);
     ctx.leave();
 };
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,6 +98,28 @@ const char* PARSER_CONFIGS[] = {
     "    \"subnet4\": [ {"
     "        \"pools\": [ "
     "            { \"pool\":  \"192.0.2.0/28\","
+    "                \"user-context\": {"
+    "                    \"integer-param\": 42,"
+    "                    \"string-param\": \"Sagittarius\","
+    "                    \"bool-param\": true"
+    "                }"
+    "            }"
+    "        ],"
+    "        \"subnet\": \"192.0.2.0/24\""
+    "     } ]"
+    "}",
+
+    // Configuration 3: one min-max pool with user context containing lw4over6 parameters
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ "
+    "            { \"pool\":  \"192.0.2.0 - 192.0.2.15\","
     "                \"user-context\": {"
     "                    \"integer-param\": 42,"
     "                    \"string-param\": \"Sagittarius\","
@@ -572,8 +594,9 @@ public:
     void getPool(const std::string& config, size_t subnet_index,
                  size_t pool_index, PoolPtr& pool) {
         ConstElementPtr status;
-        ElementPtr json = Element::fromJSON(config);
+        ConstElementPtr json;
 
+        EXPECT_NO_THROW(json = parseDHCP4(config, true));
         EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
         ASSERT_TRUE(status);
         checkResult(status, 0);
@@ -1441,6 +1464,132 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
+}
+
+// Goal of this test is to verify if invalid pool definitions
+// return a location in the error message.
+TEST_F(Dhcp4ParserTest, badPools) {
+
+    // not a prefix
+    string config_bogus1 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo/28\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not a length
+    string config_bogus2 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.128/foo\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // invalid prefix length
+    string config_bogus3 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.128/100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not a prefix nor a min-max
+    string config_bogus4 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // not an address
+    string config_bogus5 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"foo - bar\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // min > max
+    string config_bogus6 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.200 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // out of range prefix length (new check)
+    string config_bogus7 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.128/1052\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json1;
+    ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
+    ConstElementPtr json2;
+    ASSERT_NO_THROW(json2 = parseDHCP4(config_bogus2));
+    ConstElementPtr json3;
+    ASSERT_NO_THROW(json3 = parseDHCP4(config_bogus3));
+    ConstElementPtr json4;
+    ASSERT_NO_THROW(json4 = parseDHCP4(config_bogus4));
+    ConstElementPtr json5;
+    ASSERT_NO_THROW(json5 = parseDHCP4(config_bogus5));
+    ConstElementPtr json6;
+    ASSERT_NO_THROW(json6 = parseDHCP4(config_bogus6));
+    ConstElementPtr json7;
+    ASSERT_NO_THROW(json7 = parseDHCP4(config_bogus7));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+
+    // check if returned status is always a failure
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json4));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json5));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json6));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json7));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // The goal of this test is to check whether an option definition
@@ -4452,6 +4601,39 @@ TEST_F(Dhcp4ParserTest, poolUserContextEmpty) {
 TEST_F(Dhcp4ParserTest, poolUserContextData) {
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[2]), 0, 0, pool);
+    ASSERT_TRUE(pool);
+    ConstElementPtr ctx = pool->getContext();
+    ASSERT_TRUE(ctx);
+
+    // The context should be of type map and contain 4 parameters.
+    EXPECT_EQ(Element::map, ctx->getType());
+    EXPECT_EQ(3, ctx->size());
+    ConstElementPtr int_param  = ctx->get("integer-param");
+    ConstElementPtr str_param  = ctx->get("string-param");
+    ConstElementPtr bool_param = ctx->get("bool-param");
+
+    ASSERT_TRUE(int_param);
+    ASSERT_EQ(Element::integer, int_param->getType());
+    int64_t int_value;
+    EXPECT_NO_THROW(int_param->getValue(int_value));
+    EXPECT_EQ(42L, int_value);
+
+    ASSERT_TRUE(str_param);
+    ASSERT_EQ(Element::string, str_param->getType());
+    EXPECT_EQ("Sagittarius", str_param->stringValue());
+
+    ASSERT_TRUE(bool_param);
+    bool bool_value;
+    ASSERT_EQ(Element::boolean, bool_param->getType());
+    EXPECT_NO_THROW(bool_param->getValue(bool_value));
+    EXPECT_EQ(true, bool_value);
+}
+
+// Test verifies that it's possible to specify parameters in the user context
+// in the min-max address pool.
+TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
+    PoolPtr pool;
+    getPool(string(PARSER_CONFIGS[3]), 0, 0, pool);
     ASSERT_TRUE(pool);
     ConstElementPtr ctx = pool->getContext();
     ASSERT_TRUE(ctx);

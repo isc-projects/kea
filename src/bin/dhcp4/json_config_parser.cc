@@ -54,18 +54,6 @@ namespace {
 ///
 /// It is useful for parsing Dhcp4/subnet4[X]/pool parameters.
 class Pool4Parser : public PoolParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter. Note, it is passed through
-    /// but unused, parameter is currently always "Dhcp4/subnet4[X]/pool"
-    /// @param pools storage container in which to store the parsed pool
-    /// upon "commit"
-    Pool4Parser(const std::string& param_name,  PoolStoragePtr pools)
-        :PoolParser(param_name, pools, AF_INET) {
-    }
-
 protected:
     /// @brief Creates a Pool4 object given a IPv4 prefix and the prefix length.
     ///
@@ -90,15 +78,23 @@ protected:
     }
 };
 
-class Pools4ListParser : public PoolsListParser {
+/// @brief Specialization of the pool list parser for DHCPv4
+class Pools4ListParser : PoolsListParser {
 public:
-    Pools4ListParser(const std::string& dummy, PoolStoragePtr pools)
-        :PoolsListParser(dummy, pools) {
-    }
 
-protected:
-    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) {
-        return (ParserPtr(new Pool4Parser("pool", storage)));
+    /// @brief parses the actual structure
+    ///
+    /// This method parses the actual list of pools.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pools_list a list of pool structures
+    /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
+    void parse(PoolStoragePtr pools,
+               isc::data::ConstElementPtr pools_list) {
+        BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
+            Pool4Parser parser;
+            parser.parse(pools, pool, AF_INET);
+        }
     }
 };
 
@@ -123,6 +119,13 @@ public:
     ///
     /// @param subnet A new subnet being configured.
     void build(ConstElementPtr subnet) {
+        /// Parse Pools first.
+        ConstElementPtr pools = subnet->get("pools");
+        if (pools) {
+            Pools4ListParser parser;
+            parser.parse(pools_, pools);
+        }
+
         SubnetConfigParser::build(subnet);
 
         if (subnet_) {
@@ -186,9 +189,8 @@ protected:
                    (config_id.compare("next-server") == 0) ||
                    (config_id.compare("reservation-mode") == 0)) {
             parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("pools") == 0) {
-            parser = new Pools4ListParser(config_id, pools_);
-            // relay has been converted to SimpleParser already.
+        // pools has been converted to SimpleParser already.
+        // relay has been converted to SimpleParser already.
         // option-data has been converted to SimpleParser already.
         } else if (config_id.compare("match-client-id") == 0) {
             parser = new BooleanParser(config_id, boolean_values_);

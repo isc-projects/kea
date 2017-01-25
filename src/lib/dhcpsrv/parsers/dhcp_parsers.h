@@ -711,32 +711,25 @@ typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 /// and stored in chosen PoolStorage container.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[X]/pools[X] structure.
-class PoolParser : public DhcpConfigParser {
+class PoolParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param pools is the storage in which to store the parsed pool
-    /// upon "commit".
-    /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolParser(const std::string& dummy, PoolStoragePtr pools,
-               const uint16_t address_family);
+    /// @brief destructor.
+    virtual ~PoolParser() {
+    }
 
     /// @brief parses the actual structure
     ///
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
+    /// @param pools is the storage in which to store the parsed pool
     /// @param pool_structure a single entry on a list of pools
+    /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void build(isc::data::ConstElementPtr pool_structure);
-
-    /// @brief Stores the parsed values in a storage provided
-    ///        by an upper level parser.
-    virtual void commit();
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pool_structure,
+                       const uint16_t address_family);
 
 protected:
     /// @brief Creates a Pool object given a IPv4 prefix and the prefix length.
@@ -746,7 +739,7 @@ protected:
     /// @param ptype is the type of pool to create.
     /// @return returns a PoolPtr to the new Pool object.
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &addr, uint32_t len,
-                           int32_t ptype=0) = 0;
+                              int32_t ptype = 0) = 0;
 
     /// @brief Creates a Pool object given starting and ending IP addresses.
     ///
@@ -755,23 +748,8 @@ protected:
     /// @param ptype is the type of pool to create (not used by all derivations)
     /// @return returns a PoolPtr to the new Pool object.
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &min,
-                           isc::asiolink::IOAddress &max, int32_t ptype=0) = 0;
-
-    /// @brief pointer to the actual Pools storage
-    ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
-
-    /// A temporary storage for pools configuration. It is a
-    /// storage where pools are stored by build function.
-    PoolStorage local_pools_;
-
-    /// A storage for pool specific option values.
-    CfgOptionPtr options_;
-
-    /// @brief Address family: AF_INET (for DHCPv4) or AF_INET6 for DHCPv6.
-    uint16_t address_family_;
+                              isc::asiolink::IOAddress &max,
+                              int32_t ptype = 0) = 0;
 };
 
 /// @brief Parser for a list of pools
@@ -779,54 +757,22 @@ protected:
 /// This parser parses a list pools. Each element on that list gets its own
 /// parser, created with poolParserMaker() method. That method must be specified
 /// for each protocol family (v4 or v6) separately.
-///
-/// This class is not intended to be used directly. Instead, derived classes
-/// should implement poolParserMaker() method.
-class PoolsListParser :  public DhcpConfigParser {
+class PoolsListParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept a string as the first argument.
-    /// @param pools is the storage in which to store the parsed pool
-    /// upon "commit".
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolsListParser(const std::string& dummy, PoolStoragePtr pools);
+    /// @brief destructor.
+    virtual ~PoolsListParser() {
+    }
 
     /// @brief parses the actual structure
     ///
-    /// This method parses the actual list of pools. It creates a parser
-    /// for each structure using poolParserMaker().
+    /// This method parses the actual list of pools.
     ///
+    /// @param pools is the storage in which to store the parsed pools.
     /// @param pools_list a list of pool structures
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void build(isc::data::ConstElementPtr pools_list);
-
-    /// @brief Stores the parsed values in storage provided
-    ///        by an upper level parser.
-    virtual void commit();
-
-protected:
-
-    /// @brief Creates a PoolParser object
-    ///
-    /// Instantiates appropriate (v4 or v6) PoolParser object.
-    /// @param storage parameter that is passed to ParserMaker() constructor.
-    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) = 0;
-
-    /// @brief pointer to the actual Pools storage
-    ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
-
-    /// A temporary storage for pools configuration. It is the
-    /// storage where pools are stored by the build function.
-    PoolStoragePtr local_pools_;
-
-    /// Collection of parsers;
-    ParserCollection parsers_;
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pools_list) = 0;
 };
 
 /// @brief parser for additional relay information
