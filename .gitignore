@@ -4,6 +4,7 @@
 *.la
 *.lo
 *.o
+*~
 .deps/
 .libs/
 __pycache__/
