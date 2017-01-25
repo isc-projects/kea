@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +63,12 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "dhcp4o6-port",             Element::integer, "0" }
 };
 
+/// @brief This table defines default values for each IPv6 subnet.
+const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
+    { "id",  Element::integer, "0" }, // 0 means autogenerate
+    { "rapid-commit", Element::boolean, "false" } // rapid-commit disabled by default
+};
+
 /// @brief List of parameters that can be inherited from the global to subnet6 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp6) and
@@ -95,12 +101,19 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
         }
     }
 
-    // Finally, set the defaults for option data
+    // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
         BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
             cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
         }
+    }
+
+    // Now set the defaults for defined subnets
+    // Now set the defaults for defined subnets
+    ConstElementPtr subnets = global->get("subnet6");
+    if (subnets) {
+        cnt += setListDefaults(subnets, SUBNET6_DEFAULTS);
     }
 
     return (cnt);

@@ -41,6 +41,51 @@ public:
         // Finally, check if its value meets expectation.
         EXPECT_EQ(exp_value, elem->intValue());
     }
+
+    /// @brief Checks if specified map has a string parameter with expected value
+    ///
+    /// @param map map to be checked
+    /// @param param_name name of the parameter to be checked
+    /// @param exp_value expected value of the parameter.
+    void checkStringValue(const ConstElementPtr& map, const std::string& param_name,
+                          std::string exp_value) {
+
+        // First check if the passed element is a map.
+        ASSERT_EQ(Element::map, map->getType());
+
+        // Now try to get the element being checked
+        ConstElementPtr elem = map->get(param_name);
+        ASSERT_TRUE(elem);
+
+        // Now check if it's indeed integer
+        ASSERT_EQ(Element::string, elem->getType());
+
+        // Finally, check if its value meets expectation.
+        EXPECT_EQ(exp_value, elem->stringValue());
+    }
+
+    /// @brief Checks if specified map has a boolean parameter with expected value
+    ///
+    /// @param map map to be checked
+    /// @param param_name name of the parameter to be checked
+    /// @param exp_value expected value of the parameter.
+    void checkBoolValue(const ConstElementPtr& map, const std::string& param_name,
+                        bool exp_value) {
+
+        // First check if the passed element is a map.
+        ASSERT_EQ(Element::map, map->getType());
+
+        // Now try to get the element being checked
+        ConstElementPtr elem = map->get(param_name);
+        ASSERT_TRUE(elem);
+
+        // Now check if it's indeed integer
+        ASSERT_EQ(Element::boolean, elem->getType());
+
+        // Finally, check if its value meets expectation.
+        EXPECT_EQ(exp_value, elem->boolValue());
+    }
+
 };
 
 // This test checks if global defaults are properly set for DHCPv6.
@@ -89,5 +134,79 @@ TEST_F(SimpleParser6Test, inheritGlobalToSubnet6) {
     checkIntegerValue(subnet, "valid-lifetime", 4);
 }
 
-};
+// This test checks if the parameters in "subnet6" are assigned default values
+// if not explicitly specified.
+TEST_F(SimpleParser6Test, subnetDefaults6) {
+    ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
+                                  "  \"rebind-timer\": 2,"
+                                  "  \"preferred-lifetime\": 3,"
+                                  "  \"valid-lifetime\": 4,"
+                                  "  \"subnet6\": [ { } ] "
+                                  "}");
 
+    size_t num = 0;
+    EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
+    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+
+    ConstElementPtr subnets = global->find("subnet6");
+    ASSERT_TRUE(subnets);
+    ConstElementPtr subnet = subnets->get(0);
+    ASSERT_TRUE(subnet);
+
+    // we should have "id" parameter with the default value of 0 added for us.
+    checkIntegerValue(subnet, "id", 0);
+}
+
+// This test checks if the parameters in option-data are assigned default values
+// if not explicitly specified.
+TEST_F(SimpleParser6Test, optionDataDefaults4) {
+    ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
+                                  "  \"rebind-timer\": 2,"
+                                  "  \"preferred-lifetime\": 3,"
+                                  "  \"valid-lifetime\": 4,"
+                                  "  \"option-data\": [ { } ] "
+                                  "}");
+
+    size_t num = 0;
+    EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
+    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+
+    ConstElementPtr options = global->find("option-data");
+    ASSERT_TRUE(options);
+    ConstElementPtr option = options->get(0);
+    ASSERT_TRUE(option);
+
+    // we should have appropriate default value set. See
+    // SimpleParser4::OPTION4_DEFAULTS for a list of default values.
+    checkStringValue(option, "space", "dhcp6");
+    checkStringValue(option, "encapsulate", "");
+    checkBoolValue(option, "csv-format", true);
+}
+
+// This test checks if the parameters in option-data are assigned default values
+// if not explicitly specified.
+TEST_F(SimpleParser6Test, optionDefDefaults6) {
+    ElementPtr global = parseJSON("{ "
+                                  "    \"option-def\": [ { } ] "
+                                  "}");
+
+    size_t num = 0;
+    EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
+    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+
+    ConstElementPtr defs = global->find("option-def");
+    ASSERT_TRUE(defs);
+    ASSERT_EQ(1, defs->size());
+    ConstElementPtr def = defs->get(0);
+    ASSERT_TRUE(def);
+
+    // we should have appropriate default value set. See
+    // SimpleParser4::OPTION4_DEFAULTS for a list of default values.
+    checkStringValue(def, "record-types", "");
+    checkStringValue(def, "space", "dhcp6");
+    checkStringValue(def, "encapsulate", "");
+    checkBoolValue(def, "array", false);
+}
+
+
+};

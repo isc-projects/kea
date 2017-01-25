@@ -409,7 +409,8 @@ protected:
     ///
     /// @param addr is IPv6 prefix of the subnet.
     /// @param len is the prefix length
-    void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) {
+    void initSubnet(isc::data::ConstElementPtr params,
+                    isc::asiolink::IOAddress addr, uint8_t len) {
         // Get all 'time' parameters using inheritance.
         // If the subnet-specific value is defined then use it, else
         // use the global value. The global value must always be
@@ -419,10 +420,11 @@ protected:
         Triplet<uint32_t> t2 = getParam("rebind-timer");
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
+
         // Subnet ID is optional. If it is not supplied the value of 0 is used,
-        // which means autogenerate.
-        SubnetID subnet_id =
-            static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
+        // which means autogenerate. The value was inserted earlier by calling
+        // SimpleParser6::setAllDefaults.
+        SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
 
         // Get interface-id option content. For now we support string
         // representation only
@@ -454,7 +456,7 @@ protected:
         }
 
         // Gather boolean parameters values.
-        bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
+        bool rapid_commit = getBoolean(params, "rapid-commit");
 
         std::ostringstream output;
         output << addr << "/" << static_cast<int>(len)
