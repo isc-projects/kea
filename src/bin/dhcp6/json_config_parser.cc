@@ -935,7 +935,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
-            if (config_pair.first == "host-database") {
+            if (config_pair.first == "hosts-database") {
                 DbAccessParser parser(DbAccessParser::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);

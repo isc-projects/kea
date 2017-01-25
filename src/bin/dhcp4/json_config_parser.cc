@@ -689,7 +689,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
-            if (config_pair.first == "host-database") {
+            if (config_pair.first == "hosts-database") {
                 DbAccessParser parser(DbAccessParser::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
