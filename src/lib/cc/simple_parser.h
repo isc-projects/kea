@@ -98,7 +98,7 @@ class SimpleParser {
     /// @param list list to be iterated over
     /// @param default_values list of default values
     /// @return number of parameters inserted
-    static size_t setListDefaults(isc::data::ElementPtr list,
+    static size_t setListDefaults(isc::data::ConstElementPtr list,
                                   const SimpleDefaults& default_values);
 
     /// @brief Utility method that returns position of an element
