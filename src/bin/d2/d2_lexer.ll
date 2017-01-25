@@ -267,6 +267,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"algorithm\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+        return isc::d2::D2Parser::make_ALGORITHM(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("algorithm", driver.loc_);
+    }
+}
+
+\"digest-bits\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+        return isc::d2::D2Parser::make_DIGEST_BITS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("digest-bits", driver.loc_);
+    }
+}
+
+\"secret\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+        return isc::d2::D2Parser::make_SECRET(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("secret", driver.loc_);
+    }
+}
+
 
 \"Logging\" {
     switch(driver.ctx_) {
@@ -307,6 +334,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"name\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
+    case isc::d2::D2ParserContext::TSIG_KEYS:
         return isc::d2::D2Parser::make_NAME(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("name", driver.loc_);

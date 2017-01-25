@@ -264,11 +264,17 @@ D2CfgMgr::parseElement(const std::string& element_id,
             (element_id == "ncr-format") ||
             (element_id == "port")  ||
             (element_id == "dns-server-timeout"))  {
-            // global scalar params require nothing extra
+            // global scalar params require nothing extra be done
+        } else if (element_id == "tsig-keys") {
+            TSIGKeyInfoListParser parser;
+            getD2CfgContext()->setKeys(parser.parse(element));
         } else {
             // not something we handle here
             return (false);
         }
+    } catch (const D2CfgError& ex) {
+        // Should already have a specific error and postion info
+        throw ex;
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "element: " << element_id << " : "  << ex.what()
                               << element->getPosition());
@@ -297,6 +303,7 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
 
+    // Assumes that params_config has had defaults added
     BOOST_FOREACH(isc::dhcp::ConfigPair param, params_config->mapValue()) {
         std::string entry(param.first);
         isc::data::ConstElementPtr value(param.second);
@@ -358,16 +365,7 @@ D2CfgMgr::createConfigParser(const std::string& config_id,
 
     // Create parser instance based on element_id.
     isc::dhcp::ParserPtr parser;
-    if ((config_id.compare("port") == 0) ||
-        (config_id.compare("dns-server-timeout") == 0)) {
-        parser.reset(new isc::dhcp::Uint32Parser(config_id,
-                                                 context->getUint32Storage()));
-    } else if ((config_id.compare("ip-address") == 0) ||
-        (config_id.compare("ncr-protocol") == 0) ||
-        (config_id.compare("ncr-format") == 0)) {
-        parser.reset(new isc::dhcp::StringParser(config_id,
-                                                 context->getStringStorage()));
-    } else if (config_id ==  "forward-ddns") {
+    if (config_id ==  "forward-ddns") {
         parser.reset(new DdnsDomainListMgrParser("forward-ddns",
                                                  context->getForwardMgr(),
                                                  context->getKeys()));
@@ -375,9 +373,6 @@ D2CfgMgr::createConfigParser(const std::string& config_id,
         parser.reset(new DdnsDomainListMgrParser("reverse-ddns",
                                                  context->getReverseMgr(),
                                                  context->getKeys()));
-    } else if (config_id ==  "tsig-keys") {
-        parser.reset(new TSIGKeyInfoListParser("tsig-key-list",
-                                               context->getKeys()));
     } else {
         isc_throw(NotImplemented,
                   "parser error: D2CfgMgr parameter not supported : "

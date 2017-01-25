@@ -336,120 +336,105 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
 // *********************** TSIGKeyInfoParser  *************************
 
-TSIGKeyInfoParser::TSIGKeyInfoParser(const std::string& entry_name,
-                                     TSIGKeyInfoMapPtr keys)
-    : entry_name_(entry_name), keys_(keys), local_scalars_() {
-    if (!keys_) {
-        isc_throw(D2CfgError, "TSIGKeyInfoParser ctor:"
-                  " key storage cannot be null");
-    }
-}
-
-TSIGKeyInfoParser::~TSIGKeyInfoParser() {
-}
-
-void
-TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
-    isc::dhcp::ConfigPair config_pair;
-    // For each element in the key configuration:
-    // 1. Create a parser for the element.
-    // 2. Invoke the parser's build method passing in the element's
-    // configuration.
-    // 3. Invoke the parser's commit method to store the element's parsed
-    // data to the parser's local storage.
-    BOOST_FOREACH (config_pair, key_config->mapValue()) {
-        isc::dhcp::ParserPtr parser(createConfigParser(config_pair.first,
-                                                       config_pair.second->
-                                                       getPosition()));
-        parser->build(config_pair.second);
-        parser->commit();
-    }
-
+TSIGKeyInfoPtr
+TSIGKeyInfoParser::parse(isc::data::ConstElementPtr key_config) {
     std::string name;
     std::string algorithm;
     uint32_t digestbits = 0;
     std::string secret;
-    std::map<std::string, isc::data::Element::Position> pos;
 
-    // Fetch the key's parsed scalar values from parser's local storage.
-    // Only digestbits is optional and doesn't throw when missing
-    try {
-        pos["name"] = local_scalars_.getParam("name", name);
-        pos["algorithm"] = local_scalars_.getParam("algorithm", algorithm);
-        pos["digest-bits"] = local_scalars_.getParam("digest-bits", digestbits,
-                                                     DCfgContextBase::OPTIONAL);
-        pos["secret"] = local_scalars_.getParam("secret", secret);
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "TSIG Key incomplete : " << ex.what()
+    isc::data::ConstElementPtr name_elem;
+    isc::data::ConstElementPtr algo_elem;
+    isc::data::ConstElementPtr bits_elem;
+    isc::data::ConstElementPtr secret_elem;
+
+    BOOST_FOREACH(isc::dhcp::ConfigPair param, key_config->mapValue()) {
+        std::string entry(param.first);
+        isc::data::ConstElementPtr value(param.second);
+        try {
+            if (entry == "name") {
+                name = value->stringValue();
+                if (name.empty()) {
+                    isc_throw(D2CfgError, "tsig-key: name cannot be blank"
+                              << " (" << value->getPosition() << ")");
+                }
+                name_elem = value;
+            } else if (entry == "algorithm") {
+                algorithm = value->stringValue();
+                // Algorithm must be valid.
+                try {
+                    TSIGKeyInfo::stringToAlgorithmName(algorithm);
+                } catch (const std::exception& ex) {
+                    isc_throw(D2CfgError, "tsig-key : " << ex.what()
+                        << " (" << value->getPosition() << ")");
+                }
+                algo_elem = value;
+            } else if (entry == "digest-bits") {
+                digestbits = value->intValue();
+                bits_elem = value;
+            } else if (entry == "secret") {
+                secret = value->stringValue();
+                // Secret cannot be blank.
+                // Cryptolink lib doesn't offer any way to validate these.
+                // As long as it isn't blank we'll accept it. If the content
+                // is bad, the call to TSIGKeyInfo::remakeKey() made in
+                // the TSIGKeyInfo ctor below will throw.
+                if (secret.empty()) {
+                    isc_throw(D2CfgError, "tsig-key: secret cannot be blank ("
+                              << value->getPosition() << ")");
+                }
+                secret_elem = value;
+            } else {
+                isc_throw(D2CfgError, "tsig-key: unsupported parameter '"
+                          << entry << " (" << value->getPosition() << ")");
+            }
+        } catch (const isc::data::TypeError&) {
+            isc_throw(D2CfgError,
+                      "tsig-key: invalid value type specified for parameter '"
+                      << entry << " (" << value->getPosition() << ")");
+        }
+    }
+
+    if (!name_elem) {
+        isc_throw(D2CfgError, "tsig-key: must specify name"
                   << " (" << key_config->getPosition() << ")");
     }
 
-    // Name cannot be blank.
-    if (name.empty()) {
-        isc_throw(D2CfgError, "TSIG key must specify name (" << pos["name"] << ")");
+    if (!algo_elem) {
+        isc_throw(D2CfgError,
+                  "tsig-key: must specify algorithm"
+                  << " (" << key_config->getPosition() << ")");
     }
 
-    // Currently, the premise is that key storage is always empty prior to
-    // parsing so we are always adding keys never replacing them. Duplicates
-    // are not allowed and should be flagged as a configuration error.
-    if (keys_->find(name) != keys_->end()) {
-        isc_throw(D2CfgError, "Duplicate TSIG key name specified : " << name
-                              << " (" << pos["name"] << ")");
+    if (!secret_elem) {
+        isc_throw(D2CfgError,
+                  "tsig-key: must specify secret"
+                  << " (" << key_config->getPosition() << ")");
     }
 
-    // Algorithm must be valid.
-    try {
-        TSIGKeyInfo::stringToAlgorithmName(algorithm);
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "TSIG key : " << ex.what() << " (" << pos["algorithm"] << ")");
-    }
-
-    // Not zero Digestbits must be an integral number of octets, greater
-    // than 80 and the half of the full length
+    // Non-zero digest-bits must be an integral number of octets, greater
+    // than 80 and at least half of the algorithm key length.
     if (digestbits > 0) {
-      if ((digestbits % 8) != 0) {
-          isc_throw(D2CfgError, "Invalid TSIG key digest_bits specified : " <<
-                                digestbits << " (" << pos["digest-bits"] << ")");
-      }
-      if (digestbits < 80) {
-          isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                digestbits << " (" << pos["digest-bits"] << ")");
-      }
-      if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA224_STR)) {
-          if (digestbits < 112) {
-              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest-bits"]
-                                    << ")");
-          }
-      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA256_STR)) {
-          if (digestbits < 128) {
-              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest-bits"]
-                                    << ")");
-          }
-      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA384_STR)) {
-          if (digestbits < 192) {
-              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest-bits"]
-                                    << ")");
-          }
-      } else if (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA512_STR)) {
-          if (digestbits < 256) {
-              isc_throw(D2CfgError, "TSIG key digest_bits too small : " <<
-                                    digestbits << " (" << pos["digest-bits"]
-                                    << ")");
-          }
-      }
+        if ((digestbits % 8) != 0) {
+            isc_throw(D2CfgError,
+                      "tsig-key: digest bits must be a multiple of 8"
+                       << " (" << bits_elem->getPosition() << ")");
+        }
+
+        if ((digestbits < 80) ||
+            (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA224_STR)
+             && (digestbits < 112)) ||
+            (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA256_STR)
+             && (digestbits < 128)) ||
+            (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA384_STR)
+             && (digestbits < 192)) ||
+            (boost::iequals(algorithm, TSIGKeyInfo::HMAC_SHA512_STR)
+                   && (digestbits < 256))) {
+                isc_throw(D2CfgError, "tsig-key: digest-bits too small : "
+                          << " (" << bits_elem->getPosition() << ")");
+        }
     }
 
-    // Secret cannot be blank.
-    // Cryptolink lib doesn't offer any way to validate these. As long as it
-    // isn't blank we'll accept it.  If the content is bad, the call to in
-    // TSIGKeyInfo::remakeKey() made in the TSIGKeyInfo ctor will throw.
-    // We'll deal with that below.
-    if (secret.empty()) {
-        isc_throw(D2CfgError, "TSIG key must specify secret (" << pos["secret"] << ")");
-    }
 
     // Everything should be valid, so create the key instance.
     // It is possible for the asiodns::dns::TSIGKey create to fail such as
@@ -458,88 +443,34 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
     try {
         key_info.reset(new TSIGKeyInfo(name, algorithm, secret, digestbits));
     } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, ex.what() << " (" << key_config->getPosition() << ")");
-
+        isc_throw(D2CfgError, ex.what() << " ("
+                  << key_config->getPosition() << ")");
     }
 
-    // Add the new TSIGKeyInfo to the key storage.
-    (*keys_)[name]=key_info;
-}
-
-isc::dhcp::ParserPtr
-TSIGKeyInfoParser::createConfigParser(const std::string& config_id,
-                                      const isc::data::Element::Position& pos) {
-    DhcpConfigParser* parser = NULL;
-    // Based on the configuration id of the element, create the appropriate
-    // parser. Scalars are set to use the parser's local scalar storage.
-    if ((config_id == "name")  ||
-        (config_id == "algorithm") ||
-        (config_id == "secret")) {
-        parser = new isc::dhcp::StringParser(config_id,
-                                             local_scalars_.getStringStorage());
-    } else if (config_id == "digest-bits") {
-        parser = new isc::dhcp::Uint32Parser(config_id,
-                                             local_scalars_.getUint32Storage());
-    } else {
-        isc_throw(NotImplemented,
-                  "parser error: TSIGKeyInfo parameter not supported: "
-                  << config_id << " (" << pos << ")");
-    }
-
-    // Return the new parser instance.
-    return (isc::dhcp::ParserPtr(parser));
-}
-
-void
-TSIGKeyInfoParser::commit() {
+    return (key_info);
 }
 
 // *********************** TSIGKeyInfoListParser  *************************
 
-TSIGKeyInfoListParser::TSIGKeyInfoListParser(const std::string& list_name,
-                                       TSIGKeyInfoMapPtr keys)
-    :list_name_(list_name), keys_(keys), local_keys_(new TSIGKeyInfoMap()),
-     parsers_() {
-    if (!keys_) {
-        isc_throw(D2CfgError, "TSIGKeyInfoListParser ctor:"
-                  " key storage cannot be null");
-    }
-}
-
-TSIGKeyInfoListParser::~TSIGKeyInfoListParser() {
-}
-
-void
-TSIGKeyInfoListParser::
-build(isc::data::ConstElementPtr key_list) {
-    int i = 0;
+TSIGKeyInfoMapPtr
+TSIGKeyInfoListParser::parse(isc::data::ConstElementPtr key_list) {
+    TSIGKeyInfoMapPtr keys(new TSIGKeyInfoMap());
     isc::data::ConstElementPtr key_config;
-    // For each key element in the key list:
-    // 1. Create a parser for the key element.
-    // 2. Invoke the parser's build method passing in the key's
-    // configuration.
-    // 3. Add the parser to a local collection of parsers.
     BOOST_FOREACH(key_config, key_list->listValue()) {
-        // Create a name for the parser based on its position in the list.
-        std::string entry_name = boost::lexical_cast<std::string>(i++);
-        isc::dhcp::ParserPtr parser(new TSIGKeyInfoParser(entry_name,
-                                                            local_keys_));
-        parser->build(key_config);
-        parsers_.push_back(parser);
+        TSIGKeyInfoParser key_parser;
+        TSIGKeyInfoPtr key = key_parser.parse(key_config);
+
+        // Duplicates are not allowed and should be flagged as an error.
+        if (keys->find(key->getName()) != keys->end()) {
+            isc_throw(D2CfgError, "Duplicate TSIG key name specified : "
+                      << key->getName()
+                      << " (" << getPosition("name", key_config) << ")");
+        }
+
+        (*keys)[key->getName()] = key;
     }
 
-    // Now that we know we have a valid list, commit that list to the
-    // area given to us during construction (i.e. to the d2 context).
-    *keys_ = *local_keys_;
-}
-
-void
-TSIGKeyInfoListParser::commit() {
-    // Invoke commit on each server parser. This will cause each one to
-    // create it's server instance and commit it to storage.
-    BOOST_FOREACH(isc::dhcp::ParserPtr parser, parsers_) {
-        parser->commit();
-    }
+    return (keys);
 }
 
 // *********************** DnsServerInfoParser  *************************

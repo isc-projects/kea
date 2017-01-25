@@ -156,6 +156,18 @@ public:
         ///< Used while parsing content of DhcpDdns.
         DHCPDDNS,
 
+        ///< Used while parsing content of tsig-keys
+        TSIG_KEYS,
+
+        ///< Used while parsing content of DhcpDdns/tsig-keys/algorithm
+        ALGORITHM,
+
+        ///< Used while parsing content of DhcpDdns/tsig-keys/digest-bits
+        DIGEST_BITS,
+
+        ///< Used while parsing content of DhcpDdns/tsig-keys/secret
+        SECRET,
+
         ///< Used while parsing content of Logging
         LOGGING,
 
@@ -165,10 +177,10 @@ public:
         /// Used while parsing Logging/loggers/output_options structures.
         OUTPUT_OPTIONS,
 
-        /// Used while parsing Dhcp6/dhcp-ddns/ncr-protocol
+        /// Used while parsing DhcpDdns/ncr-protocol
         NCR_PROTOCOL,
 
-        /// Used while parsing Dhcp6/dhcp-ddns/ncr-format
+        /// Used while parsing DhcpDdns/ncr-format
         NCR_FORMAT
 
     } ParserContext;

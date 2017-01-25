@@ -266,26 +266,32 @@ public:
 
     /// @brief Constructor
     TSIGKeyInfoTest() {
-        reset();
     }
 
     /// @brief Destructor
     ~TSIGKeyInfoTest() {
     }
 
-    /// @brief Wipe out the current storage and parser and replace
-    /// them with new ones.
-    void reset() {
-        keys_.reset(new TSIGKeyInfoMap());
-        parser_.reset(new TSIGKeyInfoParser("test", keys_));
+    /// @brief Pointer to the current parser instance.
+    TSIGKeyInfoParser parser_;
+};
+
+/// @brief Test fixture class for testing DnsServerInfo parsing.
+class TSIGKeyInfoListTest : public ConfigParseTest {
+public:
+
+    /// @brief Constructor
+    TSIGKeyInfoListTest() {
     }
 
-    /// @brief Storage for "committing" keys.
-    TSIGKeyInfoMapPtr keys_;
+    /// @brief Destructor
+    ~TSIGKeyInfoListTest() {
+    }
 
     /// @brief Pointer to the current parser instance.
-    isc::dhcp::ParserPtr parser_;
+    TSIGKeyInfoListParser parser_;
 };
+
 
 /// @brief Test fixture class for testing DnsServerInfo parsing.
 class DnsServerInfoTest : public ConfigParseTest {
@@ -574,7 +580,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails on blank name.
-    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 
     // Config with a blank algorithm entry.
     config = "{"
@@ -586,7 +592,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails on blank algorithm.
-    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 
     // Config with an invalid algorithm entry.
     config = "{"
@@ -598,7 +604,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails on blank algorithm.
-    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 
     // Config with a blank secret entry.
     config = "{"
@@ -610,7 +616,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails blank secret
-    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 
     // Config with an invalid secret entry.
     config = "{"
@@ -622,7 +628,7 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that build fails an invalid secret
-    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
@@ -639,17 +645,9 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
 
     // Verify that it builds and commits without throwing.
     //ASSERT_NO_THROW(parser_->build(config_set_));
-    (parser_->build(config_set_));
-    ASSERT_NO_THROW(parser_->commit());
-
-    // Verify the correct number of keys are present
-    int count =  keys_->size();
-    EXPECT_EQ(1, count);
-
-    // Find the key and retrieve it.
-    TSIGKeyInfoMap::iterator gotit = keys_->find("d2_key_one");
-    ASSERT_TRUE(gotit != keys_->end());
-    TSIGKeyInfoPtr& key = gotit->second;
+    TSIGKeyInfoPtr key;
+    ASSERT_NO_THROW(key = parser_.parse(config_set_));
+    ASSERT_TRUE(key);
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "d2_key_one", "HMAC-MD5",
@@ -658,7 +656,7 @@ TEST_F(TSIGKeyInfoTest, validEntry) {
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
 /// entries is detected.
-TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
+TEST_F(TSIGKeyInfoListTest, invalidTSIGKeyList) {
     // Construct a list of keys with an invalid key entry.
     std::string config = "["
 
@@ -681,20 +679,15 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Create the list parser.
-    isc::dhcp::ParserPtr parser;
-    ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
-
-    // Verify that the list builds without errors.
-    EXPECT_THROW(parser->build(config_set_), D2CfgError);
+    // Verify that the list builds with errors.
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
 /// entries is detected.
-TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
+TEST_F(TSIGKeyInfoListTest, duplicateTSIGKey) {
     // Construct a list of keys with an invalid key entry.
     std::string config = "["
-
                          " { \"name\": \"key1\" , "
                          "   \"algorithm\": \"HMAC-MD5\" ,"
                          " \"digest-bits\": 120 , "
@@ -713,17 +706,13 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Create the list parser.
-    isc::dhcp::ParserPtr parser;
-    ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
-
     // Verify that the list builds without errors.
-    EXPECT_THROW(parser->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_.parse(config_set_), D2CfgError);
 }
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
 /// Also verifies that all of the supported algorithm names work.
-TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
+TEST_F(TSIGKeyInfoListTest, validTSIGKeyList) {
     // Construct a valid list of keys.
     std::string config = "["
 
@@ -760,22 +749,17 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          " ]";
 
     ASSERT_TRUE(fromJSON(config));
-
-    // Verify that the list builds and commits without errors.
-    // Create the list parser.
-    isc::dhcp::ParserPtr parser;
-    ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
-    ASSERT_NO_THROW(parser->build(config_set_));
-    ASSERT_NO_THROW(parser->commit());
+    TSIGKeyInfoMapPtr keys;
+    ASSERT_NO_THROW(keys = parser_.parse(config_set_));
 
     std::string ref_secret = "dGhpcyBrZXkgd2lsbCBtYXRjaA==";
     // Verify the correct number of keys are present
-    int count =  keys_->size();
+    int count =  keys->size();
     ASSERT_EQ(6, count);
 
     // Find the 1st key and retrieve it.
-    TSIGKeyInfoMap::iterator gotit = keys_->find("key1");
-    ASSERT_TRUE(gotit != keys_->end());
+    TSIGKeyInfoMap::iterator gotit = keys->find("key1");
+    ASSERT_TRUE(gotit != keys->end());
     TSIGKeyInfoPtr& key = gotit->second;
 
     // Verify the key contents.
@@ -783,8 +767,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          ref_secret, 80));
 
     // Find the 2nd key and retrieve it.
-    gotit = keys_->find("key2");
-    ASSERT_TRUE(gotit != keys_->end());
+    gotit = keys->find("key2");
+    ASSERT_TRUE(gotit != keys->end());
     key = gotit->second;
 
     // Verify the key contents.
@@ -792,8 +776,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          ref_secret, 80));
 
     // Find the 3rd key and retrieve it.
-    gotit = keys_->find("key3");
-    ASSERT_TRUE(gotit != keys_->end());
+    gotit = keys->find("key3");
+    ASSERT_TRUE(gotit != keys->end());
     key = gotit->second;
 
     // Verify the key contents.
@@ -801,8 +785,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          ref_secret, 128));
 
     // Find the 4th key and retrieve it.
-    gotit = keys_->find("key4");
-    ASSERT_TRUE(gotit != keys_->end());
+    gotit = keys->find("key4");
+    ASSERT_TRUE(gotit != keys->end());
     key = gotit->second;
 
     // Verify the key contents.
@@ -810,8 +794,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          ref_secret, 112));
 
     // Find the 5th key and retrieve it.
-    gotit = keys_->find("key5");
-    ASSERT_TRUE(gotit != keys_->end());
+    gotit = keys->find("key5");
+    ASSERT_TRUE(gotit != keys->end());
     key = gotit->second;
 
     // Verify the key contents.
@@ -819,8 +803,8 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
                          ref_secret, 192));
 
     // Find the 6th key and retrieve it.
-    gotit = keys_->find("key6");
-    ASSERT_TRUE(gotit != keys_->end());
+    gotit = keys->find("key6");
+    ASSERT_TRUE(gotit != keys->end());
     key = gotit->second;
 
     // Verify the key contents.

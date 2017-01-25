@@ -71,6 +71,13 @@ public:
         return (keys_);
     }
 
+    /// @brief Sets the may of TSIG keys
+    ///
+    /// @param new of TSIG keys
+    void setKeys(const TSIGKeyInfoMapPtr& keys) {
+        keys_ = keys;
+    }
+
 protected:
     /// @brief Copy constructor for use by derivations in clone().
     D2CfgContext(const D2CfgContext& rhs);
