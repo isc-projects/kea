@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,6 +65,11 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "next-server",              Element::string, "0.0.0.0" }
 };
 
+/// @brief This table defines default values for each IPv4 subnet.
+const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
+    { "id",  Element::integer, "0" } // 0 means autogenerate
+};
+
 /// @brief List of parameters that can be inherited from the global to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
@@ -98,13 +103,18 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
         }
     }
 
-    // Finally, set the defaults for option data
+    // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
-        BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
-            cnt += SimpleParser::setDefaults(single_option, OPTION4_DEFAULTS);
-        }
+        cnt += setListDefaults(options, OPTION4_DEFAULTS);
     }
+
+    // Now set the defaults for defined subnets
+    ConstElementPtr subnets = global->get("subnet4");
+    if (subnets) {
+        cnt += setListDefaults(subnets, SUBNET4_DEFAULTS);
+    }
+
     return (cnt);
 }
 

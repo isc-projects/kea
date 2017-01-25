@@ -856,9 +856,11 @@ protected:
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
     ///
+    /// @param params configuration parameters for that subnet
     /// @param addr is the IP prefix of the subnet.
     /// @param len is the prefix length
-    virtual void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) = 0;
+    virtual void initSubnet(isc::data::ConstElementPtr params,
+                            isc::asiolink::IOAddress addr, uint8_t len) = 0;
 
     /// @brief Returns value for a given parameter (after using inheritance)
     ///
@@ -899,9 +901,10 @@ private:
 
     /// @brief Create a new subnet using a data from child parsers.
     ///
+    /// @param data Element map that describes the subnet
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing
     /// failed.
-    void createSubnet();
+    void createSubnet(isc::data::ConstElementPtr data);
 
 protected:
 

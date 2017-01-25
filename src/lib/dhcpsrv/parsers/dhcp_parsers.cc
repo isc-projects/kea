@@ -1062,7 +1062,7 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
 
     // Create a subnet.
     try {
-        createSubnet();
+        createSubnet(subnet);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError,
                   "subnet configuration failed (" << subnet->getPosition()
@@ -1088,10 +1088,10 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
 }
 
 void
-SubnetConfigParser::createSubnet() {
+SubnetConfigParser::createSubnet(ConstElementPtr params) {
     std::string subnet_txt;
     try {
-        subnet_txt = string_values_->getParam("subnet");
+        subnet_txt = getString(params, "subnet");
     } catch (const DhcpConfigError &) {
         // rethrow with precise error
         isc_throw(DhcpConfigError,
@@ -1121,7 +1121,7 @@ SubnetConfigParser::createSubnet() {
     uint8_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
 
     // Call the subclass's method to instantiate the subnet
-    initSubnet(addr, len);
+    initSubnet(params, addr, len);
 
     // Add pools to it.
     for (PoolStorage::iterator it = pools_->begin(); it != pools_->end();
@@ -1139,7 +1139,6 @@ SubnetConfigParser::createSubnet() {
     } catch (const DhcpConfigError &) {
         // iface not mandatory so swallow the exception
     }
-
 
     // Let's set host reservation mode. If not specified, the default value of
     // all will be used.

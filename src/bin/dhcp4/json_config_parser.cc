@@ -208,7 +208,8 @@ protected:
     ///
     /// @param addr is IPv4 address of the subnet.
     /// @param len is the prefix length
-    void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) {
+    void initSubnet(isc::data::ConstElementPtr params,
+                    isc::asiolink::IOAddress addr, uint8_t len) {
         // The renew-timer and rebind-timer are optional. If not set, the
         // option 58 and 59 will not be sent to a client. In this case the
         // client will use default values based on the valid-lifetime.
@@ -218,10 +219,11 @@ protected:
         // particular subnet. If not, the global value should be present.
         // If there is no global value, exception is thrown.
         Triplet<uint32_t> valid = getParam("valid-lifetime");
+
         // Subnet ID is optional. If it is not supplied the value of 0 is used,
-        // which means autogenerate.
-        SubnetID subnet_id =
-            static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
+        // which means autogenerate. The value was inserted earlier by calling
+        // SimpleParser4::setAllDefaults.
+        SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
 
         stringstream s;
         s << addr << "/" << static_cast<int>(len) << " with params: ";
