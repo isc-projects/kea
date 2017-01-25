@@ -31,6 +31,8 @@ namespace isc {
 namespace dhcp {
 
 // Default connection timeout
+
+/// @todo: migrate this default timeout to src/bin/dhcpX/simple_parserX.cc
 const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;

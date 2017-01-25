@@ -28,6 +28,7 @@ const my_bool MLM_TRUE = 1;
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 const int MLM_MYSQL_FETCH_FAILURE = 1;
 
+/// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
 const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 MySqlTransaction::MySqlTransaction(MySqlConnection& conn)
