@@ -999,7 +999,7 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 }
 
 SubnetPtr
-SubnetConfigParser::build(ConstElementPtr subnet) {
+SubnetConfigParser::parse(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
         // Pools has been converted to SimpleParser.
         if (param.first == "pools") {

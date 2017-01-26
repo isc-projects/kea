@@ -125,10 +125,16 @@ public:
             parser.parse(pools_, pools);
         }
 
-        SubnetPtr generic = SubnetConfigParser::build(subnet);
+        SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
-        Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(generic);
-        if (!sub4ptr) {
+        if (!generic) {
+            isc_throw(DhcpConfigError,
+                      "Failed to create an IPv4 subnet (" <<
+                      subnet->getPosition() << ")");
+        }
+
+        Subnet4Ptr sn4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
+        if (!sn4ptr) {
             // If we hit this, it is a programming error.
             isc_throw(Unexpected,
                       "Invalid Subnet4 cast in Subnet4ConfigParser::parse");
@@ -136,7 +142,7 @@ public:
 
         // Set relay information if it was parsed
         if (relay_info_) {
-            sub4ptr->setRelayInfo(*relay_info_);
+            sn4ptr->setRelayInfo(*relay_info_);
         }
 
         // Parse Host Reservations for this subnet if any.
@@ -146,7 +152,7 @@ public:
             parser.parse(subnet_->getID(), reservations);
         }
 
-        return (sub4ptr);
+        return (sn4ptr);
     }
 
 protected:
@@ -378,6 +384,65 @@ public:
     }
 };
 
+class Dhcp4ConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief Sets global parameters in staging configuration
+    ///
+    /// @param global global configuration scope
+    ///
+    /// Currently this method sets the following global parameters:
+    ///
+    /// - echo-client-id
+    /// - decline-probation-period
+    /// - dhcp4o6-port
+    ///
+    /// @throw DhcpConfigError if parameters are missing or
+    /// or having incorrect values.
+    void parse(ConstElementPtr global) {
+
+        // Set whether v4 server is supposed to echo back client-id
+        // (yes = RFC6842 compatible, no = backward compatibility)
+        bool echo_client_id = getBoolean(global, "echo-client-id");
+        CfgMgr::instance().echoClientId(echo_client_id);
+
+        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+        std::string name;
+        ConstElementPtr value;
+        try {
+            // Set the probation period for decline handling.
+            name = "decline-probation-period";
+            value = global->get(name);
+            uint32_t probation_period = getUint32(name, value);
+            srv_cfg->setDeclinePeriod(probation_period);
+
+            // Set the DHCPv4-over-DHCPv6 interserver port.
+            name = "dhcp4o6-port";
+            value = global->get(name);
+            // @todo Change for uint16_t
+            uint32_t dhcp4o6_port = getUint32(name, value);
+            srv_cfg->setDhcp4o6Port(dhcp4o6_port);
+        } catch (const isc::data::TypeError& ex) {
+            isc_throw(DhcpConfigError,
+                      "invalid value type specified for parameter '" << name
+                      << "' (" << value->getPosition() << ")");
+        }
+    }
+
+private:
+
+    /// @brief Returns a value converted to uint32_t
+    ///
+    /// Instantiation of extractInt() to uint32_t
+    ///
+    /// @param value value of the parameter
+    /// @return an uint32_t value
+    uint32_t getUint32(const std::string& name,
+                       isc::data::ConstElementPtr value) {
+        return (extractInt<uint32_t, DhcpConfigError>(name, value));
+    }
+};
+
 } // anonymous namespace
 
 namespace isc {
@@ -418,49 +483,6 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
               << config_id << " (" << element->getPosition() << ")");
 
     return (parser);
-}
-
-/// @brief Sets global parameters in staging configuration
-///
-/// @param global global configuration scope
-///
-/// Currently this method sets the following global parameters:
-///
-/// - echo-client-id
-/// - decline-probation-period
-/// - dhcp4o6-port
-void setGlobalParameters4(ConstElementPtr global) {
-    // Set whether v4 server is supposed to echo back client-id (yes = RFC6842
-    // compatible, no = backward compatibility)
-    bool echo_client_id = SimpleParser::getBoolean(global, "echo-client-id");
-    CfgMgr::instance().echoClientId(echo_client_id);
-
-    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
-    /// This will be done as part of #5116.
-    int64_t probation_period = SimpleParser::getInteger(global,
-                                                        "decline-probation-period");
-    if (probation_period < std::numeric_limits<uint32_t>::min() ||
-        probation_period > std::numeric_limits<uint32_t>::max()) {
-        isc_throw(DhcpConfigError, "Invalid decline-probation-period value: "
-                  << probation_period << ", allowed range: "
-                  << std::numeric_limits<uint32_t>::min() << ".."
-                  << std::numeric_limits<uint32_t>::max());
-    }
-    CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
-
-    // Set the DHCPv4-over-DHCPv6 interserver port.
-
-    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
-    /// This will be done as part of #5116.
-    uint32_t dhcp4o6_port = SimpleParser::getInteger(global, "dhcp4o6-port");
-    if (dhcp4o6_port < std::numeric_limits<uint16_t>::min() ||
-        dhcp4o6_port > std::numeric_limits<uint16_t>::max()) {
-        isc_throw(DhcpConfigError, "Invalid dhcp4o6-port value: "
-                  << dhcp4o6_port << ", allowed range: "
-                  << std::numeric_limits<uint16_t>::min() << ".."
-                  << std::numeric_limits<uint16_t>::max());
-    }
-    CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
 }
 
 /// @brief Initialize the command channel based on the staging configuration
@@ -685,7 +707,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port, echo-client-id are
-            // handlded in the setGlobalParameters4.
+            // handled in global_parser.parse() which sets global parameters.
             // match-client-id is derived to subnet scope level.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
@@ -717,6 +739,19 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
         // Setup the command channel.
         configureCommandChannel();
+
+        // the leases database parser is the last to be run.
+        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
+            values_map.find("lease-database");
+        if (leases_config != values_map.end()) {
+            config_pair.first = "lease-database";
+            leases_parser->build(leases_config->second);
+            leases_parser->commit();
+        }
+
+        // Apply global options in the staging config.
+        Dhcp4ConfigParser global_parser;
+        global_parser.parse(mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
@@ -790,8 +825,6 @@ ParserContextPtr& globalContext() {
     static ParserContextPtr global_context_ptr(new ParserContext(Option::V4));
     return (global_context_ptr);
 }
-
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
