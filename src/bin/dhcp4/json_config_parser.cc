@@ -435,43 +435,6 @@ private:
 namespace isc {
 namespace dhcp {
 
-/// @brief creates global parsers
-///
-/// This method creates global parsers that parse global parameters, i.e.
-/// those that take format of Dhcp4/param1, Dhcp4/param2 and so forth.
-///
-/// @param config_id pointer to received global configuration entry
-/// @param element pointer to the element to be parsed
-/// @return parser for specified global DHCPv4 parameter
-/// @throw NotImplemented if trying to create a parser for unknown
-/// config element
-DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
-                                                ConstElementPtr element) {
-    DhcpConfigParser* parser = NULL;
-    // valife-lifetime, renew-timer, rebind-timer, decline-probation-period
-    // have been migrated to SimpleParser already.
-    // subnet4 has been migrated to SimpleParser already.
-    // interface-config has been migrated to SimpleParser already.
-    // option-data and option-def have been converted to SimpleParser already.
-
-    // next-server migrated
-    // echo-client-id migrated
-    // lease-database migrated
-    // hosts-database migrated
-
-    // dhcp-ddns has been converted to SimpleParser.
-    // match-client-id has been migrated to SimpleParser already.
-    // control-socket has been converted to SimpleParser already.
-    // expired-leases-processing has been converted to SimpleParser already.
-    // client-classes has been converted to SimpleParser already.
-    // host-reservation-identifiers have been converted to SimpleParser already.
-    isc_throw(DhcpConfigError,
-              "unsupported global configuration parameter: "
-              << config_id << " (" << element->getPosition() << ")");
-
-    return (parser);
-}
-
 /// @brief Initialize the command channel based on the staging configuration
 ///
 /// Only close the current channel, if the new channel configuration is
