@@ -740,15 +740,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         // Setup the command channel.
         configureCommandChannel();
 
-        // the leases database parser is the last to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
-            values_map.find("lease-database");
-        if (leases_config != values_map.end()) {
-            config_pair.first = "lease-database";
-            leases_parser->build(leases_config->second);
-            leases_parser->commit();
-        }
-
         // Apply global options in the staging config.
         Dhcp4ConfigParser global_parser;
         global_parser.parse(mutable_cfg);
