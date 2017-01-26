@@ -101,6 +101,9 @@ using namespace std;
   ID "id"
   RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
+  DISABLED "disabled"
+  OUT_OF_POOL "out-of-pool"
+  ALL "all"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
@@ -205,6 +208,7 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> db_type
+%type <ElementPtr> hr_mode
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> replace_client_name_value
@@ -862,12 +866,16 @@ client_class: CLIENT_CLASS {
 };
 
 reservation_mode: RESERVATION_MODE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr rm(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("reservation-mode", rm);
+    ctx.enter(ctx.RESERVATION_MODE);
+} COLON hr_mode {
+    ctx.stack_.back()->set("reservation-mode", $4);
     ctx.leave();
 };
+
+hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
+       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
+       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
+       ;
 
 id: ID COLON INTEGER {
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
