@@ -1,3 +1,11 @@
+1208.	[func]		tomek
+	Global DHCPv4 and DHCPv6 parsers have been migrated to the
+	SimpleParser framework. Several parameters (renew-timer,
+	rebind-timer, preferred-lifetime, valid-lifetime, match-client-id,
+	next-server, decline-probation-period, dhcp4o6-port,
+	echo-client-id) now have explicit default values.
+	(Trac #5019, git f3538dd031e6f29abcd516f425d72c8f929abbb0)
+
 1207.	[func]		fdupont
 	Client classes parser migrated to SimpleParser. The 'name'
 	parameter in 'client-classes' definitions is now mandatory.
