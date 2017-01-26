@@ -125,6 +125,20 @@ D2ParserContext::contextName()
         return ("DhcpDdns");
     case TSIG_KEYS:
         return ("tsig-keys");
+    case ALGORITHM:
+        return("algorithm");
+    case DIGEST_BITS:
+        return("digest-bits");
+    case SECRET:
+        return("secret");
+    case FORWARD_DDNS:
+        return("forward-ddns");
+    case REVERSE_DDNS:
+        return("reverse-ddns");
+    case DDNS_DOMAINS:
+        return("ddns-domains");
+    case DNS_SERVERS:
+        return("dns-servers");
     case LOGGING:
         return ("Logging");
     case LOGGERS:

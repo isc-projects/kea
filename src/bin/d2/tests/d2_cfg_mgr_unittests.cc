@@ -1773,9 +1773,10 @@ TEST_F(D2CfgMgrTest, configPermutations) {
                 EXPECT_EQ(expected_syntax_error, ex.what())
                             << description << ", syntax error mismatch";
 
-                // Expected or not, skip logic testing on syntax errors.
-                continue;
-           }
+            }
+
+            // Expected or not, skip logic testing on syntax errors.
+            continue;
         }
 
         // Attempt to Element parse the configuration. We verify that we get the

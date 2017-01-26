@@ -63,6 +63,10 @@ using namespace std;
   JSON "JSON"
   FORWARD_DDNS "forward-ddns"
   REVERSE_DDNS "reverse-ddns"
+  DDNS_DOMAINS "ddns-domains"
+  KEY_NAME "key-name"
+  DNS_SERVERS "dns-servers"
+  HOSTNAME "hostname"
   TSIG_KEYS "tsig-keys"
   ALGORITHM "algorithm"
   DIGEST_BITS "digest-bits"
@@ -157,14 +161,6 @@ list_generic: LSQUARE_BRACKET {
 } list_content RSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
 };
-
-//// This one is used in syntax parser.
-//list2: LSQUARE_BRACKET {
-//    // List parsing about to start
-//} list_content RSQUARE_BRACKET {
-//    // list parsing complete. Put any sanity checking here
-//    //ctx.stack_.pop_back();
-//};
 
 list_content: %empty // Empty list
             | not_empty_list
@@ -300,18 +296,171 @@ ncr_format: NCR_FORMAT {
 };
 
 forward_ddns : FORWARD_DDNS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("forward-ddns", $4);
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("forward-ddns", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.FORWARD_DDNS);
+} COLON LCURLY_BRACKET ddns_mgr_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
 reverse_ddns : REVERSE_DDNS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->set("reverse-ddns", $4);
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("reverse-ddns", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.REVERSE_DDNS);
+} COLON LCURLY_BRACKET ddns_mgr_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
+
+ddns_mgr_params: %empty
+               | not_empty_ddns_mgr_params
+               ;
+
+not_empty_ddns_mgr_params: ddns_mgr_param 
+                         | ddns_mgr_params COMMA ddns_mgr_param
+                         ;
+
+ddns_mgr_param: ddns_domains 
+              | unknown_map_entry
+              ;
+
+
+// --- ddns-domains ----------------------------------------
+
+ddns_domains: DDNS_DOMAINS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("ddns-domains", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.DDNS_DOMAINS);
+} COLON LSQUARE_BRACKET ddns_domain_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+ddns_domain_list: %empty
+              | not_empty_ddns_domain_list
+              ;
+
+not_empty_ddns_domain_list: ddns_domain
+                        | not_empty_ddns_domain_list COMMA ddns_domain
+                        ;
+
+ddns_domain: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} ddns_domain_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+ddns_domain_params: ddns_domain_param 
+                  | ddns_domain_params COMMA ddns_domain_param
+                  ;
+
+ddns_domain_param: ddns_domain_name
+                 | ddns_domain_key_name
+                 | dns_servers
+                 | unknown_map_entry
+                 ;
+
+//  @todo NAME needs to be an FQDN sort of thing
+ddns_domain_name: NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "name cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("name", name);
+    ctx.leave();
+};
+
+ddns_domain_key_name: KEY_NAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "key-name cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("key-name", name);
+    ctx.leave();
+};
+
+// --- end ddns-domains ----------------------------------------
+
+// --- dns-servers ----------------------------------------
+dns_servers: DNS_SERVERS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("dns-servers", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.DNS_SERVERS);
+} COLON LSQUARE_BRACKET dns_server_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+dns_server_list: %empty
+              | not_empty_dns_server_list
+              ;
+
+not_empty_dns_server_list: dns_server
+                        | not_empty_dns_server_list COMMA dns_server
+                        ;
+
+dns_server: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} dns_server_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+dns_server_params: dns_server_param 
+               | dns_server_params COMMA dns_server_param
+               ;
+
+dns_server_param: dns_server_hostname
+              | dns_server_ip_address
+              | dns_server_port
+              | unknown_map_entry
+              ;
+
+dns_server_hostname: HOSTNAME {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "hostname cannot be blank");
+    } 
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname", name);
+    ctx.leave();
+};
+
+dns_server_ip_address: IP_ADDRESS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ip-address", s);
+    ctx.leave();
+};
+
+dns_server_port: PORT COLON INTEGER {
+    if ($3 <= 0) {
+        error(@3, "port must be greater than zero");
+    } 
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("port", i);
+};
+
+// --- end of dns-servers ---------------------------------
+
+
 
 // --- tsig-keys ----------------------------------------
 // "tsig-keys" : [ ... ]

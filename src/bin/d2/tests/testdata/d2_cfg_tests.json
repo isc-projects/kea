@@ -736,7 +736,7 @@
 #------
 ,{
 "description" : "D2.forward-ddns, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.21-27: got unexpected keyword \"bogus\" in forward-ddns map.",
 "data" :
     {
     "forward-ddns" :
@@ -820,7 +820,7 @@
 #----- D2.forward-ddns.dhcp-ddns  tests
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.41-47: got unexpected keyword \"bogus\" in ddns-domains map.",
 "data" :
     {
     "forward-ddns" :
@@ -839,8 +839,8 @@
 
 #----- D2.forward-ddns.dhcp-ddns.name tests
 ,{
-"description" : "D2.forward-ddns.dhcp-ddns, no name",
-"logic-error" : true,
+"description" : "D2.forward-ddns.dhcp-ddns, empty domain",
+"syntax-error" : "<string>:1.42: syntax error, unexpected }, expecting key-name or dns-servers or name or constant string",
 "data" :
     {
     "forward-ddns" :
@@ -859,7 +859,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns, blank name",
-"logic-error" : true,
+"syntax-error" : "<string>:1.47: name cannot be blank",
 "data" :
     {
     "forward-ddns" :
@@ -934,7 +934,7 @@
 #----- D2.forward-ddns.dhcp-ddns.dns-servers tests
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.60-66: got unexpected keyword \"bogus\" in dns-servers map.",
 "data" :
     {
     "forward-ddns" :
@@ -1089,7 +1089,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers.port cannot be 0 ",
-"logic-error" : true,
+"syntax-error" : "<string>:1.97: port must be greater than zero",
 "data" :
     {
     "forward-ddns" :
@@ -1130,7 +1130,7 @@
 #------
 ,{
 "description" : "D2.reverse-ddns, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.43-49: got unexpected keyword \"bogus\" in reverse-ddns map.",
 "data" :
     {
     "forward-ddns" : {},
@@ -1214,7 +1214,7 @@
 #----- D2.reverse-ddns.dhcp-ddns  tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.63-69: got unexpected keyword \"bogus\" in ddns-domains map.",
 "data" :
     {
     "forward-ddns" : {},
@@ -1234,7 +1234,7 @@
 #----- D2.reverse-ddns.dhcp-ddns.name tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, no name",
-"logic-error" : true,
+"syntax-error" : "<string>:1.64: syntax error, unexpected }, expecting key-name or dns-servers or name or constant string",
 "data" :
     {
     "forward-ddns" : {},
@@ -1253,7 +1253,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, blank name",
-"logic-error" : true,
+"syntax-error" : "<string>:1.69: name cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -1328,7 +1328,7 @@
 #----- D2.reverse-ddns.dhcp-ddns.dns-servers tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers, unknown parameter",
-"logic-error" : true,
+"syntax-error" : "<string>:1.82-88: got unexpected keyword \"bogus\" in dns-servers map.",
 "data" :
     {
     "forward-ddns" : {},
@@ -1482,7 +1482,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers.port cannot be 0 ",
-"logic-error" : true,
+"syntax-error" : "<string>:1.119: port must be greater than zero",
 "data" :
     {
     "forward-ddns" : {},
