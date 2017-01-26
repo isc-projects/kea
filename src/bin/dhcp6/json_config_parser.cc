@@ -600,6 +600,9 @@ public:
     }
 };
 
+/// @brief Parser that takes care of global DHCPv6 parameters.
+///
+/// See @ref parse method for a list of supported parameters.
 class Dhcp6ConfigParser : public isc::data::SimpleParser {
 public:
 
