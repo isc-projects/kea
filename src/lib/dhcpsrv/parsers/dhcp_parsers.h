@@ -831,7 +831,7 @@ protected:
     /// @return a pointer to newly created subnet
     ///
     /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    virtual SubnetPtr build(isc::data::ConstElementPtr subnet);
+    SubnetPtr parse(isc::data::ConstElementPtr subnet);
 
     /// @brief creates parsers for entries in subnet definition
     ///
@@ -840,8 +840,8 @@ protected:
     /// @return parser object for specified entry name
     /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
     ///        for unknown config element
-    virtual DhcpConfigParser* createSubnetConfigParser(
-                                            const std::string& config_id) = 0;
+    virtual DhcpConfigParser*
+    createSubnetConfigParser(const std::string& config_id) = 0;
 
     /// @brief Issues a server specific warning regarding duplicate subnet
     /// options.
@@ -851,7 +851,7 @@ protected:
     /// @todo a means to know the correct logger and perhaps a common
     /// message would allow this method to be emitted by the base class.
     virtual void duplicate_option_warning(uint32_t code,
-        isc::asiolink::IOAddress& addr) = 0;
+                                          isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.

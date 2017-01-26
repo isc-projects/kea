@@ -323,7 +323,7 @@ public:
             parser.parse(pools_, pd_pools);
         }
 
-        SubnetPtr generic = SubnetConfigParser::build(subnet);
+        SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
         if (!generic) {
             isc_throw(DhcpConfigError,
@@ -331,8 +331,8 @@ public:
                       subnet->getPosition() << ")");
         }
 
-        Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
-        if (!sub6ptr) {
+        Subnet6Ptr sn6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
+        if (!sn6ptr) {
             // If we hit this, it is a programming error.
             isc_throw(Unexpected,
                       "Invalid Subnet6 cast in Subnet6ConfigParser::parse");
@@ -340,7 +340,7 @@ public:
 
         // Set relay information if it was provided
         if (relay_info_) {
-            sub6ptr->setRelayInfo(*relay_info_);
+            sn6ptr->setRelayInfo(*relay_info_);
         }
 
 
@@ -351,7 +351,7 @@ public:
             parser.parse(subnet_->getID(), reservations);
         }
 
-        return (sub6ptr);
+        return (sn6ptr);
     }
 
 protected:
@@ -616,6 +616,58 @@ public:
     virtual void commit() {}
 };
 
+class Dhcp6ConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief Sets global parameters in staging configuration
+    ///
+    /// @param global global configuration scope
+    ///
+    /// Currently this method sets the following global parameters:
+    ///
+    /// - decline-probation-period
+    /// - dhcp4o6-port
+    ///
+    /// @throw DhcpConfigError if parameters are missing or
+    /// or having incorrect values.
+    void parse(ConstElementPtr global) {
+
+        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
+        std::string name;
+        ConstElementPtr value;
+        try {
+            // Set the probation period for decline handling.
+            name = "decline-probation-period";
+            value = global->get(name);
+            uint32_t probation_period = getUint32(name, value);
+            srv_config->setDeclinePeriod(probation_period);
+
+            // Set the DHCPv4-over-DHCPv6 interserver port.
+            name = "dhcp4o6-port";
+            value = global->get(name);
+            // @todo Change for uint16_t
+            uint32_t dhcp4o6_port = getUint32(name, value);
+            srv_config->setDhcp4o6Port(dhcp4o6_port);
+        } catch (const isc::data::TypeError& ex) {
+            isc_throw(DhcpConfigError,
+                      "invalid value type specified for parameter '" << name
+                      << "' (" << value->getPosition() << ")");
+        }
+    }
+
+private:
+
+    /// @brief Returns a value converted to uint32_t
+    ///
+    /// Instantiation of extractInt() to uint32_t
+    ///
+    /// @param value value of the parameter
+    /// @return an uint32_t value
+    uint32_t getUint32(const std::string& name,
+                       isc::data::ConstElementPtr value) {
+        return (extractInt<uint32_t, DhcpConfigError>(name, value));
+    }
+};
 
 } // anonymous namespace
 
@@ -665,47 +717,6 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     }
 
     return (parser);
-}
-
-/// @brief Sets global parameters in the staging configuration
-///
-/// @param global global configuration scope
-///
-/// Currently this method sets the following global parameters:
-///
-/// - decline-probation-period
-/// - dhcp4o6-port
-///
-/// @throw DhcpConfigError if parameters are missing or having incorrect values.
-void setGlobalParameters6(ConstElementPtr global) {
-
-    // Set the probation period for decline handling.
-    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
-    /// This will be done as part of #5116.
-    int64_t probation_period = SimpleParser::getInteger(global,
-                                                        "decline-probation-period");
-    if (probation_period < std::numeric_limits<uint32_t>::min() ||
-        probation_period > std::numeric_limits<uint32_t>::max()) {
-        isc_throw(DhcpConfigError, "Invalid decline-probation-period value: "
-                  << probation_period << ", allowed range: "
-                  << std::numeric_limits<uint32_t>::min() << ".."
-                  << std::numeric_limits<uint32_t>::max());
-    }
-    CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
-
-    // Set the DHCPv4-over-DHCPv6 interserver port.
-
-    /// @todo: Use Francis' template from SimpleParser once 5097 is merged
-    /// This will be done as part of #5116.
-    uint32_t dhcp4o6_port = SimpleParser::getInteger(global, "dhcp4o6-port");
-    if (dhcp4o6_port < std::numeric_limits<uint16_t>::min() ||
-        dhcp4o6_port > std::numeric_limits<uint16_t>::max()) {
-        isc_throw(DhcpConfigError, "Invalid dhcp4o6-port value: "
-                  << dhcp4o6_port << ", allowed range: "
-                  << std::numeric_limits<uint16_t>::min() << ".."
-                  << std::numeric_limits<uint16_t>::max());
-    }
-    CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
 }
 
 /// @brief Initialize the command channel based on the staging configuration
@@ -946,7 +957,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period and dhcp4o6-port are handled in the
-            // setGlobalParameters6.
+            // global_parser.parse() which sets global parameters.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "preferred-lifetime") ||
@@ -977,7 +988,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         configureCommandChannel();
 
         // Apply global options in the staging config.
-        setGlobalParameters6(mutable_cfg);
+        Dhcp6ConfigParser global_parser;
+        global_parser.parse(mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
