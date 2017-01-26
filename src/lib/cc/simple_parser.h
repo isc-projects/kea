@@ -8,6 +8,7 @@
 #define SIMPLE_PARSER_H
 
 #include <cc/data.h>
+#include <cc/dhcp_config_error.h>
 #include <vector>
 #include <string>
 #include <stdint.h>
@@ -147,6 +148,59 @@ protected:
     /// @return a boolean value of the parameter
     static bool getBoolean(isc::data::ConstElementPtr scope,
                            const std::string& name);
+
+    /// @brief Returns an integer value with range checking from a scope
+    ///
+    /// This template should be instantied in parsers when useful
+    ///
+    /// @tparam int_type the integer type e.g. uint32_t
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter for error report
+    /// @return a value of int_type
+    template <typename int_type> int_type
+    getIntType(isc::data::ConstElementPtr scope,
+               const std::string& name) {
+        int64_t val_int = getInteger(scope, name);
+        if ((val_int < std::numeric_limits<int_type>::min()) ||
+            (val_int > std::numeric_limits<int_type>::max())) {
+          isc_throw(isc::dhcp::DhcpConfigError,
+                    "out of range value (" << val_int
+                    << ") specified for parameter '" << name
+                    << "' (" << getPosition(name, scope) << ")");
+        }
+        return (static_cast<int_type>(val_int));
+    }
+
+    /// @brief Returns a converted value from a scope
+    ///
+    /// This template should be instantied in parsers when useful
+    ///
+    /// @tparam target_type the type of the result
+    /// @tparam convert the conversion function std::string -> target_type
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter for error report
+    /// @param type_name name of target_type for error report
+    /// @param value value of the parameter
+    /// @return a converted value of target_type
+    /// @throw isc::data::TypeError when the value is not an integer
+    /// @throw exception_type when the value cannot be converted
+    template <typename target_type,
+              target_type convert(const std::string&)> target_type
+    getAndConvert(isc::data::ConstElementPtr scope,
+                  const std::string& name,
+                  const std::string& type_name) {
+        std::string str = getString(scope, name);
+        try {
+            return (convert(str));
+        } catch (const std::exception&) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "invalid " << type_name << " (" << str
+                      << ") specified for parameter '" << name
+                      << "' (" << getPosition(name, scope) << ")");
+        }
+    }
+
+    /// @todo remove this when they'll be no longer used.
 
     /// @brief Returns an integer value with range checking
     ///

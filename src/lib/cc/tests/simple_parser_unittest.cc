@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::data;
+using isc::dhcp::DhcpConfigError;
 
 /// This table defines sample default values. Although these are DHCPv6
 /// specific, the mechanism is generic and can be used by any other component.
@@ -57,23 +58,22 @@ public:
 
 class SimpleParserClassTest : public SimpleParser {
 public:
-    /// @brief Instantiation of extractInt for uint8_t
+    /// @brief Instantiation of getIntType for uint8_t
     ///
+    /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter for error report
-    /// @param value value of the parameter
     /// @return an uint8_t value
-    uint8_t extractUint8(const std::string& name, ConstElementPtr value) const {
-        return (extractInt<uint8_t, isc::OutOfRange>(name, value));
+    uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
+        return (getIntType<uint8_t>(scope, name));
     }
 
-    /// @brief Instantiation of extractConvert
+    /// @brief Instantiation of getAndConvert
     ///
+    /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter for error report
-    /// @param value value of the parameter
     /// @return a bool value
-    bool extractBool(const std::string& name, ConstElementPtr value) const {
-        return (extractConvert<bool, toBool, isc::BadValue>
-                    (name, "boolean", value));
+    bool getAsBool(ConstElementPtr scope, const std::string& name) {
+        return (getAndConvert<bool, toBool>(scope, name, "boolean"));
     }
 
     /// @brief Convert to boolean
@@ -169,45 +169,53 @@ TEST_F(SimpleParserTest, setListDefaults) {
     checkIntegerValue(third, "renew-timer", 900);
 }
 
-// This test exercises the extractInt template
-TEST_F(SimpleParserTest, extractInt) {
+// This test exercises the getIntType template
+TEST_F(SimpleParserTest, getIntType) {
 
     SimpleParserClassTest parser;
 
-    // extractInt checks if it is an integer
-    ConstElementPtr not_int(new StringElement("xyz"));
-    EXPECT_THROW(parser.extractUint8("foo", not_int), TypeError);
+    // getIntType checks it can be found
+    ElementPtr not_found = Element::fromJSON("{ \"bar\": 1 }");
+    EXPECT_THROW(parser.getUint8(not_found, "foo"), DhcpConfigError);
 
-    // extractInt checks bounds
-    ConstElementPtr negative(new IntElement(-1));
-    EXPECT_THROW(parser.extractUint8("foo", negative), isc::OutOfRange);
-    ConstElementPtr too_large(new IntElement(1024));
-    EXPECT_THROW(parser.extractUint8("foo", too_large),isc::OutOfRange);
+    // getIntType checks if it is an integer
+    ElementPtr not_int = Element::fromJSON("{ \"foo\": \"xyz\" }");
+    EXPECT_THROW(parser.getUint8(not_int, "foo"), DhcpConfigError);
 
-    // checks if extractInt can return the expected value
-    ConstElementPtr hundred(new IntElement(100));
+    // getIntType checks bounds
+    ElementPtr negative = Element::fromJSON("{ \"foo\": -1 }");
+    EXPECT_THROW(parser.getUint8(negative, "foo"), DhcpConfigError);
+    ElementPtr too_large = Element::fromJSON("{ \"foo\": 1024 }");
+    EXPECT_THROW(parser.getUint8(too_large, "foo"), DhcpConfigError);
+
+    // checks if getIntType can return the expected value
+    ElementPtr hundred = Element::fromJSON("{ \"foo\": 100 }");
     uint8_t val = 0;
-    EXPECT_NO_THROW(val = parser.extractUint8("foo", hundred));
+    EXPECT_NO_THROW(val = parser.getUint8(hundred, "foo"));
     EXPECT_EQ(100, val);
 }
 
-// This test exercises the extractConvert template
-TEST_F(SimpleParserTest, extractConvert) {
+// This test exercises the getAndConvert template
+TEST_F(SimpleParserTest, getAndConvert) {
 
     SimpleParserClassTest parser;
 
-    // extractConvert checks if it is a string
-    ConstElementPtr not_bool(new IntElement(1));
-    EXPECT_THROW(parser.extractBool("foo", not_bool), TypeError);
+    // getAndConvert checks it can be found
+    ElementPtr not_found = Element::fromJSON("{ \"bar\": \"true\" }");
+    EXPECT_THROW(parser.getAsBool(not_found, "foo"), DhcpConfigError);
 
-    // checks if extractConvert can return the expected value
-    ConstElementPtr a_bool(new StringElement("false"));
+    // getAndConvert checks if it is a string
+    ElementPtr not_bool = Element::fromJSON("{ \"foo\": 1 }");
+    EXPECT_THROW(parser.getAsBool(not_bool, "foo"), DhcpConfigError);
+
+    // checks if getAndConvert can return the expected value
+    ElementPtr a_bool = Element::fromJSON("{ \"foo\": \"false\" }");
     bool val = true;
-    EXPECT_NO_THROW(val = parser.extractBool("foo", a_bool));
+    EXPECT_NO_THROW(val = parser.getAsBool(a_bool, "foo"));
     EXPECT_FALSE(val);
 
-    // extractConvert checks convertion
-    ConstElementPtr bad_bool(new StringElement("foo"));
-    EXPECT_THROW(parser.extractBool("bar", bad_bool), isc::BadValue);
+    // getAndConvert checks convertion
+    ElementPtr bad_bool = Element::fromJSON("{ \"foo\": \"bar\" }");
+    EXPECT_THROW(parser.getAsBool(bad_bool, "bar"), DhcpConfigError);
 }
 

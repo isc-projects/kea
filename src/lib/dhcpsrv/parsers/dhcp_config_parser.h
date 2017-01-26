@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,26 +9,13 @@
 
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <cc/dhcp_config_error.h>
 #include <stdint.h>
 #include <string>
 #include <map>
 
 namespace isc {
 namespace dhcp {
-
-/// An exception that is thrown if an error occurs while configuring
-/// DHCP server.
-class DhcpConfigError : public isc::Exception {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param file name of the file, where exception occurred
-    /// @param line line of the file, where exception occurred
-    /// @param what text description of the issue that caused exception
-    DhcpConfigError(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {}
-};
 
 /// @brief Forward declaration to DhcpConfigParser class.
 ///
