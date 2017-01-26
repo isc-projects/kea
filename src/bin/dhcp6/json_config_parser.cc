@@ -543,22 +543,8 @@ public:
 /// The options on this list can be specified using an option code or option
 /// name. Therefore, the values on the list should always be enclosed in
 /// "quotes".
-class RSOOListConfigParser : public DhcpConfigParser {
+class RSOOListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "relay-supplied-options" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
-    RSOOListConfigParser(const std::string& param_name) {
-        if (param_name != "relay-supplied-options") {
-            isc_throw(BadValue, "Internal error. RSOO configuration "
-                      "parser called for the wrong parameter: " << param_name);
-        }
-    }
 
     /// @brief parses parameters value
     ///
@@ -566,7 +552,8 @@ public:
     /// to the RSOO list.
     ///
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value) {
+    /// @param cfg server configuration (RSOO will be stored here)
+    void parse(SrvConfigPtr cfg, isc::data::ConstElementPtr value) {
         try {
             BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
                 std::string option_str = source_elem->stringValue();
@@ -603,7 +590,7 @@ public:
                                   " relay-supplied-options");
                     }
                 }
-                CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enable(code);
+                cfg->getCfgRSOO()->enable(code);
             }
         } catch (const std::exception& ex) {
             // Rethrow exception with the appended position of the parsed
@@ -611,9 +598,6 @@ public:
             isc_throw(DhcpConfigError, ex.what() << " (" << value->getPosition() << ")");
         }
     }
-
-    /// @brief Does nothing.
-    virtual void commit() {}
 };
 
 class Dhcp6ConfigParser : public isc::data::SimpleParser {
@@ -622,6 +606,7 @@ public:
     /// @brief Sets global parameters in staging configuration
     ///
     /// @param global global configuration scope
+    /// @param cfg Server configuration (parsed parameters will be stored here)
     ///
     /// Currently this method sets the following global parameters:
     ///
@@ -630,9 +615,8 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(ConstElementPtr global) {
+    void parse(SrvConfigPtr srv_config, ConstElementPtr global) {
 
-        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
         std::string name;
         ConstElementPtr value;
         try {
@@ -703,14 +687,13 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
     // lease-database and hosts-database have been converted to SimpleParser already.
     // mac-source has been converted to SimpleParser.
     // dhcp-ddns has been converted to SimpleParser
-    if (config_id.compare("relay-supplied-options") == 0) {
-        parser = new RSOOListConfigParser(config_id);
+    // rsoo has been converted to SimpleParser.
     // control-socket has been converted to SimpleParser.
     // expired-leases-processing has been converted to SimpleParser.
     // client-classes has been converted to SimpleParser.
     // host-reservation-identifiers have been converted to SimpleParser already.
     // server-id has been migrated to SimpleParser
-    } else {
+    {
         isc_throw(DhcpConfigError,
                 "unsupported global configuration parameter: "
                   << config_id << " (" << element->getPosition() << ")");
@@ -967,6 +950,12 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
+            if (config_pair.first == "relay-supplied-options") {
+                RSOOListConfigParser parser;
+                parser.parse(srv_config, config_pair.second);
+                continue;
+            }
+
             /// @todo: 5116 ticket: remove this chunk below once all parser
             /// tickets are done.
             ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
@@ -989,7 +978,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
         // Apply global options in the staging config.
         Dhcp6ConfigParser global_parser;
-        global_parser.parse(mutable_cfg);
+        global_parser.parse(srv_config, mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)

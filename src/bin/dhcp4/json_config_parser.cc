@@ -196,19 +196,6 @@ protected:
         return (parser);
     }
 
-    /// @brief Issues a DHCP4 server specific warning regarding duplicate subnet
-    /// options.
-    ///
-    /// @param code is the numeric option code of the duplicate option
-    /// @param addr is the subnet address
-    /// @todo a means to know the correct logger and perhaps a common
-    /// message would allow this method to be emitted by the base class.
-    virtual void duplicate_option_warning(uint32_t code,
-                                         isc::asiolink::IOAddress& addr) {
-        LOG_WARN(dhcp4_logger, DHCP4_CONFIG_OPTION_DUPLICATE)
-            .arg(code).arg(addr.toText());
-    }
-
     /// @brief Instantiates the IPv4 Subnet based on a given IPv4 address
     /// and prefix length.
     ///
@@ -390,6 +377,7 @@ public:
     /// @brief Sets global parameters in staging configuration
     ///
     /// @param global global configuration scope
+    /// @param cfg Server configuration (parsed parameters will be stored here)
     ///
     /// Currently this method sets the following global parameters:
     ///
@@ -399,14 +387,13 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(ConstElementPtr global) {
+    void parse(SrvConfigPtr cfg, ConstElementPtr global) {
 
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
         bool echo_client_id = getBoolean(global, "echo-client-id");
         CfgMgr::instance().echoClientId(echo_client_id);
 
-        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
         std::string name;
         ConstElementPtr value;
         try {
@@ -414,14 +401,14 @@ public:
             name = "decline-probation-period";
             value = global->get(name);
             uint32_t probation_period = getUint32(name, value);
-            srv_cfg->setDeclinePeriod(probation_period);
+            cfg->setDeclinePeriod(probation_period);
 
             // Set the DHCPv4-over-DHCPv6 interserver port.
             name = "dhcp4o6-port";
             value = global->get(name);
             // @todo Change for uint16_t
             uint32_t dhcp4o6_port = getUint32(name, value);
-            srv_cfg->setDhcp4o6Port(dhcp4o6_port);
+            cfg->setDhcp4o6Port(dhcp4o6_port);
         } catch (const isc::data::TypeError& ex) {
             isc_throw(DhcpConfigError,
                       "invalid value type specified for parameter '" << name
@@ -552,16 +539,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Some of the values specified in the configuration depend on
-    // other values. Typically, the values in the subnet4 structure
-    // depend on the global values. Also, option values configuration
-    // must be performed after the option definitions configurations.
-    // Thus we group parsers and will fire them in the right order:
-    // all parsers other than: lease-database, subnet4 and option-data parser,
-    // then: option-data parser, subnet4 parser, lease-database parser.
-    // Please do not change this order!
-    ParserCollection independent_parsers;
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
@@ -720,21 +697,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
-            /// @todo: 5116 ticket: remove this chunk below once all parser
-            /// tickets are done.
-            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
-                                                           config_pair.second));
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
-                      .arg(config_pair.first);
-
-            // Those parsers should be started before other
-            // parsers so we can call build straight away.
-            independent_parsers.push_back(parser);
-            parser->build(config_pair.second);
-            // The commit operation here may modify the global storage
-            // but we need it so as the subnet6 parser can access the
-            // parsed data.
-            parser->commit();
+            // If we got here, no code handled this parameter, so we bail out.
+            isc_throw(DhcpConfigError,
+                      "unsupported global configuration parameter: " << config_pair.first
+                      << " (" << config_pair.second->getPosition() << ")");
         }
 
         // Setup the command channel.
@@ -742,7 +708,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
         // Apply global options in the staging config.
         Dhcp4ConfigParser global_parser;
-        global_parser.parse(mutable_cfg);
+        global_parser.parse(srv_cfg, mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
