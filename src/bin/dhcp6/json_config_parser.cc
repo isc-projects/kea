@@ -770,17 +770,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
-    // Some of the values specified in the configuration depend on
-    // other values. Typically, the values in the subnet6 structure
-    // depend on the global values. Also, option values configuration
-    // must be performed after the option definitions configurations.
-    // Thus we group parsers and will fire them in the right order:
-    // all parsers other than lease-database, subnet6 and
-    // option-data parser, then option-data parser, subnet6 parser,
-    // lease-database parser.
-    // Please do not change this order!
-    ParserCollection independent_parsers;
-
     // Some of the parsers alter state of the system that can't easily
     // be undone. (Or alter it in a way such that undoing the change
     // has the same risk of failure as doing the change.)
@@ -956,21 +945,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 continue;
             }
 
-            /// @todo: 5116 ticket: remove this chunk below once all parser
-            /// tickets are done.
-            ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
-                                                           config_pair.second));
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
-                      .arg(config_pair.first);
-
-            // Those parsers should be started before other
-            // parsers so we can call build straight away.
-            independent_parsers.push_back(parser);
-            parser->build(config_pair.second);
-            // The commit operation here may modify the global storage
-            // but we need it so as the subnet6 parser can access the
-            // parsed data.
-            parser->commit();
+            // If we got here, no code handled this parameter, so we bail out.
+            isc_throw(DhcpConfigError,
+                      "unsupported global configuration parameter: " << config_pair.first
+                      << " (" << config_pair.second->getPosition() << ")");
         }
 
         // Setup the command channel.

@@ -502,11 +502,6 @@ server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
 
-% DHCP6_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the IPv6 DHCP
-server, notifying that the parser for the specified configuration element
-has been successfully created.
-
 % DHCP6_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
 the IPv6 DHCP server failed to create a parser to decode the contents of
