@@ -843,16 +843,6 @@ protected:
     virtual DhcpConfigParser*
     createSubnetConfigParser(const std::string& config_id) = 0;
 
-    /// @brief Issues a server specific warning regarding duplicate subnet
-    /// options.
-    ///
-    /// @param code is the numeric option code of the duplicate option
-    /// @param addr is the subnet address
-    /// @todo a means to know the correct logger and perhaps a common
-    /// message would allow this method to be emitted by the base class.
-    virtual void duplicate_option_warning(uint32_t code,
-                                          isc::asiolink::IOAddress& addr) = 0;
-
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
     ///
