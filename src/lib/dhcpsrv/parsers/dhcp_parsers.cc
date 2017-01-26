@@ -1204,51 +1204,45 @@ SubnetConfigParser::getOptionalParam(const std::string& name) {
 //**************************** D2ClientConfigParser **********************
 
 uint32_t
-D2ClientConfigParser::getUint32(const std::string& name,
-                                ConstElementPtr value) const {
-    return (extractInt<uint32_t, DhcpConfigError>(name, value));
+D2ClientConfigParser::getUint32(ConstElementPtr scope,
+                                const std::string& name) {
+    return (getIntType<uint32_t>(scope, name));
 }
 
+// Can't use a constructor as a function
 namespace {
 IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
 };
 
 IOAddress
-D2ClientConfigParser::getIOAddress(const std::string& name,
-                                   ConstElementPtr value) const {
-    return (extractConvert<IOAddress,
-                           buildIOAddress,
-                           DhcpConfigError>(name, "address", value));
+D2ClientConfigParser::getIOAddress(ConstElementPtr scope,
+                                   const std::string& name) {
+    return (getAndConvert<IOAddress,
+            buildIOAddress>(scope, name, "address"));
 }
 
 dhcp_ddns::NameChangeProtocol
-D2ClientConfigParser::getProtocol(const std::string& name,
-                                  ConstElementPtr value) const {
-    return (extractConvert<dhcp_ddns::NameChangeProtocol,
-                           dhcp_ddns::stringToNcrProtocol,
-                            DhcpConfigError>(name,
-                                             "NameChangeRequest protocol",
-                                             value));
+D2ClientConfigParser::getProtocol(ConstElementPtr scope,
+                                  const std::string& name) {
+    return (getAndConvert<dhcp_ddns::NameChangeProtocol,
+            dhcp_ddns::stringToNcrProtocol>
+            (scope, name, "NameChangeRequest protocol"));
 }
 
 dhcp_ddns::NameChangeFormat
-D2ClientConfigParser::getFormat(const std::string& name,
-                                ConstElementPtr value) const {
-    return (extractConvert<dhcp_ddns::NameChangeFormat,
-                           dhcp_ddns::stringToNcrFormat,
-                           DhcpConfigError>(name,
-                                            "NameChangeRequest format",
-                                            value));
+D2ClientConfigParser::getFormat(ConstElementPtr scope,
+                                const std::string& name) {
+    return (getAndConvert<dhcp_ddns::NameChangeFormat,
+            dhcp_ddns::stringToNcrFormat>
+            (scope, name, "NameChangeRequest format"));
 }
 
 D2ClientConfig::ReplaceClientNameMode
-D2ClientConfigParser::getMode(const std::string& name,
-                              ConstElementPtr value) const {
-    return (extractConvert<D2ClientConfig::ReplaceClientNameMode,
-                           D2ClientConfig::stringToReplaceClientNameMode,
-                           DhcpConfigError>(name,
-                                            "ReplaceClientName mode",
-                                            value));
+D2ClientConfigParser::getMode(ConstElementPtr scope,
+                              const std::string& name) {
+    return (getAndConvert<D2ClientConfig::ReplaceClientNameMode,
+            D2ClientConfig::stringToReplaceClientNameMode>
+            (scope, name, "ReplaceClientName mode"));
 }
 
 D2ClientConfigPtr
@@ -1270,69 +1264,44 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     // Get all parameters that are needed to create the D2ClientConfig.
     std::string qualifying_suffix;
     bool found_qualifying_suffix = false;
-    IOAddress server_ip(0);
-    uint32_t server_port = 0;
-    std::string sender_ip_str;
-    uint32_t sender_port = 0;
-    uint32_t max_queue_size = 1024;
-    dhcp_ddns::NameChangeProtocol ncr_protocol;
-    dhcp_ddns::NameChangeFormat ncr_format;
-    bool always_include_fqdn = false;
-    bool allow_client_update;
-    bool override_no_update = false;
-    bool override_client_update = false;
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode =
-        D2ClientConfig::ReplaceClientNameMode::RCM_NEVER;
-    std::string generated_prefix;
+    if (client_config->contains("qualifying-suffix")) {
+            qualifying_suffix = getString(client_config, "qualifying-suffix");
+            found_qualifying_suffix = true;
+    }   
 
-    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
-        std::string entry(param.first);
-        ConstElementPtr value(param.second);
-        try {
-            if (entry == "enable-updates") {
-                // already done.
-            } else if (entry == "qualifying-suffix") {
-                qualifying_suffix = value->stringValue();
-                found_qualifying_suffix = true;
-            } else if (entry == "server-ip") {
-                server_ip = getIOAddress("server-ip", value);
-            } else if (entry == "server-port") {
-                server_port = getUint32("server-port", value);
-            } else if (entry == "sender-ip") {
-                sender_ip_str = value->stringValue();
-            } else if (entry == "sender-port") {
-                sender_port = getUint32("sender-port", value);
-            } else if (entry == "max-queue-size") {
-                max_queue_size = getUint32("max-queue-size", value);
-            } else if (entry == "ncr-protocol") {
-                ncr_protocol = getProtocol("ncr-protocol", value);
-            } else if (entry == "ncr-format") {
-                ncr_format = getFormat("ncr-format", value);
-            } else if (entry == "always-include-fqdn") {
-                always_include_fqdn = value->boolValue();
-            } else if (entry == "allow-client-update") {
-                allow_client_update = value->boolValue();
-                // currently unused
-                (void)allow_client_update;
-            } else if (entry == "override-no-update") {
-                override_no_update = value->boolValue();
-            } else if (entry == "override-client-update") {
-                override_client_update = value->boolValue();
-            } else if (entry == "replace-client-name") {
-                replace_client_name_mode = getMode("replace-client-name", value);
-            } else if (entry == "generated-prefix") {
-                generated_prefix = value->stringValue();
-            } else {
-                isc_throw(DhcpConfigError,
-                          "unsupported parameter '" << entry
-                          << " (" << value->getPosition() << ")");
-            }
-        } catch (const isc::data::TypeError&) {
-            isc_throw(DhcpConfigError,
-                      "invalid value type specified for parameter '" << entry
-                      << " (" << value->getPosition() << ")");
-        }
-    }
+    IOAddress server_ip = getIOAddress(client_config, "server-ip");
+
+    uint32_t server_port = getUint32(client_config, "server-port");
+
+    std::string sender_ip_str = getString(client_config, "sender-ip");
+
+    uint32_t sender_port = getUint32(client_config, "sender-port"); 
+
+    uint32_t max_queue_size = getUint32(client_config, "max-queue-size"); 
+
+    dhcp_ddns::NameChangeProtocol ncr_protocol =
+        getProtocol(client_config, "ncr-protocol");
+
+    dhcp_ddns::NameChangeFormat ncr_format =
+        getFormat(client_config, "ncr-format");
+
+    bool always_include_fqdn =
+        getBoolean(client_config, "always-include-fqdn");
+
+    // bool allow_client_update; (unused)
+
+    bool override_no_update =
+        getBoolean(client_config, "override-no-update");
+
+    bool override_client_update =
+        getBoolean(client_config, "override-client-update");
+
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode =
+        getMode(client_config, "replace-client-name");
+
+    std::string generated_prefix =
+        getString(client_config, "generated-prefix");
+
 
     // Qualifying-suffix is required when updates are enabled
     if (enable_updates && !found_qualifying_suffix) {
@@ -1419,18 +1388,8 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
 
 bool
 D2ClientConfigParser::isShortCutDisabled(isc::data::ConstElementPtr d2_config) {
-    if (!d2_config->contains("enable-updates")) {
-        isc_throw(DhcpConfigError,
-                  "Mandatory parameter 'enable-updates' missing ("
-                  << d2_config->getPosition() << ")");
-    }
-    ConstElementPtr enable = d2_config->get("enable-updates");
-    if (enable->getType() != Element::boolean) {
-        isc_throw(DhcpConfigError,
-                  "invalid value type specified for parameter"
-                  " 'enable-updates' (" << enable->getPosition() << ")");
-    }
-    return (!enable->boolValue() && (d2_config->mapValue().size() == 1));
+    bool value = getBoolean(d2_config, "enable-updates");
+    return (!value && (d2_config->mapValue().size() == 1));
 }
 
 /// @brief This table defines default values for D2 client configuration
