@@ -1096,7 +1096,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         // rethrow with precise error
         isc_throw(DhcpConfigError,
                  "mandatory 'subnet' parameter is missing for a subnet being"
-                  " configured");
+                  " configured (" << params->getPosition() << ")");
     }
 
     // Remove any spaces or tabs.
