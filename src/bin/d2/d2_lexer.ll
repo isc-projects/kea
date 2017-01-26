@@ -168,6 +168,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"ip-address\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_IP_ADDRESS(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("ip-address", driver.loc_);
@@ -177,6 +178,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"port\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_PORT(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("port", driver.loc_);
@@ -258,6 +260,44 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ddns-domains\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::FORWARD_DDNS:
+    case isc::d2::D2ParserContext::REVERSE_DDNS:
+        return isc::d2::D2Parser::make_DDNS_DOMAINS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("ddns-domains", driver.loc_);
+    }
+}
+
+\"key-name\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DDNS_DOMAINS:
+        return isc::d2::D2Parser::make_KEY_NAME(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("key-name", driver.loc_);
+    }
+}
+
+\"dns-servers\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DDNS_DOMAINS:
+        return isc::d2::D2Parser::make_DNS_SERVERS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("dns-servers", driver.loc_);
+    }
+}
+
+\"hostname\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DNS_SERVERS:
+        return isc::d2::D2Parser::make_HOSTNAME(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("hostname", driver.loc_);
+    }
+}
+
+
 \"tsig-keys\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -335,6 +375,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::DDNS_DOMAINS:
         return isc::d2::D2Parser::make_NAME(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("name", driver.loc_);

@@ -168,6 +168,18 @@ public:
         ///< Used while parsing content of DhcpDdns/tsig-keys/secret
         SECRET,
 
+        ///< Used while parsing content of DhcpDdns/forward-ddns
+        FORWARD_DDNS,
+
+        ///< Used while parsing content of DhcpDdns/reverse-ddns
+        REVERSE_DDNS,
+
+        ///< Used while parsing content of DhcpDdns/<forward|reverse>-ddns/ddns-domains
+        DDNS_DOMAINS,
+
+        ///< Used while parsing content of DhcpDdns/<forward|reverse>-ddns/ddns-domains/dns-servers
+        DNS_SERVERS,
+
         ///< Used while parsing content of Logging
         LOGGING,
 
