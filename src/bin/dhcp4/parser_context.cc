@@ -141,6 +141,8 @@ Parser4Context::contextName()
         return ("hooks-librairies");
     case SUBNET4:
         return ("subnet4");
+    case RESERVATION_MODE:
+        return ("reservation-mode");
     case OPTION_DEF:
         return ("option-def");
     case OPTION_DATA:
