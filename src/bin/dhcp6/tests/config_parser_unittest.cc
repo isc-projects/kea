@@ -5188,7 +5188,41 @@ TEST_F(Dhcp6ParserTest, invalidPoolRange) {
     ASSERT_NO_THROW(text = comment->stringValue());
 
     EXPECT_EQ(1, rcode);
-    string expected = "Failed to create pool defined by: 2001:db8::-200:1db8::ffff (<string>:7:26)";
+    string expected = "Failed to create pool defined by: "
+        "2001:db8::-200:1db8::ffff (<string>:7:26)";
+    EXPECT_EQ(expected, text);
+}
+
+// Test verifies the error message for an outside subnet pool range
+// is what we expect.
+TEST_F(Dhcp6ParserTest, outsideSubnetPool) {
+    string config = "{ " + genIfaceConfig() + ", \n" +
+        "\"valid-lifetime\": 4000, \n"
+        "\"preferred-lifetime\": 3000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"2001:db8:: - 2001:db8::ffff\" } ], \n"
+        "    \"subnet\": \"2001:dc8::/32\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config, true));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    string text;
+    ASSERT_NO_THROW(text = comment->stringValue());
+
+    EXPECT_EQ(1, rcode);
+    string expected = "subnet configuration failed (<string>:6:14): "
+        "a pool of type IA_NA, with the following address range: "
+        "2001:db8::-2001:db8::ffff does not match the prefix of "
+        "a subnet: 2001:dc8::/32 to which it is being added";
     EXPECT_EQ(expected, text);
 }
 

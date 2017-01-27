@@ -4716,7 +4716,40 @@ TEST_F(Dhcp4ParserTest, invalidPoolRange) {
     ASSERT_NO_THROW(text = comment->stringValue());
 
     EXPECT_EQ(1, rcode);
-    string expected = "Failed to create pool defined by: 192.0.2.1-19.2.0.200 (<string>:6:26)";
+    string expected = "Failed to create pool defined by: "
+	"192.0.2.1-19.2.0.200 (<string>:6:26)";
+    EXPECT_EQ(expected, text);
+}
+
+// Test verifies the error message for an outside subnet pool range
+// is what we expect.
+TEST_F(Dhcp4ParserTest, outsideSubnetPool) {
+    string config = "{ " + genIfaceConfig() + ", \n" +
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    string text;
+    ASSERT_NO_THROW(text = comment->stringValue());
+
+    EXPECT_EQ(1, rcode);
+    string expected = "subnet configuration failed (<string>:5:14): "
+	"a pool of type V4, with the following address range: "
+	"192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
+	"10.0.2.0/24 to which it is being added";
     EXPECT_EQ(expected, text);
 }
 
