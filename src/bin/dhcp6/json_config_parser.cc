@@ -432,6 +432,8 @@ protected:
         // Enable or disable Rapid Commit option support for the subnet.
         subnet6->setRapidCommit(rapid_commit);
 
+        // client-class processing is now generic so in DhcpConfigParser
+
         subnet_.reset(subnet6);
     }
 
