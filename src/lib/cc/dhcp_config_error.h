@@ -14,6 +14,18 @@ namespace dhcp {
 
 /// An exception that is thrown if an error occurs while configuring
 /// DHCP server.
+/// By convention when this exception is thrown there is a position
+/// between parentheses so the code style should be like this:
+///
+/// try {
+///     ...
+/// } catch (const DhcpConfigError&) {
+///     throw;
+/// } catch (const std::exception& ex) {
+///    isc_throw(DhcpConfigError, "message" << ex.what()
+///              << " (" << getPosition(what) << ")");
+/// }
+
 class DhcpConfigError : public isc::Exception {
 public:
 
