@@ -183,68 +183,6 @@ typedef boost::shared_ptr<StringStorage> StringStoragePtr;
 typedef ValueStorage<bool> BooleanStorage;
 typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 
-/// @brief Container for the current parsing context. It provides a
-/// single enclosure for the storage of configuration parameters,
-/// options, option definitions, and other context specific information
-/// that needs to be accessible throughout the parsing and parsing
-/// constructs.
-class ParserContext {
-public:
-    /// @brief Constructor
-    ///
-    /// @param universe is the Option::Universe value of this
-    /// context.
-    ParserContext(Option::Universe universe);
-
-    /// @brief Copy constructor
-    ParserContext(const ParserContext& rhs);
-
-    /// @brief Storage for boolean parameters.
-    BooleanStoragePtr boolean_values_;
-
-    /// @brief Storage for uint32 parameters.
-    Uint32StoragePtr uint32_values_;
-
-    /// @brief Storage for string parameters.
-    StringStoragePtr string_values_;
-
-    /// @brief Hooks libraries pointer.
-    ///
-    /// The hooks libraries information is a vector of strings, each containing
-    /// the name of a library.  Hooks libraries should only be reloaded if the
-    /// list of names has changed, so the list of current DHCP parameters
-    /// (in isc::dhcp::CfgMgr) contains an indication as to whether the list has
-    /// altered.  This indication is implemented by storing a pointer to the
-    /// list of library names which is cleared when the libraries are loaded.
-    /// So either the pointer is null (meaning don't reload the libraries and
-    /// the list of current names can be obtained from the HooksManager) or it
-    /// is non-null (this is the new list of names, reload the libraries when
-    /// possible).
-    isc::hooks::HookLibsCollectionPtr hooks_libraries_;
-
-    /// @brief The parsing universe of this context.
-    Option::Universe universe_;
-
-    /// @brief Assignment operator
-    ParserContext& operator=(const ParserContext& rhs);
-
-    /// @brief Copy the context fields.
-    ///
-    /// This class method initializes the context data by copying the data
-    /// stored in the context instance provided as an argument. Note that
-    /// this function will also handle copying the NULL pointers.
-    ///
-    /// @param ctx context to be copied.
-    void copyContext(const ParserContext& ctx);
-
-    template<typename T>
-    void copyContextPointer(const boost::shared_ptr<T>& source_ptr,
-                            boost::shared_ptr<T>& dest_ptr);
-};
-
-/// @brief Pointer to various parser context.
-typedef boost::shared_ptr<ParserContext> ParserContextPtr;
-
 /// @brief Simple data-type parser template class
 ///
 /// This is the template class for simple data-type parsers. It supports
@@ -628,10 +566,6 @@ private:
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;
 };
-
-///@brief Function pointer for OptionDataParser factory methods
-typedef OptionDataParser *OptionDataParserFactory(const std::string&,
-                     OptionStoragePtr options, ParserContextPtr global_context);
 
 /// @brief Parser for option data values within a subnet.
 ///

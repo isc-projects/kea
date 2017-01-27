@@ -34,61 +34,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-// *********************** ParserContext  *************************
-
-ParserContext::ParserContext(Option::Universe universe):
-    boolean_values_(new BooleanStorage()),
-    uint32_values_(new Uint32Storage()),
-    string_values_(new StringStorage()),
-    hooks_libraries_(),
-    universe_(universe)
-{
-}
-
-ParserContext::ParserContext(const ParserContext& rhs):
-    boolean_values_(),
-    uint32_values_(),
-    string_values_(),
-    hooks_libraries_(),
-    universe_(rhs.universe_)
-{
-    copyContext(rhs);
-}
-
-ParserContext&
-// The cppcheck version 1.56 doesn't recognize that copyContext
-// copies all context fields.
-// cppcheck-suppress operatorEqVarError
-ParserContext::operator=(const ParserContext& rhs) {
-    if (this != &rhs) {
-        copyContext(rhs);
-    }
-
-    return (*this);
-}
-
-void
-ParserContext::copyContext(const ParserContext& ctx) {
-    copyContextPointer(ctx.boolean_values_, boolean_values_);
-    copyContextPointer(ctx.uint32_values_, uint32_values_);
-    copyContextPointer(ctx.string_values_, string_values_);
-    copyContextPointer(ctx.hooks_libraries_, hooks_libraries_);
-    // Copy universe.
-    universe_ = ctx.universe_;
-}
-
-template<typename T>
-void
-ParserContext::copyContextPointer(const boost::shared_ptr<T>& source_ptr,
-                                  boost::shared_ptr<T>& dest_ptr) {
-    if (source_ptr) {
-        dest_ptr.reset(new T(*source_ptr));
-    } else {
-        dest_ptr.reset();
-    }
-}
-
-
 // **************************** DebugParser *************************
 
 DebugParser::DebugParser(const std::string& param_name)
