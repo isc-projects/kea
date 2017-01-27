@@ -197,7 +197,7 @@ protected:
         subnet_ = subnet4;
 
         // Set the match-client-id value for the subnet. It is always present.
-        // If not explicitly specified, the default value was filed in when
+        // If not explicitly specified, the default value was filled in when
         // SimpleParser4::setAllDefaults was called.
         bool match_client_id = getBoolean(params, "match-client-id");
         subnet4->setMatchClientId(match_client_id);
@@ -212,7 +212,7 @@ protected:
                 subnet4->setSiaddr(IOAddress(next_server));
             }
         } catch (...) {
-            ConstElementPtr next = params->find("next-server");
+            ConstElementPtr next = params->get("next-server");
             string pos("(missing)");
             if (next)
                 pos = next->getPosition().str();
