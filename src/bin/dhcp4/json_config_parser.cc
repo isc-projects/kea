@@ -109,7 +109,7 @@ public:
     ///
     /// stores global scope parameters, options, option definitions.
     Subnet4ConfigParser()
-        :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
+        :SubnetConfigParser(AF_INET) {
     }
 
     /// @brief Parses a single IPv4 subnet configuration and adds to the
@@ -156,45 +156,6 @@ public:
     }
 
 protected:
-
-    /// @brief Creates parsers for entries in subnet definition.
-    ///
-    /// @param config_id name of the entry
-    ///
-    /// @return parser object for specified entry name. Note the caller is
-    /// responsible for deleting the parser created.
-    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
-    /// for unknown config element
-    DhcpConfigParser* createSubnetConfigParser(const std::string& config_id) {
-        DhcpConfigParser* parser = NULL;
-        if ((config_id.compare("valid-lifetime") == 0)  ||
-            (config_id.compare("renew-timer") == 0)  ||
-            (config_id.compare("rebind-timer") == 0) ||
-            (config_id.compare("id") == 0)) {
-            parser = new Uint32Parser(config_id, uint32_values_);
-        } else if ((config_id.compare("subnet") == 0) ||
-                   (config_id.compare("interface") == 0) ||
-                   (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("next-server") == 0) ||
-                   (config_id.compare("reservation-mode") == 0)) {
-            parser = new StringParser(config_id, string_values_);
-        // pools has been converted to SimpleParser already.
-        // relay has been converted to SimpleParser already.
-        // option-data has been converted to SimpleParser already.
-        } else if (config_id.compare("match-client-id") == 0) {
-            parser = new BooleanParser(config_id, boolean_values_);
-        } else if (config_id.compare("4o6-subnet") == 0) {
-            parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("4o6-interface") == 0) {
-            parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("4o6-interface-id") == 0) {
-            parser = new StringParser(config_id, string_values_);
-        } else {
-            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
-        }
-
-        return (parser);
-    }
 
     /// @brief Instantiates the IPv4 Subnet based on a given IPv4 address
     /// and prefix length.

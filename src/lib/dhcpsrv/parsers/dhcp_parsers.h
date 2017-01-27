@@ -832,8 +832,8 @@ public:
     ///
     /// @param global_context
     /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
-    SubnetConfigParser(const std::string&, ParserContextPtr global_context,
-                       const isc::asiolink::IOAddress& default_addr);
+    /// @param family address family: @c AF_INET or @c AF_INET6
+    SubnetConfigParser(uint16_t family);
 
     /// @brief virtual destructor (does nothing)
     virtual ~SubnetConfigParser() { }
@@ -850,16 +850,6 @@ protected:
     /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
     SubnetPtr parse(isc::data::ConstElementPtr subnet);
 
-    /// @brief creates parsers for entries in subnet definition
-    ///
-    /// @param config_id name of the entry
-    ///
-    /// @return parser object for specified entry name
-    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
-    ///        for unknown config element
-    virtual DhcpConfigParser*
-    createSubnetConfigParser(const std::string& config_id) = 0;
-
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
     ///
@@ -868,29 +858,6 @@ protected:
     /// @param len is the prefix length
     virtual void initSubnet(isc::data::ConstElementPtr params,
                             isc::asiolink::IOAddress addr, uint8_t len) = 0;
-
-    /// @brief Returns value for a given parameter (after using inheritance)
-    ///
-    /// This method implements inheritance. For a given parameter name, it first
-    /// checks if there is a global value for it and overwrites it with specific
-    /// value if such value was defined in subnet.
-    ///
-    /// @param name name of the parameter
-    /// @return triplet with the parameter name
-    /// @throw DhcpConfigError when requested parameter is not present
-    isc::dhcp::Triplet<uint32_t> getParam(const std::string& name);
-
-    /// @brief Returns optional value for a given parameter.
-    ///
-    /// This method checks if an optional parameter has been specified for
-    /// a subnet. If not, it will try to use a global value. If the global
-    /// value is not specified it will return an object representing an
-    /// unspecified value.
-    ///
-    /// @param name name of the configuration parameter.
-    /// @return An optional value or a @c Triplet object representing
-    /// unspecified value.
-    isc::dhcp::Triplet<uint32_t> getOptionalParam(const std::string& name);
 
     /// @brief Attempts to convert text representation to HRMode enum.
     ///
@@ -915,27 +882,14 @@ private:
 
 protected:
 
-    /// Storage for subnet-specific integer values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
-    /// Storage for subnet-specific boolean values.
-    BooleanStoragePtr boolean_values_;
-
     /// Storage for pools belonging to this subnet.
     PoolStoragePtr pools_;
-
-    /// Parsers are stored here.
-    ParserCollection parsers_;
 
     /// Pointer to the created subnet object.
     isc::dhcp::SubnetPtr subnet_;
 
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @brief Address family: @c AF_INET or @c AF_INET6
+    uint16_t address_family_;
 
     /// Pointer to relay information
     isc::dhcp::Subnet::RelayInfoPtr relay_info_;
