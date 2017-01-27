@@ -206,12 +206,13 @@ protected:
         // The renew-timer and rebind-timer are optional. If not set, the
         // option 58 and 59 will not be sent to a client. In this case the
         // client will use default values based on the valid-lifetime.
-        Triplet<uint32_t> t1 = getOptionalParam("renew-timer");
-        Triplet<uint32_t> t2 = getOptionalParam("rebind-timer");
+        Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
+        Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+
         // The valid-lifetime is mandatory. It may be specified for a
         // particular subnet. If not, the global value should be present.
         // If there is no global value, exception is thrown.
-        Triplet<uint32_t> valid = getParam("valid-lifetime");
+        Triplet<uint32_t> valid = getInteger(params, "valid-lifetime");
 
         // Subnet ID is optional. If it is not supplied the value of 0 is used,
         // which means autogenerate. The value was inserted earlier by calling
@@ -234,64 +235,41 @@ protected:
         Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
-        // match-client-id
-        isc::util::OptionalValue<bool> match_client_id;
+        // Set the match-client-id value for the subnet. It is always present.
+        // If not explicitly specified, the default value was filed in when
+        // SimpleParser4::setAllDefaults was called.
+        bool match_client_id = getBoolean(params, "match-client-id");
+        subnet4->setMatchClientId(match_client_id);
+
+        // Set next-server. The default value is 0.0.0.0. Nevertheless, the
+        // user could have messed that up by specifying incorrect value.
+        // To avoid using 0.0.0.0, user can specify "".
+        string next_server;
         try {
-            match_client_id = boolean_values_->getParam("match-client-id");
-
-        } catch (...) {
-            // Ignore because this parameter is optional and it may be specified
-            // in the global scope.
-        }
-
-        // If the match-client-id wasn't specified as a subnet specific parameter
-        // check if there is global value specified.
-        if (!match_client_id.isSpecified()) {
-            // If not specified, use false.
-            match_client_id.specify(globalContext()->boolean_values_->
-                                    getOptionalParam("match-client-id", true));
-        }
-
-        // Set the match-client-id value for the subnet.
-        subnet4->setMatchClientId(match_client_id.get());
-
-        // next-server
-        try {
-            string next_server = globalContext()->string_values_->getParam("next-server");
+            next_server = getString(params, "next-server");
             if (!next_server.empty()) {
                 subnet4->setSiaddr(IOAddress(next_server));
             }
-        } catch (const DhcpConfigError&) {
-            // Don't care. next_server is optional. We can live without it
         } catch (...) {
-            isc_throw(DhcpConfigError, "invalid parameter next-server ("
-                      << globalContext()->string_values_->getPosition("next-server")
-                      << ")");
+            ConstElementPtr next = params->find("next-server");
+            string pos("(missing)");
+            if (next)
+                pos = next->getPosition().str();
+            isc_throw(DhcpConfigError, "invalid parameter next-server : "
+                      << next_server << "(" << pos << ")");
         }
 
-        // Try subnet specific value if it's available
-        try {
-            string next_server = string_values_->getParam("next-server");
-            if (!next_server.empty()) {
-                subnet4->setSiaddr(IOAddress(next_server));
-            }
-        } catch (const DhcpConfigError&) {
-            // Don't care. next_server is optional. We can live without it
-        } catch (...) {
-            isc_throw(DhcpConfigError, "invalid parameter next-server ("
-                      << string_values_->getPosition("next-server")
-                      << ")");
-        }
-
-        // Try 4o6 specific parameter: 4o6-interface
-        string iface4o6 = string_values_->getOptionalParam("4o6-interface", "");
+        // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
+        // it will have the default value of "".
+        string iface4o6 = getString(params, "4o6-interface");
         if (!iface4o6.empty()) {
             subnet4->get4o6().setIface4o6(iface4o6);
             subnet4->get4o6().enabled(true);
         }
 
-        // Try 4o6 specific parameter: 4o6-subnet
-        string subnet4o6 = string_values_->getOptionalParam("4o6-subnet", "");
+        // 4o6 specific parameter: 4o6-subnet. If not explicitly specified, it
+        // will have the default value of "".
+        string subnet4o6 = getString(params, "4o6-subnet");
         if (!subnet4o6.empty()) {
             size_t slash = subnet4o6.find("/");
             if (slash == std::string::npos) {
@@ -313,20 +291,12 @@ protected:
         }
 
         // Try 4o6 specific parameter: 4o6-interface-id
-        std::string ifaceid = string_values_->getOptionalParam("4o6-interface-id", "");
+        std::string ifaceid = getString(params, "4o6-interface-id");
         if (!ifaceid.empty()) {
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet4->get4o6().setInterfaceId(opt);
             subnet4->get4o6().enabled(true);
-        }
-
-        // Try setting up client class (if specified)
-        try {
-            string client_class = string_values_->getParam("client-class");
-            subnet4->allowClientClass(client_class);
-        } catch (const DhcpConfigError&) {
-            // That's ok if it fails. client-class is optional.
         }
     }
 };

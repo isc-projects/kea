@@ -65,8 +65,12 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv6 subnet.
 const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
-    { "id",  Element::integer, "0" }, // 0 means autogenerate
-    { "rapid-commit", Element::boolean, "false" } // rapid-commit disabled by default
+    { "id",               Element::integer, "0" }, // 0 means autogenerate
+    { "interface",        Element::string,  "" },
+    { "client-class",     Element::string,  "" },
+    { "reservation-mode", Element::string,  "all" },
+    { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
+    { "interface-id",     Element::string,  "" },
 };
 
 /// @brief List of parameters that can be inherited from the global to subnet6 scope.

@@ -806,8 +806,25 @@ protected:
 
 /// @brief this class parses a single subnet
 ///
-/// This class parses the whole subnet definition. It creates parsers
-/// for received configuration parameters as needed.
+/// There are dedicated @ref Subnet4ConfigParser and @ref Subnet6ConfigParser
+/// classes. They provide specialized parse() methods that return Subnet4Ptr
+/// or Subnet6Ptr.
+///
+/// This class parses the whole subnet definition. This class attempts to
+/// unify the code between v4 and v6 as much as possible. As a result, the flow
+/// is somewhat complex and it looks as follows:
+///
+///     ------- Base class
+///    /
+///    | /----- Derived class
+/// 1.   * SubnetXConfigParser::parse() is called.
+/// 2. *   SubnetConfigParser::parse() is called.
+/// 3. *   SubnetConfigParser::createSubnet() is called.
+/// 4.   * SubnetXConfigParser::initSubnet() is called (Subnet4 or Subnet6 is
+///        instantiated here and family specific parameters are set)
+/// 5.     Control returns to createSubnet() (step 3) and common parameters
+///        are set.
+
 class SubnetConfigParser : public isc::data::SimpleParser {
 public:
 
