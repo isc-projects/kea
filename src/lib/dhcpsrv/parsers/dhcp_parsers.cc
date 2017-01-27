@@ -990,13 +990,13 @@ SubnetConfigParser::SubnetConfigParser(uint16_t family)
 SubnetPtr
 SubnetConfigParser::parse(ConstElementPtr subnet) {
 
-    ConstElementPtr options_params = subnet->find("option-data");
+    ConstElementPtr options_params = subnet->get("option-data");
     if (options_params) {
         OptionDataListParser opt_parser(address_family_);
         opt_parser.parse(options_, options_params);
     }
 
-    ConstElementPtr relay_params = subnet->find("relay");
+    ConstElementPtr relay_params = subnet->get("relay");
     if (relay_params) {
         Option::Universe u = (address_family_ == AF_INET) ? Option::V4 : Option::V6;
         RelayInfoParser parser(u);
@@ -1053,7 +1053,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // need to get all characters preceding "/".
     size_t pos = subnet_txt.find("/");
     if (pos == string::npos) {
-        ConstElementPtr elem = params->find("subnet");
+        ConstElementPtr elem = params->get("subnet");
         isc_throw(DhcpConfigError,
                   "Invalid subnet syntax (prefix/len expected):" << subnet_txt
                   << " (" << elem->getPosition() << ")");
@@ -1080,10 +1080,10 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     std::string iface = getString(params, "interface");
     if (!iface.empty()) {
         if (!IfaceMgr::instance().getIface(iface)) {
-            ConstElementPtr error = params->find("interface");
+            ConstElementPtr error = params->get("interface");
             isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet_->toText()
-                      << " is not present" << " in the system ("
+                      << " is not present in the system ("
                       << error->getPosition() << ")");
         }
 
@@ -1096,7 +1096,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         std::string hr_mode = getString(params, "reservation-mode");
         subnet_->setHostReservationMode(hrModeFromText(hr_mode));
     } catch (const BadValue& ex) {
-        ConstElementPtr mode = params->find("reservation-mode");
+        ConstElementPtr mode = params->get("reservation-mode");
         string pos("[missing]");
         if (mode) {
             pos = mode->getPosition().str();
