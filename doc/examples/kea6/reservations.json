@@ -41,7 +41,7 @@
     {
       "subnet": "2001:db8:1::/48",
 
-      "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "pools": [ { "pool": "2001:db8:1::/120" } ],
 
       "pd-pools": [
           {
@@ -51,6 +51,8 @@
           }
       ],
       "interface": "ethX",
+
+      "reservation-mode": "out-of-pool",
 
 # Host reservations. Define several reservations, note that
 # they are all within the range of the pool of the dynamically

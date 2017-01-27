@@ -58,14 +58,15 @@
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0",
+        "interface": "eth0",
+        "reservation-mode": "out-of-pool",
         "reservations": [
 
 # This is a reservation for a specific hardware/MAC address. It's a very
 # simple reservation: just an address and nothing else.
          {
              "hw-address": "1a:1b:1c:1d:1e:1f",
-             "ip-address": "192.0.2.202"
+             "ip-address": "192.0.2.201"
          },
 
 # This is a reservation for a specific client-id. It also shows
@@ -73,7 +74,7 @@
 # for any identifier type, not just client-id.
          {
              "client-id": "01:11:22:33:44:55:66",
-             "ip-address": "192.0.2.100",
+             "ip-address": "192.0.2.202",
              "hostname": "special-snowflake"
          },
 
