@@ -953,8 +953,7 @@ SubnetConfigParser::parse(ConstElementPtr subnet) {
         createSubnet(subnet);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError,
-                  "subnet configuration failed (" << subnet->getPosition()
-                  << "): " << ex.what());
+                  "subnet configuration failed: " << ex.what());
     }
 
     return (subnet_);
@@ -1015,7 +1014,14 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Add pools to it.
     for (PoolStorage::iterator it = pools_->begin(); it != pools_->end();
          ++it) {
-        subnet_->addPool(*it);
+        try {
+            subnet_->addPool(*it);
+        } catch (const BadValue& ex) {
+            // addPool() can throw BadValue if the pool is overlapping or
+            // is out of bounds for the subnet.
+            isc_throw(DhcpConfigError, ex.what() << "(" << params->getPosition()
+                      << ")");
+        }
     }
 
     // Now configure parameters that are common for v4 and v6:
