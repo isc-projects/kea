@@ -259,6 +259,8 @@ protected:
             subnet4->get4o6().setInterfaceId(opt);
             subnet4->get4o6().enabled(true);
         }
+
+        // client-class processing is now generic so in DhcpConfigParser
     }
 };
 
