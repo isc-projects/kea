@@ -1048,9 +1048,11 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         subnet_->setHostReservationMode(hrModeFromText(hr_mode));
     } catch (const BadValue& ex) {
         ConstElementPtr mode = params->get("reservation-mode");
-        string pos("[missing]");
+        string pos;
         if (mode) {
             pos = mode->getPosition().str();
+        } else {
+            pos = params->getPosition().str();
         }
         isc_throw(DhcpConfigError, "Failed to process specified value "
                   " of reservation-mode parameter: " << ex.what()
