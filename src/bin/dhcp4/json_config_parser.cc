@@ -213,9 +213,11 @@ protected:
             }
         } catch (...) {
             ConstElementPtr next = params->get("next-server");
-            string pos("(missing)");
+            string pos;
             if (next)
                 pos = next->getPosition().str();
+            else
+                pos = params->getPosition().str();
             isc_throw(DhcpConfigError, "invalid parameter next-server : "
                       << next_server << "(" << pos << ")");
         }
@@ -235,7 +237,7 @@ protected:
             size_t slash = subnet4o6.find("/");
             if (slash == std::string::npos) {
                 isc_throw(DhcpConfigError, "Missing / in the 4o6-subnet parameter:"
-                          + subnet4o6 +", expected format: prefix6/length");
+                          << subnet4o6 << ", expected format: prefix6/length");
             }
             string prefix = subnet4o6.substr(0, slash);
             string lenstr = subnet4o6.substr(slash + 1);
@@ -245,7 +247,7 @@ protected:
                 len = boost::lexical_cast<unsigned int>(lenstr.c_str());
             } catch (const boost::bad_lexical_cast &) {
                 isc_throw(DhcpConfigError, "Invalid prefix length specified in "
-                          "4o6-subnet parameter: " + subnet4o6 + ", expected 0..128 value");
+                          "4o6-subnet parameter: " << subnet4o6 << ", expected 0..128 value");
             }
             subnet4->get4o6().setSubnet4o6(IOAddress(prefix), len);
             subnet4->get4o6().enabled(true);
@@ -260,7 +262,8 @@ protected:
             subnet4->get4o6().enabled(true);
         }
 
-        // client-class processing is now generic so in DhcpConfigParser
+        /// client-class processing is now generic and handled in the common
+        /// code (see @ref isc::data::SubnetConfigParser::createSubnet)
     }
 };
 

@@ -390,6 +390,8 @@ protected:
         // SimpleParser6::setAllDefaults.
         SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
 
+        // We want to log whether rapid-commit is enabled, so we get this
+        // before the actual subnet creation.
         bool rapid_commit = getBoolean(params, "rapid-commit");
 
         std::ostringstream output;
@@ -405,6 +407,10 @@ protected:
         // Create a new subnet.
         Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
                                        subnet_id);
+        subnet_.reset(subnet6);
+
+        // Enable or disable Rapid Commit option support for the subnet.
+        subnet6->setRapidCommit(rapid_commit);
 
         // Get interface-id option content. For now we support string
         // representation only
@@ -419,7 +425,8 @@ protected:
                       "parser error: interface (defined for locally reachable "
                       "subnets) and interface-id (defined for subnets reachable"
                       " via relays) cannot be defined at the same time for "
-                      "subnet " << addr << "/" << (int)len);
+                      "subnet " << addr << "/" << (int)len << "("
+                      << params->getPosition() << ")");
         }
 
         // Configure interface-id for remote interfaces, if defined
@@ -429,12 +436,8 @@ protected:
             subnet6->setInterfaceId(opt);
         }
 
-        // Enable or disable Rapid Commit option support for the subnet.
-        subnet6->setRapidCommit(rapid_commit);
-
-        // client-class processing is now generic so in DhcpConfigParser
-
-        subnet_.reset(subnet6);
+        /// client-class processing is now generic and handled in the common
+        /// code (see @ref isc::data::SubnetConfigParser::createSubnet)
     }
 
 };
@@ -604,50 +607,6 @@ private:
 
 namespace isc {
 namespace dhcp {
-
-/// @brief creates global parsers
-///
-/// This method creates global parsers that parse global parameters, i.e.
-/// those that take format of Dhcp6/param1, Dhcp6/param2 and so forth.
-///
-/// @param config_id pointer to received global configuration entry
-/// @param element pointer to the element to be parsed
-/// @return parser for specified global DHCPv6 parameter
-/// @throw NotImplemented if trying to create a parser for unknown config
-/// element
-DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
-                                                ConstElementPtr element) {
-    DhcpConfigParser* parser = NULL;
-    // preferred-lifetime, valid-lifetime, renew-timer, rebind-timer,
-    // decline-probation-period and dhcp4o6-port are now migrated to
-    // SimpleParser.
-    // subnet6 has been converted to SimpleParser.
-    // option-data and option-def are no longer needed here. They're now
-    // converted to SimpleParser and are handled in configureDhcp6Server.
-    // interfaces-config has been converted to SimpleParser.
-    // version was removed - it was a leftover from bindctrl.
-
-    // lease-database migrated
-    // hosts-database migrated
-
-    // hooks-libraries is now converted to SimpleParser.
-    // lease-database and hosts-database have been converted to SimpleParser already.
-    // mac-source has been converted to SimpleParser.
-    // dhcp-ddns has been converted to SimpleParser
-    // rsoo has been converted to SimpleParser.
-    // control-socket has been converted to SimpleParser.
-    // expired-leases-processing has been converted to SimpleParser.
-    // client-classes has been converted to SimpleParser.
-    // host-reservation-identifiers have been converted to SimpleParser already.
-    // server-id has been migrated to SimpleParser
-    {
-        isc_throw(DhcpConfigError,
-                "unsupported global configuration parameter: "
-                  << config_id << " (" << element->getPosition() << ")");
-    }
-
-    return (parser);
-}
 
 /// @brief Initialize the command channel based on the staging configuration
 ///
