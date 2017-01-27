@@ -941,11 +941,6 @@ private:
             isc::data::ConstElementPtr value) const;
 };
 
-// Pointers to various parser objects.
-typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
-typedef boost::shared_ptr<StringParser> StringParserPtr;
-typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
