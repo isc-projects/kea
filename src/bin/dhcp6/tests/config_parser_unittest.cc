@@ -410,10 +410,10 @@ public:
         Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
             selectSubnet(subnet_address, classify_);
         if (!subnet) {
-            /// @todo replace toText() with the use of operator <<.
             ADD_FAILURE() << "A subnet for the specified address "
-                          << subnet_address.toText()
+                          << subnet_address
                           << " does not exist in Config Manager";
+            return (OptionDescriptor(false));
         }
         OptionContainerPtr options =
             subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
