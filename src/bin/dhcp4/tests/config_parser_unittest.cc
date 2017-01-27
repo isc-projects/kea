@@ -4691,5 +4691,33 @@ TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
     EXPECT_EQ(true, bool_value);
 }
 
+// Test verifies the error message for an incorrect pool range
+// is what we expect.
+TEST_F(Dhcp4ParserTest, invalidPoolRange) {
+    string config = "{ " + genIfaceConfig() + ", \n" +
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 19.2.0.200\" } ], \n"
+        "    \"subnet\": \"192.0.2.0/24\"  \n"
+        " } ] \n"
+        "} \n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    string text;
+    ASSERT_NO_THROW(text = comment->stringValue());
+
+    EXPECT_EQ(1, rcode);
+    string expected = "Failed to create pool defined by: 192.0.2.1-19.2.0.200 (<string>:6:26)";
+    EXPECT_EQ(expected, text);
+}
 
 }
