@@ -57,6 +57,7 @@ public:
     /// - "type" is "memfile", "mysql" or "postgresql"
     /// - "lfc-interval" is a number from the range of 0 to 4294967295.
     /// - "connect-timeout" is a number from the range of 0 to 4294967295.
+    /// - "port" is a number from the range of 0 to 65535.
     ///
     /// Once all has been validated, constructs the database access string
     /// expected by the lease manager.
@@ -65,10 +66,9 @@ public:
     /// @param database_config The configuration value for the "*-database"
     ///        identifier.
     ///
-    /// @throw isc::BadValue The 'type' keyword contains an unknown database
-    ///        type.
-    /// @throw isc::dhcp::MissingTypeKeyword The 'type' keyword is missing from
-    ///        the list of database access keywords.
+    /// @throw isc::dhcp::DhcpConfigError The 'type' keyword contains an
+    ///        unknown database type or is missing from the list of
+    ///        database access keywords.
     void parse(isc::dhcp::CfgDbAccessPtr& cfg_db,
                isc::data::ConstElementPtr database_config);
 
@@ -93,7 +93,6 @@ protected:
     ///
     /// @return Database access string
     std::string getDbAccessString() const;
-
 
 private:
 
