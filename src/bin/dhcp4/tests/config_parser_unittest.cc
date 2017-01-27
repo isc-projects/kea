@@ -166,23 +166,10 @@ public:
         // is sane.
         srv_.reset(new Dhcpv4Srv(0));
         // Create fresh context.
-        globalContext()->copyContext(ParserContext(Option::V4));
         resetConfiguration();
     }
 
 public:
-    // Checks if global parameter of name have expected_value
-    void checkGlobalUint32(string name, uint32_t expected_value) {
-        const Uint32StoragePtr uint32_defaults =
-                                        globalContext()->uint32_values_;
-        try {
-            uint32_t actual_value = uint32_defaults->getParam(name);
-            EXPECT_EQ(expected_value, actual_value);
-        } catch (DhcpConfigError) {
-            ADD_FAILURE() << "Expected uint32 with name " << name
-                          << " not found";
-        }
-    }
 
     // Checks if the result of DHCP server configuration has
     // expected code (0 for success, other for failures).
@@ -2864,26 +2851,23 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 1: 0 - minimum value, should work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    parseDHCP4("{\"version\": 0,"
-                               "\"renew-timer\": 0}")));
+                    parseDHCP4("{\"renew-timer\": 0}")));
 
     // returned value must be ok (0 is a proper value)
     checkResult(status, 0);
-    checkGlobalUint32("renew-timer", 0);
+    /// @todo: check that the renew-timer is really 0
 
     // CASE 2: 4294967295U (UINT_MAX) should work as well
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    parseDHCP4("{\"version\": 0,"
-                               "\"renew-timer\": 4294967295}")));
+                    parseDHCP4("{\"renew-timer\": 4294967295}")));
 
     // returned value must be ok (0 is a proper value)
     checkResult(status, 0);
-    checkGlobalUint32("renew-timer", 4294967295U);
+    /// @todo: check that the renew-timer is really 4294967295U
 
     // CASE 3: 4294967296U (UINT_MAX + 1) should not work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    parseJSON("{\"version\": 0,"
-                              "\"renew-timer\": 4294967296}")));
+                    parseJSON("{\"renew-timer\": 4294967296}")));
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);
@@ -2891,8 +2875,7 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
 
     // CASE 4: -1 (UINT_MIN -1 ) should not work
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    parseJSON("{\"version\": 0,"
-                              "\"renew-timer\": -1}")));
+                    parseJSON("{\"renew-timer\": -1}")));
 
     // returned value must be rejected (1 configuration error)
     checkResult(status, 1);

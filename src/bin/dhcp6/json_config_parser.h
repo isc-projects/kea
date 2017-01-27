@@ -38,11 +38,6 @@ class Dhcpv6Srv;
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
 
-/// @brief Returns the global context
-///
-/// @returns a reference to the global context
-ParserContextPtr& globalContext();
-
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

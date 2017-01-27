@@ -524,8 +524,6 @@ public:
         // all interfaces before each test and later check that this setting
         // has been overridden by the configuration used in the test.
         CfgMgr::instance().clear();
-        // Create fresh context.
-        globalContext()->copyContext(ParserContext(Option::V6));
     }
 
     /// @brief Retrieve an option associated with a host.

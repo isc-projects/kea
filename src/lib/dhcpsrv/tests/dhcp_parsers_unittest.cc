@@ -321,7 +321,8 @@ TEST_F(DhcpParserTest, MacSourcesDuplicate) {
 class ParseConfigTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ParseConfigTest() {
+    ParseConfigTest()
+        :family_(AF_INET6) {
         reset_context();
         CfgMgr::instance().clear();
     }
@@ -382,9 +383,6 @@ public:
                 }
             }
 
-            int family = parser_context_->universe_ == Option::V4
-                ? AF_INET : AF_INET6;
-
             // The option definition parser is the next one to be run.
             std::map<std::string, ConstElementPtr>::const_iterator
                                 def_config = values_map.find("option-def");
@@ -401,7 +399,7 @@ public:
             if (option_config != values_map.end()) {
                 CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
 
-                OptionDataListParser option_list_parser(family);
+                OptionDataListParser option_list_parser(family_);
                 option_list_parser.parse(cfg_option, option_config->second);
             }
 
@@ -600,7 +598,7 @@ public:
     void reset_context(){
         // Note set context universe to V6 as it has to be something.
         CfgMgr::instance().clear();
-        parser_context_.reset(new ParserContext(Option::V6));
+        family_ = AF_INET6;
 
         // Ensure no hooks libraries are loaded.
         HooksManager::unloadLibraries();
@@ -615,8 +613,8 @@ public:
     /// Allows the tests to interrogate the state of the parsers (if required).
     boost::shared_ptr<HooksLibrariesParser> hooks_libraries_parser_;
 
-    /// @brief Parser context - provides storage for options and definitions
-    ParserContextPtr parser_context_;
+    /// @brief specifies IP protocol family (AF_INET or AF_INET6)
+    uint16_t family_;
 
     /// @brief Error string if the parsing failed
     std::string error_text_;
@@ -818,7 +816,7 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
 /// has the actual character (e.g. an actual backslash, not double backslash).
 TEST_F(ParseConfigTest, escapedOptionDataTest) {
 
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
 
     // We need to use double escapes here. The first backslash will
     // be consumed by C++ preprocessor, so the actual string will
@@ -867,7 +865,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     // The default universe is V6. We need to change it to use dhcp4 option
     // space.
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     ASSERT_EQ(0, rcode);
@@ -931,7 +929,7 @@ TEST_F(ParseConfigTest, encapsulatedOptionData) {
         "}";
 
     // Make sure that we're using correct universe.
-    parser_context_->universe_ = Option::V6;
+    family_ = AF_INET6;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     ASSERT_EQ(0, rcode);
@@ -1203,7 +1201,7 @@ TEST_F(ParseConfigTest, optionDataNoSubOpion) {
 
     // The default universe is V6. We need to change it to use dhcp4 option
     // space.
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
@@ -2028,410 +2026,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         EXPECT_EQ(*original_config, *current_config);
         ++i;
     }
-}
-
-/// @brief DHCP Configuration Parser Context test fixture.
-class ParserContextTest : public ::testing::Test {
-public:
-    /// @brief Constructor
-    ParserContextTest() { }
-
-    /// @brief Check that the storages of the specific type hold the
-    /// same value.
-    ///
-    /// This function assumes that the ref_values storage holds parameter
-    /// called 'foo'.
-    ///
-    /// @param ref_values A storage holding reference value. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding value to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
-                      const boost::shared_ptr<ContainerType>& values) {
-        ASSERT_NO_THROW(values->getParam("foo"));
-        EXPECT_EQ(ref_values->getParam("foo"), values->getParam("foo"));
-    }
-
-    /// @brief Check that the storages of the specific type hold the same
-    /// position of the parameter.
-    ///
-    /// @param name A name of the parameter to check.
-    /// @param ref_values A storage holding reference position. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding position to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkPositionEq(const std::string& name,
-                         const boost::shared_ptr<ContainerType>& ref_values,
-                         const boost::shared_ptr<ContainerType>& values) {
-        // Verify that the position is correct.
-        EXPECT_EQ(ref_values->getPosition(name).line_,
-                  values->getPosition(name).line_);
-
-        EXPECT_EQ(ref_values->getPosition(name).pos_,
-                  values->getPosition(name).pos_);
-
-        EXPECT_EQ(ref_values->getPosition(name).file_,
-                  values->getPosition(name).file_);
-    }
-
-    /// @brief Check that the storages of the specific type hold different
-    /// value.
-    ///
-    /// This function assumes that the ref_values storage holds exactly
-    /// one parameter called 'foo'.
-    ///
-    /// @param ref_values A storage holding reference value. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding value to be checked.
-    /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType>
-    void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
-                       const boost::shared_ptr<ContainerType>& values) {
-        ASSERT_NO_THROW(values->getParam("foo"));
-        EXPECT_NE(ref_values->getParam("foo"), values->getParam("foo"));
-    }
-
-    /// @brief Check that the storages of the specific type hold different
-    /// position.
-    ///
-    /// @param name A name of the parameter to be checked.
-    /// @param ref_values A storage holding reference position. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding position to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkPositionNeq(const std::string& name,
-                          const boost::shared_ptr<ContainerType>& ref_values,
-                          const boost::shared_ptr<ContainerType>& values) {
-        // At least one of the position fields must be different.
-        EXPECT_TRUE((ref_values->getPosition(name).line_ !=
-                     values->getPosition(name).line_) ||
-                    (ref_values->getPosition(name).pos_ !=
-                     values->getPosition(name).pos_) ||
-                    (ref_values->getPosition(name).file_ !=
-                     values->getPosition(name).file_));
-    }
-
-    /// @brief Test copy constructor or assignment operator when values
-    /// being copied are NULL.
-    ///
-    /// @param copy Indicates that copy constructor should be tested
-    /// (if true), or assignment operator (if false).
-    void testCopyAssignmentNull(const bool copy) {
-        ParserContext ctx(Option::V6);
-        // Release all pointers in the context.
-        ctx.boolean_values_.reset();
-        ctx.uint32_values_.reset();
-        ctx.string_values_.reset();
-        ctx.hooks_libraries_.reset();
-
-        // Even if the fields of the context are NULL, it should get
-        // copied.
-        ParserContextPtr ctx_new(new ParserContext(Option::V6));
-        if (copy) {
-            ASSERT_NO_THROW(ctx_new.reset(new ParserContext(ctx)));
-        } else {
-            *ctx_new = ctx;
-        }
-
-        // The resulting context has its fields equal to NULL.
-        EXPECT_FALSE(ctx_new->boolean_values_);
-        EXPECT_FALSE(ctx_new->uint32_values_);
-        EXPECT_FALSE(ctx_new->string_values_);
-        EXPECT_FALSE(ctx_new->hooks_libraries_);
-
-    }
-
-    /// @brief Test copy constructor or assignment operator.
-    ///
-    /// @param copy Indicates that copy constructor should be tested (if true),
-    /// or assignment operator (if false).
-    void testCopyAssignment(const bool copy) {
-        // Create new context. It will be later copied/assigned to another
-        // context.
-        ParserContext ctx(Option::V6);
-
-        // Set boolean parameter 'foo'.
-        ASSERT_TRUE(ctx.boolean_values_);
-        ctx.boolean_values_->setParam("foo", true,
-                                      Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.boolean_values_->setParam("pos0", true,
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.boolean_values_->setParam("pos1", true,
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.boolean_values_->setParam("pos2", true,
-                                      Element::Position("kea.conf", 100, 200));
-
-        // Set uint32 parameter 'foo'.
-        ASSERT_TRUE(ctx.uint32_values_);
-        ctx.uint32_values_->setParam("foo", 123,
-                                     Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.uint32_values_->setParam("pos0", 123,
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.uint32_values_->setParam("pos1", 123,
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.uint32_values_->setParam("pos2", 123,
-                                      Element::Position("kea.conf", 100, 200));
-
-        // Ser string parameter 'foo'.
-        ASSERT_TRUE(ctx.string_values_);
-        ctx.string_values_->setParam("foo", "some string",
-                                     Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.string_values_->setParam("pos0", "some string",
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.string_values_->setParam("pos1", "some string",
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.string_values_->setParam("pos2", "some string",
-                                      Element::Position("kea.conf", 100, 200));
-
-
-        // Allocate container for hooks libraries and add one library name.
-        ctx.hooks_libraries_.reset(new std::vector<HookLibInfo>());
-        ctx.hooks_libraries_->push_back(make_pair("library1", ConstElementPtr()));
-
-        // We will use ctx_new to assign another context to it or copy
-        // construct.
-        ParserContextPtr ctx_new(new ParserContext(Option::V4));;
-        if (copy) {
-            ctx_new.reset(new ParserContext(ctx));
-        } else {
-            *ctx_new = ctx;
-        }
-
-        // New context has the same boolean value.
-        ASSERT_TRUE(ctx_new->boolean_values_);
-        {
-            SCOPED_TRACE("Check that boolean values are equal in both"
-                         " contexts");
-            checkValueEq(ctx.boolean_values_, ctx_new->boolean_values_);
-        }
-
-        // New context has the same boolean values' positions.
-        {
-            SCOPED_TRACE("Check that positions of boolean values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-            checkPositionEq("pos1", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-            checkPositionEq("pos2", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-        }
-
-        // New context has the same uint32 value.
-        ASSERT_TRUE(ctx_new->uint32_values_);
-        {
-            SCOPED_TRACE("Check that uint32_t values are equal in both"
-                         " contexts");
-            checkValueEq(ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        // New context has the same uint32 values' positions.
-        {
-            SCOPED_TRACE("Check that positions of uint32 values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-            checkPositionEq("pos1", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-            checkPositionEq("pos2", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-        }
-
-        // New context has the same uint32 value position.
-        {
-            SCOPED_TRACE("Check that positions of uint32_t values are equal"
-                         " in both contexts");
-            checkPositionEq("foo", ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        // New context has the same string value.
-        ASSERT_TRUE(ctx_new->string_values_);
-        {
-            SCOPED_TRACE("Check that string values are equal in both contexts");
-            checkValueEq(ctx.string_values_, ctx_new->string_values_);
-        }
-
-        // New context has the same string values' positions.
-        {
-            SCOPED_TRACE("Check that positions of string values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.string_values_,
-                            ctx_new->string_values_);
-            checkPositionEq("pos1", ctx.string_values_,
-                            ctx_new->string_values_);
-            checkPositionEq("pos2", ctx.string_values_,
-                            ctx_new->string_values_);
-        }
-
-        // New context has the same hooks library.
-        ASSERT_TRUE(ctx_new->hooks_libraries_);
-        {
-            ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
-            EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0].first);
-        }
-
-        // New context has the same universe.
-        EXPECT_EQ(ctx.universe_, ctx_new->universe_);
-
-        // Change the value of the boolean parameter. This should not affect the
-        // corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that boolean value isn't changed when original"
-                         " value and position is changed");
-            ctx.boolean_values_->setParam("foo", false,
-                                          Element::Position("kea.conf",
-                                                            12, 10));
-            checkValueNeq(ctx.boolean_values_, ctx_new->boolean_values_);
-
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the boolean parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.boolean_values_->setParam("pos0", false,
-                                          Element::Position("foo.conf",
-                                                            1, 2));
-            checkPositionNeq("pos0", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-            // Modify line number.
-            ctx.boolean_values_->setParam("pos1", false,
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-            // Modify position within a line.
-            ctx.boolean_values_->setParam("pos2", false,
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-
-        }
-
-        // Change the value of the uint32_t parameter. This should not affect
-        // the corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that uint32_t value isn't changed when original"
-                         " value and position is changed");
-            ctx.uint32_values_->setParam("foo", 987,
-                                         Element::Position("kea.conf", 10, 11));
-            checkValueNeq(ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the uint32 parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.uint32_values_->setParam("pos0", 123,
-                                          Element::Position("foo.conf", 1, 2));
-            checkPositionNeq("pos0", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-            // Modify line number.
-            ctx.uint32_values_->setParam("pos1", 123,
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-            // Modify position within a line.
-            ctx.uint32_values_->setParam("pos2", 123,
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-
-        }
-
-        // Change the value of the string parameter. This should not affect the
-        // corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that string value isn't changed when original"
-                         " value and position is changed");
-            ctx.string_values_->setParam("foo", "different string",
-                                         Element::Position("kea.conf", 10, 11));
-            checkValueNeq(ctx.string_values_, ctx_new->string_values_);
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the string parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.string_values_->setParam("pos0", "some string",
-                                          Element::Position("foo.conf", 1, 2));
-            checkPositionNeq("pos0", ctx.string_values_,
-                             ctx_new->string_values_);
-            // Modify line number.
-            ctx.string_values_->setParam("pos1", "some string",
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.string_values_,
-                             ctx_new->string_values_);
-            // Modify position within a line.
-            ctx.string_values_->setParam("pos2", "some string",
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.string_values_,
-                             ctx_new->string_values_);
-
-        }
-
-        // Change the list of libraries. this should not affect the list in the
-        // new context.
-        ctx.hooks_libraries_->clear();
-        ctx.hooks_libraries_->push_back(make_pair("library2", ConstElementPtr()));
-        ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
-        EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0].first);
-
-        // Change the universe. This should not affect the universe value in the
-        // new context.
-        ctx.universe_ = Option::V4;
-        EXPECT_EQ(Option::V6, ctx_new->universe_);
-
-    }
-
-};
-
-// Check that the assignment operator of the ParserContext class copies all
-// fields correctly.
-TEST_F(ParserContextTest, assignment) {
-    testCopyAssignment(false);
-}
-
-// Check that the assignment operator of the ParserContext class copies all
-// fields correctly when these fields are NULL.
-TEST_F(ParserContextTest, assignmentNull) {
-    testCopyAssignmentNull(false);
-}
-
-// Check that the context is copy constructed correctly.
-TEST_F(ParserContextTest, copyConstruct) {
-    testCopyAssignment(true);
-}
-
-// Check that the context is copy constructed correctly, when context fields
-// are NULL.
-TEST_F(ParserContextTest, copyConstructNull) {
-    testCopyAssignmentNull(true);
 }
 
 /// @brief Checks that a valid relay info structure for IPv4 can be handled

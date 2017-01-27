@@ -423,9 +423,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND,
               DHCP4_CONFIG_START).arg(config_set->str());
 
-    // Reset global context.
-    globalContext().reset(new ParserContext(Option::V4));
-
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
@@ -443,15 +440,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // easily be undone. (Or alter it in a way such that undoing the change has
     // the same risk of failure as doing the change.)
     HooksLibrariesParser hooks_parser;
-
-    // The subnet parsers implement data inheritance by directly
-    // accessing global storage. For this reason the global data
-    // parsers must store the parsed data into global storages
-    // immediately. This may cause data inconsistency if the
-    // parsing operation fails after the global storage has been
-    // modified. We need to preserve the original global data here
-    // so as we can rollback changes when an error occurs.
-    ParserContext original_context(*globalContext());
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -661,7 +649,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
-        globalContext().reset(new ParserContext(original_context));
         // Revert to original configuration of runtime option definitions
         // in the libdhcp++.
         LibDHCP::revertRuntimeOptionDefs();
@@ -675,11 +662,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
-}
-
-ParserContextPtr& globalContext() {
-    static ParserContextPtr global_context_ptr(new ParserContext(Option::V4));
-    return (global_context_ptr);
 }
 
 }; // end of isc::dhcp namespace
