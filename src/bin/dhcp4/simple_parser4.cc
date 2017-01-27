@@ -62,12 +62,18 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "dhcp4o6-port",             Element::integer, "0" },
     { "echo-client-id",           Element::boolean, "true" },
     { "match-client-id",          Element::boolean, "true" },
-    { "next-server",              Element::string, "0.0.0.0" }
+    { "next-server",              Element::string,  "0.0.0.0" }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
 const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
-    { "id",  Element::integer, "0" } // 0 means autogenerate
+    { "id",               Element::integer, "0" }, // 0 means autogenerate
+    { "interface",        Element::string,  "" },
+    { "client-class",     Element::string,  "" },
+    { "reservation-mode", Element::string,  "all" },
+    { "4o6-interface",    Element::string,  "" },
+    { "4o6-interface-id", Element::string,  "" },
+    { "4o6-subnet",       Element::string,  "" },
 };
 
 /// @brief List of parameters that can be inherited from the global to subnet4 scope.

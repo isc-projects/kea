@@ -1129,38 +1129,42 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         subnet_->addPool(*it);
     }
 
-    // Configure interface, if defined
+    // Now configure parameters that are common for v4 and v6:
 
     // Get interface name. If it is defined, then the subnet is available
     // directly over specified network interface.
-    std::string iface;
-    try {
-        iface = string_values_->getParam("interface");
-    } catch (const DhcpConfigError &) {
-        // iface not mandatory so swallow the exception
-    }
-
-    // Let's set host reservation mode. If not specified, the default value of
-    // all will be used.
-    std::string hr_mode;
-    try {
-        hr_mode = string_values_->getOptionalParam("reservation-mode", "all");
-        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
-    } catch (const BadValue& ex) {
-        isc_throw(DhcpConfigError, "Failed to process specified value "
-                  " of reservation-mode parameter: " << ex.what()
-                  << string_values_->getPosition("reservation-mode"));
-    }
-
+    std::string iface = getString(params, "interface");
     if (!iface.empty()) {
         if (!IfaceMgr::instance().getIface(iface)) {
-            isc_throw(DhcpConfigError, "Specified interface name " << iface
+            isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet_->toText()
                       << " is not present" << " in the system ("
                       << string_values_->getPosition("interface") << ")");
         }
 
         subnet_->setIface(iface);
+    }
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    try {
+        std::string hr_mode = getString(params, "reservation-mode");
+        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) {
+        ConstElementPtr mode = params->find("reservation-mode");
+        string pos("[missing]");
+        if (mode) {
+            pos = mode->getPosition().str();
+        }
+        isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << "(" << pos << ")");
+    }
+
+    // Try setting up client class.
+    string client_class = getString(params, "client-class");
+    if (!client_class.empty()) {
+        subnet_->allowClientClass(client_class);
     }
 
     // Here globally defined options were merged to the subnet specific
@@ -1254,7 +1258,7 @@ D2ClientConfigParser::getMode(const std::string& name,
 D2ClientConfigPtr
 D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     D2ClientConfigPtr new_config;
-    
+
     if (isShortCutDisabled(client_config)) {
       // If enable-updates is the only parameter and it is false then
       // we're done.  This allows for an abbreviated configuration entry

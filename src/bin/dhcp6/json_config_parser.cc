@@ -416,46 +416,16 @@ protected:
         // use the global value. The global value must always be
         // present. If it is not, it is an internal error and exception
         // is thrown.
-        Triplet<uint32_t> t1 = getParam("renew-timer");
-        Triplet<uint32_t> t2 = getParam("rebind-timer");
-        Triplet<uint32_t> pref = getParam("preferred-lifetime");
-        Triplet<uint32_t> valid = getParam("valid-lifetime");
+        Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
+        Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+        Triplet<uint32_t> pref = getInteger(params, "preferred-lifetime");
+        Triplet<uint32_t> valid = getInteger(params, "valid-lifetime");
 
         // Subnet ID is optional. If it is not supplied the value of 0 is used,
         // which means autogenerate. The value was inserted earlier by calling
         // SimpleParser6::setAllDefaults.
         SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
 
-        // Get interface-id option content. For now we support string
-        // representation only
-        std::string ifaceid;
-        try {
-            ifaceid = string_values_->getParam("interface-id");
-        } catch (const DhcpConfigError &) {
-            // interface-id is not mandatory
-        }
-
-        // Specifying both interface for locally reachable subnets and
-        // interface id for relays is mutually exclusive. Need to test for
-        // this condition.
-        if (!ifaceid.empty()) {
-            std::string iface;
-            try {
-                iface = string_values_->getParam("interface");
-            } catch (const DhcpConfigError &) {
-                // iface not mandatory
-            }
-
-            if (!iface.empty()) {
-                isc_throw(isc::dhcp::DhcpConfigError,
-                      "parser error: interface (defined for locally reachable "
-                      "subnets) and interface-id (defined for subnets reachable"
-                      " via relays) cannot be defined at the same time for "
-                      "subnet " << addr << "/" << (int)len);
-            }
-        }
-
-        // Gather boolean parameters values.
         bool rapid_commit = getBoolean(params, "rapid-commit");
 
         std::ostringstream output;
@@ -472,6 +442,22 @@ protected:
         Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
                                        subnet_id);
 
+        // Get interface-id option content. For now we support string
+        // representation only
+        std::string ifaceid = getString(params, "interface-id");
+        std::string iface = getString(params, "interface");
+
+        // Specifying both interface for locally reachable subnets and
+        // interface id for relays is mutually exclusive. Need to test for
+        // this condition.
+        if (!ifaceid.empty() && !iface.empty()) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "parser error: interface (defined for locally reachable "
+                      "subnets) and interface-id (defined for subnets reachable"
+                      " via relays) cannot be defined at the same time for "
+                      "subnet " << addr << "/" << (int)len);
+        }
+
         // Configure interface-id for remote interfaces, if defined
         if (!ifaceid.empty()) {
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
@@ -481,14 +467,6 @@ protected:
 
         // Enable or disable Rapid Commit option support for the subnet.
         subnet6->setRapidCommit(rapid_commit);
-
-        // Try setting up client class (if specified)
-        try {
-            string client_class = string_values_->getParam("client-class");
-            subnet6->allowClientClass(client_class);
-        } catch (const DhcpConfigError&) {
-            // That's ok if it fails. client-class is optional.
-        }
 
         subnet_.reset(subnet6);
     }
