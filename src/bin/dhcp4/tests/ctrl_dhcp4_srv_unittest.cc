@@ -583,7 +583,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"unsupported parameter: BOGUS (<string>:20:26)\" }",
+              "\"text\": \"subnet configuration failed (<string>:20:17): String parameter subnet not found(<string>:20:17)\" }",
               response);
 
     // Check that the config was not lost

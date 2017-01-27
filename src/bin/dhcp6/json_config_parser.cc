@@ -302,7 +302,7 @@ public:
     ///
     /// stores global scope parameters, options, option definitions.
     Subnet6ConfigParser()
-        :SubnetConfigParser("", globalContext(), IOAddress("::")) {
+        :SubnetConfigParser(AF_INET6) {
     }
 
     /// @brief Parses a single IPv6 subnet configuration and adds to the
@@ -355,42 +355,6 @@ public:
     }
 
 protected:
-
-    /// @brief creates parsers for entries in subnet definition
-    ///
-    /// @param config_id name of the entry
-    ///
-    /// @return parser object for specified entry name. Note the caller is
-    /// responsible for deleting the parser created.
-    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
-    /// for unknown config element
-    DhcpConfigParser* createSubnetConfigParser(const std::string& config_id) {
-        DhcpConfigParser* parser = NULL;
-        if ((config_id.compare("preferred-lifetime") == 0)  ||
-            (config_id.compare("valid-lifetime") == 0)  ||
-            (config_id.compare("renew-timer") == 0)  ||
-            (config_id.compare("rebind-timer") == 0) ||
-            (config_id.compare("id") == 0)) {
-            parser = new Uint32Parser(config_id, uint32_values_);
-        } else if ((config_id.compare("subnet") == 0) ||
-                   (config_id.compare("interface") == 0) ||
-                   (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("interface-id") == 0) ||
-                   (config_id.compare("reservation-mode") == 0)) {
-            parser = new StringParser(config_id, string_values_);
-        // pools has been converted to SimpleParser.
-        // relay has been converted to SimpleParser.
-        // pd-pools has been converted to SimpleParser.
-        // option-data was here, but it is now converted to SimpleParser
-        } else if (config_id.compare("rapid-commit") == 0) {
-            parser = new BooleanParser(config_id, boolean_values_);
-        } else {
-            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
-        }
-
-        return (parser);
-    }
-
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
     /// options.
     ///

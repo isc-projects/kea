@@ -979,85 +979,28 @@ PoolParser::parse(PoolStoragePtr pools,
 
 //****************************** SubnetConfigParser *************************
 
-SubnetConfigParser::SubnetConfigParser(const std::string&,
-                                       ParserContextPtr global_context,
-                                       const isc::asiolink::IOAddress& default_addr)
-    : uint32_values_(new Uint32Storage()),
-      string_values_(new StringStorage()),
-      boolean_values_(new BooleanStorage()),
-      pools_(new PoolStorage()),
-      global_context_(global_context),
-      relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)),
+SubnetConfigParser::SubnetConfigParser(uint16_t family)
+    : pools_(new PoolStorage()),
+      address_family_(family),
       options_(new CfgOption()) {
-    // The first parameter should always be "subnet", but we don't check
-    // against that here in case some wants to reuse this parser somewhere.
-    if (!global_context_) {
-        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error: "
-                 << "context storage may not be NULL");
-    }
-
+    string addr = family == AF_INET ? "0.0.0.0" : "::";
+    relay_info_.reset(new isc::dhcp::Subnet::RelayInfo(IOAddress(addr)));
 }
 
 SubnetPtr
 SubnetConfigParser::parse(ConstElementPtr subnet) {
-    BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
-        // Pools has been converted to SimpleParser.
-        if (param.first == "pools") {
-            continue;
-        }
 
-        // PdPools has been converted to SimpleParser.
-        if ((param.first == "pd-pools") &&
-            (global_context_->universe_ == Option::V6)) {
-            continue;
-        }
-
-        // Host reservations must be parsed after subnet specific parameters.
-        // Note that the reservation parsing will be invoked by the build()
-        // in the derived classes, i.e. Subnet4ConfigParser and
-        // Subnet6ConfigParser.
-        if (param.first == "reservations") {
-            continue;
-        }
-
-        if (param.first == "option-data") {
-            uint16_t family = global_context_->universe_ == Option::V4 ? AF_INET : AF_INET6;
-            OptionDataListParser opt_parser(family);
-            opt_parser.parse(options_, param.second);
-            continue;
-        }
-
-        if (param.first == "relay") {
-            RelayInfoParser parser(global_context_->universe_);
-            parser.parse(relay_info_, param.second);
-            continue;
-        }
-
-        ParserPtr parser;
-        // When unsupported parameter is specified, the function called
-        // below will thrown an exception. We have to catch this exception
-        // to append the line number where the parameter is.
-        try {
-            parser.reset(createSubnetConfigParser(param.first));
-
-        } catch (const std::exception& ex) {
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << param.second->getPosition() << ")");
-        }
-        parser->build(param.second);
-        parsers_.push_back(parser);
+    ConstElementPtr options_params = subnet->find("option-data");
+    if (options_params) {
+        OptionDataListParser opt_parser(address_family_);
+        opt_parser.parse(options_, options_params);
     }
 
-    // In order to create new subnet we need to get the data out
-    // of the child parsers first. The only way to do it is to
-    // invoke commit on them because it will make them write
-    // parsed data into storages we have supplied.
-    // Note that triggering commits on child parsers does not
-    // affect global data because we supplied pointers to storages
-    // local to this object. Thus, even if this method fails
-    // later on, the configuration remains consistent.
-    BOOST_FOREACH(ParserPtr parser, parsers_) {
-        parser->commit();
+    ConstElementPtr relay_params = subnet->find("relay");
+    if (relay_params) {
+        Option::Universe u = (address_family_ == AF_INET) ? Option::V4 : Option::V6;
+        RelayInfoParser parser(u);
+        parser.parse(relay_info_, relay_params);
     }
 
     // Create a subnet.
@@ -1110,9 +1053,10 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // need to get all characters preceding "/".
     size_t pos = subnet_txt.find("/");
     if (pos == string::npos) {
+        ConstElementPtr elem = params->find("subnet");
         isc_throw(DhcpConfigError,
                   "Invalid subnet syntax (prefix/len expected):" << subnet_txt
-                  << " (" << string_values_->getPosition("subnet") << ")");
+                  << " (" << elem->getPosition() << ")");
     }
 
     // Try to create the address object. It also validates that
@@ -1136,10 +1080,11 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     std::string iface = getString(params, "interface");
     if (!iface.empty()) {
         if (!IfaceMgr::instance().getIface(iface)) {
+            ConstElementPtr error = params->find("interface");
             isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet_->toText()
                       << " is not present" << " in the system ("
-                      << string_values_->getPosition("interface") << ")");
+                      << error->getPosition() << ")");
         }
 
         subnet_->setIface(iface);
@@ -1173,36 +1118,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet_->getCfgOption());
-}
-
-isc::dhcp::Triplet<uint32_t>
-SubnetConfigParser::getParam(const std::string& name) {
-    uint32_t value = 0;
-    try {
-        // look for local value
-        value = uint32_values_->getParam(name);
-    } catch (const DhcpConfigError &) {
-        try {
-            // no local, use global value
-            value = global_context_->uint32_values_->getParam(name);
-        } catch (const DhcpConfigError &) {
-            isc_throw(DhcpConfigError, "Mandatory parameter " << name
-                      << " missing (no global default and no subnet-"
-                      << "specific value)");
-        }
-    }
-
-    return (Triplet<uint32_t>(value));
-}
-
-isc::dhcp::Triplet<uint32_t>
-SubnetConfigParser::getOptionalParam(const std::string& name) {
-    try {
-        return (getParam(name));
-    } catch (const DhcpConfigError &) {
-        // No error. We will return an unspecified value.
-    }
-    return (Triplet<uint32_t>());
 }
 
 //**************************** D2ClientConfigParser **********************
