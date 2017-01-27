@@ -63,6 +63,7 @@ using namespace std;
   USER "user"
   PASSWORD "password"
   HOST "host"
+  PORT "port"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
@@ -498,6 +499,7 @@ database_map_param: database_type
                   | user
                   | password
                   | host
+                  | port
                   | name
                   | persist
                   | lfc_interval
@@ -541,6 +543,11 @@ host: HOST {
     ElementPtr h(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
+};
+
+port: PORT COLON INTEGER {
+    ElementPtr p(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("port", p);
 };
 
 name: NAME {

@@ -330,6 +330,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"port\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_PORT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("port", driver.loc_);
+    }
+}
+
 \"persist\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
