@@ -66,6 +66,33 @@ MySqlConnection::openDatabase() {
         // No host.  Fine, we'll use "localhost"
     }
 
+    unsigned int port = 0;
+    string sport;
+    try {
+        sport = getParameter("port");
+    } catch (...) {
+        // No port parameter, we are going to use the default port.
+        sport = "";
+    }
+
+    if (sport.size() > 0) {
+        // Port was given, so try to convert it to an integer.
+
+        try {
+            port = boost::lexical_cast<unsigned int>(sport);
+        } catch (...) {
+            // Port given but could not be converted to an unsigned int.
+            // Just fall back to the default value.
+            port = 0;
+        }
+
+        // The port is only valid when it is in the 0..65535 range.
+        // Again fall back to the default when the given value is invalid.
+        if (port > numeric_limits<uint16_t>::max()) {
+            port = 0;
+        }
+    }
+
     const char* user = NULL;
     string suser;
     try {
@@ -173,7 +200,7 @@ MySqlConnection::openDatabase() {
     // because no row matching the WHERE clause was found, or because a
     // row was found but no data was altered.
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
-                                       0, NULL, CLIENT_FOUND_ROWS);
+                                       port, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
         isc_throw(DbOpenError, mysql_error(mysql_));
     }
