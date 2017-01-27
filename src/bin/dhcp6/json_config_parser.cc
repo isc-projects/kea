@@ -172,13 +172,15 @@ public:
             excluded_prefix_len = getUint8(pd_pool_, "excluded-prefix-len");
         }
 
-        if (pd_pool_->contains("option-data")) {
+        ConstElementPtr option_data = pd_pool_->get("option-data");
+        if (option_data) {
             OptionDataListParser opts_parser(AF_INET6);
-            opts_parser.parse(options_, pd_pool_->get("option-data"));
+            opts_parser.parse(options_, option_data);
         }
                     
-        if (pd_pool_->contains("user-context")) {
-            user_context_ = pd_pool_->get("user-context");
+        ConstElementPtr user_context = pd_pool_->get("user-context");
+        if (user_context) {
+            user_context_ = user_context;
         }
 
         // Check the pool parameters. It will throw an exception if any
