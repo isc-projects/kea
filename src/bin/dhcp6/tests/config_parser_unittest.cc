@@ -775,6 +775,22 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
     EXPECT_THROW(parseDHCP6("{\"bogus\": 5}"), Dhcp6ParseError);
 }
 
+/// The goal of this test is to verify empty interface-config is accepted.
+TEST_F(Dhcp6ParserTest, emptyInterfaceConfig) {
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP6("{ \"preferred-lifetime\": 3000,"
+                                      "\"rebind-timer\": 2000, "
+                                      "\"renew-timer\": 1000, "
+                                      "\"valid-lifetime\": 4000 }"));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+}
+
 /// The goal of this test is to verify if configuration without any
 /// subnets defined can be accepted.
 TEST_F(Dhcp6ParserTest, emptySubnet) {

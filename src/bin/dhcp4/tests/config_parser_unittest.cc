@@ -636,6 +636,21 @@ TEST_F(Dhcp4ParserTest, bogusCommand) {
     EXPECT_THROW(parseDHCP4("{\"bogus\": 5}"), Dhcp4ParseError);
 }
 
+/// The goal of this test is to verify empty interface-config is accepted.
+TEST_F(Dhcp4ParserTest, emptyInterfaceConfig) {
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4("{ \"rebind-timer\": 2000, "
+                                      "\"renew-timer\": 1000, "
+                                      "\"valid-lifetime\": 4000 }"));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+}
+
 /// The goal of this test is to verify if wrongly defined subnet will
 /// be rejected. Properly defined subnet must include at least one
 /// pool definition.
