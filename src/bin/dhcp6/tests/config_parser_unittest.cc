@@ -5219,10 +5219,10 @@ TEST_F(Dhcp6ParserTest, outsideSubnetPool) {
     ASSERT_NO_THROW(text = comment->stringValue());
 
     EXPECT_EQ(1, rcode);
-    string expected = "subnet configuration failed (<string>:6:14): "
+    string expected = "subnet configuration failed: "
         "a pool of type IA_NA, with the following address range: "
-        "2001:db8::-2001:db8::ffff does not match the prefix of "
-        "a subnet: 2001:dc8::/32 to which it is being added";
+        "2001:db8::-2001:db8::ffff does not match the prefix of a subnet: "
+        "2001:dc8::/32 to which it is being added (<string>:6:14)";
     EXPECT_EQ(expected, text);
 }
 
