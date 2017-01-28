@@ -1019,8 +1019,8 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
         } catch (const BadValue& ex) {
             // addPool() can throw BadValue if the pool is overlapping or
             // is out of bounds for the subnet.
-            isc_throw(DhcpConfigError, ex.what() << "(" << params->getPosition()
-                      << ")");
+            isc_throw(DhcpConfigError,
+                      ex.what() << " (" << params->getPosition() << ")");
         }
     }
 
