@@ -26,6 +26,12 @@ namespace dhcp {
 ///              << " (" << getPosition(what) << ")");
 /// }
 
+/// @todo: move this header into simple_parser.h as soon as
+/// there is no dependency through DhcpConfigParser
+/// @todo: create an isc_throw like macro to add the
+/// position more easily.
+/// @todo: rename the exception for instance into ConfigError
+
 class DhcpConfigError : public isc::Exception {
 public:
 
