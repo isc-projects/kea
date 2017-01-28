@@ -6,6 +6,7 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
+libkea_cc_la_SOURCES += dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
 
@@ -17,7 +18,7 @@ libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
 # Since data.h is now used in the hooks interface, it needs to be
 # installed on target system.
 libkea_cc_includedir = $(pkgincludedir)/cc
-libkea_cc_include_HEADERS = data.h
+libkea_cc_include_HEADERS = data.h dhcp_config_error.h
 
 EXTRA_DIST = cc.dox
 

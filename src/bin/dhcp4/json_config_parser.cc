@@ -307,7 +307,7 @@ public:
     }
 };
 
-/// @brief Parser that takes care of global DHCPv6 parameters.
+/// @brief Parser that takes care of global DHCPv4 parameters.
 ///
 /// See @ref parse method for a list of supported parameters.
 class Dhcp4ConfigParser : public isc::data::SimpleParser {
@@ -333,39 +333,29 @@ public:
         bool echo_client_id = getBoolean(global, "echo-client-id");
         CfgMgr::instance().echoClientId(echo_client_id);
 
-        std::string name;
-        ConstElementPtr value;
-        try {
-            // Set the probation period for decline handling.
-            name = "decline-probation-period";
-            value = global->get(name);
-            uint32_t probation_period = getUint32(name, value);
-            cfg->setDeclinePeriod(probation_period);
+        // Set the probation period for decline handling.
+        uint32_t probation_period =
+            getUint32(global, "decline-probation-period");
+        cfg->setDeclinePeriod(probation_period);
 
-            // Set the DHCPv4-over-DHCPv6 interserver port.
-            name = "dhcp4o6-port";
-            value = global->get(name);
-            // @todo Change for uint16_t
-            uint32_t dhcp4o6_port = getUint32(name, value);
-            cfg->setDhcp4o6Port(dhcp4o6_port);
-        } catch (const isc::data::TypeError& ex) {
-            isc_throw(DhcpConfigError,
-                      "invalid value type specified for parameter '" << name
-                      << "' (" << value->getPosition() << ")");
-        }
+        // Set the DHCPv4-over-DHCPv6 interserver port.
+        // @todo Change for uint16_t
+        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
+        cfg->setDhcp4o6Port(dhcp4o6_port);
     }
 
 private:
 
     /// @brief Returns a value converted to uint32_t
     ///
-    /// Instantiation of extractInt() to uint32_t
+    /// Instantiation of getIntType() to uint32_t
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return an uint32_t value
-    uint32_t getUint32(const std::string& name,
-                       isc::data::ConstElementPtr value) {
-        return (extractInt<uint32_t, DhcpConfigError>(name, value));
+    uint32_t getUint32(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint32_t>(scope, name));
     }
 };
 

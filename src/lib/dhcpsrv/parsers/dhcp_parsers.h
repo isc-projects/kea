@@ -893,52 +893,53 @@ private:
 
     /// @brief Returns a value converted to uint32_t
     ///
-    /// Instantiation of extractInt() to uint32_t
+    /// Instantiation of getIntType() to uint32_t
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return an uint32_t value
     uint32_t
-    getUint32(const std::string& name, isc::data::ConstElementPtr value) const;
+    getUint32(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to IOAddress
     ///
-    /// Instantiation of extractConvert() to IOAddress
+    /// Instantiation of getAndConvert() to IOAddress
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return an IOAddress value
     isc::asiolink::IOAddress
-    getIOAddress(const std::string& name,
-                 isc::data::ConstElementPtr value) const;
+    getIOAddress(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to NameChangeProtocol
     ///
-    /// Instantiation of extractInt() to NameChangeProtocol
+    /// Instantiation of getAndConvert() to NameChangeProtocol
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return a NameChangeProtocol value
     dhcp_ddns::NameChangeProtocol
-    getProtocol(const std::string& name,
-                isc::data::ConstElementPtr value) const;
+    getProtocol(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to NameChangeFormat
     ///
-    /// Instantiation of extractConvert() to NameChangeFormat
+    /// Instantiation of getAndConvert() to NameChangeFormat
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return a NameChangeFormat value
     dhcp_ddns::NameChangeFormat
-    getFormat(const std::string& name,
-              isc::data::ConstElementPtr value) const;
+    getFormat(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to ReplaceClientNameMode
     ///
-    /// Instantiation of extractConvert() to ReplaceClientNameMode
+    /// Instantiation of getAndConvert() to ReplaceClientNameMode
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return a NameChangeFormat value
     D2ClientConfig::ReplaceClientNameMode
-    getMode(const std::string& name,
-            isc::data::ConstElementPtr value) const;
+    getMode(isc::data::ConstElementPtr scope, const std::string& name);
 };
 
 }; // end of isc::dhcp namespace
