@@ -178,6 +178,7 @@ private:
      bool quoteValue(const std::string& parameter) const {
          return ((parameter != "persist") && (parameter != "lfc-interval") &&
                  (parameter != "connect-timeout") &&
+                 (parameter != "port") &&
                  (parameter != "readonly"));
     }
 
@@ -402,10 +403,61 @@ TEST_F(DbAccessParserTest, largeTimeout) {
     EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
 }
 
+// This test checks that the parser accepts the valid value of the
+// port parameter.
+TEST_F(DbAccessParserTest, validPort) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "port", "3306",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser(DbAccessParser::LEASE_DB);
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid port", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser rejects the negative value of the
+// port parameter.
+TEST_F(DbAccessParserTest, negativePort) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "port", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser(DbAccessParser::LEASE_DB);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint16_t) value of the timeout parameter.
+TEST_F(DbAccessParserTest, largePort) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "port", "65536",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser(DbAccessParser::LEASE_DB);
+    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+}
+
 // Check that the parser works with a valid MySQL configuration
 TEST_F(DbAccessParserTest, validTypeMysql) {
     const char* config[] = {"type",     "mysql",
                             "host",     "erewhon",
+                            "port",     "3306",
                             "user",     "kea",
                             "password", "keapassword",
                             "name",     "keatest",
@@ -423,6 +475,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
 // A missing 'type' keyword should cause an exception to be thrown.
 TEST_F(DbAccessParserTest, missingTypeKeyword) {
     const char* config[] = {"host",     "erewhon",
+                            "port",     "3306",
                             "user",     "kea",
                             "password", "keapassword",
                             "name",     "keatest",
@@ -445,6 +498,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     // Applying config2 will cause a wholesale change.
     const char* config2[] = {"type",     "mysql",
                              "host",     "erewhon",
+                             "port",     "3306",
                              "user",     "kea",
                              "password", "keapassword",
                              "name",     "keatest",
@@ -456,6 +510,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                                   NULL};
     const char* config3[] = {"type",     "mysql",
                              "host",     "erewhon",
+                             "port",     "3306",
                              "user",     "me",
                              "password", "meagain",
                              "name",     "keatest",
@@ -475,6 +530,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                                   NULL};
     const char* config4[] = {"type",     "mysql",
                              "host",     "erewhon",
+                             "port",     "3306",
                              "user",     "them",
                              "password", "",
                              "name",     "keatest",
@@ -536,7 +592,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
 // Check that the database access string is constructed correctly.
 TEST_F(DbAccessParserTest, getDbAccessString) {
     const char* config[] = {"type",     "mysql",
-                            "host",     "" ,
+                            "host",     "",
                             "name",     "keatest",
                             NULL};
 
