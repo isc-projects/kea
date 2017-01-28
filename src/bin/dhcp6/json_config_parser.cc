@@ -155,52 +155,36 @@ public:
     /// that define a prefix delegation pool.
     ///
     /// @throw DhcpConfigError if configuration parsing fails.
-  void parse(PoolStoragePtr pools,
-             ConstElementPtr pd_pool_) {
-        std::string addr_str;
-        std::string excluded_prefix_str = "::";
-        uint8_t prefix_len = 0;
-        uint8_t delegated_len = 0;
-        uint8_t excluded_prefix_len = 0;
+    void parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
+        std::string addr_str = getString(pd_pool_, "prefix");
 
-        // Parse the elements that make up the option definition.
-        BOOST_FOREACH(ConfigPair param, pd_pool_->mapValue()) {
-            std::string entry(param.first);
-            ConstElementPtr value(param.second);
-            try {
-                if (entry == "prefix") {
-                    addr_str = value->stringValue();
-                } else if (entry == "excluded-prefix") {
-                    excluded_prefix_str = value->stringValue();
-                } else if (entry == "prefix-len") {
-                    prefix_len = getUint8(entry, value);
-                } else if (entry == "delegated-len") {
-                    delegated_len = getUint8(entry, value);
-                } else if (entry == "excluded-prefix-len") {
-                    excluded_prefix_len = getUint8(entry, value);
-                } else if (entry == "option-data") {
-                    OptionDataListParser opts_parser(AF_INET6);
-                    opts_parser.parse(options_, value);
-                } else if (entry == "user-context") {
-                    user_context_ = value;
-                } else {
-                    isc_throw(isc::dhcp::DhcpConfigError,
-                              "unsupported parameter: " << entry
-                              << " (" << value->getPosition() << ")");
-                }
-            } catch (const isc::data::TypeError&) {
-                isc_throw(isc::dhcp::DhcpConfigError,
-                          "invalid value type specified for parameter '"
-                          << entry << "' ("
-                          << value->getPosition() << ")");
-            }
+        uint8_t prefix_len = getUint8(pd_pool_, "prefix-len");
+
+        uint8_t delegated_len = getUint8(pd_pool_, "delegated-len");
+
+        std::string excluded_prefix_str = "::";
+        if (pd_pool_->contains("excluded-prefix")) {
+            excluded_prefix_str = getString(pd_pool_, "excluded-prefix");
+        }
+
+        uint8_t excluded_prefix_len = 0;
+        if (pd_pool_->contains("excluded-prefix-len")) {
+            excluded_prefix_len = getUint8(pd_pool_, "excluded-prefix-len");
+        }
+
+        ConstElementPtr option_data = pd_pool_->get("option-data");
+        if (option_data) {
+            OptionDataListParser opts_parser(AF_INET6);
+            opts_parser.parse(options_, option_data);
+        }
+                    
+        ConstElementPtr user_context = pd_pool_->get("user-context");
+        if (user_context) {
+            user_context_ = user_context;
         }
 
         // Check the pool parameters. It will throw an exception if any
-        // of the required parameters are not present or invalid.
-        requireParam("prefix", pd_pool_);
-        requireParam("prefix-len", pd_pool_);
-        requireParam("delegated-len", pd_pool_);
+        // of the required parameters are invalid.
         try {
             // Attempt to construct the local pool.
             pool_.reset(new Pool6(IOAddress(addr_str),
@@ -228,28 +212,16 @@ public:
 
 private:
 
-    /// @brief Require a mandatory element
-    ///
-    /// @param name Entry name
-    /// @param config Pools configuration
-    /// @throw isc::dhcp::DhcpConfigError if not present
-    void requireParam(const std::string& name, ConstElementPtr config) const {
-        if (!config->contains(name)) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "Missing parameter '" << name << "' ("
-                      << config->getPosition() << ")");
-        }
-    }
-
     /// @brief Get an uint8_t value
     ///
-    /// @param name Entry name
-    /// @param value Integer element value
+    /// Instantiation of getIntType() to uint8_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return uint8_t value
-    /// @throw isc::data::TypeError when it is not an integer
-    /// isc::dhcp::DhcpConfigError when it does not fit in an uint8_t
-    uint8_t getUint8(const std::string& name, ConstElementPtr value) const {
-        return (extractInt<uint8_t, DhcpConfigError>(name, value));
+    /// @throw isc::dhcp::DhcpConfigError when it is not an uint8_t
+    uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
+        return (getIntType<uint8_t>(scope, name));
     }
 
     /// Pointer to the created pool object.
@@ -567,39 +539,29 @@ public:
     /// or having incorrect values.
     void parse(SrvConfigPtr srv_config, ConstElementPtr global) {
 
-        std::string name;
-        ConstElementPtr value;
-        try {
-            // Set the probation period for decline handling.
-            name = "decline-probation-period";
-            value = global->get(name);
-            uint32_t probation_period = getUint32(name, value);
-            srv_config->setDeclinePeriod(probation_period);
+        // Set the probation period for decline handling.
+        uint32_t probation_period =
+            getUint32(global, "decline-probation-period");
+        srv_config->setDeclinePeriod(probation_period);
 
-            // Set the DHCPv4-over-DHCPv6 interserver port.
-            name = "dhcp4o6-port";
-            value = global->get(name);
-            // @todo Change for uint16_t
-            uint32_t dhcp4o6_port = getUint32(name, value);
-            srv_config->setDhcp4o6Port(dhcp4o6_port);
-        } catch (const isc::data::TypeError& ex) {
-            isc_throw(DhcpConfigError,
-                      "invalid value type specified for parameter '" << name
-                      << "' (" << value->getPosition() << ")");
-        }
+        // Set the DHCPv4-over-DHCPv6 interserver port.
+        // @todo Change for uint16_t
+        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
+        srv_config->setDhcp4o6Port(dhcp4o6_port);
     }
 
 private:
 
     /// @brief Returns a value converted to uint32_t
     ///
-    /// Instantiation of extractInt() to uint32_t
+    /// Instantiation of getIntType() to uint32_t
     ///
-    /// @param value value of the parameter
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
     /// @return an uint32_t value
-    uint32_t getUint32(const std::string& name,
-                       isc::data::ConstElementPtr value) {
-        return (extractInt<uint32_t, DhcpConfigError>(name, value));
+    uint32_t getUint32(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint32_t>(scope, name));
     }
 };
 

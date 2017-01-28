@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <string>
 
 using namespace std;
+using isc::dhcp::DhcpConfigError;
 
 namespace isc {
 namespace data {
@@ -19,12 +20,14 @@ std::string
 SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "String parameter " << name << " not found"
-                  << "(" << scope->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "missing parameter '" << name << "' ("
+                  << scope->getPosition() << ")");
     }
     if (x->getType() != Element::string) {
-        isc_throw(BadValue, "Element " << name << " found, but is not a string"
-                  << "(" << x->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter '" << name
+                  << "' (" << x->getPosition() << ")");
     }
 
     return (x->stringValue());
@@ -34,12 +37,14 @@ int64_t
 SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "Integer parameter " << name << " not found "
-                  << "(" << scope->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "missing parameter '" << name << "' ("
+                  << scope->getPosition() << ")");
     }
     if (x->getType() != Element::integer) {
-        isc_throw(BadValue, "Element " << name << " found, but is not an integer"
-                  << "(" << x->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter '" << name
+                  << "' (" << x->getPosition() << ")");
     }
 
     return (x->intValue());
@@ -49,13 +54,14 @@ bool
 SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
-        isc_throw(BadValue, "Boolean element " << name << " not found "
-                  << "(" << scope->getPosition() << ")");
-
+        isc_throw(DhcpConfigError,
+                  "missing parameter '" << name << "' ("
+                  << scope->getPosition() << ")");
     }
     if (x->getType() != Element::boolean) {
-        isc_throw(BadValue, "Element " << name << " found, but is not a boolean"
-                  << "(" << x->getPosition() << ")");
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter '" << name
+                  << "' (" << x->getPosition() << ")");
     }
 
     return (x->boolValue());
@@ -112,7 +118,8 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
             } else if (def_value.value_ == string("false")) {
                 bool_value = false;
             } else {
-                isc_throw(BadValue, "Internal error. Boolean value specified as "
+                isc_throw(DhcpConfigError,
+                          "Internal error. Boolean value specified as "
                           << def_value.value_ << ", expected true or false");
             }
             x.reset(new BoolElement(bool_value, pos));
@@ -125,7 +132,8 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
         }
         default:
             // No default values for null, list or map
-            isc_throw(BadValue, "Internal error. Incorrect default value type.");
+            isc_throw(DhcpConfigError,
+                      "Internal error. Incorrect default value type.");
         }
 
         // ... and insert it into the provided Element tree.
