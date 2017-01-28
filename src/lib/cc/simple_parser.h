@@ -118,34 +118,37 @@ protected:
 
     /// @brief Returns a string parameter from a scope
     ///
-    /// Unconditionally returns a parameter. If the parameter is not there or
-    /// is not of appropriate type, BadValue exception is thrown.
+    /// Unconditionally returns a parameter.
     ///
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return a string value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type
     static std::string getString(isc::data::ConstElementPtr scope,
                                  const std::string& name);
 
     /// @brief Returns an integer parameter from a scope
     ///
-    /// Unconditionally returns a parameter. If the parameter is not there or
-    /// is not of appropriate type, BadValue exception is thrown.
+    /// Unconditionally returns a parameter.
     ///
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return an integer value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type
     static int64_t getInteger(isc::data::ConstElementPtr scope,
                               const std::string& name);
 
     /// @brief Returns a boolean parameter from a scope
     ///
-    /// Unconditionally returns a parameter. If the parameter is not there or
-    /// is not of appropriate type, BadValue exception is thrown.
+    /// Unconditionally returns a parameter.
     ///
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return a boolean value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type
     static bool getBoolean(isc::data::ConstElementPtr scope,
                            const std::string& name);
 
@@ -157,6 +160,8 @@ protected:
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter for error report
     /// @return a value of int_type
+    /// @throw DhcpConfigError if the parameter is not there, is not of
+    /// appropriate type or is out of type value range
     template <typename int_type> int_type
     getIntType(isc::data::ConstElementPtr scope,
                const std::string& name) {
@@ -182,8 +187,8 @@ protected:
     /// @param type_name name of target_type for error report
     /// @param value value of the parameter
     /// @return a converted value of target_type
-    /// @throw isc::data::TypeError when the value is not an integer
-    /// @throw exception_type when the value cannot be converted
+    /// @throw DhcpConfigError if the parameter is not there, is not of
+    /// appropriate type or can not be converted
     template <typename target_type,
               target_type convert(const std::string&)> target_type
     getAndConvert(isc::data::ConstElementPtr scope,
