@@ -185,7 +185,6 @@ protected:
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter for error report
     /// @param type_name name of target_type for error report
-    /// @param value value of the parameter
     /// @return a converted value of target_type
     /// @throw DhcpConfigError if the parameter is not there, is not of
     /// appropriate type or can not be converted

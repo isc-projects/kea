@@ -764,8 +764,6 @@ public:
 
     /// @brief constructor
     ///
-    /// @param global_context
-    /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
     /// @param family address family: @c AF_INET or @c AF_INET6
     SubnetConfigParser(uint16_t family);
 
