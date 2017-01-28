@@ -446,7 +446,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: String parameter subnet not found(<string>:21:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:21:17)\" }",
               response);
 
     // Check that the config was not lost
