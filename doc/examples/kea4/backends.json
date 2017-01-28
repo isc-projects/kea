@@ -22,6 +22,7 @@
 # dependencies or services running.
 #  "lease-database": {
 #      "type": "memfile",
+#      "persist": true,
 #      "lfc-interval": 3600
 #  },
 
@@ -36,6 +37,7 @@
 #      "type": "mysql",
 #      "name": "keatest",
 #      "host": "localhost",
+#      "port": 3306,
 #      "user": "keatest",
 #      "password": "secret1",
 #      "connect-timeout": 3
@@ -52,8 +54,10 @@
 #      "type": "pgsql",
 #      "name": "keatest",
 #      "host": "localhost",
+#      "port": 5432,
 #      "user": "keatest",
-#      "password": "secret1"
+#      "password": "secret1",
+#      "connect-timeout": 3
 #  },
 
 # 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
@@ -66,7 +70,8 @@
 #  "lease-database": {
 #      "type": "cql",
 #      "keyspace": "keatest",
-#      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3"
+#      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3",
+#      "port": 9042
 #  },
 
 # Addresses will be assigned with a lifetime of 4000 seconds.
