@@ -430,10 +430,7 @@ OptionDataParser::extractSpace(ConstElementPtr parent) const {
         }
 
     } catch (std::exception& ex) {
-        // Append position of the option space parameter. Note, that in the case
-        // when 'space' was not specified a default value will be used and we
-        // should never get here. Therefore, it is ok to call getPosition for
-        // the space parameter here as this parameter will always be specified.
+        // Append position of the option space parameter.
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << getPosition("space", parent) << ")");
     }
@@ -1046,17 +1043,10 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     try {
         std::string hr_mode = getString(params, "reservation-mode");
         subnet_->setHostReservationMode(hrModeFromText(hr_mode));
-    } catch (const BadValue& ex) {
-        ConstElementPtr mode = params->get("reservation-mode");
-        string pos;
-        if (mode) {
-            pos = mode->getPosition().str();
-        } else {
-            pos = params->getPosition().str();
-        }
-        isc_throw(DhcpConfigError, "Failed to process specified value "
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
                   " of reservation-mode parameter: " << ex.what()
-                  << "(" << pos << ")");
+                  << "(" << getPosition("reservation-mode", params) << ")");
     }
 
     // Try setting up client class.

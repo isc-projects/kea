@@ -104,9 +104,9 @@ class SimpleParser {
 
     /// @brief Utility method that returns position of an element
     ///
-    /// It's mostly useful for logging. When any necessary parameter is
-    /// missing (either parent is null or it doesn't contain specified
-    /// name) ZERO_POSITION is returned.
+    /// It's mostly useful for logging. If the element is missing
+    /// the parent position is returned or ZERO_POSITION if parent
+    /// is null.
     ///
     /// @param name position of that element will be returned
     /// @param parent parent element (optional)
