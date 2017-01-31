@@ -20,17 +20,23 @@
 #include <list>
 #include <string>
 
+using namespace boost::asio::ip;
 using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::http::test;
 
 namespace {
 
+/// @brief IP address to which HTTP service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
-const unsigned short SERVER_PORT = 18123;
-const long REQUEST_TIMEOUT = 20000;
 
-/// @brief Test timeout in ms.
+/// @brief Port number to which HTTP service is bound.
+const unsigned short SERVER_PORT = 18123;
+
+/// @brief Request Timeout used in most of the tests (ms).
+const long REQUEST_TIMEOUT = 10000;
+
+/// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
 
 /// @brief Test HTTP response.
@@ -85,9 +91,13 @@ private:
     }
 };
 
+/// @brief Implementation of the test @ref HttpResponseCreatorFactory.
+///
+/// This factory class creates @ref TestHttpResponseCreator instances.
 class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
 public:
 
+    /// @brief Creates @ref TestHttpResponseCreator instance.
     virtual HttpResponseCreatorPtr create() const {
         HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator());
         return (response_creator);
@@ -116,10 +126,12 @@ public:
         close();
     }
 
+    /// @brief Send HTTP request specified in textual format.
+    ///
+    /// @param request HTTP request in the textual format.
     void startRequest(const std::string& request) {
-        boost::asio::ip::tcp::endpoint
-            endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
-                     SERVER_PORT);
+        tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
+                               SERVER_PORT);
         socket_.async_connect(endpoint,
                               [this, request](const boost::system::error_code& ec) {
             if (ec) {
@@ -131,10 +143,16 @@ public:
         });
     }
 
+    /// @brief Send HTTP request.
+    ///
+    /// @param request HTTP request in the textual format.
     void sendRequest(const std::string& request) {
         sendPartialRequest(request);
     }
 
+    /// @brief Send part of the HTTP request.
+    ///
+    /// @param request part of the HTTP request to be sent.
     void sendPartialRequest(std::string request) {
         socket_.async_send(boost::asio::buffer(request.data(), request.size()),
                            [this, request](const boost::system::error_code& ec,
@@ -146,25 +164,36 @@ public:
                 return;
             }
 
+            // Remove the part of the request which has been sent.
             if (bytes_transferred > 0 && (request.size() <= bytes_transferred)) {
                 request.erase(0, bytes_transferred);
             }
 
+            // Continue sending request data if there are still some data to be
+            // sent.
             if (!request.empty()) {
                 sendPartialRequest(request);
 
             } else {
+                // Request has been sent. Start receiving response.
                 response_.clear();
                 receivePartialResponse();
             }
        });
     }
 
+    /// @brief Receive response from the server.
     void receivePartialResponse() {
         socket_.async_read_some(boost::asio::buffer(buf_),
                                 [this](const boost::system::error_code& ec,
                                        std::size_t bytes_transferred) {
             if (ec) {
+                // IO service stopped so simply return.
+                if (ec == boost::asio::error::operation_aborted) {
+                    return;
+                }
+
+                // Error occurred, bail...
                 ADD_FAILURE() << "error occurred while receiving HTTP"
                     " response from the server: " << ec.message();
                 io_service_.stop();
@@ -175,8 +204,13 @@ public:
                                  buf_.data() + bytes_transferred);
             }
 
+            // Two consecutive new lines end the part of the response we're
+            // expecting.
             if (response_.find("\r\n\r\n", 0) != std::string::npos) {
                 io_service_.stop();
+
+            } else {
+                receivePartialResponse();
             }
 
         });
@@ -209,9 +243,13 @@ private:
 /// @brief Pointer to the HttpClient.
 typedef boost::shared_ptr<HttpClient> HttpClientPtr;
 
+/// @brief Test fixture class for @ref HttpListener.
 class HttpListenerTest : public ::testing::Test {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Starts test timer which detects timeouts.
     HttpListenerTest()
         : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
           test_timer_(io_service_), clients_() {
@@ -219,7 +257,10 @@ public:
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
-    ~HttpListenerTest() {
+    /// @brief Destructor.
+    ///
+    /// Removes active HTTP clients.
+    virtual ~HttpListenerTest() {
         for (auto client = clients_.begin(); client != clients_.end();
              ++client) {
             (*client)->close();
@@ -244,8 +285,10 @@ public:
         io_service_.stop();
     }
 
+    /// @brief IO service used in the tests.
     IOService io_service_;
 
+    /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
 
     /// @brief Asynchronous timer service to detect timeouts.
@@ -255,6 +298,8 @@ public:
     std::list<HttpClientPtr> clients_;
 };
 
+// This test verifies that HTTP connection can be established and used to
+// transmit HTTP request and receive a response.
 TEST_F(HttpListenerTest, listen) {
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
@@ -278,7 +323,18 @@ TEST_F(HttpListenerTest, listen) {
     io_service_.poll();
 }
 
+// This test verifies that the HTTP listener can't be started twice.
+TEST_F(HttpListenerTest, startTwice) {
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, REQUEST_TIMEOUT);
+    ASSERT_NO_THROW(listener.start());
+    EXPECT_THROW(listener.start(), HttpListenerError);
+}
+
+// This test verifies that Bad Request status is returned when the request
+// is malformed.
 TEST_F(HttpListenerTest, badRequest) {
+    // Content-Type is wrong. This should result in Bad Request status.
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
         "Content-Type: foo\r\n"
         "Content-Length: 3\r\n\r\n"
@@ -301,6 +357,8 @@ TEST_F(HttpListenerTest, badRequest) {
               client->getResponse());
 }
 
+// This test verifies that NULL pointer can't be specified for the
+// HttpResponseCreatorFactory.
 TEST_F(HttpListenerTest, invalidFactory) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
                               SERVER_PORT, HttpResponseCreatorFactoryPtr(),
@@ -308,30 +366,43 @@ TEST_F(HttpListenerTest, invalidFactory) {
                  HttpListenerError);
 }
 
+// This test verifies that the timeout of 0 can't be specified for the
+// Request Timeout.
 TEST_F(HttpListenerTest, invalidRequestTimeout) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
                               SERVER_PORT, factory_, 0),
                  HttpListenerError);
 }
 
+// This test verifies that listener can't be bound to the port to which
+// other server is bound.
 TEST_F(HttpListenerTest, addressInUse) {
-    boost::asio::ip::tcp::acceptor acceptor(io_service_.get_io_service());;
-    boost::asio::ip::tcp::endpoint
-        endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
-                 SERVER_PORT + 1);
+    tcp::acceptor acceptor(io_service_.get_io_service());
+    // Use other port than SERVER_PORT to make sure that this TCP connection
+    // doesn't affect subsequent tests.
+    tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
+                           SERVER_PORT + 1);
     acceptor.open(endpoint.protocol());
     acceptor.bind(endpoint);
 
+    // Listener should report an error when we try to start it because another
+    // acceptor is bound to that port and address.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
                           SERVER_PORT + 1, factory_, REQUEST_TIMEOUT);
     EXPECT_THROW(listener.start(), HttpListenerError);
 }
 
+// This test verifies that HTTP Request Timeout status is returned as
+// expected.
 TEST_F(HttpListenerTest, requestTimeout) {
+    // The part of the request specified here is correct but it is not
+    // a complete request.
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
-        "Content-Type: foo\r\n"
+        "Content-Type: application/json\r\n"
         "Content-Length:";
 
+    // Open the listener with the Request Timeout of 1 sec and post the
+    // partial request.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                           factory_, 1000);
     ASSERT_NO_THROW(listener.start());
@@ -340,6 +411,10 @@ TEST_F(HttpListenerTest, requestTimeout) {
     ASSERT_EQ(1, clients_.size());
     HttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
+
+    // The server should wait for the missing part of the request for 1 second.
+    // The missing part never arrives so the server should respond with the
+    // HTTP Request Timeout status.
     EXPECT_EQ("HTTP/1.1 408 Request Timeout\r\n"
               "Content-Length: 44\r\n"
               "Content-Type: application/json\r\n"
