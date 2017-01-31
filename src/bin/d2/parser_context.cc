@@ -104,11 +104,10 @@ D2ParserContext::enter(const ParserContext& ctx)
 void
 D2ParserContext::leave()
 {
-#if 1
     if (cstack_.empty()) {
         fatal("unbalanced syntactic context");
     }
-#endif
+
     ctx_ = cstack_.back();
     cstack_.pop_back();
 }
@@ -123,6 +122,8 @@ D2ParserContext::contextName()
         return ("toplevel");
     case DHCPDDNS:
         return ("DhcpDdns");
+    case TSIG_KEY:
+        return ("tsig-key");
     case TSIG_KEYS:
         return ("tsig-keys");
     case ALGORITHM:
@@ -135,8 +136,12 @@ D2ParserContext::contextName()
         return("forward-ddns");
     case REVERSE_DDNS:
         return("reverse-ddns");
+    case DDNS_DOMAIN:
+        return("ddns-domain");
     case DDNS_DOMAINS:
         return("ddns-domains");
+    case DNS_SERVER:
+        return("dns-server");
     case DNS_SERVERS:
         return("dns-servers");
     case LOGGING:

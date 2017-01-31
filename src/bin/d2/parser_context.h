@@ -48,11 +48,29 @@ public:
         /// This parser will parse the content as generic JSON.
         PARSER_JSON,
 
-        ///< Used while parsing top level (contains DhcpDdns, Logging, others)
+        ///< Used for parsing top level (contains DhcpDdns, Logging, others)
         PARSER_DHCPDDNS,
 
-        ///< Used while parsing content of DhcpDdns.
-        PARSER_SUB_DHCPDDNS
+        ///< Used for parsing content of DhcpDdns.
+        PARSER_SUB_DHCPDDNS,
+
+        ///< Used for parsing content of a TSIG key.
+        PARSER_TSIG_KEY,
+
+        ///< Used for pasing a list of TSIG Keys.
+        PARSER_TSIG_KEYS,
+
+        ///< Used for parsing content of a DDNS Domain.
+        PARSER_DDNS_DOMAIN,
+
+        ///< Used for parsing a list a DDNS Domains.
+        PARSER_DDNS_DOMAINS,
+
+        ///< Used for parsing content of a DNS Server.
+        PARSER_DNS_SERVER,
+
+        ///< Used for pasing a list of DNS servess.
+        PARSER_DNS_SERVERS
     } ParserType;
 
     /// @brief Default constructor.
@@ -156,7 +174,10 @@ public:
         ///< Used while parsing content of DhcpDdns.
         DHCPDDNS,
 
-        ///< Used while parsing content of tsig-keys
+        ///< Used while parsing content of a tsig-key
+        TSIG_KEY,
+
+        ///< Used while parsing a list of tsig-keys
         TSIG_KEYS,
 
         ///< Used while parsing content of DhcpDdns/tsig-keys/algorithm
@@ -174,10 +195,16 @@ public:
         ///< Used while parsing content of DhcpDdns/reverse-ddns
         REVERSE_DDNS,
 
-        ///< Used while parsing content of DhcpDdns/<forward|reverse>-ddns/ddns-domains
+        ///< Used while parsing content of a ddns-domain
+        DDNS_DOMAIN,
+
+        ///< Used while parsing a list of ddns-domains
         DDNS_DOMAINS,
 
-        ///< Used while parsing content of DhcpDdns/<forward|reverse>-ddns/ddns-domains/dns-servers
+        ///< Used while parsing content of a dns-server
+        DNS_SERVER,
+
+        ///< Used while parsing content of list of dns-servers
         DNS_SERVERS,
 
         ///< Used while parsing content of Logging

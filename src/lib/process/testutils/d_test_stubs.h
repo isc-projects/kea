@@ -30,11 +30,6 @@ using namespace boost::posix_time;
 namespace isc {
 namespace process {
 
-/// @brief Provides a valid DHCP-DDNS configuration for testing basic
-/// parsing fundamentals.
-extern const char* valid_d2_config;
-
-
 /// @brief Class is used to set a globally accessible value that indicates
 /// a specific type of failure to simulate.  Test derivations of base classes
 /// can exercise error handling code paths by testing for specific SimFailure
@@ -892,10 +887,6 @@ private:
     /// @brief Timer which controls when the signal is sent.
     asiolink::IntervalTimerPtr timer_;
 };
-
-/// @brief Defines a small but valid DHCP-DDNS compliant configuration for
-/// testing configuration parsing fundamentals.
-extern const char* valid_d2_config;
 
 }; // namespace isc::process
 }; // namespace isc

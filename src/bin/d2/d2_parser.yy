@@ -85,6 +85,12 @@ using namespace std;
   TOPLEVEL_JSON
   TOPLEVEL_DHCPDDNS
   SUB_DHCPDDNS
+  SUB_TSIG_KEY
+  SUB_TSIG_KEYS
+  SUB_DDNS_DOMAIN
+  SUB_DDNS_DOMAINS
+  SUB_DNS_SERVER
+  SUB_DNS_SERVERS
 ;
 
 %token <std::string> STRING "constant string"
@@ -107,6 +113,12 @@ using namespace std;
 start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | TOPLEVEL_DHCPDDNS { ctx.ctx_ = ctx.CONFIG; } syntax_map
      | SUB_DHCPDDNS { ctx.ctx_ = ctx.DHCPDDNS; } sub_dhcpddns
+     | SUB_TSIG_KEY { ctx.ctx_ = ctx.TSIG_KEY; } sub_tsig_key
+     | SUB_TSIG_KEYS { ctx.ctx_ = ctx.TSIG_KEYS; } sub_tsig_keys
+     | SUB_DDNS_DOMAIN { ctx.ctx_ = ctx.DDNS_DOMAIN; } sub_ddns_domain
+     | SUB_DDNS_DOMAINS { ctx.ctx_ = ctx.DDNS_DOMAINS; } sub_ddns_domains
+     | SUB_DNS_SERVER { ctx.ctx_ = ctx.DNS_SERVERS; } sub_dns_server
+     | SUB_DNS_SERVERS { ctx.ctx_ = ctx.DNS_SERVERS; } sub_dns_servers
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -261,7 +273,7 @@ ip_address: IP_ADDRESS {
 port: PORT COLON INTEGER {
     if ($3 <= 0) {
         error(@3, "port must be greater than zero");
-    } 
+    }
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", i);
 };
@@ -269,7 +281,7 @@ port: PORT COLON INTEGER {
 dns_server_timeout: DNS_SERVER_TIMEOUT COLON INTEGER {
     if ($3 <= 0) {
         error(@3, "dns-server-timeout must be greater than zero");
-    } else { 
+    } else {
         ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
         ctx.stack_.back()->set("dns-server-timeout", i);
     }
@@ -319,17 +331,16 @@ ddns_mgr_params: %empty
                | not_empty_ddns_mgr_params
                ;
 
-not_empty_ddns_mgr_params: ddns_mgr_param 
+not_empty_ddns_mgr_params: ddns_mgr_param
                          | ddns_mgr_params COMMA ddns_mgr_param
                          ;
 
-ddns_mgr_param: ddns_domains 
+ddns_mgr_param: ddns_domains
               | unknown_map_entry
               ;
 
 
 // --- ddns-domains ----------------------------------------
-
 ddns_domains: DDNS_DOMAINS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("ddns-domains", l);
@@ -339,6 +350,13 @@ ddns_domains: DDNS_DOMAINS {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+sub_ddns_domains: LSQUARE_BRACKET {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(l);
+} ddns_domain_list RSQUARE_BRACKET {
+    // parsing completed
+}
 
 ddns_domain_list: %empty
               | not_empty_ddns_domain_list
@@ -356,7 +374,14 @@ ddns_domain: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-ddns_domain_params: ddns_domain_param 
+sub_ddns_domain: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} ddns_domain_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+ddns_domain_params: ddns_domain_param
                   | ddns_domain_params COMMA ddns_domain_param
                   ;
 
@@ -371,8 +396,8 @@ ddns_domain_name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
-        error(@3, "name cannot be blank");
-    } 
+        error(@3, "Ddns domain name cannot be blank");
+    }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("name", name);
@@ -382,9 +407,6 @@ ddns_domain_name: NAME {
 ddns_domain_key_name: KEY_NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    if ($4 == "") {
-        error(@3, "key-name cannot be blank");
-    } 
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("key-name", name);
@@ -404,13 +426,16 @@ dns_servers: DNS_SERVERS {
     ctx.leave();
 };
 
-dns_server_list: %empty
-              | not_empty_dns_server_list
-              ;
+sub_dns_servers: LSQUARE_BRACKET {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(l);
+} dns_server_list RSQUARE_BRACKET {
+    // parsing completed
+}
 
-not_empty_dns_server_list: dns_server
-                        | not_empty_dns_server_list COMMA dns_server
-                        ;
+dns_server_list: dns_server
+               | dns_server_list COMMA dns_server
+               ;
 
 dns_server: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
@@ -420,7 +445,14 @@ dns_server: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-dns_server_params: dns_server_param 
+sub_dns_server: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} dns_server_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+dns_server_params: dns_server_param
                | dns_server_params COMMA dns_server_param
                ;
 
@@ -433,9 +465,9 @@ dns_server_param: dns_server_hostname
 dns_server_hostname: HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    if ($4 == "") {
-        error(@3, "hostname cannot be blank");
-    } 
+    if ($4 != "") {
+        error(@3, "hostname is not yet supported");
+    }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname", name);
@@ -453,7 +485,7 @@ dns_server_ip_address: IP_ADDRESS {
 dns_server_port: PORT COLON INTEGER {
     if ($3 <= 0) {
         error(@3, "port must be greater than zero");
-    } 
+    }
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", i);
 };
@@ -474,6 +506,13 @@ tsig_keys: TSIG_KEYS {
     ctx.leave();
 };
 
+sub_tsig_keys: LSQUARE_BRACKET {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(l);
+} tsig_keys_list RSQUARE_BRACKET {
+    // parsing completed
+}
+
 tsig_keys_list: %empty
               | not_empty_tsig_keys_list
               ;
@@ -490,7 +529,16 @@ tsig_key: LCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-tsig_key_params: tsig_key_param 
+sub_tsig_key: LCURLY_BRACKET {
+    // Parse tsig key list entry map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} tsig_key_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+
+tsig_key_params: tsig_key_param
                | tsig_key_params COMMA tsig_key_param
                ;
 
@@ -505,8 +553,8 @@ tsig_key_name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
-        error(@3, "name cannot be blank");
-    } 
+        error(@3, "TSIG key name cannot be blank");
+    }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("name", name);
@@ -517,8 +565,8 @@ tsig_key_algorithm: ALGORITHM {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
-        error(@3, "algorithm cannot be blank");
-    } 
+        error(@3, "TSIG key algorithm cannot be blank");
+    }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("algorithm", elem);
     ctx.leave();
@@ -526,8 +574,8 @@ tsig_key_algorithm: ALGORITHM {
 
 tsig_key_digest_bits: DIGEST_BITS COLON INTEGER {
     if ($3 < 0 || ($3 > 0  && ($3 % 8 != 0))) {
-        error(@3, "digest-bits must either be zero or a positive, multiple of eight");
-    } 
+        error(@3, "TSIG key digest-bits must either be zero or a positive, multiple of eight");
+    }
     ElementPtr elem(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("digest-bits", elem);
 };
@@ -536,8 +584,8 @@ tsig_key_secret: SECRET {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
-        error(@3, "secret cannot be blank");
-    } 
+        error(@3, "TSIG key secret cannot be blank");
+    }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("secret", elem);
     ctx.leave();
