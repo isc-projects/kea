@@ -46,7 +46,7 @@ public:
     /// @brief Stops all connections and removes them from the pool.
     void stopAll();
 
-private:
+protected:
 
     /// @brief Set of connections.
     std::set<HttpConnectionPtr> connections_;
