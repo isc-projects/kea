@@ -380,10 +380,16 @@ namespace isc { namespace d2 {
         TOKEN_TOPLEVEL_JSON = 293,
         TOKEN_TOPLEVEL_DHCPDDNS = 294,
         TOKEN_SUB_DHCPDDNS = 295,
-        TOKEN_STRING = 296,
-        TOKEN_INTEGER = 297,
-        TOKEN_FLOAT = 298,
-        TOKEN_BOOLEAN = 299
+        TOKEN_SUB_TSIG_KEY = 296,
+        TOKEN_SUB_TSIG_KEYS = 297,
+        TOKEN_SUB_DDNS_DOMAIN = 298,
+        TOKEN_SUB_DDNS_DOMAINS = 299,
+        TOKEN_SUB_DNS_SERVER = 300,
+        TOKEN_SUB_DNS_SERVERS = 301,
+        TOKEN_STRING = 302,
+        TOKEN_INTEGER = 303,
+        TOKEN_FLOAT = 304,
+        TOKEN_BOOLEAN = 305
       };
     };
 
@@ -656,6 +662,30 @@ namespace isc { namespace d2 {
 
     static inline
     symbol_type
+    make_SUB_TSIG_KEY (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_TSIG_KEYS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_DDNS_DOMAIN (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_DDNS_DOMAINS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_DNS_SERVER (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_DNS_SERVERS (const location_type& l);
+
+    static inline
+    symbol_type
     make_STRING (const std::string& v, const location_type& l);
 
     static inline
@@ -875,12 +905,12 @@ namespace isc { namespace d2 {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 245,     ///< Last index in yytable_.
-      yynnts_ = 110,  ///< Number of nonterminal symbols.
-      yyfinal_ = 8, ///< Termination state number.
+      yylast_ = 247,     ///< Last index in yytable_.
+      yynnts_ = 127,  ///< Number of nonterminal symbols.
+      yyfinal_ = 20, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 45  ///< Number of tokens.
+      yyntokens_ = 51  ///< Number of tokens.
     };
 
 
@@ -926,9 +956,10 @@ namespace isc { namespace d2 {
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+      45,    46,    47,    48,    49,    50
     };
-    const unsigned int user_token_number_max_ = 299;
+    const unsigned int user_token_number_max_ = 305;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -961,24 +992,24 @@ namespace isc { namespace d2 {
   {
       switch (other.type_get ())
     {
-      case 50: // value
-      case 77: // ncr_protocol_value
+      case 62: // value
+      case 89: // ncr_protocol_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 44: // "boolean"
+      case 50: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 43: // "floating point"
+      case 49: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 42: // "integer"
+      case 48: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 41: // "constant string"
+      case 47: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -999,24 +1030,24 @@ namespace isc { namespace d2 {
     (void) v;
       switch (this->type_get ())
     {
-      case 50: // value
-      case 77: // ncr_protocol_value
+      case 62: // value
+      case 89: // ncr_protocol_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 44: // "boolean"
+      case 50: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 43: // "floating point"
+      case 49: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 42: // "integer"
+      case 48: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 41: // "constant string"
+      case 47: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1096,24 +1127,24 @@ namespace isc { namespace d2 {
     // Type destructor.
     switch (yytype)
     {
-      case 50: // value
-      case 77: // ncr_protocol_value
+      case 62: // value
+      case 89: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 44: // "boolean"
+      case 50: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 43: // "floating point"
+      case 49: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 42: // "integer"
+      case 48: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 41: // "constant string"
+      case 47: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1140,24 +1171,24 @@ namespace isc { namespace d2 {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 50: // value
-      case 77: // ncr_protocol_value
+      case 62: // value
+      case 89: // ncr_protocol_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 44: // "boolean"
+      case 50: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 43: // "floating point"
+      case 49: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 42: // "integer"
+      case 48: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 41: // "constant string"
+      case 47: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1220,7 +1251,8 @@ namespace isc { namespace d2 {
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299
+     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
+     305
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1460,6 +1492,42 @@ namespace isc { namespace d2 {
   }
 
   D2Parser::symbol_type
+  D2Parser::make_SUB_TSIG_KEY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_TSIG_KEY, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_SUB_TSIG_KEYS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_TSIG_KEYS, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_SUB_DDNS_DOMAIN (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DDNS_DOMAIN, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_SUB_DDNS_DOMAINS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DDNS_DOMAINS, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_SUB_DNS_SERVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DNS_SERVER, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_SUB_DNS_SERVERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DNS_SERVERS, l);
+  }
+
+  D2Parser::symbol_type
   D2Parser::make_STRING (const std::string& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_STRING, v, l);
@@ -1486,7 +1554,7 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy" // lalr1.cc:392
 } } // isc::d2
-#line 1490 "d2_parser.h" // lalr1.cc:392
+#line 1558 "d2_parser.h" // lalr1.cc:392
 
 
 

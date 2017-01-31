@@ -11,6 +11,7 @@
 #include <d2/d2_process.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <process/testutils/d_test_stubs.h>
+#include <d2/tests/nc_test_utils.h>
 
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

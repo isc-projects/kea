@@ -268,6 +268,16 @@ D2CfgMgr::parseElement(const std::string& element_id,
         } else if (element_id == "tsig-keys") {
             TSIGKeyInfoListParser parser;
             getD2CfgContext()->setKeys(parser.parse(element));
+        } else if (element_id ==  "forward-ddns") {
+            DdnsDomainListMgrParser parser;
+            DdnsDomainListMgrPtr mgr = parser.parse(element, element_id,
+                                                    context->getKeys());
+            context->setForwardMgr(mgr);
+        } else if (element_id ==  "reverse-ddns") {
+            DdnsDomainListMgrParser parser;
+            DdnsDomainListMgrPtr mgr = parser.parse(element, element_id,
+                                                    context->getKeys());
+            context->setReverseMgr(mgr);
         } else {
             // not something we handle here
             return (false);
@@ -357,29 +367,14 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     getD2CfgContext()->getD2Params() = params;
 }
 
-isc::dhcp::ParserPtr
+dhcp::ParserPtr
 D2CfgMgr::createConfigParser(const std::string& config_id,
                              const isc::data::Element::Position& pos) {
-    // Get D2 specific context.
-    D2CfgContextPtr context = getD2CfgContext();
+    isc_throw(NotImplemented,
+              "parser error: D2CfgMgr parameter not supported : "
+               " (" << config_id << pos << ")");
 
-    // Create parser instance based on element_id.
-    isc::dhcp::ParserPtr parser;
-    if (config_id ==  "forward-ddns") {
-        parser.reset(new DdnsDomainListMgrParser("forward-ddns",
-                                                 context->getForwardMgr(),
-                                                 context->getKeys()));
-    } else if (config_id ==  "reverse-ddns") {
-        parser.reset(new DdnsDomainListMgrParser("reverse-ddns",
-                                                 context->getReverseMgr(),
-                                                 context->getKeys()));
-    } else {
-        isc_throw(NotImplemented,
-                  "parser error: D2CfgMgr parameter not supported : "
-                  " (" << config_id << pos << ")");
-    }
-
-    return (parser);
+    return (dhcp::ParserPtr());
 }
 
 }; // end of isc::dhcp namespace

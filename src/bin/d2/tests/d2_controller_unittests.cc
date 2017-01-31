@@ -10,6 +10,7 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <process/spec_config.h>
+#include <d2/tests/nc_test_utils.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/pointer_cast.hpp>

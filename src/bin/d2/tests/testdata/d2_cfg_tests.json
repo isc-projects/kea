@@ -27,7 +27,6 @@
 # as well as validating this as the smallest config which makes writing
 # permutations easier.
 "description" : "D2 smallest, valid config",
-"logic-error" : false,
 "data" :
     {
     "forward-ddns" : {},
@@ -37,9 +36,9 @@
 }
 
 #-----
+# Map should be supplied through setDefaults
 ,{
 "description" : "D2 missing forward-ddns map",
-"logic-error" : true,
 "data" :
     {
     "reverse-ddns" : {},
@@ -48,9 +47,9 @@
 }
 
 #-----
+# Map should be supplied through setDefaults
 ,{
 "description" : "D2 missing reverse-ddns map",
-"logic-error" : true,
 "data" :
     {
     "forward-ddns" : {},
@@ -60,9 +59,9 @@
 
 
 #-----
+# Map should be supplied through setDefaults
 ,{
 "description" : "D2 missing tsig-keys list",
-"logic-error" : true,
 "data" :
     {
     "forward-ddns" : {},
@@ -138,7 +137,7 @@
 #-----
 ,{
 "description" : "D2Params.ip-address invalid value",
-"logic-error" : true,
+"logic-error" : "invalid address (bogus) specified for parameter 'ip-address' (<string>:1:39)",
 "data" :
     {
     "ip-address" : "bogus",
@@ -241,7 +240,7 @@
 #-----
 ,{
 "description" : "D2Params.ncr-protocol, unsupported TCP",
-"logic-error" : true,
+"logic-error" : "ncr-protocol : TCP is not yet supported  (<string>:1:41)",
 "data" :
     {
     "ncr-protocol" : "TCP",
@@ -316,7 +315,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, missing key name",
-"logic-error" : true,
+"logic-error" : "element: tsig-keys : String parameter name not found(<string>:1:62)<string>:1:47",
 "data" :
     {
     "forward-ddns" : {},
@@ -334,7 +333,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank key name",
-"syntax-error" : "<string>:1.95: name cannot be blank",
+"syntax-error" : "<string>:1.95: TSIG key name cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -353,7 +352,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, duplicate key name",
-"logic-error" : true,
+"logic-error" : "Duplicate TSIG key name specified : first.key (<string>:1:185)",
 "data" :
     {
     "forward-ddns" : {},
@@ -421,7 +420,7 @@
 #----- D2.tsig-keys, algorithm tests
 ,{
 "description" : "D2.tsig-keys, missing algorithm",
-"logic-error" : true,
+"logic-error" : "element: tsig-keys : String parameter algorithm not found(<string>:1:62)<string>:1:47",
 "data" :
     {
     "forward-ddns" : {},
@@ -439,7 +438,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank algorithm",
-"syntax-error" : "<string>:1.75: algorithm cannot be blank",
+"syntax-error" : "<string>:1.75: TSIG key algorithm cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -458,7 +457,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid algorithm",
-"logic-error" : true,
+"logic-error" : "tsig-key : Unknown TSIG Key algorithm: bogus (<string>:1:77)",
 "data" :
     {
     "forward-ddns" : {},
@@ -526,7 +525,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid digest-bits",
-"syntax-error" : "<string>:1.104-105: digest-bits must either be zero or a positive, multiple of eight",
+"syntax-error" : "<string>:1.104-105: TSIG key digest-bits must either be zero or a positive, multiple of eight",
 "data" :
     {
     "forward-ddns" : {},
@@ -546,7 +545,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-MD5",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:104)",
 "data" :
     {
     "forward-ddns" : {},
@@ -566,7 +565,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA1",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:105)",
 "data" :
     {
     "forward-ddns" : {},
@@ -586,7 +585,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA224",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -606,7 +605,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA256",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -626,7 +625,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA384",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -646,7 +645,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, too small truncated HMAC-SHA512",
-"logic-error" : true,
+"logic-error" : "tsig-key: digest-bits too small :  (<string>:1:107)",
 "data" :
     {
     "forward-ddns" : {},
@@ -666,7 +665,7 @@
 #----- D2.tsig-keys, secret tests
 ,{
 "description" : "D2.tsig-keys, missing secret",
-"logic-error" : true,
+"logic-error" : "element: tsig-keys : String parameter secret not found(<string>:1:62)<string>:1:47",
 "data" :
     {
     "forward-ddns" : {},
@@ -684,7 +683,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, blank secret",
-"syntax-error" : "<string>:1.118: secret cannot be blank",
+"syntax-error" : "<string>:1.118: TSIG key secret cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -703,7 +702,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid secret",
-"logic-error" : true,
+"logic-error" : "Cannot make TSIGKey: Incomplete input for base64: bogus (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},
@@ -785,7 +784,7 @@
 #------
 ,{
 "description" : "D2.forward-ddns, duplicate domain",
-"logic-error" : true,
+"logic-error" : "Duplicate domain specified:four.example.com. (<string>:1:184)",
 "data" :
     {
     "forward-ddns" :
@@ -859,7 +858,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns, blank name",
-"syntax-error" : "<string>:1.47: name cannot be blank",
+"syntax-error" : "<string>:1.47: Ddns domain name cannot be blank",
 "data" :
     {
     "forward-ddns" :
@@ -879,7 +878,7 @@
 #------ "D2.forward-ddns.dhcp-ddns, key-name tests
 ,{
 "description" : "D2.forward-ddns, no matching key name",
-"logic-error" : true,
+"logic-error" : "DdnsDomain : four.example.com. specifies an undefined key: no.such.key (<string>:1:104)",
 "data" :
     {
     "forward-ddns" :
@@ -913,7 +912,7 @@
 #----- D2.forward-ddns.dhcp-ddns.dns-servers tests
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers, no servers",
-"logic-error" : true,
+"syntax-error" : "<string>:1.59: syntax error, unexpected ], expecting {",
 "data" :
     {
     "forward-ddns" :
@@ -960,7 +959,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers.hostname unsupported",
-"logic-error" : true,
+"syntax-error" : "<string>:1.70: hostname is not yet supported",
 "data" :
     {
     "forward-ddns" :
@@ -1036,7 +1035,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers.ip-address invalid address ",
-"logic-error" : true,
+"logic-error" : "Dns Server : invalid IP address : bogus (<string>:1:74)",
 "data" :
     {
     "forward-ddns" :
@@ -1179,7 +1178,7 @@
 #------
 ,{
 "description" : "D2.reverse-ddns, duplicate domain",
-"logic-error" : true,
+"logic-error" : "Duplicate domain specified:2.0.192.in-addra.arpa. (<string>:1:211)",
 "data" :
     {
     "forward-ddns" : {},
@@ -1253,7 +1252,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, blank name",
-"syntax-error" : "<string>:1.69: name cannot be blank",
+"syntax-error" : "<string>:1.69: Ddns domain name cannot be blank",
 "data" :
     {
     "forward-ddns" : {},
@@ -1273,7 +1272,7 @@
 #------ "D2.reverse-ddns.dhcp-ddns, key-name tests
 ,{
 "description" : "D2.reverse-ddns, no matching key name",
-"logic-error" : true,
+"logic-error" : "DdnsDomain : 2.0.192.in-addr.arpa. specifies an undefined key: no.such.key (<string>:1:126)",
 "data" :
     {
     "forward-ddns" : {},
@@ -1307,7 +1306,7 @@
 #----- D2.reverse-ddns.dhcp-ddns.dns-servers tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers, no servers",
-"logic-error" : true,
+"syntax-error" : "<string>:1.81: syntax error, unexpected ], expecting {",
 "data" :
     {
     "forward-ddns" : {},
@@ -1354,7 +1353,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers.hostname unsupported",
-"logic-error" : true,
+"syntax-error" : "<string>:1.92: hostname is not yet supported",
 "data" :
     {
     "forward-ddns" : {},
@@ -1429,7 +1428,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers.ip-address invalid value",
-"logic-error" : true,
+"logic-error" : "Dns Server : invalid IP address : bogus (<string>:1:96)",
 "data" :
     {
     "forward-ddns" : {},

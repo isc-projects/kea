@@ -109,6 +109,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::d2::D2Parser::make_TOPLEVEL_DHCPDDNS(driver.loc_);
         case D2ParserContext::PARSER_SUB_DHCPDDNS:
             return isc::d2::D2Parser::make_SUB_DHCPDDNS(driver.loc_);
+        case D2ParserContext::PARSER_TSIG_KEY:
+            return isc::d2::D2Parser::make_SUB_TSIG_KEY(driver.loc_);
+        case D2ParserContext::PARSER_TSIG_KEYS:
+            return isc::d2::D2Parser::make_SUB_TSIG_KEYS(driver.loc_);
+        case D2ParserContext::PARSER_DDNS_DOMAIN:
+            return isc::d2::D2Parser::make_SUB_DDNS_DOMAIN(driver.loc_);
+        case D2ParserContext::PARSER_DDNS_DOMAINS:
+            return isc::d2::D2Parser::make_SUB_DDNS_DOMAINS(driver.loc_);
+        case D2ParserContext::PARSER_DNS_SERVER:
+            return isc::d2::D2Parser::make_SUB_DNS_SERVER(driver.loc_);
         }
     }
 %}
@@ -168,6 +178,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"ip-address\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DNS_SERVER:
     case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_IP_ADDRESS(driver.loc_);
     default:
@@ -178,6 +189,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"port\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DNS_SERVER:
     case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_PORT(driver.loc_);
     default:
@@ -272,6 +284,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"key-name\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DDNS_DOMAIN:
     case isc::d2::D2ParserContext::DDNS_DOMAINS:
         return isc::d2::D2Parser::make_KEY_NAME(driver.loc_);
     default:
@@ -281,6 +294,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"dns-servers\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DDNS_DOMAIN:
     case isc::d2::D2ParserContext::DDNS_DOMAINS:
         return isc::d2::D2Parser::make_DNS_SERVERS(driver.loc_);
     default:
@@ -290,6 +304,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DNS_SERVER:
     case isc::d2::D2ParserContext::DNS_SERVERS:
         return isc::d2::D2Parser::make_HOSTNAME(driver.loc_);
     default:
@@ -309,6 +324,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"algorithm\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
         return isc::d2::D2Parser::make_ALGORITHM(driver.loc_);
     default:
@@ -318,6 +334,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"digest-bits\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
         return isc::d2::D2Parser::make_DIGEST_BITS(driver.loc_);
     default:
@@ -327,6 +344,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"secret\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
         return isc::d2::D2Parser::make_SECRET(driver.loc_);
     default:
@@ -374,7 +392,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"name\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
+    case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::DDNS_DOMAIN:
     case isc::d2::D2ParserContext::DDNS_DOMAINS:
         return isc::d2::D2Parser::make_NAME(driver.loc_);
     default:

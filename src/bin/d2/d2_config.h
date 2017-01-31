@@ -140,11 +140,13 @@ public:
 
     /// @brief Default configuration constants.
     //@{
-    static const char *DFT_IP_ADDRESS;
-    static const char *DFT_PORT;
-    static const char *DFT_DNS_SERVER_TIMEOUT;
-    static const char *DFT_NCR_PROTOCOL;
-    static const char *DFT_NCR_FORMAT;
+    static const char*      DFT_IP_ADDRESS;
+    static const uint32_t   DFT_PORT;
+    static const char*      DFT_PORT_STR;
+    static const uint32_t   DFT_DNS_SERVER_TIMEOUT;
+    static const char*      DFT_DNS_SERVER_TIMEOUT_STR;
+    static const char*      DFT_NCR_PROTOCOL;
+    static const char*      DFT_NCR_FORMAT;
     //@}
 
     /// @brief Constructor
@@ -420,13 +422,12 @@ typedef boost::shared_ptr<TSIGKeyInfoMap> TSIGKeyInfoMapPtr;
 /// updates.
 class DnsServerInfo {
 public:
-
     /// @brief defines DNS standard port value
     static const uint32_t STANDARD_DNS_PORT = 53;
+    static const char* STANDARD_DNS_PORT_STR;
 
     /// @brief defines an "empty" string version of an ip address.
     static const char* EMPTY_IP_STR;
-
 
     /// @brief Constructor
     ///
@@ -732,7 +733,7 @@ typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 ///
 /// This class parses the configuration element "tsig-key" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
-class TSIGKeyInfoParser : public  isc::data::SimpleParser { 
+class TSIGKeyInfoParser : public  data::SimpleParser { 
 public:
     /// @brief Constructor
     TSIGKeyInfoParser(){};    
@@ -748,7 +749,7 @@ public:
     /// @param key_config is the "tsig-key" configuration to parse
     ///
     /// @return pointer to the new TSIGKeyInfo instance
-    TSIGKeyInfoPtr parse(isc::data::ConstElementPtr key_config);
+    TSIGKeyInfoPtr parse(data::ConstElementPtr key_config);
 
 private:
 };
@@ -758,7 +759,7 @@ private:
 /// This class parses a list of "tsig-key" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The TSIGKeyInfo instances are added
 /// to the given storage upon commit.
-class TSIGKeyInfoListParser : public isc::data::SimpleParser {
+class TSIGKeyInfoListParser : public data::SimpleParser {
 public:
     /// @brief Constructor
     TSIGKeyInfoListParser(){};
@@ -778,81 +779,36 @@ public:
     /// @param key_list_config is the list of "tsig_key" elements to parse.
     ///
     /// @return a map containing the TSIGKeyInfo instances 
-    TSIGKeyInfoMapPtr parse(isc::data::ConstElementPtr key_list_config);
+    TSIGKeyInfoMapPtr parse(data::ConstElementPtr key_list_config);
 };
 
 /// @brief Parser for  DnsServerInfo
 ///
 /// This class parses the configuration element "dns-server" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DnsServerInfo.
-class DnsServerInfoParser : public  isc::dhcp::DhcpConfigParser {
+class DnsServerInfoParser : public  data::SimpleParser {
 public:
     /// @brief Constructor
-    ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition. Since servers are specified in a list this value is likely
-    /// be something akin to "server:0", set during parsing.
-    /// @param servers is a pointer to the storage area to which the parser
-    /// should commit the newly created DnsServerInfo instance.
-    DnsServerInfoParser(const std::string& entry_name,
-                        DnsServerInfoStoragePtr servers);
+    DnsServerInfoParser(){};
 
     /// @brief Destructor
-    virtual ~DnsServerInfoParser();
+    virtual ~DnsServerInfoParser(){};
 
     /// @brief Performs the actual parsing of the given  "dns-server" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
-    /// then attempts to add to a list of  servers.
+    /// and returns it.
     ///
     /// @param server_config is the "dns-server" configuration to parse
+    ///
+    /// @return a pointer to the newly created server instance
     ///
     /// @throw D2CfgError if:
     /// -# hostname is not blank, hostname is not yet supported
     /// -# ip_address is invalid
     /// -# port is 0
-    virtual void build(isc::data::ConstElementPtr server_config);
-
-    /// @brief Creates a parser for the given "dns-server" member element id.
-    ///
-    /// The server elements currently supported are(see dhcp-ddns.spec):
-    ///   1. hostname
-    ///   2. ip_address
-    ///   3. port
-    ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the "dns-server" specification.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a pointer to newly created parser.
-    ///
-    /// @throw D2CfgError if configuration contains an unknown parameter
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& config_id,
-                       const isc::data::Element::Position& =
-                       isc::data::Element::ZERO_POSITION());
-
-    /// @brief Commits the configured DnsServerInfo
-    /// Currently this method is a NOP, as the server instance is created and
-    /// then added to the list of servers in build().
-    virtual void commit();
-
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    /// Since servers are specified in a list this value is likely be something
-    /// akin to "server:0", set during parsing.  Primarily here for diagnostics.
-    std::string entry_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the newly created DnsServerInfo instance. This is given to us as a
-    /// constructor argument by an upper level.
-    DnsServerInfoStoragePtr servers_;
-
-    /// @brief Local storage area for scalar parameter values. Use to hold
-    /// data until time to commit.
-    DScalarContext local_scalars_;
+    DnsServerInfoPtr parse(data::ConstElementPtr server_config);
 };
 
 /// @brief Parser for a list of DnsServerInfos
@@ -860,213 +816,94 @@ private:
 /// This class parses a list of "dns-server" configuration elements.
 /// (see src/bin/d2/dhcp-ddns.spec). The DnsServerInfo instances are added
 /// to the given storage upon commit.
-class DnsServerInfoListParser : public isc::dhcp::DhcpConfigParser {
+class DnsServerInfoListParser : public data::SimpleParser{
 public:
-
     /// @brief Constructor
-    ///
-    /// @param list_name is an arbitrary label assigned to this parser instance.
-    /// @param servers is a pointer to the storage area to which the parser
-    /// should commit the newly created DnsServerInfo instance.
-    DnsServerInfoListParser(const std::string& list_name,
-                            DnsServerInfoStoragePtr servers);
+    DnsServerInfoListParser(){};
 
     /// @brief Destructor
-    virtual ~DnsServerInfoListParser();
+    virtual ~DnsServerInfoListParser(){};
 
     /// @brief Performs the actual parsing of the given list "dns-server"
     /// elements.
-    /// It iterates over each server entry in the list:
-    ///   1. Instantiate a DnsServerInfoParser for the entry
-    ///   2. Pass the element configuration to the parser's build method
-    ///   3. Add the parser instance to local storage
     ///
-    /// The net effect is to parse all of the server entries in the list
-    /// prepping them for commit.
+    /// Creates an empty server list
+    /// It iterates over each server entry in the list:
+    ///   1. Creates a server instance by passing the entry to @c 
+    ///   DnsSeverInfoParser::parse()
+    ///   2. Adds the server to the server list
     ///
     /// @param server_list_config is the list of "dns-server" elements to parse.
-    virtual void build(isc::data::ConstElementPtr server_list_config);
-
-    /// @brief Commits the list of DnsServerInfos
-    ///
-    /// Iterates over the internal list of DdnsServerInfoParsers, invoking
-    /// commit on each one.
-    virtual void commit();
-
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    std::string list_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the list of newly created DnsServerInfo instances. This is given to us
-    /// as a constructor argument by an upper level.
-    DnsServerInfoStoragePtr servers_;
-
-    /// @brief Local storage of DnsServerInfoParser instances
-    isc::dhcp::ParserCollection parsers_;
+    /// @return A pointer to the new, populated server list
+    DnsServerInfoStoragePtr parse(data::ConstElementPtr server_list_config);
 };
 
 /// @brief Parser for  DdnsDomain
 ///
 /// This class parses the configuration element "ddns-domain" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DdnsDomain.
-class DdnsDomainParser : public isc::dhcp::DhcpConfigParser {
+class DdnsDomainParser : public data::SimpleParser {
 public:
     /// @brief Constructor
-    ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition. Since domains are specified in a list this value is likely
-    /// be something akin to "forward-ddns:0", set during parsing.
-    /// @param domains is a pointer to the storage area to which the parser
-    /// @param keys is a pointer to a map of the defined TSIG keys.
-    /// should commit the newly created DdnsDomain instance.
-    DdnsDomainParser(const std::string& entry_name, DdnsDomainMapPtr domains,
-                     TSIGKeyInfoMapPtr keys);
+    DdnsDomainParser(){};
 
     /// @brief Destructor
-    virtual ~DdnsDomainParser();
+    virtual ~DdnsDomainParser(){};
 
     /// @brief Performs the actual parsing of the given  "ddns-domain" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
-    /// DdnsDomain, validates those entries, creates a DdnsDomain instance
-    /// then attempts to add it to a list of domains.
+    /// DdnsDomain, validates those entries, and creates a DdnsDomain instance.
     ///
     /// @param domain_config is the "ddns-domain" configuration to parse
-    virtual void build(isc::data::ConstElementPtr domain_config);
-
-    /// @brief Creates a parser for the given "ddns-domain" member element id.
+    /// @param keys map of defined TSIG keys
     ///
-    /// The domain elements currently supported are(see dhcp-ddns.spec):
-    ///   1. name
-    ///   2. key_name
-    ///   3. dns_servers
-    ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the "ddns-domain" specification.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a pointer to newly created parser.
-    ///
-    /// @throw D2CfgError if configuration contains an unknown parameter
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& config_id,
-                       const isc::data::Element::Position& pos =
-                       isc::data::Element::ZERO_POSITION());
-
-    /// @brief Commits the configured DdnsDomain
-    /// Currently this method is a NOP, as the domain instance is created and
-    /// then added to the list of domains in build().
-    virtual void commit();
-
-private:
-
-    /// @brief Arbitrary label assigned to this parser instance.
-    std::string entry_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the newly created DdnsDomain instance. This is given to us as a
-    /// constructor argument by an upper level.
-    DdnsDomainMapPtr domains_;
-
-    /// @brief Pointer to the map of defined TSIG keys.
-    /// This map is passed into us and contains all of the TSIG keys defined
-    /// for this configuration.  It is used to validate the key name entry of
-    /// DdnsDomains that specify one.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Local storage for DnsServerInfo instances. This is passed into
-    /// DnsServerInfoListParser(s), which in turn passes it into each
-    /// DnsServerInfoParser.  When the DnsServerInfoParsers "commit" they add
-    /// their server instance to this storage.
-    DnsServerInfoStoragePtr local_servers_;
-
-    /// @brief Local storage area for scalar parameter values. Use to hold
-    /// data until time to commit.
-    DScalarContext local_scalars_;
+    /// @return a pointer to the new domain instance
+    DdnsDomainPtr parse(data::ConstElementPtr domain_config,
+                        const TSIGKeyInfoMapPtr keys);
 };
 
 /// @brief Parser for a list of DdnsDomains
 ///
 /// This class parses a list of "ddns-domain" configuration elements.
-/// (see src/bin/d2/dhcp-ddns.spec). The DdnsDomain instances are added
-/// to the given storage upon commit.
-class DdnsDomainListParser : public isc::dhcp::DhcpConfigParser {
+/// (see src/bin/d2/dhcp-ddns.spec) into a map of DdnsDomains.  
+class DdnsDomainListParser : public data::SimpleParser {
 public:
 
     /// @brief Constructor
-    ///
-    /// @param list_name is an arbitrary label assigned to this parser instance.
-    /// @param domains is a pointer to the storage area to which the parser
-    /// @param keys is a pointer to a map of the defined TSIG keys.
-    /// should commit the newly created DdnsDomain instance.
-    DdnsDomainListParser(const std::string& list_name,
-                         DdnsDomainMapPtr domains, TSIGKeyInfoMapPtr keys);
+    DdnsDomainListParser(){};
 
     /// @brief Destructor
-    virtual ~DdnsDomainListParser();
+    virtual ~DdnsDomainListParser(){};
 
     /// @brief Performs the actual parsing of the given list "ddns-domain"
     /// elements.
+    /// Creates a new DdnsDomain map
     /// It iterates over each domain entry in the list:
-    ///   1. Instantiate a DdnsDomainParser for the entry
-    ///   2. Pass the element configuration to the parser's build method
-    ///   3. Add the parser instance to local storage
-    ///
-    /// The net effect is to parse all of the domain entries in the list
-    /// prepping them for commit.
+    ///   1. Creates a DdnsDomain instance by passing the entry into @c 
+    ///   DdnsDomainParser::parser()
+    ///   2. Adds the DdnsDomain instance to the domain map
     ///
     /// @param domain_list_config is the list of "ddns-domain" elements to
     /// parse.
-    virtual void build(isc::data::ConstElementPtr domain_list_config);
-
-    /// @brief Commits the list of DdnsDomains
-    ///
-    /// Iterates over the internal list of DdnsDomainParsers, invoking
-    /// commit on each one.
-    virtual void commit();
-
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    std::string list_name_;
-
-    /// @brief Pointer to the storage area to which the parser should commit
-    /// the list of newly created DdnsDomain instances. This is given to us
-    /// as a constructor argument by an upper level.
-    DdnsDomainMapPtr domains_;
-
-    /// @brief Pointer to the map of defined TSIG keys.
-    /// This map is passed into us and contains all of the TSIG keys defined
-    /// for this configuration.  It is used to validate the key name entry of
-    /// DdnsDomains that specify one.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Local storage of DdnsDomainParser instances
-    isc::dhcp::ParserCollection parsers_;
+    /// @param keys map of defined TSIG keys
+    /// @return a pointer to the newly populated domain map
+    DdnsDomainMapPtr parse(data::ConstElementPtr domain_list_config,
+                           const TSIGKeyInfoMapPtr keys);
 };
 
 /// @brief Parser for DdnsDomainListMgr
 ///
 /// This class parses the configuration elements "forward-ddns" and
 /// "reverse-ddns" as defined in src/bin/d2/dhcp-ddns.spec.  It populates the
-/// given DdnsDomainListMgr with parsed information upon commit.  Note that
-/// unlike other parsers, this parser does NOT instantiate the final object
-/// during the commit phase, it populates it.  It must pre-exist.
-class DdnsDomainListMgrParser : public isc::dhcp::DhcpConfigParser {
+/// given DdnsDomainListMgr with parsed information.  
+class DdnsDomainListMgrParser : public data::SimpleParser {
 public:
     /// @brief Constructor
-    ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition.
-    /// @param mgr is a pointer to the DdnsDomainListMgr to populate.
-    /// @param keys is a pointer to a map of the defined TSIG keys.
-    /// @throw throws D2CfgError if mgr pointer is empty.
-    DdnsDomainListMgrParser(const std::string& entry_name,
-                     DdnsDomainListMgrPtr mgr, TSIGKeyInfoMapPtr keys);
+    DdnsDomainListMgrParser(){};
 
     /// @brief Destructor
-    virtual ~DdnsDomainListMgrParser();
+    virtual ~DdnsDomainListMgrParser(){};
 
     /// @brief Performs the actual parsing of the given manager element.
     ///
@@ -1074,58 +911,14 @@ public:
     /// DdnsDomainListMgr, validates those entries, then creates a
     /// DdnsDomainListMgr.
     ///
-    /// @param mgr_config is the manager configuration to parse
-    virtual void build(isc::data::ConstElementPtr mgr_config);
-
-    /// @brief Creates a parser for the given manager member element id.
+    /// @param mgr_config manager configuration to parse
+    /// @param mgr_name convenience label for the manager instance
+    /// @param keys map of defined TSIG keys
     ///
-    /// The manager elements currently supported are (see dhcp-ddns.spec):
-    ///     1. ddns_domains
-    ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the manager specification.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a pointer to newly created parser.
-    ///
-    /// @throw D2CfgError if configuration contains an unknown parameter
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& config_id,
-                       const isc::data::Element::Position& pos =
-                       isc::data::Element::ZERO_POSITION());
-
-    /// @brief Commits the configured DdsnDomainListMgr
-    /// Currently this method is a NOP, as the manager instance is created
-    /// in build().
-    virtual void commit();
-
-private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    std::string entry_name_;
-
-    /// @brief Pointer to manager instance to which the parser should commit
-    /// the parsed data. This is given to us as a constructor argument by an
-    /// upper level.
-    DdnsDomainListMgrPtr mgr_;
-
-    /// @brief Pointer to the map of defined TSIG keys.
-    /// This map is passed into us and contains all of the TSIG keys defined
-    /// for this configuration.  It is used to validate the key name entry of
-    /// DdnsDomains that specify one.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Local storage for DdnsDomain instances. This is passed into a
-    /// DdnsDomainListParser(s), which in turn passes it into each
-    /// DdnsDomainParser.  When the DdnsDomainParsers "commit" they add their
-    /// domain instance to this storage.
-    DdnsDomainMapPtr local_domains_;
-
-    /// @brief Local storage area for scalar parameter values. Use to hold
-    /// data until time to commit.
-    /// @todo Currently, the manager has no scalars but this is likely to
-    /// change as matching capabilities expand.
-    DScalarContext local_scalars_;
+    /// @return a pointer to the new manager instance
+    DdnsDomainListMgrPtr parse(data::ConstElementPtr mgr_config,
+                               const std::string& mgr_name,
+                               const TSIGKeyInfoMapPtr keys);
 };
 
 

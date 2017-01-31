@@ -18,7 +18,7 @@ namespace d2 {
 /// In particular, it contains all the default values and names of the
 /// parameters that are to be derived (inherited) between scopes.
 /// For the actual values, see @file d2_simple_parser.cc
-class D2SimpleParser : public isc::data::SimpleParser {
+class D2SimpleParser : public data::SimpleParser {
 public:
 
     /// @brief Sets all defaults for D2 configuration
@@ -27,10 +27,52 @@ public:
     ///
     /// @param global scope to be filled in with defaults.
     /// @return number of default values added
-    static size_t setAllDefaults(isc::data::ElementPtr global);
+    static size_t setAllDefaults(data::ElementPtr global);
 
     // see d2_simple_parser.cc for comments for those parameters
-    static const isc::data::SimpleDefaults D2_GLOBAL_DEFAULTS;
+    static const data::SimpleDefaults D2_GLOBAL_DEFAULTS;
+
+    // Defaults for tsig-keys list elements, TSIGKeyInfos
+    static const data::SimpleDefaults TSIG_KEY_DEFAULTS;
+
+    // Defaults for <forward|reverse>-ddns elements, DdnsDomainListMgrs
+    static const data::SimpleDefaults DDNS_DOMAIN_MGR_DEFAULTS;
+
+    // Defaults for ddns-domains list elements, DdnsDomains
+    static const data::SimpleDefaults DDNS_DOMAIN_DEFAULTS;
+
+    // Defaults for dns-servers list elements, DnsServerInfos
+    static const data::SimpleDefaults DNS_SERVER_DEFAULTS;
+
+    /// @brief Adds default values to a DDNS Domain element
+    ///
+    /// Adds the scalar default values to the given DDNS domain
+    /// element, and then adds the DNS Server defaults to the domain's
+    /// server list, "dns-servers".
+    ///
+    /// @param domain DDNS domain element to which defaults should be added
+    /// @param domain_defaults list of default values from which to add
+    /// @return returns the number of default values added
+    static size_t setDdnsDomainDefaults(data::ElementPtr domain,
+                                        const data::SimpleDefaults&
+                                        domain_defaults);
+
+    /// @brief Adds default values to a DDNS Domain List Manager
+    ///
+    /// This function looks for the named DDNS domain manager element within
+    /// the given element tree.  If it is found, it adds the scalar default
+    /// values to the manager element and then adds the DDNS Domain defaults
+    /// to its domain list, "ddns-domains".  If the manager element is not
+    /// found, then an empty map entry is added for it, thus defaulting the
+    /// manager to "disabled".
+    ///
+    /// @param domain DDNS domain manager element to which defaults should be
+    /// added
+    /// @param mgr_defaults list of default values from which to add
+    /// @return returns the number of default values added
+    static size_t setManagerDefaults(data::ElementPtr global,
+                                     const std::string& mgr_name,
+                                     const data::SimpleDefaults& mgr_defaults);
 };
 
 };
