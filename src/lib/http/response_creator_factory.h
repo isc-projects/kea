@@ -37,7 +37,7 @@ public:
 
     /// @brief Virtual destructor.
     ///
-    /// The implementation doesn't need to declare virtual destrtuctor because
+    /// The implementation doesn't need to declare virtual destructor because
     /// it is already implemented here.
     virtual ~HttpResponseCreatorFactory() { }
 
