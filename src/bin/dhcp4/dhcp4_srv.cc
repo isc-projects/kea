@@ -470,7 +470,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     // that desires to specify a subnet/link for a DHCP client request
     // that it is relaying but needs the subnet/link specification to
     // be different from the IP address the DHCP server should use
-    // when communicating with the relay agent." (RFC 3257)
+    // when communicating with the relay agent." (RFC 3527)
     //
     // Try first Relay Agent Link Selection sub-option
     OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
