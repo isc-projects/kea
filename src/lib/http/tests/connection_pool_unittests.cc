@@ -113,7 +113,7 @@ TEST_F(HttpConnectionPoolTest, startStop) {
                                                response_creator_,
                                                HttpAcceptorCallback(),
                                                1000));
-    // The pool should be initally empty.
+    // The pool should be initially empty.
     TestHttpConnectionPool pool;
     ASSERT_TRUE(pool.connections_.empty());
 

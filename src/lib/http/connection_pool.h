@@ -15,7 +15,7 @@ namespace http {
 
 /// @brief Pool of active HTTP connections.
 ///
-/// The HTTP server is designed to handle many connections simultanously.
+/// The HTTP server is designed to handle many connections simultaneously.
 /// The communication between the client and the server may take long time
 /// and the server must be able to react on other events while the communication
 /// with the clients is in progress. Thus, the server must track active
