@@ -19,7 +19,6 @@ HttpConnectionPool::start(const HttpConnectionPtr& connection) {
 void
 HttpConnectionPool::stop(const HttpConnectionPtr& connection) {
     connections_.erase(connection);
-//    connection->close();
 }
 
 void
