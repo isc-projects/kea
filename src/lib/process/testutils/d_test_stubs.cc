@@ -308,37 +308,6 @@ DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
 /// @brief Defines the name of the configuration file to use
 const char* DControllerTest::CFG_TEST_FILE = "d2-test-config.json";
 
-//************************** ObjectParser *************************
-
-ObjectParser::ObjectParser(const std::string& param_name,
-                       ObjectStoragePtr& object_values)
-    : param_name_(param_name), object_values_(object_values) {
-}
-
-ObjectParser::~ObjectParser(){
-}
-
-void
-ObjectParser::build(isc::data::ConstElementPtr new_config) {
-    if (SimFailure::shouldFailOn(SimFailure::ftElementBuild)) {
-        // Simulates an error during element data parsing.
-        isc_throw (DCfgMgrBaseError, "Simulated build exception");
-    }
-
-    value_ = new_config;
-}
-
-void
-ObjectParser::commit() {
-    if (SimFailure::shouldFailOn(SimFailure::ftElementCommit)) {
-        // Simulates an error while committing the parsed element data.
-        throw std::runtime_error("Simulated commit exception");
-    }
-
-    object_values_->setParam(param_name_, value_,
-                             isc::data::Element::Position());
-}
-
 //************************** DStubContext *************************
 
 DStubContext::DStubContext(): object_values_(new ObjectStorage()) {
@@ -381,22 +350,25 @@ DStubCfgMgr::createNewContext() {
     return (DCfgContextBasePtr (new DStubContext()));
 }
 
-isc::dhcp::ParserPtr
-DStubCfgMgr::createConfigParser(const std::string& element_id,
-                                const isc::data::Element::Position& pos) {
-    isc::dhcp::ParserPtr parser;
+void
+DStubCfgMgr::parseElement(const std::string& element_id,
+                          isc::data::ConstElementPtr element) {
     DStubContextPtr context
         = boost::dynamic_pointer_cast<DStubContext>(getContext());
+
     if (element_id == "bool_test") {
-        parser.reset(new isc::dhcp::
-                         BooleanParser(element_id,
-                                       context->getBooleanStorage()));
+        bool value = element->boolValue();
+        context->getBooleanStorage()->setParam(element_id, value,
+                                               element->getPosition()); 
     } else if (element_id == "uint32_test") {
-        parser.reset(new isc::dhcp::Uint32Parser(element_id,
-                                                 context->getUint32Storage()));
+        uint32_t value = element->intValue();
+        context->getUint32Storage()->setParam(element_id, value,
+                                              element->getPosition()); 
+
     } else if (element_id == "string_test") {
-        parser.reset(new isc::dhcp::StringParser(element_id,
-                                                 context->getStringStorage()));
+        std::string value = element->stringValue();
+        context->getStringStorage()->setParam(element_id, value,
+                                              element->getPosition()); 
     } else {
         // Fail only if SimFailure dictates we should.  This makes it easier
         // to test parse ordering, by permitting a wide range of element ids
@@ -404,15 +376,15 @@ DStubCfgMgr::createConfigParser(const std::string& element_id,
         if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
             isc_throw(DCfgMgrBaseError,
                       "Configuration parameter not supported: " << element_id
-                      << pos);
+                      << element->getPosition());
         }
 
         // Going to assume anything else is an object element.
-        parser.reset(new ObjectParser(element_id, context->getObjectStorage()));
+        context->getObjectStorage()->setParam(element_id, element,
+                                              element->getPosition()); 
     }
 
     parsed_order_.push_back(element_id);
-    return (parser);
 }
 
 }; // namespace isc::process

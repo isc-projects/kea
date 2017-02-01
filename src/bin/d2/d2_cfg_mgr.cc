@@ -252,13 +252,13 @@ getFormat(const std::string& name, isc::data::ConstElementPtr value) {
 
 } // anon
 
-bool
+void
 D2CfgMgr::parseElement(const std::string& element_id,
                        isc::data::ConstElementPtr element) {
-
-    // Get D2 specific context.
     try {
+        // Get D2 specific context.
         D2CfgContextPtr context = getD2CfgContext();
+
         if ((element_id == "ip-address") ||
             (element_id == "ncr-protocol") ||
             (element_id == "ncr-format") ||
@@ -267,7 +267,7 @@ D2CfgMgr::parseElement(const std::string& element_id,
             // global scalar params require nothing extra be done
         } else if (element_id == "tsig-keys") {
             TSIGKeyInfoListParser parser;
-            getD2CfgContext()->setKeys(parser.parse(element));
+            context->setKeys(parser.parse(element));
         } else if (element_id ==  "forward-ddns") {
             DdnsDomainListMgrParser parser;
             DdnsDomainListMgrPtr mgr = parser.parse(element, element_id,
@@ -279,8 +279,9 @@ D2CfgMgr::parseElement(const std::string& element_id,
                                                     context->getKeys());
             context->setReverseMgr(mgr);
         } else {
-            // not something we handle here
-            return (false);
+            // Shouldn't occur if the JSON parser is doing its job.
+            isc_throw(D2CfgError, "Unsupported element: "
+                      << element_id << element->getPosition());
         }
     } catch (const D2CfgError& ex) {
         // Should already have a specific error and postion info
@@ -289,8 +290,6 @@ D2CfgMgr::parseElement(const std::string& element_id,
         isc_throw(D2CfgError, "element: " << element_id << " : "  << ex.what()
                               << element->getPosition());
     }
-
-    return (true);
 };
 
 void
@@ -365,16 +364,6 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
                                     ncr_protocol, ncr_format));
 
     getD2CfgContext()->getD2Params() = params;
-}
-
-dhcp::ParserPtr
-D2CfgMgr::createConfigParser(const std::string& config_id,
-                             const isc::data::Element::Position& pos) {
-    isc_throw(NotImplemented,
-              "parser error: D2CfgMgr parameter not supported : "
-               " (" << config_id << pos << ")");
-
-    return (dhcp::ParserPtr());
 }
 
 }; // end of isc::dhcp namespace
