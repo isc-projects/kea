@@ -28,17 +28,17 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-# Defining a subnet. There are 2 DHCP options returned to the
-# clients connected to this subnet. The first option is identified
-# by the name. The second option is identified by the code.
-# There are two address pools defined within this subnet. Pool
-# specific value for option 12 is defined for the pool:
-# 2001:db8:1::1 - 2001:db8:1::100. Clients obtaining an address
-# from this pool will be assigned option 12 with a value of
-# 3001:cafe::21. Clients belonging to this subnet but obtaining
-# addresses from the other pool, or the clients obtaining
-# stateless configuration will be assigned subnet specific value
-# of option 12, i.e. 2001:db8:1:0:ff00::1.
+// Defining a subnet. There are 3 DHCP options returned to the
+// clients connected to this subnet. The first option is identified
+// by the name. The second option is identified by the code.
+// There are two address pools defined within this subnet. Pool
+// specific value for option 12 is defined for the pool:
+// 2001:db8:1::1 - 2001:db8:1::100. Clients obtaining an address
+// from this pool will be assigned option 12 with a value of
+// 3001:cafe::21. Clients belonging to this subnet but obtaining
+// addresses from the other pool, or the clients obtaining
+// stateless configuration will be assigned subnet specific value
+// of option 12, i.e. 2001:db8:1:0:ff00::1.
   "subnet6": [
     {
       "option-data": [
@@ -49,6 +49,14 @@
         {
             "code": 12,
             "data": "2001:db8:1:0:ff00::1"
+        },
+        {
+            // String options that have a comma in their values need to have
+            // it escaped (i.e. each comma is predeced by a backslash). That's
+            // because commas are reserved for separating fields in compound
+            // options.
+            "name": "new-posix-timezone",
+            "data": "EST5EDT4\,M3.2.0/02:00\,M11.1.0/02:00"
         }
       ],
       "pools": [
@@ -62,7 +70,7 @@
             ]
         },
         {
-            "pool": "2001:db8:1::500 - 2001:db8:2::1000"
+            "pool": "2001:db8:1::500 - 2001:db8:1::1000"
         }
       ],
       "subnet": "2001:db8:1::/64",
