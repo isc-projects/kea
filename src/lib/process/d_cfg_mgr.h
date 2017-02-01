@@ -244,15 +244,10 @@ typedef std::vector<std::string> ElementIdList;
 /// This allows a derivation to specify the order in which its elements are
 /// parsed if there are dependencies between elements.
 ///
-/// To parse a given element, its id is passed into createConfigParser,
-/// which returns an instance of the appropriate parser.  This method is
-/// abstract so the derivation's implementation determines the type of parser
-/// created. This isolates the knowledge of specific element ids and which
-/// application specific parsers to derivation.
-///
-/// Once the parser has been created, it is used to parse the data value
-/// associated with the element id and update the context with the parsed
-/// results.
+/// To parse a given element, its id along with the element itself, 
+/// is passed into the virtual method, @c parseElement. Derivations are 
+/// expected to converts the element into application specific object(s),
+/// thereby isolating the CPL from application details.
 ///
 /// In the event that an error occurs, parsing is halted and the
 /// configuration context is restored from backup.
@@ -331,19 +326,14 @@ protected:
 
     /// @brief Parses the an element using an alternate parsing mechanism
     ///
-    /// Each element to be parsed is passed first into this method to allow
-    /// alternate parsing mechanisms to process specific elements.  The method
-    /// should return true if it has processed the element or false if the
-    /// element should be passed onto the original parsing mechanisms.
-    /// The default implementation simply returns false.
+    /// Each element to be parsed is passed into this method to be converted
+    /// into the requisite application object(s).
     ///
     /// @param element_id name of the element as it is expected in the cfg
     /// @param element value of the element as ElementPtr
     ///
-    /// @return true if the element was parsed, false otherwise
-    virtual bool parseElement(const std::string& element_id,
+    virtual void parseElement(const std::string& element_id,
                               isc::data::ConstElementPtr element) {
-        return (false);
     };
 
     /// @brief Parses a set of scalar configuration elements into global
@@ -361,24 +351,6 @@ protected:
     ///
     /// @param params_config set of scalar configuration elements to parse
     virtual void buildParams(isc::data::ConstElementPtr params_config);
-
-    /// @brief  Create a parser instance based on an element id.
-    ///
-    /// Given an element_id returns an instance of the appropriate parser.
-    /// This method is abstract, isolating any direct knowledge of element_ids
-    /// and parsers to within the application-specific derivation.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos
-                       = isc::data::Element::Position()) = 0;
 
     /// @brief Abstract factory which creates a context instance.
     ///

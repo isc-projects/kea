@@ -264,45 +264,15 @@ void
 DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
-        // Call derivation's element parser, if it handled the element
-        // go on to the next one, otherwise use the old methods
-        if (parseElement(param.first, param.second)) {
-            continue;
-        }
-
-        // Call derivation's method to create the proper parser.
-        dhcp::ParserPtr parser(createConfigParser(param.first,
-                                                  param.second->getPosition()));
-        parser->build(param.second);
-        parser->commit();
+        // Call derivation's element parser to parse the element.
+        parseElement(param.first, param.second);
     }
 }
 
 void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
-    // Call derivation's element parser, if it handled the element
-    // go on to the next one, otherwise use the old methods
-    if (parseElement(element_id, value)) {
-        return;
-    }
-
-    // Call derivation's implementation to create the appropriate parser
-    // based on the element id.
-    ParserPtr parser = createConfigParser(element_id, value->getPosition());
-    if (!parser) {
-        isc_throw(DCfgMgrBaseError, "Could not create parser");
-    }
-
-    // Invoke the parser's build method passing in the value. This will
-    // "convert" the Element form of value into the actual data item(s)
-    // and store them in parser's local storage.
-    parser->build(value);
-
-    // Invoke the parser's commit method. This "writes" the data
-    // item(s) stored locally by the parser into the context.  (Note that
-    // parsers are free to do more than update the context, but that is an
-    // nothing something we are concerned with here.)
-    parser->commit();
+    // Call derivation's element parser to parse the element.
+    parseElement(element_id, value);
 }
 
 }; // end of isc::dhcp namespace

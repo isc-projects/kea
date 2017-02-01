@@ -45,13 +45,6 @@ public:
         return (DCfgContextBasePtr());
     }
 
-    /// @brief Dummy implementation as this method is abstract.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& /* element_id */,
-                       const isc::data::Element::Position& /* pos */) {
-        return (isc::dhcp::ParserPtr());
-    }
-
     /// @brief Returns summary of configuration in the textual format.
     virtual std::string getConfigSummary(const uint32_t) {
         return ("");
@@ -85,98 +78,6 @@ public:
 
     /// @brief Configuration manager instance.
     DStubCfgMgrPtr cfg_mgr_;
-};
-
-/// @brief Cfg manager which implements the parseElement() method
-/// This allows testing managers which use the new and/or old parsing
-/// mechanisms to parse configurations.  Eventually the latter will
-/// likely be removed.
-class ParseElementMgr : public DStubCfgMgr {
-public:
-
-    /// @brief Constructor
-    ParseElementMgr(){
-    }
-
-    /// @brief Destructor
-    ~ParseElementMgr() {
-    }
-
-    /// @brief Parse the given element if appropriate
-    ///
-    /// Overrides the DCfgMgrBase implementation.
-    /// Looks for the given element by name in the list of "parsable"
-    /// elements.  If it is found, it is added to the map of "parsed"
-    /// elements.
-    ///
-    /// @param element_id name of the element as it is expected in the cfg
-    /// @param element value of the element as ElementPtr
-    /// @return true if the element was parsed, false otherwise
-    virtual bool parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element) {
-        std::string id;
-        BOOST_FOREACH(id, parsable_elements_) {
-            if (element_id == id) {
-                parsed_elements_.set(element_id, element);
-                return (true);
-            }
-        }
-
-        return (false);
-    }
-
-    /// @brief Adds default elements to the given config
-    ///
-    /// Overrides the DCfgMgrBase implementation.
-    /// Adds the string parameter, "defaulted_parm" with a
-    /// value of "default value" to mutable_cfg if isn't
-    /// already there.
-    ///
-    /// @param mutable_cfg config to modify
-    virtual void setCfgDefaults(isc::data::ElementPtr mutable_cfg) {
-        if (!mutable_cfg->contains("defaulted_parm")) {
-            ConstElementPtr def(new StringElement("default value"));
-            mutable_cfg->set("defaulted_parm", def);
-        }
-    }
-
-    /// @brief List of element ids which should be parsed by parseElement
-    ElementIdList parsable_elements_;
-
-    /// @brief Map of elements parsed by parseElement
-    MapElement parsed_elements_;
-};
-
-typedef boost::shared_ptr<ParseElementMgr> ParseElementMgrPtr;
-
-/// @brief Test fixture for testing a ParseElementMgr
-class ParseElementMgrTest : public ConfigParseTest {
-public:
-
-    /// @brief Constructor
-    ParseElementMgrTest():cfg_mgr_(new ParseElementMgr()) {
-    }
-
-    /// @brief Destructor
-    ~ParseElementMgrTest() {
-    }
-
-    /// @brief Convenience method which returns a DStubContextPtr to the
-    /// configuration context.
-    ///
-    /// @return returns a DStubContextPtr.
-    DStubContextPtr getStubContext() {
-        return (boost::dynamic_pointer_cast<DStubContext>
-                (cfg_mgr_->getContext()));
-    }
-
-    /// @brief Adds an element id to the list of "parsable" elements
-    void addToParsableElements(const std::string& element_id) {
-        cfg_mgr_->parsable_elements_.push_back(element_id);
-    }
-
-    /// @brief Configuration manager instance.
-    ParseElementMgrPtr cfg_mgr_;
 };
 
 ///@brief Tests basic construction/destruction of configuration manager.
@@ -216,18 +117,6 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
     // Verify that we can parse a simple configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that an error building the element is caught and returns a
-    // failed parse result.
-    SimFailure::set(SimFailure::ftElementBuild);
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that an error committing the element is caught and returns a
-    // failed parse result.
-    SimFailure::set(SimFailure::ftElementCommit);
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    EXPECT_TRUE(checkAnswer(1));
 
     // Verify that an unknown element error is caught and returns a failed
     // parse result.
@@ -568,75 +457,6 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     EXPECT_NO_THROW(pos = context->getParam("bogus_value",
                                             actual_string, true));
     EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
-}
-
-// Tests that:
-//
-// 1. Elements not handled by the parseElement() method are
-// handled by the old parsing mechanisms
-// 2. Default values are supplied for elements not supplied in
-// the configuration
-TEST_F(ParseElementMgrTest, basic) {
-    // Create the test config
-    string config = "{ \"bool_test\": true , \n"
-                    "  \"uint32_test\": 77 , \n"
-                    "  \"parse_one\": 1, \n"
-                    "  \"parse_two\": 2, \n"
-                    "  \"parse_three\": \"3\", \n"
-                    "  \"string_test\": \"hmmm chewy\" }";
-    ASSERT_TRUE(fromJSON(config));
-
-    // Add two elements to the list of elements handled by parseElement
-    addToParsableElements("parse_one");
-    addToParsableElements("defaulted_parm");
-
-    // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
-    DStubContextPtr context = getStubContext();
-    ASSERT_TRUE(context);
-
-    // Verify that the list of parsed elements is as expected
-    // It should have two entries: "parse_one" and "defaulted_parm"
-    ASSERT_EQ(cfg_mgr_->parsed_elements_.size(), 2);
-    EXPECT_TRUE(cfg_mgr_->parsed_elements_.contains("parse_one"));
-    ConstElementPtr element = cfg_mgr_->parsed_elements_.get("parse_one");
-    EXPECT_EQ(element->intValue(), 1);
-
-    // "parse_two" should not be in the parsed list
-    EXPECT_FALSE(cfg_mgr_->parsed_elements_.contains("parse_two"));
-
-    // "parse_three" should be there
-    EXPECT_TRUE(cfg_mgr_->parsed_elements_.contains("defaulted_parm"));
-    element = cfg_mgr_->parsed_elements_.get("defaulted_parm");
-    EXPECT_EQ(element->stringValue(), "default value");
-
-    // Now verify the original mechanism elements were parsed correctly
-    // Verify that the boolean parameter was parsed correctly by retrieving
-    // its value from the context.
-    bool actual_bool = false;
-    isc::data::Element::Position pos;
-    EXPECT_NO_THROW(pos = context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-    EXPECT_EQ(1, pos.line_);
-
-    // Verify that the uint32 parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(pos = context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-    EXPECT_EQ(2, pos.line_);
-
-    // Verify that the string parameter was parsed correctly by retrieving
-    // its value from the context.
-    std::string actual_string = "";
-    EXPECT_NO_THROW(pos = context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-    EXPECT_EQ(6, pos.line_);
-
-    // Verify that "parse_two" wasn't parsed by old parsing either
-    EXPECT_THROW(context->getParam("parse_two", actual_string, false),
-                                   isc::dhcp::DhcpConfigError);
 }
 
 } // end of anonymous namespace

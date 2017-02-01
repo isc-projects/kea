@@ -270,9 +270,7 @@ protected:
     ///
     /// @param element_id name of the element as it is expected in the cfg
     /// @param element value of the element as ElementPtr
-    ///
-    /// @return true if the element was parsed, false otherwise
-    virtual bool parseElement(const std::string& element_id,
+    virtual void parseElement(const std::string& element_id,
                               isc::data::ConstElementPtr element);
 
     /// @brief Adds default values to the given config
@@ -302,32 +300,6 @@ protected:
     /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
     /// -# ncr_format is invalid, currently only FMT_JSON is supported
     virtual void buildParams(isc::data::ConstElementPtr params_config);
-
-    /// @brief Given an element_id returns an instance of the appropriate
-    /// parser.
-    ///
-    /// It is responsible for top-level or outermost DHCP-DDNS configuration
-    /// elements (see dhcp-ddns.spec):
-    ///     -# ip_address
-    ///     -# port
-    ///     -# dns_server_timeout
-    ///     -# ncr_protocol
-    ///     -# ncr_format
-    ///     -# tsig_keys
-    ///     -# forward_ddns
-    ///     -# reverse_ddns
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos =
-                       isc::data::Element::Position());
 
     /// @brief Creates an new, blank D2CfgContext context
     ///
