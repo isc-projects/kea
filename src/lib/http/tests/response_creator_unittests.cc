@@ -39,7 +39,7 @@ public:
 
 private:
 
-    /// @brief Creates HTTP response..
+    /// @brief Creates HTTP response.
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
@@ -115,6 +115,7 @@ TEST(HttpResponseCreatorTest, goodRequest) {
     ASSERT_TRUE(response);
 
     EXPECT_EQ("HTTP/1.0 200 OK\r\n"
+              "Content-Length: 0\r\n"
               "Content-Type: application/json\r\n"
               "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n\r\n",
               response->toString());

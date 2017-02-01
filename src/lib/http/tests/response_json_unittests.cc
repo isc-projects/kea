@@ -77,6 +77,8 @@ public:
             HttpResponse::isServerError(status_code)) {
             response_string << "Content-Length: " << status_message_json.str().size()
                             << "\r\n";
+        } else {
+            response_string << "Content-Length: 0\r\n";
         }
 
         // Content-Type and Date are automatically included.

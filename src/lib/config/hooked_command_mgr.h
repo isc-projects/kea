@@ -36,20 +36,15 @@ protected:
         return (callout_handle_);
     }
 
-private:
-
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method checks if the hook library is installed which implements
     /// callouts for the 'control_command_receive' hook point, and calls them
     /// if they exist. If the hook library supports the given command it creates
     /// a response and returns it in the 'response' argument of the
-    /// @ref ConstElementPtr type. If the callout also sets the 'skip' status,
-    /// the response created by the callout is returned. Otherwise, the
+    /// @ref isc::data::ConstElementPtr type. If the callout also sets the 'skip'
+    /// status, the response created by the callout is returned. Otherwise, the
     /// @ref BaseCommandMgr::handleCommand is called.
-    ///
-    /// This method is private because it is its final implementation which
-    /// should not be overridden in the derived classes.
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.

@@ -116,10 +116,8 @@ HttpResponse::toString() const {
     // Update or add "Date" header.
     addHeaderInternal("Date", getDateHeaderValue(), headers);
 
-    // Add "Content-Length" if body present.
-    if (!body_.empty()) {
-        addHeaderInternal("Content-Length", body_.length(), headers);
-    }
+    // Always add "Content-Length", perhaps equal to 0.
+    addHeaderInternal("Content-Length", body_.length(), headers);
 
     // Include all headers.
     for (auto header = headers.cbegin(); header != headers.cend();
