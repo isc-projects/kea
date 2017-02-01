@@ -645,7 +645,7 @@ D2ParserContext::scanStringBegin(const std::string& str, ParserType parser_type)
     loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = yy_scan_bytes(str.c_str(), str.size());
+    buffer = d2_parser__scan_bytes(str.c_str(), str.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
