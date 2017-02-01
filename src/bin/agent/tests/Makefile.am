@@ -44,9 +44,12 @@ TESTS += ctrl_agent_unittest
 
 ctrl_agent_unittest_SOURCES  = ctrl_agent_cfg_mgr_unittest.cc
 ctrl_agent_unittest_SOURCES += ctrl_agent_controller_unittest.cc
+ctrl_agent_unittests_SOURCES += ctrl_agent_command_mgr_unittests.cc
 ctrl_agent_unittest_SOURCES += parser_unittest.cc
 ctrl_agent_unittest_SOURCES += ctrl_agent_process_unittest.cc
+ctrl_agent_unittests_SOURCES += ctrl_agent_response_creator_factory_unittests.cc
 ctrl_agent_unittest_SOURCES += ctrl_agent_unittest.cc
+ctrl_agent_unittests_SOURCES += ctrl_agent_response_creator_unittests.cc
 
 ctrl_agent_unittest_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 ctrl_agent_unittest_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
@@ -61,6 +64,7 @@ ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

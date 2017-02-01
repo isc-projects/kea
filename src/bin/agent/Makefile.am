@@ -44,10 +44,13 @@ noinst_LTLIBRARIES = libagent.la
 
 libagent_la_SOURCES  = ctrl_agent_cfg_mgr.cc ctrl_agent_cfg_mgr.h
 libagent_la_SOURCES += ctrl_agent_controller.cc ctrl_agent_controller.h
+libagent_la_SOURCES += ctrl_agent_command_mgr.cc ctrl_agent_command_mgr.h
 libagent_la_SOURCES += ctrl_agent_log.cc ctrl_agent_log.h
 libagent_la_SOURCES += ctrl_agent_process.cc ctrl_agent_process.h
 libagent_la_SOURCES += agent_parser.cc agent_parser.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+libagent_la_SOURCES += ctrl_agent_response_creator.cc ctrl_agent_response_creator.h
+libagent_la_SOURCES += ctrl_agent_response_creator_factory.h
 libagent_la_SOURCES += agent_lexer.ll
 
 nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
@@ -66,6 +69,7 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

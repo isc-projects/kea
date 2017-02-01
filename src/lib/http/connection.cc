@@ -8,7 +8,6 @@
 #include <http/connection.h>
 #include <http/connection_pool.h>
 #include <boost/bind.hpp>
-#include <iostream>
 
 using namespace isc::asiolink;
 
@@ -96,6 +95,8 @@ HttpConnection::doWrite() {
             socket_.asyncSend(output_buf_.data(),
                               output_buf_.length(),
                               socket_write_callback_);
+        } else {
+            stopThisConnection();
         }
     } catch (const std::exception& ex) {
         stopThisConnection();
@@ -156,6 +157,7 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec,
 
     } else {
         output_buf_.clear();
+        stopThisConnection();
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,13 +34,13 @@ PostHttpRequestJson::reset() {
 }
 
 ConstElementPtr
-PostHttpRequestJson::getBodyAsJson() {
+PostHttpRequestJson::getBodyAsJson() const {
     checkFinalized();
     return (json_);
 }
 
 ConstElementPtr
-PostHttpRequestJson::getJsonElement(const std::string& element_name) {
+PostHttpRequestJson::getJsonElement(const std::string& element_name) const {
     try {
         ConstElementPtr body = getBodyAsJson();
         if (body) {

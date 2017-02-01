@@ -6,11 +6,25 @@
 
 #include <config.h>
 #include <agent/ctrl_agent_process.h>
+#include <agent/ctrl_agent_response_creator_factory.h>
 #include <agent/ctrl_agent_log.h>
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <http/listener.h>
 #include <boost/pointer_cast.hpp>
 
+using namespace isc::asiolink;
+using namespace isc::http;
 using namespace isc::process;
+
+// Temporarily hardcoded configuration.
+namespace {
+
+const IOAddress SERVER_ADDRESS("127.0.0.1");
+const unsigned short SERVER_PORT = 8081;
+const long REQUEST_TIMEOUT = 10000;
+
+}
 
 namespace isc {
 namespace agent {
@@ -32,6 +46,12 @@ CtrlAgentProcess::run() {
     LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
 
     try {
+
+        HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
+        HttpListener http_listener(*getIoService(), SERVER_ADDRESS,
+                                   SERVER_PORT, rcf, REQUEST_TIMEOUT);
+        http_listener.start();
+
         while (!shouldShutdown()) {
             getIoService()->run_one();
         }
