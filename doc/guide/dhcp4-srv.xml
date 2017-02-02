@@ -1018,8 +1018,9 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>When the data field is a string, and that string contains the comma
-      (,; U+002C) character, the comma must be escaped with a reverse solidus
-      character (\; U+005C). For example, the string
+      (,; U+002C) character, the comma must be escaped with a double reverse solidus
+      character (\; U+005C). This double escape is required, because a
+      single escape (\,) would make the JSON invalid. For example, the string
       &quot;foo,bar&quot; would be represented as:
       <screen>
 "Dhcp4": {
@@ -1030,7 +1031,7 @@ temporarily override a list of interface names and listen on all interfaces.
                     <userinput>"option-data": [
                         {
                             "name": "boot-file-name",
-                            "data": "foo\,bar"
+                            "data": "foo\\,bar"
                         }
                     ]</userinput>
                 },

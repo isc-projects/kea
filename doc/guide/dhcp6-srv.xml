@@ -1050,9 +1050,12 @@ temporarily override a list of interface names and listen on all interfaces.
       which was not assigned by IANA) are listed in
       <xref linkend="dhcp6-exp-options-list"/>.
     </para>
-    <para>When the data field is a string, and that string contains the comma
-    (,; U+002C) character, the comma must be escaped with a reverse solidus
-    character (\; U+005C). For example, the string &quot;EST5EDT4,M3.2.0/02:00,M11.1.0/02:00&quot; would be
+    <para>When the data field is a string, and that string contains
+    the comma (,; U+002C) character, the comma must be escaped with a
+    reverse solidus character (\; U+005C). This double escape is
+    required, because a single escape (\,) would make the JSON
+    invalid. For example, the string
+    &quot;EST5EDT4,M3.2.0/02:00,M11.1.0/02:00&quot; would be
     represented as:
 <screen>
 "Dhcp6": {
