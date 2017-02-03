@@ -7,7 +7,7 @@
 #include <cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/move/unique_ptr.hpp>
 
 #include <openssl/hmac.h>
 
@@ -42,20 +42,11 @@ public:
             isc_throw(BadKey, "Bad HMAC secret length: 0");
         }
 
-        md_.reset(new HMAC_CTX);
-        HMAC_CTX_init(md_.get());
-
+        md_.reset(HMAC_CTX_new());
         if (!HMAC_Init_ex(md_.get(), secret,
                           static_cast<int>(secret_len),
                           algo, NULL)) {
             isc_throw(LibraryError, "HMAC_Init_ex");
-        }
-    }
-
-    /// @brief Destructor
-    ~HMACImpl() {
-        if (md_) {
-            HMAC_CTX_cleanup(md_.get());
         }
     }
 
@@ -159,11 +150,28 @@ public:
     }
 
 private:
+    class HMAC_Deleter {
+    public:
+        void operator()(HMAC_CTX *ptr) { HMAC_CTX_free(ptr); }
+    };
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+    static HMAC_CTX* HMAC_CTX_new() {
+        HMAC_CTX *ptr = new HMAC_CTX;
+        HMAC_CTX_init(ptr);
+        return ptr;
+    }
+    static void HMAC_CTX_free(HMAC_CTX *ptr) {
+        HMAC_CTX_cleanup(ptr);
+        delete ptr;
+    }
+#endif
+
     /// @brief The hash algorithm
     HashAlgorithm hash_algorithm_;
 
     /// @brief The protected pointer to the OpenSSL HMAC_CTX structure
-    boost::scoped_ptr<HMAC_CTX> md_;
+    boost::movelib::unique_ptr<HMAC_CTX, HMAC_Deleter> md_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
