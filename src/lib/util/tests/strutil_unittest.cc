@@ -152,8 +152,14 @@ TEST(StringUtilTest, Tokens) {
     // Escaped escape
     result = isc::util::str::tokens("foo\\\\,bar", ",", true);
     ASSERT_EQ(2, result.size());
-    EXPECT_EQ(string("foo\\\\"), result[0]);
+    EXPECT_EQ(string("foo\\"), result[0]);
     EXPECT_EQ(string("bar"), result[1]);
+
+    // Double escapes
+    result = isc::util::str::tokens("foo\\\\\\\\,\\bar", ",", true);
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("foo\\\\"), result[0]);
+    EXPECT_EQ(string("\\bar"), result[1]);
 
     // Escaped standard character
     result = isc::util::str::tokens("fo\\o,bar", ",", true);

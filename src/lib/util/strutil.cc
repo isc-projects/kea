@@ -91,9 +91,8 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
                 in_token = true;
             }
             if (escaped) {
-                // Escaped escape: reset escaped and keep both characters
+                // Escaped escape: reset escaped and keep one character
                 escaped = false;
-                token.push_back('\\');
                 token.push_back(*c);
             } else {
                 // Remember to keep the next character
@@ -106,7 +105,7 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
                 in_token = true;
             }
             if (escaped) {
-                // Escaped common character: as there was no escape
+                // Escaped common character: as escape was false
                 escaped = false;
                 token.push_back('\\');
                 token.push_back(*c);
