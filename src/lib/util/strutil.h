@@ -69,8 +69,8 @@ std::string trim(const std::string& instring);
 /// invisible leading and trailing delimiter characters.  Therefore both cases
 /// reduce to a set of contiguous delimiters, which are considered a single
 /// delimiter (so getting rid of the string).
-/// Optional escape allows to escape delimiter characters (and *only* them)
-/// using backslash.
+/// Optional escape allows to escape delimiter characters (and *only* them
+/// and the escape character itself) using backslash.
 ///
 /// We could use Boost for this, but this (simple) function eliminates one
 /// dependency in the code.

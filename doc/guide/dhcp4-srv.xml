@@ -1017,11 +1017,12 @@ temporarily override a list of interface names and listen on all interfaces.
         the various types is given in <xref linkend="dhcp-types"/>.
       </para>
 
-      <para>When the data field is a string, and that string contains the comma
+      <para>When a data field is a string, and that string contains the comma
       (,; U+002C) character, the comma must be escaped with a double reverse solidus
-      character (\; U+005C). This double escape is required, because a
-      single escape (\,) would make the JSON invalid. For example, the string
-      &quot;foo,bar&quot; would be represented as:
+      character (\; U+005C). This double escape is required, because both the
+      routine splitting CSV data into fields and JSON use the same escape
+      character: a single escape (\,) would make the JSON invalid.
+      For example, the string &quot;foo,bar&quot; would be represented as:
       <screen>
 "Dhcp4": {
     "subnet4": [
