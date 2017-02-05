@@ -88,7 +88,7 @@ public:
         RelayInfo();
 
         /// @brief Returns prinable representation of the relay information.
-        /// @return text represenation of the structure (used in debug logging)
+        /// @return text representation of the structure (used in debug logging)
         std::string toText() const;
 
         uint8_t   msg_type_;               ///< message type (RELAY-FORW oro RELAY-REPL)
