@@ -10,6 +10,17 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
+
+/// @brief Evaluation error exception raised when trying to parse.
+///
+/// This exception is expected to be thrown when parsing of the input
+/// configuration has failed. This exception is used by parsers.
+class ParseError : public isc::Exception {
+ public:
+ ParseError(const char* file, size_t line, const char* what) :
+    isc::Exception(file, line, what) { };
+};
+
 namespace dhcp {
 
 /// An exception that is thrown if an error occurs while configuring
@@ -48,4 +59,3 @@ public:
 }; // end of isc namespace
 
 #endif // DHCP_CONFIG_ERROR_H
-
