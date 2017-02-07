@@ -39,6 +39,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::test;
 
 namespace {
 

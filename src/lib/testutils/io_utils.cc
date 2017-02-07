@@ -12,7 +12,6 @@
 #include <string>
 
 namespace isc {
-namespace dhcp {
 namespace test {
 
 bool fileExists(const std::string& file_path) {
@@ -109,6 +108,5 @@ std::string decommentJSONfile(const std::string& input_file) {
     return (outfile);
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
+}; // end of isc::test namespace
 }; // end of isc namespace

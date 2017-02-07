@@ -165,7 +165,7 @@ TEST_F(CfgDUIDTest, createLLT) {
               duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(isc::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-EN can be created from the
@@ -185,7 +185,7 @@ TEST_F(CfgDUIDTest, createEN) {
     EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(isc::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-LL can be created from the
@@ -205,7 +205,7 @@ TEST_F(CfgDUIDTest, createLL) {
     EXPECT_EQ("00:03:00:02:12:41:34:a4:b3:67", duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(isc::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This test verifies that it is possible to disable storing
@@ -226,7 +226,7 @@ TEST_F(CfgDUIDTest, createDisableWrite) {
     EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
 
     // DUID persistence is disabled so there should be no DUID file.
-    EXPECT_FALSE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_FALSE(isc::test::fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 } // end of anonymous namespace

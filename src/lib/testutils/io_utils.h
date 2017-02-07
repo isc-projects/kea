@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 
 namespace isc {
-namespace dhcp {
 namespace test {
 
 /// @brief Checks if specified file exists.
@@ -40,8 +39,7 @@ std::string readFile(const std::string& file_path);
 /// @throw BadValue if the input file cannot be opened
 std::string decommentJSONfile(const std::string& input_file);
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
+}; // end of isc::test namespace
 }; // end of isc namespace
 
 #endif // TEST_IO_UTILS_H
