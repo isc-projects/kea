@@ -506,12 +506,12 @@ TEST(ParserTest, errors) {
               "\"foo\" in map.");
     testError("{ \"Control-agent\" }\n",
               ParserContext::PARSER_AGENT,
-              "<string>:1.11: syntax error, unexpected }, "
+              "<string>:1.19: syntax error, unexpected }, "
               "expecting :");
-    testError("{ \"Control-agent\":[]\n",
+    testError("{ \"Control-agent\":",
               ParserContext::PARSER_AGENT,
-              "<string>:2.1: syntax error, unexpected end of file, "
-              "expecting \",\" or }");
+              "<string>:1.19: syntax error, unexpected end of file, "
+              "expecting {");
     testError("{}{}\n",
               ParserContext::PARSER_JSON,
               "<string>:1.3: syntax error, unexpected {, "
