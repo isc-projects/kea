@@ -22,6 +22,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/agent/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/agent\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
@@ -43,6 +44,7 @@ TESTS += ctrl_agent_unittests
 
 ctrl_agent_unittests_SOURCES  = ctrl_agent_cfg_mgr_unittests.cc
 ctrl_agent_unittests_SOURCES += ctrl_agent_controller_unittests.cc
+ctrl_agent_unittests_SOURCES += parser_unittests.cc
 ctrl_agent_unittests_SOURCES += ctrl_agent_process_unittests.cc
 ctrl_agent_unittests_SOURCES += ctrl_agent_unittests.cc
 
@@ -66,6 +68,7 @@ ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptoli
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 ctrl_agent_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 ctrl_agent_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)

@@ -1,0 +1,80 @@
+// This is a simple example of a configuration for Control-Agent (CA) or simply
+// Agent. This server provides RESTful interface for all Kea servers.
+{
+    "Control-agent":
+    {
+	// We need to specify where the agent should listen to incoming HTTP
+	// queries. Note that agent does not provide SSL or TLS protection
+	// on its own, so limiting the traffic to localhost is a good idea.
+	"http-host": "localhost",
+
+	// Another mandatory parameter is the HTTP port.
+	"http-port": 8000,
+
+	// This map specifies where control channel of each server is configured
+	// to listen on. See 'control-socket' object in the respective
+	// servers. At this time the only supported socket type is "unix".
+	// Make sure that the Agent and respective servers configuration
+	// matches exactly, otherwise they won't be able to communicate.
+	"control-sockets":
+	{
+	    // This is how the Agent can communicate with the DHCPv4 server.
+	    "dhcp4-server":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/path/to/the/unix/socket-v4"
+	    },
+
+	    // Location of the DHCPv6 command channel socket.
+	    "dhcp6-server":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/path/to/the/unix/socket-v6"
+	    },
+
+	    // Currently DHCP-DDNS (nicknamed D2) does not support
+	    // command channel yet, but we hope this will change in the
+	    // future.
+	    "d2-server":
+	    {
+		"socket-type": "unix",
+		"socket-name": "/path/to/the/unix/socket-d2"
+	    }
+	},
+
+	// CA is able to load hook libraries that augment its operation.
+	// The primary functionality is the ability to add new commands.
+	"hooks-libraries": [
+	    // Hook libraries list may contain more than one library.
+	    {
+		// The only necessary parameter is the library filename.
+		"library": "/opt/local/control-agent-commands.so",
+
+		// Some libraries may support parameters. Make sure you
+		// type this section carefully, as the CA does not validate
+		// it (because the format is library specific).
+		"parameters": {
+		    "param1": "foo"
+		}
+	    }
+	]
+
+    },
+
+    // Similar to other Kea components, CA also uses logging.
+    "Logging":
+    {
+	"loggers": [
+	    {
+		"name": "kea-ctrl-agent",
+		"output_options": [
+		    {
+			"output": "/var/log/kea-ctrl-agent.log"
+		    }
+		],
+		"severity": "INFO",
+		"debuglevel": 0
+	    }
+	]
+    }
+}
