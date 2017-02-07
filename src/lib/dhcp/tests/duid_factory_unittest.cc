@@ -180,7 +180,7 @@ DUIDFactoryTest::removeDefaultFile() const {
 
 std::string
 DUIDFactoryTest::readDefaultFile() const {
-    return (dhcp::test::readFile(absolutePath(DEFAULT_DUID_FILE)));
+    return (isc::test::readFile(absolutePath(DEFAULT_DUID_FILE)));
 }
 
 std::vector<uint8_t>

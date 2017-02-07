@@ -10,6 +10,7 @@
 #include <testutils/io_utils.h>
 
 using namespace isc::data;
+using namespace isc::test;
 using namespace std;
 
 namespace isc {
