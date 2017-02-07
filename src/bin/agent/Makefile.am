@@ -46,6 +46,9 @@ libagent_la_SOURCES  = ctrl_agent_cfg_mgr.cc ctrl_agent_cfg_mgr.h
 libagent_la_SOURCES += ctrl_agent_controller.cc ctrl_agent_controller.h
 libagent_la_SOURCES += ctrl_agent_log.cc ctrl_agent_log.h
 libagent_la_SOURCES += ctrl_agent_process.cc ctrl_agent_process.h
+libagent_la_SOURCES += agent_parser.cc agent_parser.h
+libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+libagent_la_SOURCES += agent_lexer.ll
 
 nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
 EXTRA_DIST += ctrl_agent_messages.mes
@@ -76,3 +79,31 @@ kea_ctrl_agent_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_ctrl_agent_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
+
+
+if GENERATE_PARSER
+
+parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_parser.h
+	@echo "Flex/bison files regenerated"
+
+# --- Flex/Bison stuff below --------------------------------------------------
+# When debugging grammar issues, it's useful to add -v to bison parameters.
+# bison will generate parser.output file that explains the whole grammar.
+# It can be used to manually follow what's going on in the parser.
+# This is especially useful if yydebug_ is set to 1 as that variable
+# will cause parser to print out its internal state.
+# Call flex with -s to check that the default rule can be suppressed
+# Call bison with -W to get warnings like unmarked empty rules
+# Note C++11 deprecated register still used by flex < 2.6.0
+location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
+	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
+
+agent_lexer.cc: agent_lexer.ll
+	$(LEX) --prefix parser6_ -o agent_lexer.cc agent_lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh agent_parser.cc agent_parser.h agent_lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif
