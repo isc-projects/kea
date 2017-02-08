@@ -215,7 +215,7 @@ public:
     /// @throw isc::Unexpected if unbalanced (more leave() than enter() calls)
     void leave();
 
-    /// @brief Get the syntactix context name
+    /// @brief Get the syntactic context name
     ///
     /// @return printable name of the context.
     const std::string contextName();
@@ -224,7 +224,7 @@ public:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
-    /// @brief Flag determing parser debugging.
+    /// @brief Flag determining parser debugging.
     bool trace_parsing_;
 
     /// @brief Syntactic context stack
