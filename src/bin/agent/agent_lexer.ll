@@ -531,8 +531,8 @@ null {
         driver.sfile_ = driver.sfiles_.back();
         driver.sfiles_.pop_back();
     }
-    parser6__delete_buffer(YY_CURRENT_BUFFER);
-    parser6__switch_to_buffer(driver.states_.back());
+    agent__delete_buffer(YY_CURRENT_BUFFER);
+    agent__switch_to_buffer(driver.states_.back());
     driver.states_.pop_back();
 
     BEGIN(DIR_EXIT);
@@ -553,7 +553,7 @@ ParserContext::scanStringBegin(const std::string& str, ParserType parser_type)
     loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = parser6__scan_bytes(str.c_str(), str.size());
+    buffer = agent__scan_bytes(str.c_str(), str.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
@@ -575,11 +575,11 @@ ParserContext::scanFileBegin(FILE * f,
     YY_BUFFER_STATE buffer;
 
     // See dhcp6_lexer.cc header for available definitions
-    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    buffer = agent__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal("cannot scan file " + filename);
     }
-    parser6__switch_to_buffer(buffer);
+    agent__switch_to_buffer(buffer);
 }
 
 void
@@ -587,7 +587,7 @@ ParserContext::scanEnd() {
     if (sfile_)
         fclose(sfile_);
     sfile_ = 0;
-    static_cast<void>(parser6_lex_destroy());
+    static_cast<void>(agent_lex_destroy());
     // Close files
     while (!sfiles_.empty()) {
         FILE* f = sfiles_.back();
@@ -598,7 +598,7 @@ ParserContext::scanEnd() {
     }
     // Delete states
     while (!states_.empty()) {
-        parser6__delete_buffer(states_.back());
+        agent__delete_buffer(states_.back());
         states_.pop_back();
     }
 }
@@ -619,11 +619,11 @@ ParserContext::includeFile(const std::string& filename) {
     sfile_ = f;
     states_.push_back(YY_CURRENT_BUFFER);
     YY_BUFFER_STATE buffer;
-    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    buffer = agent__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal( "Can't scan include file " + filename);
     }
-    parser6__switch_to_buffer(buffer);
+    agent__switch_to_buffer(buffer);
     files_.push_back(file_);
     file_ = filename;
     locs_.push_back(loc_);

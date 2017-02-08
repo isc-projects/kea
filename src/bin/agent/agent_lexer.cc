@@ -9,24 +9,24 @@
 /* %not-for-header */
 /* %if-c-only */
 /* %if-not-reentrant */
-#define yy_create_buffer parser6__create_buffer
-#define yy_delete_buffer parser6__delete_buffer
-#define yy_flex_debug parser6__flex_debug
-#define yy_init_buffer parser6__init_buffer
-#define yy_flush_buffer parser6__flush_buffer
-#define yy_load_buffer_state parser6__load_buffer_state
-#define yy_switch_to_buffer parser6__switch_to_buffer
-#define yyin parser6_in
-#define yyleng parser6_leng
-#define yylex parser6_lex
-#define yylineno parser6_lineno
-#define yyout parser6_out
-#define yyrestart parser6_restart
-#define yytext parser6_text
-#define yywrap parser6_wrap
-#define yyalloc parser6_alloc
-#define yyrealloc parser6_realloc
-#define yyfree parser6_free
+#define yy_create_buffer agent__create_buffer
+#define yy_delete_buffer agent__delete_buffer
+#define yy_flex_debug agent__flex_debug
+#define yy_init_buffer agent__init_buffer
+#define yy_flush_buffer agent__flush_buffer
+#define yy_load_buffer_state agent__load_buffer_state
+#define yy_switch_to_buffer agent__switch_to_buffer
+#define yyin agent_in
+#define yyleng agent_leng
+#define yylex agent_lex
+#define yylineno agent_lineno
+#define yyout agent_out
+#define yyrestart agent_restart
+#define yytext agent_text
+#define yywrap agent_wrap
+#define yyalloc agent_alloc
+#define yyrealloc agent_realloc
+#define yyfree agent_free
 
 /* %endif */
 /* %endif */
@@ -44,87 +44,87 @@
 /* %endif */
 
 /* %if-c-only */
-    #define yy_create_buffer parser6__create_buffer
+    #define yy_create_buffer agent__create_buffer
 
-    #define yy_delete_buffer parser6__delete_buffer
+    #define yy_delete_buffer agent__delete_buffer
 
-    #define yy_scan_buffer parser6__scan_buffer
+    #define yy_scan_buffer agent__scan_buffer
 
-    #define yy_scan_string parser6__scan_string
+    #define yy_scan_string agent__scan_string
 
-    #define yy_scan_bytes parser6__scan_bytes
+    #define yy_scan_bytes agent__scan_bytes
 
-    #define yy_init_buffer parser6__init_buffer
+    #define yy_init_buffer agent__init_buffer
 
-    #define yy_flush_buffer parser6__flush_buffer
+    #define yy_flush_buffer agent__flush_buffer
 
-    #define yy_load_buffer_state parser6__load_buffer_state
+    #define yy_load_buffer_state agent__load_buffer_state
 
-    #define yy_switch_to_buffer parser6__switch_to_buffer
+    #define yy_switch_to_buffer agent__switch_to_buffer
 
-    #define yypush_buffer_state parser6_push_buffer_state
+    #define yypush_buffer_state agent_push_buffer_state
 
-    #define yypop_buffer_state parser6_pop_buffer_state
+    #define yypop_buffer_state agent_pop_buffer_state
 
-    #define yyensure_buffer_stack parser6_ensure_buffer_stack
+    #define yyensure_buffer_stack agent_ensure_buffer_stack
 
-    #define yylex parser6_lex
+    #define yylex agent_lex
 
-    #define yyrestart parser6_restart
+    #define yyrestart agent_restart
 
-    #define yylex_init parser6_lex_init
+    #define yylex_init agent_lex_init
 
-    #define yylex_init_extra parser6_lex_init_extra
+    #define yylex_init_extra agent_lex_init_extra
 
-    #define yylex_destroy parser6_lex_destroy
+    #define yylex_destroy agent_lex_destroy
 
-    #define yyget_debug parser6_get_debug
+    #define yyget_debug agent_get_debug
 
-    #define yyset_debug parser6_set_debug
+    #define yyset_debug agent_set_debug
 
-    #define yyget_extra parser6_get_extra
+    #define yyget_extra agent_get_extra
 
-    #define yyset_extra parser6_set_extra
+    #define yyset_extra agent_set_extra
 
-    #define yyget_in parser6_get_in
+    #define yyget_in agent_get_in
 
-    #define yyset_in parser6_set_in
+    #define yyset_in agent_set_in
 
-    #define yyget_out parser6_get_out
+    #define yyget_out agent_get_out
 
-    #define yyset_out parser6_set_out
+    #define yyset_out agent_set_out
 
-    #define yyget_leng parser6_get_leng
+    #define yyget_leng agent_get_leng
 
-    #define yyget_text parser6_get_text
+    #define yyget_text agent_get_text
 
-    #define yyget_lineno parser6_get_lineno
+    #define yyget_lineno agent_get_lineno
 
-    #define yyset_lineno parser6_set_lineno
+    #define yyset_lineno agent_set_lineno
 
-    #define yywrap parser6_wrap
+    #define yywrap agent_wrap
 
 /* %endif */
 
-    #define yyalloc parser6_alloc
+    #define yyalloc agent_alloc
 
-    #define yyrealloc parser6_realloc
+    #define yyrealloc agent_realloc
 
-    #define yyfree parser6_free
+    #define yyfree agent_free
 
 /* %if-c-only */
 
-    #define yytext parser6_text
+    #define yytext agent_text
 
-    #define yyleng parser6_leng
+    #define yyleng agent_leng
 
-    #define yyin parser6_in
+    #define yyin agent_in
 
-    #define yyout parser6_out
+    #define yyout agent_out
 
-    #define yy_flex_debug parser6__flex_debug
+    #define yy_flex_debug agent__flex_debug
 
-    #define yylineno parser6_lineno
+    #define yylineno agent_lineno
 
 /* %endif */
 
@@ -254,7 +254,7 @@ typedef unsigned int flex_uint32_t;
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE parser6_restart(parser6_in  )
+#define YY_NEW_FILE agent_restart(agent_in  )
 #define YY_END_OF_BUFFER_CHAR 0
 
 /* Size of default input buffer. */
@@ -285,12 +285,12 @@ typedef size_t yy_size_t;
 #endif
 
 /* %if-not-reentrant */
-extern int parser6_leng;
+extern int agent_leng;
 /* %endif */
 
 /* %if-c-only */
 /* %if-not-reentrant */
-extern FILE *parser6_in, *parser6_out;
+extern FILE *agent_in, *agent_out;
 /* %endif */
 /* %endif */
 
@@ -305,13 +305,13 @@ extern FILE *parser6_in, *parser6_out;
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up parser6_text. */ \
+		/* Undo effects of setting up agent_text. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		*yy_cp = (yy_hold_char); \
 		YY_RESTORE_YY_MORE_OFFSET \
 		(yy_c_buf_p) = yy_cp = yy_bp + yyless_macro_arg - YY_MORE_ADJ; \
-		YY_DO_BEFORE_ACTION; /* set up parser6_text again */ \
+		YY_DO_BEFORE_ACTION; /* set up agent_text again */ \
 		} \
 	while ( 0 )
 #define unput(c) yyunput( c, (yytext_ptr)  )
@@ -378,8 +378,8 @@ struct yy_buffer_state
 	 * possible backing-up.
 	 *
 	 * When we actually see the EOF, we change the status to "new"
-	 * (via parser6_restart()), so that the user can continue scanning by
-	 * just pointing parser6_in at a new input file.
+	 * (via agent_restart()), so that the user can continue scanning by
+	 * just pointing agent_in at a new input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -417,89 +417,89 @@ static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 
 /* %if-not-reentrant */
 /* %not-for-header */
-/* yy_hold_char holds the character lost when parser6_text is formed. */
+/* yy_hold_char holds the character lost when agent_text is formed. */
 static char yy_hold_char;
 static int yy_n_chars;		/* number of characters read into yy_ch_buf */
-int parser6_leng;
+int agent_leng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = NULL;
 static int yy_init = 0;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
-/* Flag which is used to allow parser6_wrap()'s to do buffer switches
- * instead of setting up a fresh parser6_in.  A bit of a hack ...
+/* Flag which is used to allow agent_wrap()'s to do buffer switches
+ * instead of setting up a fresh agent_in.  A bit of a hack ...
  */
 static int yy_did_buffer_switch_on_eof;
 /* %ok-for-header */
 
 /* %endif */
 
-void parser6_restart ( FILE *input_file  );
-void parser6__switch_to_buffer ( YY_BUFFER_STATE new_buffer  );
-YY_BUFFER_STATE parser6__create_buffer ( FILE *file, int size  );
-void parser6__delete_buffer ( YY_BUFFER_STATE b  );
-void parser6__flush_buffer ( YY_BUFFER_STATE b  );
-void parser6_push_buffer_state ( YY_BUFFER_STATE new_buffer  );
-void parser6_pop_buffer_state ( void );
+void agent_restart ( FILE *input_file  );
+void agent__switch_to_buffer ( YY_BUFFER_STATE new_buffer  );
+YY_BUFFER_STATE agent__create_buffer ( FILE *file, int size  );
+void agent__delete_buffer ( YY_BUFFER_STATE b  );
+void agent__flush_buffer ( YY_BUFFER_STATE b  );
+void agent_push_buffer_state ( YY_BUFFER_STATE new_buffer  );
+void agent_pop_buffer_state ( void );
 
-static void parser6_ensure_buffer_stack ( void );
-static void parser6__load_buffer_state ( void );
-static void parser6__init_buffer ( YY_BUFFER_STATE b, FILE *file  );
-#define YY_FLUSH_BUFFER parser6__flush_buffer(YY_CURRENT_BUFFER )
+static void agent_ensure_buffer_stack ( void );
+static void agent__load_buffer_state ( void );
+static void agent__init_buffer ( YY_BUFFER_STATE b, FILE *file  );
+#define YY_FLUSH_BUFFER agent__flush_buffer(YY_CURRENT_BUFFER )
 
-YY_BUFFER_STATE parser6__scan_buffer ( char *base, yy_size_t size  );
-YY_BUFFER_STATE parser6__scan_string ( const char *yy_str  );
-YY_BUFFER_STATE parser6__scan_bytes ( const char *bytes, int len  );
+YY_BUFFER_STATE agent__scan_buffer ( char *base, yy_size_t size  );
+YY_BUFFER_STATE agent__scan_string ( const char *yy_str  );
+YY_BUFFER_STATE agent__scan_bytes ( const char *bytes, int len  );
 
 /* %endif */
 
-void *parser6_alloc ( yy_size_t  );
-void *parser6_realloc ( void *, yy_size_t  );
-void parser6_free ( void *  );
+void *agent_alloc ( yy_size_t  );
+void *agent_realloc ( void *, yy_size_t  );
+void agent_free ( void *  );
 
-#define yy_new_buffer parser6__create_buffer
+#define yy_new_buffer agent__create_buffer
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
-        parser6_ensure_buffer_stack (); \
+        agent_ensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            parser6__create_buffer(parser6_in,YY_BUF_SIZE ); \
+            agent__create_buffer(agent_in,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
-        parser6_ensure_buffer_stack (); \
+        agent_ensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            parser6__create_buffer(parser6_in,YY_BUF_SIZE ); \
+            agent__create_buffer(agent_in,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
-/* %% [1.0] parser6_text/parser6_in/parser6_out/yy_state_type/parser6_lineno etc. def's & init go here */
+/* %% [1.0] agent_text/agent_in/agent_out/yy_state_type/agent_lineno etc. def's & init go here */
 /* Begin user sect3 */
 
-#define parser6_wrap() (/*CONSTCOND*/1)
+#define agent_wrap() (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
 #define FLEX_DEBUG
 typedef flex_uint8_t YY_CHAR;
 
-FILE *parser6_in = NULL, *parser6_out = NULL;
+FILE *agent_in = NULL, *agent_out = NULL;
 
 typedef int yy_state_type;
 
-extern int parser6_lineno;
-int parser6_lineno = 1;
+extern int agent_lineno;
+int agent_lineno = 1;
 
-extern char *parser6_text;
+extern char *agent_text;
 #ifdef yytext_ptr
 #undef yytext_ptr
 #endif
-#define yytext_ptr parser6_text
+#define yytext_ptr agent_text
 
 /* %% [1.5] DFA */
 
@@ -513,15 +513,15 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 /* %endif */
 
 /* Done after the current pattern has been matched and before the
- * corresponding action - sets up parser6_text.
+ * corresponding action - sets up agent_text.
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-/* %% [2.0] code to fiddle parser6_text and parser6_leng for yymore() goes here \ */\
-	parser6_leng = (int) (yy_cp - yy_bp); \
+/* %% [2.0] code to fiddle agent_text and agent_leng for yymore() goes here \ */\
+	agent_leng = (int) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
-/* %% [3.0] code to copy yytext_ptr to parser6_text[] goes here, if %array \ */\
+/* %% [3.0] code to copy yytext_ptr to agent_text[] goes here, if %array \ */\
 	(yy_c_buf_p) = yy_cp;
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
 #define YY_NUM_RULES 52
@@ -1146,8 +1146,8 @@ static const flex_int16_t yy_chk[2015] =
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
 
-extern int parser6__flex_debug;
-int parser6__flex_debug = 1;
+extern int agent__flex_debug;
+int agent__flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[52] =
     {   0,
@@ -1166,7 +1166,7 @@ static const flex_int16_t yy_rule_linenum[52] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-char *parser6_text;
+char *agent_text;
 #line 1 "agent_lexer.ll"
 /* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
 
@@ -1270,31 +1270,31 @@ static int yy_init_globals ( void );
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int parser6_lex_destroy ( void );
+int agent_lex_destroy ( void );
 
-int parser6_get_debug ( void );
+int agent_get_debug ( void );
 
-void parser6_set_debug ( int debug_flag  );
+void agent_set_debug ( int debug_flag  );
 
-YY_EXTRA_TYPE parser6_get_extra ( void );
+YY_EXTRA_TYPE agent_get_extra ( void );
 
-void parser6_set_extra ( YY_EXTRA_TYPE user_defined  );
+void agent_set_extra ( YY_EXTRA_TYPE user_defined  );
 
-FILE *parser6_get_in ( void );
+FILE *agent_get_in ( void );
 
-void parser6_set_in  ( FILE * _in_str  );
+void agent_set_in  ( FILE * _in_str  );
 
-FILE *parser6_get_out ( void );
+FILE *agent_get_out ( void );
 
-void parser6_set_out  ( FILE * _out_str  );
+void agent_set_out  ( FILE * _out_str  );
 
-			int parser6_get_leng ( void );
+			int agent_get_leng ( void );
 
-char *parser6_get_text ( void );
+char *agent_get_text ( void );
 
-int parser6_get_lineno ( void );
+int agent_get_lineno ( void );
 
-void parser6_set_lineno ( int _line_number  );
+void agent_set_lineno ( int _line_number  );
 
 /* %if-bison-bridge */
 /* %endif */
@@ -1305,9 +1305,9 @@ void parser6_set_lineno ( int _line_number  );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int parser6_wrap ( void );
+extern "C" int agent_wrap ( void );
 #else
-extern int parser6_wrap ( void );
+extern int agent_wrap ( void );
 #endif
 #endif
 
@@ -1360,7 +1360,7 @@ static int input ( void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( parser6_text, (size_t) parser6_leng, 1, parser6_out )) {} } while (0)
+#define ECHO do { if (fwrite( agent_text, (size_t) agent_leng, 1, agent_out )) {} } while (0)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
@@ -1377,18 +1377,18 @@ static int input ( void );
 		int c = '*'; \
 		int n; \
 		for ( n = 0; n < max_size && \
-			     (c = getc( parser6_in )) != EOF && c != '\n'; ++n ) \
+			     (c = getc( agent_in )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
 		if ( c == '\n' ) \
 			buf[n++] = (char) c; \
-		if ( c == EOF && ferror( parser6_in ) ) \
+		if ( c == EOF && ferror( agent_in ) ) \
 			YY_FATAL_ERROR( "input in flex scanner failed" ); \
 		result = n; \
 		} \
 	else \
 		{ \
 		errno=0; \
-		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, parser6_in)) == 0 && ferror(parser6_in)) \
+		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, agent_in)) == 0 && ferror(agent_in)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -1396,7 +1396,7 @@ static int input ( void );
 				break; \
 				} \
 			errno=0; \
-			clearerr(parser6_in); \
+			clearerr(agent_in); \
 			} \
 		}\
 \
@@ -1445,15 +1445,15 @@ static int input ( void );
 #define YY_DECL_IS_OURS 1
 /* %if-c-only Standard (non-C++) definition */
 
-extern int parser6_lex (void);
+extern int agent_lex (void);
 
-#define YY_DECL int parser6_lex (void)
+#define YY_DECL int agent_lex (void)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
 #endif /* !YY_DECL */
 
-/* Code executed at the beginning of each rule, after parser6_text and parser6_leng
+/* Code executed at the beginning of each rule, after agent_text and agent_leng
  * have been set up.
  */
 #ifndef YY_USER_ACTION
@@ -1489,27 +1489,27 @@ YY_DECL
 		if ( ! (yy_start) )
 			(yy_start) = 1;	/* first start state */
 
-		if ( ! parser6_in )
+		if ( ! agent_in )
 /* %if-c-only */
-			parser6_in = stdin;
+			agent_in = stdin;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
-		if ( ! parser6_out )
+		if ( ! agent_out )
 /* %if-c-only */
-			parser6_out = stdout;
+			agent_out = stdout;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 
 		if ( ! YY_CURRENT_BUFFER ) {
-			parser6_ensure_buffer_stack ();
+			agent_ensure_buffer_stack ();
 			YY_CURRENT_BUFFER_LVALUE =
-				parser6__create_buffer(parser6_in,YY_BUF_SIZE );
+				agent__create_buffer(agent_in,YY_BUF_SIZE );
 		}
 
-		parser6__load_buffer_state( );
+		agent__load_buffer_state( );
 		}
 
 	{
@@ -1553,7 +1553,7 @@ YY_DECL
 /* %% [8.0] yymore()-related code goes here */
 		yy_cp = (yy_c_buf_p);
 
-		/* Support of parser6_text. */
+		/* Support of agent_text. */
 		*yy_cp = (yy_hold_char);
 
 		/* yy_bp points to the position in yy_ch_buf of the start of
@@ -1591,21 +1591,21 @@ yy_find_action:
 
 		YY_DO_BEFORE_ACTION;
 
-/* %% [11.0] code for parser6_lineno update goes here */
+/* %% [11.0] code for agent_lineno update goes here */
 
 do_action:	/* This label is used only to access EOF actions. */
 
 /* %% [12.0] debug code goes here */
-		if ( parser6__flex_debug )
+		if ( agent__flex_debug )
 			{
 			if ( yy_act == 0 )
 				fprintf( stderr, "--scanner backing up\n" );
 			else if ( yy_act < 52 )
 				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
-				         (long)yy_rule_linenum[yy_act], parser6_text );
+				         (long)yy_rule_linenum[yy_act], agent_text );
 			else if ( yy_act == 52 )
 				fprintf( stderr, "--accepting default rule (\"%s\")\n",
-				         parser6_text );
+				         agent_text );
 			else if ( yy_act == 53 )
 				fprintf( stderr, "--(end of buffer or a NUL)\n" );
 			else
@@ -2200,8 +2200,8 @@ case YY_STATE_EOF(INITIAL):
         driver.sfile_ = driver.sfiles_.back();
         driver.sfiles_.pop_back();
     }
-    parser6__delete_buffer(YY_CURRENT_BUFFER);
-    parser6__switch_to_buffer(driver.states_.back());
+    agent__delete_buffer(YY_CURRENT_BUFFER);
+    agent__switch_to_buffer(driver.states_.back());
     driver.states_.pop_back();
 
     BEGIN(DIR_EXIT);
@@ -2227,8 +2227,8 @@ ECHO;
 			{
 			/* We're scanning a new file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed parser6_in at a new source and called
-			 * parser6_lex().  If so, then we have to assure
+			 * just pointed agent_in at a new source and called
+			 * agent_lex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
@@ -2236,7 +2236,7 @@ ECHO;
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 /* %if-c-only */
-			YY_CURRENT_BUFFER_LVALUE->yy_input_file = parser6_in;
+			YY_CURRENT_BUFFER_LVALUE->yy_input_file = agent_in;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2294,11 +2294,11 @@ ECHO;
 				{
 				(yy_did_buffer_switch_on_eof) = 0;
 
-				if ( parser6_wrap( ) )
+				if ( agent_wrap( ) )
 					{
 					/* Note: because we've taken care in
 					 * yy_get_next_buffer() to have set up
-					 * parser6_text, we can now set up
+					 * agent_text, we can now set up
 					 * yy_c_buf_p so that if some total
 					 * hoser (like flex itself) wants to
 					 * call the scanner after we return the
@@ -2348,7 +2348,7 @@ ECHO;
 	} /* end of action switch */
 		} /* end of scanning one token */
 	} /* end of user's declarations */
-} /* end of parser6_lex */
+} /* end of agent_lex */
 /* %ok-for-header */
 
 /* %if-c++-only */
@@ -2437,7 +2437,7 @@ static int yy_get_next_buffer (void)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					parser6_realloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2)  );
+					agent_realloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2)  );
 				}
 			else
 				/* Can't grow it, we don't own it. */
@@ -2469,7 +2469,7 @@ static int yy_get_next_buffer (void)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			parser6_restart(parser6_in  );
+			agent_restart(agent_in  );
 			}
 
 		else
@@ -2486,7 +2486,7 @@ static int yy_get_next_buffer (void)
 	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) parser6_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size  );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) agent_realloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
 	}
@@ -2620,13 +2620,13 @@ static int yy_get_next_buffer (void)
 					 */
 
 					/* Reset buffer status. */
-					parser6_restart(parser6_in );
+					agent_restart(agent_in );
 
 					/*FALLTHROUGH*/
 
 				case EOB_ACT_END_OF_FILE:
 					{
-					if ( parser6_wrap( ) )
+					if ( agent_wrap( ) )
 						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
@@ -2646,10 +2646,10 @@ static int yy_get_next_buffer (void)
 		}
 
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
-	*(yy_c_buf_p) = '\0';	/* preserve parser6_text */
+	*(yy_c_buf_p) = '\0';	/* preserve agent_text */
 	(yy_hold_char) = *++(yy_c_buf_p);
 
-/* %% [19.0] update BOL and parser6_lineno */
+/* %% [19.0] update BOL and agent_lineno */
 
 	return c;
 }
@@ -2663,20 +2663,20 @@ static int yy_get_next_buffer (void)
  * @note This function does not reset the start condition to @c INITIAL .
  */
 /* %if-c-only */
-    void parser6_restart  (FILE * input_file )
+    void agent_restart  (FILE * input_file )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
     
 	if ( ! YY_CURRENT_BUFFER ){
-        parser6_ensure_buffer_stack ();
+        agent_ensure_buffer_stack ();
 		YY_CURRENT_BUFFER_LVALUE =
-            parser6__create_buffer(parser6_in,YY_BUF_SIZE );
+            agent__create_buffer(agent_in,YY_BUF_SIZE );
 	}
 
-	parser6__init_buffer(YY_CURRENT_BUFFER,input_file );
-	parser6__load_buffer_state( );
+	agent__init_buffer(YY_CURRENT_BUFFER,input_file );
+	agent__load_buffer_state( );
 }
 
 /* %if-c++-only */
@@ -2687,7 +2687,7 @@ static int yy_get_next_buffer (void)
  * 
  */
 /* %if-c-only */
-    void parser6__switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
+    void agent__switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2695,10 +2695,10 @@ static int yy_get_next_buffer (void)
     
 	/* TODO. We should be able to replace this entire function body
 	 * with
-	 *		parser6_pop_buffer_state();
-	 *		parser6_push_buffer_state(new_buffer);
+	 *		agent_pop_buffer_state();
+	 *		agent_push_buffer_state(new_buffer);
      */
-	parser6_ensure_buffer_stack ();
+	agent_ensure_buffer_stack ();
 	if ( YY_CURRENT_BUFFER == new_buffer )
 		return;
 
@@ -2711,18 +2711,18 @@ static int yy_get_next_buffer (void)
 		}
 
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
-	parser6__load_buffer_state( );
+	agent__load_buffer_state( );
 
 	/* We don't actually know whether we did this switch during
-	 * EOF (parser6_wrap()) processing, but the only time this flag
-	 * is looked at is after parser6_wrap() is called, so it's safe
+	 * EOF (agent_wrap()) processing, but the only time this flag
+	 * is looked at is after agent_wrap() is called, so it's safe
 	 * to go ahead and always set it.
 	 */
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 
 /* %if-c-only */
-static void parser6__load_buffer_state  (void)
+static void agent__load_buffer_state  (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2730,7 +2730,7 @@ static void parser6__load_buffer_state  (void)
     	(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 	(yytext_ptr) = (yy_c_buf_p) = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
 /* %if-c-only */
-	parser6_in = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
+	agent_in = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2744,29 +2744,29 @@ static void parser6__load_buffer_state  (void)
  * @return the allocated buffer state.
  */
 /* %if-c-only */
-    YY_BUFFER_STATE parser6__create_buffer  (FILE * file, int  size )
+    YY_BUFFER_STATE agent__create_buffer  (FILE * file, int  size )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
 	YY_BUFFER_STATE b;
     
-	b = (YY_BUFFER_STATE) parser6_alloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) agent_alloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in parser6__create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in agent__create_buffer()" );
 
 	b->yy_buf_size = size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) parser6_alloc((yy_size_t) (b->yy_buf_size + 2)  );
+	b->yy_ch_buf = (char *) agent_alloc((yy_size_t) (b->yy_buf_size + 2)  );
 	if ( ! b->yy_ch_buf )
-		YY_FATAL_ERROR( "out of dynamic memory in parser6__create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in agent__create_buffer()" );
 
 	b->yy_is_our_buffer = 1;
 
-	parser6__init_buffer(b,file );
+	agent__init_buffer(b,file );
 
 	return b;
 }
@@ -2775,11 +2775,11 @@ static void parser6__load_buffer_state  (void)
 /* %endif */
 
 /** Destroy the buffer.
- * @param b a buffer created with parser6__create_buffer()
+ * @param b a buffer created with agent__create_buffer()
  * 
  */
 /* %if-c-only */
-    void parser6__delete_buffer (YY_BUFFER_STATE  b )
+    void agent__delete_buffer (YY_BUFFER_STATE  b )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2792,17 +2792,17 @@ static void parser6__load_buffer_state  (void)
 		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
-		parser6_free((void *) b->yy_ch_buf  );
+		agent_free((void *) b->yy_ch_buf  );
 
-	parser6_free((void *) b  );
+	agent_free((void *) b  );
 }
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
- * such as during a parser6_restart() or at EOF.
+ * such as during a agent_restart() or at EOF.
  */
 /* %if-c-only */
-    static void parser6__init_buffer  (YY_BUFFER_STATE  b, FILE * file )
+    static void agent__init_buffer  (YY_BUFFER_STATE  b, FILE * file )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2810,7 +2810,7 @@ static void parser6__load_buffer_state  (void)
 {
 	int oerrno = errno;
     
-	parser6__flush_buffer(b );
+	agent__flush_buffer(b );
 
 /* %if-c-only */
 	b->yy_input_file = file;
@@ -2819,8 +2819,8 @@ static void parser6__load_buffer_state  (void)
 /* %endif */
 	b->yy_fill_buffer = 1;
 
-    /* If b is the current buffer, then parser6__init_buffer was _probably_
-     * called from parser6_restart() or through yy_get_next_buffer.
+    /* If b is the current buffer, then agent__init_buffer was _probably_
+     * called from agent_restart() or through yy_get_next_buffer.
      * In that case, we don't want to reset the lineno or column.
      */
     if (b != YY_CURRENT_BUFFER){
@@ -2843,7 +2843,7 @@ static void parser6__load_buffer_state  (void)
  * 
  */
 /* %if-c-only */
-    void parser6__flush_buffer (YY_BUFFER_STATE  b )
+    void agent__flush_buffer (YY_BUFFER_STATE  b )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2866,7 +2866,7 @@ static void parser6__load_buffer_state  (void)
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
 	if ( b == YY_CURRENT_BUFFER )
-		parser6__load_buffer_state( );
+		agent__load_buffer_state( );
 }
 
 /* %if-c-or-c++ */
@@ -2877,7 +2877,7 @@ static void parser6__load_buffer_state  (void)
  *  
  */
 /* %if-c-only */
-void parser6_push_buffer_state (YY_BUFFER_STATE new_buffer )
+void agent_push_buffer_state (YY_BUFFER_STATE new_buffer )
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2885,9 +2885,9 @@ void parser6_push_buffer_state (YY_BUFFER_STATE new_buffer )
     	if (new_buffer == NULL)
 		return;
 
-	parser6_ensure_buffer_stack();
+	agent_ensure_buffer_stack();
 
-	/* This block is copied from parser6__switch_to_buffer. */
+	/* This block is copied from agent__switch_to_buffer. */
 	if ( YY_CURRENT_BUFFER )
 		{
 		/* Flush out information for old buffer. */
@@ -2901,8 +2901,8 @@ void parser6_push_buffer_state (YY_BUFFER_STATE new_buffer )
 		(yy_buffer_stack_top)++;
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-	/* copied from parser6__switch_to_buffer. */
-	parser6__load_buffer_state( );
+	/* copied from agent__switch_to_buffer. */
+	agent__load_buffer_state( );
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 /* %endif */
@@ -2913,7 +2913,7 @@ void parser6_push_buffer_state (YY_BUFFER_STATE new_buffer )
  *  
  */
 /* %if-c-only */
-void parser6_pop_buffer_state (void)
+void agent_pop_buffer_state (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2921,13 +2921,13 @@ void parser6_pop_buffer_state (void)
     	if (!YY_CURRENT_BUFFER)
 		return;
 
-	parser6__delete_buffer(YY_CURRENT_BUFFER );
+	agent__delete_buffer(YY_CURRENT_BUFFER );
 	YY_CURRENT_BUFFER_LVALUE = NULL;
 	if ((yy_buffer_stack_top) > 0)
 		--(yy_buffer_stack_top);
 
 	if (YY_CURRENT_BUFFER) {
-		parser6__load_buffer_state( );
+		agent__load_buffer_state( );
 		(yy_did_buffer_switch_on_eof) = 1;
 	}
 }
@@ -2938,7 +2938,7 @@ void parser6_pop_buffer_state (void)
  *  Guarantees space for at least one push.
  */
 /* %if-c-only */
-static void parser6_ensure_buffer_stack (void)
+static void agent_ensure_buffer_stack (void)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2952,11 +2952,11 @@ static void parser6_ensure_buffer_stack (void)
 		 * immediate realloc on the next call.
          */
       num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
-		(yy_buffer_stack) = (struct yy_buffer_state**)parser6_alloc
+		(yy_buffer_stack) = (struct yy_buffer_state**)agent_alloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in parser6_ensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in agent_ensure_buffer_stack()" );
 
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
 
@@ -2971,12 +2971,12 @@ static void parser6_ensure_buffer_stack (void)
 		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = (yy_buffer_stack_max) + grow_size;
-		(yy_buffer_stack) = (struct yy_buffer_state**)parser6_realloc
+		(yy_buffer_stack) = (struct yy_buffer_state**)agent_realloc
 								((yy_buffer_stack),
 								num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in parser6_ensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in agent_ensure_buffer_stack()" );
 
 		/* zero only the new slots.*/
 		memset((yy_buffer_stack) + (yy_buffer_stack_max), 0, grow_size * sizeof(struct yy_buffer_state*));
@@ -2992,7 +2992,7 @@ static void parser6_ensure_buffer_stack (void)
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE parser6__scan_buffer  (char * base, yy_size_t  size )
+YY_BUFFER_STATE agent__scan_buffer  (char * base, yy_size_t  size )
 {
 	YY_BUFFER_STATE b;
     
@@ -3002,9 +3002,9 @@ YY_BUFFER_STATE parser6__scan_buffer  (char * base, yy_size_t  size )
 		/* They forgot to leave room for the EOB's. */
 		return NULL;
 
-	b = (YY_BUFFER_STATE) parser6_alloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) agent_alloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in parser6__scan_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in agent__scan_buffer()" );
 
 	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
@@ -3016,37 +3016,37 @@ YY_BUFFER_STATE parser6__scan_buffer  (char * base, yy_size_t  size )
 	b->yy_fill_buffer = 0;
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
-	parser6__switch_to_buffer(b  );
+	agent__switch_to_buffer(b  );
 
 	return b;
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan a string. The next call to parser6_lex() will
+/** Setup the input buffer state to scan a string. The next call to agent_lex() will
  * scan from a @e copy of @a str.
  * @param yystr a NUL-terminated string to scan
  * 
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
- *       parser6__scan_bytes() instead.
+ *       agent__scan_bytes() instead.
  */
-YY_BUFFER_STATE parser6__scan_string (const char * yystr )
+YY_BUFFER_STATE agent__scan_string (const char * yystr )
 {
     
-	return parser6__scan_bytes(yystr,(int) strlen(yystr) );
+	return agent__scan_bytes(yystr,(int) strlen(yystr) );
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan the given bytes. The next call to parser6_lex() will
+/** Setup the input buffer state to scan the given bytes. The next call to agent_lex() will
  * scan from a @e copy of @a bytes.
  * @param yybytes the byte buffer to scan
  * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE parser6__scan_bytes  (const char * yybytes, int  _yybytes_len )
+YY_BUFFER_STATE agent__scan_bytes  (const char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
@@ -3055,18 +3055,18 @@ YY_BUFFER_STATE parser6__scan_bytes  (const char * yybytes, int  _yybytes_len )
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
-	buf = (char *) parser6_alloc(n  );
+	buf = (char *) agent_alloc(n  );
 	if ( ! buf )
-		YY_FATAL_ERROR( "out of dynamic memory in parser6__scan_bytes()" );
+		YY_FATAL_ERROR( "out of dynamic memory in agent__scan_bytes()" );
 
 	for ( i = 0; i < _yybytes_len; ++i )
 		buf[i] = yybytes[i];
 
 	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-	b = parser6__scan_buffer(buf,n );
+	b = agent__scan_buffer(buf,n );
 	if ( ! b )
-		YY_FATAL_ERROR( "bad buffer in parser6__scan_bytes()" );
+		YY_FATAL_ERROR( "bad buffer in agent__scan_bytes()" );
 
 	/* It's okay to grow etc. this buffer, and we should throw it
 	 * away when we're done.
@@ -3097,14 +3097,14 @@ static void yynoreturn yy_fatal_error (const char* msg )
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up parser6_text. */ \
+		/* Undo effects of setting up agent_text. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
-		parser6_text[parser6_leng] = (yy_hold_char); \
-		(yy_c_buf_p) = parser6_text + yyless_macro_arg; \
+		agent_text[agent_leng] = (yy_hold_char); \
+		(yy_c_buf_p) = agent_text + yyless_macro_arg; \
 		(yy_hold_char) = *(yy_c_buf_p); \
 		*(yy_c_buf_p) = '\0'; \
-		parser6_leng = yyless_macro_arg; \
+		agent_leng = yyless_macro_arg; \
 		} \
 	while ( 0 )
 
@@ -3117,43 +3117,43 @@ static void yynoreturn yy_fatal_error (const char* msg )
 /** Get the current line number.
  * 
  */
-int parser6_get_lineno  (void)
+int agent_get_lineno  (void)
 {
     
-    return parser6_lineno;
+    return agent_lineno;
 }
 
 /** Get the input stream.
  * 
  */
-FILE *parser6_get_in  (void)
+FILE *agent_get_in  (void)
 {
-        return parser6_in;
+        return agent_in;
 }
 
 /** Get the output stream.
  * 
  */
-FILE *parser6_get_out  (void)
+FILE *agent_get_out  (void)
 {
-        return parser6_out;
+        return agent_out;
 }
 
 /** Get the length of the current token.
  * 
  */
-int parser6_get_leng  (void)
+int agent_get_leng  (void)
 {
-        return parser6_leng;
+        return agent_leng;
 }
 
 /** Get the current token.
  * 
  */
 
-char *parser6_get_text  (void)
+char *agent_get_text  (void)
 {
-        return parser6_text;
+        return agent_text;
 }
 
 /* %if-reentrant */
@@ -3163,36 +3163,36 @@ char *parser6_get_text  (void)
  * @param _line_number line number
  * 
  */
-void parser6_set_lineno (int  _line_number )
+void agent_set_lineno (int  _line_number )
 {
     
-    parser6_lineno = _line_number;
+    agent_lineno = _line_number;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
  * @param _in_str A readable stream.
  * 
- * @see parser6__switch_to_buffer
+ * @see agent__switch_to_buffer
  */
-void parser6_set_in (FILE *  _in_str )
+void agent_set_in (FILE *  _in_str )
 {
-        parser6_in = _in_str ;
+        agent_in = _in_str ;
 }
 
-void parser6_set_out (FILE *  _out_str )
+void agent_set_out (FILE *  _out_str )
 {
-        parser6_out = _out_str ;
+        agent_out = _out_str ;
 }
 
-int parser6_get_debug  (void)
+int agent_get_debug  (void)
 {
-        return parser6__flex_debug;
+        return agent__flex_debug;
 }
 
-void parser6_set_debug (int  _bdebug )
+void agent_set_debug (int  _bdebug )
 {
-        parser6__flex_debug = _bdebug ;
+        agent__flex_debug = _bdebug ;
 }
 
 /* %endif */
@@ -3206,7 +3206,7 @@ void parser6_set_debug (int  _bdebug )
 static int yy_init_globals (void)
 {
         /* Initialization is the same as for the non-reentrant scanner.
-     * This function is called from parser6_lex_destroy(), so don't allocate here.
+     * This function is called from agent_lex_destroy(), so don't allocate here.
      */
 
     (yy_buffer_stack) = NULL;
@@ -3218,38 +3218,38 @@ static int yy_init_globals (void)
 
 /* Defined in main.c */
 #ifdef YY_STDINIT
-    parser6_in = stdin;
-    parser6_out = stdout;
+    agent_in = stdin;
+    agent_out = stdout;
 #else
-    parser6_in = NULL;
-    parser6_out = NULL;
+    agent_in = NULL;
+    agent_out = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
-     * parser6_lex_init()
+     * agent_lex_init()
      */
     return 0;
 }
 /* %endif */
 
 /* %if-c-only SNIP! this currently causes conflicts with the c++ scanner */
-/* parser6_lex_destroy is for both reentrant and non-reentrant scanners. */
-int parser6_lex_destroy  (void)
+/* agent_lex_destroy is for both reentrant and non-reentrant scanners. */
+int agent_lex_destroy  (void)
 {
     
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
-		parser6__delete_buffer(YY_CURRENT_BUFFER  );
+		agent__delete_buffer(YY_CURRENT_BUFFER  );
 		YY_CURRENT_BUFFER_LVALUE = NULL;
-		parser6_pop_buffer_state();
+		agent_pop_buffer_state();
 	}
 
 	/* Destroy the stack itself. */
-	parser6_free((yy_buffer_stack) );
+	agent_free((yy_buffer_stack) );
 	(yy_buffer_stack) = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
-     * parser6_lex() is called, initialization will occur. */
+     * agent_lex() is called, initialization will occur. */
     yy_init_globals( );
 
 /* %if-reentrant */
@@ -3283,12 +3283,12 @@ static int yy_flex_strlen (const char * s )
 }
 #endif
 
-void *parser6_alloc (yy_size_t  size )
+void *agent_alloc (yy_size_t  size )
 {
 			return malloc(size);
 }
 
-void *parser6_realloc  (void * ptr, yy_size_t  size )
+void *agent_realloc  (void * ptr, yy_size_t  size )
 {
 		
 	/* The cast to (char *) in the following accommodates both
@@ -3301,9 +3301,9 @@ void *parser6_realloc  (void * ptr, yy_size_t  size )
 	return realloc(ptr, size);
 }
 
-void parser6_free (void * ptr )
+void agent_free (void * ptr )
 {
-			free( (char *) ptr );	/* see parser6_realloc() for (char *) cast */
+			free( (char *) ptr );	/* see agent_realloc() for (char *) cast */
 }
 
 /* %if-tables-serialization definitions */
@@ -3329,7 +3329,7 @@ ParserContext::scanStringBegin(const std::string& str, ParserType parser_type)
     loc_.initialize(&file_);
     yy_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
-    buffer = parser6__scan_bytes(str.c_str(), str.size());
+    buffer = agent__scan_bytes(str.c_str(), str.size());
     if (!buffer) {
         fatal("cannot scan string");
         // fatal() throws an exception so this can't be reached
@@ -3351,11 +3351,11 @@ ParserContext::scanFileBegin(FILE * f,
     YY_BUFFER_STATE buffer;
 
     // See dhcp6_lexer.cc header for available definitions
-    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    buffer = agent__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal("cannot scan file " + filename);
     }
-    parser6__switch_to_buffer(buffer);
+    agent__switch_to_buffer(buffer);
 }
 
 void
@@ -3363,7 +3363,7 @@ ParserContext::scanEnd() {
     if (sfile_)
         fclose(sfile_);
     sfile_ = 0;
-    static_cast<void>(parser6_lex_destroy());
+    static_cast<void>(agent_lex_destroy());
     // Close files
     while (!sfiles_.empty()) {
         FILE* f = sfiles_.back();
@@ -3374,7 +3374,7 @@ ParserContext::scanEnd() {
     }
     // Delete states
     while (!states_.empty()) {
-        parser6__delete_buffer(states_.back());
+        agent__delete_buffer(states_.back());
         states_.pop_back();
     }
 }
@@ -3395,11 +3395,11 @@ ParserContext::includeFile(const std::string& filename) {
     sfile_ = f;
     states_.push_back(YY_CURRENT_BUFFER);
     YY_BUFFER_STATE buffer;
-    buffer = parser6__create_buffer(f, 65536 /*buffer size*/);
+    buffer = agent__create_buffer(f, 65536 /*buffer size*/);
     if (!buffer) {
         fatal( "Can't scan include file " + filename);
     }
-    parser6__switch_to_buffer(buffer);
+    agent__switch_to_buffer(buffer);
     files_.push_back(file_);
     file_ = filename;
     locs_.push_back(loc_);

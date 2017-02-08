@@ -99,7 +99,7 @@ location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
 	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
 
 agent_lexer.cc: agent_lexer.ll
-	$(LEX) --prefix parser6_ -o agent_lexer.cc agent_lexer.ll
+	$(LEX) --prefix agent_ -o agent_lexer.cc agent_lexer.ll
 
 else
 
