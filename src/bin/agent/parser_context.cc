@@ -116,9 +116,25 @@ ParserContext::contextName()
 {
     switch (ctx_) {
     case NO_KEYWORDS:
-        return ("no keywords");
-    case KEYWORDS:
-        return ("keywords");
+        return ("__no keywords__");
+    case CONFIG:
+        return ("toplevel");
+    case AGENT:
+        return ("Control-agent");
+    case LOGGING:
+        return ("Logging");
+    case CONTROL_SOCKETS:
+        return ("control-sockets");
+    case SERVER:
+        return ("xxx-server");
+    case SOCKET_TYPE:
+        return ("socket-type");
+    case HOOKS_LIBRARIES:
+        return ("hooks-librairies");
+    case LOGGERS:
+        return ("loggers");
+    case OUTPUT_OPTIONS:
+        return ("output-options");
     default:
         return ("__unknown__");
     }

@@ -168,182 +168,209 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 
 \"Control-agent\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONFIG:
         return AgentParser::make_CONTROL_AGENT(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("Control-agent", driver.loc_);
     }
 }
 
 \"http-host\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
         return AgentParser::make_HTTP_HOST(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("http-host", driver.loc_);
     }
 }
 
 \"http-port\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
         return AgentParser::make_HTTP_PORT(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("http-port", driver.loc_);
     }
 }
 
+\"control-sockets\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_CONTROL_SOCKETS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("control-sockets", driver.loc_);
+    }
+}
+
 \"dhcp4-server\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_DHCP4_SERVER(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("dhcp4-server", driver.loc_);
     }
 }
 
 \"dhcp6-server\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_DHCP6_SERVER(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("dhcp6-server", driver.loc_);
     }
 }
 
 \"d2-server\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_D2_SERVER(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("d2-server", driver.loc_);
     }
 }
 
-(\"unix\") {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+\"socket-name\" {
+    switch(driver.ctx_) {
+    case ParserContext::SERVER:
+        return AgentParser::make_SOCKET_NAME(driver.loc_);
+    default:
+        return AgentParser::make_STRING("socket-name", driver.loc_);
+    }
+}
+
+\"socket-type\" {
+    switch(driver.ctx_) {
+    case ParserContext::SERVER:
+        return AgentParser::make_SOCKET_TYPE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("socket-type", driver.loc_);
+    }
+}
+
+\"unix\" {
+    switch(driver.ctx_) {
+    case ParserContext::SOCKET_TYPE:
         return AgentParser::make_UNIX(driver.loc_);
-    }
-    std::string tmp(yytext+1);
-    tmp.resize(tmp.size() - 1);
-    return AgentParser::make_STRING(tmp, driver.loc_);
-}
-
-\"name\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_NAME(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("name", driver.loc_);
+    default:
+        return AgentParser::make_STRING("unix", driver.loc_);
     }
 }
 
+\"hooks-libraries\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_HOOKS_LIBRARIES(driver.loc_);
+    default:
+        return AgentParser::make_STRING("hooks-libraries", driver.loc_);
+    }
+}
+
+\"library\" {
+    switch(driver.ctx_) {
+    case ParserContext::HOOKS_LIBRARIES:
+        return AgentParser::make_LIBRARY(driver.loc_);
+    default:
+        return AgentParser::make_STRING("library", driver.loc_);
+    }
+}
+
+\"parameters\" {
+    switch(driver.ctx_) {
+    case ParserContext::HOOKS_LIBRARIES:
+        return AgentParser::make_PARAMETERS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("parameters", driver.loc_);
+    }
+}
 
 \"Logging\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONFIG:
         return AgentParser::make_LOGGING(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("Logging", driver.loc_);
     }
 }
 
 \"loggers\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGING:
         return AgentParser::make_LOGGERS(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("loggers", driver.loc_);
     }
 }
 
+\"name\" {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
+        return AgentParser::make_NAME(driver.loc_);
+    default:
+        return AgentParser::make_STRING("name", driver.loc_);
+    }
+}
+
 \"output_options\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
         return AgentParser::make_OUTPUT_OPTIONS(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("output_options", driver.loc_);
     }
 }
 
 \"output\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
         return AgentParser::make_OUTPUT(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("output", driver.loc_);
     }
 }
 
 \"debuglevel\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
         return AgentParser::make_DEBUGLEVEL(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("debuglevel", driver.loc_);
     }
 }
 
 \"severity\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
         return AgentParser::make_SEVERITY(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("severity", driver.loc_);
     }
 }
 
-\"hooks-libraries\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_HOOKS_LIBRARIES(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("hooks-libraries", driver.loc_);
-    }
-}
-
-
-\"parameters\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_PARAMETERS(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("parameters", driver.loc_);
-    }
-}
-
-\"library\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_LIBRARY(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("library", driver.loc_);
-    }
-}
-
-
-\"control-sockets\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_CONTROL_SOCKETS(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("control-sockets", driver.loc_);
-    }
-}
-
-\"socket-type\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_SOCKET_TYPE(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("socket-type", driver.loc_);
-    }
-}
-
-\"socket-name\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_SOCKET_NAME(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("socket-name", driver.loc_);
-    }
-}
-
 \"Dhcp4\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
+    switch(driver.ctx_) {
+    case ParserContext::CONFIG:
         return AgentParser::make_DHCP4(driver.loc_);
-    } else {
+    default:
         return AgentParser::make_STRING("Dhcp4", driver.loc_);
     }
 }
 
 \"Dhcp6\" {
-    if (driver.ctx_ != ParserContext::NO_KEYWORDS) {
-        return AgentParser::make_DHCP4(driver.loc_);
-    } else {
-        return AgentParser::make_STRING("Dhcp4", driver.loc_);
+    switch(driver.ctx_) {
+    case ParserContext::CONFIG:
+        return AgentParser::make_DHCP6(driver.loc_);
+    default:
+        return AgentParser::make_STRING("Dhcp6", driver.loc_);
+    }
+}
+
+\"DhcpDdns\" {
+    switch(driver.ctx_) {
+    case ParserContext::CONFIG:
+        return AgentParser::make_DHCPDDNS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("DhcpDdns", driver.loc_);
     }
 }
 

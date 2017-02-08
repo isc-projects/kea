@@ -49,29 +49,28 @@ using namespace std;
   NULL_TYPE "null"
 
   CONTROL_AGENT "Control-agent"
-  CONTROL_SOCKETS "control-sockets"
   HTTP_HOST "http-host"
   HTTP_PORT "http-port"
+
+  CONTROL_SOCKETS "control-sockets"
   DHCP4_SERVER "dhcp4-server"
   DHCP6_SERVER "dhcp6-server"
   D2_SERVER "d2-server"
+  SOCKET_NAME "socket-name"
+  SOCKET_TYPE "socket-type"
+  UNIX "unix"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
   PARAMETERS "parameters"
 
-  SOCKET_TYPE "socket-type"
-  SOCKET_NAME "socket-name"
-
-  UNIX "unix"
-
   LOGGING "Logging"
   LOGGERS "loggers"
+  NAME "name"
   OUTPUT_OPTIONS "output_options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
-  NAME "name"
 
   DHCP4 "Dhcp4"
   DHCP6 "Dhcp6"
@@ -99,15 +98,15 @@ using namespace std;
 %%
 
 // The whole grammar starts with a map, because the config file
-// constists of Control-Agent, DhcpX, Logger and DhcpDdns entries in one big { }.
+// consists of Control-Agent, DhcpX, Logger and DhcpDdns entries in one big { }.
 %start start;
 
 // The starting token can be one of those listed below. Note these are
 // "fake" tokens. They're produced by the lexer before any input text
 // is parsed.
 start: START_JSON      { ctx.ctx_ = ctx.NO_KEYWORDS; } json
-     | START_AGENT     { ctx.ctx_ = ctx.KEYWORDS; } agent_syntax_map
-     | START_SUB_AGENT { ctx.ctx_ = ctx.KEYWORDS; } sub_agent 
+     | START_AGENT     { ctx.ctx_ = ctx.CONFIG; } agent_syntax_map
+     | START_SUB_AGENT { ctx.ctx_ = ctx.AGENT; } sub_agent 
      ;
 
 // This rule defines a "shortcut". Instead of specifying the whole structure
@@ -204,9 +203,10 @@ not_empty_list: value {
 // if you want to have a nice expression printed when unknown (mistyped?)
 // parameter is found.
 unknown_map_entry: STRING COLON {
+    const std::string& where = ctx.contextName();
     const std::string& keyword = $1;
     error(@1,
-          "got unexpected keyword \"" + keyword + "\" in map.");
+          "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
 
 // This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
@@ -238,20 +238,19 @@ global_object: agent_object
 
 // This define the Control-agent object.
 agent_object: CONTROL_AGENT {
-    // Let's create a MapElement that will represent it, add it to the top level
-    // map (that's already on the stack) and put the new map on the stack as well,
-    // so child elements will be able to add themselves to it.
+
+    // Let's create a MapElement that will represent it, add it to the
+    // top level map (that's already on the stack) and put the new map
+    // on the stack as well, so child elements will be able to add
+    // themselves to it.
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Control-agent", m);
     ctx.stack_.push_back(m);
-
-    // And tell the lexer that we definitely want keywords to be recognized.
-    ctx.enter(ctx.KEYWORDS);
+    ctx.enter(ctx.AGENT);
 } COLON LCURLY_BRACKET global_params RCURLY_BRACKET {
-    // Ok, we're done with parsing control-agent. Let's take the map off the stack.
+    // Ok, we're done with parsing control-agent. Let's take the map
+    // off the stack.
     ctx.stack_.pop_back();
-
-    // And tell the lexer to return to its previous state (probably KEYWORDS as well)
     ctx.leave();
 };
 
@@ -268,9 +267,12 @@ global_param: http_host
             | unknown_map_entry
             ;
 
-http_host: HTTP_HOST COLON STRING {
-    ElementPtr host(new StringElement($3, ctx.loc2pos(@3)));
+http_host: HTTP_HOST {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("http-host", host);
+    ctx.leave();
 };
 
 http_port: HTTP_PORT COLON INTEGER {
@@ -283,8 +285,10 @@ hooks_libraries: HOOKS_LIBRARIES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
+    ctx.enter(ctx.HOOKS_LIBRARIES);
 } COLON LSQUARE_BRACKET hooks_libraries_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 hooks_libraries_list: %empty
@@ -334,23 +338,25 @@ control_sockets: CONTROL_SOCKETS COLON LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-sockets", m);
     ctx.stack_.push_back(m);
+    ctx.enter(ctx.CONTROL_SOCKETS);
 } control_sockets_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // This defines what kind of control-sockets parameters we allow.
 // Note that empty map is not allowed here, because at least one control socket
 // is required.
 control_sockets_params: control_socket
-               | control_sockets_params COMMA control_socket
-               | unknown_map_entry
-               ;
+                      | control_sockets_params COMMA control_socket
+                      ;
 
 // We currently support three types of sockets: DHCPv4, DHCPv6 and D2
 // (even though D2 socket support is not yet implemented).
 control_socket: dhcp4_server_socket
               | dhcp6_server_socket
               | d2_server_socket
+              | unknown_map_entry
               ;
 
 // That's an entry for dhcp4-server socket.
@@ -358,8 +364,10 @@ dhcp4_server_socket: DHCP4_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp4-server", m);
     ctx.stack_.push_back(m);
+    ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // That's an entry for dhcp6-server socket.
@@ -367,8 +375,10 @@ dhcp6_server_socket: DHCP6_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp6-server", m);
     ctx.stack_.push_back(m);
+    ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // That's an entry for d2-server socket.
@@ -376,8 +386,10 @@ d2_server_socket: D2_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("d2-server", m);
     ctx.stack_.push_back(m);
+    ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // Socket parameters consist of one or more parameters.
@@ -386,18 +398,9 @@ control_socket_params: control_socket_param
                      ;
 
 // We currently support two socket parameters: type and name.
-control_socket_param: socket_type
-                    | socket_name
+control_socket_param: socket_name
+                    | socket_type
                     ;
-
-// This rule specifies socket type.
-socket_type: SOCKET_TYPE {
-} COLON socket_type_value {
-    ctx.stack_.back()->set("socket-type", $4);
-};
-
-// We currently allow only unix domain sockets
-socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos(@1))); }
 
 // This rule defines socket-name parameter.
 socket_name: SOCKET_NAME {
@@ -407,6 +410,18 @@ socket_name: SOCKET_NAME {
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 };
+
+// This rule specifies socket type.
+socket_type: SOCKET_TYPE {
+    ctx.enter(ctx.SOCKET_TYPE);
+} COLON socket_type_value {
+    ctx.stack_.back()->set("socket-type", $4);
+    ctx.leave();
+};
+
+// We currently allow only unix domain sockets
+socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos(@1))); }
+                  ;
 
 // --- control-sockets end here ------------------------------------------------
 
@@ -441,8 +456,10 @@ logging_object: LOGGING {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
+    ctx.enter(ctx.LOGGING);
 } COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // This defines the list of allowed parameters that may appear
@@ -461,8 +478,10 @@ loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
+    ctx.enter(ctx.LOGGERS);
 }  COLON LSQUARE_BRACKET loggers_entries RSQUARE_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // These are the parameters allowed in loggers: either one logger
@@ -516,8 +535,10 @@ output_options_list: OUTPUT_OPTIONS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
+    ctx.enter(ctx.OUTPUT_OPTIONS);
 } COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 output_options_list_content: output_entry
