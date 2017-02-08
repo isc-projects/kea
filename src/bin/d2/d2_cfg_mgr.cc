@@ -284,7 +284,7 @@ D2CfgMgr::parseElement(const std::string& element_id,
                       << element_id << element->getPosition());
         }
     } catch (const D2CfgError& ex) {
-        // Should already have a specific error and postion info
+        // Should already have a specific error and position info
         throw ex;
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, "element: " << element_id << " : "  << ex.what()
