@@ -2861,7 +2861,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 475:
-#line 1671 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1672 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
@@ -2869,7 +2869,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 476:
-#line 1673 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1674 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
@@ -2879,7 +2879,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 477:
-#line 1679 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1680 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
@@ -2890,7 +2890,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 478:
-#line 1684 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1685 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -2899,7 +2899,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 481:
-#line 1693 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1694 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
@@ -2909,7 +2909,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 482:
-#line 1697 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1698 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ctx.stack_.pop_back();
 }
@@ -2917,7 +2917,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 485:
-#line 1705 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1706 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
@@ -2925,7 +2925,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 486:
-#line 1707 "dhcp4_parser.yy" // lalr1.cc:859
+#line 1708 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
@@ -3956,8 +3956,8 @@ namespace isc { namespace dhcp {
     1539,  1544,  1549,  1554,  1554,  1562,  1565,  1568,  1571,  1574,
     1580,  1580,  1590,  1590,  1597,  1597,  1609,  1609,  1622,  1623,
     1627,  1631,  1631,  1643,  1644,  1648,  1648,  1656,  1657,  1660,
-    1661,  1662,  1663,  1664,  1667,  1671,  1671,  1679,  1679,  1689,
-    1690,  1693,  1693,  1701,  1702,  1705,  1705
+    1661,  1662,  1663,  1664,  1667,  1672,  1672,  1680,  1680,  1690,
+    1691,  1694,  1694,  1702,  1703,  1706,  1706
   };
 
   // Print the state stack on the debug stream.
@@ -3993,7 +3993,7 @@ namespace isc { namespace dhcp {
 #line 14 "dhcp4_parser.yy" // lalr1.cc:1167
 } } // isc::dhcp
 #line 3996 "dhcp4_parser.cc" // lalr1.cc:1167
-#line 1713 "dhcp4_parser.yy" // lalr1.cc:1168
+#line 1714 "dhcp4_parser.yy" // lalr1.cc:1168
 
 
 void
