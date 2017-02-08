@@ -336,7 +336,7 @@ control_sockets: CONTROL_SOCKETS COLON LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } control_sockets_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
-}
+};
 
 // This defines what kind of control-sockets parameters we allow.
 // Note that empty map is not allowed here, because at least one control socket
@@ -503,6 +503,7 @@ debuglevel: DEBUGLEVEL COLON INTEGER {
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
+
 severity: SEVERITY {
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
