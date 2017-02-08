@@ -94,7 +94,7 @@ public:
     /// for supported syntax checkers.
     ///
     /// @param str string to be parsed
-    /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
+    /// @param parser_type specifies expected content (usually AGENT or generic JSON)
     /// @return Element structure representing parsed text.
     isc::data::ElementPtr parseString(const std::string& str,
                                       ParserType parser_type);
@@ -152,7 +152,7 @@ public:
         ///< This one is used in pure JSON mode.
         NO_KEYWORDS,
 
-        ///< Used while parsing content of Dhcp6.
+        ///< Used while parsing content of Agent.
         KEYWORDS
     } LexerContext;
 
