@@ -1756,6 +1756,7 @@ debuglevel: DEBUGLEVEL COLON INTEGER {
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
+
 severity: SEVERITY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
