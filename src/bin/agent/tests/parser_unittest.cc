@@ -503,7 +503,7 @@ TEST(ParserTest, errors) {
     testError("{ \"foo\":null }\n",
               ParserContext::PARSER_AGENT,
               "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in map.");
+              "\"foo\" in toplevel map.");
     testError("{ \"Control-agent\" }\n",
               ParserContext::PARSER_AGENT,
               "<string>:1.19: syntax error, unexpected }, "
@@ -543,7 +543,7 @@ TEST(ParserTest, errors) {
               " \"topping\": \"Mozarella\" }}\n",
               ParserContext::PARSER_AGENT,
               "<string>:2.2-10: got unexpected keyword "
-              "\"topping\" in map.");
+              "\"topping\" in Control-agent map.");
 }
 
 // Check unicode escapes

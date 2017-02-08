@@ -152,8 +152,33 @@ public:
         ///< This one is used in pure JSON mode.
         NO_KEYWORDS,
 
+        ///< Used while parsing top level (that contains Control-agent, Logging and others)
+        CONFIG,
+
         ///< Used while parsing content of Agent.
-        KEYWORDS
+        AGENT,
+
+        ///< Used while parsing content of Logging.
+        LOGGING,
+
+        ///< Used while parsing Control-agent/control-sockets.
+        CONTROL_SOCKETS,
+
+        ///< Used while parsing Control-agent/control-socket/*-server.
+        SERVER,
+
+        ///< Used while parsing Control-agent/control-socket/*-server/socket-type.
+        SOCKET_TYPE,
+
+        ///< Used while parsing Control-agent/hooks-libraries.
+        HOOKS_LIBRARIES,
+
+        ///< Used while parsing Logging/loggers structures.
+        LOGGERS,
+
+        ///< Used while parsing Logging/loggers/output_options structures.
+        OUTPUT_OPTIONS
+
     } LexerContext;
 
     /// @brief File name
