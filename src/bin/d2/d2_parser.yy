@@ -248,19 +248,20 @@ sub_dhcpddns: LCURLY_BRACKET {
 };
 
 dhcpddns_params: dhcpddns_param
-                | dhcpddns_params COMMA dhcpddns_param
-                ;
-// These are teh top-level parameters allowed for DhcpDdns
-dhcpddns_param: ip_address
-               | port
-               | dns_server_timeout
-               | ncr_protocol
-               | ncr_format
-               | forward_ddns
-               | reverse_ddns
-               | tsig_keys
-               | unknown_map_entry
+               | dhcpddns_params COMMA dhcpddns_param
                ;
+
+// These are the top-level parameters allowed for DhcpDdns
+dhcpddns_param: ip_address
+              | port
+              | dns_server_timeout
+              | ncr_protocol
+              | ncr_format
+              | forward_ddns
+              | reverse_ddns
+              | tsig_keys
+              | unknown_map_entry
+              ;
 
 ip_address: IP_ADDRESS {
     ctx.enter(ctx.NO_KEYWORD);

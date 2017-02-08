@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,12 +55,13 @@ private:
 
     ///@brief Parse a given file into Elements
     ///
-    /// Uses bison parsing to parse a JSON configruation file into an
+    /// Uses bison parsing to parse a JSON configuration file into an
     /// a element map.
     ///
     /// @param file_name pathname of the file to parse
     ///
     /// @return pointer to the map of elements created
+    /// @throw BadValue if the file is empty
     virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
 
     /// @brief Constructor is declared private to maintain the integrity of

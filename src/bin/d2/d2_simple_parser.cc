@@ -8,7 +8,6 @@
 #include <d2/d2_simple_parser.h>
 #include <cc/data.h>
 #include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
 
 using namespace isc::data;
 

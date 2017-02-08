@@ -97,7 +97,7 @@ bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
 /// DnsServerInfo against the given set of values.
 ///
 /// It is structured in such a way that each value is checked, and output
-/// is generate for all that do not match.
+/// is generated for all that do not match.
 ///
 /// @param server is a pointer to the server to check against.
 /// @param hostname is the value to compare against server's hostname_.
@@ -592,6 +592,7 @@ public:
 /// 2. Algorithm cannot be blank.
 /// 3. Secret cannot be blank.
 TEST_F(TSIGKeyInfoParserTest, invalidEntry) {
+
     // Name cannot be blank.
     std::string config = "{"
                          " \"name\": \"\" , "

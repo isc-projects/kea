@@ -142,7 +142,7 @@ public:
                              << "\njson: [" << json << " ]";
             }
 
-            // JSON parsed ok, so the defaults to the element tree it produced.
+            // JSON parsed ok, so add the defaults to the element tree it produced.
             D2SimpleParser::setAllDefaults(elem);
             config_set_ = elem;
         } catch (const std::exception& ex) {
@@ -150,7 +150,7 @@ public:
             if (exp_error.empty()) {
                 // We did not expect an error, so fail.
                 return ::testing::AssertionFailure()
-                          << "Unexpected sytnax error:" << ex.what()
+                          << "Unexpected syntax error:" << ex.what()
                           << "\njson: [" << json << " ]";
             }
 

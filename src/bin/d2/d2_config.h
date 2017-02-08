@@ -729,19 +729,13 @@ private:
 /// @brief Defines a pointer for DScalarContext instances.
 typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 
-/// @brief Parser for  TSIGKeyInfo
+/// @brief Parser for TSIGKeyInfo
 ///
 /// This class parses the configuration element "tsig-key" defined in
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
 class TSIGKeyInfoParser : public  data::SimpleParser { 
 public:
-    /// @brief Constructor
-    TSIGKeyInfoParser(){};    
-    
-    /// @brief Destructor
-    virtual ~TSIGKeyInfoParser(){};
-
-    /// @brief Performs the actual parsing of the given  "tsig-key" element.
+    /// @brief Performs the actual parsing of the given "tsig-key" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
     /// TSIGKeyInfo, validates those entries, creates a TSIGKeyInfo instance
@@ -751,7 +745,6 @@ public:
     /// @return pointer to the new TSIGKeyInfo instance
     TSIGKeyInfoPtr parse(data::ConstElementPtr key_config);
 
-private:
 };
 
 /// @brief Parser for a list of TSIGKeyInfos
@@ -761,15 +754,9 @@ private:
 /// to the given storage upon commit.
 class TSIGKeyInfoListParser : public data::SimpleParser {
 public:
-    /// @brief Constructor
-    TSIGKeyInfoListParser(){};
-
-    /// @brief Destructor
-    virtual ~TSIGKeyInfoListParser(){};
-
     /// @brief Performs the parsing of the given list "tsig-key" elements.
     ///
-    /// Creates an emtpy TSIGKeyInfoMap
+    /// Creates an empty TSIGKeyInfoMap
     ///
     /// It iterates over each key entry in the list:
     ///   1. Instantiate a TSIGKeyInfoParser for the entry
@@ -788,12 +775,6 @@ public:
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DnsServerInfo.
 class DnsServerInfoParser : public  data::SimpleParser {
 public:
-    /// @brief Constructor
-    DnsServerInfoParser(){};
-
-    /// @brief Destructor
-    virtual ~DnsServerInfoParser(){};
-
     /// @brief Performs the actual parsing of the given  "dns-server" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
@@ -818,12 +799,6 @@ public:
 /// to the given storage upon commit.
 class DnsServerInfoListParser : public data::SimpleParser{
 public:
-    /// @brief Constructor
-    DnsServerInfoListParser(){};
-
-    /// @brief Destructor
-    virtual ~DnsServerInfoListParser(){};
-
     /// @brief Performs the actual parsing of the given list "dns-server"
     /// elements.
     ///
@@ -844,12 +819,6 @@ public:
 /// src/bin/d2/dhcp-ddns.spec and creates an instance of a DdnsDomain.
 class DdnsDomainParser : public data::SimpleParser {
 public:
-    /// @brief Constructor
-    DdnsDomainParser(){};
-
-    /// @brief Destructor
-    virtual ~DdnsDomainParser(){};
-
     /// @brief Performs the actual parsing of the given  "ddns-domain" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
@@ -869,13 +838,6 @@ public:
 /// (see src/bin/d2/dhcp-ddns.spec) into a map of DdnsDomains.  
 class DdnsDomainListParser : public data::SimpleParser {
 public:
-
-    /// @brief Constructor
-    DdnsDomainListParser(){};
-
-    /// @brief Destructor
-    virtual ~DdnsDomainListParser(){};
-
     /// @brief Performs the actual parsing of the given list "ddns-domain"
     /// elements.
     /// Creates a new DdnsDomain map
@@ -899,12 +861,6 @@ public:
 /// given DdnsDomainListMgr with parsed information.  
 class DdnsDomainListMgrParser : public data::SimpleParser {
 public:
-    /// @brief Constructor
-    DdnsDomainListMgrParser(){};
-
-    /// @brief Destructor
-    virtual ~DdnsDomainListMgrParser(){};
-
     /// @brief Performs the actual parsing of the given manager element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
