@@ -349,25 +349,25 @@ namespace isc { namespace agent {
         TOKEN_RCURLY_BRACKET = 263,
         TOKEN_NULL_TYPE = 264,
         TOKEN_CONTROL_AGENT = 265,
-        TOKEN_CONTROL_SOCKETS = 266,
-        TOKEN_HTTP_HOST = 267,
-        TOKEN_HTTP_PORT = 268,
+        TOKEN_HTTP_HOST = 266,
+        TOKEN_HTTP_PORT = 267,
+        TOKEN_CONTROL_SOCKETS = 268,
         TOKEN_DHCP4_SERVER = 269,
         TOKEN_DHCP6_SERVER = 270,
         TOKEN_D2_SERVER = 271,
-        TOKEN_HOOKS_LIBRARIES = 272,
-        TOKEN_LIBRARY = 273,
-        TOKEN_PARAMETERS = 274,
-        TOKEN_SOCKET_TYPE = 275,
-        TOKEN_SOCKET_NAME = 276,
-        TOKEN_UNIX = 277,
+        TOKEN_SOCKET_NAME = 272,
+        TOKEN_SOCKET_TYPE = 273,
+        TOKEN_UNIX = 274,
+        TOKEN_HOOKS_LIBRARIES = 275,
+        TOKEN_LIBRARY = 276,
+        TOKEN_PARAMETERS = 277,
         TOKEN_LOGGING = 278,
         TOKEN_LOGGERS = 279,
-        TOKEN_OUTPUT_OPTIONS = 280,
-        TOKEN_OUTPUT = 281,
-        TOKEN_DEBUGLEVEL = 282,
-        TOKEN_SEVERITY = 283,
-        TOKEN_NAME = 284,
+        TOKEN_NAME = 280,
+        TOKEN_OUTPUT_OPTIONS = 281,
+        TOKEN_OUTPUT = 282,
+        TOKEN_DEBUGLEVEL = 283,
+        TOKEN_SEVERITY = 284,
         TOKEN_DHCP4 = 285,
         TOKEN_DHCP6 = 286,
         TOKEN_DHCPDDNS = 287,
@@ -530,15 +530,15 @@ namespace isc { namespace agent {
 
     static inline
     symbol_type
-    make_CONTROL_SOCKETS (const location_type& l);
-
-    static inline
-    symbol_type
     make_HTTP_HOST (const location_type& l);
 
     static inline
     symbol_type
     make_HTTP_PORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CONTROL_SOCKETS (const location_type& l);
 
     static inline
     symbol_type
@@ -554,6 +554,18 @@ namespace isc { namespace agent {
 
     static inline
     symbol_type
+    make_SOCKET_NAME (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SOCKET_TYPE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_UNIX (const location_type& l);
+
+    static inline
+    symbol_type
     make_HOOKS_LIBRARIES (const location_type& l);
 
     static inline
@@ -566,23 +578,15 @@ namespace isc { namespace agent {
 
     static inline
     symbol_type
-    make_SOCKET_TYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_NAME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_UNIX (const location_type& l);
-
-    static inline
-    symbol_type
     make_LOGGING (const location_type& l);
 
     static inline
     symbol_type
     make_LOGGERS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NAME (const location_type& l);
 
     static inline
     symbol_type
@@ -599,10 +603,6 @@ namespace isc { namespace agent {
     static inline
     symbol_type
     make_SEVERITY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NAME (const location_type& l);
 
     static inline
     symbol_type
@@ -711,7 +711,7 @@ namespace isc { namespace agent {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short int yypact_[];
+  static const signed char yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -849,8 +849,8 @@ namespace isc { namespace agent {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 171,     ///< Last index in yytable_.
-      yynnts_ = 87,  ///< Number of nonterminal symbols.
+      yylast_ = 172,     ///< Last index in yytable_.
+      yynnts_ = 88,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -936,7 +936,7 @@ namespace isc { namespace agent {
       switch (other.type_get ())
     {
       case 48: // value
-      case 94: // socket_type_value
+      case 97: // socket_type_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -974,7 +974,7 @@ namespace isc { namespace agent {
       switch (this->type_get ())
     {
       case 48: // value
-      case 94: // socket_type_value
+      case 97: // socket_type_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1071,7 +1071,7 @@ namespace isc { namespace agent {
     switch (yytype)
     {
       case 48: // value
-      case 94: // socket_type_value
+      case 97: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1115,7 +1115,7 @@ namespace isc { namespace agent {
       switch (this->type_get ())
     {
       case 48: // value
-      case 94: // socket_type_value
+      case 97: // socket_type_value
         value.move< ElementPtr > (s.value);
         break;
 
@@ -1253,12 +1253,6 @@ namespace isc { namespace agent {
   }
 
   AgentParser::symbol_type
-  AgentParser::make_CONTROL_SOCKETS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONTROL_SOCKETS, l);
-  }
-
-  AgentParser::symbol_type
   AgentParser::make_HTTP_HOST (const location_type& l)
   {
     return symbol_type (token::TOKEN_HTTP_HOST, l);
@@ -1268,6 +1262,12 @@ namespace isc { namespace agent {
   AgentParser::make_HTTP_PORT (const location_type& l)
   {
     return symbol_type (token::TOKEN_HTTP_PORT, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_CONTROL_SOCKETS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_SOCKETS, l);
   }
 
   AgentParser::symbol_type
@@ -1289,6 +1289,24 @@ namespace isc { namespace agent {
   }
 
   AgentParser::symbol_type
+  AgentParser::make_SOCKET_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_NAME, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_SOCKET_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_UNIX (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_UNIX, l);
+  }
+
+  AgentParser::symbol_type
   AgentParser::make_HOOKS_LIBRARIES (const location_type& l)
   {
     return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
@@ -1307,24 +1325,6 @@ namespace isc { namespace agent {
   }
 
   AgentParser::symbol_type
-  AgentParser::make_SOCKET_TYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_SOCKET_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_NAME, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_UNIX (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_UNIX, l);
-  }
-
-  AgentParser::symbol_type
   AgentParser::make_LOGGING (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGING, l);
@@ -1334,6 +1334,12 @@ namespace isc { namespace agent {
   AgentParser::make_LOGGERS (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGERS, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NAME, l);
   }
 
   AgentParser::symbol_type
@@ -1358,12 +1364,6 @@ namespace isc { namespace agent {
   AgentParser::make_SEVERITY (const location_type& l)
   {
     return symbol_type (token::TOKEN_SEVERITY, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_NAME, l);
   }
 
   AgentParser::symbol_type
