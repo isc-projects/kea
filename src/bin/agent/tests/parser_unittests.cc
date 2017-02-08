@@ -88,7 +88,7 @@ TEST(ParserTest, nestedLists) {
 }
 
 TEST(ParserTest, listsInMaps) {
-    string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelguese\" ], "
+    string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
                     "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
