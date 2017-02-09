@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -877,7 +877,7 @@ public:
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
-                      IfaceMgrErrorMsgCallback error_handler = NULL);
+                      IfaceMgrErrorMsgCallback error_handler = 0);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
@@ -946,7 +946,7 @@ public:
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
                       const bool use_bcast = true,
-                      IfaceMgrErrorMsgCallback error_handler = NULL);
+                      IfaceMgrErrorMsgCallback error_handler = 0);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
@@ -1194,7 +1194,7 @@ private:
     bool openMulticastSocket(Iface& iface,
                              const isc::asiolink::IOAddress& addr,
                              const uint16_t port,
-                             IfaceMgrErrorMsgCallback error_handler = NULL);
+                             IfaceMgrErrorMsgCallback error_handler = 0);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1471,7 +1471,7 @@ TEST_F(IfaceMgrTest, openSockets4) {
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Simulate opening sockets using the dummy packet filter.
-    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // Expect that the sockets are open on both eth0 and eth1.
     EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
@@ -1538,7 +1538,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
     // - is inactive
     ifacemgr.setIfaceFlags("eth1", false, true, true, true, false);
     ASSERT_TRUE(ifacemgr.getIface("eth1")->inactive4_);
-    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // The socket on eth0 should be open because interface is up, running and
     // active (not disabled through DHCP configuration, for example).
@@ -1569,7 +1569,7 @@ TEST_F(IfaceMgrTest, openSockets4NoErrorHandler) {
 
     // The function throws an exception when it tries to open a socket
     // and bind it to the address in use.
-    EXPECT_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL),
+    EXPECT_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0),
                  isc::dhcp::SocketConfigError);
 
 }
@@ -1629,7 +1629,7 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
 
     // Simulate opening sockets using the dummy packet filter.
-    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // Expect that the sockets are open on both eth0 and eth1.
     ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
