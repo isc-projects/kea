@@ -419,8 +419,9 @@ address duration device-id {client-info} {relay-info}
             a hex string.
             </para></listitem>
             <listitem><para>
-            relay-info - for relayed packets the giaddr and the RAI circuit id
-            and remote id options (option 82 sub options 1 and 2) if present.
+            relay-info - for relayed packets the giaddr and the RAI circuit-id,
+            remote-id and subscriber-id options (option 82 sub
+            options: 1, 2 and 6) if present.
             The circuit id and remote id are presented as hex strings
             </para></listitem>
           </itemizedlist>
@@ -467,7 +468,13 @@ address duration device-id {relay-info}*
             </para></listitem>
             <listitem><para>
             relay-info - for relayed packets the content of relay agent
-            messages, remote id and subscriber id options (x and xx) if present.
+            messages, remote-id (code 37), subscriber-id (code 38) and
+            interface-id (code 18) options if present. Note that
+            interface-id option, if present, identifies the whole interface the
+            relay agent received the message on. This typically translates to a
+            single link in your network, but it depends on your specific network
+            topology. Nevertheless, this is useful information to better scope
+            down the location of the device, so it is being recorded, if present.
             </para></listitem>
           </itemizedlist>
           </para>
