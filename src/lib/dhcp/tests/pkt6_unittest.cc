@@ -1049,6 +1049,38 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_FALSE(opt);
 }
 
+// Tests whether Pkt6::toText() properly prints out all parameters, including
+// relay options: remote-id, interface-id.
+TEST_F(Pkt6Test, toText) {
+
+    // This packet contains doubly relayed solicit. The inner-most
+    // relay-forward contains inteface-id and remote-id. We will
+    // check that these are printed correctly.
+    Pkt6Ptr msg(capture2());
+    EXPECT_NO_THROW(msg->unpack());
+
+    ASSERT_EQ(2, msg->relay_info_.size());
+
+    string expected =
+        "localAddr=[ff05::1:3]:547 remoteAddr=[fe80::1234]:547\n"
+        "msgtype=1(SOLICIT), transid=0x6b4fe2\n"
+        "type=00001, len=00014: 00:01:00:01:18:b0:33:41:00:00:21:5c:18:a9\n"
+        "type=00003(IA_NA), len=00012: iaid=1, t1=4294967295, t2=4294967295\n"
+        "type=00006, len=00006: 23(uint16) 242(uint16) 243(uint16)\n"
+        "type=00008, len=00002: 0 (uint16)\n"
+        "2 relay(s):\n"
+        "relay[0]: msg-type=12(RELAY_FORWARD), hop-count=1,\n"
+        "link-address=2001:888:db8:1::, peer-address=fe80::200:21ff:fe5c:18a9, 2 option(s)\n"
+        "type=00018, len=00028: 49:53:41:4d:31:34:34:7c:32:39:39:7c:69:70:76:36:7c:6e:74:3a:76:70:3a:31:3a:31:31:30\n"
+        "type=00037, len=00018: 6527 (uint32) 0001000118B033410000215C18A9 (binary)\n"
+        "relay[1]: msg-type=12(RELAY_FORWARD), hop-count=0,\n"
+        "link-address=::, peer-address=fe80::200:21ff:fe5c:18a9, 2 option(s)\n"
+        "type=00018, len=00021: 49:53:41:4d:31:34:34:20:65:74:68:20:31:2f:31:2f:30:35:2f:30:31\n"
+        "type=00037, len=00004: 3561 (uint32)  (binary)\n";
+
+    EXPECT_EQ(expected, msg->toText());
+}
+
 // Tests whether a packet can be assigned to a class and later
 // checked if it belongs to a given class
 TEST_F(Pkt6Test, clientClasses) {
