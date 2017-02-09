@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,6 +86,11 @@ public:
 
         /// @brief default constructor
         RelayInfo();
+
+        /// @brief Returns prinable representation of the relay information.
+        /// @return text representation of the structure (used in debug logging)
+        std::string toText() const;
+
         uint8_t   msg_type_;               ///< message type (RELAY-FORW oro RELAY-REPL)
         uint8_t   hop_count_;              ///< number of traversed relays (up to 32)
         isc::asiolink::IOAddress linkaddr_;///< fixed field in relay-forw/relay-reply
