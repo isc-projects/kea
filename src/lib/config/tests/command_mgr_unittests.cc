@@ -232,8 +232,8 @@ TEST_F(CommandMgrTest, handlerInstall) {
 
     // Check that it's not allowed to install NULL pointer instead of a real
     // command.
-    EXPECT_THROW(CommandMgr::instance().registerCommand("my-command",
-                 NULL), InvalidCommandHandler);
+    EXPECT_THROW(CommandMgr::instance().registerCommand("my-command", 0),
+                 InvalidCommandHandler);
 
     // This registration should succeed.
     EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
