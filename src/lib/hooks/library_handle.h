@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,10 +135,10 @@ public:
     ///    }
     ///]
     ///
-    /// The first library has no parameters, so regardles of the name
+    /// The first library has no parameters, so regardless of the name
     /// specified, for that library getParameter will always return NULL.
     ///
-    /// For the second paramter, depending the following calls will return:
+    /// For the second parameter, depending the following calls will return:
     /// - x = getParameter("mail") will return instance of
     ///   isc::data::StringElement. The content can be accessed with
     ///   x->stringValue() and will return std::string.

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,9 +40,10 @@ public:
 
     /// @brief Destructor
     ///
-    /// Unload all libraries.
+    /// Unload all libraries and reset the shared manager.
     ~HooksManagerTest() {
         HooksManager::unloadLibraries();
+        HooksManager::getSharedCalloutManager().reset();
     }
 
 
@@ -391,6 +392,144 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
     EXPECT_EQ(-15, result);
 }
 
+// Test with a shared manager the pre- and post- callout functions survive
+// a reload
+
+TEST_F(HooksManagerTest, PrePostCalloutShared) {
+
+    HookLibsCollection library_names;
+
+    // Initialize the shared manager.
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+
+    // Load the pre- and post- callouts.
+    HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                             testPreCallout);
+    HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                              testPostCallout);
+
+    // With the pre- and post- callouts above, the result expected is
+    //
+    // 1027 * 2
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    int result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(2054, result);
+
+    // ... and check that the pre- and post- callout functions survive a
+    // reload.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    handle = HooksManager::createCalloutHandle();
+
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    // Expect same value i.e. 1027 * 2 
+    result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(2054, result);
+}
+
+// Test with a shared manager the pre- and post- callout functions survive
+// a reload but not with a not empty list of libraries
+
+TEST_F(HooksManagerTest, PrePostCalloutSharedNotEmpty) {
+
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+
+    // Initialize the shared manager.
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+
+    // Load the pre- and post- callouts.
+    HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                             testPreCallout);
+    HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                              testPostCallout);
+
+    // With the pre- and post- callouts above, the result expected is
+    //
+    // 1027 * 2
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    int result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(2054, result);
+
+    // ... and check that the pre- and post- callout functions don't survive a
+    // reload with a not empty list of libraries.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    handle = HooksManager::createCalloutHandle();
+
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    // Expect result - data_2
+    result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(-15, result);
+}
+
+// Test with a shared manager the pre- and post- callout functions don't
+// survive a reload if the shared manager is initialized too late.
+
+TEST_F(HooksManagerTest, PrePostCalloutSharedTooLate) {
+
+    HookLibsCollection library_names;
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    // Initialize the shared manager (after loadLibraries so too late)
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
+
+    // Load the pre- and post- callouts.
+    HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                             testPreCallout);
+    HooksManager::postCalloutsLibraryHandle().registerCallout("hookpt_two",
+                                                              testPostCallout);
+
+    // With the pre- and post- callouts above, the result expected is
+    //
+    // 1027 * 2
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    int result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(2054, result);
+
+    // ... and check that the pre- and post- callout functions don't survive a
+    // reload.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    handle = HooksManager::createCalloutHandle();
+
+    handle->setArgument("result", static_cast<int>(0));
+    handle->setArgument("data_2", static_cast<int>(15));
+
+    HooksManager::callCallouts(hookpt_two_index_, *handle);
+
+    // Expect no change so result = 0
+    result = 0;
+    handle->getArgument("result", result);
+    EXPECT_EQ(0, result);
+}
+
 // Check that everything works even with no libraries loaded.  First that
 // calloutsPresent() always returns false.
 
@@ -542,7 +681,7 @@ TEST_F(HooksManagerTest, validateLibraries) {
 // This test verifies that the specified parameters are accessed properly.
 TEST_F(HooksManagerTest, LibraryParameters) {
 
-    // Prepare paramters for the callout parameters library.
+    // Prepare parameters for the callout parameters library.
     ElementPtr params = Element::createMap();
     params->set("svalue", Element::create("string value"));
     params->set("ivalue", Element::create(42));

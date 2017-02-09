@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <config/command_mgr.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/callout_manager.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
@@ -111,6 +112,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
 
+        HooksManager::getSharedCalloutManager().reset();
         delete srv_;
     }
 
@@ -1603,15 +1605,12 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 }
 
 // Checks that decline4 hooks (lease4_decline) are triggered properly.
-/// @todo: There is a bug in HooksManager that causes the callouts installed
-/// using preCalloutsLibraryHandle() to be uninstalled when loadLibrary
-/// is called. This has changed recently (ticket #5031) as it calls the
-/// load/unload every time, regardless if the hooks-libraries clause is in the
-/// config file or not. #5095 has been submitted for this issue. Please
-/// enable this test once #5095 is fixed.
-TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDecline) {
+TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
+
+    // Libraries will be reloaded later
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -1655,11 +1654,12 @@ TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDecline) {
 }
 
 // Checks that decline4 hook is able to drop the packet.
-/// @todo See HooksDhcpv4SrvTest.HooksDecline description for details.
-/// Please reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv4SrvTest, DISABLED_HooksDeclineDrop) {
+TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
+
+    // Libraries will be reloaded later
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(

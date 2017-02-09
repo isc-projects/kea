@@ -1,10 +1,11 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
 
@@ -52,17 +53,34 @@ LibraryManagerCollection::loadLibraries() {
     // Unload libraries if any are loaded.
     static_cast<void>(unloadLibraries());
 
-    // Create the callout manager.  A pointer to this is maintained by
-    // each library.  Note that the callout manager does not hold any memory
-    // allocated by a library: although a library registers a callout (and so
-    // causes the creation of an entry in the CalloutManager's callout list),
-    // that creation is done by the CalloutManager itself.  The CalloutManager
-    // is created within the server.
+    // Access the callout manager, (re)creating it if required.
     //
-    // The upshot of this is that it is therefore safe for the CalloutManager
-    // to be deleted after all associated libraries are deleted, hence this
-    // link (LibraryManager -> CalloutManager) is safe.
-    callout_manager_.reset(new CalloutManager(library_names_.size()));
+    // A pointer to the callout manager is maintained by each as well as by
+    // the HooksManager itself.  Note that the callout manager does not hold any
+    // memory allocated by a library: although a library registers a callout
+    // (and so causes the creation of an entry in the CalloutManager's callout
+    // list), that creation is done by the CalloutManager itself.  The
+    // CalloutManager is created within the server. The upshot of this is that
+    // it is therefore safe for the CalloutManager to be deleted after all
+    // associated libraries are deleted, hence this link (LibraryManager ->
+    // CalloutManager) is safe.
+    //
+    // If the list of libraries is not empty, re-create the callout manager.
+    // This deletes all callouts (including the pre-library and post-
+    // library) ones.  It is up to the libraries to re-register their callouts.
+    //  The pre-library and post-library callouts will also need to be
+    // re-registered.
+    //
+    // If the list of libraries stays empty (as in the case of a reconfiguration
+    // where the hooks-libraries clause was empty and is not changed), try
+    // to re-use the existing callout manager (so retaining registered pre-
+    // and post-library callouts).
+    if (library_names_.empty()) {
+        callout_manager_ = HooksManager::getSharedCalloutManager();
+    }
+    if (!library_names_.empty() || !callout_manager_) {
+        callout_manager_.reset(new CalloutManager(library_names_.size()));
+    }
 
     // Now iterate through the libraries are load them one by one.  We'll
     for (size_t i = 0; i < library_names_.size(); ++i) {
