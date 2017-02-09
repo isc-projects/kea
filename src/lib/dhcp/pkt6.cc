@@ -37,6 +37,19 @@ Pkt6::RelayInfo::RelayInfo()
     peeraddr_(DEFAULT_ADDRESS6), relay_msg_len_(0) {
 }
 
+std::string Pkt6::RelayInfo::toText() const {
+    stringstream tmp;
+    tmp << "msg-type=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
+        << "), hop-count=" << static_cast<int>(hop_count_)  << "," << endl
+        << "link-address=" << linkaddr_.toText()
+        << ", peer-address=" << peeraddr_.toText() << ", "
+        << options_.size() << " option(s)" << endl;
+    for (auto option = options_.cbegin(); option != options_.cend(); ++option) {
+        tmp << option->second->toText() << endl;
+    }
+    return (tmp.str());
+}
+
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */)
    :Pkt(buf, buf_len, DEFAULT_ADDRESS6, DEFAULT_ADDRESS6, 0, 0),
     proto_(proto), msg_type_(0) {
@@ -607,15 +620,30 @@ Pkt6::getLabel() const {
 std::string
 Pkt6::toText() const {
     stringstream tmp;
+
+    // First print the basics
     tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_
-        << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
+        << " remoteAddr=[" << remote_addr_ << "]:" << remote_port_ << endl;
+    tmp << "msgtype=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
+        << "), transid=0x" <<
         hex << transid_ << dec << endl;
+
+    // Then print the options
     for (isc::dhcp::OptionCollection::const_iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
+    }
+
+    // Finally, print the relay information (if present)
+    if (!relay_info_.empty()) {
+        tmp << relay_info_.size() << " relay(s):" << endl;
+        int cnt = 0;
+        for (auto relay = relay_info_.cbegin(); relay != relay_info_.cend(); ++relay) {
+            tmp << "relay[" << cnt++ << "]: " << relay->toText();
+        }
+    } else {
+        tmp << "No relays traversed." << endl;
     }
     return tmp.str();
 }
