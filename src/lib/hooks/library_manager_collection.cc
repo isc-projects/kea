@@ -55,7 +55,7 @@ LibraryManagerCollection::loadLibraries() {
 
     // Access the callout manager, (re)creating it if required.
     //
-    // A pointer to the callout manager is maintained by each each as well as by
+    // A pointer to the callout manager is maintained by each as well as by
     // the HooksManager itself.  Note that the callout manager does not hold any
     // memory allocated by a library: although a library registers a callout
     // (and so causes the creation of an entry in the CalloutManager's callout
