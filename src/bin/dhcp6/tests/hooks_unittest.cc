@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <hooks/server_hooks.h>
+#include <hooks/callout_manager.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -113,10 +114,17 @@ public:
 
         // Clear static buffers
         resetCalloutBuffers();
+
+        // Reset the hook system in its original state
+        HooksManager::unloadLibraries();
     }
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
+
+        // Clear shared manager
+        HooksManager::getSharedCalloutManager().reset();
+
     }
 
     /// @brief creates an option with specified option code
@@ -2079,9 +2087,11 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
 
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_basicLease6Decline) {
+TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
     IfaceMgrTestConfig test_config(true);
+
+    // Libraries will be reloaded later
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2127,9 +2137,11 @@ TEST_F(HooksDhcpv6SrvTest, DISABLED_basicLease6Decline) {
 }
 
 // Test that the lease6_decline hook point can handle SKIP status.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineSkip) {
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
     IfaceMgrTestConfig test_config(true);
+
+    // Libraries will be reloaded later
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2172,9 +2184,11 @@ TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineSkip) {
 }
 
 // Test that the lease6_decline hook point can handle DROP status.
-/// @todo: Reenable this once #5095 is fixed.
-TEST_F(HooksDhcpv6SrvTest, DISABLED_lease6DeclineDrop) {
+TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     IfaceMgrTestConfig test_config(true);
+
+    // Libraries will be reloaded later
+    HooksManager::getSharedCalloutManager().reset(new CalloutManager(0));
 
     // Install lease6_decline callout. It will set the status to skip
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
