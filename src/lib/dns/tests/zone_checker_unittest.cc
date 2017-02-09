@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,7 +130,7 @@ TEST_F(ZoneCheckerTest, checkSOA) {
     // If null callback is specified, checkZone() only returns the final
     // result.
     ZoneCheckerCallbacks noerror_callbacks(
-        NULL, boost::bind(&ZoneCheckerTest::callback, this, _1, false));
+        0, boost::bind(&ZoneCheckerTest::callback, this, _1, false));
     EXPECT_FALSE(checkZone(zname_, zclass_, *rrsets_, noerror_callbacks));
     checkIssues();
 
@@ -194,7 +194,7 @@ TEST_F(ZoneCheckerTest, checkNSData) {
     // Same check, but disabling warning callback.  Same result, but without
     // the warning.
     ZoneCheckerCallbacks nowarn_callbacks(
-        boost::bind(&ZoneCheckerTest::callback, this, _1, true), NULL);
+        boost::bind(&ZoneCheckerTest::callback, this, _1, true), 0);
     EXPECT_TRUE(checkZone(zname_, zclass_, *rrsets_, nowarn_callbacks));
     checkIssues();
 
