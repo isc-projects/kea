@@ -1065,12 +1065,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
 //**************************** D2ClientConfigParser **********************
 
-uint32_t
-D2ClientConfigParser::getUint32(ConstElementPtr scope,
-                                const std::string& name) {
-    return (getIntType<uint32_t>(scope, name));
-}
-
 // Can't use a constructor as a function
 namespace {
 IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
