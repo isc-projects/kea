@@ -1,3 +1,7 @@
+1212.	[doc]		andreipavelQ
+	Many spelling corrections.
+	(Github #47, git a6a7ca1ced8c63c1e11ef4c572f09272340afdd7)
+
 1211.	[func]		andreipavelQ
 	Updated PostgreSQL version reporting to be in line with
 	MySQL and Cassandra.
