@@ -1,3 +1,9 @@
+1213.	[bug]		fdupont
+	Option string values containing comma can now be specified
+	correctly by preceding comma with double backslashes (e.g.
+	"foo\\,bar").
+	(Trac #5105, git xxx)
+
 1212.	[doc]		andreipavelQ
 	Many spelling corrections.
 	(Github #47, git a6a7ca1ced8c63c1e11ef4c572f09272340afdd7)
