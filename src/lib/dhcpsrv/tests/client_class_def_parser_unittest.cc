@@ -459,20 +459,6 @@ TEST_F(ClientClassDefParserTest, blankClassName) {
                  DhcpConfigError);
 }
 
-
-// Verifies that a class with an unknown element, fails to parse.
-TEST_F(ClientClassDefParserTest, unknownElement) {
-    std::string cfg_text =
-        "{ \n"
-        "    \"name\": \"one\", \n"
-        "    \"bogus\": \"bad\" \n"
-        "} \n";
-
-    ClientClassDefPtr cclass;
-    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
-                 DhcpConfigError);
-}
-
 // Verifies that a class with an invalid expression, fails to parse.
 TEST_F(ClientClassDefParserTest, invalidExpression) {
     std::string cfg_text =
@@ -562,22 +548,6 @@ TEST_F(ClientClassDefListParserTest, duplicateClass) {
 
     ClientClassDictionaryPtr dictionary;
     ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET),
-                 DhcpConfigError);
-}
-
-// Verifies that a class list containing an invalid class entry, fails to
-// parse.
-TEST_F(ClientClassDefListParserTest, invalidClass) {
-    std::string cfg_text =
-        "[ \n"
-        "   { \n"
-        "       \"name\": \"one\", \n"
-        "       \"bogus\": \"bad\" \n"
-        "   } \n"
-        "] \n";
-
-    ClientClassDictionaryPtr dictionary;
-    ASSERT_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6),
                  DhcpConfigError);
 }
 
