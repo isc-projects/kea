@@ -1,3 +1,8 @@
+1211.	[func]		andreipavelQ
+	Updated PostgreSQL version reporting to be in line with
+	MySQL and Cassandra.
+	(Github #42, git 7ef4a190facadd66775b4a44c696d1c4215616cd)
+
 1210.	[doc]		andreipavelQ
 	Doxygen version updated to 1.8.11.
 	(Github #45, git ce72998382b62269823fa0dcbfa41dfa9c72b69e)
