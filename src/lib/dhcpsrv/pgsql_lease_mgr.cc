@@ -230,7 +230,6 @@ namespace dhcp {
 /// database.
 class PgSqlLeaseExchange : public PgSqlExchange {
 public:
-
     PgSqlLeaseExchange()
         : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
           expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
@@ -819,7 +818,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
                   << " does not match expected count:" << NUM_STATEMENTS);
     }
 
-    pair<uint32_t, uint32_t> code_version(PG_CURRENT_VERSION, PG_CURRENT_MINOR);
+    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
     pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Posgresql schema version mismatch: need version: "
@@ -834,8 +833,8 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 std::string
 PgSqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
-    tmp << "PostgreSQL backend " << PG_CURRENT_VERSION;
-    tmp << "." << PG_CURRENT_MINOR;
+    tmp << "PostgreSQL backend " << PG_SCHEMA_VERSION_MAJOR;
+    tmp << "." << PG_SCHEMA_VERSION_MINOR;
     tmp << ", library " << PQlibVersion();
     return (tmp.str());
 }
