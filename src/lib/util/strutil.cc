@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,28 +61,67 @@ trim(const string& instring) {
 // another dependency on a Boost library.
 
 vector<string>
-tokens(const std::string& text, const std::string& delim) {
+tokens(const std::string& text, const std::string& delim, bool escape) {
     vector<string> result;
-
-    // Search for the first non-delimiter character
-    size_t start = text.find_first_not_of(delim);
-    while (start != string::npos) {
-
-        // Non-delimiter found, look for next delimiter
-        size_t end = text.find_first_of(delim, start);
-        if (end != string::npos) {
-
-            // Delimiter found, so extract string & search for start of next
-            // non-delimiter segment.
-            result.push_back(text.substr(start, (end - start)));
-            start = text.find_first_not_of(delim, end);
-
+    string token;
+    bool in_token = false;
+    bool escaped = false;
+    for (auto c = text.cbegin(); c != text.cend(); ++c) {
+        if (delim.find(*c) != string::npos) {
+            // Current character is a delimiter
+            if (!in_token) {
+                // Two or more delimiters, eat them
+            } else if (escaped) {
+                // Escaped delimiter in a token: reset escaped and keep it
+                escaped = false;
+                token.push_back(*c);
+            } else {
+                // End of the current token: save it if not empty
+                if (!token.empty()) {
+                    result.push_back(token);
+                }
+                // Reset state
+                in_token = false;
+                token.clear();
+            }
+        } else if (escape && (*c == '\\')) {
+            // Current character is the escape character
+            if (!in_token) {
+                // The escape character is the first character of a new token
+                in_token = true;
+            }
+            if (escaped) {
+                // Escaped escape: reset escaped and keep one character
+                escaped = false;
+                token.push_back(*c);
+            } else {
+                // Remember to keep the next character
+                escaped = true;
+            }
         } else {
-
-            // End of string found, extract rest of string and flag to exit
-            result.push_back(text.substr(start));
-            start = string::npos;
+            // Not a delimiter nor an escape
+            if (!in_token) {
+                // First character of a new token
+                in_token = true;
+            }
+            if (escaped) {
+                // Escaped common character: as escape was false
+                escaped = false;
+                token.push_back('\\');
+                token.push_back(*c);
+            } else {
+                // The common case: keep it
+                token.push_back(*c);
+            }
         }
+    }
+    // End of input: close and save the current token if not empty
+    if (escaped) {
+        // Pending escape
+        token.push_back('\\');
+    }
+    if (!token.empty()) {
+        result.push_back(token);
     }
 
     return (result);
