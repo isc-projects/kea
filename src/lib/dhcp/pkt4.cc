@@ -383,7 +383,7 @@ std::string
 Pkt4::toText() const {
     stringstream output;
     output << "local_address=" << local_addr_ << ":" << local_port_
-        << ", remote_adress=" << remote_addr_
+        << ", remote_address=" << remote_addr_
         << ":" << remote_port_ << ", msg_type=";
 
     // Try to obtain message type.
