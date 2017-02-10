@@ -102,7 +102,7 @@ class OptionIntArray;
 /// option type is used. In such cases the data field types within the record
 /// are specified using \ref OptionDefinition::addRecordField.
 ///
-/// When the OptionDefinition object has been sucessfully created, it can be
+/// When the OptionDefinition object has been successfully created, it can be
 /// queried to return the appropriate option factory function for the specified
 /// specified option format. There are a number of "standard" factory functions
 /// that cover well known (common) formats.  If the particular format does not

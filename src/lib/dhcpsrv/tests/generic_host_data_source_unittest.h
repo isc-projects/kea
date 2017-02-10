@@ -88,7 +88,7 @@ public:
 
     /// @brief Compares hardware addresses of the two hosts.
     ///
-    /// This method compares two hwardware address and uses gtest
+    /// This method compares two hardware address and uses gtest
     /// macros to signal unexpected (mismatch if expect_match is true;
     /// match if expect_match is false) values.
     ///
@@ -393,7 +393,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrives them and checks that the hostnames are set properly.
+    /// retrieves them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///

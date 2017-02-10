@@ -81,9 +81,9 @@ const bool STATEFUL = false;
 ///   - Single subnet 10.0.0.0/24 with a pool of 10.0.0.10-10.0.0.100
 ///   - Single reservation within the subnet:
 ///     - HW address: aa:bb:cc:dd:ee:ff
-///     - ip-adress 10.0.0.7
+///     - ip-address 10.0.0.7
 ///     - Vendor option for Cable Labs vendor id specified for the reservation:
-///       - TFTP servers suboption overriding globally spececified suboption:
+///       - TFTP servers suboption overriding globally specified suboption:
 ///         10.1.1.202,10.1.1.203
 ///
 const char* HOST_CONFIGS[] = {
@@ -252,7 +252,7 @@ public:
     /// Overridden options are requested with Parameter Request List
     /// option.
     ///
-    /// @param stateless Boolean value indicating if statless or stateful
+    /// @param stateless Boolean value indicating if stateless or stateful
     /// configuration should be performed.
     void testOverrideRequestedOptions(const bool stateless);
 
@@ -262,21 +262,21 @@ public:
     /// Overridden options are the options which server sends regardless
     /// if they are requested with Parameter Request List option or not.
     ///
-    /// @param stateless Boolean value indicating if statless or stateful
+    /// @param stateless Boolean value indicating if stateless or stateful
     /// configuration should be performed.
     void testOverrideDefaultOptions(const bool stateless);
 
     /// @brief Verifies that client receives options when they are solely
     /// defined in the host scope (and not in the global or subnet scope).
     ///
-    /// @param stateless Boolean value indicating if statless or stateful
+    /// @param stateless Boolean value indicating if stateless or stateful
     /// configuration should be performed.
     void testHostOnlyOptions(const bool stateless);
 
     /// @brief Verifies that host specific vendor options override vendor
     /// options defined in the global scope.
     ///
-    /// @param stateless Boolean value indicating if statless or stateful
+    /// @param stateless Boolean value indicating if stateless or stateful
     /// configuration should be performed.
     void testOverrideVendorOptions(const bool stateless);
 

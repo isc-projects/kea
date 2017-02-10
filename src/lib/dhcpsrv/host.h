@@ -501,7 +501,7 @@ public:
     /// @brief Returns pointer to the DHCPv4 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption4() {
         return (cfg_option4_);
@@ -516,7 +516,7 @@ public:
     /// @brief Returns pointer to the DHCPv6 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption6() {
         return (cfg_option6_);

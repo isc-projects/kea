@@ -122,7 +122,7 @@ TEST(CSVRow, trim) {
     EXPECT_EQ("two", row.readAt(2));
     EXPECT_EQ("three", row.readAt(3));
 
-    // Verfiy we can trim more than one
+    // Verify we can trim more than one
     ASSERT_NO_THROW(row.trim(2));
     ASSERT_EQ(2, row.getValuesCount());
     EXPECT_EQ("zero", row.readAt(0));

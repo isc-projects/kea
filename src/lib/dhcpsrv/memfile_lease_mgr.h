@@ -650,7 +650,7 @@ private:
     /// the unit tests need to override this path (with the path in the
     /// Kea build directory, the @c KEA_LFC_EXECUTABLE environmental
     /// variable should be set to hold an absolute path to the kea-lfc
-    /// excutable.
+    /// executable.
     /// @param conversion_needed flag that indicates input lease file(s) are
     /// schema do not match the current schema (older or newer), and need
     /// conversion. This value is passed through to LFCSetup::setup() via its

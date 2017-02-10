@@ -47,7 +47,7 @@ class CfgMACSource {
     static uint32_t MACSourceFromText(const std::string& name);
 
 
-    /// @brief Adds additional MAC/hardware address aquisition.
+    /// @brief Adds additional MAC/hardware address acquisition.
     ///
     /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
     ///

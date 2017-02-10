@@ -2072,7 +2072,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
                                    sname.size());
             }
-            
+
             const string& filename = cl->second->getFilename();
             if (!filename.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is

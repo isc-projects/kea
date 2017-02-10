@@ -58,7 +58,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief IfaceMgr exception thrown thrown when error occured during
+/// @brief IfaceMgr exception thrown thrown when error occurred during
 /// reading data from socket.
 class SocketReadError : public Exception {
 public:
@@ -66,7 +66,7 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief IfaceMgr exception thrown thrown when error occured during
+/// @brief IfaceMgr exception thrown thrown when error occurred during
 /// sedning data through socket.
 class SocketWriteError : public Exception {
 public:
@@ -303,7 +303,7 @@ public:
     /// @brief Check if the interface has the specified address assigned.
     ///
     /// @param address Address to be checked.
-    /// @return true if address is assigned to the intefrace, false otherwise.
+    /// @return true if address is assigned to the interface, false otherwise.
     bool hasAddress(const isc::asiolink::IOAddress& address) const;
 
     /// @brief Adds an address to an interface.
@@ -438,7 +438,7 @@ protected:
     /// Network interface name.
     std::string name_;
 
-    /// Interface index (a value that uniquely indentifies an interface).
+    /// Interface index (a value that uniquely identifies an interface).
     int ifindex_;
 
     /// List of assigned addresses.
@@ -724,7 +724,7 @@ public:
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occured when receiving a
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
     /// packet.
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
@@ -746,7 +746,7 @@ public:
     /// (in microseconds)
     ///
     /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occured when receiving a
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
     /// packet.
     /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
     /// interrupted by a signal.
@@ -1010,7 +1010,7 @@ public:
     /// @throw PacketFilterChangeDenied if there are open IPv4 sockets.
     void setPacketFilter(const PktFilterPtr& packet_filter);
 
-    /// @brief Set packet filter object to handle sending and receving DHCPv6
+    /// @brief Set packet filter object to handle sending and receiving DHCPv6
     /// messages.
     ///
     /// Packet filter objects provide means for the @c IfaceMgr to open sockets
@@ -1043,7 +1043,7 @@ public:
     /// implementation that supports this feature on a particular OS.
     /// If there isn't, the PktFilterInet object will be set. If the
     /// argument is set to 'false', PktFilterInet object instance will
-    /// be set as the Packet Filter regrdaless of the OS type.
+    /// be set as the Packet Filter regardless of the OS type.
     ///
     /// @param direct_response_desired specifies whether the Packet Filter
     /// object being set should support direct traffic to the host

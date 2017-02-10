@@ -24,7 +24,7 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test class derived from NameAddTransaction to provide visiblity
+/// @brief Test class derived from NameAddTransaction to provide visibility
 // to protected methods.
 class NameAddStub : public NameAddTransaction {
 public:
@@ -1030,7 +1030,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());

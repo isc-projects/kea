@@ -131,7 +131,7 @@ public:
         // Data length is 2 bytes.
         EXPECT_EQ(2, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(TEST_OPT_CODE, opt->getType());
-        // The total length is 2 bytes for data and 2 or 4 bytes for aheader.
+        // The total length is 2 bytes for data and 2 or 4 bytes for a header.
         if (u == Option::V4) {
             EXPECT_EQ(4, out_buf_.getLength());
         } else {

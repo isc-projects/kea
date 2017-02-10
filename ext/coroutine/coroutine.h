@@ -24,7 +24,7 @@
 // routine, the function is provided as the handler object.  (The simplest
 // way to do this is to have the reentrant function be the operator()
 // member for the coroutine object itself.)   For example:
-// 
+//
 //     CORO_YIELD socket->async_read_some(buffer, *this);
 //
 // The CORO_YIELD keyword updates the current status of the coroutine to

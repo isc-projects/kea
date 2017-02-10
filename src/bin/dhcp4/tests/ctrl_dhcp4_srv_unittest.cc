@@ -396,7 +396,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     EXPECT_TRUE(lease1->stateExpiredReclaimed());
 }
 
-// Thist test verifies that the DHCP server immediately removed expired
+// This test verifies that the DHCP server immediately removed expired
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     createUnixChannelServer();

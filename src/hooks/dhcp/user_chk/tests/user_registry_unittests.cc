@@ -61,7 +61,7 @@ TEST(UserRegistry, userBasics) {
     EXPECT_TRUE(found_user);
     EXPECT_EQ(found_user->getUserId(), *id);
 
-    // Verify that searching for a non-existant user returns empty user pointer.
+    // Verify that searching for a non-existing user returns empty user pointer.
     UserIdPtr id2;
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::HW_ADDRESS, "02020202")));
     ASSERT_NO_THROW(found_user = reg->findUser(*id2));

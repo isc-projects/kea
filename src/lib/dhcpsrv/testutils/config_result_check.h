@@ -18,7 +18,7 @@ namespace test {
 ///
 /// This function checks that the error string returned by the configuration
 /// parsers contains the position of the element which caused an error. The
-/// error string is expected to contain at least one occurence of the following:
+/// error string is expected to contain at least one occurrence of the following:
 ///
 /// @code
 ///     [filename]:[linenum]:[pos]

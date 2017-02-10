@@ -35,7 +35,7 @@ public:
 /// implementations should derive from it.
 ///
 /// Methods are not pure virtual, as we need to instantiate basic daemons (e.g.
-/// Dhcpv6Srv) in tests, without going through the hassles of implemeting stub
+/// Dhcpv6Srv) in tests, without going through the hassles of implementing stub
 /// methods.
 ///
 /// Classes derived from @c Daemon may install custom signal handlers using
@@ -55,7 +55,7 @@ public:
     /// process to NULL.
     Daemon();
 
-    /// @brief Desctructor
+    /// @brief Destructor
     ///
     /// Having virtual destructor ensures that all derived classes will have
     /// virtual destructor as well.

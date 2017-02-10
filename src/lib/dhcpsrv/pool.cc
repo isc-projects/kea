@@ -170,7 +170,7 @@ Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
         }
 
         /// @todo Check that the prefixes actually match. Theoretically, a
-        /// user could specify a prefix which sets insgnificant bits. We should
+        /// user could specify a prefix which sets insignificant bits. We should
         /// clear insignificant bits based on the prefix length but this
         /// should be considered a part of the IOAddress class, perhaps and
         /// requires a bit of work (mainly in terms of testing).

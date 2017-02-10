@@ -166,7 +166,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
 
-        // The decline succeded, so the declined-addresses statistic should
+        // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
         EXPECT_EQ(after_global, before_global + 1);

@@ -117,7 +117,7 @@ public:
     /// reservations from the alternate source.
     ///
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -162,11 +162,11 @@ public:
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// This method returns a single reservation for a particular host as
-    /// documneted in the @c BaseHostDataSource::get4.
+    /// documented in the @c BaseHostDataSource::get4.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -213,7 +213,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///

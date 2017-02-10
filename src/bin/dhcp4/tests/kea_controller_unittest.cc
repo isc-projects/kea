@@ -536,7 +536,7 @@ TEST_F(JSONFileBackendTest, timers) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv4Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -605,7 +605,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv4Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -707,7 +707,7 @@ testBackendReconfiguration(const std::string& backend_first,
                            const std::string& backend_second) {
     writeFile(TEST_FILE, createConfiguration(backend_first));
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<NakedControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv4Srv()));
     srv->setConfigFile(TEST_FILE);

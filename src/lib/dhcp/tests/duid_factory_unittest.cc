@@ -347,7 +347,7 @@ TEST_F(DUIDFactoryTest, createLLTExplicitHtype) {
 }
 
 // This test verifies that the factory class creates DUID-LLT from
-// explcitly specified link layer address, when other parameters
+// explicitly specified link layer address, when other parameters
 // are generated.
 TEST_F(DUIDFactoryTest, createLLTExplicitLinkLayerAddress) {
     ASSERT_NO_THROW(factory().createLLT(0, 0, toVector("121212121212")));

@@ -453,7 +453,7 @@ TEST_F(StatsMgrTest, commandStatisticGetNegative) {
     EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", rsp->str());
 }
 
-// This test checks whether statistc-get-all command returns all statistics
+// This test checks whether statistic-get-all command returns all statistics
 // correctly.
 TEST_F(StatsMgrTest, commandGetAll) {
 

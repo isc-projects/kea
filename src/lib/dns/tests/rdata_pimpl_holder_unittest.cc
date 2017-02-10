@@ -20,7 +20,7 @@ TEST(RdataPimplHolderTest, all) {
     EXPECT_EQ(i1, holder1.get());
     // Obviously the value should match too.
     EXPECT_EQ(42, *holder1.get());
-    // We don't explictly delete i or holder1, so it should not leak
+    // We don't explicitly delete i or holder1, so it should not leak
     // anything when the test is done (checked by Valgrind).
 
     // The following cases are similar:

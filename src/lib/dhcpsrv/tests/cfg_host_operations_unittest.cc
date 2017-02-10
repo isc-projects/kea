@@ -81,7 +81,7 @@ TEST(CfgHostOperationsTest, addIdentifier) {
     EXPECT_TRUE(cfg.getIdentifierTypes().empty());
 }
 
-// This test verfies that the default DHCPv4 configuration is created
+// This test verifies that the default DHCPv4 configuration is created
 // as expected.
 TEST(CfgHostOperationsTest, createConfig4) {
     CfgHostOperationsPtr cfg = CfgHostOperations::createConfig4();
@@ -91,7 +91,7 @@ TEST(CfgHostOperationsTest, createConfig4) {
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_CIRCUIT_ID, 2));
 }
 
-// This test verfies that the default DHCPv6 configuration is created
+// This test verifies that the default DHCPv6 configuration is created
 // as expected.
 TEST(CfgHostOperationsTest, createConfig6) {
     CfgHostOperationsPtr cfg = CfgHostOperations::createConfig6();

@@ -398,10 +398,10 @@ public:
 
     /// @brief Gets a value from the specified packet.
     ///
-    /// Evaluation uses metadatas available in the packet. It does not
+    /// Evaluation uses metadata available in the packet. It does not
     /// require any values to be present on the stack.
     ///
-    /// @param pkt - metadatas will be extracted from here
+    /// @param pkt - metadata will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
     void evaluate(Pkt& pkt, ValueStack& values);
 

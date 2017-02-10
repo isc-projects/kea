@@ -523,7 +523,7 @@ void
 OptionCustom::writeFqdn(const std::string& fqdn, const uint32_t index) {
     checkIndex(index);
 
-    // Create a temporay buffer where the FQDN will be written.
+    // Create a temporary buffer where the FQDN will be written.
     OptionBuffer buf;
     // Try to write to the temporary buffer rather than to the
     // buffers_ member directly guarantees that we don't modify
@@ -531,7 +531,7 @@ OptionCustom::writeFqdn(const std::string& fqdn, const uint32_t index) {
     // is valid.
     OptionDataTypeUtil::writeFqdn(fqdn, buf);
     // If we got to this point it means that the FQDN is valid.
-    // We can move the contents of the teporary buffer to the
+    // We can move the contents of the temporary buffer to the
     // target buffer.
     std::swap(buffers_[index], buf);
 }
