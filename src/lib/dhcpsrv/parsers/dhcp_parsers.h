@@ -889,16 +889,6 @@ public:
 
 private:
 
-    /// @brief Returns a value converted to uint32_t
-    ///
-    /// Instantiation of getIntType() to uint32_t
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an uint32_t value
-    uint32_t
-    getUint32(isc::data::ConstElementPtr scope, const std::string& name);
-
     /// @brief Returns a value converted to IOAddress
     ///
     /// Instantiation of getAndConvert() to IOAddress
