@@ -1,0 +1,267 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef PARSER_CONTEXT_H
+#define PARSER_CONTEXT_H
+#include <string>
+#include <map>
+#include <vector>
+#include <agent/agent_parser.h>
+#include <agent/parser_context_decl.h>
+#include <exceptions/exceptions.h>
+
+// Tell Flex the lexer's prototype ...
+#define YY_DECL isc::agent::AgentParser::symbol_type agent_lex (ParserContext& driver)
+
+// ... and declare it for the parser's sake.
+YY_DECL;
+
+namespace isc {
+namespace agent {
+
+/// @brief Parser context is a wrapper around flex/bison instances dedicated to
+///        Control-agent config file parser.
+///
+/// It follows the same principle as other components. The primary interface
+/// are @ref parseString and @ref parseFile methods. All other methods are
+/// public for testing purposes only. This interface allows parsing the
+/// whole configuration with syntactic checking (which is by far the most
+/// frequent use), but it also allows parsing input as generic JSON or
+/// parse only content of the Control-agent object, which is a subset
+/// of full grammar (this will be very useful for unit-tests to not duplicate
+/// unnecessary parts of the config file).
+class ParserContext
+{
+public:
+
+    /// @brief Defines currently supported scopes
+    ///
+    /// AgentParser is able to parse several types of scope. Usually,
+    /// when it parses a config file, it expects the data to have a map
+    /// with Control-agent in it and all the parameters within that map.
+    /// However, sometimes the parser is expected to parse only a subset
+    /// of that information.
+    typedef enum {
+        /// This parser will parse the content as generic JSON.
+        PARSER_JSON,
+
+        /// This parser will expect the content as Control-agent config wrapped
+        /// in a map (that's the regular config file)
+        PARSER_AGENT,
+
+        /// This parser will expect only the content of Control-agent.
+        PARSER_SUB_AGENT
+    } ParserType;
+
+    /// @brief Default constructor.
+    ParserContext();
+
+    /// @brief destructor
+    virtual ~ParserContext();
+
+    /// @brief JSON elements being parsed.
+    std::vector<isc::data::ElementPtr> stack_;
+
+    /// @brief Method called before scanning starts on a string.
+    ///
+    /// @param str string to be parsed
+    /// @param type specifies expected content
+    void scanStringBegin(const std::string& str, ParserType type);
+
+    /// @brief Method called before scanning starts on a file.
+    ///
+    /// @param f stdio FILE pointer
+    /// @param filename file to be parsed
+    /// @param type specifies expected content
+    void scanFileBegin(FILE* f, const std::string& filename, ParserType type);
+
+    /// @brief Method called after the last tokens are scanned.
+    void scanEnd();
+
+    /// @brief Divert input to an include file.
+    ///
+    /// @param filename file to be included
+    void includeFile(const std::string& filename);
+
+    /// @brief Run the parser on the string specified.
+    ///
+    /// This method parses specified string. Depending on the value of
+    /// parser_type, parser may either check only that the input is valid
+    /// JSON, or may do more specific syntax checking. See @ref ParserType
+    /// for supported syntax checkers.
+    ///
+    /// @param str string to be parsed
+    /// @param parser_type specifies expected content (usually AGENT or generic JSON)
+    /// @return Element structure representing parsed text.
+    isc::data::ElementPtr parseString(const std::string& str,
+                                      ParserType parser_type);
+
+    /// @brief Run the parser on the file specified.
+    ///
+    /// This method parses specified file. Depending on the value of
+    /// parser_type, parser may either check only that the input is valid
+    /// JSON, or may do more specific syntax checking. See @ref ParserType
+    /// for supported syntax checkers.
+    ///
+    /// @param filename file to be parsed
+    /// @param parser_type specifies expected content (usually PARSER_AGENT or
+    ///                                                PARSER_JSON)
+    /// @return Element structure representing parsed text.
+    isc::data::ElementPtr parseFile(const std::string& filename,
+                                    ParserType parser_type);
+
+    /// @brief Error handler
+    ///
+    /// @param loc location within the parsed file when experienced a problem.
+    /// @param what string explaining the nature of the error.
+    /// @throw ParseError
+    void error(const isc::agent::location& loc, const std::string& what);
+
+    /// @brief Error handler
+    ///
+    /// This is a simplified error reporting tool for possible future
+    /// cases when the AgentParser is not able to handle the packet.
+    ///
+    /// @param what string explaining the nature of the error.
+    /// @throw ParseError
+    void error(const std::string& what);
+
+    /// @brief Fatal error handler
+    ///
+    /// This is for should not happen but fatal errors.
+    /// Used by YY_FATAL_ERROR macro so required to be static.
+    ///
+    /// @param what string explaining the nature of the error.
+    /// @throw ParseError
+    static void fatal(const std::string& what);
+
+    /// @brief Converts bison's position to one understandable by isc::data::Element
+    ///
+    /// Convert a bison location into an element position
+    /// (take the begin, the end is lost)
+    ///
+    /// @param loc location in bison format
+    /// @return Position in format accepted by Element
+    isc::data::Element::Position loc2pos(isc::agent::location& loc);
+
+    /// @brief Defines syntactic contexts for lexical tie-ins
+    typedef enum {
+        ///< This one is used in pure JSON mode.
+        NO_KEYWORDS,
+
+        ///< Used while parsing top level (that contains Control-agent, Logging and others)
+        CONFIG,
+
+        ///< Used while parsing content of Agent.
+        AGENT,
+
+        ///< Used while parsing content of Logging.
+        LOGGING,
+
+        ///< Used while parsing Control-agent/control-sockets.
+        CONTROL_SOCKETS,
+
+        ///< Used while parsing Control-agent/control-socket/*-server.
+        SERVER,
+
+        ///< Used while parsing Control-agent/control-socket/*-server/socket-type.
+        SOCKET_TYPE,
+
+        ///< Used while parsing Control-agent/hooks-libraries.
+        HOOKS_LIBRARIES,
+
+        ///< Used while parsing Logging/loggers structures.
+        LOGGERS,
+
+        ///< Used while parsing Logging/loggers/output_options structures.
+        OUTPUT_OPTIONS
+
+    } LexerContext;
+
+    /// @brief File name
+    std::string file_;
+
+    /// @brief File name stack
+    std::vector<std::string> files_;
+
+    /// @brief Location of the current token
+    ///
+    /// The lexer will keep updating it. This variable will be useful
+    /// for logging errors.
+    isc::agent::location loc_;
+
+    /// @brief Location stack
+    std::vector<isc::agent::location> locs_;
+
+    /// @brief Lexer state stack
+    std::vector<struct yy_buffer_state*> states_;
+
+    /// @brief sFile (aka FILE)
+    FILE* sfile_;
+
+    /// @brief sFile (aka FILE) stack
+    ///
+    /// This is a stack of files. Typically there's only one file (the
+    /// one being currently parsed), but there may be more if one
+    /// file includes another.
+    std::vector<FILE*> sfiles_;
+
+    /// @brief Current syntactic context
+    LexerContext ctx_;
+
+    /// @brief Enter a new syntactic context
+    ///
+    /// Entering a new syntactic context is useful in several ways.
+    /// First, it allows the parser to avoid conflicts. Second, it
+    /// allows the lexer to return different tokens depending on
+    /// context (e.g. if "renew-timer" string is detected, the lexer
+    /// will return STRING token if in JSON mode or RENEW_TIMER if
+    /// in DHCP6 mode. Finally, the syntactic context allows the
+    /// error message to be more descriptive if the input string
+    /// does not parse properly. Control Agent parser uses simplified
+    /// contexts: either it recognizes keywords (value set to KEYWORDS)
+    /// or not (value set to NO_KEYWORDS).
+    ///
+    /// Make sure to call @ref leave() once the parsing of your
+    /// context is complete.
+    ///
+    /// @param ctx the syntactic context to enter into
+    void enter(const LexerContext& ctx);
+
+    /// @brief Leave a syntactic context
+    ///
+    /// @ref enter() must be called before (when entering a new scope
+    /// or context). Once you complete the parsing, this method
+    /// should be called.
+    ///
+    /// @throw isc::Unexpected if unbalanced (more leave() than enter() calls)
+    void leave();
+
+    /// @brief Get the syntactic context name
+    ///
+    /// @return printable name of the context.
+    const std::string contextName();
+
+ private:
+    /// @brief Flag determining scanner debugging.
+    bool trace_scanning_;
+
+    /// @brief Flag determining parser debugging.
+    bool trace_parsing_;
+
+    /// @brief Syntactic context stack
+    std::vector<LexerContext> cstack_;
+
+    /// @brief Common part of parseXXX
+    ///
+    /// @return Element structure representing parsed text.
+    isc::data::ElementPtr parseCommon();
+};
+
+}; // end of isc::eval namespace
+}; // end of isc namespace
+
+#endif

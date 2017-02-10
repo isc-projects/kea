@@ -6,7 +6,8 @@ EXTRA_DIST += devel/contribute.dox
 EXTRA_DIST += devel/mainpage.dox
 EXTRA_DIST += devel/unit-tests.dox
 
-nobase_dist_doc_DATA  = examples/ddns/sample1.json
+nobase_dist_doc_DATA  = examples/agent/simple.json
+nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 nobase_dist_doc_DATA += examples/kea4/advanced.json
 nobase_dist_doc_DATA += examples/kea4/backends.json
