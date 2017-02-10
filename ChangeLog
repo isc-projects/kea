@@ -1,3 +1,7 @@
+1210.	[doc]		andreipavelQ
+	Doxygen version updated to 1.8.11.
+	(Github #45, git ce72998382b62269823fa0dcbfa41dfa9c72b69e)
+
 1209.	[func]		tomek
 	Relay options are now printed in DHCPv6 when suffiently detailed
 	debug logging is requested.
