@@ -1016,6 +1016,36 @@ temporarily override a list of interface names and listen on all interfaces.
         structures. "Type" designates the format of the data: the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
       </para>
+
+      <para>When a data field is a string, and that string contains the comma
+      (,; U+002C) character, the comma must be escaped with a double reverse solidus
+      character (\; U+005C). This double escape is required, because both the
+      routine splitting CSV data into fields and JSON use the same escape
+      character: a single escape (\,) would make the JSON invalid.
+      For example, the string &quot;foo,bar&quot; would be represented as:
+      <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    <userinput>"option-data": [
+                        {
+                            "name": "boot-file-name",
+                            "data": "foo\\,bar"
+                        }
+                    ]</userinput>
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
       <para>
         Some options are designated as arrays, which means that more than one
         value is allowed in such an option. For example the option time-servers
