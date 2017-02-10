@@ -217,7 +217,7 @@ TEST_F(PerfPkt6Test, InvalidOptions) {
 
     // Create packet.
     boost::scoped_ptr<PerfPkt6> pkt2(capture());
-    // Testing offset of the option (lower than pakcet size but
+    // Testing offset of the option (lower than packet size but
     // tail of the option out of bounds).
     LocalizedOptionPtr pkt2_serverid(new LocalizedOption(Option::V6,
                                                          D6O_SERVERID,

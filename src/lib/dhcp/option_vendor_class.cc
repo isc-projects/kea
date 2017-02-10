@@ -167,7 +167,7 @@ OptionVendorClass::toText(int indent) const {
 
     // Apply indentation
     s << std::string(indent, ' ');
-    // Print type, length and first occurence of enterprise id.
+    // Print type, length and first occurrence of enterprise id.
     s << "type=" << getType() << ", len=" << len() - getHeaderLen() << ", "
         " enterprise id=0x" << std::hex << getVendorId() << std::dec;
     // Iterate over all tuples and print their size and contents.

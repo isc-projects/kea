@@ -488,7 +488,7 @@ public:
     ///
     /// @code
     ///    { "<app_name>" : <content> }
-    /// @endcod
+    /// @endcode
     ///
     /// suffix the content within a JSON element with the given module
     /// name or  wrapped by a JSON
@@ -513,7 +513,7 @@ public:
     /// file to replaced write_time_ms after DControllerBase::launch() has
     /// invoked runProcess().
     ///
-    /// @param config JSON string containing the deisred content for the config
+    /// @param config JSON string containing the desired content for the config
     /// file.
     /// @param write_time_ms time in milliseconds to delay before writing the
     /// file.

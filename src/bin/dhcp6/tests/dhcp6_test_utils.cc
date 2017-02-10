@@ -679,7 +679,7 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     // fakeReceive()
     srv.run();
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
     tested_stat = mgr.getObservation(stat_name);
     ASSERT_TRUE(pkt6_rcvd);

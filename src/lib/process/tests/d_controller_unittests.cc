@@ -38,7 +38,7 @@ public:
 };
 
 /// @brief Basic Controller instantiation testing.
-/// Verfies that the controller singleton gets created and that the
+/// Verifies that the controller singleton gets created and that the
 /// basic derivation from the base class is intact.
 TEST_F(DStubControllerTest, basicInstanceTesting) {
     // Verify that the singleton exists and it is the correct type.
@@ -188,8 +188,8 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
                 elapsed_time.total_milliseconds() <= 2300);
 }
 
-/// @brief Tests launch with an nonexistant configuration file.
-TEST_F(DStubControllerTest, nonexistantConfigFile) {
+/// @brief Tests launch with an non-existing configuration file.
+TEST_F(DStubControllerTest, nonExistingConfigFile) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),

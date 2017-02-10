@@ -110,7 +110,7 @@ public:
     static std::string createTempFilename() {
         string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
 
-        // Copy into writeable storage for the call to mkstemp
+        // Copy into writable storage for the call to mkstemp
         boost::scoped_array<char> tname(new char[filename.size() + 1]);
         strcpy(tname.get(), filename.c_str());
 

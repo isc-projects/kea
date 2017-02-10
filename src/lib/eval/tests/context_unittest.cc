@@ -189,13 +189,13 @@ public:
             return;
         }
 
-        // Parsing should succed and return a token.
+        // Parsing should succeed and return a token.
         EXPECT_TRUE(parsed_);
 
         // There should be the expected number of tokens.
         ASSERT_EQ(exp_tokens, eval.expression.size());
 
-        // checkt that the first token is TokenRelay6Option and that
+        // checked that the first token is TokenRelay6Option and that
         // is has the correct attributes
         checkTokenRelay6Option(eval.expression.at(0), exp_level, exp_code, exp_repr);
     }
@@ -212,7 +212,7 @@ public:
         EXPECT_EQ(type, pkt->getType());
     }
 
-    /// @brief Test that verifies access to the DHCP packet metadatas.
+    /// @brief Test that verifies access to the DHCP packet metadata.
     ///
     /// This test attempts to parse the expression, will check if the number
     /// of tokens is exactly as expected and then will try to verify if the
@@ -379,13 +379,13 @@ public:
             return;
         }
 
-        // Parsing should succed and return a token.
+        // Parsing should succeed and return a token.
         EXPECT_TRUE(parsed_);
 
         // There should be the expected number of tokens.
         ASSERT_EQ(exp_tokens, eval.expression.size());
 
-        // checkt that the first token is TokenRelay6Field and that
+        // checked that the first token is TokenRelay6Field and that
         // is has the correct attributes
         checkTokenRelay6Field(eval.expression.at(0), exp_level, exp_type);
     }
@@ -1359,7 +1359,7 @@ TEST_F(EvalContextTest, typeErrors) {
                "hexstring, expecting integer");
 
     // With the #4483 addition, all integers are treated as 4 byte strings,
-    // so those checks no longer makes sense. Commeting it out.
+    // so those checks no longer makes sense. Commenting it out.
     // checkError("concat('foo',3) == 'foo3'",
     //            "<string>:1.14: syntax error, unexpected integer");
     // checkError("concat(3,'foo') == '3foo'",

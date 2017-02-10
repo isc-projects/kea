@@ -137,7 +137,7 @@ public:
         IfaceMgr::instance().openSockets4();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     ~ClassifyTest() {
     }

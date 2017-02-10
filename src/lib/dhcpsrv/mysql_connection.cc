@@ -116,7 +116,7 @@ MySqlConnection::openDatabase() {
         }
 
         // The timeout is only valid if greater than zero, as depending on the
-        // database, a zero timeout might signify someting like "wait
+        // database, a zero timeout might signify something like "wait
         // indefinitely".
         //
         // The check below also rejects a value greater than the maximum

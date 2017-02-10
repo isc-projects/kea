@@ -105,7 +105,7 @@ public:
     ///
     /// This function checks if the direct response capability is supported,
     /// i.e. if the server can respond to the client which doesn't have an
-    /// address yet. For this dummy class, the true is alaways returned.
+    /// address yet. For this dummy class, the true is always returned.
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const;

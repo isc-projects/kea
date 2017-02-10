@@ -194,7 +194,7 @@ public:
     ///
     /// The test uses stub implementation of packet filter object. It is
     /// possible to configure that object to report having a capability
-    /// to directly repond to clients which don't have an address yet.
+    /// to directly respond to clients which don't have an address yet.
     /// This function sets this property for packet filter object.
     ///
     /// @param direct_resp Value to be set.

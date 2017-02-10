@@ -273,7 +273,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
                          const_cast<char*>("-d") };
         launch(4, argv);
     } catch (...) {
-        // calculate elasped time, then rethrow it
+        // calculate elapsed time, then rethrow it
         elapsed_time = microsec_clock::universal_time() - start;
         throw;
     }

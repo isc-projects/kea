@@ -452,7 +452,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
                   OptionContainerTypeIndex::const_iterator> range =
             idx.equal_range(code);
         // Distance between iterators indicates how many options
-        // have been retured for the particular code.
+        // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;

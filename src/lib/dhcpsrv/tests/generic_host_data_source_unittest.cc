@@ -382,7 +382,7 @@ GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
             // Options must be represented by the same C++ class derived from
             // the Option class.
             EXPECT_TRUE(typeid(*option1) == typeid(*option2))
-                << "Comapared DHCP options, having option code "
+                << "Compared DHCP options, having option code "
                 << desc1.option_->getType() << " and belonging to the "
                 << space << " option space, are represented "
                 "by different C++ classes: "
@@ -823,7 +823,7 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
         EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
     }
 
-    // Finally, check that the hosts can be retrived by HW address or DUID
+    // Finally, check that the hosts can be retrieved by HW address or DUID
     ConstHostCollection all_by_id =
         hdsptr_->getAll(id, &host->getIdentifier()[0],
                         host->getIdentifier().size());
@@ -945,7 +945,7 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
         EXPECT_EQ(i + 1000, from_hds->getIPv6SubnetID());
     }
 
-    // Check that the hosts can all be retrived by HW address or DUID
+    // Check that the hosts can all be retrieved by HW address or DUID
     ConstHostCollection all_by_id = hdsptr_->getAll(id, &host->getIdentifier()[0],
                                                     host->getIdentifier().size());
     ASSERT_EQ(subnets, all_by_id.size());

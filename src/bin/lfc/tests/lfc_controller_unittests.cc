@@ -219,7 +219,7 @@ TEST_F(LFCControllerTest, notEnoughData) {
 /// @brief Verify that extra arguments cause the parse to fail.
 /// Parse a full command line plus some extra arguments on the end
 /// to verify that we don't stop parsing when we find all of the
-/// required arguments.  We exepct the parse to fail with an
+/// required arguments.  We expect the parse to fail with an
 /// InvalidUsage exception.
 TEST_F(LFCControllerTest, tooMuchData) {
     LFCController lfc_controller;
@@ -297,7 +297,7 @@ TEST_F(LFCControllerTest, fileRotate) {
     int argc = 14;
     lfc_controller.parseArgs(argc, argv);
 
-    // Test 1: Start with no files - we expect an execption as there
+    // Test 1: Start with no files - we expect an exception as there
     // is no file to copy.
     EXPECT_THROW(lfc_controller.fileRotate(), RunTimeFail);
     removeTestFile();

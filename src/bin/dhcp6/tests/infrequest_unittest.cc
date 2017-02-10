@@ -24,7 +24,7 @@ namespace {
 ///   - one subnet used on eth0 interface
 ///     - with address and prefix pools
 ///     - dns-servers option
-/// - Configuation 1:
+/// - Configuration 1:
 ///   - one subnet used on eth0 interface
 ///     - no addresses or prefixes
 ///     - domain-search option

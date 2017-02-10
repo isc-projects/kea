@@ -25,7 +25,7 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test class derived from NameRemoveTransaction to provide visiblity
+/// @brief Test class derived from NameRemoveTransaction to provide visibility
 // to protected methods.
 class NameRemoveStub : public NameRemoveTransaction {
 public:
@@ -969,7 +969,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_FqdnNotInUse) {
     // Run removingFwdRRsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
 
-    // Forwad completion flag should be true, reverse should still be false.
+    // Forward completion flag should be true, reverse should still be false.
     EXPECT_TRUE(name_remove->getForwardChangeCompleted());
     EXPECT_FALSE(name_remove->getReverseChangeCompleted());
 
@@ -1016,7 +1016,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_OtherRcode) {
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());
     EXPECT_FALSE(name_remove->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_remove->getCurrState());

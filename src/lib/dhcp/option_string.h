@@ -89,7 +89,7 @@ public:
     ///
     /// This function decodes option data from the provided buffer. Note that
     /// it does not decode the option code and length, so the iterators must
-    /// point to the begining and end of the option payload respectively.
+    /// point to the beginning and end of the option payload respectively.
     /// The size of the decoded payload must be at least 1 byte.
     ///
     /// @param begin the iterator pointing to the option payload.

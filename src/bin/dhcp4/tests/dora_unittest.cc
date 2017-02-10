@@ -355,7 +355,7 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     /// Cleans up statistics after the test.
     ~DORATest() {
@@ -609,7 +609,7 @@ TEST_F(DORATest, initRebootRequest) {
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
     // Change client identifier. The server should treat the request
-    // as a resquest from unknown client and ignore it.
+    // as a request from unknown client and ignore it.
     client.includeClientId("12:34");
     ASSERT_NO_THROW(client.doRequest());
     ASSERT_FALSE(client.getContext().response_);
@@ -1315,7 +1315,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
 
     // Client A performs 4-way exchange.
     client.setState(Dhcp4Client::SELECTING);
-    // Revert to the broadcast address for the selcting client.
+    // Revert to the broadcast address for the selecting client.
     client.setDestAddress(IOAddress::IPV4_BCAST_ADDRESS());
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -1379,7 +1379,7 @@ TEST_F(DORATest, statisticsDORA) {
     ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_discover_received);
     ASSERT_TRUE(pkt4_offer_sent);
@@ -1441,7 +1441,7 @@ TEST_F(DORATest, statisticsNAK) {
     ObservationPtr pkt4_nak_sent = mgr.getObservation("pkt4-nak-sent");
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_request_received);
     ASSERT_FALSE(pkt4_ack_sent); // No acks were sent, no such statistic expected.

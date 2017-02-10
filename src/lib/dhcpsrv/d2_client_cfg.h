@@ -49,7 +49,7 @@ public:
 class D2ClientConfig {
 public:
     /// @brief Default configuration constants.
-    /// @todo For now these are hard-coded as configuraiton layer cannot
+    /// @todo For now these are hard-coded as configuration layer cannot
     /// readily provide them (see Trac #3358).
     static const char* DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
@@ -147,7 +147,7 @@ public:
         return(sender_port_);
     }
 
-    /// @brief Return Maximun sender queue size
+    /// @brief Return Maximum sender queue size
     size_t getMaxQueueSize() const {
         return(max_queue_size_);
     }
@@ -214,7 +214,7 @@ public:
     ///
     /// @param mode_str text to convert to an enum.
     /// Valid string values: "never", "always", "when-present",
-    /// "when-not-present" (case insensistive)
+    /// "when-not-present" (case-insensitive)
     ///
     /// @return NameChangeFormat value which maps to the given string.
     ///

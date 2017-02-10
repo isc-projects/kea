@@ -235,7 +235,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
             asio_socket_->set_option(boost::asio::socket_base::reuse_address(true));
         }
 
-        // Bind the low leve socket to our endpoint.
+        // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (boost::system::system_error& ex) {
         isc_throw (NcrUDPError, ex.code().message());

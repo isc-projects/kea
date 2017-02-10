@@ -769,7 +769,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -812,7 +812,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -822,7 +822,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
 
     // replace-client-name is true, client passes in a partial fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "myhost", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -833,7 +833,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
 
 
     // replace-client-name is true, client passes in a full fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "myhost.example.com.",
                                          Option4ClientFqdn::FULL));
@@ -862,7 +862,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
 
@@ -902,7 +902,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
 
@@ -911,7 +911,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
 
     // replace-client-name is true, client passes in a partial fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "myhost",
                                         Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
@@ -922,7 +922,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
 
 
     // replace-client-name is true, client passes in a full fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "myhost.example.com.",
                                         Option6ClientFqdn::FULL));
     response.reset(new Option6ClientFqdn(*request));

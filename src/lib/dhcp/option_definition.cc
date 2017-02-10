@@ -438,7 +438,7 @@ OptionDefinition::haveOpaqueDataTuplesFormat() const {
 
 bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
-    // Case insensitve check that the input is one of: "true" or "false".
+    // Case-insensitive check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
         return (true);
 

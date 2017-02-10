@@ -186,7 +186,7 @@ Dhcp4Client::applyConfiguration() {
     // sname
     OptionBuffer buf = resp->getSname();
     // sname is a fixed length field holding null terminated string. Use
-    // of c_str() guarantess that only a useful portion (ending with null
+    // of c_str() guarantees that only a useful portion (ending with null
     // character) is assigned.
     config_.sname_.assign(std::string(buf.begin(), buf.end()).c_str());
     // (boot)file

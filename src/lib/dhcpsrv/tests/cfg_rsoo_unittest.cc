@@ -64,7 +64,7 @@ TEST(CfgRSOOTest, enableAndClear) {
     }
 }
 
-// This test verfies that the same option may be specified
+// This test verifies that the same option may be specified
 // multiple times and that the code doesn't fail.
 TEST(CfgRSOOTest, enableTwice) {
     CfgRSOO rsoo;

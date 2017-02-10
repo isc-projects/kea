@@ -60,7 +60,7 @@ TEST(OptionSpaceTest, validateName) {
     EXPECT_TRUE(OptionSpace::validateName("1234"));
     EXPECT_TRUE(OptionSpace::validateName("UPPER_CASE_allowed"));
 
-    // Negative test scenarions: empty strings, dots, spaces are not
+    // Negative test scenarios: empty strings, dots, spaces are not
     // allowed
     EXPECT_FALSE(OptionSpace::validateName(""));
     EXPECT_FALSE(OptionSpace::validateName(" "));

@@ -99,7 +99,7 @@ public:
         LeaseFileLoader::write<LeaseObjectType, LeaseFileType, StorageType>
             (lease_file, storage);
 
-        // Compare to see if we got what we exepcted.
+        // Compare to see if we got what we expected.
         EXPECT_EQ(compare, io_.readFile());
     }
 

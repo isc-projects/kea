@@ -176,11 +176,11 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     // Verify queue count is correct.
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr->getQueueSize());
 
-    // Verfiy that peekAt returns the correct entry.
+    // Verify that peekAt returns the correct entry.
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
     EXPECT_TRUE (*(ref_msgs[1]) == *ncr);
 
-    // Verfiy that dequeueAt removes the correct entry.
+    // Verify that dequeueAt removes the correct entry.
     // Removing it, this should shift the queued entries forward by one.
     EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));

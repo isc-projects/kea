@@ -114,7 +114,7 @@ public:
 /// socket and bind to link local address as well as open a socket bound to
 /// the specified unicast address.
 ///
-/// The DHCPv4 configuration doesn't accept the simulatenous use of the
+/// The DHCPv4 configuration doesn't accept the simultaneous use of the
 /// "interface-name" and the "interface-name/address" tuple for the
 /// given interface. When the "interface-name" is specified it implies
 /// that the sockets will be opened on for all addresses configured on
@@ -177,11 +177,11 @@ public:
 
     /// @brief Select interface to be used to receive DHCP traffic.
     ///
-    /// @ref CfgIface for a detail explaination of the interface name argument.
+    /// @ref CfgIface for a detail explanation of the interface name argument.
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param iface_name Explicit interface name, a wildcard name (*) of
-    /// the interface(s) or the pair of iterface/unicast-address to be used
+    /// the interface(s) or the pair of interface/unicast-address to be used
     /// to receive DHCP traffic.
     ///
     /// @throw InvalidIfaceName If the interface name is incorrect, e.g. empty.
@@ -258,7 +258,7 @@ private:
     ///
     /// This method is useful to check if the current configuration uses
     /// multiple IPv4 addresses on any interface. This is important when
-    /// using raw sockets to recieve messages from the clients because
+    /// using raw sockets to receive messages from the clients because
     /// each packet may be received multiple times when it is sent from
     /// a directly connected client. If this is the case, a warning must
     /// be logged.

@@ -586,7 +586,7 @@ public:
         CfgMgr::instance().clear();
     }
 
-    /// @brief Test invalid option paramater value.
+    /// @brief Test invalid option parameter value.
     ///
     /// This test function constructs the simple configuration
     /// string and injects invalid option configuration into it.
@@ -3929,7 +3929,7 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
 // This test checks the ability of the server to parse a configuration
 // containing a full, valid dhcp-ddns (D2ClientConfig) entry.
 TEST_F(Dhcp6ParserTest, d2ClientConfig) {
-    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    // Verify that the D2 configuration can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
@@ -4035,7 +4035,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    // Verify that the D2 configuration can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 

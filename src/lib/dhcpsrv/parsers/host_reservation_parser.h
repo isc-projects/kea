@@ -146,7 +146,7 @@ protected:
 /// @brief Parser for a list of host identifiers.
 ///
 /// This is a parent parser class for parsing "host-reservation-identifiers"
-/// global configuration parmeter. The DHCPv4 and DHCPv6 specific parsers
+/// global configuration parameter. The DHCPv4 and DHCPv6 specific parsers
 /// derive from this class.
 class HostReservationIdsParser : public isc::data::SimpleParser {
 public:

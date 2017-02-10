@@ -62,7 +62,7 @@ public:
         NONE = 4        ///< "Not set" state
     };
 
-    /// \brief Minimim size of buffers
+    /// \brief Minimum size of buffers
     enum {
         MIN_SIZE = (64 * 1024 + 2)          ///< 64kB + two bytes for a count
     };
@@ -149,7 +149,7 @@ public:
         return (ptr_->expected_);
     }
 
-    /// \brief Get offset intodData
+    /// \brief Get offset into data
     size_t& offset() {
         return (ptr_->offset_);
     }
@@ -418,7 +418,7 @@ TEST(TCPSocket, sequenceTest) {
     // Run the callbacks. Several options are possible depending on how ASIO
     // is implemented and whether the message gets fragmented:
     //
-    // 1) The send handler may complete immediately, regardess of whether the
+    // 1) The send handler may complete immediately, regardless of whether the
     // data has been read by the client.  (This is the most likely.)
     // 2) The send handler may only run after all the data has been read by
     // the client. (This could happen if the client's TCP buffers were too

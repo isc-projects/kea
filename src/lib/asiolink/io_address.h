@@ -67,11 +67,11 @@ public:
 
     /// @brief Constructor for ip::address_v4 object.
     ///
-    /// This constructor is intented to be used when constructing
+    /// This constructor is intended to be used when constructing
     /// IPv4 address out of uint32_t type. Passed value must be in
     /// network byte order
     ///
-    /// @param v4address IPv4 address represnted by uint32_t
+    /// @param v4address IPv4 address represented by uint32_t
     IOAddress(uint32_t v4address);
 
     /// \brief Convert the address to a string.
@@ -183,7 +183,7 @@ public:
     ///
     /// It is useful for comparing which address is bigger.
     /// Operations within one protocol family are obvious.
-    /// Comparisons between v4 and v6 will allways return v4
+    /// Comparisons between v4 and v6 will always return v4
     /// being smaller. This follows boost::boost::asio::ip implementation
     bool lessThan(const IOAddress& other) const {
         if (this->getFamily() == other.getFamily()) {

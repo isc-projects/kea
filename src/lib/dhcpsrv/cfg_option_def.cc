@@ -38,7 +38,7 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
     // Get option space names held by the other object.
     const std::list<std::string>&
         other_names = other.option_definitions_.getOptionSpaceNames();
-    // Compareg that sizes are the same. If they hold different number of
+    // Compare that sizes are the same. If they hold different number of
     // option space names the objects are not equal.
     if (names.size() != other_names.size()) {
         return (false);

@@ -26,7 +26,7 @@ const unsigned int MAX_BPF_OPEN_ATTEMPTS = 100;
 /// received on local loopback interface.
 const unsigned int BPF_LOCAL_LOOPBACK_HEADER_LEN = 4;
 
-/// The following structure defines a Berkely Packet Filter program to perform
+/// The following structure defines a Berkeley Packet Filter program to perform
 /// packet filtering. The program operates on Ethernet packets.  To help with
 /// interpretation of the program, for the types of Ethernet packets we are
 /// interested in, the header layout is:
@@ -229,7 +229,7 @@ PktFilterBPF::openSocket(Iface& iface,
 
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
-    // The function will throw an exception and effectivelly cease opening
+    // The function will throw an exception and effectively cease opening
     // the BPF device below.
     int fallback = openFallbackSocket(addr, port);
 
@@ -310,7 +310,7 @@ PktFilterBPF::openSocket(Iface& iface,
         close(fallback);
         close(sock);
         isc_throw(SocketConfigError, "Unable to obtain the required"
-                  " buffer legth for reads from BPF device");
+                  " buffer length for reads from BPF device");
     }
 
     if (buf_len < sizeof(bpf_hdr)) {
@@ -355,14 +355,14 @@ PktFilterBPF::openSocket(Iface& iface,
     }
 
     // Configure the BPF device to use the immediate mode. This ensures
-    // that the read function returns immediatelly, instead of waiting
+    // that the read function returns immediately, instead of waiting
     // for the kernel to fill up the buffer, which would likely cause
     // read hangs.
     int flag = 1;
     if (ioctl(sock, BIOCIMMEDIATE, &flag) < 0) {
         close(fallback);
         close(sock);
-        isc_throw(SocketConfigError, "Failed to set promiscious mode for"
+        isc_throw(SocketConfigError, "Failed to set promiscuous mode for"
                   " BPF device");
     }
 
@@ -411,10 +411,10 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     datalen = read(socket_info.sockfd_, iface.getReadBuffer(),
                    iface.getReadBufferSize());
     // If negative value is returned by read(), it indicates that an
-    // error occured. If returned value is 0, no data was read from the
+    // error occurred. If returned value is 0, no data was read from the
     // socket. In both cases something has gone wrong, because we expect
     // that a chunk of data is there. We signal the lack of data by
-    // returing an empty packet.
+    // returning an empty packet.
     if (datalen <= 0) {
         return Pkt4Ptr();
     }

@@ -15,7 +15,7 @@ using namespace isc::util;
 
 // This test verifies that the value can be assigned and committed.
 TEST(StagedValueTest, assignAndCommit) {
-    // Initally the value should be set to a default
+    // Initially the value should be set to a default
     StagedValue<int> value;
     ASSERT_EQ(0, value.getValue());
 
