@@ -196,7 +196,7 @@ public:
             if (len > size) {
                 len = size;
             }
-            if (digest_.empty()) {
+            if (digest_.size() == 0) {
                 digest_ = hmac_->final();
             }
             return (Botan::same_mem(&digest_[0],
