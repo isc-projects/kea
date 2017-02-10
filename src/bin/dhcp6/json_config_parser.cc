@@ -545,8 +545,7 @@ public:
         srv_config->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
-        // @todo Change for uint16_t
-        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
+        uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
     }
 
@@ -562,6 +561,18 @@ private:
     uint32_t getUint32(isc::data::ConstElementPtr scope,
                        const std::string& name) {
         return (getIntType<uint32_t>(scope, name));
+    }
+
+    /// @brief Returns a value converted to uint16_t
+    ///
+    /// Instantiation of getIntType() to uint16_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an uint16_t value
+    uint16_t getUint16(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint16_t>(scope, name));
     }
 };
 
