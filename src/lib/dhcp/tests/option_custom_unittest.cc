@@ -99,9 +99,24 @@ public:
     /// @tparam integer type.
     template<typename T>
     void writeInt(T value, std::vector<uint8_t>& buf) {
-        // This loop is incorrectly compiled by some old g++?!
-        for (int i = 0; i < sizeof(T); ++i) {
-            buf.push_back(value >> ((sizeof(T) - i - 1) * 8) & 0xFF);
+        switch (sizeof(T)) {
+        case 4:
+            buf.push_back((value >> 24) & 0xFF);
+            /* falls into */
+        case 3:
+            buf.push_back((value >> 16) & 0xFF);
+            /* falls into */
+        case 2:
+            buf.push_back((value >> 8) & 0xFF);
+            /* falls into */
+        case 1:
+            buf.push_back(value & 0xFF);
+            break;
+        default:
+            // This loop is incorrectly compiled by some old g++?!
+            for (int i = 0; i < sizeof(T); ++i) {
+                buf.push_back(value >> ((sizeof(T) - i - 1) * 8) & 0xFF);
+            }
         }
     }
 
