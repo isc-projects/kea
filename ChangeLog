@@ -1,3 +1,9 @@
+1213.	[func]		tomek
+	Bison parser implemented for Control-agent. The code is able
+	to syntactically parse input configuration, but the output
+	is not used yet.
+	(Trac #5076, git d99048aa5b90efa7812a75cdae98a0913470f5a6)
+
 1212.	[doc]		andreipavelQ
 	Many spelling corrections.
 	(Github #47, git a6a7ca1ced8c63c1e11ef4c572f09272340afdd7)
