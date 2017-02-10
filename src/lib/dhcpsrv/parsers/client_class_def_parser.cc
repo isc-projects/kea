@@ -72,73 +72,71 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Parse matching expression
     ExpressionPtr match_expr;
-    ConstElementPtr test_cfg = class_def_cfg->get("test");
-    if (test_cfg) {
+    ConstElementPtr test = class_def_cfg->get("test");
+    if (test) {
         ExpressionParser parser;
-        parser.parse(match_expr, test_cfg, family);
+        parser.parse(match_expr, test, family);
     }
 
     // Parse option data
     CfgOptionPtr options(new CfgOption());
-    ConstElementPtr options_cfg = class_def_cfg->get("option-data");
-    if (options_cfg) {
+    ConstElementPtr option_data = class_def_cfg->get("option-data");
+    if (option_data) {
         OptionDataListParser opts_parser(family);
-        opts_parser.parse(options, options_cfg);
+        opts_parser.parse(options, option_data);
     }
 
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");
-    ConstElementPtr next_server_cfg = class_def_cfg->get("next-server");
-    if (next_server_cfg) {
+    if (class_def_cfg->contains("next-server")) {
+        std::string next_server_txt = getString(class_def_cfg, "next-server");
         try {
-            next_server = IOAddress(getString(class_def_cfg, "next-server"));
+            next_server = IOAddress(next_server_txt);
         } catch (const IOError& ex) {
             isc_throw(DhcpConfigError,
                       "Invalid next-server value specified: '"
-                      << next_server_cfg->stringValue() << "' ("
-                      << next_server_cfg->getPosition() << ")");
+                      << next_server_txt << "' ("
+                      << getPosition("next-server", class_def_cfg) << ")");
         }
 
         if (next_server.getFamily() != AF_INET) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_cfg->stringValue()
+                      << next_server_txt
                       << "', must be IPv4 address ("
-                      << next_server_cfg->getPosition() << ")");
+                      << getPosition("next-server", class_def_cfg) << ")");
         }
 
         if (next_server.isV4Bcast()) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_cfg->stringValue()
+                      << next_server_txt
                       << "', must not be a broadcast ("
-                      << next_server_cfg->getPosition() << ")");
+                      << getPosition("next-server", class_def_cfg) << ")");
         }
     }
 
     // Let's try to parse server-hostname
     std::string sname;
-    ConstElementPtr sname_cfg = class_def_cfg->get("server-hostname");
-    if (sname_cfg) {
+    if (class_def_cfg->contains("server-hostname")) {
         sname = getString(class_def_cfg, "server-hostname");
 
         if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
             isc_throw(DhcpConfigError, "server-hostname must be at most "
                       << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
                       << sname.length() << " ("
-                      << sname_cfg->getPosition() << ")");
+                      << getPosition("server-hostname", class_def_cfg) << ")");
         }
     }
 
     // Let's try to parse boot-file-name
     std::string filename;
-    ConstElementPtr filename_cfg = class_def_cfg->get("boot-file-name");
-    if (filename_cfg) {
+    if (class_def_cfg->contains("boot-file-name")) {
         filename = getString(class_def_cfg, "boot-file-name");
 
         if (filename.length() > Pkt4::MAX_FILE_LEN) {
             isc_throw(DhcpConfigError, "boot-file-name must be at most "
                       << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
                       << filename.length() << " ("
-                      << filename_cfg->getPosition() << ")");
+                      << getPosition("boot-file-name", class_def_cfg) << ")");
         }
 
     }
