@@ -2,7 +2,7 @@
 	Option string values containing comma can now be specified
 	correctly by preceding comma with double backslashes (e.g.
 	"foo\\,bar").
-	(Trac #5105, git xxx)
+	(Trac #5105, git fa79ac2396aa94d7bac91bd12d3593ebaaa9386d)
 
 1212.	[doc]		andreipavelQ
 	Many spelling corrections.
