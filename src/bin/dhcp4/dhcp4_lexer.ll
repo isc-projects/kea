@@ -370,6 +370,36 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"keyspace\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_KEYSPACE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("keyspace", driver.loc_);
+    }
+}
+
+\"contact_points\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_CONTACT_POINTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("contact_points", driver.loc_);
+    }
+}
+
+\"contact-points\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_CONTACT_POINTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("contact-points", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
