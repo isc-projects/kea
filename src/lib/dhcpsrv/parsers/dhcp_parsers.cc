@@ -526,7 +526,10 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // separated values then we need to split this string into
         // individual values - each value will be used to initialize
         // one data field of an option.
-        data_tokens = isc::util::str::tokens(data_param, ",");
+        // It is the only usage of the escape option: this allows
+        // to embed commas in individual values and to return
+        // for instance a string value with embedded commas.
+        data_tokens = isc::util::str::tokens(data_param, ",", true);
 
     } else {
         // Otherwise, the option data is specified as a string of
