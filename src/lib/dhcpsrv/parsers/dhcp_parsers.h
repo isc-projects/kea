@@ -466,7 +466,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    OptionDataParser(const uint16_t address_family);
+    explicit OptionDataParser(const uint16_t address_family);
 
     /// @brief Parses ElementPtr containing option definition
     ///
@@ -578,7 +578,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or AF_INET6
-    OptionDataListParser(const uint16_t address_family);
+    explicit OptionDataListParser(const uint16_t address_family);
 
     /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
@@ -721,7 +721,7 @@ public:
 
     /// @brief constructor
     /// @param family specifies protocol family (IPv4 or IPv6)
-    RelayInfoParser(const isc::dhcp::Option::Universe& family);
+    explicit RelayInfoParser(const isc::dhcp::Option::Universe& family);
 
     /// @brief parses the actual relay parameters
     ///
@@ -733,7 +733,18 @@ public:
     void parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
                isc::data::ConstElementPtr relay_info);
 
-protected:
+private:
+
+    /// @brief Returns a value converted to IOAddress
+    ///
+    /// Instantiation of getAndConvert() to IOAddress
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an IOAddress value
+    isc::asiolink::IOAddress
+    getIOAddress(isc::data::ConstElementPtr scope, const std::string& name);
+
     /// Protocol family (IPv4 or IPv6)
     Option::Universe family_;
 };
@@ -765,7 +776,7 @@ public:
     /// @brief constructor
     ///
     /// @param family address family: @c AF_INET or @c AF_INET6
-    SubnetConfigParser(uint16_t family);
+    explicit SubnetConfigParser(uint16_t family);
 
     /// @brief virtual destructor (does nothing)
     virtual ~SubnetConfigParser() { }
