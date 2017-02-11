@@ -331,7 +331,7 @@ public:
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
         bool echo_client_id = getBoolean(global, "echo-client-id");
-        CfgMgr::instance().echoClientId(echo_client_id);
+        cfg->setEchoClientId(echo_client_id);
 
         // Set the probation period for decline handling.
         uint32_t probation_period =

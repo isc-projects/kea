@@ -470,6 +470,22 @@ public:
         return (decline_timer_);
     }
 
+    /// @brief Sets whether server should send back client-id in DHCPv4
+    ///
+    /// This is a compatibility flag. The default (true) is compliant with
+    /// RFC6842. False is for backward compatibility.
+    ///
+    /// @param echo should the client-id be sent or not
+    void setEchoClientId(const bool echo) {
+        echo_v4_client_id_ = echo;
+    }
+
+    /// @brief Returns whether server should send back client-id in DHCPv4.
+    /// @return true if client-id should be returned, false otherwise.
+    bool getEchoClientId() const {
+        return (echo_v4_client_id_);
+    }
+
     /// @brief Sets DHCP4o6 IPC port
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
@@ -582,6 +598,9 @@ private:
     /// This timer specifies decline probation period, the time after a declined
     /// lease is recovered back to available state. Expressed in seconds.
     uint32_t decline_timer_;
+
+    /// @brief Indicates whether v4 server should send back client-id
+    bool echo_v4_client_id_;
 
     /// @brief DHCP4o6 IPC port
     ///

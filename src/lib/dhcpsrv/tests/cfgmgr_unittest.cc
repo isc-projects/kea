@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -381,23 +381,6 @@ TEST_F(CfgMgrTest, optionSpace6) {
     );
 
     /// @todo decide if a duplicate vendor space is allowed.
-}
-
-// This test verifies that RFC6842 (echo client-id) compatibility may be
-// configured.
-TEST_F(CfgMgrTest, echoClientId) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Check that the default is true
-    EXPECT_TRUE(cfg_mgr.echoClientId());
-
-    // Check that it can be modified to false
-    cfg_mgr.echoClientId(false);
-    EXPECT_FALSE(cfg_mgr.echoClientId());
-
-    // Check that the default value can be restored
-    cfg_mgr.echoClientId(true);
-    EXPECT_TRUE(cfg_mgr.echoClientId());
 }
 
 // This test checks the D2ClientMgr wrapper methods.
