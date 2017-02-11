@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -744,7 +744,14 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     checkResponse(offer, DHCPOFFER, 1234);
     checkClientId(offer, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+    
     offer = srv.processDiscover(dis);
 
     // Check if we get response at all
@@ -812,7 +819,14 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+
     ack = srv.processRequest(dis);
 
     // Check if we get response at all

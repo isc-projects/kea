@@ -83,7 +83,6 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
 
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
-    CfgMgr::instance().echoClientId(true);
 
     LibDHCP::clearRuntimeOptionDefs();
 
@@ -360,7 +359,8 @@ void Dhcpv4SrvTest::checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_
 
 void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid) {
 
-    bool include_clientid = CfgMgr::instance().echoClientId();
+    bool include_clientid =
+        CfgMgr::instance().getCurrentCfg()->getEchoClientId();
 
     // check that server included our own client-id
     OptionPtr opt = rsp->getOption(DHO_DHCP_CLIENT_IDENTIFIER);

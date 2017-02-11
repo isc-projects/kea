@@ -29,7 +29,7 @@ SrvConfig::SrvConfig()
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0),
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()) {
 }
 
@@ -43,7 +43,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0),
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()) {
 }
 
