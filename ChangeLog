@@ -1,3 +1,7 @@
+1215.	[doc]		tomek
+	Developer's Guide updated to cover flex/bison parser.
+	(Trac #5112, git 44139d821c1f4e43dbff22d49101a0854e4f9f5b)
+
 1214.	[func]		tomek
 	Bison parser implemented for Control-agent. The code is able
 	to syntactically parse input configuration, but the output
