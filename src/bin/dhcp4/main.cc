@@ -153,6 +153,9 @@ main(int argc, char* argv[]) {
             }
             ControlledDhcpv4Srv server(0);
             ConstElementPtr answer;
+
+            // Now we pass the Dhcp4 configuration to the server, but
+            // tell it to check the configuration only (check_only = true)
             answer = configureDhcp4Server(server, dhcp4, true);
 
             int status_code = 0;
