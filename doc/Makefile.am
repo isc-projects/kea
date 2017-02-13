@@ -1,9 +1,11 @@
 SUBDIRS = guide design
 
 EXTRA_DIST  = version.ent.in Doxyfile Doxyfile-xml
+EXTRA_DIST += devel/bison.dox
 EXTRA_DIST += devel/config-backend.dox
 EXTRA_DIST += devel/contribute.dox
 EXTRA_DIST += devel/mainpage.dox
+EXTRA_DIST += devel/terminology.dox
 EXTRA_DIST += devel/unit-tests.dox
 
 nobase_dist_doc_DATA  = examples/agent/simple.json
