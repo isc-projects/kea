@@ -9,6 +9,8 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/parser_context.h>
+#include <dhcp4/json_config_parser.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -124,6 +126,14 @@ main(int argc, char* argv[]) {
 
     if (check_mode) {
         try {
+
+            // We need to initialize logging, in case any error messages are to be printed.
+            // This is just a test, so we don't care about lockfile.
+            setenv("KEA_LOCKFILE_DIR", "none", 0);
+            CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+            Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
+
+            // Check the syntax first.
             Parser4Context parser;
             ConstElementPtr json;
             json = parser.parseFile(config_file, Parser4Context::PARSER_DHCP4);
@@ -134,9 +144,27 @@ main(int argc, char* argv[]) {
             if (verbose_mode) {
                 cerr << "Syntax check OK" << endl;
             }
-            return (EXIT_SUCCESS);
+
+            // Check the logic next.
+            ConstElementPtr dhcp4 = json->get("Dhcp4");
+            if (!dhcp4) {
+                cerr << "Missing mandatory Dhcp4 element" << endl;
+                return (EXIT_FAILURE);
+            }
+            ControlledDhcpv4Srv server(0);
+            ConstElementPtr answer;
+            answer = configureDhcp4Server(server, dhcp4, true);
+
+            int status_code = 0;
+            answer = isc::config::parseAnswer(status_code, answer);
+            if (status_code == 0) {
+                return (EXIT_SUCCESS);
+            } else {
+                cerr << "Error encountered: " << answer->stringValue() << endl;
+                return (EXIT_FAILURE);
+            }
         } catch (const std::exception& ex) {
-            cerr << "Syntax check failed with " << ex.what() << endl;
+            cerr << "Syntax check failed with: " << ex.what() << endl;
         }
         return (EXIT_FAILURE);
     }
