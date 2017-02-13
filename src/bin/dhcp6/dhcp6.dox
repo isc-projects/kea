@@ -24,7 +24,7 @@ component implementation.
 
 @section dhcpv6ConfigParser Configuration Parsers in DHCPv6
 
-Three minutes overview. If you are here only to learn absolute minimum about
+This is a three minutes overview. If you are here only to learn absolute minimum about
 the new parser, here's how you use it:
 
 @code
@@ -38,6 +38,8 @@ the new parser, here's how you use it:
 
 Note: parsers are currently being migrated to @ref isc::data::SimpleParser. See
 @ref ccSimpleParser page for details.
+
+For more detailed background information about flex and bison, see @ref parser.
 
 The common configuration parsers for the DHCP servers are located in the
 src/lib/dhcpsrv/parsers/ directory. Parsers specific to the DHCPv6 component
@@ -242,6 +244,8 @@ MapElement object, but does not remove it.
 
 @section dhcpv6ConfigSubParser Parsing Partial Configuration in DHCPv6
 
+For more generic description of the solution, see @ref parserSubgrammar.
+
 One another important capability required is the ability to parse not only the
 whole configuration, but a subset of it. This is done by introducing artificial
 tokens (e.g. TOPLEVEL_JSON and TOPLEVEL_DHCP6). For complete list of available
@@ -276,7 +280,7 @@ several new interesting ones, though. ParserTest.file loads all the
 config file examples we have in doc/examples/kea6. This ensures that the
 parser is able to load them and also checks that our examples are sane.
 
-@section dhcp6ParserIncludes Config File Includes
+@section dhcp6ParserIncludes Configuration Files Inclusion
 
 The new parser provides an ability to include files. The syntax was chosen
 to look similar to how Apache includes PHP scripts in HTML code. This
@@ -340,6 +344,8 @@ descriptive if the input string does not parse properly.
 
 Details of the refactor of the classes derived from DhcpConfigParser are
 documented in http://kea.isc.org/wiki/SimpleParser.
+
+For a generic description of the conflict avoidance, see @ref parserFlex.
 
 @section dhcpv6ConfigInherit DHCPv6 Configuration Inheritance
 

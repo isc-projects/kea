@@ -119,6 +119,8 @@
  *   - @subpage cplSignals
  *
  * @section miscellaneousTopics Miscellaneous Topics
+ * - @subpage terminology
+ * - @subpage parser
  * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
  *   - @subpage logDeveloperUse
