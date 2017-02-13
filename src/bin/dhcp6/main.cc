@@ -9,6 +9,7 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/parser_context.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -128,6 +129,13 @@ main(int argc, char* argv[]) {
 
     if (check_mode) {
         try {
+            // We need to initialize logging, in case any error messages are to be printed.
+            // This is just a test, so we don't care about lockfile.
+            setenv("KEA_LOCKFILE_DIR", "none", 0);
+            CfgMgr::instance().setDefaultLoggerName(DHCP6_ROOT_LOGGER_NAME);
+            Daemon::loggerInit(DHCP6_ROOT_LOGGER_NAME, verbose_mode);
+
+            // Check the syntax first.
             Parser6Context parser;
             ConstElementPtr json;
             json = parser.parseFile(config_file, Parser6Context::PARSER_DHCP6);
@@ -138,6 +146,30 @@ main(int argc, char* argv[]) {
             if (verbose_mode) {
                 cerr << "Syntax check OK" << endl;
             }
+
+            // Check the logic next.
+            ConstElementPtr dhcp6 = json->get("Dhcp6");
+            if (!dhcp6) {
+                cerr << "Missing mandatory Dhcp6 element" << endl;
+                return (EXIT_FAILURE);
+            }
+            ControlledDhcpv6Srv server(0);
+            ConstElementPtr answer;
+
+            // Now we pass the Dhcp6 configuration to the server, but
+            // tell it to check the configuration only (check_only = true)
+            answer = configureDhcp6Server(server, dhcp6, true);
+
+            int status_code = 0;
+            answer = isc::config::parseAnswer(status_code, answer);
+            if (status_code == 0) {
+                return (EXIT_SUCCESS);
+            } else {
+                cerr << "Error encountered: " << answer->stringValue() << endl;
+                return (EXIT_FAILURE);
+            }
+
+
             return (EXIT_SUCCESS);
         } catch (const std::exception& ex) {
             cerr << "Syntax check failed with " << ex.what() << endl;
