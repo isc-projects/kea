@@ -105,8 +105,8 @@
       <varlistentry>
         <term><option>-t</option></term>
         <listitem><para>
-          Check the syntax of the configuration file and report the first
-          error if any.
+          Check the syntax of the configuration file (specified with
+          -c) and report the first error if any.
         </para></listitem>
       </varlistentry>
 
