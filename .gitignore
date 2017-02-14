@@ -44,3 +44,5 @@ config.h.in~
 /local.zone.sqlite3
 /logger_lockfile
 /report.info
+
+/ext/gtest/
