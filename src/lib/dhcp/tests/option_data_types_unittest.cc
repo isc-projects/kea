@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -190,6 +190,69 @@ TEST_F(OptionDataTypesTest, writeBinary) {
     // Verify that the buffer contains valid data.
     ASSERT_EQ(buf_ref.size(), buf.size());
     EXPECT_TRUE(std::equal(buf_ref.begin(), buf_ref.end(), buf.begin()));
+}
+
+// The purpose of this test is to verify that the tuple value stored
+TEST_F(OptionDataTypesTest, readTuple) {
+    // The string
+    std::string value = "hello world";
+    // Create an input buffer.
+    std::vector<uint8_t> buf;
+    // DHCPv4 tuples use 1 byte length
+    writeInt<uint8_t>(static_cast<uint8_t>(value.size()), buf);
+    writeString(value, buf);
+
+    // Read the string from the buffer.
+    std::string result;
+    ASSERT_NO_THROW(
+        result = OptionDataTypeUtil::readTuple(buf, OpaqueDataTuple::LENGTH_1_BYTE);
+    );
+    // Check that it is valid.
+    EXPECT_EQ(value, result);
+
+    buf.clear();
+
+    // DHCPv6 tuples use 2 byte length
+    writeInt<uint16_t>(static_cast<uint16_t>(value.size()), buf);
+    writeString(value, buf);
+
+    // Read the string from the buffer.
+    ASSERT_NO_THROW(
+        result = OptionDataTypeUtil::readTuple(buf, OpaqueDataTuple::LENGTH_2_BYTES);
+    );
+    // Check that it is valid.
+    EXPECT_EQ(value, result);
+}
+
+// The purpose of this test is to verify that a tuple value
+// are correctly encoded in a buffer
+TEST_F(OptionDataTypesTest, writeTuple) {
+    // The string
+    std::string value = "hello world";
+    // Create an output buffer.
+    std::vector<uint8_t> buf;
+
+    // Encode it in DHCPv4
+    OptionDataTypeUtil::writeTuple(value, OpaqueDataTuple::LENGTH_1_BYTE, buf);
+
+    // Check that it is valid.
+    ASSERT_EQ(value.size() + 1, buf.size());
+    std::vector<uint8_t> expected;
+    writeInt<uint8_t>(static_cast<uint8_t>(value.size()), expected);
+    writeString(value, expected);
+    EXPECT_EQ(0, std::memcmp(&buf[0], &expected[0], buf.size()));
+
+    buf.clear();
+
+    // Encode it in DHCPv6
+    OptionDataTypeUtil::writeTuple(value, OpaqueDataTuple::LENGTH_2_BYTES, buf);
+
+    // Check that it is valid.
+    ASSERT_EQ(value.size() + 2, buf.size());
+    expected.clear();
+    writeInt<uint16_t>(static_cast<uint16_t>(value.size()), expected);
+    writeString(value, expected);
+    EXPECT_EQ(0, std::memcmp(&buf[0], &expected[0], buf.size()));
 }
 
 // The purpose of this test is to verify that the boolean value stored
