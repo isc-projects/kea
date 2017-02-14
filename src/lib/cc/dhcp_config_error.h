@@ -21,19 +21,17 @@ class ParseError : public isc::Exception {
     isc::Exception(file, line, what) { };
 };
 
-namespace dhcp {
-
 /// An exception that is thrown if an error occurs while configuring
-/// DHCP server.
+/// any server.
 /// By convention when this exception is thrown there is a position
 /// between parentheses so the code style should be like this:
 ///
 /// try {
 ///     ...
-/// } catch (const DhcpConfigError&) {
+/// } catch (const ConfigError&) {
 ///     throw;
 /// } catch (const std::exception& ex) {
-///    isc_throw(DhcpConfigError, "message" << ex.what()
+///    isc_throw(ConfigError, "message" << ex.what()
 ///              << " (" << getPosition(what) << ")");
 /// }
 
@@ -41,11 +39,25 @@ namespace dhcp {
 /// there is no dependency through DhcpConfigParser
 /// @todo: create an isc_throw like macro to add the
 /// position more easily.
-/// @todo: rename the exception for instance into ConfigError
-
-class DhcpConfigError : public isc::Exception {
+/// @todo: replace all references to DhcpConfigError with ConfigError,
+///        then remove DhcpConfigError.
+class ConfigError : public isc::Exception {
 public:
 
+    /// @brief constructor
+    ///
+    /// @param file name of the file, where exception occurred
+    /// @param line line of the file, where exception occurred
+    /// @param what text description of the issue that caused exception
+    ConfigError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {}
+};
+
+namespace dhcp {
+
+/// @brief To be removed. Please use ConfigError instead.
+class DhcpConfigError : public isc::Exception {
+public:
     /// @brief constructor
     ///
     /// @param file name of the file, where exception occurred
