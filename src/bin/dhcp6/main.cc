@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,13 +46,13 @@ usage() {
     cerr << "Kea DHCPv6 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W] [-d] [-t] [-c cfgfile] [-p port_number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p port_number]" << endl;
     cerr << "  -v: print version number and exit." << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
-    cerr << "  -t: check the configuration file syntax and exit" << endl;
     cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -t file: check the configuration file syntax and exit" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
@@ -70,14 +70,10 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dtvVWc:p:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:t:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
-            break;
-
-        case 't':
-            check_mode = true;
             break;
 
         case 'v':
@@ -91,6 +87,10 @@ main(int argc, char* argv[]) {
         case 'W':
             cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
+
+        case 't':
+            check_mode = true;
+            // falls through
 
         case 'c': // config file
             config_file = optarg;
