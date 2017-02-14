@@ -38,14 +38,14 @@ FAILED=
 
 # Find all the tests (yes, doing it by a name is a nasty hack)
 # Since the while runs in a subprocess, we need to get the assignments out, done by the eval
-eval $(find . -type f -name run_unittests -print | grep -v '\.libs/run_unittests$' | while read testname ; do
+eval $(find . -type f -name *_unittests -print | grep -v '\.libs/' | while read testname ; do
     sed -e 's#exec "#exec valgrind '"$FLAGS"' "#' "$testname" > "$testname.valgrind"
     chmod +x "$testname.valgrind"
     echo "$testname" >>"$LOGFILE"
     echo "===============" >>"$LOGFILE"
     OLDDIR="`pwd`"
     cd $(dirname "$testname")
-    ./run_unittests.valgrind >&2 &
+    ./$(basename $testname).valgrind >&2 &
     PID="$!"
     set +e
     wait "$PID"
@@ -59,8 +59,10 @@ eval $(find . -type f -name run_unittests -print | grep -v '\.libs/run_unittests
     NAME="$LOGFILE.$PID"
     rm "$testname.valgrind"
     # Remove the ones from death tests
-    grep "==$PID==" "$NAME" >>"$LOGFILE"
-    rm "$NAME"
+    if [ -e $NAME ]; then
+        grep "==$PID==" "$NAME" >>"$LOGFILE"
+        rm "$NAME"
+    fi
     echo 'FOUND_ANY=true'
 done)
 
