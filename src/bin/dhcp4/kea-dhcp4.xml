@@ -52,9 +52,9 @@
       <arg><option>-V</option></arg>
       <arg><option>-W</option></arg>
       <arg><option>-d</option></arg>
-      <arg><option>-t</option></arg>
-      <arg><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg><option>-p<replaceable class="parameter">port-number</replaceable></option></arg>
+      <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg><option>-p <replaceable class="parameter">port-number</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -103,20 +103,20 @@
       </varlistentry>
 
       <varlistentry>
-        <term><option>-t</option></term>
-        <listitem><para> Check the syntax of the configuration file
-          (specified with -c) and report the first error if any. Note
-          that not all parameters are completely checked, in
-          particular, traffic sockets are not opened, control channel
-          socket is not opened and hook libraries are not loaded.
-        </para></listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><option>-c</option></term>
         <listitem><para>
           Configuration file including the configuration for DHCPv4 server.
           It may also contain configuration entries for other Kea services.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para> Check the configuration file
+          and report the first error if any. Note
+          that not all parameters are completely checked, in
+          particular, service and control channel sockets
+          are not opened, and hook libraries are not loaded.
         </para></listitem>
       </varlistentry>
 
