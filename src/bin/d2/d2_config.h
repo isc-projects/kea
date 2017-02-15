@@ -134,18 +134,6 @@ public:
 /// @brief Acts as a storage vault for D2 global scalar parameters
 class D2Params {
 public:
-
-    /// @brief Default configuration constants.
-    //@{
-    static const char*      DFT_IP_ADDRESS;
-    static const uint32_t   DFT_PORT;
-    static const char*      DFT_PORT_STR;
-    static const uint32_t   DFT_DNS_SERVER_TIMEOUT;
-    static const char*      DFT_DNS_SERVER_TIMEOUT_STR;
-    static const char*      DFT_NCR_PROTOCOL;
-    static const char*      DFT_NCR_FORMAT;
-    //@}
-
     /// @brief Constructor
     ///
     /// @param ip_address IP address at which D2 should listen for NCRs
@@ -421,10 +409,6 @@ class DnsServerInfo {
 public:
     /// @brief defines DNS standard port value
     static const uint32_t STANDARD_DNS_PORT = 53;
-    static const char* STANDARD_DNS_PORT_STR;
-
-    /// @brief defines an "empty" string version of an ip address.
-    static const char* EMPTY_IP_STR;
 
     /// @brief Constructor
     ///
