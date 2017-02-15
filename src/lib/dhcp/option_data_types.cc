@@ -216,9 +216,19 @@ OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
 }
 
 void
-OptionDataTypeUtil:: writeTuple(const std::string& value,
-                                OpaqueDataTuple::LengthFieldType lengthfieldtype,
-                                std::vector<uint8_t>& buf) {
+OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
+                              OpaqueDataTuple& tuple) {
+    try {
+        tuple.unpack(buf.begin(), buf.end());
+    } catch (const OpaqueDataTupleError& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+void
+OptionDataTypeUtil::writeTuple(const std::string& value,
+                               OpaqueDataTuple::LengthFieldType lengthfieldtype,
+                               std::vector<uint8_t>& buf) {
     if (lengthfieldtype == OpaqueDataTuple::LENGTH_1_BYTE) {
         if (value.size() > std::numeric_limits<uint8_t>::max()) {
             isc_throw(BadDataTypeCast, "invalid tuple value (size "
@@ -242,6 +252,37 @@ OptionDataTypeUtil:: writeTuple(const std::string& value,
                   << static_cast<unsigned>(lengthfieldtype));
     }
     buf.insert(buf.end(), value.begin(), value.end());
+}
+
+void
+OptionDataTypeUtil::writeTuple(const OpaqueDataTuple& tuple,
+                               std::vector<uint8_t>& buf) {
+    if (tuple.getLength() == 0) {
+        isc_throw(BadDataTypeCast, "invalid empty tuple value");
+    }
+    if (tuple.getLengthFieldType() == OpaqueDataTuple::LENGTH_1_BYTE) {
+        if (tuple.getLength() > std::numeric_limits<uint8_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << tuple.getLength() << " larger than "
+                      << std::numeric_limits<uint8_t>::max() << ")");
+        }
+        buf.push_back(static_cast<uint8_t>(tuple.getLength()));
+
+    } else if (tuple.getLengthFieldType() == OpaqueDataTuple::LENGTH_2_BYTES) {
+        if (tuple.getLength() > std::numeric_limits<uint16_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << tuple.getLength() << " larger than "
+                      << std::numeric_limits<uint16_t>::max() << ")");
+        }
+        buf.resize(buf.size() + 2);
+        isc::util::writeUint16(static_cast<uint16_t>(tuple.getLength()),
+                               &buf[buf.size() - 2], 2);
+    } else {
+        isc_throw(BadDataTypeCast, "unable to write data to the buffer as"
+                  << " tuple. Invalid length type field: "
+                  << tuple.getLengthFieldType());
+    }
+    buf.insert(buf.end(), tuple.getData().begin(), tuple.getData().end());
 }
 
 bool

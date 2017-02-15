@@ -394,6 +394,16 @@ public:
     static std::string readTuple(const std::vector<uint8_t>& buf,
                                  OpaqueDataTuple::LengthFieldType lengthfieldtype);
 
+    /// @brief Read length and string tuple from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @param tuple reference of the tuple to read into
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated.
+    /// @return tuple being read.
+    static void readTuple(const std::vector<uint8_t>& buf,
+                          OpaqueDataTuple& tuple);
+
     /// @brief Append length and string tuple to a buffer
     ///
     /// @param value length and string tuple
@@ -401,6 +411,13 @@ public:
     /// @param [out] buf output buffer.
     static void writeTuple(const std::string& value,
                            OpaqueDataTuple::LengthFieldType lengthfieldtype,
+                           std::vector<uint8_t>& buf);
+
+    /// @brief Append length and string tuple to a buffer
+    ///
+    /// @param tuple length and string tuple
+    /// @param [out] buf output buffer.
+    static void writeTuple(const OpaqueDataTuple& tuple,
                            std::vector<uint8_t>& buf);
 
     /// @brief Read boolean value from a buffer.

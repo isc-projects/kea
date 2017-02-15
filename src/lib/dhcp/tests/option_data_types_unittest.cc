@@ -210,6 +210,12 @@ TEST_F(OptionDataTypesTest, readTuple) {
     // Check that it is valid.
     EXPECT_EQ(value, result);
 
+    // Read the tuple from the buffer.
+    OpaqueDataTuple tuple4(OpaqueDataTuple::LENGTH_1_BYTE);
+    ASSERT_NO_THROW(OptionDataTypeUtil::readTuple(buf, tuple4));
+    // Check that it is valid.
+    EXPECT_EQ(value, tuple4.getText());
+
     buf.clear();
 
     // DHCPv6 tuples use 2 byte length
@@ -222,11 +228,17 @@ TEST_F(OptionDataTypesTest, readTuple) {
     );
     // Check that it is valid.
     EXPECT_EQ(value, result);
+
+    // Read the tuple from the buffer.
+    OpaqueDataTuple tuple6(OpaqueDataTuple::LENGTH_2_BYTES);
+    ASSERT_NO_THROW(OptionDataTypeUtil::readTuple(buf, tuple6));
+    // Check that it is valid.
+    EXPECT_EQ(value, tuple6.getText());
 }
 
 // The purpose of this test is to verify that a tuple value
-// are correctly encoded in a buffer
-TEST_F(OptionDataTypesTest, writeTuple) {
+// are correctly encoded in a buffer (string version)
+TEST_F(OptionDataTypesTest, writeTupleString) {
     // The string
     std::string value = "hello world";
     // Create an output buffer.
@@ -246,6 +258,44 @@ TEST_F(OptionDataTypesTest, writeTuple) {
 
     // Encode it in DHCPv6
     OptionDataTypeUtil::writeTuple(value, OpaqueDataTuple::LENGTH_2_BYTES, buf);
+
+    // Check that it is valid.
+    ASSERT_EQ(value.size() + 2, buf.size());
+    expected.clear();
+    writeInt<uint16_t>(static_cast<uint16_t>(value.size()), expected);
+    writeString(value, expected);
+    EXPECT_EQ(0, std::memcmp(&buf[0], &expected[0], buf.size()));
+}
+
+// The purpose of this test is to verify that a tuple value
+// are correctly encoded in a buffer (tuple version)
+TEST_F(OptionDataTypesTest, writeTuple) {
+    // The string
+    std::string value = "hello world";
+    // Create a DHCPv4 tuple
+    OpaqueDataTuple tuple4(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple4.append(value);
+    // Create an output buffer.
+    std::vector<uint8_t> buf;
+
+    // Encode it in DHCPv4
+    OptionDataTypeUtil::writeTuple(tuple4, buf);
+
+    // Check that it is valid.
+    ASSERT_EQ(value.size() + 1, buf.size());
+    std::vector<uint8_t> expected;
+    writeInt<uint8_t>(static_cast<uint8_t>(value.size()), expected);
+    writeString(value, expected);
+    EXPECT_EQ(0, std::memcmp(&buf[0], &expected[0], buf.size()));
+
+    buf.clear();
+
+    // Create a DHCPv6 tuple
+    OpaqueDataTuple tuple6(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple6.append(value);
+
+    // Encode it in DHCPv6
+    OptionDataTypeUtil::writeTuple(tuple6, buf);
 
     // Check that it is valid.
     ASSERT_EQ(value.size() + 2, buf.size());
