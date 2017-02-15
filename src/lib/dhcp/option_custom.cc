@@ -76,6 +76,15 @@ OptionCustom::addArrayDataField(const std::string& value) {
 }
 
 void
+OptionCustom::addArrayDataField(const OpaqueDataTuple& value) {
+    checkArrayType();
+
+    OptionBuffer buf;
+    OptionDataTypeUtil::writeTuple(value, buf);
+    buffers_.push_back(buf);
+}
+
+void
 OptionCustom::addArrayDataField(const bool value) {
     checkArrayType();
 
@@ -560,6 +569,13 @@ OptionCustom::readTuple(const uint32_t index) const {
 }
 
 void
+OptionCustom::readTuple(OpaqueDataTuple& tuple,
+                        const uint32_t index) const {
+    checkIndex(index);
+    OptionDataTypeUtil::readTuple(buffers_[index], tuple);
+}
+
+void
 OptionCustom::writeTuple(const std::string& value, const uint32_t index) {
     checkIndex(index);
 
@@ -567,6 +583,14 @@ OptionCustom::writeTuple(const std::string& value, const uint32_t index) {
     OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
         OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
     OptionDataTypeUtil::writeTuple(value, lft, buffers_[index]);
+}
+
+void
+OptionCustom::writeTuple(const OpaqueDataTuple& value, const uint32_t index) {
+    checkIndex(index);
+
+    buffers_[index].clear();
+    OptionDataTypeUtil::writeTuple(value, buffers_[index]);
 }
 
 bool
