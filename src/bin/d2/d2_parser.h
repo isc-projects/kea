@@ -40,7 +40,7 @@
 #ifndef YY_D2_PARSER_D2_PARSER_H_INCLUDED
 # define YY_D2_PARSER_D2_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "d2_parser.yy" // lalr1.cc:377
+#line 17 "d2_parser.yy" // lalr1.cc:392
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::d2;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "d2_parser.h" // lalr1.cc:377
+#line 56 "d2_parser.h" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined D2_PARSER_DEBUG */
 
-#line 14 "d2_parser.yy" // lalr1.cc:377
+#line 14 "d2_parser.yy" // lalr1.cc:392
 namespace isc { namespace d2 {
-#line 141 "d2_parser.h" // lalr1.cc:377
+#line 141 "d2_parser.h" // lalr1.cc:392
 
 
 
@@ -1552,9 +1552,9 @@ namespace isc { namespace d2 {
   }
 
 
-#line 14 "d2_parser.yy" // lalr1.cc:377
+#line 14 "d2_parser.yy" // lalr1.cc:392
 } } // isc::d2
-#line 1558 "d2_parser.h" // lalr1.cc:377
+#line 1558 "d2_parser.h" // lalr1.cc:392
 
 
 

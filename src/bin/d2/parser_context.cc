@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,10 +17,6 @@ namespace d2 {
 
 D2ParserContext::D2ParserContext()
   : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
-{
-}
-
-D2ParserContext::~D2ParserContext()
 {
 }
 

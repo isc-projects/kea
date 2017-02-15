@@ -50,9 +50,6 @@ namespace d2 {
 /// that the application can carry out DNS update exchanges with it. Servers
 /// are represented by the class, DnsServerInfo.
 ///
-/// The configuration specification for use with Kea is detailed in the file
-/// dhcp-ddns.spec.
-///
 /// The parsing class hierarchy reflects this same scheme.  Working top down:
 ///
 /// A DdnsDomainListMgrParser parses a managed domain list entry. It handles
@@ -731,9 +728,9 @@ typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 
 /// @brief Parser for TSIGKeyInfo
 ///
-/// This class parses the configuration element "tsig-key" defined in
-/// src/bin/d2/dhcp-ddns.spec and creates an instance of a TSIGKeyInfo.
-class TSIGKeyInfoParser : public  data::SimpleParser { 
+/// This class parses the configuration element "tsig-key"
+/// and creates an instance of a TSIGKeyInfo.
+class TSIGKeyInfoParser : public  data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given "tsig-key" element.
     ///
@@ -750,29 +747,28 @@ public:
 /// @brief Parser for a list of TSIGKeyInfos
 ///
 /// This class parses a list of "tsig-key" configuration elements.
-/// (see src/bin/d2/dhcp-ddns.spec). The TSIGKeyInfo instances are added
-/// to the given storage upon commit.
+/// The TSIGKeyInfo instances are added to the given storage upon commit.
 class TSIGKeyInfoListParser : public data::SimpleParser {
 public:
     /// @brief Performs the parsing of the given list "tsig-key" elements.
     ///
     /// Creates an empty TSIGKeyInfoMap
     ///
+    /// Instantiates a TSIGKeyInfoParser
     /// It iterates over each key entry in the list:
-    ///   1. Instantiate a TSIGKeyInfoParser for the entry
     ///   2. Pass the element configuration to the parser's parse method
     ///   3. Add the new TSIGKeyInfo instance to the key map
     ///
     /// @param key_list_config is the list of "tsig_key" elements to parse.
     ///
-    /// @return a map containing the TSIGKeyInfo instances 
+    /// @return a map containing the TSIGKeyInfo instances
     TSIGKeyInfoMapPtr parse(data::ConstElementPtr key_list_config);
 };
 
 /// @brief Parser for  DnsServerInfo
 ///
-/// This class parses the configuration element "dns-server" defined in
-/// src/bin/d2/dhcp-ddns.spec and creates an instance of a DnsServerInfo.
+/// This class parses the configuration element "dns-server"
+/// and creates an instance of a DnsServerInfo.
 class DnsServerInfoParser : public  data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given  "dns-server" element.
@@ -795,7 +791,7 @@ public:
 /// @brief Parser for a list of DnsServerInfos
 ///
 /// This class parses a list of "dns-server" configuration elements.
-/// (see src/bin/d2/dhcp-ddns.spec). The DnsServerInfo instances are added
+/// The DnsServerInfo instances are added
 /// to the given storage upon commit.
 class DnsServerInfoListParser : public data::SimpleParser{
 public:
@@ -804,7 +800,7 @@ public:
     ///
     /// Creates an empty server list
     /// It iterates over each server entry in the list:
-    ///   1. Creates a server instance by passing the entry to @c 
+    ///   1. Creates a server instance by passing the entry to @c
     ///   DnsSeverInfoParser::parse()
     ///   2. Adds the server to the server list
     ///
@@ -815,8 +811,8 @@ public:
 
 /// @brief Parser for  DdnsDomain
 ///
-/// This class parses the configuration element "ddns-domain" defined in
-/// src/bin/d2/dhcp-ddns.spec and creates an instance of a DdnsDomain.
+/// This class parses the configuration element "ddns-domain"
+/// and creates an instance of a DdnsDomain.
 class DdnsDomainParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given  "ddns-domain" element.
@@ -834,15 +830,15 @@ public:
 
 /// @brief Parser for a list of DdnsDomains
 ///
-/// This class parses a list of "ddns-domain" configuration elements.
-/// (see src/bin/d2/dhcp-ddns.spec) into a map of DdnsDomains.  
+/// This class parses a list of "ddns-domain" configuration elements
+/// into a map of DdnsDomains.
 class DdnsDomainListParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given list "ddns-domain"
     /// elements.
     /// Creates a new DdnsDomain map
     /// It iterates over each domain entry in the list:
-    ///   1. Creates a DdnsDomain instance by passing the entry into @c 
+    ///   1. Creates a DdnsDomain instance by passing the entry into @c
     ///   DdnsDomainParser::parser()
     ///   2. Adds the DdnsDomain instance to the domain map
     ///
@@ -857,8 +853,8 @@ public:
 /// @brief Parser for DdnsDomainListMgr
 ///
 /// This class parses the configuration elements "forward-ddns" and
-/// "reverse-ddns" as defined in src/bin/d2/dhcp-ddns.spec.  It populates the
-/// given DdnsDomainListMgr with parsed information.  
+/// "reverse-ddns".  It populates the given DdnsDomainListMgr with parsed
+/// information.
 class DdnsDomainListMgrParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given manager element.

@@ -321,10 +321,9 @@ protected:
     /// Element map prior to parsing it.
     ///
     /// @param mutable_config - configuration to which defaults should be added
-    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config) {
-    }
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
 
-    /// @brief Parses the an element using an alternate parsing mechanism
+    /// @brief Parses an individual element
     ///
     /// Each element to be parsed is passed into this method to be converted
     /// into the requisite application object(s).
@@ -333,8 +332,7 @@ protected:
     /// @param element value of the element as ElementPtr
     ///
     virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element) {
-    };
+                              isc::data::ConstElementPtr element);
 
     /// @brief Parses a set of scalar configuration elements into global
     /// parameters

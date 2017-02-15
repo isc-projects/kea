@@ -261,6 +261,15 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
 }
 
 void
+DCfgMgrBase::setCfgDefaults(isc::data::ElementPtr) {
+}
+
+void
+DCfgMgrBase::parseElement(const std::string&, isc::data::ConstElementPtr) {
+};
+
+
+void
 DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {

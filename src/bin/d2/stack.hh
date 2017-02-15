@@ -1,4 +1,3 @@
-// Generated 201702011423
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Stack handling for Bison parsers in C++
@@ -41,9 +40,9 @@
 
 # include <vector>
 
-#line 14 "d2_parser.yy" // stack.hh:132
+#line 14 "d2_parser.yy" // stack.hh:151
 namespace isc { namespace d2 {
-#line 46 "stack.hh" // stack.hh:132
+#line 46 "stack.hh" // stack.hh:151
   template <class T, class S = std::vector<T> >
   class stack
   {
@@ -151,8 +150,8 @@ namespace isc { namespace d2 {
     unsigned int range_;
   };
 
-#line 14 "d2_parser.yy" // stack.hh:132
+#line 14 "d2_parser.yy" // stack.hh:151
 } } // isc::d2
-#line 156 "stack.hh" // stack.hh:132
+#line 156 "stack.hh" // stack.hh:151
 
 #endif // !YY_D2_PARSER_STACK_HH_INCLUDED

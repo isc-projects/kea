@@ -411,10 +411,7 @@ protected:
     ///
     /// @return pointer to the elements created
     ///
-    virtual isc::data::ConstElementPtr parseFile(const std::string& file_name) {
-        isc::data::ConstElementPtr elements;
-        return (elements);
-    }
+    virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
 
     ///@brief Parse text into Elements
     ///

@@ -1,4 +1,3 @@
-// Generated 201702011423
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Locations for Bison parsers in C++
@@ -41,9 +40,9 @@
 
 # include "position.hh"
 
-#line 14 "d2_parser.yy" // location.cc:296
+#line 14 "d2_parser.yy" // location.cc:337
 namespace isc { namespace d2 {
-#line 46 "location.hh" // location.cc:296
+#line 46 "location.hh" // location.cc:337
   /// Abstract a location.
   class location
   {
@@ -187,7 +186,7 @@ namespace isc { namespace d2 {
     return ostr;
   }
 
-#line 14 "d2_parser.yy" // location.cc:296
+#line 14 "d2_parser.yy" // location.cc:337
 } } // isc::d2
-#line 192 "location.hh" // location.cc:296
+#line 192 "location.hh" // location.cc:337
 #endif // !YY_D2_PARSER_LOCATION_HH_INCLUDED

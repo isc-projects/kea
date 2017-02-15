@@ -421,7 +421,7 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
 
     // Cannot use port  0
     config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
-    SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero");
+    SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65792");
 
     // Cannot use dns server timeout of 0
     config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
@@ -460,7 +460,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         " \"ncr-format\": \"JSON\", "
                         "\"tsig-keys\": ["
                         "{"
-                        "  \"name\": \"d2_key.tmark.org\" , "
+                        "  \"name\": \"d2_key.example.com\" , "
                         "  \"algorithm\": \"hmac-md5\" , "
                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "},"
@@ -473,8 +473,8 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "],"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } , "
                         "  { \"ip-address\": \"127.0.0.2\" } , "
@@ -492,7 +492,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "\"reverse-ddns\" : {"
                         "\"ddns-domains\": [ "
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.1.1\" } , "
                         "  { \"ip-address\": \"127.0.2.1\" } , "
@@ -598,12 +598,12 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
                         "\"tsig-keys\": [] ,"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
-                        "{ \"name\": \"one.tmark.org\" , "
+                        "{ \"name\": \"one.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
@@ -629,24 +629,24 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
 
     DdnsDomainPtr match;
     // Verify that an exact match works.
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
     // Verify that search is case insensisitive.
-    EXPECT_TRUE(cfg_mgr_->matchForward("TMARK.ORG", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("EXAMPLE.COM", match));
+    EXPECT_EQ("example.com", match->getName());
 
     // Verify that an exact match works.
-    EXPECT_TRUE(cfg_mgr_->matchForward("one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that a FQDN for sub-domain matches.
-    EXPECT_TRUE(cfg_mgr_->matchForward("blue.tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("blue.example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
     // Verify that a FQDN for sub-domain matches.
-    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that an FQDN with no match, returns the wild card domain.
     EXPECT_TRUE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
@@ -668,12 +668,12 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
                         "\"tsig-keys\": [] ,"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
-                        "{ \"name\": \"one.tmark.org\" , "
+                        "{ \"name\": \"one.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
@@ -690,14 +690,14 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
 
     DdnsDomainPtr match;
     // Verify that full or partial matches, still match.
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
-    EXPECT_TRUE(cfg_mgr_->matchForward("blue.tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("blue.example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
-    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that a FQDN with no match, fails to match.
     EXPECT_FALSE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
@@ -729,7 +729,7 @@ TEST_F(D2CfgMgrTest, matchAll) {
 
     // Verify that wild card domain is returned for any FQDN.
     DdnsDomainPtr match;
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
     EXPECT_EQ("*", match->getName());
     EXPECT_TRUE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
     EXPECT_EQ("*", match->getName());
