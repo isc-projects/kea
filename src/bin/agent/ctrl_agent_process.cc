@@ -52,6 +52,9 @@ CtrlAgentProcess::run() {
                                    SERVER_PORT, rcf, REQUEST_TIMEOUT);
         http_listener.start();
 
+        LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
+            .arg(SERVER_ADDRESS.toText()).arg(SERVER_PORT);
+
         while (!shouldShutdown()) {
             getIoService()->run_one();
         }
