@@ -58,7 +58,7 @@ public:
     }
 
     /// @brief Sets the forward domain list manager
-    /// @param pointer to the new forward manager
+    /// @param forward_mgr pointer to the new forward manager
     void setForwardMgr(DdnsDomainListMgrPtr forward_mgr) {
         forward_mgr_ = forward_mgr;
     }
@@ -71,7 +71,7 @@ public:
     }
 
     /// @brief Sets the reverse domain list manager
-    /// @param pointer to the new reverse manager
+    /// @param reverse_mgr pointer to the new reverse manager
     void setReverseMgr(DdnsDomainListMgrPtr reverse_mgr) {
         reverse_mgr_ = reverse_mgr;
     }
@@ -85,7 +85,7 @@ public:
 
     /// @brief Sets the map of TSIG keys
     ///
-    /// @param pointer to the new TSIG key map
+    /// @param keys pointer to the new TSIG key map
     void setKeys(const TSIGKeyInfoMapPtr& keys) {
         keys_ = keys;
     }

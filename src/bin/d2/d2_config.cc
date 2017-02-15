@@ -389,8 +389,8 @@ TSIGKeyInfoMapPtr
 TSIGKeyInfoListParser::parse(data::ConstElementPtr key_list) {
     TSIGKeyInfoMapPtr keys(new TSIGKeyInfoMap());
     data::ConstElementPtr key_config;
+    TSIGKeyInfoParser key_parser;
     BOOST_FOREACH(key_config, key_list->listValue()) {
-        TSIGKeyInfoParser key_parser;
         TSIGKeyInfoPtr key = key_parser.parse(key_config);
 
         // Duplicates are not allowed and should be flagged as an error.

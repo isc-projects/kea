@@ -163,7 +163,7 @@
 #-----
 ,{
 "description" : "D2Params.port can't be 0",
-"syntax-error" : "<string>:1.33: port must be greater than zero",
+"syntax-error" : "<string>:1.33: port must be greater than zero but less than 65792",
 "data" :
     {
     "port" : 0,
@@ -1088,7 +1088,7 @@
 #-----
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns.dns-servers.port cannot be 0 ",
-"syntax-error" : "<string>:1.97: port must be greater than zero",
+"syntax-error" : "<string>:1.97: port must be greater than zero but less than 65792",
 "data" :
     {
     "forward-ddns" :
@@ -1481,7 +1481,7 @@
 #-----
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns.dns-servers.port cannot be 0 ",
-"syntax-error" : "<string>:1.119: port must be greater than zero",
+"syntax-error" : "<string>:1.119: port must be greater than zero but less than 65792",
 "data" :
     {
     "forward-ddns" : {},

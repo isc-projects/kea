@@ -2,7 +2,7 @@
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// file, You can obtain one at http://mozilla.com/MPL/2.0/.
 
 #include <config.h>
 #include <gtest/gtest.h>
@@ -816,7 +816,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 TEST_F(DnsServerInfoParserTest, invalidEntry) {
     // Create a config in which both host and ip address are supplied.
     // Verify that parsing fails.
-    std::string config = "{ \"hostname\": \"pegasus.tmark\", "
+    std::string config = "{ \"hostname\": \"pegasus.example\", "
                          "  \"ip-address\": \"127.0.0.1\", "
                          "  \"port\": 100} ";
     PARSE_FAIL(config, "<string>:1.13: hostname is not yet supported");
@@ -835,7 +835,7 @@ TEST_F(DnsServerInfoParserTest, invalidEntry) {
     config = "{ \"hostname\": \"\", "
              "  \"ip-address\": \"192.168.5.6\" ,"
              "  \"port\": -100 }";
-    PARSE_FAIL(config, "<string>:1.60-63: port must be greater than zero");
+    PARSE_FAIL(config, "<string>:1.60-63: port must be greater than zero but less than 65792");
 }
 
 
@@ -848,7 +848,7 @@ TEST_F(DnsServerInfoParserTest, invalidEntry) {
 TEST_F(DnsServerInfoParserTest, validEntry) {
     /// @todo When resolvable hostname is supported you'll need this test.
     /// // Valid entries for dynamic host
-    /// std::string config = "{ \"hostname\": \"pegasus.tmark\" }";
+    /// std::string config = "{ \"hostname\": \"pegasus.example\" }";
     /// ASSERT_TRUE(fromJSON(config));
 
     /// // Verify that it builds and commits without throwing.
@@ -861,7 +861,7 @@ TEST_F(DnsServerInfoParserTest, validEntry) {
 
     /// Verify the server exists and has the correct values.
     /// DnsServerInfoPtr server = (*servers_)[0];
-    /// EXPECT_TRUE(checkServer(server, "pegasus.tmark",
+    /// EXPECT_TRUE(checkServer(server, "pegasus.example",
     ///                         DnsServerInfo::EMPTY_IP_STR,
     ///                         DnsServerInfo::STANDARD_DNS_PORT));
 
@@ -934,7 +934,7 @@ TEST_F(DnsServerInfoListParserTest, validServerList) {
 /// 5. That an undefined key name is detected.
 TEST_F(DdnsDomainParserTest, invalidDomain) {
     // Create a domain configuration without a name
-    std::string config = "{  \"key-name\": \"d2_key.tmark.org\" , "
+    std::string config = "{  \"key-name\": \"d2_key.example.com\" , "
                          "  \"dns-servers\" : [ "
                          "  {  \"ip-address\": \"127.0.0.1\" , "
                          "    \"port\": 100 },"
@@ -945,40 +945,40 @@ TEST_F(DdnsDomainParserTest, invalidDomain) {
     PARSE_FAIL(config, "String parameter name not found(<string>:1:1)");
 
     // Create a domain configuration with an empty server list.
-    config = "{ \"name\": \"tmark.org\" , "
+    config = "{ \"name\": \"example.com\" , "
              "  \"key-name\": \"\" , "
              "  \"dns-servers\" : [ "
              "   ] } ";
-    PARSE_FAIL(config, "<string>:1.67: syntax error, unexpected ], expecting {");
+    PARSE_FAIL(config, "<string>:1.69: syntax error, unexpected ], expecting {");
 
     // Create a domain configuration with a mal-formed server entry.
-    config = "{ \"name\": \"tmark.org\" , "
+    config = "{ \"name\": \"example.com\" , "
              "  \"key-name\": \"\" , "
              "  \"dns-servers\" : [ "
              "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": -1 } ] } ";
-    PARSE_FAIL(config, "<string>:1.109-110: port must be greater than zero");
+    PARSE_FAIL(config, "<string>:1.111-112: port must be greater than zero but less than 65792");
 
     // Create a domain configuration without an defined key name
-    config = "{ \"name\": \"tmark.org\" , "
-             "  \"key-name\": \"d2_key.tmark.org\" , "
+    config = "{ \"name\": \"example.com\" , "
+             "  \"key-name\": \"d2_key.example.com\" , "
              "  \"dns-servers\" : [ "
              "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": 300 } ] } ";
-    PARSE_FAIL(config, "DdnsDomain : tmark.org specifies"
-                " an undefined key: d2_key.tmark.org (<string>:1:39)");
+    PARSE_FAIL(config, "DdnsDomain : example.com specifies"
+                " an undefined key: d2_key.example.com (<string>:1:41)");
 }
 
 /// @brief Verifies the basics of parsing of a DdnsDomain.
 TEST_F(DdnsDomainParserTest, validDomain) {
     // Add a TSIG key to the test key map, so key validation will pass.
-    addKey("d2_key.tmark.org", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
+    addKey("d2_key.example.com", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
 
     // Create a valid domain configuration entry containing three valid
     // servers.
     std::string config =
-                        "{ \"name\": \"tmark.org\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  {  \"ip-address\": \"127.0.0.1\" , "
                         "    \"port\": 100 },"
@@ -992,8 +992,8 @@ TEST_F(DdnsDomainParserTest, validDomain) {
     ASSERT_TRUE(domain_);
 
     // Verify the name and key_name values.
-    EXPECT_EQ("tmark.org", domain_->getName());
-    EXPECT_EQ("d2_key.tmark.org", domain_->getKeyName());
+    EXPECT_EQ("example.com", domain_->getName());
+    EXPECT_EQ("d2_key.example.com", domain_->getKeyName());
     ASSERT_TRUE(domain_->getTSIGKeyInfo());
     ASSERT_TRUE(domain_->getTSIGKeyInfo()->getTSIGKey());
 
@@ -1025,15 +1025,15 @@ TEST_F(DdnsDomainParserTest, validDomain) {
 /// it will accurately parse and populate each domain in the list.
 TEST_F(DdnsDomainListParserTest, validList) {
     // Add keys to key map so key validation passes.
-    addKey("d2_key.tmark.org", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
+    addKey("d2_key.example.com", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
     addKey("d2_key.billcat.net", "HMAC-MD5", "GWG/Xfbju4O2iXGqkSu4PQ==");
 
     // Create a valid domain list configuration, with two domains
     // that have three servers each.
     std::string config =
                         "[ "
-                        "{ \"name\": \"tmark.org\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" , "
                         "    \"port\": 100 },"
@@ -1059,13 +1059,13 @@ TEST_F(DdnsDomainListParserTest, validList) {
     EXPECT_EQ(2, domains_->size());
 
     // Verify that the first domain exists and can be retrieved.
-    DdnsDomainMap::iterator gotit = domains_->find("tmark.org");
+    DdnsDomainMap::iterator gotit = domains_->find("example.com");
     ASSERT_TRUE(gotit != domains_->end());
     DdnsDomainPtr& domain = gotit->second;
 
     // Verify the name and key_name values of the first domain.
-    EXPECT_EQ("tmark.org", domain->getName());
-    EXPECT_EQ("d2_key.tmark.org", domain->getKeyName());
+    EXPECT_EQ("example.com", domain->getName());
+    EXPECT_EQ("d2_key.example.com", domain->getKeyName());
 
     // Verify the TSIGKeyInfo name and that the actual key was created
     ASSERT_TRUE(domain->getTSIGKeyInfo());
@@ -1126,19 +1126,19 @@ TEST_F(DdnsDomainListParserTest, duplicateDomain) {
     // the same name.
     std::string config =
                         "[ "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         ", "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.3\" , "
                         "    \"port\": 300 } ] } "
                         "] ";
     // Verify that the parsing fails.
     PARSE_FAIL(config,
-               "Duplicate domain specified:tmark.org (<string>:1:113)");
+               "Duplicate domain specified:example.com (<string>:1:115)");
 }
 
 };

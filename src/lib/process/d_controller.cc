@@ -54,6 +54,12 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     controller_ = controller;
 }
 
+isc::data::ConstElementPtr
+DControllerBase::parseFile(const std::string&) {
+    isc::data::ConstElementPtr elements;
+    return (elements);
+}
+
 void
 DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
@@ -168,7 +174,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
             // rather than calling exit() here which disrupts gtest.
             isc_throw(VersionMessage, getVersion(true));
             break;
-            
+
         case 'W':
             // gather Kea config report and throw so main() can catch and
             // return rather than calling exit() here which disrupts gtest.
@@ -484,7 +490,7 @@ DControllerBase::getVersion(bool extended) {
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
         tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-        tmp << "database:" << std::endl; 
+        tmp << "database:" << std::endl;
 #ifdef HAVE_MYSQL
         tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
 #endif

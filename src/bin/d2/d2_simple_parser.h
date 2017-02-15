@@ -66,8 +66,11 @@ public:
     /// found, then an empty map entry is added for it, thus defaulting the
     /// manager to "disabled".
     ///
-    /// @param domain DDNS domain manager element to which defaults should be
+    /// @param global element tree containgin the DDNS domain manager element
+    /// to which defaults should be
     /// added
+    /// @param mgr_name name of the manager element within the element tree
+    /// (e.g. "forward-ddns", "reverse-ddns")
     /// @param mgr_defaults list of default values from which to add
     /// @return returns the number of default values added
     static size_t setManagerDefaults(data::ElementPtr global,
