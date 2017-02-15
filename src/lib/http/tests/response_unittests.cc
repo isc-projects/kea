@@ -39,11 +39,13 @@ public:
         response.addHeader("Content-Type", "text/html");
         std::ostringstream response_string;
         response_string << "HTTP/1.0 " << static_cast<uint16_t>(status_code)
-            << " " << status_message << "\r\n"
+            << " " << status_message << "\r\n";
+        EXPECT_EQ(response_string.str(), response.toBriefString());
+
+        response_string
             << "Content-Length: 0\r\n"
             << "Content-Type: text/html\r\n"
             << "Date: " << response.getDateHeaderValue() << "\r\n\r\n";
-
         EXPECT_EQ(response_string.str(), response.toString());
     }
 };

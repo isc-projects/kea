@@ -152,6 +152,9 @@ public:
     /// @return Textual representation of the status code.
     static std::string statusCodeToString(const HttpStatusCode& status_code);
 
+    /// @brief Returns HTTP version and HTTP status as a string.
+    std::string toBriefString() const;
+
     /// @brief Returns textual representation of the HTTP response.
     ///
     /// It includes the "Date" header with the current time in RFC 1123 format.

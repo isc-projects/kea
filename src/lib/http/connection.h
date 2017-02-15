@@ -17,6 +17,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/shared_ptr.hpp>
 #include <array>
+#include <string>
 
 namespace isc {
 namespace http {
@@ -173,6 +174,8 @@ private:
 
     /// @brief Stops current connection.
     void stopThisConnection();
+
+    std::string getRemoteEndpointAddressAsText() const;
 
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
