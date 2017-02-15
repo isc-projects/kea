@@ -26,14 +26,6 @@ namespace d2 {
 
 // *********************** D2Params  *************************
 
-const char*     D2Params::DFT_IP_ADDRESS = "127.0.0.1";
-const uint32_t  D2Params::DFT_PORT = 53001;
-const char*     D2Params::DFT_PORT_STR = "53001";
-const uint32_t  D2Params::DFT_DNS_SERVER_TIMEOUT = 100;
-const char*     D2Params::DFT_DNS_SERVER_TIMEOUT_STR = "100";
-const char*     D2Params::DFT_NCR_PROTOCOL = "UDP";
-const char*     D2Params::DFT_NCR_FORMAT = "JSON";
-
 D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
                    const size_t port,
                    const size_t dns_server_timeout,
@@ -48,8 +40,8 @@ D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
 }
 
 D2Params::D2Params()
-    : ip_address_(isc::asiolink::IOAddress(DFT_IP_ADDRESS)),
-     port_(DFT_PORT), dns_server_timeout_(DFT_DNS_SERVER_TIMEOUT),
+    : ip_address_(isc::asiolink::IOAddress("127.0.0.1")),
+     port_(53001), dns_server_timeout_(100),
      ncr_protocol_(dhcp_ddns::NCR_UDP),
      ncr_format_(dhcp_ddns::FMT_JSON) {
     validateContents();
@@ -189,10 +181,6 @@ TSIGKeyInfo::remakeKey() {
 }
 
 // *********************** DnsServerInfo  *************************
-
-const char* DnsServerInfo::STANDARD_DNS_PORT_STR = "53";
-const char* DnsServerInfo::EMPTY_IP_STR = "0.0.0.0";
-
 DnsServerInfo::DnsServerInfo(const std::string& hostname,
                              isc::asiolink::IOAddress ip_address, uint32_t port,
                              bool enabled)
@@ -429,7 +417,6 @@ DnsServerInfoParser::parse(data::ConstElementPtr server_config) {
         /// @code
         /// // When  hostname is specified, create a valid, blank IOAddress
         /// // and then create the DnsServerInfo.
-        /// isc::asiolink::IOAddress io_addr(DnsServerInfo::EMPTY_IP_STR);
         /// serverInfo.reset(new DnsServerInfo(hostname, io_addr, port));
         ///
         /// @endcode

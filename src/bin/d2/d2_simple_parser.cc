@@ -34,28 +34,36 @@ namespace d2 {
 /// in DhcpDdns) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
-    { "ip-address",         Element::string, D2Params::DFT_IP_ADDRESS },
-    { "port",               Element::integer, D2Params::DFT_PORT_STR },
-    { "dns-server-timeout", Element::integer, D2Params::DFT_DNS_SERVER_TIMEOUT_STR },
-    { "ncr-protocol",       Element::string, D2Params::DFT_NCR_PROTOCOL },
-    { "ncr-format",         Element::string, D2Params::DFT_NCR_FORMAT }
+    { "ip-address",         Element::string, "127.0.0.1" },
+    { "port",               Element::integer, "53001" },
+    { "dns-server-timeout", Element::integer, "100" }, // in seconds
+    { "ncr-protocol",       Element::string, "UDP" },
+    { "ncr-format",         Element::string, "JSON" }
 };
 
+/// Supplies defaults for ddns-domoains list elements (i.e. DdnsDomains)
 const SimpleDefaults D2SimpleParser::TSIG_KEY_DEFAULTS = {
-    { "digest-bits",    Element::integer, "0" }
+    { "digest-bits", Element::integer, "0" }
 };
 
+/// Supplies defaults for optional values in DDNS domain managers
+/// (e.g. "forward-ddns" and "reverse-ddns").
+/// @note  While there are none yet defined, it is highly likely
+/// there will be domain manager defaults added in the future.
+/// This code to set defaults already uses this list, so supporting
+/// values will simply require adding them to this list.
 const SimpleDefaults D2SimpleParser::DDNS_DOMAIN_MGR_DEFAULTS = {
-    // none yet
 };
 
+/// Supplies defaults for ddns-domoains list elements (i.e. DdnsDomains)
 const SimpleDefaults D2SimpleParser::DDNS_DOMAIN_DEFAULTS = {
-    { "key-name",    Element::string, "" }
+    { "key-name", Element::string, "" }
 };
 
+/// Supplies defaults for optional values DdnsDomain entries.
 const SimpleDefaults D2SimpleParser::DNS_SERVER_DEFAULTS = {
     { "hostname", Element::string, "" },
-    { "port",     Element::integer, DnsServerInfo::STANDARD_DNS_PORT_STR },
+    { "port",     Element::integer, "53" },
 };
 
 /// @}
