@@ -87,6 +87,19 @@ TEST(CommandInterpreterTest, parseAnswer) {
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
 }
 
+// This checks whether we can convert an answer to easily printable form.
+TEST(CommandInterpreterTest, answerToText) {
+    ConstElementPtr answer;
+
+    // Doing jolly good here.
+    answer = el("{ \"result\": 0 }");
+    EXPECT_EQ("success(0)", answerToText(answer));
+
+    // Sometimes things don't go according to plan.
+    answer = el("{ \"result\": 1, \"text\": \"ho lee fuk sum ting wong\" }");
+    EXPECT_EQ("failure(1), text=ho lee fuk sum ting wong", answerToText(answer));
+}
+
 // This test checks whether createCommand function is able to create commands
 // with and without parameters.
 TEST(CommandInterpreterTest, createCommand) {

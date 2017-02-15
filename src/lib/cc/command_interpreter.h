@@ -90,6 +90,12 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 isc::data::ConstElementPtr parseAnswer(int &status_code,
                                        const isc::data::ConstElementPtr& msg);
 
+/// @brief Converts answer to printable text
+///
+/// @param msg answer to be parsed
+/// @return printable string
+std::string answerToText(const isc::data::ConstElementPtr& msg);
+
 /// @brief Creates a standard config/command command message with no
 /// argument (of the form { "command": "my_command" })
 ///

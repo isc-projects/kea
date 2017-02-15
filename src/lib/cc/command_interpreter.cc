@@ -94,6 +94,43 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
     return (msg->get(CONTROL_TEXT));
 }
 
+std::string
+answerToText(const ConstElementPtr& msg) {
+    if (!msg) {
+        isc_throw(CtrlChannelError, "No answer specified");
+    }
+    if (msg->getType() != Element::map) {
+        isc_throw(CtrlChannelError,
+                  "Invalid answer Element specified, expected map");
+    }
+    if (!msg->contains(CONTROL_RESULT)) {
+        isc_throw(CtrlChannelError,
+                  "Invalid answer specified, does not contain mandatory 'result'");
+    }
+
+    ConstElementPtr result = msg->get(CONTROL_RESULT);
+    if (result->getType() != Element::integer) {
+            isc_throw(CtrlChannelError,
+                      "Result element in answer message is not a string");
+    }
+
+    stringstream txt;
+    int rcode = result->intValue();
+    if (rcode == 0) {
+        txt << "success(0)";
+    } else {
+        txt << "failure(" << rcode << ")";
+    }
+
+    // Was any text provided? If yes, include it.
+    ConstElementPtr txt_elem = msg->get(CONTROL_TEXT);
+    if (txt_elem) {
+        txt << ", text=" << txt_elem->stringValue();
+    }
+
+    return (txt.str());
+}
+
 ConstElementPtr
 createCommand(const std::string& command) {
     return (createCommand(command, ElementPtr()));
