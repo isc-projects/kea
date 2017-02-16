@@ -3,7 +3,7 @@
 	allows configuration sanity checking. Note that not all parameters
 	are completely checked. In particular, service and control channel
 	sockets are not opened, and hook libraries are not loaded.
-	(Trac #3770, git xxx)
+	(Trac #3770, git 1d12582e270935ee7b72548d9c66753f4eea4ca4)
 
 1215.	[doc]		tomek
 	Developer's Guide updated to cover flex/bison parser.
