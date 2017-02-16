@@ -1,3 +1,10 @@
+1216.	[func]		fdupont, tomek
+	Command line option -t implementated for DHCPv4 and DHCPv6.  It
+	allows configuration sanity checking. Note that not all parameters
+	are completely checked. In particular, service and control channel
+	sockets are not opened, and hook libraries are not loaded.
+	(Trac #3770, git xxx)
+
 1215.	[doc]		tomek
 	Developer's Guide updated to cover flex/bison parser.
 	(Trac #5112, git 44139d821c1f4e43dbff22d49101a0854e4f9f5b)
