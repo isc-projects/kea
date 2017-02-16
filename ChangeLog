@@ -1,3 +1,9 @@
+1217.   [func]         marcin
+	Implemented libkea-http library.
+        (Trac #5077, git cd72284b5b221e620770883db7e166c4d3ba7eb6)
+        (Trac #5088, git 715d18f961801ffbd798a65b19459178c3a53857)
+        (Trac #5099, git 7e8df7993f295431e2cb6a13858f746649c4e18d)
+
 1216.	[func]		fdupont, tomek
 	Command line option -t implementated for DHCPv4 and DHCPv6.  It
 	allows configuration sanity checking. Note that not all parameters
