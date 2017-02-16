@@ -42,6 +42,18 @@
             ports other than the standard ones will not be able to
             handle regular DHCPv4 queries.</simpara>
           </listitem>
+	  <listitem>
+            <simpara>
+            <command>-t <replaceable>file</replaceable></command> -
+            specifies the configuration file to be tested. Kea-dhcp4
+	    will attempt to load it, and will conduct sanity
+	    checks. Note that certain checks are possible only while
+	    running the actual server. The actual status is reported
+	    with exit code (0 = configuration looks ok, 1 = error
+	    encountered). Kea will print out log messages to standard
+	    output and error to standard error when testing
+	    configuration.</simpara>
+          </listitem>
           <listitem>
             <simpara>
               <command>-v</command> - prints out the Kea version and exits.
