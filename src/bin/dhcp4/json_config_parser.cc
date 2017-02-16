@@ -406,7 +406,8 @@ void configureCommandChannel() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
+configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
+                     bool check_only) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -583,9 +584,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                       << " (" << config_pair.second->getPosition() << ")");
         }
 
-        // Setup the command channel.
-        configureCommandChannel();
-
         // Apply global options in the staging config.
         Dhcp4ConfigParser global_parser;
         global_parser.parse(srv_cfg, mutable_cfg);
@@ -608,12 +606,25 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         rollback = true;
     }
 
+    if (check_only) {
+        rollback = true;
+        if (!answer) {
+            answer = isc::config::createAnswer(0,
+            "Configuration seems sane. Control-socket, hook-libraries, and D2 "
+            "configuration were sanity checked, but not applied.");
+        }
+    }
+
     // So far so good, there was no parsing error so let's commit the
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
+
+            // Setup the command channel.
+            configureCommandChannel();
+
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 

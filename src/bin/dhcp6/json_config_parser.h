@@ -24,6 +24,10 @@ class Dhcpv6Srv;
 /// extra parameter is a reference to DHCPv6 server component. It is currently
 /// not used and CfgMgr::instance() is accessed instead.
 ///
+/// Test-only mode is supported. If check_only flag is set to true, the
+/// configuration is parsed, but the actual change is not applied. The goal is
+/// to have the ability to test configuration.
+///
 /// This method does not throw. It catches all exceptions and returns them as
 /// reconfiguration statuses. It may return the following response codes:
 /// 0 - configuration successful
@@ -36,7 +40,8 @@ class Dhcpv6Srv;
 /// @return answer that contains result of the reconfiguration.
 /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
+configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
+                     bool check_only = false);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
