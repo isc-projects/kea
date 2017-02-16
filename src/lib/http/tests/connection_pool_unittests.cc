@@ -16,6 +16,7 @@
 #include <http/tests/response_test.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <algorithm>
 
 using namespace isc::asiolink;
 using namespace isc::http;
@@ -81,6 +82,12 @@ public:
 
     using HttpConnectionPool::connections_;
 
+    /// @brief Checks if specified connection belongs to the pool.
+    bool hasConnection(const HttpConnectionPtr& conn) const {
+        return (std::find(connections_.begin(), connections_.end(), conn)
+                != connections_.end());
+    }
+
 };
 
 /// @brief Test fixture class for @ref HttpConnectionPool.
@@ -120,19 +127,19 @@ TEST_F(HttpConnectionPoolTest, startStop) {
     // Start first connection and check that it has been added to the pool.
     ASSERT_NO_THROW(pool.start(conn1));
     ASSERT_EQ(1, pool.connections_.size());
-    ASSERT_EQ(1, pool.connections_.count(conn1));
+    ASSERT_EQ(1, pool.hasConnection(conn1));
 
     // Start second connection and check that it also has been added.
     ASSERT_NO_THROW(pool.start(conn2));
     ASSERT_EQ(2, pool.connections_.size());
-    ASSERT_EQ(1, pool.connections_.count(conn2));
+    ASSERT_EQ(1, pool.hasConnection(conn2));
 
     // Stop first connection.
     ASSERT_NO_THROW(pool.stop(conn1));
     ASSERT_EQ(1, pool.connections_.size());
     // Check that it has been removed but the second connection is still there.
-    ASSERT_EQ(0, pool.connections_.count(conn1));
-    ASSERT_EQ(1, pool.connections_.count(conn2));
+    ASSERT_EQ(0, pool.hasConnection(conn1));
+    ASSERT_EQ(1, pool.hasConnection(conn2));
 
     // Remove second connection and verify.
     ASSERT_NO_THROW(pool.stop(conn2));
@@ -179,7 +186,7 @@ TEST_F(HttpConnectionPoolTest, stopInvalid) {
     ASSERT_NO_THROW(pool.start(conn1));
     ASSERT_NO_THROW(pool.stop(conn2));
     ASSERT_EQ(1, pool.connections_.size());
-    ASSERT_EQ(1, pool.connections_.count(conn1));
+    ASSERT_EQ(1, pool.hasConnection(conn1));
 }
 
 }

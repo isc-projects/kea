@@ -110,6 +110,7 @@ public:
     /// \param endpoint Target of the send. (Unused for a TCP socket because
     ///        that was determined when the connection was opened.)
     /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
     virtual void asyncSend(const void* data, size_t length,
                            const IOEndpoint* endpoint, C& callback);
 
@@ -124,6 +125,7 @@ public:
     /// \param data Data to send
     /// \param length Length of data to send
     /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
     void asyncSend(const void* data, size_t length, C& callback);
 
     /// \brief Receive Asynchronously

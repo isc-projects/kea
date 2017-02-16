@@ -12,13 +12,13 @@ namespace http {
 
 void
 HttpConnectionPool::start(const HttpConnectionPtr& connection) {
-    connections_.insert(connection);
+    connections_.insert(connections_.end(), connection);
     connection->asyncAccept();
 }
 
 void
 HttpConnectionPool::stop(const HttpConnectionPtr& connection) {
-    connections_.erase(connection);
+    connections_.remove(connection);
 }
 
 void
