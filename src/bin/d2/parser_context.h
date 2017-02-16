@@ -69,7 +69,7 @@ public:
         ///< Used for parsing content of a DNS Server.
         PARSER_DNS_SERVER,
 
-        ///< Used for pasing a list of DNS servess.
+        ///< Used for pasing a list of DNS servers.
         PARSER_DNS_SERVERS
     } ParserType;
 
@@ -257,9 +257,9 @@ public:
     /// Entering a new syntactic context is useful in several ways.
     /// First, it allows the parser to avoid conflicts. Second, it
     /// allows the lexer to return different tokens depending on
-    /// context (e.g. if "renew-timer" string is detected, the lexer
-    /// will return STRING token if in JSON mode or RENEW_TIMER if
-    /// in DHCP6 mode. Finally, the syntactic context allows the
+    /// context (e.g. if "name" string is detected, the lexer
+    /// will return STRING token if in JSON mode or NAME if
+    /// in TSIG_KEY mode. Finally, the syntactic context allows the
     /// error message to be more descriptive if the input string
     /// does not parse properly.
     ///
@@ -271,7 +271,7 @@ public:
     /// @throw isc::Unexpected if unbalanced
     void leave();
 
-    /// @brief Get the syntactix context name
+    /// @brief Get the syntax context name
     ///
     /// @return printable name of the context.
     const std::string contextName();
@@ -280,7 +280,7 @@ public:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
-    /// @brief Flag determing parser debugging.
+    /// @brief Flag determining parser debugging.
     bool trace_parsing_;
 
     /// @brief Syntactic context stack
