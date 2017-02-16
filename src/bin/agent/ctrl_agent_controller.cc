@@ -16,7 +16,7 @@ namespace agent {
 
 /// @brief Defines the application name, this is passed into base class
 /// it may be used to locate configuration data and appears in log statement.
-const char* CtrlAgentController::agent_app_name_ = "CtrlAgent";
+const char* CtrlAgentController::agent_app_name_ = "Control-agent";
 
 /// @brief Defines the executable name. This is passed into the base class
 const char* CtrlAgentController::agent_bin_name_ = "kea-ctrl-agent";
