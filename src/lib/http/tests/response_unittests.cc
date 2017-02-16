@@ -90,6 +90,7 @@ TEST_F(HttpResponseTest, genericResponse) {
     testResponse(HttpStatusCode::UNAUTHORIZED, "Unauthorized");
     testResponse(HttpStatusCode::FORBIDDEN, "Forbidden");
     testResponse(HttpStatusCode::NOT_FOUND, "Not Found");
+    testResponse(HttpStatusCode::REQUEST_TIMEOUT, "Request Timeout");
     testResponse(HttpStatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error");
     testResponse(HttpStatusCode::NOT_IMPLEMENTED, "Not Implemented");
     testResponse(HttpStatusCode::BAD_GATEWAY, "Bad Gateway");
@@ -110,6 +111,7 @@ TEST_F(HttpResponseTest, isClientError) {
     EXPECT_TRUE(HttpResponse::isClientError(HttpStatusCode::UNAUTHORIZED));
     EXPECT_TRUE(HttpResponse::isClientError(HttpStatusCode::FORBIDDEN));
     EXPECT_TRUE(HttpResponse::isClientError(HttpStatusCode::NOT_FOUND));
+    EXPECT_TRUE(HttpResponse::isClientError(HttpStatusCode::REQUEST_TIMEOUT));
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::INTERNAL_SERVER_ERROR));
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::NOT_IMPLEMENTED));
     EXPECT_FALSE(HttpResponse::isClientError(HttpStatusCode::BAD_GATEWAY));
@@ -130,6 +132,7 @@ TEST_F(HttpResponseTest, isServerError) {
     EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::UNAUTHORIZED));
     EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::FORBIDDEN));
     EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::NOT_FOUND));
+    EXPECT_FALSE(HttpResponse::isServerError(HttpStatusCode::REQUEST_TIMEOUT));
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::INTERNAL_SERVER_ERROR));
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::NOT_IMPLEMENTED));
     EXPECT_TRUE(HttpResponse::isServerError(HttpStatusCode::BAD_GATEWAY));
