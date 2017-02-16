@@ -27,14 +27,25 @@ typedef boost::shared_ptr<Response> ResponsePtr;
 
 /// @brief Implementation of the @ref HttpResponseCreator.
 class TestHttpResponseCreator : public HttpResponseCreator {
+public:
+
+    /// @brief Create a new request.
+    ///
+    /// @return Pointer to the new instance of the @ref HttpRequest.
+    virtual HttpRequestPtr
+    createNewHttpRequest() const {
+        return (HttpRequestPtr(new HttpRequest()));
+    }
+
 private:
 
-    /// @brief Creates HTTP 400 response.
+    /// @brief Creates HTTP response..
     ///
     /// @param request Pointer to the HTTP request.
-    /// @return Pointer to the generated HTTP 400 response.
+    /// @return Pointer to the generated HTTP response.
     virtual HttpResponsePtr
-    createStockBadRequest(const ConstHttpRequestPtr& request) const {
+    createStockHttpResponse(const ConstHttpRequestPtr& request,
+                            const HttpStatusCode& status_code) const {
         // The request hasn't been finalized so the request object
         // doesn't contain any information about the HTTP version number
         // used. But, the context should have this data (assuming the
@@ -42,8 +53,7 @@ private:
         HttpVersion http_version(request->context()->http_version_major_,
                                  request->context()->http_version_minor_);
         // This will generate the response holding JSON content.
-        ResponsePtr response(new Response(http_version,
-                                          HttpStatusCode::BAD_REQUEST));
+        ResponsePtr response(new Response(http_version, status_code));
         return (response);
     }
 

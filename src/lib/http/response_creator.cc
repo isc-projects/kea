@@ -19,7 +19,7 @@ HttpResponseCreator::createHttpResponse(const ConstHttpRequestPtr& request) {
 
     // If not finalized, the request parsing failed. Generate HTTP 400.
     if (!request->isFinalized()) {
-        return (createStockBadRequest(request));
+        return (createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
     }
 
     // Message has been successfully parsed. Create implementation specific

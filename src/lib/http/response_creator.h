@@ -9,9 +9,15 @@
 
 #include <http/request.h>
 #include <http/response.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace http {
+
+class HttpResponseCreator;
+
+/// @brief Pointer to the @ref HttpResponseCreator object.
+typedef boost::shared_ptr<HttpResponseCreator> HttpResponseCreatorPtr;
 
 /// @brief Specifies an interface for classes creating HTTP responses
 /// from HTTP requests.
@@ -70,14 +76,27 @@ public:
     virtual HttpResponsePtr
     createHttpResponse(const ConstHttpRequestPtr& request) final;
 
-protected:
+    /// @brief Create a new request.
+    ///
+    /// This method creates an instance of the @ref HttpRequest or derived
+    /// class. The type of the object is compatible with the instance of
+    /// the @ref HttpResponseCreator implementation which creates it, i.e.
+    /// can be used as an argument in the call to @ref createHttpResponse.
+    ///
+    /// @return Pointer to the new instance of the @ref HttpRequest.
+    virtual HttpRequestPtr
+    createNewHttpRequest() const = 0;
 
-    /// @brief Creates implementation specific HTTP 400 response.
+    /// @brief Creates implementation specific HTTP response.
     ///
     /// @param request Pointer to an object representing HTTP request.
-    /// @return Pointer to an object representing HTTP 400 response.
+    /// @param status_code Status code of the response.
+    /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createStockBadRequest(const ConstHttpRequestPtr& request) const = 0;
+    createStockHttpResponse(const ConstHttpRequestPtr& request,
+                            const HttpStatusCode& status_code) const = 0;
+
+protected:
 
     /// @brief Creates implementation specific HTTP response.
     ///

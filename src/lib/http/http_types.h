@@ -7,6 +7,9 @@
 #ifndef HTTP_TYPES_H
 #define HTTP_TYPES_H
 
+namespace isc {
+namespace http {
+
 /// @brief HTTP protocol version.
 struct HttpVersion {
     unsigned major_; ///< Major HTTP version.
@@ -42,5 +45,8 @@ struct HttpVersion {
         return (!operator==(rhs));
     }
 };
+
+} // end of namespace isc::http
+} // end of namespace isc
 
 #endif

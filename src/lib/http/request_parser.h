@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <http/request.h>
 #include <util/state_model.h>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <list>
 #include <stdint.h>
 #include <string>
@@ -27,6 +28,11 @@ public:
     HttpRequestParserError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+class HttpRequestParser;
+
+/// @brief Pointer to the @ref HttpRequestParser.
+typedef boost::shared_ptr<HttpRequestParser> HttpRequestParserPtr;
 
 /// @brief A generic parser for HTTP requests.
 ///
