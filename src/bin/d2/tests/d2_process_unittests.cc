@@ -94,7 +94,7 @@ public:
             return res;
         }
 
-        isc::data::ConstElementPtr answer = configure(config_set_);
+        isc::data::ConstElementPtr answer = configure(config_set_, false);
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer);
 
@@ -181,7 +181,7 @@ TEST_F(D2ProcessTest, configure) {
     ASSERT_TRUE(fromJSON(valid_d2_config));
 
     // Invoke configure() with a valid D2 configuration.
-    isc::data::ConstElementPtr answer = configure(config_set_);
+    isc::data::ConstElementPtr answer = configure(config_set_, false);
 
     // Verify that configure result is success and reconfigure queue manager
     // flag is true.
@@ -199,7 +199,7 @@ TEST_F(D2ProcessTest, configure) {
     ASSERT_TRUE(fromJSON("{ \"bogus\": 1000 } "));
 
     // Invoke configure() with the invalid configuration.
-    answer = configure(config_set_);
+    answer = configure(config_set_, false);
 
     // Verify that configure result is failure, the reconfigure flag is
     // false, and that the queue manager is still running.
@@ -360,7 +360,7 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
 
     // Invoke configure() with a valid config that contains an unusable IP
     ASSERT_TRUE(fromJSON(bad_ip_d2_config));
-    isc::data::ConstElementPtr answer = configure(config_set_);
+    isc::data::ConstElementPtr answer = configure(config_set_, false);
 
     // Verify that configure result is success and reconfigure queue manager
     // flag is true.
@@ -377,7 +377,7 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
 
     // Verify we can recover given a valid config with an usable IP address.
     ASSERT_TRUE(fromJSON(valid_d2_config));
-    answer = configure(config_set_);
+    answer = configure(config_set_, false);
 
     // Verify that configure result is success and reconfigure queue manager
     // flag is true.

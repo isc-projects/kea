@@ -210,6 +210,10 @@ typedef std::vector<std::string> ElementIdList;
 /// class which is handed a set of configuration values to process by upper
 /// application management layers.
 ///
+/// This class allows two configuration methods:
+///
+/// 1. classic method
+///
 /// The class presents a public method for receiving new configurations,
 /// parseConfig.  This method coordinates the parsing effort as follows:
 ///
@@ -256,6 +260,25 @@ typedef std::vector<std::string> ElementIdList;
 ///
 /// In the event that an error occurs, parsing is halted and the
 /// configuration context is restored from backup.
+///
+/// See @ref isc::d2::D2CfgMgr and @ref isc::d2::D2Process for example use of
+/// this approach.
+///
+/// 2. simple configuration method
+///
+/// This approach assumes usage of @ref isc::data::SimpleParser paradigm. It
+/// does not use any intermediate storage, does not use parser pointers, does
+/// not enforce parsing order.
+///
+/// Here's the expected control flow order:
+/// 1. implementation calls simpleParseConfig from its configure method.
+/// 2. simpleParseConfig makes a configuration context
+/// 3. parse method from the derived class is called
+/// 4. if the configuration was unsuccessful of this is only a check, the
+///    old context is reinstantiated. If not, the configuration is kept.
+///
+/// See @ref isc::agent::CtrlAgentCfgMgr and @ref isc::agent::CtrlAgentProcess
+/// for example use of this approach.
 class DCfgMgrBase {
 public:
     /// @brief Constructor
@@ -272,13 +295,34 @@ public:
     /// @brief Acts as the receiver of new configurations and coordinates
     /// the parsing as described in the class brief.
     ///
-    /// @param config_set is a set of configuration elements to parsed.
+    /// @param config_set is a set of configuration elements to be parsed.
     ///
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
     isc::data::ConstElementPtr parseConfig(isc::data::ConstElementPtr
                                            config_set);
+
+
+    /// @brief Acts as the receiver of new configurations.
+    ///
+    /// This method is similar to what @ref parseConfig does, execept it employs
+    /// the simple parser paradigm: no intermediate storage, no parser pointers
+    /// no distinction between params_map and objects_map, parse order (if needed)
+    /// can be enforced in the actual implementation by calling specific
+    /// parsers first. See @ref isc::agent::CtrlAgentCfgMgr::parse for example.
+    ///
+    /// If check_only is true, the actual parsing is done to check if the configuration
+    /// is sane, but is then reverted.
+    ///
+    /// @param config set of configuration elements to be parsed
+    /// @param check_only true if the config is to be checked only, but not applied
+    /// @return an Element that contains the results of configuration composed
+    /// of an integer status value (0 means successful, non-zero means failure),
+    /// and a string explanation of the outcome.
+    isc::data::ConstElementPtr
+    simpleParseConfig(isc::data::ConstElementPtr config,
+                      bool check_only = false);
 
     /// @brief Adds a given element id to the end of the parse order list.
     ///
@@ -372,6 +416,24 @@ protected:
     /// @param context Pointer to the new context.
     /// @throw DCfgMgrBaseError if context is NULL.
     void setContext(DCfgContextBasePtr& context);
+
+    /// @brief Parses actual configuration.
+    ///
+    /// This method is expected to be implemented in derived classes that employ
+    /// SimpleParser paradigm (i.e. they call simpleParseConfig rather than
+    /// parseConfig from their configure method).
+    ///
+    /// Implementations that do not employ this method may provide dummy
+    /// implementation.
+    ///
+    /// @param config the Element tree structure that decribes the configuration.
+    /// @param check_only false for normal configuration, true when verifying only
+    ///
+    /// @return an Element that contains the results of configuration composed
+    /// of an integer status value (0 means successful, non-zero means failure),
+    /// and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr parse(isc::data::ConstElementPtr config,
+                                             bool check_only);
 
 private:
 

@@ -191,9 +191,14 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
 }
 
 isc::data::ConstElementPtr
-D2Process::configure(isc::data::ConstElementPtr config_set) {
+D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
               DHCP_DDNS_CONFIGURE).arg(config_set->str());
+
+    /// @todo: Implement this eventually.
+    if (check_only) {
+        return (isc::config::createAnswer(0, "Configuration check is not supported by D2."));
+    }
 
     int rcode = 0;
     isc::data::ConstElementPtr comment;

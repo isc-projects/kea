@@ -90,7 +90,12 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 }
 
 isc::data::ConstElementPtr
-DStubProcess::configure(isc::data::ConstElementPtr config_set) {
+DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) {
+    if (check_only) {
+        return (isc::config::createAnswer(1,
+                "Configuration checking is not supported."));
+    }
+
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
         return (isc::config::createAnswer(1,

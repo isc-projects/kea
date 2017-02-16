@@ -7,8 +7,10 @@
 #ifndef CTRL_AGENT_CFG_MGR_H
 #define CTRL_AGENT_CFG_MGR_H
 
+#include <cc/data.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
+#include <hooks/libinfo.h>
 
 namespace isc {
 namespace agent {
@@ -26,6 +28,20 @@ typedef boost::shared_ptr<CtrlAgentCfgContext> CtrlAgentCfgContextPtr;
 /// It is derived from the context base class, DCfgContextBase.
 class CtrlAgentCfgContext : public process::DCfgContextBase {
 public:
+
+    /// @brief Default constructor
+    CtrlAgentCfgContext();
+
+    /// @brief Specifies type of the server being controlled.
+    enum ServerType {
+        TYPE_DHCP4 = 0, ///< kea-dhcp4
+        TYPE_DHCP6 = 1, ///< kea-dhcp6
+        TYPE_D2 = 2     ///< kea-dhcp-ddns
+    };
+
+    /// @brief Used check that specified ServerType is within valid range.
+    static const uint32_t MAX_TYPE_SUPPORTED = TYPE_D2;
+
     /// @brief Creates a clone of this context object.
     ///
     /// @return A pointer to the new clone.
@@ -33,9 +49,84 @@ public:
         return (process::DCfgContextBasePtr(new CtrlAgentCfgContext(*this)));
     }
 
+    /// @brief Returns information about control socket
+    ///
+    /// @param type type of the server being controlled
+    /// @return pointer to the Element that holds control-socket map
+    const data::ConstElementPtr getControlSocketInfo(ServerType type) const {
+        if (type > MAX_TYPE_SUPPORTED) {
+            isc_throw(BadValue, "Invalid server type");
+        }
+        return (ctrl_sockets_[static_cast<uint8_t>(type)]);
+    }
+
+    /// @brief Sets information about the control socket
+    ///
+    /// @param control_socket Element that holds control-socket map
+    /// @param type type of the server being controlled
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
+                              ServerType type) {
+        if (type > MAX_TYPE_SUPPORTED) {
+            isc_throw(BadValue, "Invalid server type");
+        }
+        ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
+    }
+
+    /// @brief sets http-host parameter
+    ///
+    /// @param host hostname to be used during http socket creation
+    void setHost(const std::string& host) {
+        http_host_ = host;
+    }
+
+    /// @brief returns http-host parameter
+    ///
+    /// @return name of the http-host parameter
+    std::string getHost() const {
+        return (http_host_);
+    }
+
+    /// @brief Sets http port
+    ///
+    /// @param port sets the TCP port the http server will listen on
+    void setPort(const uint16_t port) {
+        http_port_ = port;
+    }
+
+    /// @brief Returns the TCP post the http server will listen on
+    uint16_t getPort() const {
+        return (http_port_);
+    }
+
+    /// @brief Returns a list of hook libraries
+    /// @return a list of hook libraries
+    const hooks::HookLibsCollection& getLibraries() const {
+        return (libraries_);
+    }
+
+    /// @brief Sets the list of hook libraries
+    ///
+    /// @params libs a coolection of libraries to remember.
+    void setLibraries(const hooks::HookLibsCollection& libs) {
+        libraries_ = libs;
+    }
+
+
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
     CtrlAgentCfgContext& operator=(const CtrlAgentCfgContext& rhs);
+
+    /// Socket information will be stored here (for all supported servers)
+    data::ConstElementPtr ctrl_sockets_[MAX_TYPE_SUPPORTED + 1];
+
+    /// Hostname the CA should listen on.
+    std::string http_host_;
+
+    /// TCP port the CA should listen on.
+    uint16_t http_port_;
+
+    /// List of hook libraries.
+    hooks::HookLibsCollection libraries_;
 };
 
 /// @brief Ctrl Agent Configuration Manager.
@@ -69,20 +160,16 @@ public:
 
 protected:
 
-    /// @brief  Create a parser instance based on an element id.
+    virtual isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only);
+
+    /// @brief This is no longer used.
     ///
-    /// Given an element_id returns an instance of the appropriate parser.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
+    /// @throw NotImplemented
+    /// @return nothing, always throws
     virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos
-                       = isc::data::Element::ZERO_POSITION());
+    createConfigParser(const std::string&,
+                       const isc::data::Element::Position& pos);
 
     /// @brief Creates a new, blank CtrlAgentCfgContext context.
     ///
