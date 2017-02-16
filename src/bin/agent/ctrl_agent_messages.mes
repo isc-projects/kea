@@ -18,3 +18,21 @@ event loop.
 This informational message indicates that the DHCP-DDNS server has
 processed all configuration information and is ready to begin processing.
 The version is also printed.
+
+% CTRL_AGENT_CONFIG_COMPLETE Control Agent configuration complete: %1
+This informational message indicates that the CA had completed its
+configuration.
+
+% CTRL_AGENT_CONFIG_FAIL Control Agent configuration failed: %1
+This error message indicates that the CA had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% CTRL_AGENT_CONFIG_CHECK_COMPLETE Control Agent configuration check complete: %1
+This informationnal message indicates that the CA had completed the
+configuration check. The outcome of this check is part of the message.
+
+% CTRL_AGENT_CONFIG_CHECK_FAIL Control Agent configuration check failed: %1
+This error message indicates that the CA had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.

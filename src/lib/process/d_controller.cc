@@ -320,7 +320,7 @@ DControllerBase::runProcess() {
 // Instance method for handling new config
 isc::data::ConstElementPtr
 DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
-    return (process_->configure(new_config));
+    return (process_->configure(new_config, false));
 }
 
 
