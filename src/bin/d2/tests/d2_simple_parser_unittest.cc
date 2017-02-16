@@ -21,7 +21,7 @@ namespace {
 /// @brief Checks if specified element matches the given integer default
 ///
 /// @param element defaulted element to check
-/// @param deflt SimpleDefault which supplied the default valaue
+/// @param deflt SimpleDefault which supplied the default value
 void checkIntegerValue(const ConstElementPtr& element,
                        const SimpleDefault& deflt)  {
     ASSERT_TRUE(element);
@@ -150,7 +150,7 @@ class D2SimpleParserTest : public ::testing::Test {
 public:
     /// @brief Constructor
     ///
-    /// @param parser_type specifices the parsing starting point at which
+    /// @param parser_type specificies the parsing starting point at which
     /// the JSON parser should begin. It defaults to PARSER_JSON. See @c
     /// D2ParserContext::ParserType for all possible values.
     D2SimpleParserTest(const D2ParserContext::ParserType&
@@ -170,13 +170,13 @@ public:
     /// The JSON text is submitted to the D2ParserContext for parsing. Any
     /// errors emitted here are caught and compared against the expected
     /// error or flagged as unexpected.
-    /// Next, the virtural method, setDefaults()is invoked. his method should
+    /// Next, the virtual method, setDefaults()is invoked. his method should
     /// be used by derivations to add default values to the element tree
     /// produced by the JSON parser.
     /// Lastly, it passes the element tree into the virtual method,
     /// parseElement().  This method should be used by derivations to create
     /// the appropriate element parser to parse the element tree into the
-    /// approprate D2 object(s).
+    /// appropriate D2 object(s).
     ///
     /// @param json JSON text to parse
     /// @param exp_error exact text of the error message expected or ""
@@ -626,7 +626,7 @@ TEST_F(TSIGKeyInfoParserTest, invalidEntry) {
               "}";
     PARSE_FAIL(config, "<string>:1.62: TSIG key secret cannot be blank");
 
-    // Secret must be valid for alogorithm
+    // Secret must be valid for algorithm
     config = "{"
               " \"name\": \"d2_key_one\" , "
               " \"algorithm\": \"HMAC-MD5\" , "

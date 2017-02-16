@@ -191,7 +191,7 @@ public:
     ///
     /// It then extracts the set of configuration elements for the
     /// module-name that matches the controller's app_name_ and passes that
-    /// set into @c udpateConfig().
+    /// set into @c updateConfig().
     ///
     /// The file may contain an arbitrary number of other modules.
     ///

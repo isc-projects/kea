@@ -68,7 +68,7 @@ public:
 
     /// @brief Build JSON configuration string for a D2Params element
     ///
-    /// Constructs a JSON string for "params" element using replacable
+    /// Constructs a JSON string for "params" element using replaceable
     /// parameters.
     ///
     /// @param ip_address string to insert as ip_address value
@@ -170,7 +170,7 @@ public:
         // into the Element parser and check for the expected outcome.
         data::ConstElementPtr answer = cfg_mgr_->parseConfig(config_set_);
 
-        // Extract the result and error text from the anwser.
+        // Extract the result and error text from the answer.
         int rcode = 0;
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer);
@@ -406,7 +406,7 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
 /// -# ip_address cannot be "0.0.0.0"
 /// -# ip_address cannot be "::"
 /// -# port cannot be 0
-/// -# dns_server_timeout cannat be 0
+/// -# dns_server_timeout cannot be 0
 /// -# ncr_protocol must be valid
 /// -# ncr_format must be valid
 TEST_F(D2CfgMgrTest, invalidEntry) {
@@ -632,7 +632,7 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
     EXPECT_EQ("example.com", match->getName());
 
-    // Verify that search is case insensisitive.
+    // Verify that search is case insensitive.
     EXPECT_TRUE(cfg_mgr_->matchForward("EXAMPLE.COM", match));
     EXPECT_EQ("example.com", match->getName());
 
