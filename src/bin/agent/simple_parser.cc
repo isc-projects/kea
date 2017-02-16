@@ -111,6 +111,10 @@ AgentSimpleParser::parse(CtrlAgentCfgContextPtr ctx, isc::data::ConstElementPtr 
     if (hooks) {
         hooks_parser.parse(hooks);
         hooks_parser.verifyLibraries();
+
+        hooks::HookLibsCollection libs;
+        hooks_parser.getLibraries(libs);
+        ctx->setLibraries(libs);
     }
 
     if (!check_only) {

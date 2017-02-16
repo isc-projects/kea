@@ -5,6 +5,8 @@ SHTESTS += ctrl_agent_process_tests.sh
 
 noinst_SCRIPTS = ctrl_agent_process_tests.sh
 
+noinst_LTLIBRARIES = libbasic.la
+
 EXTRA_DIST  = ctrl_agent_process_tests.sh.in
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -73,6 +75,16 @@ ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 ctrl_agent_unittest_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 ctrl_agent_unittest_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 ctrl_agent_unittest_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
+
+
+# The basic callout library - contains standard callouts
+libbasic_la_SOURCES  = basic_library.cc
+libbasic_la_CXXFLAGS = $(AM_CXXFLAGS)
+libbasic_la_CPPFLAGS = $(AM_CPPFLAGS)
+libbasic_la_LIBADD   = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 endif
 
