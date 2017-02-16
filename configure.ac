@@ -1638,6 +1638,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/mysql_tests.sh
                  src/bin/admin/tests/pgsql_tests.sh
                  src/bin/admin/tests/cql_tests.sh
+		 src/bin/agent/tests/test_libraries.h
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile

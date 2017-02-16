@@ -33,7 +33,7 @@ namespace agent {
 ///
 /// These are global Control Agent parameters.
 const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
-    { "http-post",    Element::string,  "localhost"},
+    { "http-host",    Element::string,  "localhost"},
     { "http-port",    Element::integer,  "8000"}
 };
 
@@ -81,32 +81,32 @@ void
 AgentSimpleParser::parse(CtrlAgentCfgContextPtr ctx, isc::data::ConstElementPtr config,
                          bool check_only) {
 
+    // Let's get the HTTP parameters first.
     ctx->setHost(SimpleParser::getString(config, "http-host"));
     ctx->setPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
 
+    // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
-    if (!ctrl_sockets) {
-        isc_throw(ConfigError, "Missing mandatory parameter 'control-sockets'");
+    if (ctrl_sockets) {
+        ConstElementPtr d2_socket = ctrl_sockets->get("d2-server");
+        ConstElementPtr d4_socket = ctrl_sockets->get("dhcp4-server");
+        ConstElementPtr d6_socket = ctrl_sockets->get("dhcp6-server");
+
+        if (d2_socket) {
+            ctx->setControlSocketInfo(d2_socket, CtrlAgentCfgContext::TYPE_D2);
+        }
+
+        if (d4_socket) {
+            ctx->setControlSocketInfo(d4_socket, CtrlAgentCfgContext::TYPE_DHCP4);
+        }
+
+        if (d6_socket) {
+            ctx->setControlSocketInfo(d6_socket, CtrlAgentCfgContext::TYPE_DHCP6);
+        }
     }
 
-    ConstElementPtr d2_socket = ctrl_sockets->get("d2-server");
-    ConstElementPtr d4_socket = ctrl_sockets->get("dhcp4-server");
-    ConstElementPtr d6_socket = ctrl_sockets->get("dhcp6-server");
-
-    if (d2_socket) {
-        ctx->setControlSocketInfo(d2_socket, CtrlAgentCfgContext::TYPE_D2);
-    }
-
-    if (d4_socket) {
-        ctx->setControlSocketInfo(d4_socket, CtrlAgentCfgContext::TYPE_DHCP4);
-    }
-
-    if (d6_socket) {
-        ctx->setControlSocketInfo(d6_socket, CtrlAgentCfgContext::TYPE_DHCP6);
-    }
-
+    // Finally, let's get the hook libs!
     hooks::HooksLibrariesParser hooks_parser;
-    
     ConstElementPtr hooks = config->get("hooks-libraries");
     if (hooks) {
         hooks_parser.parse(hooks);

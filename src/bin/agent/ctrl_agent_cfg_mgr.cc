@@ -82,6 +82,7 @@ CtrlAgentCfgMgr::createNewContext() {
 
 isc::data::ConstElementPtr
 CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
+    // Do a sanity check first.
     if (!config_set) {
         isc_throw(DhcpConfigError, "Mandatory config parameter not provided");
     }
@@ -92,6 +93,7 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
     ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
     AgentSimpleParser::setAllDefaults(cfg);
 
+    // And parse the configuration.
     ConstElementPtr answer;
     std::string excuse;
     try {
@@ -106,6 +108,7 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         answer = isc::config::createAnswer(2, excuse);
     }
 
+    // At this stage the answer was created only in case of exception.
     if (answer) {
         if (check_only) {
             LOG_ERROR(agent_logger, CTRL_AGENT_CONFIG_CHECK_FAIL).arg(excuse);
@@ -117,12 +120,8 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
 
     if (check_only) {
         answer = isc::config::createAnswer(0, "Configuration check successful");
-        LOG_INFO(agent_logger, CTRL_AGENT_CONFIG_CHECK_COMPLETE)
-            .arg(getConfigSummary(0));
     } else {
         answer = isc::config::createAnswer(0, "Configuration applied successfully.");
-        LOG_INFO(agent_logger, CTRL_AGENT_CONFIG_COMPLETE)
-            .arg(getConfigSummary(0));
     }
 
     return (answer);

@@ -14,7 +14,7 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 # Control Agent configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
 CONFIG="{
-    \"CtrlAgent\":
+    \"Control-agent\":
     {
         \"dummy-param\": 123
     },
@@ -75,7 +75,7 @@ shutdown_test() {
     # It should be just once on startup.
     get_reconfigs
     if [ ${_GET_RECONFIGS} -ne 1 ]; then
-        printf "ERROR: server hasn't been configured.\n"
+        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s), but exactly 1 was expected.\n"
         clean_exit 1
     else
         printf "Server successfully configured.\n"
