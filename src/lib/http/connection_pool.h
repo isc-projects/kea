@@ -8,7 +8,7 @@
 #define HTTP_CONNECTION_POOL_H
 
 #include <http/connection.h>
-#include <set>
+#include <list>
 
 namespace isc {
 namespace http {
@@ -49,7 +49,7 @@ public:
 protected:
 
     /// @brief Set of connections.
-    std::set<HttpConnectionPtr> connections_;
+    std::list<HttpConnectionPtr> connections_;
 
 };
 
