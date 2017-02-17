@@ -421,7 +421,7 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
 
     // Cannot use port  0
     config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
-    SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65535");
+    SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65536");
 
     // Cannot use dns server timeout of 0
     config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
