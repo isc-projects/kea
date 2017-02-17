@@ -961,7 +961,7 @@ TEST_F(DdnsDomainParserTest, invalidDomain) {
              "  \"dns-servers\" : [ "
              "  {  \"ip-address\": \"127.0.0.3\" , "
              "    \"port\": -1 } ] } ";
-    PARSE_FAIL(config, "<string>:1.111-112: port must be greater than zero but less than 65792");
+    PARSE_FAIL(config, "<string>:1.111-112: port must be greater than zero but less than 65536");
 
     // Create a domain configuration without an defined key name
     config = "{ \"name\": \"example.com\" , "
