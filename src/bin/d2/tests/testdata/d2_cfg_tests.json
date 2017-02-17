@@ -163,7 +163,7 @@
 #-----
 ,{
 "description" : "D2Params.port can't be 0",
-"syntax-error" : "<string>:1.33: port must be greater than zero but less than 65792",
+"syntax-error" : "<string>:1.33: port must be greater than zero but less than 65536",
 "data" :
     {
     "port" : 0,

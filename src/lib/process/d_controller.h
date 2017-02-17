@@ -429,6 +429,7 @@ protected:
     /// @return pointer to the elements created
     ///
     virtual isc::data::ConstElementPtr parseText(const std::string& input) {
+        static_cast<void>(input); // just tu shut up the unused parameter warning
         isc::data::ConstElementPtr elements;
         return (elements);
     }
