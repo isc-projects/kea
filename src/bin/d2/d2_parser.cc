@@ -894,8 +894,8 @@ namespace isc { namespace d2 {
   case 67:
 #line 274 "d2_parser.yy" // lalr1.cc:859
     {
-    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65792 ) {
-        error(yystack_[0].location, "port must be greater than zero but less than 65792");
+    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65535 ) {
+        error(yystack_[0].location, "port must be greater than zero but less than 65535");
     }
     ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
@@ -1231,8 +1231,8 @@ namespace isc { namespace d2 {
   case 127:
 #line 486 "d2_parser.yy" // lalr1.cc:859
     {
-    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65792 ) {
-        error(yystack_[0].location, "port must be greater than zero but less than 65792");
+    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65535 ) {
+        error(yystack_[0].location, "port must be greater than zero but less than 65536");
     }
     ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
