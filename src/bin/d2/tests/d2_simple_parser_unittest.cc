@@ -183,7 +183,6 @@ public:
     /// if parsing should succeed.
     ::testing::AssertionResult parseOrFail(const std::string& json,
                                            const std::string& exp_error) {
-        bool failed = false;
         try {
             // Free up objects created by previous invocation
             reset();
@@ -240,7 +239,10 @@ protected:
     ///
     /// @param config element tree in which defaults should be added
     /// @return the number of default items added to the tree
-    virtual size_t setDefaults(data::ElementPtr config) { return (0); }
+    virtual size_t setDefaults(data::ElementPtr config) {
+        static_cast<void>(config);
+        return (0);
+    }
 
     /// @brief Parses a given element tree into D2 object(s)
     ///
@@ -250,7 +252,9 @@ protected:
     /// outside of this method.
     ///
     /// @param config element tree to parse
-    virtual void parseElement(data::ConstElementPtr config) {};
+    virtual void parseElement(data::ConstElementPtr config) {
+        static_cast<void>(config);
+    }
 
     D2ParserContext::ParserType parser_type_;
 };
