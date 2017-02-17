@@ -195,7 +195,7 @@ DStubController::processSignal(int signum){
 }
 
 isc::data::ConstElementPtr
-DStubController::parseFile(const std::string& file_name) {
+DStubController::parseFile(const std::string& /*file_name*/) {
     isc::data::ConstElementPtr elements;
     if (use_alternate_parser_) {
         std::ostringstream os;

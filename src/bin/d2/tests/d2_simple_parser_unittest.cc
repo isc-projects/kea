@@ -150,7 +150,7 @@ class D2SimpleParserTest : public ::testing::Test {
 public:
     /// @brief Constructor
     ///
-    /// @param parser_type specificies the parsing starting point at which
+    /// @param parser_type specifies the parsing starting point at which
     /// the JSON parser should begin. It defaults to PARSER_JSON. See @c
     /// D2ParserContext::ParserType for all possible values.
     D2SimpleParserTest(const D2ParserContext::ParserType&
@@ -835,7 +835,7 @@ TEST_F(DnsServerInfoParserTest, invalidEntry) {
     config = "{ \"hostname\": \"\", "
              "  \"ip-address\": \"192.168.5.6\" ,"
              "  \"port\": -100 }";
-    PARSE_FAIL(config, "<string>:1.60-63: port must be greater than zero but less than 65792");
+    PARSE_FAIL(config, "<string>:1.60-63: port must be greater than zero but less than 65536");
 }
 
 

@@ -272,8 +272,8 @@ ip_address: IP_ADDRESS {
 };
 
 port: PORT COLON INTEGER {
-    if ($3 <= 0 || $3 >= 65792 ) {
-        error(@3, "port must be greater than zero but less than 65792");
+    if ($3 <= 0 || $3 >= 65535 ) {
+        error(@3, "port must be greater than zero but less than 65535");
     }
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", i);
@@ -484,8 +484,8 @@ dns_server_ip_address: IP_ADDRESS {
 };
 
 dns_server_port: PORT COLON INTEGER {
-    if ($3 <= 0 || $3 >= 65792 ) {
-        error(@3, "port must be greater than zero but less than 65792");
+    if ($3 <= 0 || $3 >= 65535 ) {
+        error(@3, "port must be greater than zero but less than 65536");
     }
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("port", i);
