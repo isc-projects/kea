@@ -1210,21 +1210,21 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
     ASSERT_NO_THROW(json_true = parseDHCP4(config_true));
 
     // Let's check the default. It should be true
-    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
 
     // Now check that "false" configuration is really applied.
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_false));
-    ASSERT_FALSE(CfgMgr::instance().echoClientId());
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
 
     CfgMgr::instance().clear();
 
     // Now check that "true" configuration is really applied.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_true));
-    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
 
     // In any case revert back to the default value (true)
-    CfgMgr::instance().echoClientId(true);
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(true);
 }
 
 // This test checks that the global match-client-id parameter is optional
@@ -4558,14 +4558,6 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
         "    \"subnet\": \"192.0.2.0/24\"  \n"
         " } ] \n"
         "} \n";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseJSON(config));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    checkResult(status, 1);
 
     EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 }

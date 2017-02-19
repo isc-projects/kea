@@ -29,7 +29,7 @@ SrvConfig::SrvConfig()
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0),
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()) {
 }
 
@@ -43,7 +43,7 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0),
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()) {
 }
 
@@ -110,6 +110,14 @@ SrvConfig::copy(SrvConfig& new_config) const {
     new_config.class_dictionary_.reset(new ClientClassDictionary(*class_dictionary_));
     // Replace the D2 client configuration
     new_config.setD2ClientConfig(getD2ClientConfig());
+    // Replace configured hooks libraries.
+    new_config.cfg_hooks_libraries_.clear();
+    using namespace isc::hooks;
+    for (HookLibsCollection::const_iterator it =
+           cfg_hooks_libraries_.get().begin();
+         it != cfg_hooks_libraries_.get().end(); ++it) {
+        new_config.cfg_hooks_libraries_.add(it->first, it->second);
+    }
 }
 
 void
@@ -151,11 +159,49 @@ SrvConfig::equals(const SrvConfig& other) const {
         }
     }
     // Logging information is equal between objects, so check other values.
-    return ((*cfg_iface_ == *other.cfg_iface_) &&
-            (*cfg_option_def_ == *other.cfg_option_def_) &&
-            (*cfg_option_ == *other.cfg_option_) &&
-            (*class_dictionary_ == *other.class_dictionary_) &&
-            (*d2_client_config_ == *other.d2_client_config_));
+    if ((*cfg_iface_ != *other.cfg_iface_) ||
+        (*cfg_option_def_ != *other.cfg_option_def_) ||
+        (*cfg_option_ != *other.cfg_option_) ||
+        (*class_dictionary_ != *other.class_dictionary_) ||
+        (*d2_client_config_ != *other.d2_client_config_)) {
+        return (false);
+    }
+    // Now only configured hooks libraries can differ.
+    // If number of configured hooks libraries are different, then
+    // configurations aren't equal.
+    if (cfg_hooks_libraries_.get().size() != other.cfg_hooks_libraries_.get().size()) {
+        return (false);
+    }
+    // Pass through all configured hooks libraries.
+    using namespace isc::hooks;
+    for (HookLibsCollection::const_iterator this_it =
+             cfg_hooks_libraries_.get().begin();
+         this_it != cfg_hooks_libraries_.get().end(); ++this_it) {
+        bool match = false;
+        for (HookLibsCollection::const_iterator other_it =
+                 other.cfg_hooks_libraries_.get().begin();
+             other_it != other.cfg_hooks_libraries_.get().end(); ++other_it) {
+            if (this_it->first != other_it->first) {
+                continue;
+            }
+            if (isNull(this_it->second) && isNull(other_it->second)) {
+                match = true;
+                break;
+            }
+            if (isNull(this_it->second) || isNull(other_it->second)) {
+                continue;
+            }
+            if (this_it->second->equals(*other_it->second)) {
+                match = true;
+                break;
+            }
+        }
+        // No match found for the particular hooks library so return false.
+        if (!match) {
+            return (false);
+        }
+    }
+    return (true);
 }
 
 void

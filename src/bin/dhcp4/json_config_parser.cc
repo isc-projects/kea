@@ -331,7 +331,7 @@ public:
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
         bool echo_client_id = getBoolean(global, "echo-client-id");
-        CfgMgr::instance().echoClientId(echo_client_id);
+        cfg->setEchoClientId(echo_client_id);
 
         // Set the probation period for decline handling.
         uint32_t probation_period =
@@ -339,23 +339,8 @@ public:
         cfg->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
-        // @todo Change for uint16_t
-        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
+        uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         cfg->setDhcp4o6Port(dhcp4o6_port);
-    }
-
-private:
-
-    /// @brief Returns a value converted to uint32_t
-    ///
-    /// Instantiation of getIntType() to uint32_t
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an uint32_t value
-    uint32_t getUint32(isc::data::ConstElementPtr scope,
-                       const std::string& name) {
-        return (getIntType<uint32_t>(scope, name));
     }
 };
 
@@ -429,11 +414,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Some of the parsers alter the state of the system in a way that can't
-    // easily be undone. (Or alter it in a way such that undoing the change has
-    // the same risk of failure as doing the change.)
-    HooksLibrariesParser hooks_parser;
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -514,8 +494,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "hooks-libraries") {
-                hooks_parser.parse(config_pair.second);
-                hooks_parser.verifyLibraries();
+                HooksLibrariesParser hooks_parser;
+                CfgHooksLibraries& libraries = srv_cfg->getHooksLibraries();
+                hooks_parser.parse(config_pair.second, libraries);
+                libraries.verifyLibraries(config_pair.second->getPosition());
                 continue;
             }
 
@@ -628,15 +610,18 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // This occurs last as if it succeeds, there is no easy way
-            // revert it.  As a result, the failure to commit a subsequent
-            // change causes problems when trying to roll back.
-            hooks_parser.loadLibraries();
-
             // Apply the staged D2ClientConfig, used to be done by parser commit
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
+
+            // This occurs last as if it succeeds, there is no easy way
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            const CfgHooksLibraries& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksLibraries();
+            libraries.loadLibraries();
+
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());

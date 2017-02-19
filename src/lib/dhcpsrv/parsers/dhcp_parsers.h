@@ -17,10 +17,10 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/cfg_hooks_libraries.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <cc/simple_parser.h>
-#include <hooks/libinfo.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
 
@@ -346,22 +346,6 @@ public:
 ///
 /// This parser handles the list of hooks libraries.  This is an optional list,
 /// which may be empty.
-///
-/// However, the parser does more than just check the list of library names.
-/// It does two other things:
-///
-/// -# The problem faced with the hooks libraries is that we wish to avoid
-/// reloading the libraries if they have not changed.  (This would cause the
-/// "unload" and "load" methods to run.  Although libraries should be written
-/// to cope with this, it is feasible that such an action may be costly in
-/// terms of time and resources, or may cause side effects such as clearing
-/// an internal cache.)  To this end, the parser also checks the list against
-/// the list of libraries current loaded and notes if there are changes.
-/// -# If there are, the parser validates the libraries; it opens them and
-/// checks that the "version" function exists and returns the correct value.
-///
-/// Only if the library list has changed and the libraries are valid will the
-/// change be applied.
 class HooksLibrariesParser : public isc::data::SimpleParser {
 public:
 
@@ -396,51 +380,11 @@ public:
     /// -# That there is an optional 'parameters' element.
     /// -# That there are no other element.
     ///
-    /// If you want to check whether the library is really present (if the file
-    /// is on disk, it is really a library and that it could be loaded), call
-    /// @ref verifyLibraries().
-    ///
-    /// This method stores parsed libraries in libraries_.
+    /// This method stores parsed libraries in libraries
     ///
     /// @param value pointer to the content of parsed values
-    void parse(isc::data::ConstElementPtr value);
-
-    /// @brief Verifies that libraries stored in libraries_ are valid.
-    ///
-    /// This method is a smart wrapper around @ref
-    /// isc::hooks::HooksManager::validateLibraries().
-    /// It tries to validate all the libraries stored in libraries_.
-    /// @throw DhcpConfigError if any issue is discovered.
-    void verifyLibraries();
-
-    /// @brief Commits hooks libraries data
-    ///
-    /// This method calls necessary methods in HooksManager that will unload
-    /// any libraries that may be currently loaded and will load the actual
-    /// libraries. Providing that the specified libraries are valid and are
-    /// different to those already loaded, this method loads the new set of
-    /// libraries (and unloads the existing set).
-    ///
-    /// @throw DhcpConfigError if the call to HooksManager fails.
-    void loadLibraries();
-
-    /// @brief Returns list of parsed libraries
-    ///
-    /// Principally for testing, this returns the list of libraries as well as
-    /// an indication as to whether the list is different from the list of
-    /// libraries already loaded.
-    ///
-    /// @param [out] libraries List of libraries that were specified in the
-    ///        new configuration.
-    void getLibraries(isc::hooks::HookLibsCollection& libraries);
-
-private:
-    /// List of hooks libraries with their configuration parameters
-    isc::hooks::HookLibsCollection libraries_;
-
-    /// Position of the original element is stored in case we need to report an
-    /// error later.
-    isc::data::Element::Position position_;
+    /// @param libraries configured hooks libraries to store into
+    void parse(isc::data::ConstElementPtr value, CfgHooksLibraries& libraries);
 };
 
 /// @brief Parser for option data value.
@@ -466,7 +410,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    OptionDataParser(const uint16_t address_family);
+    explicit OptionDataParser(const uint16_t address_family);
 
     /// @brief Parses ElementPtr containing option definition
     ///
@@ -578,7 +522,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or AF_INET6
-    OptionDataListParser(const uint16_t address_family);
+    explicit OptionDataListParser(const uint16_t address_family);
 
     /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
@@ -721,7 +665,7 @@ public:
 
     /// @brief constructor
     /// @param family specifies protocol family (IPv4 or IPv6)
-    RelayInfoParser(const isc::dhcp::Option::Universe& family);
+    explicit RelayInfoParser(const isc::dhcp::Option::Universe& family);
 
     /// @brief parses the actual relay parameters
     ///
@@ -733,7 +677,18 @@ public:
     void parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
                isc::data::ConstElementPtr relay_info);
 
-protected:
+private:
+
+    /// @brief Returns a value converted to IOAddress
+    ///
+    /// Instantiation of getAndConvert() to IOAddress
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an IOAddress value
+    isc::asiolink::IOAddress
+    getIOAddress(isc::data::ConstElementPtr scope, const std::string& name);
+
     /// Protocol family (IPv4 or IPv6)
     Option::Universe family_;
 };
@@ -765,7 +720,7 @@ public:
     /// @brief constructor
     ///
     /// @param family address family: @c AF_INET or @c AF_INET6
-    SubnetConfigParser(uint16_t family);
+    explicit SubnetConfigParser(uint16_t family);
 
     /// @brief virtual destructor (does nothing)
     virtual ~SubnetConfigParser() { }
@@ -888,16 +843,6 @@ public:
     static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
 
 private:
-
-    /// @brief Returns a value converted to uint32_t
-    ///
-    /// Instantiation of getIntType() to uint32_t
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an uint32_t value
-    uint32_t
-    getUint32(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to IOAddress
     ///

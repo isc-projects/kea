@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/cfg_hooks_libraries.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -365,6 +366,20 @@ public:
         class_dictionary_ = dictionary;
     }
 
+    /// @brief Returns non-const reference to configured hooks libraries.
+    ///
+    /// @return non-const reference to configured hooks libraries.
+    CfgHooksLibraries& getHooksLibraries() {
+        return (cfg_hooks_libraries_);
+    }
+
+    /// @brief Returns const reference to configured hooks libraries.
+    ///
+    /// @return const reference to configured hooks libraries.
+    const CfgHooksLibraries& getHooksLibraries() const {
+        return (cfg_hooks_libraries_);
+    }
+
     /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -470,13 +485,29 @@ public:
         return (decline_timer_);
     }
 
+    /// @brief Sets whether server should send back client-id in DHCPv4
+    ///
+    /// This is a compatibility flag. The default (true) is compliant with
+    /// RFC6842. False is for backward compatibility.
+    ///
+    /// @param echo should the client-id be sent or not
+    void setEchoClientId(const bool echo) {
+        echo_v4_client_id_ = echo;
+    }
+
+    /// @brief Returns whether server should send back client-id in DHCPv4.
+    /// @return true if client-id should be returned, false otherwise.
+    bool getEchoClientId() const {
+        return (echo_v4_client_id_);
+    }
+
     /// @brief Sets DHCP4o6 IPC port
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
     ///
     /// @param port port and port + 1 to use
-    void setDhcp4o6Port(uint32_t port) {
+    void setDhcp4o6Port(uint16_t port) {
         /// @todo: Port is supposed to be uint16_t, not uint32_t
         dhcp4o6_port_ = port;
     }
@@ -485,7 +516,7 @@ public:
     ///
     /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint32_t getDhcp4o6Port() {
+    uint16_t getDhcp4o6Port() {
         return (dhcp4o6_port_);
     }
 
@@ -577,17 +608,23 @@ private:
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
 
+    /// @brief Configured hooks libraries.
+    CfgHooksLibraries cfg_hooks_libraries_;
+
     /// @brief Decline Period time
     ///
     /// This timer specifies decline probation period, the time after a declined
     /// lease is recovered back to available state. Expressed in seconds.
     uint32_t decline_timer_;
 
+    /// @brief Indicates whether v4 server should send back client-id
+    bool echo_v4_client_id_;
+
     /// @brief DHCP4o6 IPC port
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
-    uint32_t dhcp4o6_port_;
+    uint16_t dhcp4o6_port_;
 
     D2ClientConfigPtr d2_client_config_;
 };

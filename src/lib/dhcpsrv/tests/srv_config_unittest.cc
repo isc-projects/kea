@@ -261,6 +261,27 @@ TEST_F(SrvConfigTest, classDictionaryBasics) {
     EXPECT_EQ(ref_dictionary_->getClasses()->size(), cd->getClasses()->size());
 }
 
+// This test verifies that RFC6842 (echo client-id) compatibility may be
+// configured.
+TEST_F(SrvConfigTest, echoClientId) {
+    SrvConfig conf;
+
+    // Check that the default is true
+    EXPECT_TRUE(conf.getEchoClientId());
+
+    // Check that it can be modified to false
+    conf.setEchoClientId(false);
+    EXPECT_FALSE(conf.getEchoClientId());
+
+    // Check that the default value can be restored
+    conf.setEchoClientId(true);
+    EXPECT_TRUE(conf.getEchoClientId());
+
+    // Check the other constructor has the same default
+    SrvConfig conf1(1);
+    EXPECT_TRUE(conf1.getEchoClientId());
+}
+
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
 TEST_F(SrvConfigTest, copy) {
@@ -377,6 +398,31 @@ TEST_F(SrvConfigTest, equality) {
     conf2.setClientClassDictionary(ref_dictionary_);
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
+}
+
+// Verifies that we can get and set configured hooks libraries
+TEST_F(SrvConfigTest, hooksLibraries) {
+    SrvConfig conf(32);
+    CfgHooksLibraries& libraries = conf.getHooksLibraries();
+
+    // Upon construction configured hooks libraries should be empty.
+    EXPECT_EQ(0, libraries.get().size());
+
+    // Verify we can update it.
+    isc::data::ConstElementPtr elem0;
+    libraries.add("foo", elem0);
+    std::string config = "{ \"library\": \"bar\" }";
+    isc::data::ConstElementPtr elem1 = isc::data::Element::fromJSON(config);
+    libraries.add("bar", elem1);
+    EXPECT_EQ(2, libraries.get().size());
+    EXPECT_EQ(2, conf.getHooksLibraries().get().size());
+
+    // Try to copy
+    SrvConfig copied(64);
+    ASSERT_TRUE(conf != copied);
+    ASSERT_NO_THROW(conf.copy(copied));
+    ASSERT_TRUE(conf == copied);
+    EXPECT_EQ(2, copied.getHooksLibraries().get().size());
 }
 
 } // end of anonymous namespace

@@ -104,9 +104,9 @@ class SimpleParser {
 
     /// @brief Utility method that returns position of an element
     ///
-    /// It's mostly useful for logging. When any necessary parameter is
-    /// missing (either parent is null or it doesn't contain specified
-    /// name) ZERO_POSITION is returned.
+    /// It's mostly useful for logging. If the element is missing
+    /// the parent position is returned or ZERO_POSITION if parent
+    /// is null.
     ///
     /// @param name position of that element will be returned
     /// @param parent parent element (optional)
@@ -202,6 +202,44 @@ protected:
                       << ") specified for parameter '" << name
                       << "' (" << getPosition(name, scope) << ")");
         }
+    }
+
+    /// @brief Returns a value converted to uint32_t
+    ///
+    /// Instantiation of getIntType() to uint32_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an uint32_t value
+    /// @throw isc::dhcp::DhcpConfigError when it is not an uint32_t
+    uint32_t getUint32(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint32_t>(scope, name));
+    }
+
+    /// @brief Returns a value converted to uint16_t
+    ///
+    /// Instantiation of getIntType() to uint16_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an uint16_t value
+    /// @throw isc::dhcp::DhcpConfigError when it is not an uint16_t
+    uint16_t getUint16(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint16_t>(scope, name));
+    }
+
+    /// @brief Get an uint8_t value
+    ///
+    /// Instantiation of getIntType() to uint8_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return uint8_t value
+    /// @throw isc::dhcp::DhcpConfigError when it is not an uint8_t
+    uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
+        return (getIntType<uint8_t>(scope, name));
     }
 };
 

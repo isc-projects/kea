@@ -212,18 +212,6 @@ public:
 
 private:
 
-    /// @brief Get an uint8_t value
-    ///
-    /// Instantiation of getIntType() to uint8_t
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return uint8_t value
-    /// @throw isc::dhcp::DhcpConfigError when it is not an uint8_t
-    uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
-        return (getIntType<uint8_t>(scope, name));
-    }
-
     /// Pointer to the created pool object.
     isc::dhcp::Pool6Ptr pool_;
 
@@ -545,23 +533,8 @@ public:
         srv_config->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
-        // @todo Change for uint16_t
-        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
+        uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
-    }
-
-private:
-
-    /// @brief Returns a value converted to uint32_t
-    ///
-    /// Instantiation of getIntType() to uint32_t
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an uint32_t value
-    uint32_t getUint32(isc::data::ConstElementPtr scope,
-                       const std::string& name) {
-        return (getIntType<uint32_t>(scope, name));
     }
 };
 
@@ -636,11 +609,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Some of the parsers alter state of the system that can't easily
-    // be undone. (Or alter it in a way such that undoing the change
-    // has the same risk of failure as doing the change.)
-    HooksLibrariesParser hooks_parser;
 
     // This is a way to convert ConstElementPtr to ElementPtr.
     // We need a config that can be edited, because we will insert
@@ -737,8 +705,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "hooks-libraries") {
-                hooks_parser.parse(config_pair.second);
-                hooks_parser.verifyLibraries();
+                HooksLibrariesParser hooks_parser;
+                CfgHooksLibraries& libraries = srv_config->getHooksLibraries();
+                hooks_parser.parse(config_pair.second, libraries);
+                libraries.verifyLibraries(config_pair.second->getPosition());
                 continue;
             }
 
@@ -851,15 +821,18 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // This occurs last as if it succeeds, there is no easy way to
-            // revert it.  As a result, the failure to commit a subsequent
-            // change causes problems when trying to roll back.
-            hooks_parser.loadLibraries();
-
             // Apply staged D2ClientConfig, used to be done by parser commit
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
+
+            // This occurs last as if it succeeds, there is no easy way to
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            const CfgHooksLibraries& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksLibraries();
+            libraries.loadLibraries();
+
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());

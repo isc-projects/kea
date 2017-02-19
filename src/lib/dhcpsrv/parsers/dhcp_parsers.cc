@@ -12,7 +12,6 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/cfg_mac_source.h>
-#include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -168,16 +167,13 @@ void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr v
 
 // ******************** HooksLibrariesParser *************************
 void
-HooksLibrariesParser::parse(ConstElementPtr value) {
+HooksLibrariesParser::parse(ConstElementPtr value, CfgHooksLibraries& libraries) {
     // Initialize.
-    libraries_.clear();
+    libraries.clear();
 
     if (!value) {
         isc_throw(DhcpConfigError, "Tried to parse null hooks libraries");
     }
-
-    // Let's store
-    position_ = value->getPosition();
 
     // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
@@ -248,55 +244,8 @@ HooksLibrariesParser::parse(ConstElementPtr value) {
                 " (" << library_entry->getPosition() << ")");
         }
 
-        libraries_.push_back(make_pair(libname, parameters));
+        libraries.add(libname, parameters);
     }
-}
-
-void HooksLibrariesParser::verifyLibraries() {
-    // Check if the list of libraries has changed.  If not, nothing is done
-    // - the command "DhcpN libreload" is required to reload the same
-    // libraries (this prevents needless reloads when anything else in the
-    // configuration is changed).
-
-    // We no longer rely on this. Parameters can change. And even if the
-    // parameters stay the same, they could point to files that could
-    // change.
-    vector<string> current_libraries = HooksManager::getLibraryNames();
-    if (current_libraries.empty() && libraries_.empty()) {
-        return;
-    }
-
-    // Library list has changed, validate each of the libraries specified.
-    vector<string> lib_names = isc::hooks::extractNames(libraries_);
-    vector<string> error_libs = HooksManager::validateLibraries(lib_names);
-    if (!error_libs.empty()) {
-
-        // Construct the list of libraries in error for the message.
-        string error_list = error_libs[0];
-        for (size_t i = 1; i < error_libs.size(); ++i) {
-            error_list += (string(", ") + error_libs[i]);
-        }
-        isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
-                  "library or libraries in error are: " << error_list
-                  << "(" << position_ << ")");
-    }
-}
-
-void
-HooksLibrariesParser::loadLibraries() {
-    /// Commits the list of libraries to the configuration manager storage if
-    /// the list of libraries has changed.
-    /// @todo: Delete any stored CalloutHandles before reloading the
-    /// libraries
-    if (!HooksManager::loadLibraries(libraries_)) {
-        isc_throw(DhcpConfigError, "One or more hook libraries failed to load");
-    }
-}
-
-// Method for testing
-void
-HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries) {
-    libraries = libraries_;
 }
 
 // **************************** OptionDataParser *************************
@@ -430,10 +379,7 @@ OptionDataParser::extractSpace(ConstElementPtr parent) const {
         }
 
     } catch (std::exception& ex) {
-        // Append position of the option space parameter. Note, that in the case
-        // when 'space' was not specified a default value will be used and we
-        // should never get here. Therefore, it is ok to call getPosition for
-        // the space parameter here as this parameter will always be specified.
+        // Append position of the option space parameter.
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << getPosition("space", parent) << ")");
     }
@@ -735,57 +681,31 @@ RelayInfoParser::RelayInfoParser(const Option::Universe& family)
     : family_(family) {
 };
 
+// Can't use a constructor as a function
+namespace {
+IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
+};
+
+IOAddress
+RelayInfoParser::getIOAddress(ConstElementPtr scope,
+                              const std::string& name) {
+    return (getAndConvert<IOAddress,
+            buildIOAddress>(scope, name, "address"));
+}
+
 void
 RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
                        ConstElementPtr relay_info) {
-    // Let's start with some sanity checks.
-    if (!relay_info || !cfg) {
-        isc_throw(DhcpConfigError, "Logic error: RelayInfoParser::parse() called "
-                  "with at least one NULL parameter.");
-    }
+    // There is only one parameter which is mandatory
+    IOAddress ip = getIOAddress(relay_info, "ip-address");
 
-    if (relay_info->getType() != Element::map) {
-        isc_throw(DhcpConfigError, "Configuration error: RelayInfoParser::parse() "
-                  "called with non-map parameter");
-    }
-
-    // Now create the default value.
-    isc::asiolink::IOAddress ip(family_ == Option::V4 ? IOAddress::IPV4_ZERO_ADDRESS()
-                                : IOAddress::IPV6_ZERO_ADDRESS());
-
-    // Now iterate over all parameters. Currently there's only one supported
-    // parameter, so it should be an easy thing to check.
-    bool ip_address_specified = false;
-    BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
-        if (param.first == "ip-address") {
-            ip_address_specified = true;
-
-            try {
-                ip = asiolink::IOAddress(param.second->stringValue());
-            } catch (...)  {
-                isc_throw(DhcpConfigError, "Failed to parse ip-address "
-                          "value: " << param.second
-                          << " (" << param.second->getPosition() << ")");
-            }
-
-            // Check if the address family matches.
-            if ( (ip.isV4() && family_ != Option::V4) ||
-                 (ip.isV6() && family_ != Option::V6) ) {
-                isc_throw(DhcpConfigError, "ip-address field " << ip.toText()
-                          << " does not have IP address of expected family type: "
-                          << (family_ == Option::V4 ? "IPv4" : "IPv6")
-                          << " (" << param.second->getPosition() << ")");
-            }
-        } else {
-            isc_throw(NotImplemented,
-                      "parser error: RelayInfoParser parameter not supported: "
-                      << param.second);
-        }
-    }
-
-    if (!ip_address_specified) {
-        isc_throw(DhcpConfigError, "'relay' specified, but mandatory 'ip-address' "
-                  "paramter in it is missing");
+    // Check if the address family matches.
+    if ((ip.isV4() && family_ != Option::V4) ||
+        (ip.isV6() && family_ != Option::V6) ) {
+        isc_throw(DhcpConfigError, "ip-address field " << ip.toText()
+                  << " does not have IP address of expected family type: "
+                  << (family_ == Option::V4 ? "IPv4" : "IPv6")
+                  << " (" << getPosition("ip-address", relay_info) << ")");
     }
 
     // Ok, we're done with parsing. Let's store the result in the structure
@@ -1049,17 +969,10 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     try {
         std::string hr_mode = getString(params, "reservation-mode");
         subnet_->setHostReservationMode(hrModeFromText(hr_mode));
-    } catch (const BadValue& ex) {
-        ConstElementPtr mode = params->get("reservation-mode");
-        string pos;
-        if (mode) {
-            pos = mode->getPosition().str();
-        } else {
-            pos = params->getPosition().str();
-        }
-        isc_throw(DhcpConfigError, "Failed to process specified value "
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
                   " of reservation-mode parameter: " << ex.what()
-                  << "(" << pos << ")");
+                  << "(" << getPosition("reservation-mode", params) << ")");
     }
 
     // Try setting up client class.
@@ -1077,17 +990,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 }
 
 //**************************** D2ClientConfigParser **********************
-
-uint32_t
-D2ClientConfigParser::getUint32(ConstElementPtr scope,
-                                const std::string& name) {
-    return (getIntType<uint32_t>(scope, name));
-}
-
-// Can't use a constructor as a function
-namespace {
-IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
-};
 
 IOAddress
 D2ClientConfigParser::getIOAddress(ConstElementPtr scope,
