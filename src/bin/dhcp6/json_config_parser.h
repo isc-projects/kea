@@ -37,6 +37,7 @@ class Dhcpv6Srv;
 ///
 /// @param server DHCPv6 server object.
 /// @param config_set a new configuration for DHCPv6 server.
+/// @param check_only whether this configuration is for testing only
 /// @return answer that contains result of the reconfiguration.
 /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
