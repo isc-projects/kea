@@ -169,7 +169,7 @@ public:
     /// The resulting string will contain the Element in JSON format.
     ///
     /// \return std::string containing the string representation
-    std::string str() const;
+    std::string str(unsigned indent = 0, unsigned step = 0) const;
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
@@ -196,9 +196,15 @@ public:
     /// \return true if the other ElementPtr has the same type and value
     virtual bool equals(const Element& other) const = 0;
 
-    /// Converts the Element to JSON format and appends it to
-    /// the given stringstream.
-    virtual void toJSON(std::ostream& ss) const = 0;
+    /// \brief Converts the Element to JSON format
+    ///
+    /// Pretty print when indent and step are not zero
+    ///
+    /// \param ss output stream where to append
+    /// \param indent indent by the given number of spaces
+    /// \param step indent next included block by the given number of spaces
+    virtual void toJSON(std::ostream& ss,
+                        unsigned indent = 0, unsigned step = 0) const = 0;
 
     /// \name Type-specific getters
     ///
@@ -551,7 +557,8 @@ public:
     bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
     bool setValue(long long int v) { i = v; return (true); }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     bool equals(const Element& other) const;
 };
 
@@ -566,7 +573,8 @@ public:
     bool getValue(double& t) const { t = d; return (true); }
     using Element::setValue;
     bool setValue(const double v) { d = v; return (true); }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     bool equals(const Element& other) const;
 };
 
@@ -581,7 +589,8 @@ public:
     bool getValue(bool& t) const { t = b; return (true); }
     using Element::setValue;
     bool setValue(const bool v) { b = v; return (true); }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     bool equals(const Element& other) const;
 };
 
@@ -589,7 +598,8 @@ class NullElement : public Element {
 public:
     NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {};
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     bool equals(const Element& other) const;
 };
 
@@ -604,7 +614,8 @@ public:
     bool getValue(std::string& t) const { t = s; return (true); }
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return (true); }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     bool equals(const Element& other) const;
 };
 
@@ -635,7 +646,8 @@ public:
     void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }
     bool equals(const Element& other) const;
@@ -672,7 +684,8 @@ public:
     bool contains(const std::string& s) const {
         return (m.find(s) != m.end());
     }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned indent = 0, unsigned step = 0) const;
 
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the

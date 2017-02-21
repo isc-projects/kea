@@ -47,22 +47,22 @@ operator<<(std::ostream& out, const Element::Position& pos) {
 }
 
 std::string
-Element::str() const {
+Element::str(unsigned indent, unsigned step) const {
     std::stringstream ss;
-    toJSON(ss);
+    toJSON(ss, indent, step);
     return (ss.str());
 }
 
 std::string
 Element::toWire() const {
     std::stringstream ss;
-    toJSON(ss);
+    toJSON(ss, 0, 0);
     return (ss.str());
 }
 
 void
 Element::toWire(std::ostream& ss) const {
-    toJSON(ss);
+    toJSON(ss, 0, 0);
 }
 
 bool
@@ -742,17 +742,17 @@ Element::fromJSONFile(const std::string& file_name,
 // to JSON format
 
 void
-IntElement::toJSON(std::ostream& ss) const {
+IntElement::toJSON(std::ostream& ss, unsigned, unsigned) const {
     ss << intValue();
 }
 
 void
-DoubleElement::toJSON(std::ostream& ss) const {
+DoubleElement::toJSON(std::ostream& ss, unsigned, unsigned) const {
     ss << doubleValue();
 }
 
 void
-BoolElement::toJSON(std::ostream& ss) const {
+BoolElement::toJSON(std::ostream& ss, unsigned, unsigned) const {
     if (boolValue()) {
         ss << "true";
     } else {
@@ -761,12 +761,12 @@ BoolElement::toJSON(std::ostream& ss) const {
 }
 
 void
-NullElement::toJSON(std::ostream& ss) const {
+NullElement::toJSON(std::ostream& ss, unsigned, unsigned) const {
     ss << "null";
 }
 
 void
-StringElement::toJSON(std::ostream& ss) const {
+StringElement::toJSON(std::ostream& ss, unsigned, unsigned) const {
     ss << "\"";
     const std::string& str = stringValue();
     for (size_t i = 0; i < str.size(); ++i) {
@@ -814,38 +814,84 @@ StringElement::toJSON(std::ostream& ss) const {
 }
 
 void
-ListElement::toJSON(std::ostream& ss) const {
-    ss << "[ ";
+ListElement::toJSON(std::ostream& ss, unsigned indent, unsigned step) const {
+    if (empty()) {
+        if (step) {
+            ss << "[ ]";
+        } else {
+            // For backward compatibility
+            ss << "[  ]";
+        }
+        return;
+    }
+    int first_type = get(0)->getType();
+    bool complex = (first_type == list) || (first_type == map);
+    std::string separator = ", ";
+    if (step && complex) {
+        ss << "[\n";
+        separator = ",\n";
+    } else {
+        ss << "[ ";
+    }
 
     const std::vector<ElementPtr>& v = listValue();
     for (std::vector<ElementPtr>::const_iterator it = v.begin();
          it != v.end(); ++it) {
         if (it != v.begin()) {
-            ss << ", ";
+            ss << separator;
         }
-        (*it)->toJSON(ss);
+        if (step && complex) {
+            ss << std::string(indent + step, ' ');
+        }
+        (*it)->toJSON(ss, indent + step, step);
     }
-    ss << " ]";
+    if (step && complex) {
+        ss << "\n" << std::string(indent, ' ') << "]";
+    } else {
+        ss << " ]";
+    }
 }
 
 void
-MapElement::toJSON(std::ostream& ss) const {
-    ss << "{ ";
+MapElement::toJSON(std::ostream& ss, unsigned indent, unsigned step) const {
+    if (size() == 0) {
+        if (step) {
+            ss << "{ }";
+        } else {
+            // For backward compatibility
+            ss << "{  }";
+        }
+        return;
+    }
+    std::string separator = ", ";
+    if (step) {
+        ss << "{\n";
+        separator = ",\n";
+    } else {
+        ss << "{ ";
+    }
 
     const std::map<std::string, ConstElementPtr>& m = mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end(); ++it) {
         if (it != m.begin()) {
-            ss << ", ";
+            ss << separator;
+        }
+        if (step) {
+            ss << std::string(indent + step, ' ');
         }
         ss << "\"" << (*it).first << "\": ";
         if ((*it).second) {
-            (*it).second->toJSON(ss);
+            (*it).second->toJSON(ss, indent + step, step);
         } else {
             ss << "None";
         }
     }
-    ss << " }";
+    if (step) {
+        ss << "\n" << std::string(indent, ' ') << "}";
+    } else {
+        ss << " }";
+    }
 }
 
 // throws when one of the types in the path (except the one

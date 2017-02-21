@@ -30,4 +30,9 @@ run_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
 
 endif
 
+bin_PROGRAMS = pp
+
+pp_SOURCES = pp.cc
+pp_LDADD =  $(top_builddir)/src/lib/cc/libkea-cc.la
+
 noinst_PROGRAMS = $(TESTS)
