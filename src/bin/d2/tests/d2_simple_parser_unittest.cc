@@ -946,7 +946,7 @@ TEST_F(DdnsDomainParserTest, invalidDomain) {
                          "    \"port\": 200 },"
                          "  {  \"ip-address\": \"127.0.0.3\" , "
                          "    \"port\": 300 } ] } ";
-    PARSE_FAIL(config, "String parameter name not found(<string>:1:1)");
+    PARSE_FAIL(config, "missing parameter 'name' (<string>:1:1)");
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"example.com\" , "
