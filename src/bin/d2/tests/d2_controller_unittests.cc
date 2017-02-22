@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <process/spec_config.h>
+#include <d2/tests/nc_test_utils.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/pointer_cast.hpp>

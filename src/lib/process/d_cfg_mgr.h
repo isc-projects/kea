@@ -244,15 +244,10 @@ typedef std::vector<std::string> ElementIdList;
 /// This allows a derivation to specify the order in which its elements are
 /// parsed if there are dependencies between elements.
 ///
-/// To parse a given element, its id is passed into createConfigParser,
-/// which returns an instance of the appropriate parser.  This method is
-/// abstract so the derivation's implementation determines the type of parser
-/// created. This isolates the knowledge of specific element ids and which
-/// application specific parsers to derivation.
-///
-/// Once the parser has been created, it is used to parse the data value
-/// associated with the element id and update the context with the parsed
-/// results.
+/// To parse a given element, its id along with the element itself, 
+/// is passed into the virtual method, @c parseElement. Derivations are 
+/// expected to converts the element into application specific object(s),
+/// thereby isolating the CPL from application details.
 ///
 /// In the event that an error occurs, parsing is halted and the
 /// configuration context is restored from backup.
@@ -320,37 +315,40 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
 protected:
+    /// @brief Adds default values to the given config
+    ///
+    /// Provides derviations a means to add defaults to a configuration
+    /// Element map prior to parsing it.
+    ///
+    /// @param mutable_config - configuration to which defaults should be added
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
+
+    /// @brief Parses an individual element
+    ///
+    /// Each element to be parsed is passed into this method to be converted
+    /// into the requisite application object(s).
+    ///
+    /// @param element_id name of the element as it is expected in the cfg
+    /// @param element value of the element as ElementPtr
+    ///
+    virtual void parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element);
+
     /// @brief Parses a set of scalar configuration elements into global
     /// parameters
     ///
     /// For each scalar element in the set:
-    ///  - create a parser for the element
-    ///  - invoke the parser's build method
-    ///  - invoke the parser's commit method
+    /// - Invoke parseElement
+    /// - If it returns true go to the next element othewise:
+    ///     - create a parser for the element
+    ///     - invoke the parser's build method
+    ///     - invoke the parser's commit method
     ///
     /// This will commit the values to context storage making them accessible
     /// during object parsing.
     ///
     /// @param params_config set of scalar configuration elements to parse
     virtual void buildParams(isc::data::ConstElementPtr params_config);
-
-    /// @brief  Create a parser instance based on an element id.
-    ///
-    /// Given an element_id returns an instance of the appropriate parser.
-    /// This method is abstract, isolating any direct knowledge of element_ids
-    /// and parsers to within the application-specific derivation.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos
-                       = isc::data::Element::Position()) = 0;
 
     /// @brief Abstract factory which creates a context instance.
     ///
@@ -377,8 +375,10 @@ private:
 
     /// @brief Parse a configuration element.
     ///
-    /// Given an element_id and data value, instantiate the appropriate
-    /// parser,  parse the data value, and commit the results.
+    /// Given an element_id and data value, invoke parseElement. If
+    /// it returns true the return, otherwise created the appropriate
+    /// parser, parse the data value, and commit the results.
+    ///
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.

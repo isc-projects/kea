@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,9 @@
 #include <config/module_spec.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/d2_simple_parser.h>
+#include <d2/parser_context.h>
+#include <d2/tests/parser_unittest.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
@@ -95,270 +98,150 @@ public:
 
         return (config.str());
     }
+
     /// @brief Enumeration to select between expected configuration outcomes
     enum RunConfigMode {
-       SHOULD_PASS,
-       SHOULD_FAIL
+        NO_ERROR,
+        SYNTAX_ERROR,
+        LOGIC_ERROR
     };
 
     /// @brief Parses a configuration string and tests against a given outcome
     ///
     /// Convenience method which accepts JSON text and an expected pass or fail
-    /// outcome. It converts the text into an ElementPtr and passes that to
-    /// configuration manager's parseConfig method.  It then tests the
-    /// parse result against the expected outcome  If they do not match it
-    /// the method asserts a failure.   If they do match, it refreshes the
-    /// the D2Params pointer with the newly parsed instance.
+    /// outcome.  It uses the D2ParserContext to parse the text under the
+    /// PARSE_SUB_DHCPDDNS context, then adds the D2 defaults to the resultant
+    /// element tree. Assuming that's successful the element tree is passed
+    /// to D2CfgMgr::parseConfig() method.
     ///
     /// @param config_str the JSON configuration text to parse
-    /// @param mode indicator if the parsing should fail or not.  It defaults
+    /// @param error_type  indicates the type error expected, NONE, SYNTAX,
+    /// or LOGIC. SYNTAX errors are emitted by JSON parser, logic errors
+    /// are emitted by element parser(s).
+    /// @param exp_error exact text of the error message expected
     /// defaults to SHOULD_PASS.
     ///
-    void runConfig(std::string config_str, RunConfigMode mode=SHOULD_PASS) {
-        // We assume the config string is valid JSON.
-        ASSERT_TRUE(fromJSON(config_str));
+    /// @return AssertionSuccess if test passes, AssertionFailure otherwise
+    ::testing::AssertionResult runConfigOrFail(const std::string& json,
+                                               const RunConfigMode mode,
+                                               const std::string& exp_error) {
 
-        // Parse the configuration and verify we got the expected outcome.
-        answer_ = cfg_mgr_->parseConfig(config_set_);
-        ASSERT_TRUE(checkAnswer(mode == SHOULD_FAIL));
+        try {
+            // Invoke the JSON parser, casting the returned element tree
+            // into mutable form.
+            D2ParserContext parser_context;
+            data::ElementPtr elem =
+                boost::const_pointer_cast<Element>
+                (parser_context.parseString(json, D2ParserContext::
+                                                  PARSER_SUB_DHCPDDNS));
 
-        // Verify that the D2 context can be retrieved and is not null.
-        D2CfgContextPtr context;
-        ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+            // If parsing succeeded when we expected a syntax error, then fail.
+            if (mode == SYNTAX_ERROR) {
+               return ::testing::AssertionFailure()
+                             << "Unexpected  JSON parsing success"
+                             << "\njson: [" << json << " ]";
+            }
 
-        // Verify that the global scalars have the proper values.
-        d2_params_ = context->getD2Params();
-        ASSERT_TRUE(d2_params_);
-    }
+            // JSON parsed ok, so add the defaults to the element tree it produced.
+            D2SimpleParser::setAllDefaults(elem);
+            config_set_ = elem;
+        } catch (const std::exception& ex) {
+            // JSON Parsing failed
+            if (exp_error.empty()) {
+                // We did not expect an error, so fail.
+                return ::testing::AssertionFailure()
+                          << "Unexpected syntax error:" << ex.what()
+                          << "\njson: [" << json << " ]";
+            }
 
-    /// @brief Check parse result against expected outcome and position info
-    ///
-    /// This method analyzes the given parsing result against an expected outcome
-    /// of SHOULD_PASS or SHOULD_FAIL.  If it is expected to fail, the comment
-    /// contained within the result is searched for Element::Position information
-    /// which should contain the given file name.  It does not attempt to verify
-    /// the numerical values for line number and col.
-    ///
-    /// @param answer Element set containing an integer result code and string
-    /// comment.
-    /// @param mode indicator if the parsing should fail or not.
-    /// @param file_name name of the file containing the configuration text
-    /// parsed. It defaults to "<string>" which is the value present if the
-    /// configuration text did not originate from a file. (i.e. one did not use
-    /// isc::data::Element::fromJSONFile() to read the JSON text).
-    void
-    checkAnswerWithError(isc::data::ConstElementPtr answer,
-                         RunConfigMode mode, std::string file_name="<string>") {
+            if (ex.what() != exp_error) {
+                // Expected an error not the one we got, so fail
+                return ::testing::AssertionFailure()
+                          << "Wrong syntax error detected, expected: "
+                          << exp_error << ", got: " << ex.what()
+                          << "\njson: [" << json << " ]";
+            }
+
+            // We go the syntax error we expected, so return success
+            return ::testing::AssertionSuccess();
+        }
+
+        // The JSON parsed ok and we've added the defaults, pass the config
+        // into the Element parser and check for the expected outcome.
+        data::ConstElementPtr answer = cfg_mgr_->parseConfig(config_set_);
+
+        // Extract the result and error text from the answer.
         int rcode = 0;
         isc::data::ConstElementPtr comment;
         comment = isc::config::parseAnswer(rcode, answer);
 
-        if (mode == SHOULD_PASS) {
-            if (rcode == 0) {
-                return;
+        if (rcode != 0) {
+            // Element Parsing failed.
+            if (exp_error.empty()) {
+                // We didn't expect it to, fail the test.
+                return ::testing::AssertionFailure()
+                              << "Unexpected logic error: " << *comment
+                              << "\njson: [" << json << " ]";
             }
 
-            FAIL() << "Parsing was expected to pass but failed : " << rcode
-                   << " comment: " << *comment;
+            if (comment->stringValue() != exp_error) {
+                // We 't expect a different error, fail the test.
+                return ::testing::AssertionFailure()
+                              << "Wrong logic error detected, expected: "
+                              << exp_error << ", got: " << *comment
+                              << "\njson: [" << json << " ]";
+            }
+        } else {
+            // Element parsing succeeded.
+            if (!exp_error.empty()) {
+                // It was supposed to fail, so fail the test.
+                return ::testing::AssertionFailure()
+                              << "Unexpected logic success, expected error:"
+                              << exp_error
+                              << "\njson: [" << json << " ]";
+            }
         }
 
-        if (rcode == 0) {
-            FAIL() << "Parsing was expected to fail but passed : "
-                   << " comment: " << *comment;
+        // Verify that the D2 context can be retrieved and is not null.
+        D2CfgContextPtr context;
+        context = cfg_mgr_->getD2CfgContext();
+        if (!context) {
+            return ::testing::AssertionFailure() << "D2CfgContext is null";
         }
 
-        // Parsing was expected to fail, test for position info.
-        if (isc::dhcp::test::errorContainsPosition(answer, file_name)) {
-            return;
+        // Verify that the global scalar container has been created.
+        d2_params_ = context->getD2Params();
+        if (!d2_params_) {
+            return ::testing::AssertionFailure() << "D2Params is null";
         }
 
-        FAIL() << "Parsing failed as expected but lacks position : " << *comment;
+        return ::testing::AssertionSuccess();
     }
+
 
     /// @brief Pointer the D2Params most recently parsed.
     D2ParamsPtr d2_params_;
 };
 
+/// @brief Convenience macros for invoking runOrConfig()
+#define RUN_CONFIG_OK(a) (runConfigOrFail(a, NO_ERROR, ""))
+#define SYNTAX_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,SYNTAX_ERROR,b))
+#define LOGIC_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,LOGIC_ERROR,b))
+
 /// @brief Tests that the spec file is valid.
 /// Verifies that the DHCP-DDNS configuration specification file
-//  is valid.
+///  is valid.
 TEST(D2SpecTest, basicSpec) {
     ASSERT_NO_THROW(isc::config::
                     moduleSpecFromFile(specfile("dhcp-ddns.spec")));
 }
-
-/// @brief Convenience function which compares the contents of the given
-/// DnsServerInfo against the given set of values.
-///
-/// It is structured in such a way that each value is checked, and output
-/// is generate for all that do not match.
-///
-/// @param server is a pointer to the server to check against.
-/// @param hostname is the value to compare against server's hostname_.
-/// @param ip_address is the string value to compare against server's
-/// ip_address_.
-/// @param port is the value to compare against server's port.
-///
-/// @return returns true if there is a match across the board, otherwise it
-/// returns false.
-bool checkServer(DnsServerInfoPtr server, const char* hostname,
-                 const char *ip_address, uint32_t port)
-{
-    // Return value, assume its a match.
-    bool result = true;
-
-    if (!server) {
-        EXPECT_TRUE(server);
-        return false;
-    }
-
-    // Check hostname.
-    if (server->getHostname() != hostname) {
-        EXPECT_EQ(hostname, server->getHostname());
-        result = false;
-    }
-
-    // Check IP address.
-    if (server->getIpAddress().toText() != ip_address) {
-        EXPECT_EQ(ip_address, server->getIpAddress().toText());
-        result = false;
-    }
-
-    // Check port.
-    if (server->getPort() !=  port) {
-        EXPECT_EQ (port, server->getPort());
-        result = false;
-    }
-
-    return (result);
-}
-
-/// @brief Convenience function which compares the contents of the given
-/// TSIGKeyInfo against the given set of values, and that the TSIGKey
-/// member points to a key.
-///
-/// @param key is a pointer to the TSIGKeyInfo instance to verify
-/// @param name is the value to compare against key's name_.
-/// @param algorithm is the string value to compare against key's algorithm.
-/// @param secret is the value to compare against key's secret.
-///
-/// @return returns true if there is a match across the board, otherwise it
-/// returns false.
-bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
-              const std::string& algorithm, const std::string& secret,
-              uint32_t digestbits = 0) {
-    // Return value, assume its a match.
-    return (((key) &&
-        (key->getName() == name) &&
-        (key->getAlgorithm() == algorithm)  &&
-        (key->getDigestbits() == digestbits) &&
-        (key->getSecret() ==  secret)  &&
-        (key->getTSIGKey())));
-}
-
-/// @brief Test fixture class for testing DnsServerInfo parsing.
-class TSIGKeyInfoTest : public ConfigParseTest {
-public:
-
-    /// @brief Constructor
-    TSIGKeyInfoTest() {
-        reset();
-    }
-
-    /// @brief Destructor
-    ~TSIGKeyInfoTest() {
-    }
-
-    /// @brief Wipe out the current storage and parser and replace
-    /// them with new ones.
-    void reset() {
-        keys_.reset(new TSIGKeyInfoMap());
-        parser_.reset(new TSIGKeyInfoParser("test", keys_));
-    }
-
-    /// @brief Storage for "committing" keys.
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Pointer to the current parser instance.
-    isc::dhcp::ParserPtr parser_;
-};
-
-/// @brief Test fixture class for testing DnsServerInfo parsing.
-class DnsServerInfoTest : public ConfigParseTest {
-public:
-
-    /// @brief Constructor
-    DnsServerInfoTest() {
-        reset();
-    }
-
-    /// @brief Destructor
-    ~DnsServerInfoTest() {
-    }
-
-    /// @brief Wipe out the current storage and parser and replace
-    /// them with new ones.
-    void reset() {
-        servers_.reset(new DnsServerInfoStorage());
-        parser_.reset(new DnsServerInfoParser("test", servers_));
-    }
-
-    /// @brief Storage for "committing" servers.
-    DnsServerInfoStoragePtr servers_;
-
-    /// @brief Pointer to the current parser instance.
-    isc::dhcp::ParserPtr parser_;
-};
-
-
-/// @brief Test fixture class for testing DDnsDomain parsing.
-class DdnsDomainTest : public ConfigParseTest {
-public:
-
-    /// @brief Constructor
-    DdnsDomainTest() {
-        reset();
-    }
-
-    /// @brief Destructor
-    ~DdnsDomainTest() {
-    }
-
-    /// @brief Wipe out the current storage and parser and replace
-    /// them with new ones.
-    void reset() {
-        keys_.reset(new TSIGKeyInfoMap());
-        domains_.reset(new DdnsDomainMap());
-        parser_.reset(new DdnsDomainParser("test", domains_, keys_));
-    }
-
-    /// @brief Add TSIGKeyInfos to the key map
-    ///
-    /// @param name the name of the key
-    /// @param algorithm the algorithm of the key
-    /// @param secret the secret value of the key
-    void addKey(const std::string& name, const std::string& algorithm,
-                const std::string& secret) {
-        TSIGKeyInfoPtr key_info(new TSIGKeyInfo(name, algorithm, secret));
-        (*keys_)[name]=key_info;
-    }
-
-    /// @brief Storage for "committing" domains.
-    DdnsDomainMapPtr domains_;
-
-    /// @brief Storage for TSIGKeys
-    TSIGKeyInfoMapPtr keys_;
-
-    /// @brief Pointer to the current parser instance.
-    isc::dhcp::ParserPtr parser_;
-};
 
 /// @brief Tests a basic valid configuration for D2Param.
 TEST_F(D2CfgMgrTest, validParamsEntry) {
     // Verify that ip_address can be valid v4 address.
     std::string config = makeParamsConfigString ("192.0.0.1", 777, 333,
                                            "UDP", "JSON");
-    runConfig(config);
+    RUN_CONFIG_OK(config);
 
     EXPECT_EQ(isc::asiolink::IOAddress("192.0.0.1"),
               d2_params_->getIpAddress());
@@ -369,7 +252,7 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
 
     // Verify that ip_address can be valid v6 address.
     config = makeParamsConfigString ("3001::5", 777, 333, "UDP", "JSON");
-    runConfig(config);
+    RUN_CONFIG_OK(config);
 
     // Verify that the global scalars have the proper values.
     EXPECT_EQ(isc::asiolink::IOAddress("3001::5"),
@@ -386,6 +269,9 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
 /// Currently they are all optional.
 TEST_F(D2CfgMgrTest, defaultValues) {
 
+    ElementPtr defaults = isc::d2::test::parseJSON("{ }");
+    ASSERT_NO_THROW(D2SimpleParser::setAllDefaults(defaults));
+
     // Check that omitting ip_address gets you its default
     std::string config =
             "{"
@@ -398,9 +284,11 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "\"reverse-ddns\" : {} "
             "}";
 
-    runConfig(config);
-    EXPECT_EQ(isc::asiolink::IOAddress(D2Params::DFT_IP_ADDRESS),
-              d2_params_->getIpAddress());
+    RUN_CONFIG_OK(config);
+    ConstElementPtr deflt;
+    ASSERT_NO_THROW(deflt = defaults->get("ip-address"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->stringValue(), d2_params_->getIpAddress().toText());
 
     // Check that omitting port gets you its default
     config =
@@ -414,8 +302,10 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "\"reverse-ddns\" : {} "
             "}";
 
-    runConfig(config);
-    EXPECT_EQ(D2Params::DFT_PORT, d2_params_->getPort());
+    RUN_CONFIG_OK(config);
+    ASSERT_NO_THROW(deflt = defaults->get("port"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->intValue(), d2_params_->getPort());
 
     // Check that omitting timeout gets you its default
     config =
@@ -429,11 +319,12 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "\"reverse-ddns\" : {} "
             "}";
 
-    runConfig(config);
-    EXPECT_EQ(D2Params::DFT_DNS_SERVER_TIMEOUT,
-              d2_params_->getDnsServerTimeout());
+    RUN_CONFIG_OK(config);
+    ASSERT_NO_THROW(deflt = defaults->get("dns-server-timeout"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(deflt->intValue(), d2_params_->getDnsServerTimeout());
 
-    // Check that protocol timeout gets you its default
+    // Check that omitting protocol gets you its default
     config =
             "{"
             " \"ip-address\": \"192.0.0.1\" , "
@@ -445,11 +336,13 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "\"reverse-ddns\" : {} "
             "}";
 
-    runConfig(config);
-    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(D2Params::DFT_NCR_PROTOCOL),
+    RUN_CONFIG_OK(config);
+    ASSERT_NO_THROW(deflt = defaults->get("ncr-protocol"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(deflt->stringValue()),
               d2_params_->getNcrProtocol());
 
-    // Check that format timeout gets you its default
+    // Check that omitting format gets you its default
     config =
             "{"
             " \"ip-address\": \"192.0.0.1\" , "
@@ -461,8 +354,10 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             "\"reverse-ddns\" : {} "
             "}";
 
-    runConfig(config);
-    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2Params::DFT_NCR_FORMAT),
+    RUN_CONFIG_OK(config);
+    ASSERT_NO_THROW(deflt = defaults->get("ncr-format"));
+    ASSERT_TRUE(deflt);
+    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(deflt->stringValue()),
               d2_params_->getNcrFormat());
 }
 
@@ -482,7 +377,8 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
             "\"bogus-param\" : true "
             "}";
 
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.181-193: got unexpected "
+                         "keyword \"bogus-param\" in DhcpDdns map.");
 
     // Check that unsupported top level objects fails.  For
     // D2 these fail as they are not in the parse order.
@@ -500,7 +396,8 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
             "\"bogus-object-two\" : {} "
             "}";
 
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.139-156: got unexpected"
+                         " keyword \"bogus-object-one\" in DhcpDdns map.");
 }
 
 
@@ -516,31 +413,35 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
     // Cannot use IPv4 ANY address
     std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
                                            "UDP", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    LOGIC_ERROR(config, "IP address cannot be \"0.0.0.0\" (<string>:1:17)");
 
     // Cannot use IPv6 ANY address
     config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    LOGIC_ERROR(config, "IP address cannot be \"::\" (<string>:1:17)");
 
     // Cannot use port  0
     config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65536");
 
     // Cannot use dns server timeout of 0
     config = makeParamsConfigString ("127.0.0.1", 777, 0, "UDP", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.69: dns-server-timeout"
+                         " must be greater than zero");
 
     // Invalid protocol
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "BOGUS", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.92-98: syntax error,"
+                         " unexpected constant string, expecting UDP or TCP");
 
     // Unsupported protocol
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "TCP", "JSON");
-    runConfig(config, SHOULD_FAIL);
+    LOGIC_ERROR(config, "ncr-protocol : TCP is not yet supported"
+                        "  (<string>:1:92)");
 
     // Invalid format
     config = makeParamsConfigString ("127.0.0.1", 777, 333, "UDP", "BOGUS");
-    runConfig(config, SHOULD_FAIL);
+    SYNTAX_ERROR(config, "<string>:1.115-121: syntax error,"
+                         " unexpected constant string, expecting JSON");
 }
 
 /// @brief Tests the enforcement of data validation when parsing TSIGKeyInfos.
@@ -1265,7 +1166,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         " \"ncr-format\": \"JSON\", "
                         "\"tsig-keys\": ["
                         "{"
-                        "  \"name\": \"d2_key.tmark.org\" , "
+                        "  \"name\": \"d2_key.example.com\" , "
                         "  \"algorithm\": \"hmac-md5\" , "
                         "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
                         "},"
@@ -1278,8 +1179,8 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "],"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } , "
                         "  { \"ip-address\": \"127.0.0.2\" } , "
@@ -1297,7 +1198,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "\"reverse-ddns\" : {"
                         "\"ddns-domains\": [ "
                         "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.1.1\" } , "
                         "  { \"ip-address\": \"127.0.2.1\" } , "
@@ -1313,11 +1214,8 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "  ] } "
                         "] } }";
 
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
+    // Should parse without error.
+    RUN_CONFIG_OK(config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1406,12 +1304,12 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
                         "\"tsig-keys\": [] ,"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
-                        "{ \"name\": \"one.tmark.org\" , "
+                        "{ \"name\": \"one.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
@@ -1424,11 +1322,8 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
                         "\"reverse-ddns\" : {} "
                         "}";
 
-
-    ASSERT_TRUE(fromJSON(config));
     // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
+    RUN_CONFIG_OK(config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1440,24 +1335,24 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
 
     DdnsDomainPtr match;
     // Verify that an exact match works.
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
-    // Verify that search is case-insensitive.
-    EXPECT_TRUE(cfg_mgr_->matchForward("TMARK.ORG", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    // Verify that search is case insensitive.
+    EXPECT_TRUE(cfg_mgr_->matchForward("EXAMPLE.COM", match));
+    EXPECT_EQ("example.com", match->getName());
 
     // Verify that an exact match works.
-    EXPECT_TRUE(cfg_mgr_->matchForward("one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that a FQDN for sub-domain matches.
-    EXPECT_TRUE(cfg_mgr_->matchForward("blue.tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("blue.example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
     // Verify that a FQDN for sub-domain matches.
-    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that an FQDN with no match, returns the wild card domain.
     EXPECT_TRUE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
@@ -1479,12 +1374,12 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
                         "\"tsig-keys\": [] ,"
                         "\"forward-ddns\" : {"
                         "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org\" , "
+                        "{ \"name\": \"example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.1\" } "
                         "  ] } "
                         ", "
-                        "{ \"name\": \"one.tmark.org\" , "
+                        "{ \"name\": \"one.example.com\" , "
                         "  \"dns-servers\" : [ "
                         "  { \"ip-address\": \"127.0.0.2\" } "
                         "  ] } "
@@ -1492,11 +1387,8 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
                         "\"reverse-ddns\" : {} "
                         " }";
 
-    ASSERT_TRUE(fromJSON(config));
-
     // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
+    RUN_CONFIG_OK(config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1504,14 +1396,14 @@ TEST_F(D2CfgMgrTest, matchNoWildcard) {
 
     DdnsDomainPtr match;
     // Verify that full or partial matches, still match.
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
-    EXPECT_TRUE(cfg_mgr_->matchForward("blue.tmark.org", match));
-    EXPECT_EQ("tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("blue.example.com", match));
+    EXPECT_EQ("example.com", match->getName());
 
-    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.tmark.org", match));
-    EXPECT_EQ("one.tmark.org", match->getName());
+    EXPECT_TRUE(cfg_mgr_->matchForward("red.one.example.com", match));
+    EXPECT_EQ("one.example.com", match->getName());
 
     // Verify that a FQDN with no match, fails to match.
     EXPECT_FALSE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
@@ -1534,11 +1426,8 @@ TEST_F(D2CfgMgrTest, matchAll) {
                         "\"reverse-ddns\" : {} "
                         "}";
 
-    ASSERT_TRUE(fromJSON(config));
-
     // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
+    RUN_CONFIG_OK(config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1546,7 +1435,7 @@ TEST_F(D2CfgMgrTest, matchAll) {
 
     // Verify that wild card domain is returned for any FQDN.
     DdnsDomainPtr match;
-    EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
+    EXPECT_TRUE(cfg_mgr_->matchForward("example.com", match));
     EXPECT_EQ("*", match->getName());
     EXPECT_TRUE(cfg_mgr_->matchForward("shouldbe.wildcard", match));
     EXPECT_EQ("*", match->getName());
@@ -1596,11 +1485,8 @@ TEST_F(D2CfgMgrTest, matchReverse) {
                         "  ] } "
                         "] } }";
 
-    ASSERT_TRUE(fromJSON(config));
-
     // Verify that we can parse the configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    ASSERT_TRUE(checkAnswer(0));
+    RUN_CONFIG_OK(config);
 
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
@@ -1641,6 +1527,12 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 }
 
 /// @brief Tests D2 config parsing against a wide range of config permutations.
+///
+/// It tests for both syntax errors that the JSON parsing (D2ParserContext)
+/// should detect as well as post-JSON parsing logic errors generated by
+/// the Element parsers (i.e...SimpleParser/DhcpParser derivations)
+///
+///
 /// It iterates over all of the test configurations described in given file.
 /// The file content is JSON specialized to this test. The format of the file
 /// is:
@@ -1656,12 +1548,13 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 ///
 /// #    Each test has:
 /// #      1. description - optional text description
-/// #      2. should-fail - bool indicator if parsing is expected to file
-/// #         (defaults to false)
-/// #       3. data - configuration text to parse
+/// #      2. syntax-error - error JSON parser should emit (omit if none)
+/// #      3. logic-error - error element parser(s) should emit (omit if none)
+/// #      4. data - configuration text to parse
 /// #
 ///      "description" : "<text describing test>",
-///      "should_fail" : <true|false> ,
+///      "syntax-error" : "<exact text from JSON parser including position>" ,
+///      "logic-error" : "<exact text from element parser including position>" ,
 ///      "data" :
 ///          {
 /// #        configuration elements here
@@ -1695,18 +1588,15 @@ TEST_F(D2CfgMgrTest, configPermutations) {
     }
 
     // Read in each test For each test, read:
-    //  1. description - optional text description
-    //  2. should-fail - bool indicator if parsing is expected to file (defaults
-    //     to false
-    //  3. data - configuration text to parse
     //
-    // Next attempt to parse the configuration by passing it into
-    // D2CfgMgr::parseConfig().  Then check the parsing outcome against the
-    // expected outcome as given by should-fail.
+    //  1. description - optional text description
+    //  2. syntax-error or logic-error or neither
+    //  3. data - configuration text to parse
+    //  4. convert data into JSON text
+    //  5. submit JSON for parsing
     isc::data::ConstElementPtr test;
     ASSERT_TRUE(tests->get("test-list"));
     BOOST_FOREACH(test, tests->get("test-list")->listValue()) {
-
         // Grab the description.
         std::string description = "<no desc>";
         isc::data::ConstElementPtr elem = test->get("description");
@@ -1714,12 +1604,19 @@ TEST_F(D2CfgMgrTest, configPermutations) {
             elem->getValue(description);
         }
 
-        // Grab the outcome flag, should-fail, defaults to false if it's
-        // not specified.
-        bool should_fail = false;
-        elem = test->get("should-fail");
-        if (elem)  {
-            elem->getValue(should_fail);
+        // Grab the expected error message, if there is one.
+        std::string expected_error = "";
+        RunConfigMode mode = NO_ERROR;
+        elem = test->get("syntax-error");
+        if (elem) {
+            elem->getValue(expected_error);
+            mode = SYNTAX_ERROR;
+        } else {
+            elem = test->get("logic-error");
+            if (elem) {
+                elem->getValue(expected_error);
+                mode = LOGIC_ERROR;
+            }
         }
 
         // Grab the test's configuration data.
@@ -1727,13 +1624,13 @@ TEST_F(D2CfgMgrTest, configPermutations) {
         ASSERT_TRUE(data) << "No data for test: "
                           << " : " << test->getPosition();
 
-        // Attempt to parse the configuration. We verify that we get the expected
-        // outcome, and if it was supposed to fail if the explanation contains
-        // position information.
-        checkAnswerWithError(cfg_mgr_->parseConfig(data),
-                             (should_fail ? SHOULD_FAIL : SHOULD_PASS),
-                             test_file);
+        // Convert the test data back to JSON text, then submit it for parsing.
+        stringstream os;
+        data->toJSON(os);
+        EXPECT_TRUE(runConfigOrFail(os.str(), mode, expected_error))
+            << " failed for test: " << test->getPosition() << std::endl;
     }
 }
+
 
 } // end of anonymous namespace

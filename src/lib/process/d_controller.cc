@@ -54,6 +54,12 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     controller_ = controller;
 }
 
+isc::data::ConstElementPtr
+DControllerBase::parseFile(const std::string&) {
+    isc::data::ConstElementPtr elements;
+    return (elements);
+}
+
 void
 DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
@@ -168,7 +174,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
             // rather than calling exit() here which disrupts gtest.
             isc_throw(VersionMessage, getVersion(true));
             break;
-            
+
         case 'W':
             // gather Kea config report and throw so main() can catch and
             // return rather than calling exit() here which disrupts gtest.
@@ -257,9 +263,13 @@ DControllerBase::configFromFile() {
                                 "use -c command line option.");
         }
 
-        // Read contents of the file and parse it as JSON
-        isc::data::ConstElementPtr whole_config =
-            isc::data::Element::fromJSONFile(config_file, true);
+        // If parseFile returns an empty pointer, then pass the file onto the
+        // original JSON parser.
+        isc::data::ConstElementPtr whole_config = parseFile(config_file);
+        if (!whole_config) {
+            // Read contents of the file and parse it as JSON
+            whole_config = isc::data::Element::fromJSONFile(config_file, true);
+        }
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
@@ -480,7 +490,7 @@ DControllerBase::getVersion(bool extended) {
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
         tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-        tmp << "database:" << std::endl; 
+        tmp << "database:" << std::endl;
 #ifdef HAVE_MYSQL
         tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
 #endif

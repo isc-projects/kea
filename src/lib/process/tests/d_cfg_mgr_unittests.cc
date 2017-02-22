@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::config;
 using namespace isc::process;
+using namespace isc::data;
 using namespace boost::posix_time;
 
 namespace {
@@ -42,13 +43,6 @@ public:
     /// @brief Dummy implementation as this method is abstract.
     virtual DCfgContextBasePtr createNewContext() {
         return (DCfgContextBasePtr());
-    }
-
-    /// @brief Dummy implementation as this method is abstract.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& /* element_id */,
-                       const isc::data::Element::Position& /* pos */) {
-        return (isc::dhcp::ParserPtr());
     }
 
     /// @brief Returns summary of configuration in the textual format.
@@ -123,18 +117,6 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
     // Verify that we can parse a simple configuration.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that an error building the element is caught and returns a
-    // failed parse result.
-    SimFailure::set(SimFailure::ftElementBuild);
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that an error committing the element is caught and returns a
-    // failed parse result.
-    SimFailure::set(SimFailure::ftElementCommit);
-    answer_ = cfg_mgr_->parseConfig(config_set_);
-    EXPECT_TRUE(checkAnswer(1));
 
     // Verify that an unknown element error is caught and returns a failed
     // parse result.
@@ -476,6 +458,5 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
                                             actual_string, true));
     EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
 }
-
 
 } // end of anonymous namespace
