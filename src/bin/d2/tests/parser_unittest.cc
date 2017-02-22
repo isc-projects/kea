@@ -263,7 +263,7 @@ void testFile(const std::string& fname) {
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
-    string decommented = dhcp::test::decommentJSONfile(fname);
+    string decommented = isc::test::decommentJSONfile(fname);
     EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
 
     // remove the temporary file
