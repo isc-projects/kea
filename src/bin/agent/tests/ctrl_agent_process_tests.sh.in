@@ -14,9 +14,8 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 # Control Agent configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
 CONFIG="{
-    \"CtrlAgent\":
+    \"Control-agent\":
     {
-        \"dummy-param\": 123
     },
     \"Logging\":
     {
