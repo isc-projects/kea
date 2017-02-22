@@ -20,6 +20,7 @@
 namespace isc {
 namespace d2 {
 
+extern const char* valid_d2_config;
 extern const char* TEST_DNS_SERVER_IP;
 extern size_t TEST_DNS_SERVER_PORT;
 

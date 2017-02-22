@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,7 +167,11 @@ public:
     /// include at least:
     ///
     /// @code
-    ///  { "<module-name>": {<module-config>} }
+    ///  { "<module-name>": {<module-config>}
+    ///
+    ///   # Logging element is optional
+    ///   ,"Logging": {<logger connfig}
+    ///  }
     ///
     ///  where:
     ///     module-name : is a label which uniquely identifies the
@@ -177,8 +181,16 @@ public:
     ///                    the application's configuration values
     /// @endcode
     ///
-    /// The method extracts the set of configuration elements for the
-    /// module-name which matches the controller's app_name_ and passes that
+    /// To translate the JSON content into Elements, @c parseFile() is called
+    /// first.  This virtual method provides derivations a means to parse the
+    /// file content using an alternate parser.  If it returns an empty pointer
+    /// than the JSON parsing providing by Element::fromJSONFile() is called.
+    ///
+    /// Once parsed, the method looks for the Element "Logging" and, if present
+    /// uses it to configure loging.
+    ///
+    /// It then extracts the set of configuration elements for the
+    /// module-name that matches the controller's app_name_ and passes that
     /// set into @c updateConfig().
     ///
     /// The file may contain an arbitrary number of other modules.
@@ -382,6 +394,45 @@ protected:
     /// @throw InvalidUsage when there are usage errors.
     /// @throw VersionMessage if the -v or -V arguments is given.
     void parseArgs(int argc, char* argv[]);
+
+
+    ///@brief Parse a given file into Elements
+    ///
+    /// This method provides a means for deriving classes to use alternate
+    /// parsing mechanisms to parse configuration files into the corresponding
+    /// isc::data::Elements. The elements produced must be equivalent to those
+    /// which would be produced by the original JSON parsing.  Implementations
+    /// should throw when encountering errors.
+    ///
+    /// The default implementation returns an empty pointer, signifying to
+    /// callers that they should submit the file to the original parser.
+    ///
+    /// @param file_name pathname of the file to parse
+    ///
+    /// @return pointer to the elements created
+    ///
+    virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
+
+    ///@brief Parse text into Elements
+    ///
+    /// This method provides a means for deriving classes to use alternate
+    /// parsing mechanisms to parse configuration text into the corresponding
+    /// isc::data::Elements. The elements produced must be equivalent to those
+    /// which would be produced by the original JSON parsing.  Implementations
+    /// should throw when encountering errors.
+    ///
+    /// The default implementation returns an empty pointer, signifying to
+    /// callers that they should submit the text to the original parser.
+    ///
+    /// @param input text to parse
+    ///
+    /// @return pointer to the elements created
+    ///
+    virtual isc::data::ConstElementPtr parseText(const std::string& input) {
+        static_cast<void>(input); // just tu shut up the unused parameter warning
+        isc::data::ConstElementPtr elements;
+        return (elements);
+    }
 
     /// @brief Instantiates the application process and then initializes it.
     /// This is the second step taken during launch, following successful

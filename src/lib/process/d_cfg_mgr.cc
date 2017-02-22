@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,6 +147,11 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     std::string element_id;
 
     try {
+
+        // Make the configuration mutable so we can then insert default values.
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        setCfgDefaults(mutable_cfg);
+
         // Split the configuration into two maps. The first containing only
         // top-level scalar parameters (i.e. globals), the second containing
         // non-scalar or object elements (maps, lists, etc...).  This allows
@@ -156,7 +161,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         ElementMap objects_map;
 
         isc::dhcp::ConfigPair config_pair;
-        BOOST_FOREACH(config_pair, config_set->mapValue()) {
+        BOOST_FOREACH(config_pair, mutable_cfg->mapValue()) {
             std::string element_id = config_pair.first;
             isc::data::ConstElementPtr element = config_pair.second;
             switch (element->getType()) {
@@ -203,7 +208,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                     isc_throw(DCfgMgrBaseError,
                                "Element required by parsing order is missing: "
                                << element_id << " ("
-                               << config_set->getPosition() << ")");
+                               << mutable_cfg->getPosition() << ")");
                 }
             }
 
@@ -256,36 +261,27 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
 }
 
 void
+DCfgMgrBase::setCfgDefaults(isc::data::ElementPtr) {
+}
+
+void
+DCfgMgrBase::parseElement(const std::string&, isc::data::ConstElementPtr) {
+};
+
+
+void
 DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
-        // Call derivation's method to create the proper parser.
-        dhcp::ParserPtr parser(createConfigParser(param.first,
-                                                  param.second->getPosition()));
-        parser->build(param.second);
-        parser->commit();
+        // Call derivation's element parser to parse the element.
+        parseElement(param.first, param.second);
     }
 }
 
 void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
-    // Call derivation's implementation to create the appropriate parser
-    // based on the element id.
-    ParserPtr parser = createConfigParser(element_id, value->getPosition());
-    if (!parser) {
-        isc_throw(DCfgMgrBaseError, "Could not create parser");
-    }
-
-    // Invoke the parser's build method passing in the value. This will
-    // "convert" the Element form of value into the actual data item(s)
-    // and store them in parser's local storage.
-    parser->build(value);
-
-    // Invoke the parser's commit method. This "writes" the data
-    // item(s) stored locally by the parser into the context.  (Note that
-    // parsers are free to do more than update the context, but that is an
-    // nothing something we are concerned with here.)
-    parser->commit();
+    // Call derivation's element parser to parse the element.
+    parseElement(element_id, value);
 }
 
 }; // end of isc::dhcp namespace
