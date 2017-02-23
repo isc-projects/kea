@@ -10,13 +10,11 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <stats/stats_mgr.h>
 #include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::util;
-using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -28,35 +26,6 @@ CfgMgr::instance() {
     static CfgMgr cfg_mgr;
     return (cfg_mgr);
 }
-
-void
-CfgMgr::addOptionSpace4(const OptionSpacePtr& space) {
-    if (!space) {
-        isc_throw(InvalidOptionSpace,
-                  "provided option space object is NULL.");
-    }
-    OptionSpaceCollection::iterator it = spaces4_.find(space->getName());
-    if (it != spaces4_.end()) {
-        isc_throw(InvalidOptionSpace, "option space " << space->getName()
-                  << " already added.");
-    }
-    spaces4_.insert(make_pair(space->getName(), space));
-}
-
-void
-CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
-    if (!space) {
-        isc_throw(InvalidOptionSpace,
-                  "provided option space object is NULL.");
-    }
-    OptionSpaceCollection::iterator it = spaces6_.find(space->getName());
-    if (it != spaces6_.end()) {
-        isc_throw(InvalidOptionSpace, "option space " << space->getName()
-                  << " already added.");
-    }
-    spaces6_.insert(make_pair(space->getName(), space));
-}
-
 
 std::string CfgMgr::getDataDir() const {
     return (datadir_);
