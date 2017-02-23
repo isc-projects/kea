@@ -737,6 +737,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (config_pair.first == "hooks-libraries") {
                 hooks_parser.parse(config_pair.second);
                 hooks_parser.verifyLibraries();
+
+                // We need to store hooks information in the configuration.
+                hooks::HookLibsCollection libs;
+                hooks_parser.getLibraries(libs);
+                srv_config->setLibraries(libs);
                 continue;
             }
 

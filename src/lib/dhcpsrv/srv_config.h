@@ -22,6 +22,7 @@
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
+#include <hooks/libinfo.h>
 #include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -521,6 +522,19 @@ public:
         d2_client_config_ = d2_client_config;
     }
 
+    /// @brief Returns a list of hook libraries
+    /// @return a list of hook libraries
+    const hooks::HookLibsCollection& getLibraries() const {
+        return (libraries_);
+    }
+
+    /// @brief Sets the list of hook libraries
+    ///
+    /// @params libs a coolection of libraries to remember.
+    void setLibraries(const hooks::HookLibsCollection& libs) {
+        libraries_ = libs;
+    }
+
 private:
 
     /// @brief Sequence number identifying the configuration.
@@ -609,6 +623,9 @@ private:
     uint32_t dhcp4o6_port_;
 
     D2ClientConfigPtr d2_client_config_;
+
+    /// List of hook libraries.
+    hooks::HookLibsCollection libraries_;
 };
 
 /// @name Pointers to the @c SrvConfig object.
