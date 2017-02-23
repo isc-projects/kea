@@ -1,8 +1,15 @@
-1217.   [func]         marcin
+1218.	[func]		tmark, tomek
+	Configuration parsing for D2 has been migrated to bison/flex
+	and the SimpleParser framework.  This includes changes to
+	libprocess which render the CPL agnostic to the underlying
+	parsing mechansims.
+	(Trac #5110, git feb2cedc0936364a923ab78542a21114533dd0f5)
+
+1217.	[func]		marcin
 	Implemented libkea-http library.
-        (Trac #5077, git cd72284b5b221e620770883db7e166c4d3ba7eb6)
-        (Trac #5088, git 715d18f961801ffbd798a65b19459178c3a53857)
-        (Trac #5099, git 7e8df7993f295431e2cb6a13858f746649c4e18d)
+	(Trac #5077, git cd72284b5b221e620770883db7e166c4d3ba7eb6)
+	(Trac #5088, git 715d18f961801ffbd798a65b19459178c3a53857)
+	(Trac #5099, git 7e8df7993f295431e2cb6a13858f746649c4e18d)
 
 1216.	[func]		fdupont, tomek
 	Command line option -t implementated for DHCPv4 and DHCPv6.  It
