@@ -2,7 +2,7 @@
 	Configuration parsing for D2 has been migrated to bison/flex
 	and the SimpleParser framework.  This includes changes to
 	libprocess which render the CPL agnostic to the underlying
-	parsing mechansims.
+	parsing mechanisms.
 	(Trac #5110, git feb2cedc0936364a923ab78542a21114533dd0f5)
 
 1217.	[func]		marcin
@@ -12,7 +12,7 @@
 	(Trac #5099, git 7e8df7993f295431e2cb6a13858f746649c4e18d)
 
 1216.	[func]		fdupont, tomek
-	Command line option -t implementated for DHCPv4 and DHCPv6.  It
+	Command line option -t implemented for DHCPv4 and DHCPv6.  It
 	allows configuration sanity checking. Note that not all parameters
 	are completely checked. In particular, service and control channel
 	sockets are not opened, and hook libraries are not loaded.
@@ -78,13 +78,13 @@
 1204.   [func]         marcin
 	Added 'control_command_receive' hook point to Kea Command
 	Manager.
-        (Trac #5100, git d0c7cb29a7df3588c540afb4ca56de55f26142e0)
+	(Trac #5100, git d0c7cb29a7df3588c540afb4ca56de55f26142e0)
 
 1203.   [func]         marcin
 	Implemented TCPAcceptor class in libkea-asiolink. This class
 	provides means to listen and asynchronously accept new TCP
 	connections.
-        (Trac #5094, git 920ba90696ba9d8579a7db5e1efcf955d6654a96)
+	(Trac #5094, git 920ba90696ba9d8579a7db5e1efcf955d6654a96)
 
 1202.	[func]		tomek
 	Parsers for mac-sources, control-socket, and relay-info converted
@@ -212,6 +212,8 @@
 	Extended DHCPv6 server to allow for specifying DHCP options
 	on address and prefix pool levels.
 	(Trac #5022, git e3b2785c79aedbb0c8af7468d61f6d61dafd2282)
+
+Kea 1.1.0 released on September 30, 2016
 
 1180.	[doc]		stephen
 	Editing pass through the Kea guide.
