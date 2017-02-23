@@ -2642,7 +2642,7 @@ should include options from the isc option space:
             },
             {
                 "hw-address": "00:01:02:03:04:05",
-                "ip-addresses": [ "2001:db8:1::101, 2001:db8:1::102" ]
+                "ip-addresses": [ "2001:db8:1::101", "2001:db8:1::102" ]
             },
             {
                 "duid": "01:02:03:04:05:06:07:08:09:0A",
