@@ -63,10 +63,9 @@ public:
 /// and a valid lifetime of 1000s. The second subnet has preferred lifetime
 /// of 500s, but valid lifetime of 2000s.
 ///
-/// Parameter inheritance is likely to be implemented in configuration handling
-/// routines, so there is no storage capability in a global scope for
-/// subnet-specific parameters.
-///
+/// Parameter inheritance is implemented in dedicated classes. See
+/// @ref isc::dhcp::SimpleParser4::deriveParameters and
+/// @ref isc::dhcp::SimpleParser6::deriveParameters.
 class CfgMgr : public boost::noncopyable {
 public:
 
@@ -80,36 +79,6 @@ public:
     /// CfgMgr is a singleton and this method is the only way of
     /// accessing it.
     static CfgMgr& instance();
-
-    /// @brief Adds new DHCPv4 option space to the collection.
-    ///
-    /// @param space option space to be added.
-    ///
-    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
-    /// has been specified.
-    void addOptionSpace4(const OptionSpacePtr& space);
-
-    /// @brief Adds new DHCPv6 option space to the collection.
-    ///
-    /// @param space option space to be added.
-    ///
-    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
-    /// has been specified.
-    void addOptionSpace6(const OptionSpacePtr& space);
-
-    /// @brief Return option spaces for DHCPv4.
-    ///
-    /// @return A collection of option spaces.
-    const OptionSpaceCollection& getOptionSpaces4() const {
-        return (spaces4_);
-    }
-
-    /// @brief Return option spaces for DHCPv6.
-    ///
-    /// @return A collection of option spaces.
-    const OptionSpaceCollection& getOptionSpaces6() const {
-        return (spaces6_);
-    }
 
     /// @brief returns path do the data directory
     ///
@@ -302,12 +271,6 @@ private:
     /// is created. If current configuration is not set, it creates the
     /// default current configuration.
     void ensureCurrentAllocated();
-
-    /// @brief Container for defined DHCPv6 option spaces.
-    OptionSpaceCollection spaces6_;
-
-    /// @brief Container for defined DHCPv4 option spaces.
-    OptionSpaceCollection spaces4_;
 
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
