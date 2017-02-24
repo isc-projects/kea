@@ -628,15 +628,15 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // This occurs last as if it succeeds, there is no easy way
-            // revert it.  As a result, the failure to commit a subsequent
-            // change causes problems when trying to roll back.
-            hooks_parser.loadLibraries();
-
             // Apply the staged D2ClientConfig, used to be done by parser commit
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
+
+            // This occurs last as if it succeeds, there is no easy way
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            hooks_parser.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
