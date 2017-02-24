@@ -187,6 +187,20 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 
+	AC_MSG_CHECKING(variadic template support)
+	feature="variadic template"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[template<typename ... Args>
+			 struct A {
+			 void foo(Args... myargs) { return; };
+			 };],
+			 [A<> a;
+			  a.foo();])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
 	AC_MSG_CHECKING(lambda support)
 	feature="lambda"
 	AC_COMPILE_IFELSE(
