@@ -175,6 +175,7 @@ private:
     /// @brief Stops current connection.
     void stopThisConnection();
 
+    /// @brief returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
 
     /// @brief Timer used to detect Request Timeout.

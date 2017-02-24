@@ -104,8 +104,8 @@ public:
     /// @param command_arguments Command arguments (empty).
     ///
     /// @return Returns response with a single string "bar".
-    ConstElementPtr fooCommandHandler(const std::string& command_name,
-                                      const ConstElementPtr& command_arguments) {
+    ConstElementPtr fooCommandHandler(const std::string& /*command_name*/,
+                                      const ConstElementPtr& /*command_arguments*/) {
         ElementPtr arguments = Element::createList();
         arguments->add(Element::create("bar"));
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
@@ -122,7 +122,7 @@ public:
 
 };
 
-// This test verifies that the created "empty" reuqest has valid type.
+// This test verifies that the created "empty" request has valid type.
 TEST_F(CtrlAgentResponseCreatorTest, createNewHttpRequest) {
     // The request must be of PostHttpRequestJson type.
     PostHttpRequestJsonPtr request_json = boost::dynamic_pointer_cast<
@@ -144,7 +144,7 @@ TEST_F(CtrlAgentResponseCreatorTest, createStockHttpResponseHighVersion) {
                       "HTTP/1.0 408 Request Timeout");
 }
 
-// Test that the server responsds with version 1.1 if request version is 1.1.
+// Test that the server responds with version 1.1 if request version is 1.1.
 TEST_F(CtrlAgentResponseCreatorTest, createStockHttpResponseCorrectVersion) {
     request_->context()->http_version_major_ = 1;
     request_->context()->http_version_minor_ = 1;
