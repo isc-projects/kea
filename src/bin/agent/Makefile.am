@@ -42,8 +42,8 @@ BUILT_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
 
 noinst_LTLIBRARIES = libagent.la
 
-libagent_la_SOURCES  = agent_lexer.ll
-libagent_la_SOURCES += agent_parser.cc agent_parser.h
+libagent_la_SOURCES  = agent_parser.cc agent_parser.h
+libagent_la_SOURCES += agent_lexer.cc
 libagent_la_SOURCES += ctrl_agent_cfg_mgr.cc ctrl_agent_cfg_mgr.h
 libagent_la_SOURCES += ctrl_agent_controller.cc ctrl_agent_controller.h
 libagent_la_SOURCES += ctrl_agent_command_mgr.cc ctrl_agent_command_mgr.h
@@ -55,6 +55,8 @@ libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 
 nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
 EXTRA_DIST += ctrl_agent_messages.mes
+EXTRA_DIST += agent_lexer.ll
+EXTRA_DIST += agent_parser.yy
 
 sbin_PROGRAMS = kea-ctrl-agent
 
