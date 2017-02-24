@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define LIBRARY_MANAGER_H
 
 #include <exceptions/exceptions.h>
-
+#include <hooks/server_hooks.h>
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -218,6 +218,8 @@ private:
     boost::shared_ptr<CalloutManager> manager_;
                                 ///< Callout manager for registration
     std::string library_name_;  ///< Name of the library
+
+    ServerHooksPtr server_hooks_; ///< Stores a pointer to ServerHooks.
 
 };
 
