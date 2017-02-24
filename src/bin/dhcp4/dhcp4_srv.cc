@@ -257,7 +257,7 @@ void
 Dhcpv4Exchange::copyDefaultOptions() {
     // Let's copy client-id to response. See RFC6842.
     // It is possible to disable RFC6842 to keep backward compatibility
-    bool echo = CfgMgr::instance().echoClientId();
+    bool echo = CfgMgr::instance().getCurrentCfg()->getEchoClientId();
     OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_id && echo) {
         resp_->addOption(client_id);

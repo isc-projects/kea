@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -315,89 +315,6 @@ TEST_F(CfgMgrTest, configuration) {
     configuration = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
-}
-
-// This test verifies that new DHCPv4 option spaces can be added to
-// the configuration manager and that duplicated option space is
-// rejected.
-TEST_F(CfgMgrTest, optionSpace4) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Create some option spaces.
-    OptionSpacePtr space1(new OptionSpace("isc", false));
-    OptionSpacePtr space2(new OptionSpace("xyz", true));
-
-    // Add option spaces with different names and expect they
-    // are accepted.
-    ASSERT_NO_THROW(cfg_mgr.addOptionSpace4(space1));
-    ASSERT_NO_THROW(cfg_mgr.addOptionSpace4(space2));
-
-    // Validate that the option spaces have been added correctly.
-    const OptionSpaceCollection& spaces = cfg_mgr.getOptionSpaces4();
-
-    ASSERT_EQ(2, spaces.size());
-    EXPECT_FALSE(spaces.find("isc") == spaces.end());
-    EXPECT_FALSE(spaces.find("xyz") == spaces.end());
-
-    // Create another option space with the name that duplicates
-    // the existing option space.
-    OptionSpacePtr space3(new OptionSpace("isc", true));
-    // Expect that the duplicate option space is rejected.
-    ASSERT_THROW(
-        cfg_mgr.addOptionSpace4(space3), isc::dhcp::InvalidOptionSpace
-    );
-
-    /// @todo decode if a duplicate vendor space is allowed.
-}
-
-// This test verifies that new DHCPv6 option spaces can be added to
-// the configuration manager and that duplicated option space is
-// rejected.
-TEST_F(CfgMgrTest, optionSpace6) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Create some option spaces.
-    OptionSpacePtr space1(new OptionSpace("isc", false));
-    OptionSpacePtr space2(new OptionSpace("xyz", true));
-
-    // Add option spaces with different names and expect they
-    // are accepted.
-    ASSERT_NO_THROW(cfg_mgr.addOptionSpace6(space1));
-    ASSERT_NO_THROW(cfg_mgr.addOptionSpace6(space2));
-
-    // Validate that the option spaces have been added correctly.
-    const OptionSpaceCollection& spaces = cfg_mgr.getOptionSpaces6();
-
-    ASSERT_EQ(2, spaces.size());
-    EXPECT_FALSE(spaces.find("isc") == spaces.end());
-    EXPECT_FALSE(spaces.find("xyz") == spaces.end());
-
-    // Create another option space with the name that duplicates
-    // the existing option space.
-    OptionSpacePtr space3(new OptionSpace("isc", true));
-    // Expect that the duplicate option space is rejected.
-    ASSERT_THROW(
-        cfg_mgr.addOptionSpace6(space3), isc::dhcp::InvalidOptionSpace
-    );
-
-    /// @todo decide if a duplicate vendor space is allowed.
-}
-
-// This test verifies that RFC6842 (echo client-id) compatibility may be
-// configured.
-TEST_F(CfgMgrTest, echoClientId) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
-    // Check that the default is true
-    EXPECT_TRUE(cfg_mgr.echoClientId());
-
-    // Check that it can be modified to false
-    cfg_mgr.echoClientId(false);
-    EXPECT_FALSE(cfg_mgr.echoClientId());
-
-    // Check that the default value can be restored
-    cfg_mgr.echoClientId(true);
-    EXPECT_TRUE(cfg_mgr.echoClientId());
 }
 
 // This test checks the D2ClientMgr wrapper methods.
