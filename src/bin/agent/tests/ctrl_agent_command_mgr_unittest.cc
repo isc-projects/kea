@@ -6,9 +6,11 @@
 
 #include <config.h>
 #include <agent/ctrl_agent_command_mgr.h>
+#include <cc/command_interpreter.h>
 #include <gtest/gtest.h>
 
 using namespace isc::agent;
+using namespace isc::data;
 
 namespace {
 
@@ -23,16 +25,55 @@ public:
     /// @brief Constructor.
     ///
     /// Deregisters all commands except 'list-commands'.
-    CtrlAgentCommandMgrTest() {
-        CtrlAgentCommandMgr::instance().deregisterAll();
+    CtrlAgentCommandMgrTest()
+        : mgr_(CtrlAgentCommandMgr::instance()) {
+        mgr_.deregisterAll();
     }
 
     /// @brief Destructor.
     ///
     /// Deregisters all commands except 'list-commands'.
     virtual ~CtrlAgentCommandMgrTest() {
-        CtrlAgentCommandMgr::instance().deregisterAll();
+        mgr_.deregisterAll();
     }
+
+    /// @brief Verifies received answer
+    ///
+    /// @todo Add better checks for failure cases and for
+    /// verification of the response parameters.
+    ///
+    /// @param answer answer to be verified
+    /// @param expected_code code expected to be returned in the answer
+    void checkAnswer(ConstElementPtr answer, int expected_code) {
+        int status_code;
+        isc::config::parseAnswer(status_code, answer);
+        EXPECT_EQ(expected_code, status_code);
+    }
+
+    /// @brief a convenience reference to control agent command manager
+    CtrlAgentCommandMgr& mgr_;
 };
+
+/// Just a basic test checking that non-existent command is handled
+/// properly.
+TEST_F(CtrlAgentCommandMgrTest, bogus) {
+
+    ConstElementPtr answer;
+
+    EXPECT_NO_THROW(answer = mgr_.handleCommand("fish-and-chips-please",
+                                                ConstElementPtr()));
+    checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR);
+};
+
+/// Just a basic test checking that 'list-commands' is supported.
+TEST_F(CtrlAgentCommandMgrTest, listCommands) {
+
+    ConstElementPtr answer;
+
+    EXPECT_NO_THROW(answer = mgr_.handleCommand("list-commands",
+                                                ConstElementPtr()));
+    checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR);
+};
+
 
 }
