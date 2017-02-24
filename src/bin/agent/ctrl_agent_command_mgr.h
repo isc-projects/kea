@@ -34,8 +34,6 @@ public:
     /// @brief Returns sole instance of the Command Manager.
     static CtrlAgentCommandMgr& instance();
 
-private:
-
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method extends the base implementation with the ability to forward
@@ -54,7 +52,7 @@ private:
     handleCommand(const std::string& cmd_name,
                   const isc::data::ConstElementPtr& params);
 
-
+private:
     /// @brief Private constructor.
     ///
     /// The instance should be created using @ref CtrlAgentCommandMgr::instance,
