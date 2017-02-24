@@ -10,14 +10,11 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/subnet_id.h>
-#include <stats/stats_mgr.h>
 #include <sstream>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::util;
-using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -30,35 +27,6 @@ CfgMgr::instance() {
     return (cfg_mgr);
 }
 
-void
-CfgMgr::addOptionSpace4(const OptionSpacePtr& space) {
-    if (!space) {
-        isc_throw(InvalidOptionSpace,
-                  "provided option space object is NULL.");
-    }
-    OptionSpaceCollection::iterator it = spaces4_.find(space->getName());
-    if (it != spaces4_.end()) {
-        isc_throw(InvalidOptionSpace, "option space " << space->getName()
-                  << " already added.");
-    }
-    spaces4_.insert(make_pair(space->getName(), space));
-}
-
-void
-CfgMgr::addOptionSpace6(const OptionSpacePtr& space) {
-    if (!space) {
-        isc_throw(InvalidOptionSpace,
-                  "provided option space object is NULL.");
-    }
-    OptionSpaceCollection::iterator it = spaces6_.find(space->getName());
-    if (it != spaces6_.end()) {
-        isc_throw(InvalidOptionSpace, "option space " << space->getName()
-                  << " already added.");
-    }
-    spaces6_.insert(make_pair(space->getName(), space));
-}
-
-
 std::string CfgMgr::getDataDir() const {
     return (datadir_);
 }
@@ -67,18 +35,6 @@ void
 CfgMgr::setDataDir(const std::string& datadir) {
     datadir_ = datadir;
 }
-
-bool
-CfgMgr::isDuplicate(const Subnet6& subnet) const {
-    for (Subnet6Collection::const_iterator subnet_it = subnets6_.begin();
-         subnet_it != subnets6_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
-}
-
 
 void
 CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
@@ -211,8 +167,7 @@ CfgMgr::getStagingCfg() {
 }
 
 CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR), echo_v4_client_id_(true),
-      d2_client_mgr_(), verbose_mode_(false) {
+    : datadir_(DHCP_DATA_DIR), d2_client_mgr_(), verbose_mode_(false) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am
