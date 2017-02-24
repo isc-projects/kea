@@ -18,6 +18,7 @@ using namespace isc::http;
 using namespace isc::process;
 
 // Temporarily hardcoded configuration.
+/// @todo: remove once 5134 is merged.
 namespace {
 
 const IOAddress SERVER_ADDRESS("127.0.0.1");
@@ -47,14 +48,26 @@ CtrlAgentProcess::run() {
 
     try {
 
+        // Create response creator factory first. It will be used to generate
+        // response creators. Each response creator will be used to generate
+        // answer to specific request.
         HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
+
+        // Create http listener. It will open up a TCP socket and be prepared
+        // to accept incoming connection.
         HttpListener http_listener(*getIoService(), SERVER_ADDRESS,
                                    SERVER_PORT, rcf, REQUEST_TIMEOUT);
+
+        // Instruct the http listener to actually open socket, install callback
+        // and start listening.
         http_listener.start();
 
+        // Ok, seems we're good to go.
         LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
             .arg(SERVER_ADDRESS.toText()).arg(SERVER_PORT);
 
+        // Let's process incoming data or expiring timers in a loop until
+        // shutdown condition is detected.
         while (!shouldShutdown()) {
             getIoService()->run_one();
         }
