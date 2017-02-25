@@ -48,7 +48,7 @@ libagent_la_SOURCES += ctrl_agent_log.cc ctrl_agent_log.h
 libagent_la_SOURCES += ctrl_agent_process.cc ctrl_agent_process.h
 libagent_la_SOURCES += agent_parser.cc agent_parser.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-libagent_la_SOURCES += agent_lexer.ll
+libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
 
 nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
 EXTRA_DIST += ctrl_agent_messages.mes
