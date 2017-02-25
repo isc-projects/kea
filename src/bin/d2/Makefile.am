@@ -146,4 +146,3 @@ parser location.hh position.hh stack.hh d2_parser.cc d2_parser.h d2_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif
-                                                                                        
