@@ -129,7 +129,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 }
 
 void
-HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) {
+HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
     std::string s(&buf_[0], buf_[0] + length);
     parser_->postBuffer(static_cast<void*>(buf_.data()), length);
     parser_->poll();
@@ -148,7 +148,7 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
 }
 
 void
-HttpConnection::socketWriteCallback(boost::system::error_code ec,
+HttpConnection::socketWriteCallback(boost::system::error_code,
                                     size_t length) {
     if (length <= output_buf_.size()) {
         output_buf_.erase(0, length);
