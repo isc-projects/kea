@@ -46,8 +46,16 @@ public:
     /// @param expected_code code expected to be returned in the answer
     void checkAnswer(ConstElementPtr answer, int expected_code) {
         int status_code;
-        isc::config::parseAnswer(status_code, answer);
-        EXPECT_EQ(expected_code, status_code);
+        // There may be multiple answers returned within a list.
+        std::vector<ElementPtr> answer_list = answer->listValue();
+        // There must be at least one answer.
+        ASSERT_GE(answer_list.size(), 1);
+        // Check that all answers indicate success.
+        for (auto ans = answer_list.cbegin(); ans != answer_list.cend();
+             ++ans) {
+            ASSERT_NO_THROW(isc::config::parseAnswer(status_code, *ans));
+            EXPECT_EQ(expected_code, status_code);
+        }
     }
 
     /// @brief a convenience reference to control agent command manager
@@ -57,9 +65,7 @@ public:
 /// Just a basic test checking that non-existent command is handled
 /// properly.
 TEST_F(CtrlAgentCommandMgrTest, bogus) {
-
     ConstElementPtr answer;
-
     EXPECT_NO_THROW(answer = mgr_.handleCommand("fish-and-chips-please",
                                                 ConstElementPtr()));
     checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR);
@@ -67,12 +73,10 @@ TEST_F(CtrlAgentCommandMgrTest, bogus) {
 
 /// Just a basic test checking that 'list-commands' is supported.
 TEST_F(CtrlAgentCommandMgrTest, listCommands) {
-
     ConstElementPtr answer;
-
     EXPECT_NO_THROW(answer = mgr_.handleCommand("list-commands",
                                                 ConstElementPtr()));
-    checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR);
+    checkAnswer(answer, isc::config::CONTROL_RESULT_SUCCESS);
 };
 
 
