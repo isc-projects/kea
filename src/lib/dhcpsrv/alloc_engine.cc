@@ -710,6 +710,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 leases.push_back(lease);
                 return (leases);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() !=
+                        CalloutHandle::NEXT_STEP_CONTINUE)) {
+                // Don't retry when the callout status is not continue.
+                break;
             }
 
             // Although the address was free just microseconds ago, it may have
@@ -2841,6 +2846,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             new_lease = allocateOrReuseLease4(candidate, ctx);
             if (new_lease) {
                 return (new_lease);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() !=
+                        CalloutHandle::NEXT_STEP_CONTINUE)) {
+                // Don't retry when the callout status is not continue.
+                break;
             }
         }
     }
