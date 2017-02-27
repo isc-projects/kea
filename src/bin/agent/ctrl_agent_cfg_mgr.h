@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,28 +72,30 @@ public:
         ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
     }
 
-    /// @brief sets http-host parameter
+    /// @brief Sets http-host parameter
     ///
-    /// @param host hostname to be used during http socket creation
+    /// @param host Hostname or IP address where the agent's HTTP service
+    /// will be available.
     void setHost(const std::string& host) {
         http_host_ = host;
     }
 
-    /// @brief returns http-host parameter
+    /// @brief Returns http-host parameter
     ///
-    /// @return name of the http-host parameter
+    /// @return Hostname or IP address where the agent's HTTP service is
+    /// available.
     std::string getHost() const {
         return (http_host_);
     }
 
     /// @brief Sets http port
     ///
-    /// @param port sets the TCP port the http server will listen on
+    /// @param port sets the TCP port the HTTP server will listen on
     void setPort(const uint16_t port) {
         http_port_ = port;
     }
 
-    /// @brief Returns the TCP post the http server will listen on
+    /// @brief Returns the TCP post the HTTP server will listen on
     uint16_t getPort() const {
         return (http_port_);
     }
@@ -114,6 +116,8 @@ public:
 
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
+    ///
+    /// @param rhs Context to be assigned.
     CtrlAgentCfgContext& operator=(const CtrlAgentCfgContext& rhs);
 
     /// Socket information will be stored here (for all supported servers)
@@ -160,6 +164,12 @@ public:
 
 protected:
 
+    /// @brief Parses configuration of the Control Agent.
+    ///
+    /// @param config Pointer to a configuration specified for the agent.
+    /// @param check_only Boolean flag indicating if this method should
+    /// only verify correctness of the provided conifiguration.
+    /// @return Pointer to a result of configuration parsing.
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);
 
