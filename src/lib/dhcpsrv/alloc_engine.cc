@@ -713,7 +713,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             } else if (ctx.callout_handle_ &&
                        (ctx.callout_handle_->getStatus() !=
                         CalloutHandle::NEXT_STEP_CONTINUE)) {
-                // Don't retry when the callout status is next step skip.
+                // Don't retry when the callout status is not continue.
                 break;
             }
 
@@ -2849,8 +2849,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             } else if (ctx.callout_handle_ &&
                        (ctx.callout_handle_->getStatus() !=
                         CalloutHandle::NEXT_STEP_CONTINUE)) {
-                // Don't retry when the callout status is next step skip
-                // or next step drop.
+                // Don't retry when the callout status is not continue.
                 break;
             }
         }
