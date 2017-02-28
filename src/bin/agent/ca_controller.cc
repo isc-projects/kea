@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <agent/ctrl_agent_controller.h>
-#include <agent/ctrl_agent_process.h>
+#include <agent/ca_controller.h>
+#include <agent/ca_process.h>
 
 using namespace isc::process;
 
@@ -16,7 +16,7 @@ namespace agent {
 
 /// @brief Defines the application name, this is passed into base class
 /// it may be used to locate configuration data and appears in log statement.
-const char* CtrlAgentController::agent_app_name_ = "CtrlAgent";
+const char* CtrlAgentController::agent_app_name_ = "Control-agent";
 
 /// @brief Defines the executable name. This is passed into the base class
 const char* CtrlAgentController::agent_bin_name_ = "kea-ctrl-agent";

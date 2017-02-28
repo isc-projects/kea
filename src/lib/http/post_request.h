@@ -8,9 +8,17 @@
 #define HTTP_POST_REQUEST_H
 
 #include <http/request.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace http {
+
+class PostHttpRequest;
+
+/// @brief Pointer to @ref PostHttpRequest.
+typedef boost::shared_ptr<PostHttpRequest> PostHttpRequestPtr;
+/// @brief Pointer to const @ref PostHttpRequest.
+typedef boost::shared_ptr<const PostHttpRequest> ConstPostHttpRequestPtr;
 
 /// @brief Represents HTTP POST request.
 ///
@@ -24,6 +32,7 @@ public:
     /// @brief Constructor.
     PostHttpRequest();
 };
+
 
 } // namespace http
 } // namespace isc

@@ -315,6 +315,7 @@ TEST_F(HttpListenerTest, listen) {
     HttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 200 OK\r\n"
+              "Content-Length: 0\r\n"
               "Content-Type: application/json\r\n"
               "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
               "\r\n",

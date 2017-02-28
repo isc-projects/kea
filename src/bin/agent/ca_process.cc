@@ -5,12 +5,27 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <agent/ctrl_agent_process.h>
-#include <agent/ctrl_agent_log.h>
+#include <agent/ca_process.h>
+#include <agent/ca_response_creator_factory.h>
+#include <agent/ca_log.h>
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <http/listener.h>
 #include <boost/pointer_cast.hpp>
 
+using namespace isc::asiolink;
+using namespace isc::http;
 using namespace isc::process;
+
+// Temporarily hardcoded configuration.
+/// @todo: remove once 5134 is merged.
+namespace {
+
+const IOAddress SERVER_ADDRESS("127.0.0.1");
+const unsigned short SERVER_PORT = 8081;
+const long REQUEST_TIMEOUT = 10000;
+
+}
 
 namespace isc {
 namespace agent {
@@ -32,6 +47,27 @@ CtrlAgentProcess::run() {
     LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
 
     try {
+
+        // Create response creator factory first. It will be used to generate
+        // response creators. Each response creator will be used to generate
+        // answer to specific request.
+        HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
+
+        // Create http listener. It will open up a TCP socket and be prepared
+        // to accept incoming connection.
+        HttpListener http_listener(*getIoService(), SERVER_ADDRESS,
+                                   SERVER_PORT, rcf, REQUEST_TIMEOUT);
+
+        // Instruct the http listener to actually open socket, install callback
+        // and start listening.
+        http_listener.start();
+
+        // Ok, seems we're good to go.
+        LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
+            .arg(SERVER_ADDRESS.toText()).arg(SERVER_PORT);
+
+        // Let's process incoming data or expiring timers in a loop until
+        // shutdown condition is detected.
         while (!shouldShutdown()) {
             getIoService()->run_one();
         }
