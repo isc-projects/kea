@@ -70,7 +70,7 @@
 #  "lease-database": {
 #      "type": "cql",
 #      "keyspace": "keatest",
-#      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3",
+#      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
 #      "port": 9042
 #  },
 
