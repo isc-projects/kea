@@ -7,7 +7,7 @@
 #ifndef CTRL_AGENT_RESPONSE_CREATOR_FACTORY_H
 #define CTRL_AGENT_RESPONSE_CREATOR_FACTORY_H
 
-#include <agent/ctrl_agent_response_creator.h>
+#include <agent/ca_response_creator.h>
 #include <http/response_creator_factory.h>
 
 namespace isc {

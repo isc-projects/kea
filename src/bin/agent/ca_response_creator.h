@@ -7,7 +7,7 @@
 #ifndef CTRL_AGENT_RESPONSE_CREATOR_H
 #define CTRL_AGENT_RESPONSE_CREATOR_H
 
-#include <agent/ctrl_agent_command_mgr.h>
+#include <agent/ca_command_mgr.h>
 #include <http/response_creator.h>
 #include <boost/shared_ptr.hpp>
 

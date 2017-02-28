@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <agent/ctrl_agent_command_mgr.h>
+#include <agent/ca_command_mgr.h>
 #include <cc/command_interpreter.h>
 #include <gtest/gtest.h>
 

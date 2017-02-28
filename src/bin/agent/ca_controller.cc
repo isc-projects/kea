@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <agent/ctrl_agent_controller.h>
-#include <agent/ctrl_agent_process.h>
+#include <agent/ca_controller.h>
+#include <agent/ca_process.h>
 
 using namespace isc::process;
 
