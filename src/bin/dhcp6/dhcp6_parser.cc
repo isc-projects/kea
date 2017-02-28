@@ -1290,7 +1290,7 @@ namespace isc { namespace dhcp {
 #line 587 "dhcp6_parser.yy" // lalr1.cc:859
     {
     ElementPtr cp(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("contact_points", cp);
+    ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 }
 #line 1297 "dhcp6_parser.cc" // lalr1.cc:859
@@ -3982,7 +3982,7 @@ namespace isc { namespace dhcp {
   "\"hosts-database\"", "\"type\"", "\"memfile\"", "\"mysql\"",
   "\"postgresql\"", "\"cql\"", "\"user\"", "\"password\"", "\"host\"",
   "\"port\"", "\"persist\"", "\"lfc-interval\"", "\"readonly\"",
-  "\"connect-timeout\"", "\"contact_points\"", "\"keyspace\"",
+  "\"connect-timeout\"", "\"contact-points\"", "\"keyspace\"",
   "\"preferred-lifetime\"", "\"valid-lifetime\"", "\"renew-timer\"",
   "\"rebind-timer\"", "\"decline-probation-period\"", "\"subnet6\"",
   "\"option-def\"", "\"option-data\"", "\"name\"", "\"data\"", "\"code\"",
