@@ -253,7 +253,7 @@ public:
             // host_id : INT UNSIGNED NOT NULL
             // The host_id is auto_incremented by MySQL database,
             // so we need to pass the NULL value
-            host_id_ = static_cast<uint32_t>(NULL);
+            host_id_ = 0;
             bind_[0].buffer_type = MYSQL_TYPE_LONG;
             bind_[0].buffer = reinterpret_cast<char*>(&host_id_);
             bind_[0].is_unsigned = MLM_TRUE;
