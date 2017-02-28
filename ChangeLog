@@ -1,3 +1,8 @@
+1219.   [func]         marcin
+	Control Agent uses libkea-http to process commands over
+	the RESTful interface.
+        (Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)
+
 1218.	[func]		tmark, tomek
 	Configuration parsing for D2 has been migrated to bison/flex
 	and the SimpleParser framework.  This includes changes to
