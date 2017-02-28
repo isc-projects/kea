@@ -1322,7 +1322,7 @@ namespace isc { namespace dhcp {
 #line 602 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr cp(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("contact_points", cp);
+    ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 }
 #line 1329 "dhcp4_parser.cc" // lalr1.cc:859
@@ -3855,7 +3855,7 @@ namespace isc { namespace dhcp {
   "\"lease-database\"", "\"hosts-database\"", "\"type\"", "\"memfile\"",
   "\"mysql\"", "\"postgresql\"", "\"cql\"", "\"user\"", "\"password\"",
   "\"host\"", "\"port\"", "\"persist\"", "\"lfc-interval\"",
-  "\"readonly\"", "\"connect-timeout\"", "\"contact_points\"",
+  "\"readonly\"", "\"connect-timeout\"", "\"contact-points\"",
   "\"keyspace\"", "\"valid-lifetime\"", "\"renew-timer\"",
   "\"rebind-timer\"", "\"decline-probation-period\"", "\"subnet4\"",
   "\"4o6-interface\"", "\"4o6-interface-id\"", "\"4o6-subnet\"",
