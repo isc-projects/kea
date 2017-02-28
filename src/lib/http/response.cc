@@ -99,12 +99,20 @@ HttpResponse::getDateHeaderValue() const {
 }
 
 std::string
-HttpResponse::toString() const {
+HttpResponse::toBriefString() const {
     std::ostringstream s;
     // HTTP version number and status code.
     s << "HTTP/" << http_version_.major_ << "." << http_version_.minor_;
     s << " " << static_cast<uint16_t>(status_code_);
     s << " " << statusCodeToString(status_code_) << crlf;
+    return (s.str());
+}
+
+std::string
+HttpResponse::toString() const {
+    std::ostringstream s;
+    // HTTP version number and status code.
+    s << toBriefString();
 
     // We need to at least insert "Date" header into the HTTP headers. This
     // method is const thus we can't insert it into the headers_ map. We'll
@@ -116,10 +124,8 @@ HttpResponse::toString() const {
     // Update or add "Date" header.
     addHeaderInternal("Date", getDateHeaderValue(), headers);
 
-    // Add "Content-Length" if body present.
-    if (!body_.empty()) {
-        addHeaderInternal("Content-Length", body_.length(), headers);
-    }
+    // Always add "Content-Length", perhaps equal to 0.
+    addHeaderInternal("Content-Length", body_.length(), headers);
 
     // Include all headers.
     for (auto header = headers.cbegin(); header != headers.cend();

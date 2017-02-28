@@ -9,7 +9,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda ctrl_agent_messages.h ctrl_agent_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda ca_messages.h ca_messages.cc s-messages
 
 man_MANS = kea-ctrl-agent.8
 DISTCLEANFILES = $(man_MANS)
@@ -29,29 +29,35 @@ $(man_MANS):
 
 endif
 
-ctrl_agent_messages.h ctrl_agent_messages.cc: s-messages
+ca_messages.h ca_messages.cc: s-messages
 
-s-messages: ctrl_agent_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ctrl_agent_messages.mes
+s-messages: ca_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
 	touch $@
 
-BUILT_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
+BUILT_SOURCES = ca_messages.h ca_messages.cc
 
 
 # convenience archive
 
 noinst_LTLIBRARIES = libagent.la
 
-libagent_la_SOURCES  = ctrl_agent_cfg_mgr.cc ctrl_agent_cfg_mgr.h
-libagent_la_SOURCES += ctrl_agent_controller.cc ctrl_agent_controller.h
-libagent_la_SOURCES += ctrl_agent_log.cc ctrl_agent_log.h
-libagent_la_SOURCES += ctrl_agent_process.cc ctrl_agent_process.h
-libagent_la_SOURCES += agent_parser.cc agent_parser.h
+libagent_la_SOURCES  = agent_parser.cc agent_parser.h
+libagent_la_SOURCES += agent_lexer.cc
+libagent_la_SOURCES += ca_cfg_mgr.cc ca_cfg_mgr.h
+libagent_la_SOURCES += ca_controller.cc ca_controller.h
+libagent_la_SOURCES += ca_command_mgr.cc ca_command_mgr.h
+libagent_la_SOURCES += ca_log.cc ca_log.h
+libagent_la_SOURCES += ca_process.cc ca_process.h
+libagent_la_SOURCES += ca_response_creator.cc ca_response_creator.h
+libagent_la_SOURCES += ca_response_creator_factory.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
 
-nodist_libagent_la_SOURCES = ctrl_agent_messages.h ctrl_agent_messages.cc
-EXTRA_DIST += ctrl_agent_messages.mes
+nodist_libagent_la_SOURCES = ca_messages.h ca_messages.cc
+EXTRA_DIST += ca_messages.mes
+EXTRA_DIST += agent_lexer.ll
+EXTRA_DIST += agent_parser.yy
 
 sbin_PROGRAMS = kea-ctrl-agent
 
@@ -66,6 +72,7 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
