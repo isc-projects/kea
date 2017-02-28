@@ -5,8 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <agent/ctrl_agent_response_creator.h>
-#include <agent/ctrl_agent_response_creator_factory.h>
+#include <agent/ca_response_creator.h>
+#include <agent/ca_response_creator_factory.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 

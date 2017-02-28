@@ -5,9 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <agent/ctrl_agent_process.h>
-#include <agent/ctrl_agent_response_creator_factory.h>
-#include <agent/ctrl_agent_log.h>
+#include <agent/ca_process.h>
+#include <agent/ca_response_creator_factory.h>
+#include <agent/ca_log.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <http/listener.h>
