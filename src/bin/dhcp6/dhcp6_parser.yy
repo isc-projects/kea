@@ -68,7 +68,7 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
-  CONTACT_POINTS "contact_points"
+  CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
 
   PREFERRED_LIFETIME "preferred-lifetime"
@@ -586,7 +586,7 @@ contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("contact_points", cp);
+    ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 };
 
