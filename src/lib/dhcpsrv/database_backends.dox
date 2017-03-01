@@ -93,7 +93,7 @@
 
   @subsection dhcpdb-keywords-cql Cassandra (CQL) connection string keywords
 
-  - <b>contact_points</b> - a list of comma separated IP addresses of the
+  - <b>contact-points</b> - a list of comma separated IP addresses of the
     cluster contact points>
   - <b>port</b> - an integer specifying a connection port. If not specified, the
     default port will be used.

@@ -1,4 +1,10 @@
-1219.   [func]         marcin
+1220.	[func]		parisioa, fdupont, tomek
+	DHCPv4 and DHCPv6 parsers have updated to accept database port
+	parameter. The parameter for Cassandra is now called
+	"contact-points" (was "contact_points" previously).
+	(Trac #5061, git xxx)
+
+1219.   [func]		marcin
 	Control Agent uses libkea-http to process commands over
 	the RESTful interface.
         (Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)

@@ -55,6 +55,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
 
     int64_t lfc_interval = 0;
     int64_t timeout = 0;
+    int64_t port = 0;
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
         try {
@@ -71,6 +72,11 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                 timeout = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "port") {
+                port = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(port);
 
             } else {
                 values_copy[param.first] = param.second->stringValue();
@@ -125,6 +131,16 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
         isc_throw(DhcpConfigError, "connect-timeout value: " << timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+
+    // e. Check that the port is within a reasonable range.
+    if ((port < 0) ||
+        (port > std::numeric_limits<uint16_t>::max())) {
+        ConstElementPtr value = database_config->get("port");
+        isc_throw(DhcpConfigError, "port value: " << port
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint16_t>::max()
                   << " (" << value->getPosition() << ")");
     }
 

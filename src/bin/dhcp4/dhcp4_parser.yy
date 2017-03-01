@@ -72,10 +72,13 @@ using namespace std;
   USER "user"
   PASSWORD "password"
   HOST "host"
+  PORT "port"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  CONTACT_POINTS "contact-points"
+  KEYSPACE "keyspace"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -513,11 +516,14 @@ database_map_param: database_type
                   | user
                   | password
                   | host
+                  | port
                   | name
                   | persist
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | contact_points
+                  | keyspace
                   | unknown_map_entry
 ;
 
@@ -558,6 +564,11 @@ host: HOST {
     ctx.leave();
 };
 
+port: PORT COLON INTEGER {
+    ElementPtr p(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("port", p);
+};
+
 name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -585,6 +596,23 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
 };
+
+contact_points: CONTACT_POINTS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("contact-points", cp);
+    ctx.leave();
+};
+
+keyspace: KEYSPACE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("keyspace", ks);
+    ctx.leave();
+};
+
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
