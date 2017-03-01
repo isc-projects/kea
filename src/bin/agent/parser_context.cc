@@ -16,7 +16,7 @@ namespace isc {
 namespace agent {
 
 ParserContext::ParserContext()
-  : ctx_(NO_KEYWORDS), trace_scanning_(false), trace_parsing_(false)
+  : sfile_(0), ctx_(NO_KEYWORDS), trace_scanning_(false), trace_parsing_(false)
 {
 }
 
