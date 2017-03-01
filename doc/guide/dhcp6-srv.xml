@@ -443,7 +443,7 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
-  Should the database use a port different than standard, it may be
+  Should the database use a port different than default, it may be
   specified as well:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
