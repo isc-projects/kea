@@ -51,32 +51,31 @@ public:
 
     /// @brief Returns information about control socket
     ///
+    /// This method returns Element tree structure that describes the control
+    /// socket (or null pointer if the socket is not defined for a particular
+    /// server type). This information is expected to be compatible with
+    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
+    ///
     /// @param type type of the server being controlled
-    /// @return pointer to the Element that holds control-socket map
-    const data::ConstElementPtr getControlSocketInfo(ServerType type) const {
-        if (type > MAX_TYPE_SUPPORTED) {
-            isc_throw(BadValue, "Invalid server type");
-        }
-        return (ctrl_sockets_[static_cast<uint8_t>(type)]);
-    }
+    /// @return pointer to the Element that holds control-socket map (or NULL)
+    const data::ConstElementPtr getControlSocketInfo(ServerType type) const;
 
     /// @brief Sets information about the control socket
+    ///
+    /// This method stores Element tree structure that describes the control
+    /// socket. This information is expected to be compatible with
+    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
     ///
     /// @param control_socket Element that holds control-socket map
     /// @param type type of the server being controlled
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
-                              ServerType type) {
-        if (type > MAX_TYPE_SUPPORTED) {
-            isc_throw(BadValue, "Invalid server type");
-        }
-        ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
-    }
+                              ServerType type);
 
     /// @brief Sets http-host parameter
     ///
     /// @param host Hostname or IP address where the agent's HTTP service
     /// will be available.
-    void setHost(const std::string& host) {
+    void setHttpHost(const std::string& host) {
         http_host_ = host;
     }
 
@@ -84,19 +83,19 @@ public:
     ///
     /// @return Hostname or IP address where the agent's HTTP service is
     /// available.
-    std::string getHost() const {
+    std::string getHttpHost() const {
         return (http_host_);
     }
 
     /// @brief Sets http port
     ///
     /// @param port sets the TCP port the HTTP server will listen on
-    void setPort(const uint16_t port) {
+    void setHttpPort(const uint16_t port) {
         http_port_ = port;
     }
 
     /// @brief Returns the TCP post the HTTP server will listen on
-    uint16_t getPort() const {
+    uint16_t getHttpPort() const {
         return (http_port_);
     }
 
@@ -115,6 +114,15 @@ public:
 
 
 private:
+
+    /// @brief Private copy constructor
+    ///
+    /// It is private to forbid anyone outside of this class to make copies.
+    /// The only legal way to copy a context is to call @ref clone().
+    ///
+    /// @param orig the original context to copy from
+    CtrlAgentCfgContext(const CtrlAgentCfgContext& orig);
+
     /// @brief Private assignment operator to avoid potential for slicing.
     ///
     /// @param rhs Context to be assigned.

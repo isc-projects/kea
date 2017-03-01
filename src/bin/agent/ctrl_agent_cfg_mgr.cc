@@ -20,8 +20,20 @@ namespace agent {
 
 CtrlAgentCfgContext::CtrlAgentCfgContext()
     :http_host_(""), http_port_(0) {
-
 }
+
+CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
+    : DCfgContextBase(),http_host_(orig.http_host_), http_port_(orig.http_port_),
+      libraries_(orig.libraries_) {
+
+    // We're copying pointers here only. The underlying data will be shared by
+    // old and new context. That's how shared pointers work and I see no reason
+    // why it would be different in this particular here.
+    ctrl_sockets_[TYPE_D2] = orig.ctrl_sockets_[TYPE_D2];
+    ctrl_sockets_[TYPE_DHCP4] = orig.ctrl_sockets_[TYPE_DHCP4];
+    ctrl_sockets_[TYPE_DHCP6] = orig.ctrl_sockets_[TYPE_DHCP6];
+}
+
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
     : DCfgMgrBase(DCfgContextBasePtr(new CtrlAgentCfgContext())) {
@@ -37,8 +49,8 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     // First print the http stuff.
     std::ostringstream s;
-    s << "listening on " << ctx->getHost() << ", port " << ctx->getPort()
-      << ", control sockets: ";
+    s << "listening on " << ctx->getHttpHost() << ", port "
+      << ctx->getHttpPort() << ", control sockets: ";
 
     // Then print the control-sockets
     bool socks = false;
@@ -55,7 +67,9 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
         socks = true;
     }
     if (!socks) {
-        // That's weird
+        // That's uncommon, but correct scenario. CA can respond to some
+        // commands on its own. Further down the road we will possibly get the
+        // capability to tell CA to start other servers.
         s << "none";
     }
 
@@ -126,6 +140,24 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
 
     return (answer);
 }
+
+const data::ConstElementPtr
+CtrlAgentCfgContext::getControlSocketInfo(ServerType type) const {
+    if (type > MAX_TYPE_SUPPORTED) {
+        isc_throw(BadValue, "Invalid server type");
+    }
+    return (ctrl_sockets_[static_cast<uint8_t>(type)]);
+}
+
+void
+CtrlAgentCfgContext::setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
+                                          ServerType type) {
+    if (type > MAX_TYPE_SUPPORTED) {
+        isc_throw(BadValue, "Invalid server type");
+    }
+    ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
+}
+
 
 } // namespace isc::agent
 } // namespace isc

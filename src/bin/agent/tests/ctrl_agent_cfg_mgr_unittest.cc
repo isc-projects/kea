@@ -8,13 +8,16 @@
 #include <agent/ctrl_agent_cfg_mgr.h>
 #include <agent/parser_context.h>
 #include <process/testutils/d_test_stubs.h>
+#include <process/d_cfg_mgr.h>
 #include <agent/tests/test_libraries.h>
+#include <hooks/libinfo.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc::agent;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::process;
 
 namespace  {
 
@@ -54,11 +57,11 @@ TEST(CtrlAgentCfgMgr, contextHttpParams) {
     CtrlAgentCfgContext ctx;
 
     // Check http parameters
-    ctx.setPort(12345);
-    EXPECT_EQ(12345, ctx.getPort());
+    ctx.setHttpPort(12345);
+    EXPECT_EQ(12345, ctx.getHttpPort());
 
-    ctx.setHost("alnitak");
-    EXPECT_EQ("alnitak", ctx.getHost());
+    ctx.setHttpHost("alnitak");
+    EXPECT_EQ("alnitak", ctx.getHttpHost());
 }
 
 // Tests if context can store and retrieve control socket information.
@@ -100,6 +103,57 @@ TEST(CtrlAgentCfgMgr, contextSocketInfo) {
     EXPECT_EQ(socket2, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
     EXPECT_EQ(socket3, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
 }
+
+// Tests if copied context retains all parameters.
+TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
+
+    CtrlAgentCfgContext ctx;
+
+    ConstElementPtr socket1 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
+                                                "  \"socket-name\": \"socket1\" }");
+    ConstElementPtr socket2 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
+                                                "  \"socket-name\": \"socket2\" }");
+    ConstElementPtr socket3 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
+                                                "  \"socket-name\": \"socket3\" }");
+    // Ok, now set the control sockets
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket1, CtrlAgentCfgContext::TYPE_D2));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket2, CtrlAgentCfgContext::TYPE_DHCP4));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket3, CtrlAgentCfgContext::TYPE_DHCP6));
+
+    EXPECT_NO_THROW(ctx.setHttpPort(12345));
+    EXPECT_NO_THROW(ctx.setHttpHost("bellatrix"));
+
+    HookLibsCollection libs;
+    string exp_name("testlib1.so");
+    ConstElementPtr exp_param(new StringElement("myparam"));
+    libs.push_back(make_pair(exp_name, exp_param));
+    ctx.setLibraries(libs);
+
+    // Make a copy.
+    DCfgContextBasePtr copy_base(ctx.clone());
+    CtrlAgentCfgContextPtr copy = boost::dynamic_pointer_cast<CtrlAgentCfgContext>(copy_base);
+    ASSERT_TRUE(copy);
+
+    // Now check the values returned
+    EXPECT_EQ(12345, copy->getHttpPort());
+    EXPECT_EQ("bellatrix", copy->getHttpHost());
+
+    // Check socket info
+    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
+    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
+    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_EQ(socket1->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2)->str());
+    EXPECT_EQ(socket2->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4)->str());
+    EXPECT_EQ(socket3->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6)->str());
+
+    // Check hook libs
+    HookLibsCollection libs2 = copy->getLibraries();
+    ASSERT_EQ(1, libs2.size());
+    EXPECT_EQ(exp_name, libs2[0].first);
+    ASSERT_TRUE(libs2[0].second);
+    EXPECT_EQ(exp_param->str(), libs2[0].second->str());
+}
+
 
 // Tests if the context can store and retrieve hook libs information.
 TEST(CtrlAgentCfgMgr, contextHookParams) {
@@ -228,8 +282,8 @@ TEST_F(AgentParserTest, configParseHttpOnly) {
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    EXPECT_EQ("betelguese", ctx->getHost());
-    EXPECT_EQ(8001, ctx->getPort());
+    EXPECT_EQ("betelguese", ctx->getHttpHost());
+    EXPECT_EQ(8001, ctx->getHttpPort());
 }
 
 // Tests if a single socket can be configured. BTW this test also checks
