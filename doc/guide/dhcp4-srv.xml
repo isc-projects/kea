@@ -448,7 +448,7 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
-  Should the database use a port different than standard, it may be
+  Should the database use a port different than default, it may be
   specified as well:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
@@ -531,7 +531,7 @@ If a timeout is given though, it should be an integer greater than zero.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
-  Should the database use a port different than standard, it may be
+  Should the database use a port different than default, it may be
   specified as well:
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
