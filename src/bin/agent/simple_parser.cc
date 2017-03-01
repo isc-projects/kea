@@ -82,8 +82,8 @@ AgentSimpleParser::parse(CtrlAgentCfgContextPtr ctx, isc::data::ConstElementPtr 
                          bool check_only) {
 
     // Let's get the HTTP parameters first.
-    ctx->setHost(SimpleParser::getString(config, "http-host"));
-    ctx->setPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
+    ctx->setHttpHost(SimpleParser::getString(config, "http-host"));
+    ctx->setHttpPort(SimpleParser::getIntType<uint16_t>(config, "http-port"));
 
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
