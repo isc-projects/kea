@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,6 +127,13 @@ public:
     using LibraryManager::runUnload;
 };
 
+
+// Check that LibraryManager constructor requires a not null manager
+
+TEST_F(LibraryManagerTest, NullManager) {
+    EXPECT_THROW(PublicLibraryManager(std::string("foo"), 0, 0),
+                 NoCalloutManager);
+}
 
 // Check that openLibrary() reports an error when it can't find the specified
 // library.

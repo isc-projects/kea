@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,7 +100,7 @@ TEST(Element, from_and_to_json) {
 
     BOOST_FOREACH(const std::string& s, sv) {
         // Test two types of fromJSON(): with string and istream.
-        for (int i = 0; i < 2; ++i) {
+        for (unsigned i = 0; i < 2; ++i) {
             // test << operator, which uses Element::str()
             if (i == 0) {
                 el = Element::fromJSON(s);
@@ -555,6 +555,12 @@ TEST(Element, escape) {
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
     // A whitespace test
     EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
+    // Escape for forward slash is optional
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\/bar\""));
+    EXPECT_EQ("foo/bar", Element::fromJSON("\"foo\\/bar\"")->stringValue());
+    // Control characters
+    StringElement bell("foo\abar");
+    EXPECT_EQ("\"foo\\u0007bar\"", bell.str());
 }
 
 // This test verifies that a backslash can be used in element content
@@ -655,6 +661,12 @@ TEST(Element, MapElement) {
     el->set(long_maptag, Element::create("bar"));
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
+    // Null pointer value
+    el.reset(new MapElement());
+    ConstElementPtr null_ptr;
+    el->set("value", null_ptr);
+    EXPECT_FALSE(el->get("value"));
+    EXPECT_EQ("{ \"value\": None }", el->str());
 }
 
 TEST(Element, to_and_from_wire) {
@@ -857,8 +869,9 @@ TEST(Element, constRemoveIdentical) {
     c = Element::fromJSON("{ \"a\": 1 }");
     EXPECT_EQ(*removeIdentical(a, b), *c);
 
-    EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)),
-                 TypeError);
+    // removeIdentical() is overloaded so force the first argument to const
+    ConstElementPtr bad = Element::create(1);
+    EXPECT_THROW(removeIdentical(bad, Element::create(2)), TypeError);
 }
 
 TEST(Element, merge) {
@@ -999,6 +1012,10 @@ TEST(Element, preprocessor) {
     EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
     EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
     EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
+
+    // For coverage
+    std::istringstream iss(no_comment);
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(iss, true)));
 }
 
 TEST(Element, getPosition) {
