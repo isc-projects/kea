@@ -330,6 +330,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"port\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_PORT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("port", driver.loc_);
+    }
+}
+
 \"persist\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -357,6 +367,26 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_CONNECT_TIMEOUT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("connect-timeout", driver.loc_);
+    }
+}
+
+\"keyspace\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_KEYSPACE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("keyspace", driver.loc_);
+    }
+}
+
+\"contact-points\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_CONTACT_POINTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("contact-points", driver.loc_);
     }
 }
 

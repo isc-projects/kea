@@ -243,6 +243,7 @@ TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
                                "backends.json",
                                "classify.json",
+                               "cassandra.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",
                                "leases-expiration.json",

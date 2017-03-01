@@ -1,0 +1,66 @@
+// This is an example configuration file for the DHCPv6 server in Kea.
+// It is a basic scenario with one IPv6 subnet configured. It demonstrates
+// how to configure Kea to use CQL (Cassandra) backend.
+
+{ "Dhcp6":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
+// sure it is up, running and properly initialized. See kea-admin documentation
+// for details on how to initialize the database. The only strictly required
+// parameters are type, keyspace and contact-points. At least one contact point
+// must be specified, but more than one is required for redundancy. Make sure
+// you specify the contact points without spaces. Kea must be compiled with
+// --with-cql option to use this backend.
+  "lease-database": {
+      "type": "cql",
+      "keyspace": "keatest",
+      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
+      "port": 9042
+  },
+
+// Addresses will be assigned with preferred and valid lifetimes
+// being 3000 and 4000, respectively. Client is told to start
+// renewing after 1000 seconds. If the server does not respond
+// after 2000 seconds since the lease was granted, client is supposed
+// to start REBIND procedure (emergency renewal that allows switching
+// to a different server).
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
+  "subnet6": [
+    {
+      "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "subnet": "2001:db8:1::/64",
+      "interface": "ethX"
+    }
+  ]
+},
+
+// The following configures logging. It assumes that messages with at least
+// informational level (info, warn, error and fatal) should be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "debuglevel": 0,
+            "severity": "INFO"
+        }
+    ]
+}
+
+}

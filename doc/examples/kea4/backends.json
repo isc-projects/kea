@@ -22,6 +22,7 @@
 # dependencies or services running.
 #  "lease-database": {
 #      "type": "memfile",
+#      "persist": true,
 #      "lfc-interval": 3600
 #  },
 
@@ -36,6 +37,7 @@
 #      "type": "mysql",
 #      "name": "keatest",
 #      "host": "localhost",
+#      "port": 3306,
 #      "user": "keatest",
 #      "password": "secret1",
 #      "connect-timeout": 3
@@ -52,21 +54,24 @@
 #      "type": "pgsql",
 #      "name": "keatest",
 #      "host": "localhost",
+#      "port": 5432,
 #      "user": "keatest",
-#      "password": "secret1"
+#      "password": "secret1",
+#      "connect-timeout": 3
 #  },
 
 # 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
 # sure it is up, running and properly initialized. See kea-admin documentation
 # for details on how to initialize the database. The only strictly required
-# parameters are type, keyspace and contact_points. At least one contact point
+# parameters are type, keyspace and contact-points. At least one contact point
 # must be specified, but more than one is required for redundancy. Make sure
 # you specify the contact points without spaces. Kea must be compiled with
 # --with-cql option to use this backend.
 #  "lease-database": {
 #      "type": "cql",
 #      "keyspace": "keatest",
-#      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3"
+#      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
+#      "port": 9042
 #  },
 
 # Addresses will be assigned with a lifetime of 4000 seconds.

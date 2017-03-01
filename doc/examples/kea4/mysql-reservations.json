@@ -58,7 +58,8 @@
     "name": "kea",
     "user": "kea",
     "password": "kea",
-    "host": "localhost"
+    "host": "localhost",
+    "port": 3306
   },
 
 # Define a subnet with a single pool of dynamic addresses. Addresses from

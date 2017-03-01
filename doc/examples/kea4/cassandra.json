@@ -1,0 +1,64 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It is a basic scenario with one IPv4 subnet configured. It demonstrates
+// how to configure Kea to use CQL (Cassandra) backend
+
+{ "Dhcp4":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
+// sure it is up, running and properly initialized. See kea-admin documentation
+// for details on how to initialize the database. The only strictly required
+// parameters are type, keyspace and contact-points. At least one contact point
+// must be specified, but more than one is required for redundancy. Make sure
+// you specify the contact points without spaces. Kea must be compiled with
+// --with-cql option to use this backend.
+  "lease-database": {
+      "type": "cql",
+      "keyspace": "keatest",
+      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
+      "port": 9042
+  },
+
+// Addresses will be assigned with a lifetime of 4000 seconds.
+  "valid-lifetime": 4000,
+
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
+
+// The following list defines subnets. We have only one subnet
+// here. We tell Kea that it is directly available over local interface.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "interface": "ethX"
+    }
+  ]
+},
+
+// The following configures logging. It assumes that messages with at least
+// informational level (info, warn, error and fatal) should be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}

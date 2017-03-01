@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,6 +152,40 @@ PgSqlConnection::openDatabase() {
     }
 
     dbconnparameters += "host = '" + shost + "'" ;
+
+    string sport;
+    try {
+        sport = getParameter("port");
+    } catch (...) {
+        // No port parameter, we are going to use the default port.
+        sport = "";
+    }
+
+    if (sport.size() > 0) {
+        unsigned int port = 0;
+
+        // Port was given, so try to convert it to an integer.
+        try {
+            port = boost::lexical_cast<unsigned int>(sport);
+        } catch (...) {
+            // Port given but could not be converted to an unsigned int.
+            // Just fall back to the default value.
+            port = 0;
+        }
+
+        // The port is only valid when it is in the 0..65535 range.
+        // Again fall back to the default when the given value is invalid.
+        if (port > numeric_limits<uint16_t>::max()) {
+            port = 0;
+        }
+
+        // Add it to connection parameters when not default.
+        if (port > 0) {
+            std::ostringstream oss;
+            oss << port;
+            dbconnparameters += " port = " + oss.str();
+        }
+    }
 
     string suser;
     try {
