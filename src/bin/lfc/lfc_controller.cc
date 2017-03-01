@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -163,12 +163,12 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'v':
-            // Print just Kea vesion and exit.
+            // Print just Kea version and exit.
             std::cout << getVersion(false) << std::endl;
             exit(EXIT_SUCCESS);
 
         case 'V':
-            // Print extended  Kea vesion and exit.
+            // Print extended  Kea version and exit.
             std::cout << getVersion(true) << std::endl;
             exit(EXIT_SUCCESS);
 
