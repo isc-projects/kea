@@ -16,7 +16,7 @@ namespace isc {
 namespace d2 {
 
 D2ParserContext::D2ParserContext()
-  : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
+  : sfile_(0), ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
 {
 }
 
