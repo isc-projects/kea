@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,7 +142,12 @@ ServerHooks::getHookNames() const {
 
 ServerHooks&
 ServerHooks::getServerHooks() {
-    static ServerHooks hooks;
+    return (*getServerHooksPtr());
+}
+
+ServerHooksPtr
+ServerHooks::getServerHooksPtr() {
+    static ServerHooksPtr hooks(new ServerHooks());
     return (hooks);
 }
 

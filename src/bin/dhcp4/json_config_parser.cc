@@ -22,6 +22,7 @@
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -433,7 +434,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
     // the same risk of failure as doing the change.)
-    HooksLibrariesParser hooks_parser;
+    hooks::HooksLibrariesParser hooks_parser;
 
     // Answer will hold the result.
     ConstElementPtr answer;

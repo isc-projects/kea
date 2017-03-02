@@ -28,6 +28,11 @@ to establish a session with the Kea control channel.
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the controller.
 
+% DCTL_CONFIG_CHECK_COMPLETE server has completed configuration check: %1, result: %2
+This is an informational message announcing the successful processing of a
+new configuration check is complete. The result of that check is printed.
+This informational message is printed when configuration check is requested.
+
 % DCTL_CONFIG_COMPLETE server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. It is output during server startup, and when an updated

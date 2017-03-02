@@ -93,9 +93,11 @@ CtrlAgentProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
 }
 
 isc::data::ConstElementPtr
-CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set) {
+CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
+                            bool check_only) {
     int rcode = 0;
-    isc::data::ConstElementPtr answer = getCfgMgr()->parseConfig(config_set);
+    isc::data::ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
+                                                                       check_only);
     config::parseAnswer(rcode, answer);
     return (answer);
 }
