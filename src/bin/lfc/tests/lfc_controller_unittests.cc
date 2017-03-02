@@ -145,29 +145,7 @@ TEST_F(LFCControllerTest, initialValues) {
     EXPECT_TRUE(lfc_controller.getPidFile().empty());
 }
 
-/// @brief Verify that parsing -v/V/W/h works well.
-TEST_F(LFCControllerTest, version) {
-    LFCController lfc_controller;
-
-    int argc = 2;
-    char *argv_v[] = { const_cast<char*>("progName"),
-		       const_cast<char*>("-v") };
-    char *argv_V[] = { const_cast<char*>("progName"),
-		       const_cast<char*>("-V") };
-    char *argv_W[] = { const_cast<char*>("progName"),
-		       const_cast<char*>("-W") };
-    char *argv_h[] = { const_cast<char*>("progName"),
-		       const_cast<char*>("-h") };
-
-    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_v),
-		::testing::ExitedWithCode(0), "");
-    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_V),
-		::testing::ExitedWithCode(0), "");
-    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_W), 
-		::testing::ExitedWithCode(0), "");
-    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_h),
-		::testing::ExitedWithCode(0), "Usage");
-}
+/// @todo verify that parsing -v/V/W/h works well without ASSERT_EXIT
 
 /// @brief Verify that parsing a full command line works.
 /// Parse a complete command line then verify the parsed
