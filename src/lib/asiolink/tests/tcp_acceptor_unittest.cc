@@ -229,6 +229,12 @@ public:
         return (endpoint_copy);
     }
 
+    /// @brief Opens TCP acceptor and sets 'reuse address' option.
+    void acceptorOpen() {
+        acceptor_.open(endpoint_);
+        acceptor_.setOption(TestTCPAcceptor::ReuseAddress(true));
+    }
+
     /// @brief Starts accepting TCP connections.
     ///
     /// This method creates new Acceptor instance and calls accept() to start
@@ -324,7 +330,7 @@ TEST_F(TCPAcceptorTest, asyncAccept) {
     setMaxConnections(10);
 
     // Initialize acceptor.
-    acceptor_.open(endpoint_);
+    acceptorOpen();
     acceptor_.bind(endpoint_);
     acceptor_.listen();
 
@@ -387,15 +393,18 @@ TEST_F(TCPAcceptorTest, getNative) {
     // Initially the descriptor should be invalid (negative).
     ASSERT_LT(acceptor_.getNative(), 0);
     // Now open the socket and make sure the returned descriptor is now valid.
-    ASSERT_NO_THROW(acceptor_.open(endpoint_));
+    ASSERT_NO_THROW(acceptorOpen());
     EXPECT_GE(acceptor_.getNative(), 0);
 }
 
+// macOS 10.12.3 has a bug which causes the connections to not enter
+// the TIME-WAIT state and they never get closed.
+#if !defined (OS_OSX)
 
 // Test that TCPAcceptor::close works properly.
 TEST_F(TCPAcceptorTest, close) {
     // Initialize acceptor.
-    acceptor_.open(endpoint_);
+    acceptorOpen();
     acceptor_.bind(endpoint_);
     acceptor_.listen();
 
@@ -418,5 +427,7 @@ TEST_F(TCPAcceptorTest, close) {
     EXPECT_EQ(1, aborted_connections_num_);
     EXPECT_EQ(1, connections_.size());
 }
+
+#endif
 
 }
