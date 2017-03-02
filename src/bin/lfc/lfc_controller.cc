@@ -150,7 +150,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, ":46dvVWp:x:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dhvVWp:x:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -236,6 +236,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
         case '?':
             // Unknown argument
+            // note this will catch all the prevous ... name missing
             isc_throw(InvalidUsage, "Unknown argument");
 
         case ':':
