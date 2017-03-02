@@ -9,6 +9,7 @@
 #include <agent/ca_response_creator_factory.h>
 #include <agent/ca_log.h>
 #include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
 #include <http/listener.h>
 #include <boost/pointer_cast.hpp>
@@ -21,8 +22,6 @@ using namespace isc::process;
 /// @todo: remove once 5134 is merged.
 namespace {
 
-const IOAddress SERVER_ADDRESS("127.0.0.1");
-const unsigned short SERVER_PORT = 8081;
 const long REQUEST_TIMEOUT = 10000;
 
 }
@@ -53,10 +52,27 @@ CtrlAgentProcess::run() {
         // answer to specific request.
         HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
 
+        DCfgContextBasePtr base_ctx = getCfgMgr()->getContext();
+        CtrlAgentCfgContextPtr ctx = boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
+        if (!ctx) {
+            isc_throw(Unexpected, "Interal logic error: bad context type");
+        }
+
+        /// @todo: If the parameter is a hostname, we need to resolve it.
+        IOAddress server_address("::");
+        try {
+            server_address = IOAddress(ctx->getHttpHost());
+        } catch (const IOError& e) {
+            isc_throw(BadValue, "Failed to convert " << ctx->getHttpHost()
+                      << " to IP address:" << e.what());
+        }
+
+        uint16_t server_port = ctx->getHttpPort();
+
         // Create http listener. It will open up a TCP socket and be prepared
         // to accept incoming connection.
-        HttpListener http_listener(*getIoService(), SERVER_ADDRESS,
-                                   SERVER_PORT, rcf, REQUEST_TIMEOUT);
+        HttpListener http_listener(*getIoService(), server_address,
+                                   server_port, rcf, REQUEST_TIMEOUT);
 
         // Instruct the http listener to actually open socket, install callback
         // and start listening.
@@ -64,7 +80,7 @@ CtrlAgentProcess::run() {
 
         // Ok, seems we're good to go.
         LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
-            .arg(SERVER_ADDRESS.toText()).arg(SERVER_PORT);
+            .arg(server_address.toText()).arg(server_port);
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
