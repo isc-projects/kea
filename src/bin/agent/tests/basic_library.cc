@@ -15,7 +15,6 @@
 
 #include <config.h>
 #include <hooks/hooks.h>
-#include <fstream>
 
 using namespace isc::hooks;
 using namespace std;

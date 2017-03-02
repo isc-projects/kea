@@ -13,11 +13,12 @@
 namespace isc {
 namespace agent {
 
-/// @brief SimpleParser specialized for DHCPv4
+/// @brief SimpleParser specialized for Control Agent
 ///
-/// This class is a @ref isc::data::SimpleParser dedicated to DHCPv4 parser.
-/// In particular, it contains all the default values and names of the
-/// parameters that are to be derived (inherited) between scopes.
+/// This class is a @ref isc::data::SimpleParser dedicated to Control Agent.
+/// In particular, it contains all the default values for the whole
+/// agent and for the socket defaults.
+///
 /// For the actual values, see @file agent/simple_parser.cc
 class AgentSimpleParser : public isc::data::SimpleParser {
 public:
@@ -27,7 +28,7 @@ public:
     ///
     /// @param global scope to be filled in with defaults.
     /// @return number of default values added
-    static size_t setAllDefaults(isc::data::ElementPtr global);
+    static size_t setAllDefaults(const isc::data::ElementPtr& global);
 
     /// @brief Parses the control agent configuration
     ///
@@ -36,7 +37,8 @@ public:
     /// @param check_only - if true the configuration is verified only, not applied
     ///
     /// @throw ConfigError if any issues are encountered.
-    void parse(CtrlAgentCfgContextPtr ctx, isc::data::ConstElementPtr config,
+    void parse(const CtrlAgentCfgContextPtr& ctx,
+               const isc::data::ConstElementPtr& config,
                bool check_only);
 
     // see simple_parser.cc for comments for those parameters

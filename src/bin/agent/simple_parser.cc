@@ -49,7 +49,7 @@ const SimpleDefaults AgentSimpleParser::SOCKET_DEFAULTS = {
 /// --- end of default values -------------------------------------------------
 /// ---------------------------------------------------------------------------
 
-size_t AgentSimpleParser::setAllDefaults(isc::data::ElementPtr global) {
+size_t AgentSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) {
     size_t cnt = 0;
 
     // Set global defaults first.
@@ -78,7 +78,8 @@ size_t AgentSimpleParser::setAllDefaults(isc::data::ElementPtr global) {
 }
 
 void
-AgentSimpleParser::parse(CtrlAgentCfgContextPtr ctx, isc::data::ConstElementPtr config,
+AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
+                         const isc::data::ConstElementPtr& config,
                          bool check_only) {
 
     // Let's get the HTTP parameters first.
