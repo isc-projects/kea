@@ -9,6 +9,7 @@
 #include <process/d_log.h>
 #include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <cc/command_interpreter.h>
 
 using namespace boost::asio;
 
@@ -426,6 +427,11 @@ DStubCfgMgr::createConfigParser(const std::string& element_id,
 
     parsed_order_.push_back(element_id);
     return (parser);
+}
+
+isc::data::ConstElementPtr
+DStubCfgMgr::parse(isc::data::ConstElementPtr /*config*/, bool /*check_only*/) {
+    return (isc::config::createAnswer(0, "It all went fine. I promise"));
 }
 
 }; // namespace isc::process

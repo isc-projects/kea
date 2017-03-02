@@ -706,6 +706,19 @@ public:
                        const isc::data::Element::Position& pos
                        = isc::data::Element::Position());
 
+    /// @brief Pretends to parse the config
+    ///
+    /// This method pretends to parse the configuration specified on input
+    /// and returns a positive answer. The check_only flag is currently ignored.
+    ///
+    /// @param config configuration specified
+    /// @param check_only whether it's real configuration (false) or just
+    ///                configuration check (true)
+    /// @return always positive answer
+    ///
+    isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only);
+
     /// @brief Returns a summary of the configuration in the textual format.
     ///
     /// @return Always an empty string.
