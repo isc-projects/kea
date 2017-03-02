@@ -233,6 +233,28 @@ const char* AGENT_CONFIGS[] = {
     "            }\n"
     "        }\n"
     "     ]\n"
+    "}",
+
+    // Configuration 5: http and 1 socket (d2 only)
+    "{\n"
+    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"control-sockets\": {\n"
+    "        \"d2-server\": {\n"
+    "            \"socket-name\": \"/tmp/socket-d2\"\n"
+    "        }\n"
+    "    }\n"
+    "}",
+
+    // Configuration 6: http and 1 socket (dhcp6 only)
+    "{\n"
+    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"control-sockets\": {\n"
+    "        \"dhcp6-server\": {\n"
+    "            \"socket-name\": \"/tmp/socket-v6\"\n"
+    "        }\n"
+    "    }\n"
     "}"
 };
 
@@ -289,7 +311,7 @@ TEST_F(AgentParserTest, configParseHttpOnly) {
 // Tests if a single socket can be configured. BTW this test also checks
 // if default value for socket-type is specified (the config doesn't have it,
 // so the default value should be filed in).
-TEST_F(AgentParserTest, configParse1Socket) {
+TEST_F(AgentParserTest, configParseSocketDhcp4) {
     configParse(AGENT_CONFIGS[2], 0);
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
@@ -299,6 +321,39 @@ TEST_F(AgentParserTest, configParse1Socket) {
     EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v4\", \"socket-type\": \"unix\" }",
               socket->str());
     EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
+}
+
+// Tests if a single socket can be configured. BTW this test also checks
+// if default value for socket-type is specified (the config doesn't have it,
+// so the default value should be filed in).
+TEST_F(AgentParserTest, configParseSocketD2) {
+    configParse(AGENT_CONFIGS[5], 0);
+
+    CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    ConstElementPtr socket = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2);
+    ASSERT_TRUE(socket);
+    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-d2\", \"socket-type\": \"unix\" }",
+              socket->str());
+
+    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
+    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+}
+
+// Tests if a single socket can be configured. BTW this test also checks
+// if default value for socket-type is specified (the config doesn't have it,
+// so the default value should be filed in).
+TEST_F(AgentParserTest, configParseSocketDhcp6) {
+    configParse(AGENT_CONFIGS[6], 0);
+
+    CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    ConstElementPtr socket = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6);
+    ASSERT_TRUE(socket);
+    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v6\", \"socket-type\": \"unix\" }",
+              socket->str());
+    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
     EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
 }
 

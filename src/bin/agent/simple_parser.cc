@@ -69,7 +69,7 @@ size_t AgentSimpleParser::setAllDefaults(isc::data::ElementPtr global) {
         }
 
         ElementPtr d6 = boost::const_pointer_cast<Element>(sockets->get("dhcp6-server"));
-        if (d2) {
+        if (d6) {
             cnt += SimpleParser::setDefaults(d6, SOCKET_DEFAULTS);
         }
     }
