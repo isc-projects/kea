@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,11 +113,12 @@ public:
     /// below.
     ///
     /// @param config_set a new configuration (JSON) for the process
+    /// @param check_only true if configuration is to be verified only, not applied
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr configure(isc::data::ConstElementPtr
-                                                 config_set) = 0;
+    virtual isc::data::ConstElementPtr
+    configure(isc::data::ConstElementPtr config_set, bool check_only) = 0;
 
     /// @brief Processes the given command.
     ///

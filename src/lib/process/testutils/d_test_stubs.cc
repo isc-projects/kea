@@ -9,6 +9,7 @@
 #include <process/d_log.h>
 #include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <cc/command_interpreter.h>
 
 using namespace boost::asio;
 
@@ -66,7 +67,12 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 }
 
 isc::data::ConstElementPtr
-DStubProcess::configure(isc::data::ConstElementPtr config_set) {
+DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) {
+    if (check_only) {
+        return (isc::config::createAnswer(1,
+                "Configuration checking is not supported."));
+    }
+
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
         return (isc::config::createAnswer(1,
@@ -385,6 +391,11 @@ DStubCfgMgr::parseElement(const std::string& element_id,
     }
 
     parsed_order_.push_back(element_id);
+}
+
+isc::data::ConstElementPtr
+DStubCfgMgr::parse(isc::data::ConstElementPtr /*config*/, bool /*check_only*/) {
+    return (isc::config::createAnswer(0, "It all went fine. I promise"));
 }
 
 }; // namespace isc::process

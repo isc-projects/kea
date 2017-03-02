@@ -260,6 +260,61 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     return (answer);
 }
 
+isc::data::ConstElementPtr
+DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
+                               bool check_only) {
+    if (!config_set) {
+        return (isc::config::createAnswer(1,
+                                    std::string("Can't parse NULL config")));
+    }
+    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND,
+                DCTL_CONFIG_START).arg(config_set->str());
+
+    // The parsers implement data inheritance by directly accessing
+    // configuration context. For this reason the data parsers must store
+    // the parsed data into context immediately. This may cause data
+    // inconsistency if the parsing operation fails after the context has been
+    // modified. We need to preserve the original context here
+    // so as we can rollback changes when an error occurs.
+    DCfgContextBasePtr original_context = context_;
+    resetContext();
+
+    // Answer will hold the result returned to the caller.
+    ConstElementPtr answer;
+
+    try {
+        // Let's call the actual implementation
+        answer = parse(config_set, check_only);
+
+        // Everything was fine. Configuration set processed successfully.
+        if (!check_only) {
+            LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
+            answer = isc::config::createAnswer(0, "Configuration committed.");
+        } else {
+            LOG_INFO(dctl_logger, DCTL_CONFIG_CHECK_COMPLETE)
+                .arg(getConfigSummary(0))
+                .arg(config::answerToText(answer));
+        }
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
+        answer = isc::config::createAnswer(1, ex.what());
+
+        // An error occurred, so make sure that we restore original context.
+        context_ = original_context;
+        return (answer);
+    }
+
+    if (check_only) {
+        // If this is a configuration check only, then don't actually apply
+        // the configuration and reverse to the previous one.
+        context_ = original_context;
+    }
+
+    return (answer);
+}
+
+
 void
 DCfgMgrBase::setCfgDefaults(isc::data::ElementPtr) {
 }
@@ -284,6 +339,10 @@ void DCfgMgrBase::buildAndCommit(std::string& element_id,
     parseElement(element_id, value);
 }
 
+isc::data::ConstElementPtr
+DCfgMgrBase::parse(isc::data::ConstElementPtr, bool) {
+    isc_throw(DCfgMgrBaseError, "This class does not implement simple parser paradigm yet");
+}
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
-

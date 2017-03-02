@@ -36,6 +36,7 @@ libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
 libkea_hooks_la_SOURCES += hooks.h
 libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
 libkea_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
+libkea_hooks_la_SOURCES += hooks_parser.cc hooks_parser.h
 libkea_hooks_la_SOURCES += libinfo.cc libinfo.h
 libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
 libkea_hooks_la_SOURCES += library_manager.cc library_manager.h

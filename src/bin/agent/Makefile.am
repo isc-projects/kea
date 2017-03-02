@@ -51,6 +51,7 @@ libagent_la_SOURCES += ca_log.cc ca_log.h
 libagent_la_SOURCES += ca_process.cc ca_process.h
 libagent_la_SOURCES += ca_response_creator.cc ca_response_creator.h
 libagent_la_SOURCES += ca_response_creator_factory.h
+libagent_la_SOURCES += simple_parser.cc simple_parser.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
 

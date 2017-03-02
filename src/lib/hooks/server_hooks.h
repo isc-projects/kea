@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <map>
 #include <string>
@@ -37,6 +38,8 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+class ServerHooks;
+typedef boost::shared_ptr<ServerHooks> ServerHooksPtr;
 
 /// @brief Server hook collection
 ///
@@ -132,6 +135,11 @@ public:
     ///
     /// @return Reference to the global ServerHooks object.
     static ServerHooks& getServerHooks();
+
+    /// @brief Returns pointer to ServerHooks object.
+    ///
+    /// @return Pointer to the global ServerHooks object.
+    static ServerHooksPtr getServerHooksPtr();
 
 private:
     /// @brief Constructor
