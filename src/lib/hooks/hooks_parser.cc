@@ -20,6 +20,9 @@ using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::dhcp;
 
+namespace isc {
+namespace hooks {
+
 // ******************** HooksLibrariesParser *************************
 void
 HooksLibrariesParser::parse(ConstElementPtr value) {
@@ -151,4 +154,7 @@ HooksLibrariesParser::loadLibraries() {
 void
 HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries) {
     libraries = libraries_;
+}
+
+}
 }

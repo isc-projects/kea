@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -475,6 +475,31 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     EXPECT_NO_THROW(pos = context->getParam("bogus_value",
                                             actual_string, true));
     EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
+}
+
+// This tests if some aspects of simpleParseConfig are behaving properly.
+// Thorough testing is only possible for specific implementations. This
+// is done for control agent (see CtrlAgentControllerTest tests in
+// src/bin/agent/tests/ctrl_agent_controller_unittest.cc for example).
+// Also, shell tests in src/bin/agent/ctrl_agent_process_tests.sh test
+// the whole CA process that uses simpleParseConfig. The alternative
+// would be to implement whole parser that would set the context
+// properly. The ROI for this is not worth the effort.
+TEST_F(DStubCfgMgrTest, simpleParseConfig) {
+    using namespace isc::data;
+
+    // Passing just null pointer should result in error return code
+    answer_ = cfg_mgr_->simpleParseConfig(ConstElementPtr(), false);
+    EXPECT_TRUE(checkAnswer(1));
+
+    // Ok, now try with a dummy, but valid json code
+    string config = "{ \"bool_test\": true , \n"
+                    "  \"uint32_test\": 77 , \n"
+                    "  \"string_test\": \"hmmm chewy\" }";
+    ASSERT_NO_THROW(fromJSON(config));
+
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
+    EXPECT_TRUE(checkAnswer(0));
 }
 
 
