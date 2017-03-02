@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,30 @@ TEST_F(LFCControllerTest, initialValues) {
     EXPECT_TRUE(lfc_controller.getOutputFile().empty());
     EXPECT_TRUE(lfc_controller.getFinishFile().empty());
     EXPECT_TRUE(lfc_controller.getPidFile().empty());
+}
+
+/// @brief Verify that parsing -v/V/W/h works well.
+TEST_F(LFCControllerTest, version) {
+    LFCController lfc_controller;
+
+    int argc = 2;
+    char *argv_v[] = { const_cast<char*>("progName"),
+		       const_cast<char*>("-v") };
+    char *argv_V[] = { const_cast<char*>("progName"),
+		       const_cast<char*>("-V") };
+    char *argv_W[] = { const_cast<char*>("progName"),
+		       const_cast<char*>("-W") };
+    char *argv_h[] = { const_cast<char*>("progName"),
+		       const_cast<char*>("-h") };
+
+    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_v),
+		::testing::ExitedWithCode(0), "");
+    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_V),
+		::testing::ExitedWithCode(0), "");
+    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_W), 
+		::testing::ExitedWithCode(0), "");
+    ASSERT_EXIT(lfc_controller.parseArgs(argc, argv_h),
+		::testing::ExitedWithCode(0), "Usage");
 }
 
 /// @brief Verify that parsing a full command line works.
@@ -662,5 +686,7 @@ TEST_F(LFCControllerTest, launch6) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
 }
+
+// @todo double launch (how to do that)
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <d2/d2_zone.h>
 #include <gtest/gtest.h>
+#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -39,6 +40,21 @@ TEST(D2ZoneTest, toText) {
     // function's output changes accordingly.
     D2Zone zone2(Name("foo.example.com"), RRClass::IN());
     EXPECT_EQ("foo.example.com. IN SOA\n", zone2.toText());
+}
+
+  // Same than for toText() but using the << operator.
+TEST(D2ZoneTest, output) {
+    // Create first object.
+    D2Zone zone1(Name("example.com"), RRClass::ANY());
+    ostringstream ss;
+    ss << zone1;
+    EXPECT_EQ("example.com. ANY SOA\n", ss.str());
+    // Create another object with different parameters to make sure that the
+    // function's output changes accordingly.
+    D2Zone zone2(Name("foo.example.com"), RRClass::IN());
+    ostringstream ss2;
+    ss2 << zone2;
+    EXPECT_EQ("foo.example.com. IN SOA\n", ss2.str());
 }
 
 // This test verifies that the equality and inequality operators behave as
