@@ -16,8 +16,11 @@ using namespace isc::process;
 namespace {
 
 /// @brief Valid Control Agent Config used in tests.
-/// @todo Use actual config once configuration parsing is implemented.
-const char* valid_agent_config = "{ }";
+const char* valid_agent_config =
+    "{"
+    "  \"http-host\": \"127.0.0.1\","
+    "  \"http-port\": 8081"
+    "}";
 
 /// @brief test fixture class for testing CtrlAgentController class. This
 /// class derives from DControllerTest and wraps CtrlAgentController. Much
