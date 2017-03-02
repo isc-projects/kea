@@ -1,2 +1,3 @@
-/ctrl_agent_unittest
+/run_unittest
 /ctrl_agent_process_tests.sh
+/test_libraries.h
