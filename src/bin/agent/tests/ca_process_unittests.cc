@@ -29,6 +29,9 @@ public:
     CtrlAgentProcessTest() :
         CtrlAgentProcess("agent-test",
                          IOServicePtr(new isc::asiolink::IOService())) {
+        CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgMgr()->getCtrlAgentCfgContext();
+        ctx->setHttpHost("127.0.0.1");
+        ctx->setHttpPort(8081);
     }
 
     /// @brief Destructor

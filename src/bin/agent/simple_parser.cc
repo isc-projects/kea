@@ -33,7 +33,7 @@ namespace agent {
 ///
 /// These are global Control Agent parameters.
 const SimpleDefaults AgentSimpleParser::AGENT_DEFAULTS = {
-    { "http-host",    Element::string,  "localhost"},
+    { "http-host",    Element::string,  "127.0.0.1"},
     { "http-port",    Element::integer,  "8000"}
 };
 
