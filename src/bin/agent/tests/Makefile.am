@@ -87,7 +87,7 @@ libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-nodist_run_unittests_SOURCES = test_libraries.h
+nodist_ca_unittests_SOURCES = test_libraries.h
 
 endif
 
