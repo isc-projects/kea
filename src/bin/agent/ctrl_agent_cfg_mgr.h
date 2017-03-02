@@ -44,6 +44,9 @@ public:
 
     /// @brief Creates a clone of this context object.
     ///
+    /// Note this method does not do deep copy the information about control sockets.
+    /// That data is stored as ConstElementPtr (a shared pointer) to the actual data.
+    ///
     /// @return A pointer to the new clone.
     virtual process::DCfgContextBasePtr clone() {
         return (process::DCfgContextBasePtr(new CtrlAgentCfgContext(*this)));
