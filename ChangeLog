@@ -1,3 +1,9 @@
+1221.	[func]		tomek
+	Control agent is now able to parse the input configuration and
+	store it in its configuration syntax structure. Upcoming tickets
+	will take advantage of that information.
+	(Trac #5134, git 828304f2f408888e4b096418e90e35ba524979d0)
+
 1220.	[func]		parisioa, fdupont, tomek
 	DHCPv4 and DHCPv6 parsers have updated to accept database port
 	parameter. The parameter for Cassandra is now called
