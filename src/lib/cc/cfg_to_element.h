@@ -22,11 +22,10 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-namespace dhcp {
+namespace data {
 
 /// @brief Abstract class for configuration Cfg_* classes
 ///
-template<typename ... Args>
 struct CfgToElement {
     /// Destructor
     virtual ~CfgToElement() { }
@@ -35,13 +34,12 @@ struct CfgToElement {
     ///
     /// Returns an element which must parse into the same objet, i.e.
     /// @code
-    /// for all valid config C parse(toElement(parse(C)) == parse(C)
+    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
     /// @endcode
     ///
-    /// @param extras extra arguments
     /// @return a pointer to a configuration which can be parsed into
     /// the initial configuration object
-    virtual isc::data::ElementPtr toElement(Args... extras) const = 0;
+    virtual isc::data::ElementPtr toElement() const = 0;
 };
 
 }; // namespace isc::dhcp

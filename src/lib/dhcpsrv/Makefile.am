@@ -85,7 +85,6 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
-libkea_dhcpsrv_la_SOURCES += cfg_to_element.h
 libkea_dhcpsrv_la_SOURCES += cfg_4o6.h
 libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
 libkea_dhcpsrv_la_SOURCES += cfg_duid.cc cfg_duid.h
@@ -223,7 +222,6 @@ EXTRA_DIST += logging.spec
 # following headers are anticipated to be useful for the user libraries.
 libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \
-    cfg_to_element.h \
     cfg_option.h \
     cfg_4o6.h \
     d2_client_cfg.h \
