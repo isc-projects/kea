@@ -1858,29 +1858,6 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
-    std::string invalid_shortcuts[] = {
-        // Must supply at least enable-updates
-        "{ \"dhcp-ddns\" :"
-        "    {"
-        "    }"
-        "}",
-        // Enable-updates must be a boolean
-        "{ \"dhcp-ddns\" :"
-        "    {"
-        "     \"enable-updates\" : 0"
-        "    }"
-        "}",
-        // stop
-        ""
-    };
-    int i = 0;
-    while (!invalid_shortcuts[i].empty()) {
-        // Verify that the configuration string parsing throws
-        EXPECT_THROW(parseConfiguration(invalid_shortcuts[i]),
-                     DhcpConfigError);
-        i++;
-    }
-
     std::string invalid_configs[] = {
         // Must supply qualifying-suffix when updates are enabled
         "{ \"dhcp-ddns\" :"
@@ -2036,7 +2013,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
     // Iterate through the invalid configuration strings, attempting to
     // parse each one.  They should fail to parse, but fail gracefully.
     D2ClientConfigPtr current_config;
-    i = 0;
+    int i = 0;
     while (!invalid_configs[i].empty()) {
         // Verify that the configuration string parses without throwing.
         int rcode = parseConfiguration(invalid_configs[i]);
