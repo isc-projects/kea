@@ -18,10 +18,10 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <hooks/hooks_parser.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_parser.h>
 #include <hooks/hooks_manager.h>
 
 #include <gtest/gtest.h>
@@ -377,10 +377,12 @@ public:
                 }
 
                 if (config_pair.first == "hooks-libraries") {
-                    hooks_libraries_parser_.reset(new HooksLibrariesParser());
-                    hooks_libraries_parser_->parse(config_pair.second);
-                    hooks_libraries_parser_->verifyLibraries();
-                    hooks_libraries_parser_->loadLibraries();
+                    HooksLibrariesParser hook_parser;
+                    HooksConfig&  libraries =
+                        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+                    hook_parser.parse(libraries, config_pair.second);
+                    libraries.verifyLibraries(config_pair.second->getPosition());
+                    libraries.loadLibraries();
                     continue;
                 }
             }
@@ -610,10 +612,10 @@ public:
         CfgMgr::instance().setD2ClientConfig(tmp);
     }
 
-    /// @brief Parsers used in the parsing of the configuration
-    ///
-    /// Allows the tests to interrogate the state of the parsers (if required).
-    boost::shared_ptr<HooksLibrariesParser> hooks_libraries_parser_;
+    /// Allows the tests to interrogate the state of the libraries (if required).
+    const isc::hooks::HookLibsCollection& getLibraries() {
+        return (CfgMgr::instance().getStagingCfg()->getHooksConfig().get());
+    }
 
     /// @brief specifies IP protocol family (AF_INET or AF_INET6)
     uint16_t family_;
@@ -1306,8 +1308,7 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // Check that the parser recorded nothing.
-    isc::hooks::HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     EXPECT_TRUE(libraries.empty());
 
     // Check that there are still no libraries loaded.
@@ -1329,8 +1330,7 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // Check that the parser recorded a single library.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(1, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
 
@@ -1355,8 +1355,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // Check that the parser recorded two libraries in the expected order.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1393,8 +1392,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     // The list has not changed between the two parse operations. However,
     // the paramters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1432,8 +1430,7 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has changed, and this is what we should see.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].first);
@@ -1469,8 +1466,7 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has changed, and this is what we should see.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     EXPECT_TRUE(libraries.empty());
 
     // Check that no libraries are currently loaded
@@ -1501,8 +1497,7 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
 
     // Check that the parser recorded the names but, as they were in error,
     // does not flag them as changed.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1543,8 +1538,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
 
     // Check that the parser recorded the names but, as the library set was
     // incorrect, did not mark the configuration as changed.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1648,8 +1642,7 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
     ASSERT_EQ(0, rcode);
 
     // Check that the parser recorded the names.
-    HookLibsCollection libraries;
-    hooks_libraries_parser_->getLibraries(libraries);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);

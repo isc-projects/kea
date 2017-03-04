@@ -9,7 +9,6 @@
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
-#include <hooks/hooks_manager.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <util/strutil.h>
@@ -23,18 +22,16 @@ using namespace isc::dhcp;
 namespace isc {
 namespace hooks {
 
-// ******************** HooksLibrariesParser *************************
+// @todo use the flat style, split into list and item
+
 void
-HooksLibrariesParser::parse(ConstElementPtr value) {
+HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
     // Initialize.
-    libraries_.clear();
+    libraries.clear();
 
     if (!value) {
         isc_throw(DhcpConfigError, "Tried to parse null hooks libraries");
     }
-
-    // Let's store
-    position_ = value->getPosition();
 
     // This is the new syntax.  Iterate through it and get each map.
     BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
@@ -105,55 +102,8 @@ HooksLibrariesParser::parse(ConstElementPtr value) {
                 " (" << library_entry->getPosition() << ")");
         }
 
-        libraries_.push_back(make_pair(libname, parameters));
+        libraries.add(libname, parameters);
     }
-}
-
-void HooksLibrariesParser::verifyLibraries() {
-    // Check if the list of libraries has changed.  If not, nothing is done
-    // - the command "DhcpN libreload" is required to reload the same
-    // libraries (this prevents needless reloads when anything else in the
-    // configuration is changed).
-
-    // We no longer rely on this. Parameters can change. And even if the
-    // parameters stay the same, they could point to files that could
-    // change.
-    vector<string> current_libraries = HooksManager::getLibraryNames();
-    if (current_libraries.empty() && libraries_.empty()) {
-        return;
-    }
-
-    // Library list has changed, validate each of the libraries specified.
-    vector<string> lib_names = isc::hooks::extractNames(libraries_);
-    vector<string> error_libs = HooksManager::validateLibraries(lib_names);
-    if (!error_libs.empty()) {
-
-        // Construct the list of libraries in error for the message.
-        string error_list = error_libs[0];
-        for (size_t i = 1; i < error_libs.size(); ++i) {
-            error_list += (string(", ") + error_libs[i]);
-        }
-        isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
-                  "library or libraries in error are: " << error_list
-                  << "(" << position_ << ")");
-    }
-}
-
-void
-HooksLibrariesParser::loadLibraries() {
-    /// Commits the list of libraries to the configuration manager storage if
-    /// the list of libraries has changed.
-    /// @todo: Delete any stored CalloutHandles before reloading the
-    /// libraries
-    if (!HooksManager::loadLibraries(libraries_)) {
-        isc_throw(DhcpConfigError, "One or more hook libraries failed to load");
-    }
-}
-
-// Method for testing
-void
-HooksLibrariesParser::getLibraries(isc::hooks::HookLibsCollection& libraries) {
-    libraries = libraries_;
 }
 
 }

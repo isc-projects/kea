@@ -8,9 +8,9 @@
 #define CTRL_AGENT_CFG_MGR_H
 
 #include <cc/data.h>
+#include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
-#include <hooks/libinfo.h>
 
 namespace isc {
 namespace agent {
@@ -61,7 +61,7 @@ public:
     ///
     /// @param type type of the server being controlled
     /// @return pointer to the Element that holds control-socket map (or NULL)
-    const data::ConstElementPtr getControlSocketInfo(ServerType type) const;
+    const isc::data::ConstElementPtr getControlSocketInfo(ServerType type) const;
 
     /// @brief Sets information about the control socket
     ///
@@ -102,19 +102,19 @@ public:
         return (http_port_);
     }
 
-    /// @brief Returns a list of hook libraries
-    /// @return a list of hook libraries
-    const hooks::HookLibsCollection& getLibraries() const {
-        return (libraries_);
-    }
-
-    /// @brief Sets the list of hook libraries
+    /// @brief Returns non-const reference to configured hooks libraries.
     ///
-    /// @params libs a coolection of libraries to remember.
-    void setLibraries(const hooks::HookLibsCollection& libs) {
-        libraries_ = libs;
+    /// @return non-const reference to configured hooks libraries.
+    isc::hooks::HooksConfig& getHooksConfig() {
+        return (hooks_config_);
     }
 
+    /// @brief Returns const reference to configured hooks libraries.
+    ///
+    /// @return const reference to configured hooks libraries.
+    const isc::hooks::HooksConfig& getHooksConfig() const {
+        return (hooks_config_);
+    }
 
 private:
 
@@ -132,7 +132,7 @@ private:
     CtrlAgentCfgContext& operator=(const CtrlAgentCfgContext& rhs);
 
     /// Socket information will be stored here (for all supported servers)
-    data::ConstElementPtr ctrl_sockets_[MAX_TYPE_SUPPORTED + 1];
+    isc::data::ConstElementPtr ctrl_sockets_[MAX_TYPE_SUPPORTED + 1];
 
     /// Hostname the CA should listen on.
     std::string http_host_;
@@ -140,8 +140,8 @@ private:
     /// TCP port the CA should listen on.
     uint16_t http_port_;
 
-    /// List of hook libraries.
-    hooks::HookLibsCollection libraries_;
+    /// @brief Configured hooks libraries.
+    isc::hooks::HooksConfig hooks_config_;
 };
 
 /// @brief Ctrl Agent Configuration Manager.
