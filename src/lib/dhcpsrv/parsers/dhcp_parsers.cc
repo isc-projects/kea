@@ -1028,8 +1028,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     bool always_include_fqdn =
         getBoolean(client_config, "always-include-fqdn");
 
-    // bool allow_client_update; (unused)
-
     bool override_no_update =
         getBoolean(client_config, "override-no-update");
 

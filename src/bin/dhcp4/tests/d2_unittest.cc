@@ -109,7 +109,6 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
