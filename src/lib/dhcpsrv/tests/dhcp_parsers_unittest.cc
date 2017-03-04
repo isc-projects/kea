@@ -530,8 +530,7 @@ public:
 
         /// D2 client configuration code is in this library
         ConstElementPtr d2_client = config->get("dhcp-ddns");
-        if (d2_client &&
-            !D2ClientConfigParser::isShortCutDisabled(d2_client)) {
+        if (d2_client) {
             D2ClientConfigParser::setAllDefaults(d2_client);
         }
     }
