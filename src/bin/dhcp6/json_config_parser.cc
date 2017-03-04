@@ -54,6 +54,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 namespace {
 
@@ -638,11 +639,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
-    // Some of the parsers alter state of the system that can't easily
-    // be undone. (Or alter it in a way such that undoing the change
-    // has the same risk of failure as doing the change.)
-    hooks::HooksLibrariesParser hooks_parser;
-
     // This is a way to convert ConstElementPtr to ElementPtr.
     // We need a config that can be edited, because we will insert
     // default values and will insert derived values as well.
@@ -738,8 +734,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "hooks-libraries") {
-                hooks_parser.parse(config_pair.second);
-                hooks_parser.verifyLibraries();
+                HooksLibrariesParser hooks_parser;
+                HooksConfig& libraries = srv_config->getHooksConfig();
+                hooks_parser.parse(libraries, config_pair.second);
+                libraries.verifyLibraries(config_pair.second->getPosition());
                 continue;
             }
 
@@ -860,7 +858,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            hooks_parser.loadLibraries();
+            const HooksConfig& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksConfig();
+            libraries.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
