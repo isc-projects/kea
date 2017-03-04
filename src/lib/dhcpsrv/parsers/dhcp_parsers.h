@@ -753,7 +753,6 @@ public:
     /// -# ncr-protocol
     /// -# ncr-format
     /// -# always-include-fqdn
-    /// -# allow-client-update
     /// -# override-no-update
     /// -# override-client-update
     /// -# replace-client-name

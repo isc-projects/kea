@@ -1018,15 +1018,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"allow-client-update\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_ALLOW_CLIENT_UPDATE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("allow-client-update", driver.loc_);
-    }
-}
-
 \"override-no-update\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
