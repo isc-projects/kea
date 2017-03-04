@@ -74,7 +74,7 @@ SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr p
     }
     ConstElementPtr elem = parent->get(name);
     if (!elem) {
-        return (parent->getPosition());
+        return (data::Element::ZERO_POSITION());
     }
     return (elem->getPosition());
 }

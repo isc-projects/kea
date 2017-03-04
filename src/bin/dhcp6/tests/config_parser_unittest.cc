@@ -4969,6 +4969,13 @@ TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
         " } ] \n"
         "} \n";
 
+    ConstElementPtr json = parseJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+
     EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 }
 

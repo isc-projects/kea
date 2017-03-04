@@ -43,7 +43,7 @@ public:
     /// @brief Constructor
     ///
     /// @param db_type Specifies database type (lease or hosts)
-    explicit DbAccessParser(DBType db_type);
+    DbAccessParser(DBType db_type);
 
     /// The destructor.
     virtual ~DbAccessParser()

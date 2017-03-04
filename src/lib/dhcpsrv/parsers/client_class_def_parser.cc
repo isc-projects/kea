@@ -62,87 +62,86 @@ void
 ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                             ConstElementPtr class_def_cfg,
                             uint16_t family) {
-    // name is now mandatory
-    std::string name = getString(class_def_cfg, "name");
-    if (name.empty()) {
-        isc_throw(DhcpConfigError,
-                  "not empty parameter 'name' is required "
-                  << getPosition("name", class_def_cfg) << ")");
-    }
 
-    // Parse matching expression
-    ExpressionPtr match_expr;
-    ConstElementPtr test = class_def_cfg->get("test");
-    if (test) {
-        ExpressionParser parser;
-        parser.parse(match_expr, test, family);
-    }
+    try {
+        std::string name;
+        std::string next_server_txt = "0.0.0.0";
+        std::string sname;
+        std::string filename;
+        ExpressionPtr match_expr;
+        CfgOptionPtr options(new CfgOption());
 
-    // Parse option data
-    CfgOptionPtr options(new CfgOption());
-    ConstElementPtr option_data = class_def_cfg->get("option-data");
-    if (option_data) {
-        OptionDataListParser opts_parser(family);
-        opts_parser.parse(options, option_data);
-    }
+        // Parse the elements that make up the client class definition.
+        BOOST_FOREACH(ConfigPair param, class_def_cfg->mapValue()) {
+            std::string entry(param.first);
+            ConstElementPtr value(param.second);
 
-    // Let's try to parse the next-server field
-    IOAddress next_server("0.0.0.0");
-    if (class_def_cfg->contains("next-server")) {
-        std::string next_server_txt = getString(class_def_cfg, "next-server");
+            if (entry == "name") {
+                name = value->stringValue();
+
+            } else if (entry == "test") {
+                ExpressionParser parser;
+                parser.parse(match_expr, value, family);
+                
+            } else if (entry == "option-data") {
+                OptionDataListParser opts_parser(family);
+                opts_parser.parse(options, value);
+
+            } else if (entry == "next-server") {
+                next_server_txt = value->stringValue();
+
+            } else if (entry == "server-hostname") {
+                sname = value->stringValue();
+
+            } else if (entry == "boot-file-name") {
+                filename = value->stringValue();
+
+            } else {
+                isc_throw(DhcpConfigError, "invalid parameter '" << entry
+                          << "' (" << value->getPosition() << ")");
+            }
+        }
+
+        // name is now mandatory
+        if (name.empty()) {
+            isc_throw(DhcpConfigError,
+                      "not empty parameter 'name' is required");
+        }
+
+        // Let's parse the next-server field
+        IOAddress next_server("0.0.0.0");
         try {
             next_server = IOAddress(next_server_txt);
         } catch (const IOError& ex) {
-            isc_throw(DhcpConfigError,
-                      "Invalid next-server value specified: '"
-                      << next_server_txt << "' ("
-                      << getPosition("next-server", class_def_cfg) << ")");
+            isc_throw(DhcpConfigError, "Invalid next-server value specified: '"
+                      << next_server_txt);
         }
 
         if (next_server.getFamily() != AF_INET) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_txt
-                      << "', must be IPv4 address ("
-                      << getPosition("next-server", class_def_cfg) << ")");
+                      << next_server_txt << "', must be IPv4 address");
         }
 
         if (next_server.isV4Bcast()) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_txt
-                      << "', must not be a broadcast ("
-                      << getPosition("next-server", class_def_cfg) << ")");
+                      << next_server_txt << "', must not be a broadcast");
         }
-    }
 
-    // Let's try to parse server-hostname
-    std::string sname;
-    if (class_def_cfg->contains("server-hostname")) {
-        sname = getString(class_def_cfg, "server-hostname");
-
+        // Let's try to parse server-hostname
         if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
             isc_throw(DhcpConfigError, "server-hostname must be at most "
                       << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
-                      << sname.length() << " ("
-                      << getPosition("server-hostname", class_def_cfg) << ")");
+                      << sname.length());
         }
-    }
 
-    // Let's try to parse boot-file-name
-    std::string filename;
-    if (class_def_cfg->contains("boot-file-name")) {
-        filename = getString(class_def_cfg, "boot-file-name");
-
+        // Let's try to parse boot-file-name
         if (filename.length() > Pkt4::MAX_FILE_LEN) {
             isc_throw(DhcpConfigError, "boot-file-name must be at most "
                       << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
-                      << filename.length() << " ("
-                      << getPosition("boot-file-name", class_def_cfg) << ")");
+                      << filename.length());
         }
 
-    }
-
-    // Add the client class definition
-    try {
+        // Add the client class definition
         class_dictionary->addClass(name, match_expr, options, next_server,
                                    sname, filename);
     } catch (const std::exception& ex) {
