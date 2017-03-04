@@ -341,8 +341,23 @@ public:
         cfg->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
-        uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
+        // @todo Change for uint16_t
+        uint32_t dhcp4o6_port = getUint32(global, "dhcp4o6-port");
         cfg->setDhcp4o6Port(dhcp4o6_port);
+    }
+
+private:
+
+    /// @brief Returns a value converted to uint32_t
+    ///
+    /// Instantiation of getIntType() to uint32_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an uint32_t value
+    uint32_t getUint32(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
+        return (getIntType<uint32_t>(scope, name));
     }
 };
 

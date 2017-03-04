@@ -507,7 +507,7 @@ public:
     /// this socket is bound and connected to this port and port + 1
     ///
     /// @param port port and port + 1 to use
-    void setDhcp4o6Port(uint16_t port) {
+    void setDhcp4o6Port(uint32_t port) {
         /// @todo: Port is supposed to be uint16_t, not uint32_t
         dhcp4o6_port_ = port;
     }
@@ -516,7 +516,7 @@ public:
     ///
     /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint16_t getDhcp4o6Port() {
+    uint32_t getDhcp4o6Port() {
         return (dhcp4o6_port_);
     }
 
@@ -624,7 +624,7 @@ private:
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
-    uint16_t dhcp4o6_port_;
+    uint32_t dhcp4o6_port_;
 
     D2ClientConfigPtr d2_client_config_;
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,7 @@ public:
     /// @brief Constructor
     ///
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    explicit IfacesConfigParser(const uint16_t protocol);
+    IfacesConfigParser(const uint16_t protocol);
 
     /// @brief Parses content of the "interfaces-config".
     ///

@@ -58,9 +58,14 @@ public:
 
 class SimpleParserClassTest : public SimpleParser {
 public:
-
-    /// Make getUint8 public
-    using SimpleParser::getUint8;
+    /// @brief Instantiation of getIntType for uint8_t
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter for error report
+    /// @return an uint8_t value
+    uint8_t getUint8(ConstElementPtr scope, const std::string& name) {
+        return (getIntType<uint8_t>(scope, name));
+    }
 
     /// @brief Instantiation of getAndConvert
     ///

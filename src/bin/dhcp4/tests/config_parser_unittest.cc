@@ -4557,6 +4557,14 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
         " } ] \n"
         "} \n";
 
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 1);
+
     EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 }
 

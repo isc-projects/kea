@@ -221,6 +221,15 @@ TEST_F(ExpirationConfigParserTest, otherParameters) {
     EXPECT_EQ(20, cfg->getUnwarnedReclaimCycles());
 }
 
+// This test verifies that the exception is thrown if unsupported
+// parameter is specified.
+TEST_F(ExpirationConfigParserTest, invalidParameter) {
+   addParam("reclaim-timer-wait-time", 20);
+   addParam("invalid-parameter", 20);
+
+   EXPECT_THROW(renderConfig(), DhcpConfigError);
+}
+
 // This test verifies that negative parameter values are not allowed.
 TEST_F(ExpirationConfigParserTest, outOfRangeValues) {
     testOutOfRange("reclaim-timer-wait-time",
