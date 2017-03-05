@@ -8,6 +8,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -231,13 +232,29 @@ SrvConfig::toElement() const {
     ConstElementPtr option_data = cfg_option_->toElement();
     dhcp->set("option-data", option_data);
     // Set subnets
+    ConstElementPtr subnets;
     if (family == AF_INET) {
-        ConstElementPtr subnets = cfg_subnets4_->toElement();
-        // @todo Insert reservations
+        subnets = cfg_subnets4_->toElement();
+    } else {
+        subnets = cfg_subnets6_->toElement();
+    }
+    // Insert reservations
+    CfgHostsList resv_list;
+    resv_list.internalize(cfg_hosts_->toElement());
+    const std::vector<ElementPtr>& sn_list = subnets->listValue();
+    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.begin();
+         subnet != sn_list.end(); ++subnet) {
+        ConstElementPtr id = (*subnet)->get("id");
+        if (isNull(id)) {
+            isc_throw(ToElementError, "subnet has no id");
+        }
+        SubnetID subnet_id = id->intValue();
+        ConstElementPtr resvs = resv_list.get(subnet_id);
+        (*subnet)->set("reservations", resvs);
+    }
+    if (family == AF_INET) {
         dhcp->set("subnet4", subnets);
     } else {
-        ConstElementPtr subnets = cfg_subnets6_->toElement();
-        // @todo Insert reservations
         dhcp->set("subnet6", subnets);
     }
     // Set relay-supplied-options (DHCPv6)
@@ -256,7 +273,11 @@ SrvConfig::toElement() const {
     dhcp->set("lease-database", lease_db.toElement());
     // Set hosts-database
     CfgHostDbAccess host_db(*cfg_db_access_);
-    dhcp->set("hosts-database", host_db.toElement());
+    // @todo accept empty map
+    ConstElementPtr hosts_database = host_db.toElement();
+    if (hosts_database->size() > 0) {
+        dhcp->set("hosts-database", hosts_database);
+    }
     // Set host-reservation-identifiers
     ConstElementPtr host_ids;
     if (family == AF_INET) {
@@ -275,7 +296,10 @@ SrvConfig::toElement() const {
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();
-    dhcp->set("client-classes", client_classes);
+    // @todo accept empty list
+    if (!client_classes->empty()) {
+        dhcp->set("client-classes", client_classes);
+    }
     // Set hooks-libraries
     ConstElementPtr hooks_libs = hooks_config_.toElement();
     dhcp->set("hooks-libraries", hooks_libs);
