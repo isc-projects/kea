@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
@@ -64,9 +65,9 @@ public:
         }
 
         // Build our reference dictionary of client classes
-        ref_dictionary_->addClass("cc1", ExpressionPtr(), CfgOptionPtr());
-        ref_dictionary_->addClass("cc2", ExpressionPtr(), CfgOptionPtr());
-        ref_dictionary_->addClass("cc3", ExpressionPtr(), CfgOptionPtr());
+        ref_dictionary_->addClass("cc1", ExpressionPtr(), "", CfgOptionPtr());
+        ref_dictionary_->addClass("cc2", ExpressionPtr(), "", CfgOptionPtr());
+        ref_dictionary_->addClass("cc3", ExpressionPtr(), "", CfgOptionPtr());
     }
 
 
@@ -426,5 +427,64 @@ TEST_F(SrvConfigTest, hooksLibraries) {
 
     EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
 }
+
+// Verifies that the toElement method works well (tests limited to
+// direct parameters)
+TEST_F(SrvConfigTest, unparse) {
+    SrvConfig conf(32);
+    std::string header4 = "{\n\"Dhcp4\": {\n";
+    std::string header6 = "{\n\"Dhcp6\": {\n";
+
+    std::string defaults = "\"decline-probation-period\": 0,\n";
+    defaults += "\"dhcp4o6-port\": 0,\n";
+    defaults += "\"interfaces-config\": { \"interfaces\": [ ] },\n";
+    defaults += "\"option-def\": [ ],\n";
+    defaults += "\"option-data\": [ ],\n";
+    defaults += "\"expired-leases-processing\": ";
+    defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
+    defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
+    defaults += "\"hosts-database\": { },\n";
+    defaults += "\"client-classes\": [ ],\n";
+    defaults += "\"hooks-libraries\": [ ],\n";
+    defaults += "\"dhcp-ddns\": \n";
+    defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
+
+    std::string defaults4 = "\"echo-client-id\": true,\n";
+    defaults4 += "\"subnet4\": [ ],\n";
+    defaults4 += "\"host-reservation-identifiers\": ";
+    defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\" ],\n";
+
+    std::string defaults6 = "\"relay-supplied-options\": [ \"65\" ],\n";
+    defaults6 += "\"subnet6\": [ ],\n";
+    defaults6 += "\"server-id\": ";
+    defaults6 += conf.getCfgDUID()->toElement()->str() + ",\n";
+    defaults6 += "\"host-reservation-identifiers\": ";
+    defaults6 += "[ \"hw-address\", \"duid\" ],\n";
+    defaults6 += "\"dhcp4o6-port\": 0,\n";
+    defaults6 += "\"mac-sources\": [ \"any\" ]\n";
+
+    std::string params = "\"echo-client-id\": true,\n";
+    params += "\"dhcp4o6-port\": 0\n";
+    std::string trailer = "}\n}\n";
+    
+    // Verify DHCPv4
+    CfgMgr::instance().setFamily(AF_INET);
+    isc::test::runToElementTest<SrvConfig>
+        (header4 + defaults + defaults4 + params + trailer, conf);
+
+    // Verify DHCPv6
+    CfgMgr::instance().setFamily(AF_INET6);
+    isc::test::runToElementTest<SrvConfig>
+        (header6 + defaults + defaults6 + trailer, conf);
+
+    // Verify direct non-default parameters
+    CfgMgr::instance().setFamily(AF_INET);
+    conf.setEchoClientId(false);
+    conf.setDhcp4o6Port(6767);
+    params = "\"echo-client-id\": false,\n";
+    params += "\"dhcp4o6-port\": 6767\n";
+    isc::test::runToElementTest<SrvConfig>
+        (header4 + defaults + defaults4 + params + trailer, conf);
+}    
 
 } // end of anonymous namespace

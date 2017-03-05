@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcp/option.h>
 #include <dhcp/option_space_container.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/key_from_key.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -210,7 +211,7 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// options is useful when the client requests stateless configuration from
 /// the DHCP server and no subnet is selected for this client. This client
 /// will only receive global options.
-class CfgOption {
+class CfgOption : public isc::data::CfgToElement {
 public:
 
     /// @brief default constructor
@@ -393,6 +394,11 @@ public:
     ///
     /// @return List comprising option space names for vendor options.
     std::list<std::string> getVendorIdsSpaceNames() const;
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

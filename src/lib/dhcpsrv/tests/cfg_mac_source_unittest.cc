@@ -1,18 +1,23 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
+#include <string>
 
 namespace {
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 // Checks whether CfgMACSource::MACSourceFromText is working correctly.
 // Technically, this is a Pkt, not Pkt6 test, but since there is no separate
@@ -42,6 +47,38 @@ TEST(CfgMACSourceTest, MACSourceFromText) {
               CfgMACSource::MACSourceFromText("docsis-cmts"));
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM,
               CfgMACSource::MACSourceFromText("docsis-modem"));
+}
+
+// Checks whether the opposite operation is working correctly.
+TEST(CfgMACSourceTest, unparse) {
+    CfgMACSource cfg;
+    // any was added by the constructor
+    cfg.add(HWAddr::HWADDR_SOURCE_RAW);
+    cfg.add(HWAddr::HWADDR_SOURCE_DUID);
+    cfg.add(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL);
+    cfg.add(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
+    cfg.add(HWAddr::HWADDR_SOURCE_REMOTE_ID);
+    cfg.add(HWAddr::HWADDR_SOURCE_SUBSCRIBER_ID);
+    cfg.add(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS);
+    cfg.add(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM);
+
+    // Unparse
+    std::string expected = "["
+        "\"any\","
+        "\"raw\","
+        "\"duid\","
+        "\"ipv6-link-local\","
+        "\"client-link-addr-option\","
+        "\"remote-id\","
+        "\"subscriber-id\","
+        "\"docsis-cmts\","
+        "\"docsis-modem\""
+        "]";
+    runToElementTest<CfgMACSource>(expected, cfg);
+
+    // Add an unknown type
+    cfg.add(0x12345678);
+    ASSERT_THROW(cfg.toElement(), ToElementError);
 }
 
 };

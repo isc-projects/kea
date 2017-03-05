@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,9 @@
 
 #include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <boost/lexical_cast.hpp>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -33,6 +36,17 @@ CfgRSOO::enable(const uint16_t code) {
     }
 }
 
+ElementPtr
+CfgRSOO::toElement() const {
+    ElementPtr result = Element::createList();
+    // We can use LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, *opt) too...
+    for (std::set<uint16_t>::const_iterator opt = rsoo_options_.cbegin();
+         opt != rsoo_options_.cend(); ++opt) {
+        const std::string& code = boost::lexical_cast<std::string>(*opt);
+        result->add(Element::create(code));
+    }
+    return (result);
+}
 
 }
 }

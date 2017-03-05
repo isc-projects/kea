@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cassert>
 #include <climits>
+#include <list>
 #include <map>
 #include <cstdio>
 #include <iostream>
@@ -1065,6 +1066,241 @@ merge(ElementPtr element, ConstElementPtr other) {
             element->remove((*it).first);
         }
     }
+}
+
+ElementPtr
+copy(ConstElementPtr from, int level) {
+    if (isNull(from)) {
+        isc_throw(BadValue, "copy got a null pointer");
+    }
+    int from_type = from->getType();
+    if (from_type == Element::integer) {
+        return (ElementPtr(new IntElement(from->intValue())));
+    } else if (from_type == Element::real) {
+        return (ElementPtr(new DoubleElement(from->doubleValue())));
+    } else if (from_type == Element::boolean) {
+        return (ElementPtr(new BoolElement(from->boolValue())));
+    } else if (from_type == Element::null) {
+        return (ElementPtr(new NullElement()));
+    } else if (from_type == Element::string) {
+        return (ElementPtr(new StringElement(from->stringValue())));
+    } else if (from_type == Element::list) {
+        ElementPtr result = ElementPtr(new ListElement());
+        typedef std::vector<ElementPtr> ListType;
+        const ListType& value = from->listValue();
+        for (ListType::const_iterator it = value.cbegin();
+             it != value.cend(); ++it) {
+            if (level == 0) {
+                result->add(*it);
+            } else {
+                result->add(copy(*it, level - 1));
+            }
+        }
+        return (result);
+    } else if (from_type == Element::map) {
+        ElementPtr result = ElementPtr(new MapElement());
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& value = from->mapValue();
+        for (MapType::const_iterator it = value.cbegin();
+             it != value.cend(); ++it) {
+            if (level == 0) {
+                result->set(it->first, it->second);
+            } else {
+                result->set(it->first, copy(it->second, level - 1));
+            }
+        }
+        return (result);
+    } else {
+        isc_throw(BadValue, "copy got an element of type: " << from_type);
+    }
+}
+
+namespace {
+
+// Helper function which blocks infinite recursion
+bool
+isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level)
+{
+    // check looping forever on cycles
+    if (!level) {
+        isc_throw(BadValue, "isEquivalent got infinite recursion: "
+                  "arguments include cycles");
+    }
+    if (!a || !b) {
+        isc_throw(BadValue, "isEquivalent got a null pointer");
+    }
+    // check types
+    if (a->getType() != b->getType()) {
+        return (false);
+    }
+    if (a->getType() == Element::list) {
+        // check empty
+        if (a->empty()) {
+            return (b->empty());
+        }
+        // check size
+        if (a->size() != b->size()) {
+            return (false);
+        }
+
+        // copy b into a list
+        const size_t s = a->size();
+        typedef std::list<ConstElementPtr> ListType;
+        ListType l;
+        for (size_t i = 0; i < s; ++i) {
+            l.push_back(b->get(i));
+        }
+
+        // iterate on a
+        for (size_t i = 0; i < s; ++i) {
+            ConstElementPtr item = a->get(i);
+            // lookup this item in the list
+            bool found = false;
+            for (ListType::iterator it = l.begin();
+                 it != l.end(); ++it) {
+                // if found in the list remove it
+                if (isEquivalent0(item, *it, level - 1)) {
+                    found = true;
+                    l.erase(it);
+                    break;
+                }
+            }
+            // if not found argument differs
+            if (!found) {
+                return (false);
+            }
+        }
+
+        // sanity check: the list must be empty
+        if (!l.empty()) {
+            isc_throw(Unexpected, "isEquivalent internal error");
+        }
+        return (true);
+    } else if (a->getType() == Element::map) {
+        // iterate on the first map
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& ma = a->mapValue();
+        for (MapType::const_iterator it = ma.begin();
+             it != ma.end() ; ++it) {
+            // get the b value for the given keyword and recurse
+            ConstElementPtr item = b->get(it->first);
+            if (!item || !isEquivalent0(it->second, item, level - 1)) {
+                return (false);
+            }
+        }
+        // iterate on the second map
+        const MapType& mb = b->mapValue();
+        for (MapType::const_iterator it = mb.begin();
+             it != mb.end() ; ++it) {
+            // check if the keyword exists
+            if (!a->contains(it->first)) {
+                return (false);
+            }
+        }
+        return (true);
+    } else {
+        return (a->equals(*b));
+    }
+}
+
+}
+
+bool
+isEquivalent(ConstElementPtr a, ConstElementPtr b) {
+    return (isEquivalent0(a, b, 100));
+}
+
+void
+prettyPrint(ConstElementPtr element, std::ostream& out,
+            unsigned indent, unsigned step) {
+    if (!element) {
+        isc_throw(BadValue, "prettyPrint got a null pointer");
+    }
+    if (element->getType() == Element::list) {
+        // empty list case
+        if (element->empty()) {
+            out << "[ ]";
+            return;
+        }
+
+        // complex ? multiline : oneline
+        if (!element->get(0)) {
+            isc_throw(BadValue, "prettyPrint got a null pointer");
+        }
+        int first_type = element->get(0)->getType();
+        bool complex = false;
+        if ((first_type == Element::list) || (first_type == Element::map)) {
+            complex = true;
+        }
+        std::string separator = complex ? ",\n" : ", ";
+
+        // open the list
+        out << "[" << (complex ? "\n" : " ");
+        
+        // iterate on items
+        typedef std::vector<ElementPtr> ListType;
+        const ListType& l = element->listValue();
+        for (ListType::const_iterator it = l.begin();
+             it != l.end(); ++it) {
+            // add the separator if not the first item
+            if (it != l.begin()) {
+                out << separator;
+            }
+            // add indentation
+            if (complex) {
+                out << std::string(indent + step, ' ');
+            }
+            // recursive call
+            prettyPrint(*it, out, indent + step, step);
+        }
+
+        // close the list
+        if (complex) {
+            out << "\n" << std::string(indent, ' ');
+        } else {
+            out << " ";
+        }
+        out << "]";
+    } else if (element->getType() == Element::map) {
+        // empty map case
+        if (element->size() == 0) {
+            out << "{ }";
+            return;
+        }
+
+        // open the map
+        out << "{\n";
+
+        // iterate on keyword: value
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& m = element->mapValue();
+        for (MapType::const_iterator it = m.begin();
+             it != m.end(); ++it) {
+            // add the separator if not the first item
+            if (it != m.begin()) {
+                out << ",\n";
+            }
+            // add indentation
+            out << std::string(indent + step, ' ');
+            // add keyword:
+            out << "\"" << it->first << "\": ";
+            // recusive call
+            prettyPrint(it->second, out, indent + step, step);
+        }
+
+        // close the map
+        out << "\n" << std::string(indent, ' ') << "}";
+    } else {
+        // not a list or a map
+        element->toJSON(out);
+    }
+}
+
+std::string
+prettyPrint(ConstElementPtr element, unsigned indent, unsigned step) {
+    std::stringstream ss;
+    prettyPrint(element, ss, indent, step);
+    return (ss.str());
 }
 
 void Element::preprocess(std::istream& in, std::stringstream& out) {

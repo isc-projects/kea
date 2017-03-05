@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -309,6 +309,16 @@ public:
     /// @param class_name client class to be supported by this subnet
     void
     allowClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief returns the client class white list
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return client classes @ref white_list_
+    const isc::dhcp::ClientClasses& getClientClasses() const {
+        return (white_list_);
+    }
 
     /// @brief Specifies what type of Host Reservations are supported.
     ///

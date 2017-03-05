@@ -732,6 +732,50 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
+/// \brief Copy the data up to a nesting level.
+///
+/// The copy is a deep copy so nothing is shared if it is not
+/// under the given nesting level.
+///
+/// \param from the pointer to the element to copy
+/// \param level nesting level (default is 100, 0 means shallow copy,
+/// negative means outbound and perhaps looping forever).
+/// \return a pointer to a fresh copy
+/// \throw raises a BadValue is a null pointer occurs.
+ElementPtr copy(ConstElementPtr from, int level = 100); 
+
+/// \brief Compares the data with other using unordered lists
+///
+/// This comparison function handles lists (JSON arrays) as
+/// unordered multi sets (multi means an item can occurs more
+/// than once as soon as it occurs the same number of times).
+bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
+
+/// \brief Pretty prints the data into stream.
+///
+/// This operator converts the \c ConstElementPtr into a string and
+/// inserts it into the output stream \c out with an initial
+/// indentation \c indent and add at each level \c step spaces.
+///
+/// \param element A \c ConstElementPtr to pretty print
+/// \param out A \c std::ostream on which the print operation is performed
+/// \param indent An initial number of spaces to add each new line
+/// \param step A number of spaces to add to indentation at a new level
+void prettyPrint(ConstElementPtr element, std::ostream& out,
+                 unsigned indent = 0, unsigned step = 2);
+
+/// \brief Pretty prints the data into string
+///
+/// This operator converts the \c ConstElementPtr into a string with
+/// an initial indentation \c indent and add at each level \c step spaces.
+///
+/// \param element A \c ConstElementPtr to pretty print
+/// \param indent An initial number of spaces to add each new line
+/// \param step A number of spaces to add to indentation at a new level
+/// \return a string where element was pretty printed
+std::string prettyPrint(ConstElementPtr element,
+                        unsigned indent = 0, unsigned step = 2);
+
 ///
 /// \brief Insert Element::Position as a string into stream.
 ///

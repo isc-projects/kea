@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -16,6 +17,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::test;
 using namespace isc;
 
 namespace {
@@ -120,6 +122,25 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     // Verify that toText called by << operator doesn't bomb.
     ASSERT_NO_THROW(std::cout << "toText test:" << std::endl <<
                     *d2_client_config << std::endl);
+
+    // Verify what toElement returns.
+    std::string expected = "{\n"
+        "\"enable-updates\": true,\n"
+        "\"server-ip\": \"127.0.0.1\",\n"
+        "\"server-port\": 477,\n"
+        "\"sender-ip\": \"127.0.0.1\",\n"
+        "\"sender-port\": 478,\n"
+        "\"max-queue-size\": 2048,\n"
+        "\"ncr-protocol\": \"UDP\",\n"
+        "\"ncr-format\": \"JSON\",\n"
+        "\"always-include-fqdn\": true,\n"
+        "\"override-no-update\": true,\n"
+        "\"override-client-update\": true,\n"
+        "\"replace-client-name\": \"when-present\",\n"
+        "\"generated-prefix\": \"the_prefix\",\n"
+        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "}\n";
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 
     // Verify that constructor does not allow use of NCR_TCP.
     /// @todo obviously this becomes invalid once TCP is supported.

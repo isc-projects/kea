@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <log/logger_name.h>
 
 using namespace isc::log;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -135,6 +136,61 @@ LoggingInfo::toSpec() const {
     }
 
     return (spec);
+}
+
+ElementPtr
+LoggingInfo::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set name
+    result->set("name", Element::create(name_));
+    // Set output_options
+    ElementPtr options = Element::createList();
+    for (std::vector<LoggingDestination>::const_iterator dest =
+             destinations_.cbegin();
+         dest != destinations_.cend(); ++dest) {
+        ElementPtr map = Element::createMap();
+        // Set output
+        map->set("output", Element::create(dest->output_));
+        // Set maxver
+        map->set("maxver", Element::create(dest->maxver_));
+        // Set maxsize
+        map->set("maxsize",
+                 Element::create(static_cast<long long>(dest->maxsize_)));
+        // Set flush
+        map->set("flush", Element::create(dest->flush_));
+        // Push on output option list
+        options->add(map);
+    }
+    result->set("output_options", options);
+    // Set severity
+    std::string severity;
+    switch (severity_) {
+    case isc::log::DEBUG:
+        severity = "DEBUG";
+        break;
+    case isc::log::INFO:
+        severity = "INFO";
+        break;
+    case isc::log::WARN:
+        severity = "WARN";
+        break;
+    case isc::log::ERROR:
+        severity = "ERROR";
+        break;
+    case isc::log::FATAL:
+        severity = "FATAL";
+        break;
+    case isc::log::NONE:
+        severity = "NONE";
+        break;
+    default:
+        isc_throw(ToElementError, "illegal severity: " << severity_);
+        break;
+    }
+    result->set("severity", Element::create(severity));
+    // Set debug level
+    result->set("debuglevel", Element::create(debuglevel_));
+    return (result);
 }
 
 } // end of namespace isc::dhcp

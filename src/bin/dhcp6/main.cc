@@ -127,6 +127,9 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    // This is the DHCPv6 server
+    CfgMgr::instance().setFamily(AF_INET6);
+
     if (check_mode) {
         try {
             // We need to initialize logging, in case any error messages are to be printed.

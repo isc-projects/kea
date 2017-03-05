@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -159,7 +159,7 @@ TEST_F(SimpleParser6Test, subnetDefaults6) {
 
 // This test checks if the parameters in option-data are assigned default values
 // if not explicitly specified.
-TEST_F(SimpleParser6Test, optionDataDefaults4) {
+TEST_F(SimpleParser6Test, optionDataDefaults6) {
     ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
                                   "  \"rebind-timer\": 2,"
                                   "  \"preferred-lifetime\": 3,"
@@ -179,7 +179,6 @@ TEST_F(SimpleParser6Test, optionDataDefaults4) {
     // we should have appropriate default value set. See
     // SimpleParser4::OPTION4_DEFAULTS for a list of default values.
     checkStringValue(option, "space", "dhcp6");
-    checkStringValue(option, "encapsulate", "");
     checkBoolValue(option, "csv-format", true);
 }
 

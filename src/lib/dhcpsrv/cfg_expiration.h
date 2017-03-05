@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_EXPIRATION_H
 
 #include <asiolink/interval_timer.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -57,7 +58,7 @@ namespace dhcp {
 /// The @c CfgExpiration class provides a collection of accessors and
 /// modifiers to manage the data. Each accessor checks if the given value
 /// is in range allowed for this value.
-class CfgExpiration {
+class CfgExpiration : public isc::data::CfgToElement {
 public:
 
     /// @name Default values.
@@ -222,6 +223,11 @@ public:
                                                    const bool, const uint16_t),
                      void (Instance::*delete_fun)(const uint32_t),
                      Instance* instance_ptr) const;
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

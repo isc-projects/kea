@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <testutils/test_to_element.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
@@ -598,5 +599,46 @@ TEST_F(CfgOptionTest, getVendorIdsSpaceNames) {
     }
 }
 
+// This test verifies that the unparse function returns what is expected.
+TEST_F(CfgOptionTest, unparse) {
+    CfgOption cfg;
+
+    // Add some options.
+    OptionPtr opt1(new Option(Option::V6, 100, OptionBuffer(4, 0x12)));
+    cfg.add(opt1, false, "dns");
+    OptionPtr opt2(new Option(Option::V6, 101, OptionBuffer(4, 12)));
+    OptionDescriptor desc2(opt2, false, "12, 12, 12, 12");
+    cfg.add(desc2, "dns");
+    OptionPtr opt3(new Option(Option::V6, D6O_STATUS_CODE, OptionBuffer(2, 0)));
+    cfg.add(opt3, false, DHCP6_OPTION_SPACE);
+    OptionPtr opt4(new Option(Option::V6, 100, OptionBuffer(4, 0x21)));
+    cfg.add(opt4, false, "vendor-1234");
+
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"code\": 100,\n"
+        "    \"space\": \"dns\",\n"
+        "    \"csv-format\": false,\n"
+        "    \"data\": \"12121212\"\n"
+        "},{\n"
+        "    \"code\": 101,\n"
+        "    \"space\": \"dns\",\n"
+        "    \"csv-format\": true,\n"
+        "    \"data\": \"12, 12, 12, 12\"\n"
+        "},{\n"
+        "    \"code\": 13,\n"
+        "    \"name\": \"status-code\",\n"
+        "    \"space\": \"dhcp6\",\n"
+        "    \"csv-format\": false,\n"
+        "    \"data\": \"0000\"\n"
+        "},{\n"
+        "    \"code\": 100,\n"
+        "    \"space\": \"vendor-1234\",\n"
+        "    \"csv-format\": false,\n"
+        "    \"data\": \"21212121\"\n"
+        "}]\n";
+    isc::test::runToElementTest<CfgOption>(expected, cfg);
+}
 
 } // end of anonymous namespace
