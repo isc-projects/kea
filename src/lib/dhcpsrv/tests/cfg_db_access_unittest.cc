@@ -1,21 +1,24 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <cc/data.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -23,7 +26,11 @@ namespace {
 TEST(CfgDbAccessTest, defaults) {
     CfgDbAccess cfg;
     EXPECT_EQ("type=memfile", cfg.getLeaseDbAccessString());
+    std::string expected = "{ \"type\": \"memfile\" }";
+    runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
+
     EXPECT_TRUE(cfg.getHostDbAccessString().empty());
+    runToElementTest<CfgHostDbAccess>("{ }", CfgHostDbAccess(cfg));
 }
 
 // This test verifies that it is possible to set the lease database
@@ -33,9 +40,16 @@ TEST(CfgDbAccessTest, setLeaseDbAccessString) {
     ASSERT_NO_THROW(cfg.setLeaseDbAccessString("type=mysql"));
     EXPECT_EQ("type=mysql", cfg.getLeaseDbAccessString());
 
+    // Check unparse
+    std::string expected = "{ \"type\": \"mysql\" }";
+    runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
+
     // Append additional parameter.
     ASSERT_NO_THROW(cfg.setAppendedParameters("universe=4"));
     EXPECT_EQ("type=mysql universe=4", cfg.getLeaseDbAccessString());
+
+    // Additional parameters are not in lease_db_access_
+    runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
 
     // If access string is empty, no parameters will be appended.
     ASSERT_NO_THROW(cfg.setLeaseDbAccessString(""));
@@ -50,9 +64,16 @@ TEST(CfgDbAccessTest, setHostDbAccessString) {
     ASSERT_NO_THROW(cfg.setHostDbAccessString("type=mysql"));
     EXPECT_EQ("type=mysql", cfg.getHostDbAccessString());
 
+    // Check unparse
+    std::string expected = "{ \"type\": \"mysql\" }";
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
+
     // Append additional parameter.
     ASSERT_NO_THROW(cfg.setAppendedParameters("universe=4"));
     EXPECT_EQ("type=mysql universe=4", cfg.getHostDbAccessString());
+
+    // Additional parameters are not in host_db_access_
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
 
     // If access string is empty, no parameters will be appended.
     ASSERT_NO_THROW(cfg.setHostDbAccessString(""));

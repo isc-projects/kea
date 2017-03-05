@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,9 @@
 /// This file defines the classes Kea uses to manage configuration needed to
 /// act as a client of the kea-dhcp-ddns module (aka D2).
 ///
+
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
 
@@ -46,7 +48,7 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig {
+class D2ClientConfig : public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
     /// @todo For now these are hard-coded as configuration layer cannot
@@ -229,6 +231,11 @@ public:
     /// @return std:string containing the text label if the value is valid, or
     /// "unknown" if not.
     static std::string replaceClientNameModeToString(const ReplaceClientNameMode& mode);
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 protected:
     /// @brief Validates member values.

@@ -45,8 +45,7 @@ const SimpleDefaults SimpleParser4::OPTION4_DEF_DEFAULTS = {
 /// for those option-data declarations.
 const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"},
-    { "csv-format",   Element::boolean, "true"},
-    { "encapsulate",  Element::string,  "" }
+    { "csv-format",   Element::boolean, "true"}
 };
 
 /// @brief This table defines default global values for DHCPv4

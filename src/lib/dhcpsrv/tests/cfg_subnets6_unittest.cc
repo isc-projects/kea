@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,12 +12,14 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 #include <string>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -340,6 +342,180 @@ TEST(CfgSubnets6Test, duplication) {
     EXPECT_NO_THROW(cfg.add(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
+}
+
+// This test check if IPv6 subnets can be unparsed in a predictable way,
+TEST(CfgSubnets6Test, unparseSubnet) {
+    CfgSubnets6 cfg;
+
+    // Add some subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, 123));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, 124));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, 125));
+
+    OptionPtr ifaceid = generateInterfaceId("relay.eth0");
+    subnet1->setInterfaceId(ifaceid);
+    subnet1->allowClientClass("foo");
+    subnet2->setIface("lo");
+    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
+    subnet3->setIface("eth1");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"id\": 123,\n"
+        "    \"subnet\": \"2001:db8:1::/48\",\n"
+        "    \"relay\": { \"ip-address\": \"::\" },\n"
+        "    \"interface-id\": \"relay.eth0\",\n"
+        "    \"interface\": \"\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"preferred-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 4,\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"client-class\": \"foo\",\n"
+        "    \"pools\": [ ],\n"
+        "    \"pd-pools\": [ ],\n"
+        "    \"option-data\": [ ]\n"
+        "},{\n"
+        "    \"id\": 124,\n"
+        "    \"subnet\": \"2001:db8:2::/48\",\n"
+        "    \"relay\": { \"ip-address\": \"2001:db8:ff::2\" },\n"
+        "    \"interface-id\": \"\",\n"
+        "    \"interface\": \"lo\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"preferred-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 4,\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"pools\": [ ],\n"
+        "    \"pd-pools\": [ ],\n"
+        "    \"option-data\": [ ]\n"
+        "},{\n"
+        "    \"id\": 125,\n"
+        "    \"subnet\": \"2001:db8:3::/48\",\n"
+        "    \"relay\": { \"ip-address\": \"::\" },\n"
+        "    \"interface-id\": \"\",\n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"preferred-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 4,\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"pools\": [ ],\n"
+        "    \"pd-pools\": [ ],\n"
+        "    \"option-data\": [ ]\n"
+        "} ]\n";
+    runToElementTest<CfgSubnets6>(expected, cfg);
+}
+
+// This test check if IPv6 pools can be unparsed in a predictable way,
+TEST(CfgSubnets6Test, unparsePool) {
+    CfgSubnets6 cfg;
+
+    // Add a subnet with pools
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"),
+                                  48, 1, 2, 3, 4, 123));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
+                             IOAddress("2001:db8:1::100"),
+                             IOAddress("2001:db8:1::199")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+
+    subnet->addPool(pool1);
+    subnet->addPool(pool2);
+    cfg.add(subnet);
+    
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"id\": 123,\n"
+        "    \"subnet\": \"2001:db8:1::/48\",\n"
+        "    \"relay\": { \"ip-address\": \"::\" },\n"
+        "    \"interface-id\": \"\",\n"
+        "    \"interface\": \"\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"preferred-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 4,\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"pools\": [\n"
+        "        {\n"
+        "            \"pool\": \"2001:db8:1::100-2001:db8:1::199\",\n"
+        "            \"option-data\": [ ]\n"
+        "        },{\n"
+        "            \"pool\": \"2001:db8:1:1::/64\",\n"
+        "            \"option-data\": [ ]\n"
+        "        }\n"
+        "    ],\n"
+        "    \"pd-pools\": [ ],\n"
+        "    \"option-data\": [ ]\n"
+        "} ]\n";
+    runToElementTest<CfgSubnets6>(expected, cfg);
+}
+
+// This test check if IPv6 prefix delegation pools can be unparsed
+// in a predictable way,
+TEST(CfgSubnets6Test, unparsePdPool) {
+    CfgSubnets6 cfg;
+
+    // Add a subnet with pd-pools
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"),
+                                  48, 1, 2, 3, 4, 123));
+    Pool6Ptr pdpool1(new Pool6(Lease::TYPE_PD,
+                               IOAddress("2001:db8:2::"), 48, 64));
+    Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
+                               IOAddress("2001:db8:3::"), 64));
+
+    subnet->addPool(pdpool1);
+    subnet->addPool(pdpool2);
+    cfg.add(subnet);
+    
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"id\": 123,\n"
+        "    \"subnet\": \"2001:db8:1::/48\",\n"
+        "    \"relay\": { \"ip-address\": \"::\" },\n"
+        "    \"interface-id\": \"\",\n"
+        "    \"interface\": \"\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"preferred-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 4,\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"pools\": [ ],\n"
+        "    \"pd-pools\": [\n"
+        "        {\n"
+        "            \"prefix\": \"2001:db8:2::\",\n"
+        "            \"prefix-len\": 48,\n"
+        "            \"delegated-len\": 64,\n"
+        "            \"excluded-prefix\": \"::\",\n"
+        "            \"excluded-prefix-len\": 0,\n"
+        "            \"option-data\": [ ]\n"
+        "        },{\n"
+        "            \"prefix\": \"2001:db8:3::\",\n"
+        "            \"prefix-len\": 48,\n"
+        "            \"delegated-len\": 56,\n"
+        "            \"excluded-prefix\": \"2001:db8:3::\",\n"
+        "            \"excluded-prefix-len\": 64,\n"
+        "            \"option-data\": [ ]\n"
+        "        }\n"
+        "    ],\n"
+        "    \"option-data\": [ ]\n"
+        "} ]\n";
+    runToElementTest<CfgSubnets6>(expected, cfg);
 }
 
 } // end of anonymous namespace

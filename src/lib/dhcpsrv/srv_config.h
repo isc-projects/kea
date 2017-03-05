@@ -7,6 +7,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
@@ -37,7 +38,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig {
+class SrvConfig : public isc::data::CfgToElement {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -507,7 +508,7 @@ public:
     /// this socket is bound and connected to this port and port + 1
     ///
     /// @param port port and port + 1 to use
-    void setDhcp4o6Port(uint32_t port) {
+    void setDhcp4o6Port(uint16_t port) {
         /// @todo: Port is supposed to be uint16_t, not uint32_t
         dhcp4o6_port_ = port;
     }
@@ -516,7 +517,7 @@ public:
     ///
     /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint32_t getDhcp4o6Port() {
+    uint16_t getDhcp4o6Port() {
         return (dhcp4o6_port_);
     }
 
@@ -535,6 +536,11 @@ public:
     void setD2ClientConfig(const D2ClientConfigPtr& d2_client_config) {
         d2_client_config_ = d2_client_config;
     }
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 
@@ -624,7 +630,7 @@ private:
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
-    uint32_t dhcp4o6_port_;
+    uint16_t dhcp4o6_port_;
 
     D2ClientConfigPtr d2_client_config_;
 };

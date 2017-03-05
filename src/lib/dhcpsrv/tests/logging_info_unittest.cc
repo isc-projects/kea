@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,11 @@
 #include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/logging_info.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -69,6 +71,17 @@ TEST_F(LoggingInfoTest, defaults) {
     ASSERT_EQ(1, info_non_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_non_verbose.destinations_[0].output_);
 
+    std::string header = "{\n"
+        "\"name\": \"kea\",\n"
+        "\"output_options\": [ {\n"
+        " \"output\": \"stdout\",\n \"maxsize\": 204800,\n"
+        " \"maxver\": 1,\n \"flush\": true } ],\n"
+        "\"severity\": \"";
+    std::string dbglvl = "\",\n\"debuglevel\": ";
+    std::string trailer = "\n}\n";
+    std::string expected = header + "INFO" + dbglvl + "0" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_non_verbose);
+
     CfgMgr::instance().setVerbose(true);
     LoggingInfo info_verbose;
     EXPECT_EQ("kea", info_verbose.name_);
@@ -77,6 +90,9 @@ TEST_F(LoggingInfoTest, defaults) {
 
     ASSERT_EQ(1, info_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
+
+    expected = header + "DEBUG" + dbglvl + "99" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_verbose);
 }
 
 // Checks if (in)equality operators work for LoggingInfo.

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <cc/cfg_to_element.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -125,7 +126,7 @@ public:
 /// to which it is bound. It is allowed to select multiple addresses on the
 /// particular interface explicitly, e.g. "eth0/192.168.8.1",
 /// "eth0/192.168.8.2".
-class CfgIface {
+class CfgIface : public isc::data::CfgToElement {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.
@@ -250,6 +251,11 @@ public:
     bool operator!=(const CfgIface& other) const {
         return (!equals(other));
     }
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

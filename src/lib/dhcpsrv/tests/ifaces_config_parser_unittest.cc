@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,13 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -60,6 +62,9 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(config, *cfg_iface);
+
     // Open sockets according to the parsed configuration.
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
@@ -80,6 +85,8 @@ TEST_F(IfacesConfigParserTest, interfaces) {
 
     cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    runToElementTest<CfgIface>(config, *cfg_iface);
 
     cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_NO_THROW(cfg->getCfgIface()->openSockets(AF_INET, 10000));
@@ -122,7 +129,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     CfgIface cfg_ref;
 
     // Configuration with a datagram socket selected.
-    std::string config = "{ ""\"interfaces\": [ ],"
+    std::string config = "{ \"interfaces\": [ ],"
         " \"dhcp-socket-type\": \"udp\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
@@ -131,6 +138,9 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     IfacesConfigParser parser(AF_INET);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(config, *cfg_iface);
 
     // Compare the resulting configuration with a reference
     // configuration using the raw socket.

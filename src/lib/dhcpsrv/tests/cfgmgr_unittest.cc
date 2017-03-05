@@ -505,6 +505,18 @@ TEST_F(CfgMgrTest, verbosity) {
     EXPECT_FALSE(CfgMgr::instance().isVerbose());
 }
 
+// This test verifies that the address family can be set and obtained
+// from the configuration manager.
+TEST_F(CfgMgrTest, family) {
+    ASSERT_EQ(AF_INET, CfgMgr::instance().getFamily());
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    ASSERT_EQ(AF_INET6, CfgMgr::instance().getFamily());
+
+    CfgMgr::instance().setFamily(AF_INET);
+    EXPECT_EQ(AF_INET, CfgMgr::instance().getFamily());
+}
+
 // This test verifies that once the configuration is committed, statistics
 // are updated appropriately.
 TEST_F(CfgMgrTest, commitStats4) {
