@@ -544,11 +544,9 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"option-data\": [],\n"
         "    \"pools\": [\n"
         "        {\n"
-        "            \"pool\": \"192.0.2.1-192.0.2.10\",\n"
-        "            \"option-data\": []\n"
+        "            \"pool\": \"192.0.2.1-192.0.2.10\"\n"
         "        },{\n"
-        "            \"pool\": \"192.0.2.64/26\",\n"
-        "            \"option-data\": []\n"
+        "            \"pool\": \"192.0.2.64/26\"\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

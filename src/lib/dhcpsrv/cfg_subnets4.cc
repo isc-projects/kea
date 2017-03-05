@@ -332,9 +332,7 @@ CfgSubnets4::toElement() const {
             if (!isNull(context)) {
                 pool_map->set("user-context", context);
             }
-            // Set pool options
-            ConstCfgOptionPtr opts = (*pool)->getCfgOption();
-            pool_map->set("option-data", opts->toElement());
+            // Set pool options (not yet supported)
             // Push on the pool list
             pool_list->add(pool_map);
         }
@@ -365,7 +363,7 @@ CfgSubnets4::toElement() const {
                  Element::create((*subnet)->getSiaddr().toText()));
         // Set DHCP4o6
         const Cfg4o6& d4o6 = (*subnet)->get4o6();
-        merge(map, d4o6.toElement());
+        isc::data::merge(map, d4o6.toElement());
         // Set client-class
         const ClientClasses& cclasses = (*subnet)->getClientClasses();
         if (cclasses.size() > 1) {

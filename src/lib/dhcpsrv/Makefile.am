@@ -89,6 +89,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_4o6.cc cfg_4o6.h
 libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
 libkea_dhcpsrv_la_SOURCES += cfg_duid.cc cfg_duid.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
+libkea_dhcpsrv_la_SOURCES += cfg_hosts_util.cc cfg_hosts_util.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfg_expiration.cc cfg_expiration.h
 libkea_dhcpsrv_la_SOURCES += cfg_host_operations.cc cfg_host_operations.h

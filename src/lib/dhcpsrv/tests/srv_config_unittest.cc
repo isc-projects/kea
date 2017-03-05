@@ -443,8 +443,6 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += "\"expired-leases-processing\": ";
     defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
-    defaults += "\"hosts-database\": { },\n";
-    defaults += "\"client-classes\": [ ],\n";
     defaults += "\"hooks-libraries\": [ ],\n";
     defaults += "\"dhcp-ddns\": \n";
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";

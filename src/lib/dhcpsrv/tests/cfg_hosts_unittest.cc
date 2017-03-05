@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,9 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <set>
@@ -78,7 +80,7 @@ CfgHostsTest::CfgHostsTest() {
 
     const uint32_t addra_template = 0xc0000205; // 192.0.2.5
     const uint32_t addrb_template = 0xc00a020a; // 192.10.2.10
-    for (int i = 0; i < 50; ++i) {
+    for (unsigned i = 0; i < 50; ++i) {
         IOAddress addra(addra_template + i);
         addressesa_.push_back(addra);
         IOAddress addrb(addrb_template + i);
@@ -102,7 +104,7 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
     CfgHosts cfg;
     // Add 25 hosts identified by HW address and 25 hosts identified by
     // DUID. They are added to different subnets.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
                                  SubnetID(i % 10 + 1), SubnetID(i % 5 + 1),
@@ -151,7 +153,7 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
 TEST_F(CfgHostsTest, getAllRepeatingHosts) {
     CfgHosts cfg;
     // Add hosts.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Add two hosts, using the same HW address to two distinct subnets.
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
@@ -172,7 +174,7 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
     }
 
     // Verify that hosts can be retrieved.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Get host by HW address. The DUID is non-null but the reservation
         // should be returned for the HW address because there are no
         // reservations for the DUIDs from the range of 25 to 49.
@@ -205,7 +207,7 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
 TEST_F(CfgHostsTest, getAll4ByAddress) {
     CfgHosts cfg;
     // Add hosts.
-    for (int i = 0; i < 25; ++i) {
+    for (unsigned i = 0; i < 25; ++i) {
         // Add host identified by the HW address.
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
@@ -268,6 +270,90 @@ TEST_F(CfgHostsTest, get4) {
     }
 }
 
+// This test checks that the DHCPv4 reservations can be unparsed
+TEST_F(CfgHostsTest, unparsed4) {
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHosts cfg;
+    CfgHostsList list;
+    // Add hosts.
+    for (unsigned i = 0; i < 25; ++i) {
+        // Add host identified by HW address.
+        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                 "hw-address",
+                                 SubnetID(1 + i), SubnetID(13),
+                                 increase(IOAddress("192.0.2.5"), i))));
+
+        // Add host identified by DUID.
+        cfg.add(HostPtr(new Host(duids_[i]->toText(), "duid",
+                                 SubnetID(1 + i), SubnetID(13),
+                                 increase(IOAddress("192.0.2.100"), i))));
+    }
+
+    using namespace isc::data;
+    ConstElementPtr cfg_unparsed;
+    ASSERT_NO_THROW(cfg_unparsed = cfg.toElement());
+    ASSERT_NO_THROW(list.internalize(cfg_unparsed));
+    for (unsigned i = 0; i < 25; ++i) {
+        ConstElementPtr unparsed = list.get(SubnetID(1 + i));
+        ASSERT_TRUE(unparsed);
+        ASSERT_EQ(Element::list, unparsed->getType());
+        EXPECT_EQ(2, unparsed->size());
+        ASSERT_NE(0, unparsed->size());
+
+        // Check by HW address entries
+        bool checked_hw = false;
+        for (unsigned j = 0; j < unparsed->size(); ++j) {
+            ConstElementPtr host = unparsed->get(j);
+            ASSERT_TRUE(host);
+            ASSERT_EQ(Element::map, host->getType());
+            if (!host->contains("hw-address")) {
+                continue;
+            }
+            checked_hw = true;
+            // Not both hw-address and duid
+            EXPECT_FALSE(host->contains("duid"));
+            // Check the HW address
+            ConstElementPtr hw = host->get("hw-address");
+            ASSERT_TRUE(hw);
+            ASSERT_EQ(Element::string, hw->getType());
+            EXPECT_EQ(hwaddrs_[i]->toText(false), hw->stringValue());
+            // Check the reservation
+            ConstElementPtr resv = host->get("ip-address");
+            ASSERT_TRUE(resv);
+            ASSERT_EQ(Element::string, resv->getType());
+            EXPECT_EQ(increase(IOAddress("192.0.2.5"), i),
+                          IOAddress(resv->stringValue()));
+        }
+        ASSERT_TRUE(checked_hw);
+
+        // Check by DUID entries
+        bool checked_duid = false;
+        for (unsigned j = 0; j < unparsed->size(); ++j) {
+            ConstElementPtr host = unparsed->get(j);
+            ASSERT_TRUE(host);
+            ASSERT_EQ(Element::map, host->getType());
+            if (!host->contains("duid")) {
+                continue;
+            }
+            checked_duid = true;
+            // Not both hw-address and duid
+            EXPECT_FALSE(host->contains("hw-address"));
+            // Check the DUID
+            ConstElementPtr duid = host->get("duid");
+            ASSERT_TRUE(duid);
+            ASSERT_EQ(Element::string, duid->getType());
+            EXPECT_EQ(duids_[i]->toText(), duid->stringValue());
+            // Check the reservation
+            ConstElementPtr resv = host->get("ip-address");
+            ASSERT_TRUE(resv);
+            ASSERT_EQ(Element::string, resv->getType());
+            EXPECT_EQ(increase(IOAddress("192.0.2.100"), i),
+                      IOAddress(resv->stringValue()));
+        }
+        ASSERT_TRUE(checked_duid);
+    }
+}
+
 // This test checks that the reservations can be retrieved for the particular
 // host connected to the specific IPv6 subnet (by subnet id).
 TEST_F(CfgHostsTest, get6) {
@@ -319,6 +405,108 @@ TEST_F(CfgHostsTest, get6) {
     }
 }
 
+// This test checks that the DHCPv6 reservations can be unparsed
+TEST_F(CfgHostsTest, unparse6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHosts cfg;
+    CfgHostsList list;
+    // Add hosts.
+    for (unsigned i = 0; i < 25; ++i) {
+        // Add host identified by HW address.
+        HostPtr host = HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                        "hw-address",
+                                        SubnetID(10), SubnetID(1 + i),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i)));
+        cfg.add(host);
+
+        // Add host identified by DUID.
+        host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                SubnetID(10), SubnetID(1 + i),
+                                IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:2::1"),
+                                                i)));
+        cfg.add(host);
+    }
+
+    using namespace isc::data;
+    ConstElementPtr cfg_unparsed;
+    ASSERT_NO_THROW(cfg_unparsed = cfg.toElement());
+    ASSERT_NO_THROW(list.internalize(cfg_unparsed));
+    for (unsigned i = 0; i < 25; ++i) {
+        ConstElementPtr unparsed = list.get(SubnetID(1 + i));
+        ASSERT_TRUE(unparsed);
+        ASSERT_EQ(Element::list, unparsed->getType());
+        EXPECT_EQ(2, unparsed->size());
+        ASSERT_NE(0, unparsed->size());
+
+        // Check by HW address entries
+        bool checked_hw = false;
+        for (unsigned j = 0; j < unparsed->size(); ++j) {
+            ConstElementPtr host = unparsed->get(j);
+            ASSERT_TRUE(host);
+            ASSERT_EQ(Element::map, host->getType());
+            if (!host->contains("hw-address")) {
+                continue;
+            }
+            checked_hw = true;
+            // Not both hw-address and duid
+            EXPECT_FALSE(host->contains("duid"));
+            // Check the HW address
+            ConstElementPtr hw = host->get("hw-address");
+            ASSERT_TRUE(hw);
+            ASSERT_EQ(Element::string, hw->getType());
+            EXPECT_EQ(hwaddrs_[i]->toText(false), hw->stringValue());
+            // Check the reservation
+            ConstElementPtr resvs = host->get("ip-addresses");
+            ASSERT_TRUE(resvs);
+            ASSERT_EQ(Element::list, resvs->getType());
+            EXPECT_EQ(1, resvs->size());
+            ASSERT_GE(1, resvs->size());
+            ConstElementPtr resv = resvs->get(0);
+            ASSERT_TRUE(resv);
+            ASSERT_EQ(Element::string, resv->getType());
+            EXPECT_EQ(increase(IOAddress("2001:db8:1::1"), i),
+                          IOAddress(resv->stringValue()));
+        }
+        ASSERT_TRUE(checked_hw);
+
+        // Check by DUID entries
+        bool checked_duid = false;
+        for (unsigned j = 0; j < unparsed->size(); ++j) {
+            ConstElementPtr host = unparsed->get(j);
+            ASSERT_TRUE(host);
+            ASSERT_EQ(Element::map, host->getType());
+            if (!host->contains("duid")) {
+                continue;
+            }
+            checked_duid = true;
+            // Not both hw-address and duid
+            EXPECT_FALSE(host->contains("hw-address"));
+            // Check the DUID
+            ConstElementPtr duid = host->get("duid");
+            ASSERT_TRUE(duid);
+            ASSERT_EQ(Element::string, duid->getType());
+            EXPECT_EQ(duids_[i]->toText(), duid->stringValue());
+            // Check the reservation
+            ConstElementPtr resvs = host->get("ip-addresses");
+            ASSERT_TRUE(resvs);
+            ASSERT_EQ(Element::list, resvs->getType());
+            EXPECT_EQ(1, resvs->size());
+            ASSERT_GE(1, resvs->size());
+            ConstElementPtr resv = resvs->get(0);
+            ASSERT_TRUE(resv);
+            ASSERT_EQ(Element::string, resv->getType());
+            EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
+                      IOAddress(resv->stringValue()));
+        }
+        ASSERT_TRUE(checked_duid);
+    }
+}
+
 // This test checks that the IPv6 reservations can be retrieved for a particular
 // (subnet-id, address) tuple.
 TEST_F(CfgHostsTest, get6ByAddr) {
@@ -365,7 +553,7 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
                                         IOAddress("0.0.0.0")));
 
         // Generate 5 unique addresses for this host.
-        for (int j = 0; j < 5; ++j) {
+        for (unsigned j = 0; j < 5; ++j) {
             std::stringstream address_stream;
             address_stream << "2001:db8:" << i << "::" << j;
             host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,

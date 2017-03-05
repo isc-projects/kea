@@ -70,6 +70,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     subnet_->getCfgOption()->add(opt_routers, false, DHCP4_OPTION_SPACE);
 
     CfgMgr::instance().clear();
+    CfgMgr::instance().setFamily(AF_INET);
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
 

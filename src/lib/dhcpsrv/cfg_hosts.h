@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_HOSTS_H
 
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
@@ -35,7 +36,8 @@ namespace dhcp {
 /// when the new configuration is applied for the server. The reservations
 /// are retrieved by the @c HostMgr class when the server is allocating or
 /// renewing an address or prefix for the particular client.
-class CfgHosts : public BaseHostDataSource, public WritableHostDataSource {
+class CfgHosts : public BaseHostDataSource, public WritableHostDataSource,
+                 public isc::data::CfgToElement {
 public:
 
     /// @brief Destructor.
@@ -329,6 +331,24 @@ public:
         return (std::string("configuration file"));
     }
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// host reservation lists are not autonomous so they are
+    /// not returned directly but with the subnet where they are
+    /// declared as:
+    /// @code
+    /// [
+    ///   { "id": 123, "reservations": [ <resv1>, <resv2> ] },
+    ///   { "id": 456, "reservations": [ <resv3 ] },
+    ///   ...
+    /// ]
+    /// @endcode
+    ///
+    /// @ref isc::dhcp::CfgHostsList can be used to handle this
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Returns @c Host objects for the specific identifier and type.
@@ -491,6 +511,16 @@ private:
     /// - IPv6 address
     /// - IPv6 prefix
     HostContainer6 hosts6_;
+
+    /// @brief Unparse a configuration objet (DHCPv4 reservations)
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement4() const;
+
+    /// @brief Unparse a configuration objet (DHCPv6 reservations)
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement6() const;
 };
 
 /// @name Pointers to the @c CfgHosts objects.

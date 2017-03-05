@@ -280,6 +280,7 @@ public:
 
     void clear() {
         CfgMgr::instance().setVerbose(false);
+        CfgMgr::instance().setFamily(AF_INET);
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
     }
