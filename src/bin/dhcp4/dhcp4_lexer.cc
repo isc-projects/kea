@@ -3277,7 +3277,7 @@ YY_RULE_SETUP
     case isc::dhcp::Parser4Context::SUBNET4:
         return isc::dhcp::Dhcp4Parser::make_SUBNET_4O6_SUBNET(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("4o6-interface", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("4o6-subnet", driver.loc_);
     }
 }
 	YY_BREAK
