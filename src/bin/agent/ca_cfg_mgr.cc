@@ -24,7 +24,7 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     : DCfgContextBase(),http_host_(orig.http_host_), http_port_(orig.http_port_),
-      libraries_(orig.libraries_) {
+      hooks_config_(orig.hooks_config_) {
 
     // We're copying pointers here only. The underlying data will be shared by
     // old and new context. That's how shared pointers work and I see no reason
@@ -74,7 +74,7 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     }
 
     // Finally, print the hook libraries names
-    const hooks::HookLibsCollection libs = ctx->getLibraries();
+    const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
     for (auto lib = libs.begin(); lib != libs.end(); ++lib) {
         s << lib->first << " ";

@@ -989,25 +989,8 @@ D2ClientConfigPtr
 D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     D2ClientConfigPtr new_config;
 
-    if (isShortCutDisabled(client_config)) {
-      // If enable-updates is the only parameter and it is false then
-      // we're done.  This allows for an abbreviated configuration entry
-      // that only contains that flag.  Use the default D2ClientConfig
-      // constructor to a create a disabled instance.
-      new_config.reset(new D2ClientConfig());
-      return (new_config);
-    }
-
-    // As isShortCutDisabled() was called this cannot fail
-    bool enable_updates = client_config->get("enable-updates")->boolValue();
-
     // Get all parameters that are needed to create the D2ClientConfig.
-    std::string qualifying_suffix;
-    bool found_qualifying_suffix = false;
-    if (client_config->contains("qualifying-suffix")) {
-            qualifying_suffix = getString(client_config, "qualifying-suffix");
-            found_qualifying_suffix = true;
-    }   
+    bool enable_updates = getBoolean(client_config, "enable-updates");
 
     IOAddress server_ip = getIOAddress(client_config, "server-ip");
 
@@ -1028,8 +1011,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     bool always_include_fqdn =
         getBoolean(client_config, "always-include-fqdn");
 
-    // bool allow_client_update; (unused)
-
     bool override_no_update =
         getBoolean(client_config, "override-no-update");
 
@@ -1042,14 +1023,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
 
-
-    // Qualifying-suffix is required when updates are enabled
-    if (enable_updates && !found_qualifying_suffix) {
-        isc_throw(DhcpConfigError,
-                  "parameter 'qualifying-suffix' is required when "
-                  "updates are enabled ("
-                  << client_config->getPosition() << ")");
-    }
+    // qualifying-suffix is the only parameter which has no default
+    std::string qualifying_suffix = "";
+    bool found_qualifying_suffix = false;
+    if (client_config->contains("qualifying-suffix")) {
+            qualifying_suffix = getString(client_config, "qualifying-suffix");
+            found_qualifying_suffix = true;
+    }   
 
     IOAddress sender_ip(0);
     if (sender_ip_str.empty()) {
@@ -1064,6 +1044,14 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                       << ") specified for parameter 'sender-ip' ("
                       << getPosition("sender-ip", client_config) << ")");
         }
+    }
+
+    // Qualifying-suffix is required when updates are enabled
+    if (enable_updates && !found_qualifying_suffix) {
+        isc_throw(DhcpConfigError,
+                  "parameter 'qualifying-suffix' is required when "
+                  "updates are enabled ("
+                  << client_config->getPosition() << ")");
     }
 
     // Now we check for logical errors. This repeats what is done in
@@ -1104,19 +1092,19 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     try {
         // Attempt to create the new client config.
         new_config.reset(new D2ClientConfig(enable_updates,
-                                                      server_ip,
-                                                      server_port,
-                                                      sender_ip,
-                                                      sender_port,
-                                                      max_queue_size,
-                                                      ncr_protocol,
-                                                      ncr_format,
-                                                      always_include_fqdn,
-                                                      override_no_update,
-                                                      override_client_update,
-                                                      replace_client_name_mode,
-                                                      generated_prefix,
-                                                      qualifying_suffix));
+                                            server_ip,
+                                            server_port,
+                                            sender_ip,
+                                            sender_port,
+                                            max_queue_size,
+                                            ncr_protocol,
+                                            ncr_format,
+                                            always_include_fqdn,
+                                            override_no_update,
+                                            override_client_update,
+                                            replace_client_name_mode,
+                                            generated_prefix,
+                                            qualifying_suffix));
 
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
@@ -1124,12 +1112,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     }
 
     return(new_config);
-}
-
-bool
-D2ClientConfigParser::isShortCutDisabled(isc::data::ConstElementPtr d2_config) {
-    bool value = getBoolean(d2_config, "enable-updates");
-    return (!value && (d2_config->mapValue().size() == 1));
 }
 
 /// @brief This table defines default values for D2 client configuration

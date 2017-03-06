@@ -161,7 +161,6 @@ using namespace std;
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
   ALWAYS_INCLUDE_FQDN "always-include-fqdn"
-  ALLOW_CLIENT_UPDATE "allow-client-update"
   OVERRIDE_NO_UPDATE "override-no-update"
   OVERRIDE_CLIENT_UPDATE "override-client-update"
   REPLACE_CLIENT_NAME "replace-client-name"
@@ -1575,7 +1574,6 @@ dhcp_ddns_param: enable_updates
                | ncr_protocol
                | ncr_format
                | always_include_fqdn
-               | allow_client_update
                | override_no_update
                | override_client_update
                | replace_client_name
@@ -1650,11 +1648,6 @@ ncr_format: NCR_FORMAT {
 always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("always-include-fqdn", b);
-};
-
-allow_client_update: ALLOW_CLIENT_UPDATE COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("allow-client-update",  b);
 };
 
 override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {

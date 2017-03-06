@@ -400,4 +400,31 @@ TEST_F(SrvConfigTest, equality) {
     EXPECT_FALSE(conf1 != conf2);
 }
 
+// Verifies that we can get and set configured hooks libraries
+TEST_F(SrvConfigTest, hooksLibraries) {
+    SrvConfig conf(32);
+    isc::hooks::HooksConfig& libraries = conf.getHooksConfig();
+
+    // Upon construction configured hooks libraries should be empty.
+    EXPECT_EQ(0, libraries.get().size());
+
+    // Verify we can update it.
+    isc::data::ConstElementPtr elem0;
+    libraries.add("foo", elem0);
+    std::string config = "{ \"library\": \"bar\" }";
+    isc::data::ConstElementPtr elem1 = isc::data::Element::fromJSON(config);
+    libraries.add("bar", elem1);
+    EXPECT_EQ(2, libraries.get().size());
+    EXPECT_EQ(2, conf.getHooksConfig().get().size());
+
+    // Try to copy
+    SrvConfig copied(64);
+    ASSERT_TRUE(conf != copied);
+    ASSERT_NO_THROW(conf.copy(copied));
+    ASSERT_TRUE(conf == copied);
+    EXPECT_EQ(2, copied.getHooksConfig().get().size());
+
+    EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
+}
+
 } // end of anonymous namespace

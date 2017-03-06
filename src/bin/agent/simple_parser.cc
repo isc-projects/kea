@@ -107,22 +107,21 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     }
 
     // Finally, let's get the hook libs!
-    hooks::HooksLibrariesParser hooks_parser;
+    
+    using namespace isc::hooks;
+    HooksConfig& libraries = ctx->getHooksConfig();
     ConstElementPtr hooks = config->get("hooks-libraries");
     if (hooks) {
-        hooks_parser.parse(hooks);
-        hooks_parser.verifyLibraries();
-
-        hooks::HookLibsCollection libs;
-        hooks_parser.getLibraries(libs);
-        ctx->setLibraries(libs);
+        HooksLibrariesParser hooks_parser;
+        hooks_parser.parse(libraries, hooks);
+        libraries.verifyLibraries(hooks->getPosition());
     }
 
     if (!check_only) {
         // This occurs last as if it succeeds, there is no easy way
         // revert it.  As a result, the failure to commit a subsequent
         // change causes problems when trying to roll back.
-        hooks_parser.loadLibraries();
+        libraries.loadLibraries();
     }
 }
 

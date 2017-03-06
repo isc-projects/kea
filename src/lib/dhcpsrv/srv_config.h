@@ -22,6 +22,7 @@
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
+#include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -365,6 +366,20 @@ public:
         class_dictionary_ = dictionary;
     }
 
+    /// @brief Returns non-const reference to configured hooks libraries.
+    ///
+    /// @return non-const reference to configured hooks libraries.
+    isc::hooks::HooksConfig& getHooksConfig() {
+        return (hooks_config_);
+    }
+
+    /// @brief Returns const reference to configured hooks libraries.
+    ///
+    /// @return const reference to configured hooks libraries.
+    const isc::hooks::HooksConfig& getHooksConfig() const {
+        return (hooks_config_);
+    }
+
     /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -592,6 +607,9 @@ private:
 
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
+
+    /// @brief Configured hooks libraries.
+    isc::hooks::HooksConfig hooks_config_;
 
     /// @brief Decline Period time
     ///

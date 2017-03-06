@@ -10,12 +10,12 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <agent/tests/test_libraries.h>
-#include <hooks/libinfo.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc::agent;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -123,11 +123,10 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     EXPECT_NO_THROW(ctx.setHttpPort(12345));
     EXPECT_NO_THROW(ctx.setHttpHost("bellatrix"));
 
-    HookLibsCollection libs;
+    HooksConfig& libs = ctx.getHooksConfig();
     string exp_name("testlib1.so");
     ConstElementPtr exp_param(new StringElement("myparam"));
-    libs.push_back(make_pair(exp_name, exp_param));
-    ctx.setLibraries(libs);
+    libs.add(exp_name, exp_param);
 
     // Make a copy.
     DCfgContextBasePtr copy_base(ctx.clone());
@@ -147,7 +146,7 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     EXPECT_EQ(socket3->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6)->str());
 
     // Check hook libs
-    HookLibsCollection libs2 = copy->getLibraries();
+    const HookLibsCollection& libs2 = copy->getHooksConfig().get();
     ASSERT_EQ(1, libs2.size());
     EXPECT_EQ(exp_name, libs2[0].first);
     ASSERT_TRUE(libs2[0].second);
@@ -160,19 +159,18 @@ TEST(CtrlAgentCfgMgr, contextHookParams) {
     CtrlAgentCfgContext ctx;
 
     // By default there should be no hooks.
-    HookLibsCollection libs = ctx.getLibraries();
-    EXPECT_TRUE(libs.empty());
+    HooksConfig& libs = ctx.getHooksConfig();
+    EXPECT_TRUE(libs.get().empty());
 
-    libs.push_back(std::make_pair("libone.so", ConstElementPtr()));
-    libs.push_back(std::make_pair("libtwo.so", Element::fromJSON("{\"foo\": true}")));
-    libs.push_back(std::make_pair("libthree.so", Element::fromJSON("{\"bar\": 42}")));
+    libs.add("libone.so", ConstElementPtr());
+    libs.add("libtwo.so", Element::fromJSON("{\"foo\": true}"));
+    libs.add("libthree.so", Element::fromJSON("{\"bar\": 42}"));
 
-    ctx.setLibraries(libs);
+    const HooksConfig& stored_libs = ctx.getHooksConfig();
+    EXPECT_EQ(3, stored_libs.get().size());
 
-    HookLibsCollection stored_libs = ctx.getLibraries();
-    EXPECT_EQ(3, stored_libs.size());
-
-    EXPECT_EQ(libs, stored_libs);
+    // @todo add a == operator to HooksConfig
+    EXPECT_EQ(libs.get(), stored_libs.get());
 }
 
 /// Control Agent configurations used in tests.
@@ -389,7 +387,7 @@ TEST_F(AgentParserTest, configParseHooks) {
 
     // The context now should have the library specified.
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
-    HookLibsCollection libs = ctx->getLibraries();
+    const HookLibsCollection libs = ctx->getHooksConfig().get();
     ASSERT_EQ(1, libs.size());
     EXPECT_EQ(string(BASIC_CALLOUT_LIBRARY), libs[0].first);
     ASSERT_TRUE(libs[0].second);
