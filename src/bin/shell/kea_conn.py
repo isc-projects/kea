@@ -16,6 +16,7 @@ class CARequest:
     http_port = 0
     command = ''
     timeout = 0
+    params = ''
     headers = {}
 
     # Generates the content, out of specified command line
@@ -23,7 +24,10 @@ class CARequest:
     # @todo: Add support for parameters
     # this stores the output in self.content
     def generateBody(self):
-        self.content = '{"command": "' + self.command + '"}'
+        self.content = '{ "command": "' + self.command + '" '
+        if (len(self.params)):
+            self.content += self.params
+        self.content += '}'
 
     # Generate HTTP headers
     #
