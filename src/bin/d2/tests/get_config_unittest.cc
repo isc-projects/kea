@@ -11,7 +11,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
-#include <d2/tests/parser_unittest.h>
+#include <d2/parser_context.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
