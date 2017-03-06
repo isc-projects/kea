@@ -18,14 +18,17 @@ namespace hooks {
 
 void
 HooksConfig::verifyLibraries(const Element::Position& position) const {
+    // The code used to follow this logic:
+    //
     // Check if the list of libraries has changed.  If not, nothing is done
     // - the command "DhcpN libreload" is required to reload the same
     // libraries (this prevents needless reloads when anything else in the
     // configuration is changed).
-
+    //
     // We no longer rely on this. Parameters can change. And even if the
     // parameters stay the same, they could point to files that could
-    // change.
+    // change. We can skip loading routines only if there were and there still
+    // are no libraries specified.
     vector<string> current_libraries = HooksManager::getLibraryNames();
     if (current_libraries.empty() && libraries_.empty()) {
         return;
@@ -58,6 +61,45 @@ HooksConfig::loadLibraries() const {
         isc_throw(InvalidHooksLibraries,
                   "One or more hook libraries failed to load");
     }
+}
+
+bool
+HooksConfig::equal(const HooksConfig& other) const {
+
+    /// @todo: This comparision assumes that the library order is not relevant,
+    /// so [ lib1, lib2 ] is equal to [ lib2, lib1 ]. However, this is not strictly
+    /// true, because callouts execution is called in other they're loaded. Therefore
+    /// changing the libraries order may change the server behavior.
+    ///
+    /// We don't have any libraries that are interacting (or would change their behavior
+    /// depending on the order in which their callouts are executed), so the code is
+    /// ok for now.
+    for (isc::hooks::HookLibsCollection::const_iterator this_it = libraries_.begin();
+         this_it != libraries_.end(); ++this_it) {
+        bool match = false;
+        for (isc::hooks::HookLibsCollection::const_iterator other_it =
+                 other.libraries_.begin(); other_it != other.libraries_.end(); ++other_it) {
+            if (this_it->first != other_it->first) {
+                continue;
+            }
+            if (isNull(this_it->second) && isNull(other_it->second)) {
+                match = true;
+                break;
+            }
+            if (isNull(this_it->second) || isNull(other_it->second)) {
+                continue;
+            }
+            if (this_it->second->equals(*other_it->second)) {
+                match = true;
+                break;
+            }
+        }
+        // No match found for the particular hooks library so return false.
+        if (!match) {
+            return (false);
+        }
+    }
+    return (true);
 }
 
 ElementPtr

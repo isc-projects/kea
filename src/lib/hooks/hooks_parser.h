@@ -54,7 +54,8 @@ public:
     ///
     /// This method stores parsed libraries in libraries.
     ///
-    /// @param value pointer to the content of parsed values
+    /// @param libraries parsed libraries information will be stored here
+    /// @param value pointer to the content to be parsed
     void parse(HooksConfig& libraries, isc::data::ConstElementPtr value);
 };
 

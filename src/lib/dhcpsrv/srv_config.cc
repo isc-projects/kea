@@ -173,35 +173,7 @@ SrvConfig::equals(const SrvConfig& other) const {
         return (false);
     }
     // Pass through all configured hooks libraries.
-    using namespace isc::hooks;
-    for (isc::hooks::HookLibsCollection::const_iterator this_it =
-             hooks_config_.get().begin();
-         this_it != hooks_config_.get().end(); ++this_it) {
-        bool match = false;
-        for (isc::hooks::HookLibsCollection::const_iterator other_it =
-                 other.hooks_config_.get().begin();
-             other_it != other.hooks_config_.get().end(); ++other_it) {
-            if (this_it->first != other_it->first) {
-                continue;
-            }
-            if (isNull(this_it->second) && isNull(other_it->second)) {
-                match = true;
-                break;
-            }
-            if (isNull(this_it->second) || isNull(other_it->second)) {
-                continue;
-            }
-            if (this_it->second->equals(*other_it->second)) {
-                match = true;
-                break;
-            }
-        }
-        // No match found for the particular hooks library so return false.
-        if (!match) {
-            return (false);
-        }
-    }
-    return (true);
+    return (hooks_config_.equal(other.hooks_config_));
 }
 
 void
