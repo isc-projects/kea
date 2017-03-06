@@ -60,6 +60,11 @@ public:
         libraries_.clear();
     }
 
+    /// @brief Compares two Hooks Config classes for equality
+    ///
+    /// @param other other hooksconfig to compare with
+    bool equal(const HooksConfig& other) const;
+
     /// @brief Verifies that libraries stored in libraries_ are valid.
     ///
     /// This method is a smart wrapper around @ref
@@ -81,9 +86,9 @@ public:
     /// @throw InvalidHooksLibraries if the call to HooksManager fails.
     void loadLibraries() const;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
-    /// Returns an element which must parse into the same objet, i.e.
+    /// Returns an element which must parse into the same object, i.e.
     /// @code
     /// for all valid config C parse(parse(C)->toElement()) == parse(C)
     /// @endcode

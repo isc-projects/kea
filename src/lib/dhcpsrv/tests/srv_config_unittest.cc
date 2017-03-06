@@ -423,6 +423,8 @@ TEST_F(SrvConfigTest, hooksLibraries) {
     ASSERT_NO_THROW(conf.copy(copied));
     ASSERT_TRUE(conf == copied);
     EXPECT_EQ(2, copied.getHooksConfig().get().size());
+
+    EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
 }
 
 } // end of anonymous namespace
