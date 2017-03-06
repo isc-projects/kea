@@ -753,7 +753,6 @@ public:
     /// -# ncr-protocol
     /// -# ncr-format
     /// -# always-include-fqdn
-    /// -# allow-client-update
     /// -# override-no-update
     /// -# override-client-update
     /// -# replace-client-name
@@ -761,17 +760,6 @@ public:
     ///
     /// @return returns a pointer to newly created D2ClientConfig.
     D2ClientConfigPtr parse(isc::data::ConstElementPtr d2_client_cfg);
-
-    /// @brief Check the short cut disabled updates condition
-    ///
-    /// The condition is that the d2 client configuration is
-    /// reduced to "enable-updates": false
-    ///
-    /// @param d2_config d2 client configuration
-    /// @return true if and only if the condition matches.
-    /// @throw DhcpConfigError if enable-updates is not present or
-    /// is not a boolean
-    static bool isShortCutDisabled(isc::data::ConstElementPtr d2_config);
 
     /// @brief Defaults for the D2 client configuration.
     static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;

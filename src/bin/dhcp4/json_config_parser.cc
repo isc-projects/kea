@@ -42,6 +42,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 namespace {
 
@@ -431,11 +432,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // for option definitions. This is equivalent to commiting empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
-    // Some of the parsers alter the state of the system in a way that can't
-    // easily be undone. (Or alter it in a way such that undoing the change has
-    // the same risk of failure as doing the change.)
-    hooks::HooksLibrariesParser hooks_parser;
-
     // Answer will hold the result.
     ConstElementPtr answer;
     // Rollback informs whether error occurred and original data
@@ -515,17 +511,17 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "hooks-libraries") {
-                hooks_parser.parse(config_pair.second);
-                hooks_parser.verifyLibraries();
+                HooksLibrariesParser hooks_parser;
+                HooksConfig& libraries = srv_cfg->getHooksConfig();
+                hooks_parser.parse(libraries, config_pair.second);
+                libraries.verifyLibraries(config_pair.second->getPosition());
                 continue;
             }
 
             // Legacy DhcpConfigParser stuff below
             if (config_pair.first == "dhcp-ddns") {
-                // Apply defaults if not in short cut
-                if (!D2ClientConfigParser::isShortCutDisabled(config_pair.second)) {
-                    D2ClientConfigParser::setAllDefaults(config_pair.second);
-                }
+                // Apply defaults
+                D2ClientConfigParser::setAllDefaults(config_pair.second);
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(config_pair.second);
                 srv_cfg->setD2ClientConfig(cfg);
@@ -637,7 +633,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            hooks_parser.loadLibraries();
+            const HooksConfig& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksConfig();
+            libraries.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());

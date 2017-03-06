@@ -110,6 +110,14 @@ SrvConfig::copy(SrvConfig& new_config) const {
     new_config.class_dictionary_.reset(new ClientClassDictionary(*class_dictionary_));
     // Replace the D2 client configuration
     new_config.setD2ClientConfig(getD2ClientConfig());
+    // Replace configured hooks libraries.
+    new_config.hooks_config_.clear();
+    using namespace isc::hooks;
+    for (HookLibsCollection::const_iterator it =
+           hooks_config_.get().begin();
+         it != hooks_config_.get().end(); ++it) {
+        new_config.hooks_config_.add(it->first, it->second);
+    }
 }
 
 void
@@ -151,11 +159,21 @@ SrvConfig::equals(const SrvConfig& other) const {
         }
     }
     // Logging information is equal between objects, so check other values.
-    return ((*cfg_iface_ == *other.cfg_iface_) &&
-            (*cfg_option_def_ == *other.cfg_option_def_) &&
-            (*cfg_option_ == *other.cfg_option_) &&
-            (*class_dictionary_ == *other.class_dictionary_) &&
-            (*d2_client_config_ == *other.d2_client_config_));
+    if ((*cfg_iface_ != *other.cfg_iface_) ||
+        (*cfg_option_def_ != *other.cfg_option_def_) ||
+        (*cfg_option_ != *other.cfg_option_) ||
+        (*class_dictionary_ != *other.class_dictionary_) ||
+        (*d2_client_config_ != *other.d2_client_config_)) {
+        return (false);
+    }
+    // Now only configured hooks libraries can differ.
+    // If number of configured hooks libraries are different, then
+    // configurations aren't equal.
+    if (hooks_config_.get().size() != other.hooks_config_.get().size()) {
+        return (false);
+    }
+    // Pass through all configured hooks libraries.
+    return (hooks_config_.equal(other.hooks_config_));
 }
 
 void
