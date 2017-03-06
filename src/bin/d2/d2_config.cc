@@ -20,6 +20,7 @@
 #include <string>
 
 using namespace isc::process;
+using namespace isc::data;
 
 namespace isc {
 namespace d2 {
@@ -180,6 +181,22 @@ TSIGKeyInfo::remakeKey() {
     }
 }
 
+ElementPtr
+TSIGKeyInfo::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set name
+    result->set("name", Element::create(name_));
+    // Set algorithm
+    result->set("algorithm", Element::create(algorithm_));
+    // Set secret
+    result->set("secret", Element::create(secret_));
+    // Set digest-bits
+    result->set("digest-bits",
+                Element::create(static_cast<int64_t>(digestbits_)));
+
+    return (result);
+}
+
 // *********************** DnsServerInfo  *************************
 DnsServerInfo::DnsServerInfo(const std::string& hostname,
                              isc::asiolink::IOAddress ip_address, uint32_t port,
@@ -196,6 +213,19 @@ DnsServerInfo::toText() const {
     std::ostringstream stream;
     stream << (getIpAddress().toText()) << " port:" << getPort();
     return (stream.str());
+}
+
+ElementPtr
+DnsServerInfo::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set hostname
+    result->set("hostname", Element::create(hostname_));
+    // Set ip-address
+    result->set("ip-address", Element::create(ip_address_.toText()));
+    // Set port
+    result->set("port", Element::create(static_cast<int64_t>(port_)));
+
+    return (result);
 }
 
 
@@ -224,6 +254,30 @@ DdnsDomain::getKeyName() const {
     }
 
     return ("");
+}
+
+ElementPtr
+DdnsDomain::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set name
+    result->set("name", Element::create(name_));
+    // Set servers
+    ElementPtr servers = Element::createList();
+    for (DnsServerInfoStorage::const_iterator server = servers_->begin();
+         server != servers_->end(); ++server) {
+        ElementPtr dns_server = (*server)->toElement();
+        servers->add(dns_server);
+    }
+    // the dns server list may not be empty
+    if (!servers->empty()) {
+        result->set("dns-servers", servers);
+    }
+    // Set key-name
+    if (tsig_key_info_) {
+        result->set("key-name", Element::create(tsig_key_info_->getName()));
+    }
+
+    return (result);
 }
 
 // *********************** DdnsDomainLstMgr  *************************
@@ -319,6 +373,19 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
     domain = best_match;
     return (true);
+}
+
+ElementPtr
+DdnsDomainListMgr::toElement() const {
+    ElementPtr result = Element::createList();
+    // Iterate on ddns domains
+    for (DdnsDomainMap::const_iterator domain = domains_->begin();
+         domain != domains_->end(); ++domain) {
+        ElementPtr ddns_domain = domain->second->toElement();
+        result->add(ddns_domain);
+    }
+
+    return (result);
 }
 
 // *************************** PARSERS ***********************************

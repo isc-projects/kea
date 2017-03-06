@@ -392,7 +392,7 @@ CfgSubnets6::toElement() const {
         // Set client-class
         const ClientClasses& cclasses = (*subnet)->getClientClasses();
         if (cclasses.size() > 1) {
-            isc_throw(ToElementError, "client-classes has too many items: "
+            isc_throw(ToElementError, "client-class has too many items: "
                       << cclasses.size());
         } else if (!cclasses.empty()) {
             map->set("client-class", Element::create(*cclasses.cbegin()));

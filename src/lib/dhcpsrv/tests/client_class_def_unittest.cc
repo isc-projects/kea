@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp/option_space.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
@@ -357,6 +358,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
 
 // Verifies the unparse method of option class definitions
 TEST(ClientClassDef, unparseDef) {
+    CfgMgr::instance().setFamily(AF_INET);
     boost::scoped_ptr<ClientClassDef> cclass;
 
     // Get a client class definition and fill it
@@ -385,6 +387,7 @@ TEST(ClientClassDef, unparseDef) {
 
 // Verifies the unparse method of client class dictionaries
 TEST(ClientClassDictionary, unparseDict) {
+    CfgMgr::instance().setFamily(AF_INET);
     ClientClassDictionaryPtr dictionary;
     ExpressionPtr expr;
     CfgOptionPtr options;
@@ -400,7 +403,6 @@ TEST(ClientClassDictionary, unparseDict) {
         [](std::string name) {
             return ("{\n"
                     "\"name\": \"" + name + "\",\n"
-                    "\"test\": \"\",\n"
                     "\"next-server\": \"0.0.0.0\",\n"
                     "\"server-hostname\": \"\",\n"
                     "\"boot-file-name\": \"\",\n"

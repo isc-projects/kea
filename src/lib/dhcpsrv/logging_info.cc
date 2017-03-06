@@ -23,6 +23,22 @@ LoggingDestination::equals(const LoggingDestination& other) const {
             flush_ == other.flush_);
 }
 
+ElementPtr
+LoggingDestination::toElement() const {
+    ElementPtr result = Element::createMap();
+
+    // Set output
+    result->set("output", Element::create(output_));
+    // Set maxver
+    result->set("maxver", Element::create(maxver_));
+    // Set maxsize
+    result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
+    // Set flush
+    result->set("flush", Element::create(flush_));
+
+    return(result);
+}
+
 LoggingInfo::LoggingInfo()
     : name_("kea"), severity_(isc::log::INFO), debuglevel_(0) {
     // If configuration Manager is in the verbose mode, we need to modify the
@@ -148,18 +164,7 @@ LoggingInfo::toElement() const {
     for (std::vector<LoggingDestination>::const_iterator dest =
              destinations_.cbegin();
          dest != destinations_.cend(); ++dest) {
-        ElementPtr map = Element::createMap();
-        // Set output
-        map->set("output", Element::create(dest->output_));
-        // Set maxver
-        map->set("maxver", Element::create(dest->maxver_));
-        // Set maxsize
-        map->set("maxsize",
-                 Element::create(static_cast<long long>(dest->maxsize_)));
-        // Set flush
-        map->set("flush", Element::create(dest->flush_));
-        // Push on output option list
-        options->add(map);
+        options->add(dest->toElement());
     }
     result->set("output_options", options);
     // Set severity

@@ -10,6 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
 #include <exceptions/exceptions.h>
@@ -255,7 +256,7 @@ typedef boost::shared_ptr<D2Params> D2ParamsPtr;
 /// instance of the actual key (@ref isc::dns::TSIGKey) that can be used
 /// by the IO layer for signing and verifying messages.
 ///
-class TSIGKeyInfo {
+class TSIGKeyInfo : public isc::data::CfgToElement {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
     //@{
@@ -356,6 +357,11 @@ public:
     static const dns::Name& stringToAlgorithmName(const std::string&
                                                   algorithm_id);
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
     /// @brief Creates the actual TSIG key instance member
     ///
@@ -405,7 +411,7 @@ typedef boost::shared_ptr<TSIGKeyInfoMap> TSIGKeyInfoMapPtr;
 /// belongs to a list of servers supporting DNS for a given domain. It will
 /// be used to establish communications with the server to carry out DNS
 /// updates.
-class DnsServerInfo {
+class DnsServerInfo : public isc::data::CfgToElement {
 public:
     /// @brief defines DNS standard port value
     static const uint32_t STANDARD_DNS_PORT = 53;
@@ -472,6 +478,11 @@ public:
     /// @brief Returns a text representation for the server.
     std::string toText() const;
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 
 private:
     /// @brief The resolvable name of the server. If not blank, then the
@@ -510,7 +521,7 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// @todo Currently the name entry for a domain is just an std::string. It
 /// may be worthwhile to change this to a dns::Name for purposes of better
 /// validation and matching capabilities.
-class DdnsDomain {
+class DdnsDomain : public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -553,6 +564,11 @@ public:
         return (tsig_key_info_);
     }
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
     /// @brief The domain name of the domain.
     std::string name_;
@@ -588,7 +604,7 @@ typedef boost::shared_ptr<DdnsDomainMap> DdnsDomainMapPtr;
 /// specify the wild card domain as the only forward domain. All forward DNS
 /// updates would be sent to that one list of servers, regardless of the FQDN.
 /// As matching capabilities evolve this class is expected to expand.
-class DdnsDomainListMgr {
+class DdnsDomainListMgr : public isc::data::CfgToElement {
 public:
     /// @brief defines the domain name for denoting the wildcard domain.
     static const char* wildcard_domain_name_;
@@ -655,6 +671,11 @@ public:
     /// set the internal wild card domain pointer accordingly.
     void setDomains(DdnsDomainMapPtr domains);
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
     /// @brief An arbitrary label assigned to this manager.
     std::string name_;
@@ -695,6 +716,13 @@ public:
     /// @return returns a pointer to the new clone.
     virtual process::DCfgContextBasePtr clone() {
         return (process::DCfgContextBasePtr(new DScalarContext(*this)));
+    }
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const {
+        isc_throw(isc::NotImplemented, "DScalarContext::ElementPtr");
     }
 
 protected:

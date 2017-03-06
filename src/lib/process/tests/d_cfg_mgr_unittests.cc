@@ -54,8 +54,8 @@ public:
 /// @brief Test fixture class for testing DCfgMgrBase class.
 /// It maintains an member instance of DStubCfgMgr and derives from
 /// ConfigParseTest fixture, thus providing methods for converting JSON
-/// strings to configuration element sets, checking parse results, and
-/// accessing the configuration context.
+/// strings to configuration element sets, checking parse results,
+/// accessing the configuration context and trying to unparse.
 class DStubCfgMgrTest : public ConfigParseTest {
 public:
 
