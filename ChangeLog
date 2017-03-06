@@ -1,7 +1,7 @@
 1222.	[func]		fdupont
 	Obsolete parameter 'allow-client-update' has been removed
 	from DHCPv4 and DHCPv6 components.
-	(Trac #5145, git xxx)
+	(Trac #5145, git 01fde297a978e2bd832655ac7276e5aa3a7e8400)
 
 1221.	[func]		tomek
 	Control agent is now able to parse the input configuration and
