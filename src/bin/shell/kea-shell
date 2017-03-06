@@ -27,9 +27,9 @@ from kea_conn import CARequest, CAResponse
 
 import argparse
 parser = argparse.ArgumentParser(description='Connects to Kea Control Agent.')
-parser.add_argument('--host', type=str, nargs=1, default='localhost',
+parser.add_argument('--host', type=str, nargs=1, default='127.0.0.1',
                     help='hostname of the CA to connect to')
-parser.add_argument('--port', type=int, nargs=1, default='8000',
+parser.add_argument('--port', type=int, nargs=1, default=8000,
                     help='TCP port of the CA to connect to')
 parser.add_argument('--timeout', type=int, nargs=1, default='10000',
                     help='Timeout (in milliseconds) when attempting to connect to CA')
@@ -41,8 +41,8 @@ cmd_args = parser.parse_args()
 # connection.
 params = CARequest()
 params.command = cmd_args.command
-params.http_host = cmd_args.host[0]
-params.http_port = cmd_args.port[0]
+params.http_host = cmd_args.host
+params.http_port = cmd_args.port
 params.timeout = cmd_args.timeout
 
 params.generateBody()
