@@ -90,6 +90,11 @@ public:
         keys_ = keys;
     }
 
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 protected:
     /// @brief Copy constructor for use by derivations in clone().
     D2CfgContext(const D2CfgContext& rhs);

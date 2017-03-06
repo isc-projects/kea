@@ -19,7 +19,7 @@ namespace dhcp {
 /// @brief Defines single logging destination
 ///
 /// This structure is used to keep log4cplus configuration parameters.
-struct LoggingDestination {
+struct LoggingDestination : public isc::data::CfgToElement {
 
     /// @brief defines logging destination output
     ///
@@ -47,6 +47,11 @@ struct LoggingDestination {
     LoggingDestination()
         : output_("stdout"), maxver_(1), maxsize_(204800), flush_(true) {
     }
+
+    /// @brief Unparse a configuration objet
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief structure that describes one logging entry

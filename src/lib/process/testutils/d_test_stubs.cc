@@ -342,6 +342,11 @@ DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
     object_values_(new ObjectStorage(*(rhs.object_values_))) {
 }
 
+isc::data::ElementPtr
+DStubContext::toElement() const {
+    return (isc::data::Element::createMap());
+}
+
 //************************** DStubCfgMgr *************************
 
 DStubCfgMgr::DStubCfgMgr()

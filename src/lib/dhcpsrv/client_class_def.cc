@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -112,13 +113,20 @@ ClientClassDef::equals(const ClientClassDef& other) const {
 
 ElementPtr
 ClientClassDef:: toElement() const {
+    uint16_t family = CfgMgr::instance().getFamily();
     ElementPtr result = Element::createMap();
     // Set name
     result->set("name", Element::create(name_));
-    // Set original match expression
-    result->set("test", Element::create(test_));
+    // Set original match expression (empty string won't parse)
+    if (!test_.empty()) {
+        result->set("test", Element::create(test_));
+    }
     // Set option-data
     result->set("option-data", cfg_option_->toElement());
+    if (family != AF_INET) {
+        // Other parameters are DHCPv4 specific
+        return (result);
+    }
     // Set next-server
     result->set("next-server", Element::create(next_server_.toText()));
     // Set server-hostname

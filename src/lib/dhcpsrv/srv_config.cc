@@ -306,15 +306,16 @@ SrvConfig::toElement() const {
     // Set DhcpX
     result->set(family == AF_INET ? "Dhcp4" : "Dhcp6", dhcp);
 
-    // Logging global map (skip if loggers is empty)
-    ElementPtr logging = Element::createMap();
-    // Set loggers list
-    ElementPtr loggers = Element::createList();
-    for (LoggingInfoStorage::const_iterator logger = logging_info_.cbegin();
-         logger != logging_info_.cend(); ++logger) {
-        loggers->add(logger->toElement());
-    }
-    if (!loggers->empty()) {
+    // Logging global map (skip if empty)
+    if (!logging_info_.empty()) {
+        ElementPtr logging = Element::createMap();
+        // Set loggers list
+        ElementPtr loggers = Element::createList();
+        for (LoggingInfoStorage::const_iterator logger =
+                 logging_info_.cbegin();
+             logger != logging_info_.cend(); ++logger) {
+            loggers->add(logger->toElement());
+        }
         logging->set("loggers", loggers);
         result->set("Logging", logging);
     }
