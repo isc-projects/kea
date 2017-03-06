@@ -4,7 +4,10 @@ SHTESTS =
 SHTESTS += ca_process_tests.sh
 
 noinst_SCRIPTS = ca_process_tests.sh
+
 EXTRA_DIST  = ca_process_tests.sh.in
+EXTRA_DIST += testdata/get_config.json
+
 noinst_LTLIBRARIES = libbasic.la
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -50,6 +53,7 @@ ca_unittests_SOURCES += ca_response_creator_unittests.cc
 ca_unittests_SOURCES += ca_response_creator_factory_unittests.cc
 ca_unittests_SOURCES += ca_unittests.cc
 ca_unittests_SOURCES += parser_unittests.cc
+ca_unittests_SOURCES += get_config_unittest.cc
 
 ca_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 ca_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
@@ -87,7 +91,7 @@ libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-nodist_ca_unittests_SOURCES = test_libraries.h
+nodist_ca_unittests_SOURCES = test_data_files_config.h test_libraries.h
 
 endif
 
