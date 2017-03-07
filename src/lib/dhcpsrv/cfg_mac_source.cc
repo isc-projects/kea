@@ -81,6 +81,7 @@ ElementPtr CfgMACSource::toElement() const {
         }
         result->add(Element::create(name));
     }
+    // @todo check if the list is empty (including a new unit test)
     return (result);
 }
 
