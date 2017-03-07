@@ -181,9 +181,9 @@ public:
     /// @return returns a pointer to the new clone.
     virtual DCfgContextBasePtr clone() = 0;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
-    /// Returns an element which must parse into the same objet, i.e.
+    /// Returns an element which must parse into the same object, i.e.
     /// @code
     /// for all valid config C parse(parse(C)->toElement()) == parse(C)
     /// @endcode

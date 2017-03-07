@@ -357,7 +357,7 @@ public:
     static const dns::Name& stringToAlgorithmName(const std::string&
                                                   algorithm_id);
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;
@@ -478,7 +478,7 @@ public:
     /// @brief Returns a text representation for the server.
     std::string toText() const;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;
@@ -564,7 +564,7 @@ public:
         return (tsig_key_info_);
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;
@@ -671,7 +671,7 @@ public:
     /// set the internal wild card domain pointer accordingly.
     void setDomains(DdnsDomainMapPtr domains);
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;
@@ -718,7 +718,7 @@ public:
         return (process::DCfgContextBasePtr(new DScalarContext(*this)));
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {

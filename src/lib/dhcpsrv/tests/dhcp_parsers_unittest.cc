@@ -651,7 +651,7 @@ public:
         cfg_option_def_(cfg->getCfgOptionDef()),
         cfg_option_(cfg->getCfgOption()) { }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration (a map with
     /// not empty option-def and option-data lists)

@@ -47,7 +47,7 @@ public:
     /// @param code option to be enabled in RSOO
     void enable(const uint16_t code);
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;

@@ -331,7 +331,7 @@ public:
         return (std::string("configuration file"));
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// host reservation lists are not autonomous so they are
     /// not returned directly but with the subnet where they are
@@ -512,12 +512,12 @@ private:
     /// - IPv6 prefix
     HostContainer6 hosts6_;
 
-    /// @brief Unparse a configuration objet (DHCPv4 reservations)
+    /// @brief Unparse a configuration object (DHCPv4 reservations)
     ///
     /// @return a pointer to unparsed configuration
     isc::data::ElementPtr toElement4() const;
 
-    /// @brief Unparse a configuration objet (DHCPv6 reservations)
+    /// @brief Unparse a configuration object (DHCPv6 reservations)
     ///
     /// @return a pointer to unparsed configuration
     isc::data::ElementPtr toElement6() const;
