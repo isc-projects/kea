@@ -459,43 +459,31 @@ case "$host" in
         ;;
 esac
 
-m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3.4 python3.3 python3.2 python3.1 python3])
-AC_ARG_WITH([pythonpath],
-AC_HELP_STRING([--with-pythonpath=PATH],
-  [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
-  [python_path="$withval"], [python_path="auto"])
-if test "$python_path" = auto; then
-        AM_PATH_PYTHON([3.1],,[PYTHON=no])
+
+# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
+# It may likely work with earlier versions, but 2.7 was the oldest one we tested
+# it with. We require python only if kea-shell was enabled. It is disabled
+# by default to not introduce hard dependency on python.
+AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
+  [enable kea-shell, a text management client for Control Agent [default=no]])],
+  enable_shell=$enableval, enable_shell=no)
+
+if test "x$enable_shell" != xno ; then
+# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+  AM_PATH_PYTHON([2.7])
 else
-        # Older versions of automake can't handle python3 well.  This is an
-        # in-house workaround for them.
-        PYTHON=$python_path
-        AC_SUBST(PYTHON)
-        PYTHON_PREFIX='${prefix}'
-        AC_SUBST(PYTHON_PREFIX)
-        PYTHON_EXEC_PREFIX='$(exec_prefix)'
-        AC_SUBST(PYTHON_EXEC_PREFIX)
-        PYTHON_VERSION=[`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`]
-        if test `echo "$PYTHON_VERSION >= 3.1" | bc` != 1 ; then
-                AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])
-        fi
-        AC_SUBST(PYTHON_VERSION)
-        PYTHON_PLATFORM=`$PYTHON -c "import sys; print(sys.platform)"`
-        AC_SUBST(PYTHON_PLATFORM)
-        pythondir='${prefix}/lib/python'$PYTHON_VERSION'/site-packages'
-        AC_SUBST(pythondir)
-        pkgpythondir='${pythondir}/'$PACKAGE
-        AC_SUBST(pkgpythondir)
-        pyexecdir='${exec_prefix}/lib/python'$PYTHON_VERSION'/site-packages'
-        AC_SUBST(pyexecdir)
-        pkgpyexecdir='${pyexecdir}/'$PACKAGE
-        AC_SUBST(pkgpyexecdir)
+  PYTHON=no
 fi
+
+# Export to makefiles the info whether we have shell enabled or not
+AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    KEA_CXXFLAGS="$KEA_CXXFLAGS -fPIC"
 fi
+
+
 
 AC_SUBST(KEA_CXXFLAGS)
 
@@ -1639,6 +1627,9 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/pgsql_tests.sh
                  src/bin/admin/tests/cql_tests.sh
                  src/bin/agent/tests/test_libraries.h
+                 src/bin/shell/Makefile
+                 src/bin/shell/tests/Makefile
+                 src/bin/shell/tests/shell_process_tests.sh
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1808,19 +1799,15 @@ END
 if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
-Python3:
+Python:
   PYTHON_VERSION:  ${PYTHON_VERSION}
-  PYTHON_INCLUDES: ${PYTHON_INCLUDES}
-  PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
-  PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
-  PYTHON_LIB:      ${PYTHON_LIB}
 
 END
 else
 cat >> config.report << END
 
-Python3:
-  not installed
+Python:
+  PYTHON_VERSION:  not needed (because kea-shell is disabled)
 
 END
 fi
@@ -1922,6 +1909,7 @@ Developer:
   Logger checks: $enable_logger_checks
   Generate Documentation: $enable_generate_docs
   Parser Generation: $enable_generate_parser
+  Kea-shell: $enable_shell
 
 END
 
