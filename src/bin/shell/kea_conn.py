@@ -24,10 +24,10 @@ class CARequest:
     # @todo: Add support for parameters
     # this stores the output in self.content
     def generateBody(self):
-        self.content = '{ "command": "' + self.command + '" '
+        self.content = '{ "command": "' + self.command + '"'
         if (len(self.params)):
-            self.content += self.params
-        self.content += '}'
+            self.content += ', "parameters": { ' + self.params + ' }'
+        self.content += ' }'
 
     # Generate HTTP headers
     #
@@ -40,7 +40,7 @@ class CARequest:
 
     # This is a storage for generated command (input data to be sent over POST)
     content = ''
-        
+
 # This class represents the HTTP response
 class CAResponse:
 
@@ -67,4 +67,3 @@ class CAResponse:
             print(self.status)
             print(self.reason)
         print(self.body)
-        
