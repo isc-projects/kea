@@ -395,7 +395,7 @@ public:
     /// @return List comprising option space names for vendor options.
     std::list<std::string> getVendorIdsSpaceNames() const;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;

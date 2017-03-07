@@ -115,7 +115,7 @@ public:
     /// @return Pointer to an instance of new DUID.
     DuidPtr create(const std::string& duid_file_path) const;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;

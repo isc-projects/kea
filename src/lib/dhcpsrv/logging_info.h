@@ -48,7 +48,7 @@ struct LoggingDestination : public isc::data::CfgToElement {
         : output_("stdout"), maxver_(1), maxsize_(204800), flush_(true) {
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
@@ -123,7 +123,7 @@ struct LoggingInfo : public isc::data::CfgToElement {
     /// @brief Converts logger configuration to a spec.
     isc::log::LoggerSpecification toSpec() const;
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;

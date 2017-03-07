@@ -232,7 +232,7 @@ public:
     /// "unknown" if not.
     static std::string replaceClientNameModeToString(const ReplaceClientNameMode& mode);
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;

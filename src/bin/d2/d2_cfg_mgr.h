@@ -90,7 +90,7 @@ public:
         keys_ = keys;
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const;

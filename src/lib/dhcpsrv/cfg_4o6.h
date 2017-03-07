@@ -79,7 +79,7 @@ struct Cfg4o6 : public isc::data::CfgToElement {
         enabled_ = true;
     }
 
-    /// @brief Unparse a configuration objet
+    /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
