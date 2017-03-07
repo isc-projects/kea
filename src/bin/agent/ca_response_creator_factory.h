@@ -15,14 +15,14 @@ namespace agent {
 
 /// @brief HTTP response creator factory for Control Agent.
 ///
-/// See the documentation of the @ref HttpResponseCreatorFactory for
-/// the details how the response factory object is used by the
-/// @ref HttpListener.
+/// See the documentation of the @ref isc::http::HttpResponseCreatorFactory
+/// for the details how the response factory object is used by the
+/// @ref isc::http::HttpListener.
 ///
 /// This class always returns the same instance of the
-/// @ref CtrlAgentResponseCreator which @ref HttpListener and
-/// @ref HttpConnection classes use to generate HTTP response messages
-/// which comply with the formats required by the Control Agent.
+/// @ref CtrlAgentResponseCreator which @ref isc::http::HttpListener and
+/// @ref isc::http::HttpConnection classes use to generate HTTP response
+/// messages which comply with the formats required by the Control Agent.
 class CtrlAgentResponseCreatorFactory : public http::HttpResponseCreatorFactory {
 public:
 

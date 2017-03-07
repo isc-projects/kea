@@ -22,13 +22,13 @@ typedef boost::shared_ptr<CtrlAgentResponseCreator> CtrlAgentResponseCreatorPtr;
 /// @brief Concrete implementation of the HTTP response crator used
 /// by the Control Agent.
 ///
-/// See the documentation of the @ref HttpResponseCreator for the basic
-/// information how HTTP response creators are utilized by the libkea-http
-/// library to generate HTTP responses.
+/// See the documentation of the @ref isc::http::HttpResponseCreator for
+/// the basic information how HTTP response creators are utilized by
+/// the libkea-http library to generate HTTP responses.
 ///
 /// This creator expects that received requests are encapsulated in the
-/// @ref PostHttpRequestJson objects. The generated responses are
-/// encapsulated in the HttpResponseJson objects.
+/// @ref isc::http::PostHttpRequestJson objects. The generated responses
+/// are encapsulated in the HttpResponseJson objects.
 ///
 /// This class uses @ref CtrlAgentCommandMgr singleton to process commands
 /// conveyed in the HTTP body. The JSON responses returned by the manager
@@ -38,17 +38,19 @@ public:
 
     /// @brief Create a new request.
     ///
-    /// This method creates a bare instance of the @ref PostHttpRequestJson.
+    /// This method creates a bare instance of the @ref
+    /// isc::http::PostHttpRequestJson.
     ///
-    /// @return Pointer to the new instance of the @ref PostHttpRequestJson.
+    /// @return Pointer to the new instance of the @ref
+    /// isc::http::PostHttpRequestJson.
     virtual http::HttpRequestPtr createNewHttpRequest() const;
 
     /// @brief Creates stock HTTP response.
     ///
     /// @param request Pointer to an object representing HTTP request.
     /// @param status_code Status code of the response.
-    /// @return Pointer to an @ref HttpResponseJson object representing stock
-    /// HTTP response.
+    /// @return Pointer to an @ref isc::http::HttpResponseJson object
+    /// representing stock HTTP response.
     virtual http::HttpResponsePtr
     createStockHttpResponse(const http::ConstHttpRequestPtr& request,
                             const http::HttpStatusCode& status_code) const;
