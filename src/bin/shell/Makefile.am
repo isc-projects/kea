@@ -7,7 +7,8 @@ if KEA_SHELL
 # Kea-shell is enabled, here are proper rules for it.
 kea_shell_PYTHON = kea-shell.py kea_conn.py kea_connection2.py kea_connector3.py kea_params.py
 kea_shelldir = @localstatedir@/@PACKAGE@
-#pkglibexecdir = $(libexecdir)/@PACKAGE@
+
+bin_SCRIPTS = kea-shell
 
 else
 
