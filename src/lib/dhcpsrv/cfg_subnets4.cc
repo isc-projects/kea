@@ -313,7 +313,7 @@ CfgSubnets4::toElement() const {
         ElementPtr pool_list = Element::createList();
         for (PoolCollection::const_iterator pool = pools.cbegin();
              pool != pools.cend(); ++pool) {
-            // Prepare the map for a pool
+            // Prepare the map for a pool (@todo move this code to pool.cc)
             ElementPtr pool_map = Element::createMap();
             // Set pool
             const IOAddress& first = (*pool)->getFirstAddress();

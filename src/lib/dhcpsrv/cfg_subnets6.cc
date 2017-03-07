@@ -289,7 +289,7 @@ CfgSubnets6::toElement() const {
         ElementPtr pool_list = Element::createList();
         for (PoolCollection::const_iterator pool = pools.cbegin();
              pool != pools.cend(); ++pool) {
-            // Prepare the map for a pool
+            // Prepare the map for a pool (@todo move this code to pool.cc)
             ElementPtr pool_map = Element::createMap();
             // Set pool
             const IOAddress& first = (*pool)->getFirstAddress();
@@ -320,7 +320,7 @@ CfgSubnets6::toElement() const {
         ElementPtr pdpool_list = Element::createList();
         for (PoolCollection::const_iterator pool = pdpools.cbegin();
              pool != pdpools.cend(); ++pool) {
-            // Get it as a Pool6
+            // Get it as a Pool6 (@todo move this code to pool.cc)
             const Pool6* pdpool = dynamic_cast<Pool6*>(pool->get());
             if (!pdpool) {
                 isc_throw(ToElementError, "invalid pd-pool pointer");
