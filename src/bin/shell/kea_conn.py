@@ -10,6 +10,7 @@
 # - command - specifies the command to send (e.g. list-commands)
 # - timeout - timeout (in ms)
 # - headers - extra HTTP headers may be added here
+# - version - version to be reported in HTTP header
 class CARequest:
     path = '/'
     http_host = ''
@@ -18,6 +19,7 @@ class CARequest:
     timeout = 0
     params = ''
     headers = {}
+    version = ""
 
     # Generates the content, out of specified command line
     # and optional content.
@@ -34,7 +36,7 @@ class CARequest:
     # In particular, this method generates Content-Length and its value.
     def generateHeaders(self):
         self.headers['Content-Type'] = 'application/json'
-        self.headers['User-Agent'] = 'Kea-shell/0.1'
+        self.headers['User-Agent'] = "Kea-shell/%s"%(self.version)
         self.headers['Accept'] = '*/*'
         self.headers['Content-Length'] = "%d"%(len(self.content))
 
