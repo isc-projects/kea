@@ -464,7 +464,7 @@ TEST_F(SrvConfigTest, unparse) {
     std::string params = "\"echo-client-id\": true,\n";
     params += "\"dhcp4o6-port\": 0\n";
     std::string trailer = "}\n}\n";
-    
+
     // Verify DHCPv4
     CfgMgr::instance().setFamily(AF_INET);
     isc::test::runToElementTest<SrvConfig>

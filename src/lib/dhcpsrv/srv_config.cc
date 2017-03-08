@@ -223,20 +223,19 @@ SrvConfig::toElement() const {
     // Set dhcp-ddns
     dhcp->set("dhcp-ddns", d2_client_config_->toElement());
     // Set interfaces-config
-    ConstElementPtr ifaces = cfg_iface_->toElement();
     dhcp->set("interfaces-config", cfg_iface_->toElement());
     // Set option-def
-    ConstElementPtr option_def = cfg_option_def_->toElement();
-    dhcp->set("option-def", option_def);
+    dhcp->set("option-def", cfg_option_def_->toElement());
     // Set option-data
-    ConstElementPtr option_data = cfg_option_->toElement();
-    dhcp->set("option-data", option_data);
+    dhcp->set("option-data", cfg_option_->toElement());
     // Set subnets
     ConstElementPtr subnets;
     if (family == AF_INET) {
         subnets = cfg_subnets4_->toElement();
+        dhcp->set("subnet4", subnets);
     } else {
         subnets = cfg_subnets6_->toElement();
+        dhcp->set("subnet6", subnets);
     }
     // Insert reservations
     CfgHostsList resv_list;
@@ -252,21 +251,15 @@ SrvConfig::toElement() const {
         ConstElementPtr resvs = resv_list.get(subnet_id);
         (*subnet)->set("reservations", resvs);
     }
-    if (family == AF_INET) {
-        dhcp->set("subnet4", subnets);
-    } else {
-        dhcp->set("subnet6", subnets);
-    }
-    // Set relay-supplied-options (DHCPv6)
-    if (family == AF_INET6) {
-        dhcp->set("relay-supplied-options", cfg_rsoo_->toElement());
-    }
     // Set expired-leases-processing
     ConstElementPtr expired = cfg_expiration_->toElement();
     dhcp->set("expired-leases-processing", expired);
-    // Set server-id (DHCPv6)
     if (family == AF_INET6) {
+        // Set server-id (DHCPv6)
         dhcp->set("server-id", cfg_duid_->toElement());
+
+        // Set relay-supplied-options (DHCPv6)
+        dhcp->set("relay-supplied-options", cfg_rsoo_->toElement());
     }
     // Set lease-database
     CfgLeaseDbAccess lease_db(*cfg_db_access_);

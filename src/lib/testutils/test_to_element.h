@@ -42,7 +42,7 @@ void runToElementTest(const std::string& expected, const Cfg& cfg) {
     using namespace isc::data;
 #ifdef HAVE_IS_BASE_OF
     static_assert(std::is_base_of<CfgToElement, Cfg>::value,
-                  "CfgToElement is not a base of the tenplate parameter");
+                  "CfgToElement is not a base of the template parameter");
 #endif
     ConstElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(expected)) << expected;
@@ -69,7 +69,7 @@ template<typename Cfg>
 void runToElementTest(isc::data::ConstElementPtr expected, const Cfg& cfg) {
 #ifdef HAVE_IS_BASE_OF
     static_assert(std::is_base_of<isc::data::CfgToElement, Cfg>::value,
-                  "CfgToElement is not a base of the tenplate parameter");
+                  "CfgToElement is not a base of the template parameter");
 #endif
     isc::data::ConstElementPtr unparsed;
     ASSERT_NO_THROW(unparsed = cfg.toElement());
