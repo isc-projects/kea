@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# This is going to be replaced with the actual version (see kea-shell target
+# in Makefile.am)
+VERSION = "REPORTED_VERSION"
+
 # First, let's import the right kea_connector.
 # We have two versions: one for python 2.x and another for python 3.x.
 # Sadly, there's no unified way to handle http connections. The recommended
@@ -29,22 +33,27 @@ from kea_conn import CARequest, CAResponse
 # the help and sanity checking input parameters.
 
 parser = argparse.ArgumentParser(description='Connects to Kea Control Agent.')
-parser.add_argument('--host', type=str, nargs=1, default='127.0.0.1',
+parser.add_argument('--host', type=str, default='127.0.0.1',
                     help='hostname of the CA to connect to')
-parser.add_argument('--port', type=int, nargs=1, default=8000,
+parser.add_argument('--port', type=int, default=8000,
                     help='TCP port of the CA to connect to')
-parser.add_argument('--timeout', type=int, nargs=1, default='10',
+parser.add_argument('--timeout', type=int, default='10',
                     help='Timeout (in seconds) when attempting to connect to CA')
 parser.add_argument('command', type=str, nargs="?", default='list-commands',
                     help='command to be executed. If not specified, "list-commands" is used')
+parser.add_argument('-v', action="store_true", help="Prints version")
 cmd_args = parser.parse_args()
+
+if (cmd_args.v):
+    print (VERSION)
+    exit(0)
 
 # Ok, now time to put the parameters parsed into the structure to be used by the
 # connection.
 params = CARequest()
 params.command = cmd_args.command
-params.http_host = cmd_args.host[0]
-params.http_port = cmd_args.port[0]
+params.http_host = cmd_args.host
+params.http_port = cmd_args.port
 params.timeout = cmd_args.timeout
 
 params.generateBody()
