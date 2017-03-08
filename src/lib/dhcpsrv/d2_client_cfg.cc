@@ -229,34 +229,26 @@ D2ClientConfig::toElement() const {
     // Set server-ip
     result->set("server-ip", Element::create(server_ip_.toText()));
     // Set server-port
-    result->set("server-port",
-                Element::create(static_cast<long long>(server_port_)));
+    result->set("server-port", Element::create(static_cast<long long>(server_port_)));
     // Set sender-ip
     result->set("sender-ip", Element::create(sender_ip_.toText()));
     // Set sender-port
-    result->set("sender-port",
-                Element::create(static_cast<long long>(sender_port_)));
+    result->set("sender-port", Element::create(static_cast<long long>(sender_port_)));
     // Set max-queue-size
-    result->set("max-queue-size",
-                Element::create(static_cast<long long>(max_queue_size_)));
+    result->set("max-queue-size", Element::create(static_cast<long long>(max_queue_size_)));
     // Set ncr-protocol
-    result->set("ncr-protocol",
-                Element::create(dhcp_ddns::
-                                ncrProtocolToString(ncr_protocol_)));
+    result->set("ncr-protocol", Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol_)));
     // Set ncr-format
-    result->set("ncr-format",
-                Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
+    result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
     // Set always-include-fqdn
     result->set("always-include-fqdn", Element::create(always_include_fqdn_));
     // Set override-no-update
     result->set("override-no-update", Element::create(override_no_update_));
     // Set override-client-update
-    result->set("override-client-update",
-                Element::create(override_client_update_));
+    result->set("override-client-update", Element::create(override_client_update_));
     // Set replace-client-name
     result->set("replace-client-name",
-                Element::create(replaceClientNameModeToString
-                                (replace_client_name_mode_)));
+                Element::create(replaceClientNameModeToString(replace_client_name_mode_)));
     // Set generated-prefix
     result->set("generated-prefix", Element::create(generated_prefix_));
     return (result);
