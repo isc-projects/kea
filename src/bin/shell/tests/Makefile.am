@@ -23,7 +23,6 @@ check-shell:
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
-
 CLEANDIRS = __pycache__
 
 clean-local:

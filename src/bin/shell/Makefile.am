@@ -40,9 +40,9 @@ endif
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 kea-shell: kea-shell.py
-	rm -f kea-shell.tmp
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" kea-shell.py > kea-shell.tmp
 	$(SED) "s|REPORTED_VERSION|@PACKAGE_VERSION@|" kea-shell.tmp >$@
+	rm -f kea-shell.tmp
 	chmod a+x $@
 
 install-data-local:
