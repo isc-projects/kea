@@ -1,9 +1,13 @@
-PYTESTS = shell_unittest.py
+PYTESTS =
+SHTESTS =
+EXTRA_DIST =
 
-SHTESTS = shell_process_tests.sh
+if KEA_SHELL
 
-noinst_SCRIPTS = $(PYTESTS) shell_process_tests.sh
-EXTRA_DIST = testdata/plugins/testplugin.py
+# Ok, shell is enabled. Let's run those tests.
+PYTESTS += shell_unittest.py
+SHTESTS += shell_process_tests.sh
+noinst_SCRIPTS = $(PYTESTS) $(SHTESTS)
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local: check-shell check-python
@@ -22,6 +26,15 @@ check-shell:
 	export KEA_PIDFILE_DIR=$(abs_top_builddir); \
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
+
+else
+
+# Nope, shell is disabled. Let's keep the files in EXTRA_DIST, so they get
+# included in make dist, but don't do anything special about them.
+EXTRA_DIST += shell_unittest.py shell_process_tests.sh
+
+endif
+
 
 CLEANDIRS = __pycache__
 
