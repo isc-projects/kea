@@ -13,7 +13,7 @@ bin_SCRIPTS = kea-shell
 else
 
 # Kea-shell is disabled, simply keep the files for make dist
-EXTRA_DIST += kea-shell.py kea_conn.py kea_connection2.py kea_connector3.py kea_params.py
+EXTRA_DIST += kea-shell.py kea_conn.py kea_connector2.py kea_connector3.py kea_params.py
 
 endif
 
