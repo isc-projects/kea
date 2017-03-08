@@ -55,6 +55,7 @@ params.command = cmd_args.command
 params.http_host = cmd_args.host
 params.http_port = cmd_args.port
 params.timeout = cmd_args.timeout
+params.version = VERSION
 
 params.generateBody()
 params.generateHeaders()

@@ -84,6 +84,15 @@ class CARequestUnitTest(unittest.TestCase):
 
         self.assertTrue(self.checkHeader(x.headers, 'Content-Length', str(len(x.content))))
 
+    def test_headerVersion(self):
+        """
+        This test checks if the version reported in HTTP headers is generated properly.
+        """
+        x = CARequest()
+        x.version = "1.2.3"
+        x.generateHeaders()
+        self.assertTrue(self.checkHeader(x.headers, 'User-Agent', 'Kea-shell/1.2.3'))
+
     def tearDown(self):
         """
         This method is called after each test. Currently it does nothing.
