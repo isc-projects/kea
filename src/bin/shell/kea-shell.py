@@ -32,13 +32,14 @@ from kea_conn import CARequest, CAResponse
 # that purpose. It does great job with having default values, taking care of
 # the help and sanity checking input parameters.
 
-parser = argparse.ArgumentParser(description='Connects to Kea Control Agent.')
+parser = argparse.ArgumentParser(description='kea-shell is a simple text client that uses REST '
+                                 'interface to connect to Kea Control Agent.')
 parser.add_argument('--host', type=str, default='127.0.0.1',
-                    help='hostname of the CA to connect to')
+                    help='hostname of the CA to connect to (default; 127.0.0.1)')
 parser.add_argument('--port', type=int, default=8000,
-                    help='TCP port of the CA to connect to')
+                    help='TCP port of the CA to connect to (default: 8000)')
 parser.add_argument('--timeout', type=int, default='10',
-                    help='Timeout (in seconds) when attempting to connect to CA')
+                    help='Timeout (in seconds) when attempting to connect to CA (default: 10)')
 parser.add_argument('command', type=str, nargs="?", default='list-commands',
                     help='command to be executed. If not specified, "list-commands" is used')
 parser.add_argument('-v', action="store_true", help="Prints version")
