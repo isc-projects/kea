@@ -67,6 +67,14 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandGetConfigHandler(const string&,
+                                             ConstElementPtr /*args*/) {
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
+    return (createAnswer(0, config));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = 1; // 1 indicates an error
@@ -180,6 +188,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
+
+        } else if (command == "get-config") {
+            return (srv->commandGetConfigHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -323,6 +334,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("get-config",
+        boost::bind(&ControlledDhcpv4Srv::commandGetConfigHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
@@ -364,6 +378,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().closeCommandSocket();
 
         // Deregister any registered commands
+        CommandMgr::instance().deregisterCommand("get-config");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");

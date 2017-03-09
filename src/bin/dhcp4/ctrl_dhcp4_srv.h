@@ -144,6 +144,10 @@ private:
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
+    isc::data::ConstElementPtr
+    commandGetConfigHandler(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
     /// @brief handler for processing 'set-config' command
     ///
     /// This handler processes set-config command, which processes
