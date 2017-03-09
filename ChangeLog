@@ -1,3 +1,10 @@
+1223.	[func]		tomek
+	Kea-shell, a management client able to connect to REST interface
+	provided by Control Agent, has been added. Control Agent now
+	uses bison parser, which provides better sanity checks, improved
+	comments and file inclusions.
+	(Trac #5137, git 816dc5ccfa374bd9942a49c7bac475f6d0523caa)
+
 1222.	[func]		fdupont
 	Obsolete parameter 'allow-client-update' has been removed
 	from DHCPv4 and DHCPv6 components.
