@@ -5,7 +5,6 @@ SHTESTS += ca_process_tests.sh
 
 noinst_SCRIPTS = ca_process_tests.sh
 EXTRA_DIST  = ca_process_tests.sh.in
-noinst_LTLIBRARIES = libbasic.la
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -39,6 +38,8 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+
+noinst_LTLIBRARIES = libbasic.la
 
 TESTS += ca_unittests
 
