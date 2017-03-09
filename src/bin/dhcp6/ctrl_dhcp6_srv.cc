@@ -72,6 +72,14 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
 }
 
 ConstElementPtr
+ControlledDhcpv6Srv::commandGetConfigHandler(const string&,
+                                             ConstElementPtr /*args*/) {
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
+    return (createAnswer(0, config));
+}
+
+ConstElementPtr
 ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = 1; // 1 indicates an error
@@ -188,6 +196,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
+
+        } else if (command == "get-config") {
+            return (srv->commandGetConfigHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -352,6 +363,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("get-config",
+        boost::bind(&ControlledDhcpv6Srv::commandGetConfigHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
@@ -393,6 +407,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().closeCommandSocket();
 
         // Deregister any registered commands
+        CommandMgr::instance().deregisterCommand("get-config");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");
