@@ -16,6 +16,7 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 CONFIG="{
     \"Control-agent\":
     {
+        \"http-host\": \"127.0.0.1\"
     },
     \"Logging\":
     {

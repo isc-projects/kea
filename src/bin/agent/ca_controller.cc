@@ -8,6 +8,7 @@
 
 #include <agent/ca_controller.h>
 #include <agent/ca_process.h>
+#include <agent/parser_context.h>
 
 using namespace isc::process;
 
@@ -38,6 +39,12 @@ CtrlAgentController::createProcess() {
     // Instantiate and return an instance of the D2 application process. Note
     // that the process is passed the controller's io_service.
     return (new CtrlAgentProcess(getAppName().c_str(), getIOService()));
+}
+
+isc::data::ConstElementPtr
+CtrlAgentController::parseFile(const std::string& name) {
+    ParserContext parser;
+    return (parser.parseFile(name, ParserContext::PARSER_AGENT));
 }
 
 CtrlAgentController::CtrlAgentController()
