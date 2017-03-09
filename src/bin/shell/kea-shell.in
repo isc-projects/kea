@@ -71,7 +71,7 @@ def shell_body():
         print(VERSION)
         exit(0)
 
-    # Ok, now time to put the parameters parsed into the structure to be
+    # Ok, now it's time to put the parameters parsed into the structure to be
     # used by the connection.
     params = CARequest()
     params.command = cmd_args.command

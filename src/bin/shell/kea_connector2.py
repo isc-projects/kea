@@ -13,7 +13,9 @@ import httplib
 from kea_conn import CAResponse # CARequest
 
 def send_to_control_agent(params):
-    """Establish HTTP connection first."""
+    """ Sends a request to Control Agent, receives a response and returns it."""
+
+    # Establish HTTP connection first.
     conn = httplib.HTTPConnection(params.http_host, params.http_port)
     conn.connect()
 
@@ -25,7 +27,7 @@ def send_to_control_agent(params):
         conn.putheader(k, params.headers[k])
     conn.endheaders()
 
-    # Send the content
+    # Send the body (i.e. the actual content)
     conn.send(params.content)
 
     # Now get the response
