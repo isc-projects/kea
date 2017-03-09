@@ -36,8 +36,8 @@ CONFIG="{
 }"
 
 # In these tests we need to use two binaries: Control Agent and Kea shell.
-# Using bin and bin_path would be confusing, so we omit defining bin and bin_path
-# on purpose.
+# Using bin and bin_path would be confusing, so we omit defining bin
+# and bin_path on purpose.
 ca_bin="kea-ctrl-agent"
 ca_bin_path=@abs_top_builddir@/src/bin/agent
 
@@ -83,8 +83,8 @@ shell_command_test() {
     # of configuration failure).
     get_pid ${ca_bin}
     if [ ${_GET_PIDS_NUM} -ne 1 ]; then
-        printf "ERROR: expected one Control Agent process to be started. Found %d processes\
- started.\n" ${_GET_PIDS_NUM}
+        printf "ERROR: expected one Control Agent process to be started.\
+ Found %d processes started.\n" ${_GET_PIDS_NUM}
         clean_exit 1
     fi
 
@@ -92,22 +92,26 @@ shell_command_test() {
     # It should be just once on startup.
     get_reconfigs
     if [ ${_GET_RECONFIGS} -ne 1 ]; then
-        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s), but exactly 1 was expected.\n"
+        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s),\
+ but exactly 1 was expected.\n"
         clean_exit 1
     else
         printf "Server successfully configured.\n"
     fi
 
     # Main test phase: send command, check response.
-    tmp="echo \"${params}\" | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt"
+    tmp="echo \"${params}\" | ${shell_bin_path}/${shell_bin} --host \
+ 127.0.0.1 --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
     
-    echo "${params}" | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt
+    echo "${params}" | ${shell_bin_path}/${shell_bin} --host 127.0.0.1 \
+ --port 8081 ${cmd} > ${tmpfile_path}/shell-stdout.txt
 
     # Check the exit code
     shell_exit_code=$?
     if [ ${shell_exit_code} -ne 0 ]; then
-        echo "ERROR: kea-shell returned ${shell_exit_code} exit code, expected 0."
+        echo "ERROR:" \
+	"kea-shell returned ${shell_exit_code} exit code,  expected 0."
     else
         echo "kea-shell returned ${shell_exit_code} exit code as expected."
     fi
@@ -118,7 +122,9 @@ shell_command_test() {
     diff ${tmpfile_path}/shell-stdout.txt ${tmpfile_path}/shell-expected.txt
     diff_code=$?
     if [ ${diff_code} -ne 0 ]; then
-        echo "ERROR: content returned is different than expected. See ${tmpfile_path}/shell-*.txt"
+        echo "ERROR:" \
+	"content returned is different than expected." \
+	"See ${tmpfile_path}/shell-*.txt"
         echo "EXPECTED:"
         cat ${tmpfile_path}/shell-expected.txt
         echo "ACTUAL RESULT:"
@@ -164,7 +170,8 @@ version_test() {
     if test "${REPORTED_VERSION}" == "${EXPECTED_VERSION}"; then
         test_finish 0
     else
-        printf "ERROR: Expected version ${EXPECTED_VERSION}, got ${REPORTED_VERSION}\n"
+        echo "ERROR:" \
+	"Expected version ${EXPECTED_VERSION}, got ${REPORTED_VERSION}"
         test_finish 1
     fi
 }
@@ -174,5 +181,3 @@ shell_command_test "shell.list-commands" "list-commands" \
     "[ { \"arguments\": [ \"list-commands\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
     "[ { \"result\": 1, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
-
-

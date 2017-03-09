@@ -5,7 +5,7 @@ EXTRA_DIST =
 if KEA_SHELL
 
 # Kea-shell is enabled, here are proper rules for it.
-kea_shell_PYTHON = kea-shell.py kea_conn.py kea_connector2.py kea_connector3.py
+kea_shell_PYTHON = kea_conn.py kea_connector2.py kea_connector3.py
 kea_shelldir = @localstatedir@/@PACKAGE@
 
 bin_SCRIPTS = kea-shell
@@ -13,12 +13,11 @@ bin_SCRIPTS = kea-shell
 else
 
 # Kea-shell is disabled, simply keep the files for make dist
-EXTRA_DIST += kea-shell.py kea_conn.py kea_connector2.py kea_connector3.py
+EXTRA_DIST += kea-shell kea_conn.py kea_connector2.py kea_connector3.py
 
 endif
 
-CLEANFILES = kea-shell kea-shell.pyc
-
+CLEANFILES = *.pyc
 
 man_MANS = kea-shell.8
 DISTCLEANFILES = $(man_MANS)
@@ -37,13 +36,6 @@ $(man_MANS):
 	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
-
-# This is done here since configure.ac AC_OUTPUT doesn't expand certain variables.
-kea-shell: kea-shell.py
-	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" kea-shell.py > kea-shell.tmp
-	$(SED) "s|REPORTED_VERSION|@PACKAGE_VERSION@|" kea-shell.tmp >$@
-	rm -f kea-shell.tmp
-	chmod a+x $@
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
