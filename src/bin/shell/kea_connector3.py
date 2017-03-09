@@ -13,13 +13,18 @@ import urllib.request
 from kea_conn import CAResponse # CARequest
 
 def send_to_control_agent(params):
-    """Establish HTTP connection first."""
+    """ Sends a request to Control Agent, receives a response and returns it."""
+
+    # First, create the URL
     url = "http://" + params.http_host + ":"
     url += str(params.http_port) + str(params.path)
 
+    # Now preprare the request (URL, headers and body)
     req = urllib.request.Request(url=url,
                                  data=str.encode(params.content),
                                  headers=params.headers)
+
+    # Establish connection, send the request.
     resp = urllib.request.urlopen(req)
 
     # Now get the response details, put it in CAResponse and return it

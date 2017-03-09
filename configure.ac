@@ -470,6 +470,7 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
 
 if test "x$enable_shell" != xno ; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+# We try to find 3.x first. If not found, we can do with 2.7.
   AM_PATH_PYTHON([3], [found="yes"], [found="no"])
   if test "x$found" = xno ; then
     AM_PATH_PYTHON([2.7])
