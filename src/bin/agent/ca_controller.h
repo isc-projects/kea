@@ -40,6 +40,13 @@ public:
     /// by convention this should match the executable name.
     static const char* agent_bin_name_;
 
+    /// @brief Parses the configuration file using Agent::ParserContext (bison)
+    ///
+    /// @param name name of the text file to be parsed
+    /// @return Element tree structure representing parsed configuration
+    isc::data::ConstElementPtr
+    parseFile(const std::string& name);
+
 private:
 
     /// @brief Creates an instance of the Control Agent application
