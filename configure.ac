@@ -470,7 +470,10 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
 
 if test "x$enable_shell" != xno ; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-  AM_PATH_PYTHON([2.7])
+  AM_PATH_PYTHON([3], [found="yes"], [found="no"])
+  if test "x$found" = xno ; then
+    AM_PATH_PYTHON([2.7])
+  fi
 else
   PYTHON=no
 fi
@@ -1628,8 +1631,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/admin/tests/cql_tests.sh
                  src/bin/agent/tests/test_libraries.h
                  src/bin/shell/Makefile
+                 src/bin/shell/kea-shell
                  src/bin/shell/tests/Makefile
                  src/bin/shell/tests/shell_process_tests.sh
+                 src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
@@ -1720,11 +1725,14 @@ AC_CONFIG_FILES([compatcheck/Makefile
 ])
 
  AC_CONFIG_COMMANDS([permissions], [
+           chmod +x src/bin/admin/kea-admin
            chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh
            chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh
            chmod +x src/bin/keactrl/keactrl
            chmod +x src/bin/keactrl/tests/keactrl_tests.sh
-           chmod +x src/bin/admin/kea-admin
+           chmod +x src/bin/shell/kea-shell
+           chmod +x src/bin/shell/tests/shell_process_tests.sh
+           chmod +x src/bin/shell/tests/shell_unittest.py
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
@@ -1800,6 +1808,7 @@ if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
 Python:
+  PYTHON:          ${PYTHON}
   PYTHON_VERSION:  ${PYTHON_VERSION}
 
 END

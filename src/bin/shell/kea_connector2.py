@@ -1,34 +1,39 @@
-#!/usr/bin/python
+# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# This is PYTHON 2.x version of HTTP connection establishment
-
-from kea_conn import CARequest, CAResponse
+"""
+This is PYTHON 2.x version of HTTP connection establishment
+"""
 
 import httplib
 
-class KeaConnector:
-    def sendCA(self, params):
-        # Estalbish HTTP connection first.
-        conn = httplib.HTTPConnection(params.http_host, params.http_port)
-        conn.connect()
+from kea_conn import CAResponse # CARequest
 
-        # Use POST to send it
-        request = conn.putrequest('POST', params.path)
+def send_to_control_agent(params):
+    """Establish HTTP connection first."""
+    conn = httplib.HTTPConnection(params.http_host, params.http_port)
+    conn.connect()
 
-        # Send the headers first
-        for k in params.headers:
-            conn.putheader(k, params.headers[k])
-        conn.endheaders()
+    # Use POST to send it
+    _ = conn.putrequest('POST', params.path)
 
-        # Send the content
-        conn.send(params.content)
+    # Send the headers first
+    for k in params.headers:
+        conn.putheader(k, params.headers[k])
+    conn.endheaders()
 
-        # Now get the response
-        resp = conn.getresponse()
+    # Send the content
+    conn.send(params.content)
 
-        # Now get the response details, put it in CAResponse and
-        # return it
-        x = CAResponse(resp.status, resp.reason, resp.read())
-        conn.close()
+    # Now get the response
+    resp = conn.getresponse()
 
-        return (x)
+    # Now get the response details, put it in CAResponse and
+    # return it
+    result = CAResponse(resp.status, resp.reason, resp.read())
+    conn.close()
+
+    return result

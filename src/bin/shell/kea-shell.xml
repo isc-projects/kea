@@ -49,9 +49,10 @@
     <cmdsynopsis>
       <command>kea-shell</command>
       <arg><option>-h</option></arg>
+      <arg><option>-v</option></arg>
       <arg><option>--host</option></arg>
       <arg><option>--port</option></arg>
-      <arg><option>-v</option></arg>
+      <arg><option>--timeout</option></arg>
       <arg><option>command</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -64,8 +65,8 @@
       Kea Control Agent (CA). It takes command as a command-line parameter
       that is being sent to CA with proper JSON
       encapsulation. Optional parameters may be specified on the
-      stdin. The request it sent of HTTP and a response is
-      retrieved. That response is printed out on stdout.
+      standard input. The request it sent of HTTP and a response is
+      retrieved. That response is displayed out on the standard output.
     </para>
 
   </refsect1>
@@ -78,16 +79,16 @@
     <variablelist>
 
       <varlistentry>
-        <term><option>-v</option></term>
+        <term><option>-h</option></term>
         <listitem><para>
-          Display the version.
+          Displays help regarding command line parameters.
         </para></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term><option>-h</option></term>
+        <term><option>-v</option></term>
         <listitem><para>
-          Displays help regarding command line parameters.
+          Display the version.
         </para></listitem>
       </varlistentry>
 
