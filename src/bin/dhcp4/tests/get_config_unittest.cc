@@ -5873,6 +5873,6 @@ TEST_P(Dhcp4GetConfigTest, run) {
 
 /// Define the parametrized test loop
 INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
-                        ::testing::Range(0UL, max_config_counter));
+                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
 
 };
