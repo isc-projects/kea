@@ -8,6 +8,7 @@
 #define D_CFG_MGR_H
 
 #include <cc/data.h>
+#include <cc/cfg_to_element.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 
@@ -57,7 +58,7 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase {
+class DCfgContextBase : public isc::data::CfgToElement {
 public:
     /// @brief Indicator that a configuration parameter is optional.
     static const bool OPTIONAL = true;
@@ -179,6 +180,17 @@ public:
     ///
     /// @return returns a pointer to the new clone.
     virtual DCfgContextBasePtr clone() = 0;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// Returns an element which must parse into the same object, i.e.
+    /// @code
+    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
+    /// @endcode
+    ///
+    /// @return a pointer to a configuration which can be parsed into
+    /// the initial configuration object
+    virtual isc::data::ElementPtr toElement() const = 0;
 
 protected:
     /// @brief Copy constructor for use by derivations in clone().

@@ -11,6 +11,7 @@
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <testutils/test_to_element.h>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 #include <limits>
@@ -182,13 +183,15 @@ TEST_F(DUIDConfigParserTest, noType) {
 // This test verifies that all parameters can be set.
 TEST_F(DUIDConfigParserTest, allParameters) {
     // Set all parameters.
-    ASSERT_NO_THROW(build("{ \"type\": \"EN\","
-                          "  \"identifier\": \"ABCDEF\","
-                          "  \"time\": 100,"
-                          "  \"htype\": 8,"
-                          "  \"enterprise-id\": 2024,"
-                          "  \"persist\": false"
-                          "}"));
+    std::string config = "{"
+        " \"type\": \"EN\","
+        " \"identifier\": \"ABCDEF\","
+        " \"time\": 100,"
+        " \"htype\": 8,"
+        " \"enterprise-id\": 2024,"
+        " \"persist\": false"
+        "}";
+    ASSERT_NO_THROW(build(config));
 
     // Verify that parameters have been set correctly.
     ASSERT_TRUE(cfg_duid_);
@@ -198,6 +201,9 @@ TEST_F(DUIDConfigParserTest, allParameters) {
     EXPECT_EQ(100, cfg_duid_->getTime());
     EXPECT_EQ(2024, cfg_duid_->getEnterpriseId());
     EXPECT_FALSE(cfg_duid_->persist());
+
+    // Check the config can be got back.
+    isc::test::runToElementTest<CfgDUID>(config, *cfg_duid_);
 }
 
 // Test out of range values for time.

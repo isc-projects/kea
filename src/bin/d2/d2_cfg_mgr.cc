@@ -13,6 +13,8 @@
 
 #include <boost/foreach.hpp>
 
+using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::process;
 
 namespace isc {
@@ -49,6 +51,50 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : DCfgContextBase(rhs) {
 }
 
 D2CfgContext::~D2CfgContext() {
+}
+
+ElementPtr
+D2CfgContext::toElement() const {
+    ElementPtr d2 = Element::createMap();
+    // Set ip-address
+    const IOAddress& ip_address = d2_params_->getIpAddress();
+    d2->set("ip-address", Element::create(ip_address.toText()));
+    // Set port
+    size_t port = d2_params_->getPort();
+    d2->set("port", Element::create(static_cast<int64_t>(port)));
+    // Set dns-server-timeout
+    size_t dns_server_timeout = d2_params_->getDnsServerTimeout();
+    d2->set("dns-server-timeout",
+            Element::create(static_cast<int64_t>(dns_server_timeout)));
+    // Set ncr-protocol
+    const dhcp_ddns::NameChangeProtocol& ncr_protocol =
+        d2_params_->getNcrProtocol();
+    d2->set("ncr-protocol",
+            Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol)));
+    // Set ncr-format
+    const dhcp_ddns::NameChangeFormat& ncr_format = d2_params_->getNcrFormat();
+    d2->set("ncr-format",
+            Element::create(dhcp_ddns::ncrFormatToString(ncr_format)));
+    // Set forward-ddns
+    ElementPtr forward_ddns = Element::createMap();
+    forward_ddns->set("ddns-domains", forward_mgr_->toElement());
+    d2->set("forward-ddns", forward_ddns);
+    // Set reverse-ddns
+    ElementPtr reverse_ddns = Element::createMap();
+    reverse_ddns->set("ddns-domains", reverse_mgr_->toElement());
+    d2->set("reverse-ddns", reverse_ddns);
+    // Set tsig-keys
+    ElementPtr tsig_keys = Element::createList();
+    for (TSIGKeyInfoMap::const_iterator key = keys_->begin();
+         key != keys_->end(); ++key) {
+        tsig_keys->add(key->second->toElement());
+    }
+    d2->set("tsig-keys", tsig_keys);
+    // Set DhcpDdns
+    ElementPtr result = Element::createMap();
+    result->set("DhcpDdns", d2);
+
+    return (result);
 }
 
 // *********************** D2CfgMgr  *************************

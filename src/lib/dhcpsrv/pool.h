@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -263,7 +263,7 @@ public:
     /// This may be useful for "prefix/len" style definition for
     /// addresses, but is mostly useful for prefix pools.
     /// @return prefix length (1-128)
-    uint8_t getLength() {
+    uint8_t getLength() const {
         return (prefix_len_);
     }
 

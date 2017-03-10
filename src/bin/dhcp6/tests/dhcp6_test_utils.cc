@@ -66,6 +66,7 @@ Dhcpv6SrvTest::Dhcpv6SrvTest()
     subnet_->addPool(pool_);
 
     isc::dhcp::CfgMgr::instance().clear();
+    CfgMgr::instance().setFamily(AF_INET6);
     isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
     isc::dhcp::CfgMgr::instance().commit();
 

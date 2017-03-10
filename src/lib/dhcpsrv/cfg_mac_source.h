@@ -7,6 +7,7 @@
 #ifndef CFG_MAC_SOURCE_H
 #define CFG_MAC_SOURCE_H
 
+#include <cc/cfg_to_element.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -21,7 +22,7 @@ typedef std::vector<uint32_t> CfgMACSources;
 ///
 /// It's a simple wrapper around a vector of uint32_t, with each entry
 /// holding one MAC source.
-class CfgMACSource {
+class CfgMACSource : public isc::data::CfgToElement {
 
  public:
     /// @brief Default constructor.
@@ -67,6 +68,11 @@ class CfgMACSource {
     void clear() {
         mac_sources_.clear();
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
  protected:
     /// @brief Actual MAC sources storage

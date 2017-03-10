@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_SUBNETS4_H
 
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <boost/shared_ptr.hpp>
@@ -25,7 +26,7 @@ namespace dhcp {
 ///
 /// See @c CfgSubnets4::selectSubnet documentation for more details on how the
 /// subnet is selected for the client.
-class CfgSubnets4 {
+class CfgSubnets4 : public isc::data::CfgToElement {
 public:
 
     /// @brief Adds new subnet to the configuration.
@@ -182,6 +183,11 @@ public:
     /// anything related to subnets, as there may be fewer subnets in the new
     /// configuration and also subnet-ids may change.
     void removeStatistics();
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

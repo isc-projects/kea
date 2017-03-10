@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef CFG_HOST_OPERATIONS_H
 #define CFG_HOST_OPERATIONS_H
 
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/host.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
@@ -39,7 +40,7 @@ ConstCfgHostOperationsPtr;
 /// An administrator selects which identifiers the server should
 /// use and in which order to search for host reservations to
 /// optimize performance of the server.
-class CfgHostOperations {
+class CfgHostOperations : public isc::data::CfgToElement {
 public:
 
     /// @brief Type of the container holding ordered list of identifiers.
@@ -76,6 +77,11 @@ public:
 
     /// @brief Removes existing identifier types.
     void clearIdentifierTypes();
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 
