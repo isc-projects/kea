@@ -32,6 +32,7 @@ libkea_asiolink_la_SOURCES += tcp_endpoint.h
 libkea_asiolink_la_SOURCES += tcp_socket.h
 libkea_asiolink_la_SOURCES += udp_endpoint.h
 libkea_asiolink_la_SOURCES += udp_socket.h
+libkea_asiolink_la_SOURCES += unix_domain_socket.cc unix_domain_socket.h
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # KEA_CXXFLAGS)
