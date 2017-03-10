@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,17 @@
 
 #include <config.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/hosts_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <ostream>
+#include <string>
+#include <vector>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -665,6 +671,145 @@ CfgHosts::add6(const HostPtr& host) {
         }
         hosts6_.insert(HostResrv6Tuple(it->second, host));
     }
+}
+
+ElementPtr
+CfgHosts::toElement() const {
+    uint16_t family = CfgMgr::instance().getFamily();
+    if (family == AF_INET) {
+        return (toElement4());
+    } else if (family == AF_INET6) {
+        return (toElement6());
+    } else {
+        isc_throw(ToElementError, "CfgHosts::toElement: unknown "
+                  "address family: " << family);
+    }
+}
+
+ElementPtr
+CfgHosts::toElement4() const {
+    CfgHostsList result;
+    // Iterate using arbitrary the index 0
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+        // Get the subnet ID
+        SubnetID subnet_id = (*host)->getIPv4SubnetID();
+        // Prepare the map
+        ElementPtr map = Element::createMap();
+        // Set the identifier
+        Host::IdentifierType id_type = (*host)->getIdentifierType();
+        if (id_type == Host::IDENT_HWADDR) {
+            HWAddrPtr hwaddr = (*host)->getHWAddress();
+            map->set("hw-address", Element::create(hwaddr->toText(false)));
+        } else if (id_type == Host::IDENT_DUID) {
+            DuidPtr duid = (*host)->getDuid();
+            map->set("duid", Element::create(duid->toText()));
+        } else if (id_type == Host::IDENT_CIRCUIT_ID) {
+            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
+            std::string circuit_id = util::encode::encodeHex(bin);
+            map->set("circuit-id", Element::create(circuit_id));
+        } else if (id_type == Host::IDENT_CLIENT_ID) {
+            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
+            std::string client_id = util::encode::encodeHex(bin);
+            map->set("client-id", Element::create(client_id));
+        } else {
+            isc_throw(ToElementError, "invalid DUID type: " << id_type);
+        }
+        // Set the reservation
+        const IOAddress& address = (*host)->getIPv4Reservation();
+        map->set("ip-address", Element::create(address.toText()));
+        // Set the hostname
+        const std::string& hostname = (*host)->getHostname();
+        map->set("hostname", Element::create(hostname));
+        // Set next-server
+        const IOAddress& next_server = (*host)->getNextServer();
+        map->set("next-server", Element::create(next_server.toText()));
+        // Set server-hostname
+        const std::string& server_hostname = (*host)->getServerHostname();
+        map->set("server-hostname", Element::create(server_hostname));
+        // Set boot-file-name
+        const std::string& boot_file_name = (*host)->getBootFileName();
+        map->set("boot-file-name", Element::create(boot_file_name));
+        // Set client-classes
+        const ClientClasses& cclasses = (*host)->getClientClasses4();
+        ElementPtr classes = Element::createList();
+        for (ClientClasses::const_iterator cclass = cclasses.cbegin();
+             cclass != cclasses.end(); ++cclass) {
+            classes->add(Element::create(*cclass));
+        }
+        map->set("client-classes", classes);
+        // Set option-data
+        ConstCfgOptionPtr opts = (*host)->getCfgOption4();
+        map->set("option-data", opts->toElement());
+        // Push the map on the list
+        result.add(subnet_id, map);
+    }
+    return (result.externalize());
+}
+
+ElementPtr
+CfgHosts::toElement6() const {
+    CfgHostsList result;
+    // Iterate using arbitrary the index 0
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+        // Get the subnet ID
+        SubnetID subnet_id = (*host)->getIPv6SubnetID();
+        // Prepare the map
+        ElementPtr map = Element::createMap();
+        // Set the identifier
+        Host::IdentifierType id_type = (*host)->getIdentifierType();
+        if (id_type == Host::IDENT_HWADDR) {
+            HWAddrPtr hwaddr = (*host)->getHWAddress();
+            map->set("hw-address", Element::create(hwaddr->toText(false)));
+        } else if (id_type == Host::IDENT_DUID) {
+            DuidPtr duid = (*host)->getDuid();
+            map->set("duid", Element::create(duid->toText()));
+        } else if (id_type == Host::IDENT_CIRCUIT_ID) {
+            isc_throw(ToElementError, "unexpected circuit-id DUID type");
+        } else if (id_type == Host::IDENT_CLIENT_ID) {
+            isc_throw(ToElementError, "unexpected client-id DUID type");
+        } else {
+            isc_throw(ToElementError, "invalid DUID type: " << id_type);
+        }
+        // Set reservations (ip-addresses)
+        IPv6ResrvRange na_resv =
+            (*host)->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ElementPtr resvs = Element::createList();
+        for (IPv6ResrvIterator resv = na_resv.first;
+             resv != na_resv.second; ++resv) {
+            resvs->add(Element::create(resv->second.toText()));
+        }
+        map->set("ip-addresses", resvs);
+        // Set reservations (prefixes)
+        IPv6ResrvRange pd_resv =
+                (*host)->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+        resvs = Element::createList();
+        for (IPv6ResrvIterator resv = pd_resv.first;
+             resv != pd_resv.second; ++resv) {
+            resvs->add(Element::create(resv->second.toText()));
+        }
+        map->set("prefixes", resvs);
+        // Set the hostname
+        const std::string& hostname = (*host)->getHostname();
+        map->set("hostname", Element::create(hostname));
+        // Set client-classes
+        const ClientClasses& cclasses = (*host)->getClientClasses6();
+        ElementPtr classes = Element::createList();
+        for (ClientClasses::const_iterator cclass = cclasses.cbegin();
+             cclass != cclasses.end(); ++cclass) {
+            classes->add(Element::create(*cclass));
+        }
+        map->set("client-classes", classes);
+        // Set option-data
+        ConstCfgOptionPtr opts = (*host)->getCfgOption6();
+        map->set("option-data", opts->toElement());
+        // Push the map on the list
+        result.add(subnet_id, map);
+    }
+    return (result.externalize());
 }
 
 } // end of namespace isc::dhcp

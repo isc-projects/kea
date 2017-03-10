@@ -6,7 +6,7 @@ SHTESTS += d2_process_tests.sh
 noinst_SCRIPTS = d2_process_tests.sh
 
 EXTRA_DIST  = d2_process_tests.sh.in
-EXTRA_DIST += testdata/d2_cfg_tests.json
+EXTRA_DIST += testdata/d2_cfg_tests.json testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -58,6 +58,7 @@ d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += d2_controller_unittests.cc
 d2_unittests_SOURCES += d2_simple_parser_unittest.cc
 d2_unittests_SOURCES += parser_unittest.cc parser_unittest.h
+d2_unittests_SOURCES += get_config_unittest.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)

@@ -116,6 +116,17 @@ public:
         return (hooks_config_);
     }
 
+    /// @brief Unparse a configuration object
+    ///
+    /// Returns an element which must parse into the same object, i.e.
+    /// @code
+    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
+    /// @endcode
+    ///
+    /// @return a pointer to a configuration which can be parsed into
+    /// the initial configuration object
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Private copy constructor

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <testutils/test_to_element.h>
 #include <util/stopwatch.h>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -111,6 +112,19 @@ TEST(CfgExpirationTest, defaults) {
               cfg.getMaxReclaimTime());
     EXPECT_EQ(CfgExpiration::DEFAULT_UNWARNED_RECLAIM_CYCLES,
               cfg.getUnwarnedReclaimCycles());
+}
+
+/// @brief Tests that unparse returns an expected value
+TEST(CfgExpirationTest, unparse) {
+    CfgExpiration cfg;
+    std::string defaults = "{\n"
+        "\"reclaim-timer-wait-time\": 10,\n"
+        "\"flush-reclaimed-timer-wait-time\": 25,\n"
+        "\"hold-reclaimed-time\": 3600,\n"
+        "\"max-reclaim-leases\": 100,\n"
+        "\"max-reclaim-time\": 250,\n"
+        "\"unwarned-reclaim-cycles\": 5 }";
+    isc::test::runToElementTest<CfgExpiration>(defaults, cfg);
 }
 
 // Test the {get,set}ReclaimTimerWaitTime.

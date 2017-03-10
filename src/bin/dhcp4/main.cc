@@ -124,6 +124,9 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    // This is the DHCPv4 server
+    CfgMgr::instance().setFamily(AF_INET);
+
     if (check_mode) {
         try {
 

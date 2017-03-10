@@ -167,7 +167,8 @@ CfgMgr::getStagingCfg() {
 }
 
 CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR), d2_client_mgr_(), verbose_mode_(false) {
+    : datadir_(DHCP_DATA_DIR), d2_client_mgr_(),
+      verbose_mode_(false), family_(AF_INET) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am

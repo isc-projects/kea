@@ -9,12 +9,14 @@
 #include <d2/d2_simple_parser.h>
 #include <d2/tests/parser_unittest.h>
 #include <cc/data.h>
+#include <testutils/test_to_element.h>
 
 #include <boost/lexical_cast.hpp>
 
 using namespace isc;
 using namespace isc::data;
 using namespace isc::d2;
+using namespace isc::test;
 
 namespace {
 
@@ -659,6 +661,9 @@ TEST_F(TSIGKeyInfoParserTest, validEntry) {
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key_, "d2_key_one", "HMAC-MD5",
                          "dGhpcyBrZXkgd2lsbCBtYXRjaA==", 120));
+
+    // Verify unparsing.
+    runToElementTest<TSIGKeyInfo>(config, *key_);
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -880,6 +885,9 @@ TEST_F(DnsServerInfoParserTest, validEntry) {
     ASSERT_TRUE(server_);
     EXPECT_TRUE(checkServer(server_, "", "127.0.0.1", 100));
 
+    // Verify unparsing.
+    runToElementTest<DnsServerInfo>(config, *server_);
+
     // Valid entries for static ip, no port
     // This will fail without invoking set defaults
     config = " { \"ip-address\": \"192.168.2.5\" }";
@@ -1022,6 +1030,21 @@ TEST_F(DdnsDomainParserTest, validDomain) {
     EXPECT_TRUE(server);
 
     EXPECT_TRUE(checkServer(server, "", "127.0.0.3", 300));
+
+    // Verify unparsing.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ConstElementPtr servers_json;
+    ASSERT_NO_THROW(servers_json = json->get("dns-servers"));
+    ASSERT_TRUE(servers_json);
+    ASSERT_EQ(Element::list, servers_json->getType());
+    for (size_t i = 0; i < servers_json->size(); ++i) {
+        ElementPtr server_json;
+        ASSERT_NO_THROW(server_json = servers_json->getNonConst(i));
+        ASSERT_NO_THROW(server_json->set("hostname",
+                                         Element::create(std::string())));
+    }
+    runToElementTest<DdnsDomain>(json, *domain_);
 }
 
 /// @brief Tests the fundamentals of parsing DdnsDomain lists.
@@ -1146,4 +1169,3 @@ TEST_F(DdnsDomainListParserTest, duplicateDomain) {
 }
 
 };
-

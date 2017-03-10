@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -241,6 +241,95 @@ TEST(AddrUtilitiesTest, addrsInRange6) {
               IOAddress("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")));
 
     EXPECT_THROW(addrsInRange(IOAddress("fe80::5"), IOAddress("fe80::4")),
+                 isc::BadValue);
+}
+
+// Checks if IPv4 address ranges can be converted to prefix / prefix_len
+TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
+    // Use a shorter name
+    const auto& plfr = prefixLengthFromRange;
+
+    // Let's start with something simple
+    EXPECT_EQ(32, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.0")));
+    EXPECT_EQ(31, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.1")));
+    EXPECT_EQ(30, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.3")));
+    EXPECT_EQ(29, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.7")));
+    EXPECT_EQ(28, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.15")));
+    EXPECT_EQ(27, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.31")));
+    EXPECT_EQ(26, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.63")));
+    EXPECT_EQ(25, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.127")));
+    EXPECT_EQ(24, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.255")));
+    EXPECT_EQ(23, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.3.255")));
+    EXPECT_EQ(16, plfr(IOAddress("10.0.0.0"), IOAddress("10.0.255.255")));
+    EXPECT_EQ(8, plfr(IOAddress("10.0.0.0"), IOAddress("10.255.255.255")));
+    EXPECT_EQ(0, plfr(IOAddress("0.0.0.0"), IOAddress("255.255.255.255")));
+
+    // Fail if a network boundary is crossed
+    EXPECT_EQ(-1, plfr(IOAddress("10.0.0.255"), IOAddress("10.0.1.1")));
+
+    // The upper bound cannot be smaller than the lower bound
+    EXPECT_THROW(plfr(IOAddress("192.0.2.5"), IOAddress("192.0.2.4")),
+                 isc::BadValue);
+}
+
+// Checks if IPv6 address ranges can be converted to prefix / prefix_len
+TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
+    // Use a shorter name
+    const auto& plfr = prefixLengthFromRange;
+
+    // Let's start with something simple
+    EXPECT_EQ(128, plfr(IOAddress("::"), IOAddress("::")));
+    EXPECT_EQ(112, plfr(IOAddress("fe80::"),  IOAddress("fe80::ffff")));
+    EXPECT_EQ(96, plfr(IOAddress("fe80::"),  IOAddress("fe80::ffff:ffff")));
+    EXPECT_EQ(80, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::ffff:ffff:ffff")));
+    EXPECT_EQ(64, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(63, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::1:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(62, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::3:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(61, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::7:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(60, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::f:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(59, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::1f:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(58, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::3f:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(57, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::7f:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(56, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::ff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(55, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::1ff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(54, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::3ff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(53, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::7ff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(52, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::fff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(51, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::1fff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(50, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::3fff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(49, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::7fff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(48, plfr(IOAddress("fe80::"),
+                       IOAddress("fe80::ffff:ffff:ffff:ffff:ffff")));
+    EXPECT_EQ(0, plfr(IOAddress("::"),
+                      IOAddress("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")));
+
+    // Fail if a network boundary is crossed
+    EXPECT_EQ(-1, plfr(IOAddress("2001:db8::ffff"),
+                       IOAddress("2001:db8::1:1")));
+
+    // The upper bound cannot be smaller than the lower bound
+    EXPECT_THROW(plfr(IOAddress("fe80::5"), IOAddress("fe80::4")),
+                 isc::BadValue);
+
+    // Address family must match
+    EXPECT_THROW(plfr(IOAddress("192.0.2.0"), IOAddress("fe80::1")),
                  isc::BadValue);
 }
 

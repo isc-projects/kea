@@ -248,6 +248,16 @@ public:
         return (default_logger_name_);
     }
 
+    /// @brief Sets address family (AF_INET or AF_INET6)
+    void setFamily(uint16_t family) {
+        family_ = family == AF_INET ? AF_INET : AF_INET6;
+    }
+
+    /// @brief Returns address family.
+    uint16_t getFamily() const {
+        return (family_);
+    }
+
     //@}
 
 protected:
@@ -299,6 +309,9 @@ private:
 
     /// @brief Default logger name.
     std::string default_logger_name_;
+
+    /// @brief Address family.
+    uint16_t family_;
 };
 
 } // namespace isc::dhcp

@@ -11,11 +11,14 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
+#include <testutils/test_to_element.h>
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <string>
@@ -23,6 +26,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -67,9 +71,82 @@ HostReservationsListParserTest::TearDown() {
     CfgMgr::instance().clear();
 }
 
+/// @brief class of subnet_id reservations
+class CfgHostsSubnet : public CfgToElement {
+public:
+    /// @brief constructor
+    CfgHostsSubnet(ConstCfgHostsPtr hosts, SubnetID id)
+        : hosts_(hosts), id_(id) { }
+
+    /// @brief unparse method
+    ElementPtr toElement() const;
+
+private:
+    /// @brief the host reservation configuration
+    ConstCfgHostsPtr hosts_;
+
+    /// @brief the subnet ID
+    SubnetID id_;
+};
+
+ElementPtr
+CfgHostsSubnet::toElement() const {
+    CfgHostsList list;
+    try {
+        list.internalize(hosts_->toElement());
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "CfgHostsSubnet::toElement: " << ex.what();
+    }
+    ElementPtr result = boost::const_pointer_cast<Element>(list.get(id_));
+
+    // Strip
+    for (size_t i = 0; i < result->size(); ++i) {
+        ElementPtr resv = result->getNonConst(i);
+        ConstElementPtr ip_address = resv->get("ip-address");
+        if (ip_address && (ip_address->stringValue() == "0.0.0.0")) {
+            resv->remove("ip-address");
+        }
+        ConstElementPtr ip_addresses = resv->get("ip-addresses");
+        if (ip_addresses && ip_addresses->empty()) {
+            resv->remove("ip-addresses");
+        }
+        ConstElementPtr prefixes = resv->get("prefixes");
+        if (prefixes && prefixes->empty()) {
+            resv->remove("prefixes");
+        }
+        ConstElementPtr hostname = resv->get("hostname");
+        if (hostname && hostname->stringValue().empty()) {
+            resv->remove("hostname");
+        }
+        ConstElementPtr next_server = resv->get("next-server");
+        if (next_server && (next_server->stringValue() == "0.0.0.0")) {
+            resv->remove("next-server");
+        }
+        ConstElementPtr server_hostname = resv->get("server-hostname");
+        if (server_hostname && server_hostname->stringValue().empty()) {
+            resv->remove("server-hostname");
+        }
+        ConstElementPtr boot_file_name = resv->get("boot-file-name");
+        if (boot_file_name && boot_file_name->stringValue().empty()) {
+            resv->remove("boot-file-name");
+        }
+        ConstElementPtr client_classess = resv->get("client-classes");
+        if (client_classess && client_classess->empty()) {
+            resv->remove("client-classes");
+        }
+        ConstElementPtr option_data = resv->get("option-data");
+        if (option_data && option_data->empty()) {
+            resv->remove("option-data");
+        }
+    }
+    return (result);
+}
+
 // This test verifies that the parser for the list of the host reservations
 // parses IPv4 reservations correctly.
 TEST_F(HostReservationsListParserTest, ipv4Reservations) {
+    CfgMgr::instance().setFamily(AF_INET);
+    // hexadecimal in lower case for toElement()
     std::string config =
         "[ "
         "  { "
@@ -109,6 +186,19 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.110", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("bar.example.com", hosts[0]->getHostname());
+
+    // Get back the config from cfg_hosts
+    boost::algorithm::to_lower(config);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>(config, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(0));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that an attempt to add two reservations with the
@@ -147,6 +237,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
 // This test verifies that the parser for the list of the host reservations
 // parses IPv6 reservations correctly.
 TEST_F(HostReservationsListParserTest, ipv6Reservations) {
+    // hexadecimal in lower case for toElement()
     std::string config = 
         "[ "
         "  { \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
@@ -156,7 +247,6 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
         "  }, "
         "  { \"hw-address\": \"01:02:03:04:05:06\","
         "    \"ip-addresses\": [ \"2001:db8:1::123\" ],"
-        "    \"prefixes\": [ ],"
         "    \"hostname\": \"bar.example.com\" "
         "  } "
         "]";
@@ -202,6 +292,23 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8:1:2::", prefixes.first->second.getPrefix().toText());
     EXPECT_EQ(80, prefixes.first->second.getPrefixLen());
+
+    // Get back the config from cfg_hosts
+    ElementPtr resv = config_element->getNonConst(0);
+    resv->remove("ip-addresses");
+    config = prettyPrint(config_element);
+    boost::algorithm::to_lower(config);
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(2));
+    runToElementTest<CfgHostsSubnet>(config, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(2));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that an attempt to add two reservations with the
@@ -235,7 +342,5 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
         EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
     }
 }
-
-
 
 } // end of anonymous namespace

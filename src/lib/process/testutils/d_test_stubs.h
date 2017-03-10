@@ -646,6 +646,11 @@ private:
 
     /// @brief Stores non-scalar configuration elements
     ObjectStoragePtr object_values_;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief Defines a pointer to DStubContext.

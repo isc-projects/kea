@@ -31,6 +31,7 @@
 #include "test_libraries.h"
 #include "test_data_files_config.h"
 #include "dhcp4_test_utils.h"
+#include "get_config_unittest.h"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -628,12 +629,15 @@ TEST_F(Dhcp4ParserTest, bogusCommand) {
 /// pool definition.
 TEST_F(Dhcp4ParserTest, emptySubnet) {
 
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [  ], "
+        "\"valid-lifetime\": 4000 }";
+
     ConstElementPtr json;
-    EXPECT_NO_THROW(json = parseDHCP4("{ " + genIfaceConfig() + "," +
-                                      "\"rebind-timer\": 2000, "
-                                      "\"renew-timer\": 1000, "
-                                      "\"subnet4\": [  ], "
-                                      "\"valid-lifetime\": 4000 }"));
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -655,6 +659,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -689,6 +694,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -723,6 +729,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -774,6 +781,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     int cnt = 0; // Number of reconfigurations
 
@@ -832,6 +840,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     int cnt = 0; // Number of reconfigurations
     do {
@@ -1040,6 +1049,7 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1070,6 +1080,7 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1168,6 +1179,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1206,8 +1218,10 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
 
     ConstElementPtr json_false;
     ASSERT_NO_THROW(json_false = parseDHCP4(config_false));
+    extractConfig(config_false);
     ConstElementPtr json_true;
     ASSERT_NO_THROW(json_true = parseDHCP4(config_true));
+    extractConfig(config_true);
 
     // Let's check the default. It should be true
     ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getEchoClientId());
@@ -1248,6 +1262,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1285,6 +1300,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1317,6 +1333,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1357,6 +1374,7 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
         "\"valid-lifetime\": 4000 }";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1429,6 +1447,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1585,6 +1604,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config, true));
+    extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1651,6 +1671,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1705,6 +1726,7 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     // Make sure that the option definitions do not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -1813,6 +1835,7 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -1855,6 +1878,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -2056,6 +2080,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 109);
@@ -2112,6 +2137,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "  } ]"
         "}";
     ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    extractConfig(config);
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2155,6 +2181,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2225,6 +2252,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2306,6 +2334,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2381,6 +2410,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2437,6 +2467,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         "}";
 
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
@@ -2498,6 +2529,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2646,6 +2678,7 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -2920,6 +2953,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2976,6 +3010,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 
 
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
@@ -3055,6 +3090,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -3110,6 +3146,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -3287,6 +3324,7 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
 
@@ -3326,6 +3364,7 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
 
@@ -3424,6 +3463,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     // Convert the JSON string to configuration elements.
     ConstElementPtr config;
     ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
+    extractConfig(config_str);
 
     // Pass the configuration in for parsing.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
@@ -3523,6 +3563,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -3710,6 +3751,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -3861,6 +3903,7 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -4045,6 +4088,7 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(hr_config));
+    extractConfig(hr_config);
     ConstElementPtr result;
     EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
 
@@ -4092,6 +4136,7 @@ TEST_F(Dhcp4ParserTest, declineTimerDefault) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4113,6 +4158,7 @@ TEST_F(Dhcp4ParserTest, dhcp4o6portDefault) {
         "}";
     ConstElementPtr config;
     ASSERT_NO_THROW(config = parseDHCP4(config_txt));
+    extractConfig(config_txt);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
@@ -4138,6 +4184,7 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4193,6 +4240,7 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -4263,6 +4311,7 @@ TEST_F(Dhcp4ParserTest, 4o6default) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4297,6 +4346,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4393,6 +4443,7 @@ TEST_F(Dhcp4ParserTest, 4o6iface) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4429,6 +4480,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4467,6 +4519,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
 
@@ -4517,6 +4570,7 @@ TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -4557,20 +4611,13 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseJSON(config));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    checkResult(status, 1);
-
     EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 }
 
 // Test verifies that regular configuration does not provide any user context
 // in the address pool.
 TEST_F(Dhcp4ParserTest, poolUserContextMissing) {
+    extractConfig(PARSER_CONFIGS[0]);
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[0]), 0, 0, pool);
     ASSERT_TRUE(pool);
@@ -4580,6 +4627,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextMissing) {
 // Test verifies that it's possible to specify empty user context in the
 // address pool.
 TEST_F(Dhcp4ParserTest, poolUserContextEmpty) {
+    extractConfig(PARSER_CONFIGS[1]);
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[1]), 0, 0, pool);
     ASSERT_TRUE(pool);
@@ -4594,6 +4642,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextEmpty) {
 // Test verifies that it's possible to specify parameters in the user context
 // in the address pool.
 TEST_F(Dhcp4ParserTest, poolUserContextData) {
+    extractConfig(PARSER_CONFIGS[2]);
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[2]), 0, 0, pool);
     ASSERT_TRUE(pool);
@@ -4627,6 +4676,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextData) {
 // Test verifies that it's possible to specify parameters in the user context
 // in the min-max address pool.
 TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
+    extractConfig(PARSER_CONFIGS[3]);
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[3]), 0, 0, pool);
     ASSERT_TRUE(pool);

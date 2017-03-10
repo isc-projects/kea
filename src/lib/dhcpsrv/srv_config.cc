@@ -8,6 +8,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -15,6 +16,7 @@
 #include <sstream>
 
 using namespace isc::log;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -198,6 +200,120 @@ SrvConfig::updateStatistics() {
 
         getCfgSubnets6()->updateStatistics();
     }
+}
+
+ElementPtr
+SrvConfig::toElement() const {
+    // Get family for the configuration manager
+    uint16_t family = CfgMgr::instance().getFamily();
+    // Toplevel map
+    ElementPtr result = Element::createMap();
+    // DhcpX global map
+    ElementPtr dhcp = Element::createMap();
+    // Set decline-probation-period
+    dhcp->set("decline-probation-period",
+              Element::create(static_cast<long long>(decline_timer_)));
+    // Set echo-client-id (DHCPv4)
+    if (family == AF_INET) {
+        dhcp->set("echo-client-id", Element::create(echo_v4_client_id_));
+    }
+    // Set dhcp4o6-port
+    dhcp->set("dhcp4o6-port",
+              Element::create(static_cast<int>(dhcp4o6_port_)));
+    // Set dhcp-ddns
+    dhcp->set("dhcp-ddns", d2_client_config_->toElement());
+    // Set interfaces-config
+    dhcp->set("interfaces-config", cfg_iface_->toElement());
+    // Set option-def
+    dhcp->set("option-def", cfg_option_def_->toElement());
+    // Set option-data
+    dhcp->set("option-data", cfg_option_->toElement());
+    // Set subnets
+    ConstElementPtr subnets;
+    if (family == AF_INET) {
+        subnets = cfg_subnets4_->toElement();
+        dhcp->set("subnet4", subnets);
+    } else {
+        subnets = cfg_subnets6_->toElement();
+        dhcp->set("subnet6", subnets);
+    }
+    // Insert reservations
+    CfgHostsList resv_list;
+    resv_list.internalize(cfg_hosts_->toElement());
+    const std::vector<ElementPtr>& sn_list = subnets->listValue();
+    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.begin();
+         subnet != sn_list.end(); ++subnet) {
+        ConstElementPtr id = (*subnet)->get("id");
+        if (isNull(id)) {
+            isc_throw(ToElementError, "subnet has no id");
+        }
+        SubnetID subnet_id = id->intValue();
+        ConstElementPtr resvs = resv_list.get(subnet_id);
+        (*subnet)->set("reservations", resvs);
+    }
+    // Set expired-leases-processing
+    ConstElementPtr expired = cfg_expiration_->toElement();
+    dhcp->set("expired-leases-processing", expired);
+    if (family == AF_INET6) {
+        // Set server-id (DHCPv6)
+        dhcp->set("server-id", cfg_duid_->toElement());
+
+        // Set relay-supplied-options (DHCPv6)
+        dhcp->set("relay-supplied-options", cfg_rsoo_->toElement());
+    }
+    // Set lease-database
+    CfgLeaseDbAccess lease_db(*cfg_db_access_);
+    dhcp->set("lease-database", lease_db.toElement());
+    // Set hosts-database
+    CfgHostDbAccess host_db(*cfg_db_access_);
+    // @todo accept empty map
+    ConstElementPtr hosts_database = host_db.toElement();
+    if (hosts_database->size() > 0) {
+        dhcp->set("hosts-database", hosts_database);
+    }
+    // Set host-reservation-identifiers
+    ConstElementPtr host_ids;
+    if (family == AF_INET) {
+        host_ids = cfg_host_operations4_->toElement();
+    } else {
+        host_ids = cfg_host_operations6_->toElement();
+    }
+    dhcp->set("host-reservation-identifiers", host_ids);
+    // Set mac-sources (DHCPv6)
+    if (family == AF_INET6) {
+        dhcp->set("mac-sources", cfg_mac_source_.toElement());
+    }
+    // Set control-socket (skip if null as empty is not legal)
+    if (!isNull(control_socket_)) {
+        dhcp->set("control-socket", control_socket_);
+    }
+    // Set client-classes
+    ConstElementPtr client_classes = class_dictionary_->toElement();
+    // @todo accept empty list
+    if (!client_classes->empty()) {
+        dhcp->set("client-classes", client_classes);
+    }
+    // Set hooks-libraries
+    ConstElementPtr hooks_libs = hooks_config_.toElement();
+    dhcp->set("hooks-libraries", hooks_libs);
+    // Set DhcpX
+    result->set(family == AF_INET ? "Dhcp4" : "Dhcp6", dhcp);
+
+    // Logging global map (skip if empty)
+    if (!logging_info_.empty()) {
+        ElementPtr logging = Element::createMap();
+        // Set loggers list
+        ElementPtr loggers = Element::createList();
+        for (LoggingInfoStorage::const_iterator logger =
+                 logging_info_.cbegin();
+             logger != logging_info_.cend(); ++logger) {
+            loggers->add(logger->toElement());
+        }
+        logging->set("loggers", loggers);
+        result->set("Logging", logging);
+    }
+
+    return (result);
 }
 
 }

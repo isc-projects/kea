@@ -167,12 +167,11 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 	feature="final method"
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM(
-			[],
 			[class Foo {
 			 public:
 			 	virtual ~Foo() {};
 				virtual void bar() final;
-			 };])],
+			 };],[])],
 		 [AC_MSG_RESULT([yes])],
 		 [AC_MSG_RESULT([no])
 		  continue])
@@ -201,6 +200,31 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 
+	AC_MSG_CHECKING(static_assert support)
+	feature="static_assert"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[static_assert(1 + 1 == 2, "");],
+			[])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(template alias)
+	feature="template alias"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[template<int i>
+			 class I {
+			 public: int get() { return i; };
+			 };
+			 using Zero = I<0>;],
+			[Zero Z;
+			 return Z.get();])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
 	AC_MSG_CHECKING(lambda support)
 	feature="lambda"
 	AC_COMPILE_IFELSE(
@@ -212,6 +236,19 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 done
+
+# Check for std::is_base_of support
+AC_MSG_CHECKING([for std::is_base_of])
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[#include <type_traits>
+		 class A {};
+		 class B : A {};]
+		[static_assert(std::is_base_of<A, B>::value, "");])],
+	[AC_MSG_RESULT(yes)
+	 AC_DEFINE([HAVE_IS_BASE_OF], [1],
+	 [Define to 1 if std::is_base_of is available])],
+	[AC_MSG_RESULT(no)])
 
 dnl Determine if we are using GNU sed
 GNU_SED=no
@@ -1407,6 +1444,31 @@ if test $enable_gtest != "no"; then
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 	    
+# Check for CreateUnifiedDiff from gtest >= 1.8.0
+if test $enable_gtest != "no"; then
+   AC_MSG_CHECKING([for CreateUnifiedDiff in $GTEST_INCLUDES/gtest.h])
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
+   AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM(
+           [#include <boost/algorithm/string.hpp>
+	    #include <gtest/gtest.h>
+	    #include <string>
+	    #include <vector>
+	    std::string nodiff(std::string text) {
+	        std::vector<std::string> lines;
+		boost::split(lines, text, boost::is_any_of("\n"));
+		using namespace testing::internal;
+		return (edit_distance::CreateUnifiedDiff(lines, lines));
+	    }],
+	    [return 0;])],
+	[AC_MSG_RESULT(yes)
+	 AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
+	 [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
+	[AC_MSG_RESULT(no)])
+    CPPFLAGS=$CPPFLAGS_SAVED
+fi    
+
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
@@ -1459,11 +1521,11 @@ AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
    enable_generate_parser=$enableval, enable_generate_parser=no)
 
 # Check if flex is avaible. Flex is not needed for building Kea sources,
-# unless you want to regenerate grammar in src/lib/eval
+# unless you want to regenerate grammars
 AC_PROG_LEX
 
 # Check if bison is available. Bison is not needed for building Kea sources,
-# unless you want to regenerate grammar in src/lib/eval
+# unless you want to regenerate grammars
 AC_PROG_YACC
 
 if test "x$enable_generate_parser" != "xno"; then
@@ -1477,7 +1539,7 @@ if test "x$enable_generate_parser" != "xno"; then
     fi
 
 # Ok, let's check if we have at least 3.0.0 version of the bison. The code used
-# to generate src/lib/eval parser is roughly based on bison 3.0 examples.
+# to generate parsers is roughly based on bison 3.0 examples.
    cat > bisontest.y << EOF
 %require "3.0.0"
 %token X
@@ -1591,23 +1653,33 @@ AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset
 
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
-AC_CONFIG_FILES([compatcheck/Makefile
+AC_CONFIG_FILES([Makefile
+                 compatcheck/Makefile
                  dns++.pc
-                 doc/design/datasrc/Makefile
-                 doc/design/Makefile
-                 doc/guide/Makefile
                  doc/Makefile
+                 doc/design/Makefile
+                 doc/design/datasrc/Makefile
+                 doc/guide/Makefile
                  doc/version.ent
+                 ext/Makefile
                  ext/coroutine/Makefile
                  ext/gtest/Makefile
-                 ext/Makefile
                  m4macros/Makefile
-                 Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/admin/Makefile
+                 src/bin/admin/kea-admin
+                 src/bin/admin/tests/Makefile
+                 src/bin/admin/tests/cql_tests.sh
+                 src/bin/admin/tests/data/Makefile
+                 src/bin/admin/tests/memfile_tests.sh
+                 src/bin/admin/tests/mysql_tests.sh
+                 src/bin/admin/tests/pgsql_tests.sh
                  src/bin/agent/Makefile
                  src/bin/agent/tests/Makefile
                  src/bin/agent/tests/ca_process_tests.sh
+                 src/bin/agent/tests/test_data_files_config.h
+                 src/bin/agent/tests/test_libraries.h
                  src/bin/d2/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
@@ -1636,15 +1708,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
-                 src/bin/admin/Makefile
-                 src/bin/admin/kea-admin
-                 src/bin/admin/tests/Makefile
-                 src/bin/admin/tests/data/Makefile
-                 src/bin/admin/tests/memfile_tests.sh
-                 src/bin/admin/tests/mysql_tests.sh
-                 src/bin/admin/tests/pgsql_tests.sh
-                 src/bin/admin/tests/cql_tests.sh
-                 src/bin/agent/tests/test_libraries.h
                  src/bin/shell/Makefile
                  src/bin/shell/kea-shell
                  src/bin/shell/tests/Makefile
@@ -1682,6 +1745,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
+                 src/lib/eval/Makefile
+                 src/lib/eval/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/hooks/Makefile
@@ -1707,10 +1772,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/process/spec_config.h.pre
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
-                 src/lib/testutils/Makefile
-                 src/lib/testutils/dhcp_test_lib.sh
                  src/lib/stats/Makefile
                  src/lib/stats/tests/Makefile
+                 src/lib/testutils/Makefile
+                 src/lib/testutils/dhcp_test_lib.sh
                  src/lib/util/Makefile
                  src/lib/util/io/Makefile
                  src/lib/util/python/Makefile
@@ -1720,11 +1785,10 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
-                 src/lib/eval/Makefile
-                 src/lib/eval/tests/Makefile
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
+                 src/share/database/scripts/cql/Makefile
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
@@ -1734,12 +1798,11 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
-                 src/share/database/scripts/cql/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])
 
- AC_CONFIG_COMMANDS([permissions], [
+AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/admin/kea-admin
            chmod +x src/bin/dhcp4/tests/dhcp4_process_tests.sh
            chmod +x src/bin/dhcp6/tests/dhcp6_process_tests.sh

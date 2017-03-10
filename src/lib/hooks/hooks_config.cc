@@ -113,11 +113,9 @@ HooksConfig::toElement() const {
         ElementPtr map = Element::createMap();
         // Set the library name
         map->set("library", Element::create(hl->first));
-        // Set parameters
+        // Set parameters (not set vs set empty map)
         if (!isNull(hl->second)) {
             map->set("parameters", hl->second);
-        } else {
-            map->set("parameters", Element::createMap());
         }
         // Push to the list
         result->add(map);

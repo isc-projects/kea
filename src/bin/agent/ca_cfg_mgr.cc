@@ -158,6 +158,38 @@ CtrlAgentCfgContext::setControlSocketInfo(const isc::data::ConstElementPtr& cont
     ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
 }
 
+ElementPtr
+CtrlAgentCfgContext::toElement() const {
+    ElementPtr ca = Element::createMap();
+    // Set http-host
+    ca->set("http-host", Element::create(http_host_));
+    // Set http-port
+    ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
+    // Set hooks-libraries
+    ca->set("hooks-libraries", hooks_config_.toElement());
+    // Set control-sockets
+    ElementPtr control_sockets = Element::createMap();
+    // Set dhcp4-server
+    if (ctrl_sockets_[TYPE_DHCP4]) {
+        control_sockets->set("dhcp4-server", ctrl_sockets_[TYPE_DHCP4]);
+    }
+    // Set dhcp6-server
+    if (ctrl_sockets_[TYPE_DHCP6]) {
+        control_sockets->set("dhcp6-server", ctrl_sockets_[TYPE_DHCP6]);
+    }
+    // Set d2-server
+    if (ctrl_sockets_[TYPE_D2]) {
+        control_sockets->set("d2-server", ctrl_sockets_[TYPE_D2]);
+    }
+    ca->set("control-sockets", control_sockets);
+    // Set Control-agent
+    ElementPtr result = Element::createMap();
+    result->set("Control-agent", ca);
+
+    // Set Logging (not yet)
+
+    return (result);
+}
 
 } // namespace isc::agent
 } // namespace isc

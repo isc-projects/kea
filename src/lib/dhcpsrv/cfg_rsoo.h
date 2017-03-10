@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef CFG_RSOO_H
 #define CFG_RSOO_H
 
+#include <cc/cfg_to_element.h>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <set>
@@ -21,7 +22,7 @@ namespace dhcp {
 /// 65 is officially RSSO-enabled. The list may be extended in the future
 /// and this class allows for specifying any future RSOO-enabled options.
 /// The administrator may also use existing options as RSOO-enabled.
-class CfgRSOO {
+class CfgRSOO : public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.
@@ -45,6 +46,11 @@ public:
     ///
     /// @param code option to be enabled in RSOO
     void enable(const uint16_t code);
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

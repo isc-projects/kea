@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -293,6 +293,7 @@ TEST(Subnet4Test, clientClasses) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -300,6 +301,7 @@ TEST(Subnet4Test, clientClasses) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
+    EXPECT_EQ(1, subnet->getClientClasses().size());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -325,6 +327,7 @@ TEST(Subnet4Test, clientClassesMultiple) {
     bar_class.insert("bar");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -332,6 +335,7 @@ TEST(Subnet4Test, clientClassesMultiple) {
     // Let's allow clients belonging to "bar" or "foo" class.
     subnet->allowClientClass("bar");
     subnet->allowClientClass("foo");
+    EXPECT_EQ(2, subnet->getClientClasses().size());
 
     // Class-less clients are to be rejected.
     EXPECT_FALSE(subnet->clientSupported(no_class));
@@ -740,6 +744,7 @@ TEST(Subnet6Test, clientClasses) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -747,6 +752,7 @@ TEST(Subnet6Test, clientClasses) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
+    EXPECT_EQ(1, subnet->getClientClasses().size());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -772,6 +778,7 @@ TEST(Subnet6Test, clientClassesMultiple) {
     bar_class.insert("bar");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -779,6 +786,7 @@ TEST(Subnet6Test, clientClassesMultiple) {
     // Let's allow only clients belonging to "foo" or "bar" class.
     subnet->allowClientClass("foo");
     subnet->allowClientClass("bar");
+    EXPECT_EQ(2, subnet->getClientClasses().size());
 
     // Class-less clients are to be rejected.
     EXPECT_FALSE(subnet->clientSupported(no_class));

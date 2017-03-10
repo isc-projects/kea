@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -18,6 +19,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -438,5 +440,117 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceName) {
     EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
+// This test check if IPv4 subnets can be unparsed in a predictable way,
+TEST(CfgSubnets4Test, unparseSubnet) {
+    CfgSubnets4 cfg;
+
+    // Add some subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+    subnet1->allowClientClass("foo");
+    subnet2->setIface("lo");
+    subnet2->setRelayInfo(IOAddress("10.0.0.1"));
+    subnet3->setIface("eth1");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"id\": 123,\n"
+        "    \"subnet\": \"192.0.2.0/26\",\n"
+        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
+        "    \"interface\": \"\",\n"
+        "    \"match-client-id\": true,\n"
+        "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"valid-lifetime\": 3,\n"
+        "    \"client-class\": \"foo\",\n"
+        "    \"4o6-interface\": \"\",\n"
+        "    \"4o6-interface-id\": \"\",\n"
+        "    \"4o6-subnet\": \"\",\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"pools\": [ ]\n"
+        "},{\n"
+        "    \"id\": 124,\n"
+        "    \"subnet\": \"192.0.2.64/26\",\n"
+        "    \"relay\": { \"ip-address\": \"10.0.0.1\" },\n"
+        "    \"interface\": \"lo\",\n"
+        "    \"match-client-id\": true,\n"
+        "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"valid-lifetime\": 3,\n"
+        "    \"4o6-interface\": \"\",\n"
+        "    \"4o6-interface-id\": \"\",\n"
+        "    \"4o6-subnet\": \"\",\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"pools\": [ ]\n"
+        "},{\n"
+        "    \"id\": 125,\n"
+        "    \"subnet\": \"192.0.2.128/26\",\n"
+        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"match-client-id\": true,\n"
+        "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"valid-lifetime\": 3,\n"
+        "    \"4o6-interface\": \"\",\n"
+        "    \"4o6-interface-id\": \"\",\n"
+        "    \"4o6-subnet\": \"\",\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"pools\": [ ]\n"
+        "} ]\n";
+    runToElementTest<CfgSubnets4>(expected, cfg);
+}
+
+// This test check if IPv4 pools can be unparsed in a predictable way,
+TEST(CfgSubnets4Test, unparsePool) {
+    CfgSubnets4 cfg;
+
+    // Add a subnet with pools
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 123));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
+    Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
+
+    subnet->addPool(pool1);
+    subnet->addPool(pool2);
+    cfg.add(subnet);
+    
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"id\": 123,\n"
+        "    \"subnet\": \"192.0.2.0/24\",\n"
+        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
+        "    \"interface\": \"\",\n"
+        "    \"match-client-id\": true,\n"
+        "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"renew-timer\": 1,\n"
+        "    \"rebind-timer\": 2,\n"
+        "    \"valid-lifetime\": 3,\n"
+        "    \"4o6-interface\": \"\",\n"
+        "    \"4o6-interface-id\": \"\",\n"
+        "    \"4o6-subnet\": \"\",\n"
+        "    \"reservation-mode\": \"all\",\n"
+        "    \"option-data\": [],\n"
+        "    \"pools\": [\n"
+        "        {\n"
+        "            \"pool\": \"192.0.2.1-192.0.2.10\"\n"
+        "        },{\n"
+        "            \"pool\": \"192.0.2.64/26\"\n"
+        "        }\n"
+        "    ]\n"
+        "} ]\n";
+    runToElementTest<CfgSubnets4>(expected, cfg);
+}
 
 } // end of anonymous namespace
