@@ -60,6 +60,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     // Parse the configuration.
     IfacesConfigParser parser(AF_INET);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     // Check it can be unparsed.
@@ -84,6 +85,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     config_element = Element::fromJSON(config);
 
     cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     runToElementTest<CfgIface>(config, *cfg_iface);
@@ -137,6 +139,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     // Parse the configuration.
     IfacesConfigParser parser(AF_INET);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
     ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
 
     // Check it can be unparsed.
@@ -147,6 +150,7 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
     cfg_ref.useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    ASSERT_TRUE(cfg->getCfgIface());
     EXPECT_TRUE(*cfg->getCfgIface() == cfg_ref);
 }
 

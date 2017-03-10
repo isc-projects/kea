@@ -703,21 +703,7 @@ public:
     void runCfgOptionsTest(uint16_t family, std::string config) {
         ConstElementPtr json;
         ASSERT_NO_THROW(json = Element::fromJSON(config)) << config;
-        ConstElementPtr option_def = json->get("option-def");
-        if (option_def) {
-            SimpleParser::setListDefaults(option_def,
-                                          family == AF_INET ?
-                                          ParseConfigTest::OPTION4_DEF_DEFAULTS :
-                                          ParseConfigTest::OPTION6_DEF_DEFAULTS);
-        }
-        ConstElementPtr option_data = json->get("option-data");
-        if (option_data) {
-            SimpleParser::setListDefaults(option_data,
-                                          family == AF_INET ?
-                                          ParseConfigTest::OPTION4_DEFAULTS :
-                                          ParseConfigTest::OPTION6_DEFAULTS);
-        }
-        runToElementTest<CfgOptionsTest>(json, *this);
+        runCfgOptionsTest(family, json);
     }
 
 private:
