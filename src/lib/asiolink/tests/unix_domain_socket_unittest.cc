@@ -6,18 +6,15 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
-#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <asiolink/unix_domain_socket.h>
-#include <boost/bind.hpp>
+#include <asiolink/testutils/test_server_unix_socket.h>
 #include <gtest/gtest.h>
 #include <array>
 #include <cstdio>
 #include <sstream>
 #include <string>
 
-using namespace boost::asio;
-using namespace boost::asio::local;
 using namespace isc::asiolink;
 
 namespace  {
@@ -36,13 +33,9 @@ public:
     ///
     /// Removes unix socket descriptor before the test.
     UnixDomainSocketTest() : io_service_(),
-                             server_endpoint_(unixSocketFilePath()),
-                             server_acceptor_(io_service_.get_io_service()),
-                             server_socket_(io_service_.get_io_service()),
-                             test_timer_(io_service_) {
+                             test_socket_(io_service_, unixSocketFilePath(),
+                                          TEST_TIMEOUT) {
         removeUnixSocketFile();
-        test_timer_.setup(boost::bind(&UnixDomainSocketTest::timeoutHandler, this),
-                                      TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
@@ -64,74 +57,18 @@ public:
         static_cast<void>(remove(unixSocketFilePath().c_str()));
     }
 
-    /// @brief Creates and binds server socket.
-    void bindServerSocket() {
-        server_acceptor_.open();
-        server_acceptor_.bind(server_endpoint_);
-        server_acceptor_.listen();
-        server_acceptor_.async_accept(server_socket_,
-                                      boost::bind(&UnixDomainSocketTest::
-                                                  acceptHandler, this, _1));
-    }
-
-    /// @brief Server acceptor handler.
-    ///
-    /// @param ec Error code.
-    void acceptHandler(const boost::system::error_code& ec) {
-        if (ec) {
-            ADD_FAILURE() << ec.message();
-        }
-        server_socket_.async_read_some(boost::asio::buffer(&raw_buf_[0],
-                                                           raw_buf_.size()),
-                                       boost::bind(&UnixDomainSocketTest::
-                                                   readHandler, this, _1, _2));
-    }
-
-    /// @brief Server read handler.
-    ///
-    /// @param ec Error code.
-    /// @param bytes_transferred Number of bytes read.
-    void readHandler(const boost::system::error_code& ec,
-                     size_t bytes_transferred) {
-        std::string received(&raw_buf_[0], bytes_transferred);
-        std::string response("received " + received);
-        boost::asio::write(server_socket_, boost::asio::buffer(response.c_str(),
-                                                               response.size()));
-        io_service_.stop();
-    }
-
-    /// @brief Callback function invoke upon test timeout.
-    ///
-    /// It stops the IO service and reports test timeout.
-    void timeoutHandler() {
-        ADD_FAILURE() << "Timeout occurred while running the test!";
-        io_service_.stop();
-    }
-
     /// @brief IO service used by the tests.
     IOService io_service_;
 
-    /// @brief Server endpoint.
-    local::stream_protocol::endpoint server_endpoint_;
-
-    /// @brief Server acceptor.
-    local::stream_protocol::acceptor server_acceptor_;
-
-    /// @brief Server side unix domain socket.
-    stream_protocol::socket server_socket_;
-
-    /// @brief Receive buffer.
-    std::array<char, 1024> raw_buf_;
-
-    /// @brief Asynchronous timer service to detect timeouts.
-    IntervalTimer test_timer_;
+    /// @brief Server side unix socket used in these tests.
+    test::TestServerUnixSocket test_socket_;
 };
 
 // This test verifies that the client can send data over the unix
 // domain socket and receive a response.
 TEST_F(UnixDomainSocketTest, sendReceive) {
     // Start the server.
-    bindServerSocket();
+    test_socket_.bindServerSocket();
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);
@@ -176,7 +113,7 @@ TEST_F(UnixDomainSocketTest, clientErrors) {
 // the socket is connected.
 TEST_F(UnixDomainSocketTest, getNative) {
     // Start the server.
-    bindServerSocket();
+    test_socket_.bindServerSocket();
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);
