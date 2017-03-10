@@ -356,7 +356,7 @@ TEST_F(HostReservationParserTest, dhcp4ClientIdHexWithPrefix) {
 // This test verifies that the parser can parse the reservation entry
 // when IPv4 address is specified, but hostname is not.
 TEST_F(HostReservationParserTest, dhcp4NoHostname) {
-    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0a\","
         "\"ip-address\": \"192.0.2.10\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
@@ -376,7 +376,6 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 
     // lower duid value
-    boost::algorithm::to_lower(config);
     CfgMgr::instance().setFamily(AF_INET);
     CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
     runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);

@@ -1165,7 +1165,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     // There should be at least one interface
-
+    // As far as I can tell, this is the first lambda in Kea code. Cool.
     auto config = [this](string iface) {
         return ("{ " + genIfaceConfig() + ","
                 "\"preferred-lifetime\": 3000,"
