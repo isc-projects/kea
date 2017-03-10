@@ -1,3 +1,8 @@
+1224.	[func]		fdupont
+	toElement(), a crucial functionality for upcoming get-config
+	and write-config command, has been implemented.
+	(Trac #5114, git df38c26f957c9ac329718ac9d70ffbcf7b95c4e9)
+
 1223.	[func]		tomek
 	Kea-shell, a management client able to connect to REST interface
 	provided by Control Agent, has been added. Control Agent now
