@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/asiolink/tests\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -8,7 +9,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda test-socket
 
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
@@ -28,6 +29,7 @@ run_unittests_SOURCES += udp_socket_unittest.cc
 run_unittests_SOURCES += io_service_unittest.cc
 run_unittests_SOURCES += dummy_io_callback_unittest.cc
 run_unittests_SOURCES += tcp_acceptor_unittest.cc
+run_unittests_SOURCES += unix_domain_socket_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
