@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,8 +52,8 @@
       <arg><option>-V</option></arg>
       <arg><option>-W</option></arg>
       <arg><option>-d</option></arg>
-      <arg><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg><option>-t<replaceable class="parameter">config-file</replaceable></option></arg>
+      <!-- not yet <arg><option>-t</option></arg> -->
+      <arg><option>-c</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -105,21 +105,21 @@
         </para></listitem>
       </varlistentry>
 
+<!-- not yet
+      <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para>
+          Check the syntax of the configuration file and report the first
+          error if any.
+        </para></listitem>
+      </varlistentry>
+-->
+
       <varlistentry>
         <term><option>-c</option></term>
         <listitem><para>
           Configuration file including the configuration for DHCP-DDNS server.
           It may also contain configuration entries for other Kea services.
-        </para></listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><option>-t</option></term>
-        <listitem><para>
-          Check the syntax of the configuration file and report the
-          first error if any. Note that not all parameters are
-          completely checked, in particular, service socket is
-          not opened.
         </para></listitem>
       </varlistentry>
 
