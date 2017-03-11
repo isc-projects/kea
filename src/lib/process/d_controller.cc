@@ -530,7 +530,9 @@ DControllerBase::usage(const std::string & text)
               << std::endl
               << "  -d: optional, verbose output " << std::endl
               << "  -c <config file name> : mandatory,"
-              <<   " specifies name of configuration file " << std::endl;
+              << " specify name of configuration file" << std::endl
+              << "  -t <config file name> : check the"
+              << " configuration file and exit" << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
