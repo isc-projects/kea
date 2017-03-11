@@ -150,12 +150,12 @@ void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
     // Iterate over the given command line options. If its a stock option
-    // ("c" or "d") handle it here.  If its a valid custom option, then
+    // ("s" or "v") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVWc:t:" + getCustomOpts());
+    std::string opts("dvVWc:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -182,17 +182,12 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'c':
-        case 't':
             // config file name
             if (optarg == NULL) {
                 isc_throw(InvalidUsage, "configuration file name missing");
             }
 
             setConfigFile(optarg);
-
-            if (ch == 't') {
-                check_only_ = true;
-            }
             break;
 
         case '?': {
