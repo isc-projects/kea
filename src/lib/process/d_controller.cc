@@ -68,10 +68,66 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         parseArgs(argc, argv);
     } catch (const InvalidUsage& ex) {
         usage(ex.what());
-        throw; // rethrow it
+        // rethrow it with an empty message
+        isc_throw(InvalidUsage, "");
     }
 
     setProcName(bin_name_);
+
+    if (!test_mode && check_only_) {
+        try {
+            // We need to initialize logging, in case any error
+            // messages are to be printed.
+            // This is just a test, so we don't care about lockfile.
+            setenv("KEA_LOCKFILE_DIR", "none", 0);
+            isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
+            isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
+            Daemon::loggerInit(bin_name_.c_str(), verbose_);
+
+            // Check the syntax first.
+            std::string config_file = getConfigFile();
+            if (config_file.empty()) {
+                // Basic sanity check: file name must not be empty.
+                isc_throw(InvalidUsage,
+                          "JSON configuration file not specified");
+            }
+            isc::data::ConstElementPtr whole_config = parseFile(config_file);
+            if (!whole_config) {
+                // No fallback to fromJSONFile
+                isc_throw(InvalidUsage, "No configuration found");
+            }
+            if (verbose_) {
+                std::cerr << "Syntax check OK" << std::endl;
+            }
+
+            // Check the logic next.
+            isc::data::ConstElementPtr module_config;
+            module_config = whole_config->get(getAppName());
+            if (!module_config) {
+                isc_throw(InvalidUsage, "Config file " << config_file <<
+                          " does not include '" << getAppName() << "' entry");
+            }
+
+            // Get an application process object.
+            initProcess();
+
+            isc::data::ConstElementPtr answer;
+            answer = updateConfig(module_config, true);
+            int rcode = 0;
+            answer = isc::config::parseAnswer(rcode, answer);
+            if (rcode != 0) {
+                isc_throw(InvalidUsage, "Error encountered: "
+                          << answer->stringValue());
+            }
+        } catch (const VersionMessage&) {
+            throw;
+        } catch (const InvalidUsage&) {
+            throw;
+        } catch (const std::exception& ex) {
+            isc_throw(InvalidUsage, "Syntax check failed with: " << ex.what());
+        }
+        return;
+    }   
 
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
@@ -150,12 +206,12 @@ void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
     // Iterate over the given command line options. If its a stock option
-    // ("s" or "v") handle it here.  If its a valid custom option, then
+    // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVWc:" + getCustomOpts());
+    std::string opts("dvVWc:t:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -182,12 +238,17 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'c':
+        case 't':
             // config file name
             if (optarg == NULL) {
                 isc_throw(InvalidUsage, "configuration file name missing");
             }
 
             setConfigFile(optarg);
+
+            if (ch == 't') {
+                check_only_ = true;
+            }
             break;
 
         case '?': {
@@ -290,7 +351,7 @@ DControllerBase::configFromFile() {
                                  getAppName() << "' entry.");
         }
 
-        answer = updateConfig(module_config);
+        answer = updateConfig(module_config, false);
         int rcode = 0;
         isc::config::parseAnswer(rcode, answer);
         if (!rcode) {
@@ -329,8 +390,9 @@ DControllerBase::runProcess() {
 
 // Instance method for handling new config
 isc::data::ConstElementPtr
-DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
-    return (process_->configure(new_config, false));
+DControllerBase::updateConfig(isc::data::ConstElementPtr new_config,
+                              bool check_only) {
+    return (process_->configure(new_config, check_only));
 }
 
 
