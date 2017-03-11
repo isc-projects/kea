@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -268,13 +268,24 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     isc::data::ElementPtr config_set = isc::data::Element::fromJSON(config);
 
     // Verify that a valid config gets a successful update result.
-    answer = updateConfig(config_set);
+    answer = updateConfig(config_set, false);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode);
+
+    // Verify that a valid config gets a successful check result.
+    answer = updateConfig(config_set, true);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
-    answer = updateConfig(config_set);
+    answer = updateConfig(config_set, false);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
+
+    // Verify that an error is handled too when the config is checked for.
+    SimFailure::set(SimFailure::ftProcessConfigure);
+    answer = updateConfig(config_set, true);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }

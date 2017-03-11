@@ -168,7 +168,8 @@ public:
 
         // The JSON parsed ok and we've added the defaults, pass the config
         // into the Element parser and check for the expected outcome.
-        data::ConstElementPtr answer = cfg_mgr_->parseConfig(config_set_);
+        data::ConstElementPtr answer;
+        answer = cfg_mgr_->parseConfig(config_set_, false);
 
         // Extract the result and error text from the answer.
         int rcode = 0;
@@ -601,7 +602,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
 
     // Verify that parsing the exact same configuration a second time
     // does not cause a duplicate value errors.
-    answer_ = cfg_mgr_->parseConfig(config_set_);
+    answer_ = cfg_mgr_->parseConfig(config_set_, false);
     ASSERT_TRUE(checkAnswer(0));
 }
 
