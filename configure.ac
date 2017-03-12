@@ -519,6 +519,7 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
   [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
+PKGPYTHONDIR=
 if test "x$enable_shell" != xno ; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
 # We try to find 3.x first. If not found, we can do with 2.7.
@@ -526,12 +527,20 @@ if test "x$enable_shell" != xno ; then
   if test "x$found" = xno ; then
     AM_PATH_PYTHON([2.7])
   fi
+  # pkgpythondir needs to be expanded
+  PKGPYTHONDIR="$pkgpythondir"
+  OLD=
+  while test "x$OLD" != "x$PKGPYTHONDIR"; do
+    OLD="$PKGPYTHONDIR"
+    eval PKGPYTHONDIR="\"$OLD\""
+  done
 else
   PYTHON=no
 fi
 
 # Export to makefiles the info whether we have shell enabled or not
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
+AC_SUBST(PKGPYTHONDIR)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
