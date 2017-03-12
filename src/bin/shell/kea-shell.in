@@ -17,9 +17,12 @@ Text client for Control Agent process
 # that's a stand alone package that requires separate installation. One of
 # the design requirements was to not require any additional packages, so
 # the code uses standard libraries available in python. Hence two versions.
+import os
 import sys
 import signal
 import argparse
+
+sys.path.append('@PKGPYTHONDIR@')
 
 from kea_conn import CARequest # CAResponse
 
