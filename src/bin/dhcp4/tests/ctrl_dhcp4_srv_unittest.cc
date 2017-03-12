@@ -397,6 +397,31 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     EXPECT_TRUE(lease1->stateExpiredReclaimed());
 }
 
+// This test verifies that the DHCP server handles get-version commands
+TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the get-version command
+    sendUnixCommand("{ \"command\": \"get-version\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_FALSE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the get-extended-version command
+    sendUnixCommand("{ \"command\": \"get-extended-version\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the get-config-report command
+    sendUnixCommand("{ \"command\": \"get-config-report\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// This test verifies that the DHCP server immediately removed expired
 // This test verifies that the DHCP server immediately removed expired
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {

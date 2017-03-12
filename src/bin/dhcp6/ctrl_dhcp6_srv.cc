@@ -16,6 +16,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <cfgrpt/config_report.h>
 
 using namespace isc::config;
 using namespace isc::data;
@@ -134,6 +135,27 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
 
 
 ConstElementPtr
+ControlledDhcpv6Srv::commandConfigGetVersion(const string&, ConstElementPtr) {
+    ConstElementPtr answer =
+        isc::config::createAnswer(0, Dhcpv6Srv::getVersion(false));
+    return (answer);
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandConfigGetExtendedVersion(const string&, ConstElementPtr) {
+    ConstElementPtr answer =
+        isc::config::createAnswer(0, Dhcpv6Srv::getVersion(true));
+    return (answer);
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandConfigGetConfigReport(const string&, ConstElementPtr) {
+    ConstElementPtr answer =
+        isc::config::createAnswer(0, isc::detail::getConfigReport());
+    return (answer);
+}
+
+ConstElementPtr
 ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
@@ -188,6 +210,15 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
+
+        } else if (command == "get-version") {
+            return (srv->commandConfigGetVersion(command, args));
+
+        } else if (command == "get-extended-version") {
+            return (srv->commandConfigGetExtendedVersion(command, args));
+
+        } else if (command == "get-config-report") {
+            return (srv->commandConfigGetConfigReport(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -352,6 +383,15 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("get-version",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigGetVersion, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("get-extended-version",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigGetExtendedVersion, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("get-config-report",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigGetConfigReport, this, _1, _2));
+
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
@@ -396,6 +436,9 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");
+        CommandMgr::instance().deregisterCommand("get-version");
+        CommandMgr::instance().deregisterCommand("get-extended-version");
+        CommandMgr::instance().deregisterCommand("get-config-report");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-reset");
