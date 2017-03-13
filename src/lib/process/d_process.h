@@ -25,6 +25,18 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief String value for the list-commands command.
+static const std::string LIST_COMMANDS_COMMAND("list-commands");
+
+/// @brief String value for the get-version command.
+static const std::string GET_VERSION_COMMAND("get-version");
+
+/// @brief String value for the get-extended-version command.
+static const std::string GET_EXTENDED_VERSION_COMMAND("get-extended-version");
+
+/// @brief String value for the get-config-report command.
+static const std::string GET_CONFIG_REPORT_COMMAND("get-config-report");
+
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 

@@ -86,7 +86,12 @@ isc::data::ConstElementPtr
 DStubProcess::command(const std::string& command,
                       isc::data::ConstElementPtr /* args */) {
     isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
+    if (command.compare(LIST_COMMANDS_COMMAND) == 0) {
+        isc::data::ElementPtr commands = isc::data::Element::createList();
+        std::string command(stub_proc_command_);
+        commands->add(isc::data::Element::create(command));
+        answer = isc::config::createAnswer(COMMAND_SUCCESS, commands);
+    } else if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
         // Simulates a process command execution failure.
         answer = isc::config::createAnswer(COMMAND_ERROR,
                                           "SimFailure::ftProcessCommand");
@@ -171,7 +176,12 @@ isc::data::ConstElementPtr
 DStubController::customControllerCommand(const std::string& command,
                                      isc::data::ConstElementPtr /* args */) {
     isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftControllerCommand)) {
+    if (command.compare(LIST_COMMANDS_COMMAND) == 0) {
+        isc::data::ElementPtr commands = isc::data::Element::createList();
+        std::string command(stub_ctl_command_);
+        commands->add(isc::data::Element::create(command));
+        answer = isc::config::createAnswer(COMMAND_SUCCESS, commands);
+    } else if (SimFailure::shouldFailOn(SimFailure::ftControllerCommand)) {
         // Simulates command failing to execute.
         answer = isc::config::createAnswer(COMMAND_ERROR,
                                           "SimFailure::ftControllerCommand");

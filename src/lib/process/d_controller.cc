@@ -338,21 +338,36 @@ DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
 isc::data::ConstElementPtr
 DControllerBase::executeCommand(const std::string& command,
                             isc::data::ConstElementPtr args) {
-    // Shutdown is universal.  If its not that, then try it as
-    // a custom command supported by the derivation.  If that
-    // doesn't pan out either, than send to it the application
-    // as it may be supported there.
     isc::data::ConstElementPtr answer;
-    if (command.compare(SHUT_DOWN_COMMAND) == 0) {
+    if (command.compare(LIST_COMMANDS_COMMAND) == 0) {
+        // First do list-commands.
+        isc::data::ConstElementPtr answer2;
+        answer = getStockControllerCommandsList(command, args);
+        answer2 = customControllerCommand(command, args);
+        answer = isc::config::combineCommandsLists(answer, answer2);
+        answer2 = process_->command(command, args);
+        answer = isc::config::combineCommandsLists(answer, answer2);
+    } else if (command.compare(GET_VERSION_COMMAND) == 0) {
+        answer = isc::config::createAnswer(COMMAND_SUCCESS, getVersion(false));
+    } else if (command.compare(GET_EXTENDED_VERSION_COMMAND) == 0) {
+        answer = isc::config::createAnswer(COMMAND_SUCCESS, getVersion(true));
+    } else if (command.compare(GET_CONFIG_REPORT_COMMAND) ==0) {
+        answer = isc::config::createAnswer(COMMAND_SUCCESS,
+                                           isc::detail::getConfigReport());
+    } else if (command.compare(SHUT_DOWN_COMMAND) == 0) {
+        // Shutdown is universal.  If its not that, then try it as
+        // a custom command supported by the derivation.  If that
+        // doesn't pan out either, than send to it the application
+        // as it may be supported there.
         answer = shutdownProcess(args);
     } else {
-        // It wasn't shutdown, so it may be a custom controller command.
+        // It wasn't a stock command, so it may be a custom controller one.
         int rcode = 0;
         answer = customControllerCommand(command, args);
         isc::config::parseAnswer(rcode, answer);
         if (rcode == COMMAND_INVALID)
         {
-            // It wasn't a controller command, so it may be an application command.
+            // It wasn't a controller command, so it may be an application one.
             answer = process_->command(command, args);
         }
     }
@@ -360,10 +375,46 @@ DControllerBase::executeCommand(const std::string& command,
     return (answer);
 }
 
+const std::set<std::string>&
+DControllerBase::getStockControllerCommandsList() const {
+    static std::set<std::string> stock_list;
+    if (stock_list.empty()) {
+        // Build it
+        stock_list.insert(LIST_COMMANDS_COMMAND);
+        stock_list.insert(GET_VERSION_COMMAND);
+        stock_list.insert(GET_EXTENDED_VERSION_COMMAND);
+        stock_list.insert(GET_CONFIG_REPORT_COMMAND);
+        stock_list.insert(SHUT_DOWN_COMMAND);
+}
+    return (stock_list);
+}
+
+isc::data::ConstElementPtr
+DControllerBase::getStockControllerCommandsList(const std::string& /*command*/,
+                                isc::data::ConstElementPtr /*args*/) const {
+    static isc::data::ConstElementPtr stock_answer;
+    if (!stock_answer) {
+        const std::set<std::string>& stock_list =
+            getStockControllerCommandsList();
+        isc::data::ElementPtr commands = isc::data::Element::createList();
+        for (auto command = stock_list.cbegin();
+             command != stock_list.cend();
+             ++command) {
+            commands->add(isc::data::Element::create(*command));
+        }
+        stock_answer = isc::config::createAnswer(COMMAND_SUCCESS, commands);
+    }
+    return (stock_answer);
+}
+
 isc::data::ConstElementPtr
 DControllerBase::customControllerCommand(const std::string& command,
                                      isc::data::ConstElementPtr /* args */) {
 
+    // Default implementation implements no command
+    if (command.compare(LIST_COMMANDS_COMMAND) == 0) {
+        return (isc::data::ConstElementPtr());
+    }
     // Default implementation always returns invalid command.
     return (isc::config::createAnswer(COMMAND_INVALID,
                                       "Unrecognized command: " + command));

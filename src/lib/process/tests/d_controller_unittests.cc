@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -279,22 +279,39 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     EXPECT_EQ(1, rcode);
 }
 
+/// @brief Stock list-commands test.
+TEST_F(DStubControllerTest, getStockControllerCommandsListTests) {
+    // Check the set version
+    const std::set<std::string>& set = getStockControllerCommandsList();
+    EXPECT_FALSE(set.empty());
+    EXPECT_EQ(1, set.count("list-commands"));
+    EXPECT_EQ(0, set.count("bogus"));
+
+    // Check the answer version
+    int rcode = -1;
+    isc::data::ConstElementPtr answer;
+    isc::data::ConstElementPtr list;
+    answer = getStockControllerCommandsList("list-commands", list);
+    ASSERT_TRUE(answer);
+    list = isc::config::parseAnswer(rcode, answer);
+    ASSERT_EQ(0, rcode);
+    ASSERT_TRUE(list);
+    ASSERT_EQ(isc::data::Element::list, list->getType());
+    EXPECT_EQ(set.size(), list->size());
+}
+
 /// @brief Command execution tests.
 /// This really tests just the ability of the handler to invoke the necessary
 /// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
-/// process::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a process::COMMAND_SUCCESS
+/// COMMAND_INVALID.
+/// 2. Shutdown command is recognized and returns a COMMAND_SUCCESS status.
+/// 3. A valid, custom controller command is recognized a COMMAND_SUCCESS
 /// status.
-/// 3. A valid, custom controller command is recognized a
-/// process::COMMAND_SUCCESS
-/// status.
-/// 4. A valid, custom process command is recognized a
-/// process::COMMAND_SUCCESS status.
-/// 5. That a valid controller command that fails returns a
-/// process::COMMAND_ERROR.
-/// 6. That a valid process command that fails returns a process::COMMAND_ERROR.
+/// 4. A valid, custom process command is recognized a COMMAND_SUCCESS status.
+/// 5. That a valid controller command that fails returns a COMMAND_ERROR.
+/// 6. That a valid process command that fails returns a COMMAND_ERROR.
 TEST_F(DStubControllerTest, executeCommandTests) {
     int rcode = -1;
     isc::data::ConstElementPtr answer;
@@ -304,43 +321,77 @@ TEST_F(DStubControllerTest, executeCommandTests) {
     ASSERT_NO_THROW(initProcess());
     EXPECT_TRUE(checkProcess());
 
-    // Verify that an unknown command returns an process::COMMAND_INVALID
-    // response.
+    // Verify that an unknown command returns an COMMAND_INVALID response.
     std::string bogus_command("bogus");
     answer = executeCommand(bogus_command, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
-    // Verify that shutdown command returns process::COMMAND_SUCCESS response.
-    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
+    // Verify that stock commands return COMMAND_SUCCESS responses.
+    const std::set<std::string>& commands = getStockControllerCommandsList();
+    for (auto command = commands.cbegin();
+         command != commands.cend();
+         ++command) {
+        answer = executeCommand(*command, arg_set);
+        ASSERT_TRUE(answer);
+        isc::config::parseAnswer(rcode, answer);
+        EXPECT_EQ(COMMAND_SUCCESS, rcode) << "command: " << *command;
+    }
 
     // Verify that a valid custom controller command returns
-    // process::COMMAND_SUCCESS response.
+    // COMMAND_SUCCESS response.
     answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom process command returns
-    // process::COMMAND_SUCCESS response.
+    // COMMAND_SUCCESS response.
     answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
 
     // Verify that a valid custom controller command that fails returns
-    // a process::COMMAND_ERROR.
+    // a COMMAND_ERROR.
     SimFailure::set(SimFailure::ftControllerCommand);
     answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
 
     // Verify that a valid custom process command that fails returns
-    // a process::COMMAND_ERROR.
+    // a COMMAND_ERROR.
     SimFailure::set(SimFailure::ftProcessCommand);
     answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_ERROR, rcode);
+}
+
+/// @brief List-commands tests.
+TEST_F(DStubControllerTest, listCommandsTests) {
+    int rcode = -1;
+    isc::data::ConstElementPtr answer;
+    isc::data::ElementPtr arg_set;
+
+    // Initialize the application process.
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // Get the list of commands
+    answer = executeCommand(LIST_COMMANDS_COMMAND, arg_set);
+    isc::config::parseAnswer(rcode, answer);
+    ASSERT_EQ(COMMAND_SUCCESS, rcode);
+
+    // Expected result
+    std::string expected = "{ \"result\": 0,\n"
+      "\"arguments\": [\n"
+      "\"" + std::string(LIST_COMMANDS_COMMAND) + "\", "
+      "\"" + std::string(GET_VERSION_COMMAND) + "\", "
+      "\"" + std::string(GET_EXTENDED_VERSION_COMMAND) + "\", "
+      "\"" + std::string(GET_CONFIG_REPORT_COMMAND) + "\", "
+      "\"" + std::string(SHUT_DOWN_COMMAND) + "\", "
+      "\"" + std::string(DStubController::stub_ctl_command_) + "\", "
+      "\"" + std::string(DStubProcess::stub_proc_command_) + "\" ] }";
+    isc::data::ConstElementPtr json = isc::data::Element::fromJSON(expected);
+    EXPECT_TRUE(isc::data::isEquivalent(json, answer));
 }
 
 // Tests that registered signals are caught and handled.

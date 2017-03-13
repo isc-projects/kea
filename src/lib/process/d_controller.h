@@ -19,6 +19,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <string>
+#include <set>
 
 namespace isc {
 namespace process {
@@ -128,7 +130,7 @@ public:
     /// arguments.
     ///
     /// This function can be run in "test mode". It prevents initialization
-    /// of D2 module logger. This is used in unit tests which initialize logger
+    /// of module logger. This is used in unit tests which initialize logger
     /// in their main function. Such a logger uses environmental variables to
     /// control severity, verbosity etc.
     ///
@@ -206,7 +208,7 @@ public:
     /// It supports the execution of:
     ///
     ///   1. Stock controller commands - commands common to all DControllerBase
-    /// derivations.  Currently there is only one, the shutdown command.
+    /// derivations.
     ///
     ///   2. Custom controller commands - commands that the deriving controller
     /// class implements.  These commands are executed by the deriving
@@ -223,15 +225,35 @@ public:
     /// @return an Element that contains the results of command composed
     /// of an integer status value and a string explanation of the outcome.
     /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
+    ///   COMMAND_SUCCESS - Command executed successfully
+    ///   COMMAND_ERROR - Command is valid but suffered an operational
     ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as valid be either
+    ///   COMMAND_INVALID - Command is not recognized as valid be either
     ///   the controller or the application process.
     virtual isc::data::ConstElementPtr executeCommand(const std::string&
                                                       command,
                                                       isc::data::
                                                       ConstElementPtr args);
+
+    /// @brief Gets the set of stock controller commands.
+    ///
+    /// It builds (once) and returns the list of stock controller commands
+    /// as a set.
+    ///
+    /// @return a set of strings with the stock controller commands.
+    const std::set<std::string>& getStockControllerCommandsList() const;
+
+    /// @brief Gets the list of stock controller commands.
+    ///
+    /// It builds (once) and returns the list of stock controller commands
+    /// as a command answer (@ref executeCommand).
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return an Element answer with the stock controller commands.
+    isc::data::ConstElementPtr
+    getStockControllerCommandsList(const std::string& command,
+                                   isc::data::ConstElementPtr args) const;
 
     /// @brief Fetches the name of the application under control.
     ///
@@ -283,10 +305,10 @@ protected:
     /// @return an Element that contains the results of command composed
     /// of an integer status value and a string explanation of the outcome.
     /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
+    ///   COMMAND_SUCCESS - Command executed successfully
+    ///   COMMAND_ERROR - Command is valid but suffered an operational
     ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as a valid custom
+    ///   COMMAND_INVALID - Command is not recognized as a valid custom
     ///   controller command.
     virtual isc::data::ConstElementPtr customControllerCommand(
             const std::string& command, isc::data::ConstElementPtr args);

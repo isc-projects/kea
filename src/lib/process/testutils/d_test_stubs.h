@@ -495,8 +495,24 @@ public:
     /// @Wrapper to invoke the Controller's executeCommand method.  Please
     /// refer to DControllerBase::executeCommand for details.
     isc::data::ConstElementPtr executeCommand(const std::string& command,
-                                       isc::data::ConstElementPtr args){
+                                       isc::data::ConstElementPtr args) {
         return (getController()->executeCommand(command, args));
+    }
+
+    /// @Wrapper to invoke the Controller's getStockControllerCommandsList
+    /// method. Please refer to DControllerBase::getStockControllerCommandsList
+    /// (set version) for details.
+    const std::set<std::string>& getStockControllerCommandsList() const {
+        return (getController()->getStockControllerCommandsList());
+    }
+
+    /// @Wrapper to invoke the Controller's getStockControllerCommandsList
+    /// method. Please refer to DControllerBase::getStockControllerCommandsList
+    /// (answer version) for details.
+    isc::data::ConstElementPtr
+    getStockControllerCommandsList(const std::string& command,
+                                   isc::data::ConstElementPtr args) const {
+        return (getController()->getStockControllerCommandsList(command, args));
     }
 
     /// @brief Callback that will generate shutdown command via the
