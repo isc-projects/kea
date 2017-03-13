@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,19 @@ public:
     isc::data::ConstElementPtr
     parseFile(const std::string& name);
 
+    /// @brief Register commands.
+    ///
+    /// For all commands in the commands_ set at the exception of
+    /// list-commands register the command with the generic
+    /// @ref isc::process::DControllerBase::executeCommand() handler.
+    void registerCommands();
+
+    /// @brief Deregister commands.
+    ///
+    /// For all commands in the commands_ set at the exception of
+    /// list-commands deregister the command.
+    void deregisterCommands();
+
 private:
 
     /// @brief Creates an instance of the Control Agent application
@@ -65,7 +78,14 @@ private:
     /// the singleton instance.
     CtrlAgentController();
 
+    /// @brief The list of commands (initialize in the constructor from
+    /// the DControllerBase stock controller command set).
+    /// @todo provide a way to add a new command
+    std::set<std::string> commands_;
 };
+
+// @Defines a shared pointer to CtrlAgentController
+typedef boost::shared_ptr<CtrlAgentController> CtrlAgentControllerPtr;
 
 } // namespace isc::agent
 } // namespace isc

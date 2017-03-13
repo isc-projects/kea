@@ -364,6 +364,11 @@ D2Process::reconfigureQueueMgr() {
 isc::data::ConstElementPtr
 D2Process::command(const std::string& command,
                    isc::data::ConstElementPtr args) {
+    // Ignore list-commands
+    if (command.compare(LIST_COMMANDS_COMMAND) == 0) {
+        return (isc::data::ConstElementPtr());
+    }
+
     // @todo This is the initial implementation.  If and when D2 is extended
     // to support its own commands, this implementation must change. Otherwise
     // it should reject all commands as it does now.
