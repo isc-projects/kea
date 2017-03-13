@@ -8,7 +8,6 @@
 #include <config/base_command_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>
-#include <set>
 
 using namespace isc::data;
 
@@ -84,57 +83,6 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
         return (createAnswer(CONTROL_RESULT_ERROR,
                              std::string("Error during command processing: ")
                              + e.what()));
-    }
-}
-
-ConstElementPtr
-BaseCommandMgr::combineCommandsLists(const ConstElementPtr& response1,
-                                     const ConstElementPtr& response2) const {
-    // Usually when this method is called there should be two non-null
-    // responses. If there is just a single response, return this
-    // response.
-    if (!response1 && response2) {
-        return (response2);
-
-    } else if (response1 && !response2) {
-        return (response1);
-
-    } else if (!response1 && !response2) {
-        return (ConstElementPtr());
-
-    } else {
-        // Both responses are non-null so we need to combine the lists
-        // of supported commands if the status codes are 0.
-        int status_code;
-        ConstElementPtr args1 = parseAnswer(status_code, response1);
-        if (status_code != 0) {
-            return (response1);
-        }
-
-        ConstElementPtr args2 = parseAnswer(status_code, response2);
-        if (status_code != 0) {
-            return (response2);
-        }
-
-        const std::vector<ElementPtr> vec1 = args1->listValue();
-        const std::vector<ElementPtr> vec2 = args2->listValue();
-
-        // Storing command names in a set guarantees that the non-unique
-        // command names are aggregated.
-        std::set<std::string> combined_set;
-        for (auto v = vec1.cbegin(); v != vec1.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
-        }
-        for (auto v = vec2.cbegin(); v != vec2.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
-        }
-
-        // Create a combined list of commands.
-        ElementPtr combined_list = Element::createList();
-        for (auto s = combined_set.cbegin(); s != combined_set.cend(); ++s) {
-            combined_list->add(Element::create(*s));
-        }
-        return (createAnswer(CONTROL_RESULT_SUCCESS, combined_list));
     }
 }
 
