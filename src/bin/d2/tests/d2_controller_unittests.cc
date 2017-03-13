@@ -194,8 +194,8 @@ TEST_F(D2ControllerTest, configUpdateTests) {
 /// chain of methods and to handle error conditions.
 /// This test verifies that:
 /// 1. That an unrecognized command is detected and returns a status of
-/// d2::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a d2::COMMAND_SUCCESS status.
+/// COMMAND_INVALID.
+/// 2. Shutdown command is recognized and returns a COMMAND_SUCCESS status.
 TEST_F(D2ControllerTest, executeCommandTests) {
     int rcode = -1;
     isc::data::ConstElementPtr answer;
@@ -211,8 +211,12 @@ TEST_F(D2ControllerTest, executeCommandTests) {
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_INVALID, rcode);
 
+    // Verify that get-version command returns COMMAND_SUCCESS response.
+    answer = executeCommand(GET_VERSION_COMMAND, arg_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(COMMAND_SUCCESS, rcode);
+
     // Verify that shutdown command returns COMMAND_SUCCESS response.
-    //answer = executeCommand(SHUT_DOWN_COMMAND, isc::data::ElementPtr());
     answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(COMMAND_SUCCESS, rcode);
