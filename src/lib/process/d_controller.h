@@ -155,14 +155,27 @@ public:
     /// configuration and then invoke the application process' configure method.
     ///
     /// @param  new_config is the new configuration
-    /// @param check_only false for normal configuration, true when verifying only
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-    updateConfig(isc::data::ConstElementPtr new_config,
-                 bool check_only = false);
+    virtual isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr
+                                                    new_config);
+
+    /// @brief Instance method invoked by the configuration event handler and
+    /// which processes the actual configuration check.  Provides behavioral
+    /// path for both integrated and stand-alone modes. The current
+    /// implementation will merge the configuration update into the existing
+    /// configuration and then invoke the application process' configure method
+    /// with a final rollback.
+    ///
+    /// @param  new_config is the new configuration
+    ///
+    /// @return returns an Element that contains the results of configuration
+    /// update composed of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                                   new_config);
 
     /// @brief Reconfigures the process from a configuration file
     ///
@@ -194,7 +207,7 @@ public:
     ///
     /// It then extracts the set of configuration elements for the
     /// module-name that matches the controller's app_name_ and passes that
-    /// set into @c updateConfig().
+    /// set into @c updateConfig() (or @c checkConfig()).
     ///
     /// The file may contain an arbitrary number of other modules.
     ///

@@ -487,10 +487,16 @@ public:
 
     /// @Wrapper to invoke the Controller's updateConfig method.  Please
     /// refer to DControllerBase::updateConfig for details.
-    isc::data::ConstElementPtr
-    updateConfig(isc::data::ConstElementPtr new_config,
-                 bool check_only) {
-        return (getController()->updateConfig(new_config, check_only));
+    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr
+                                            new_config) {
+        return (getController()->updateConfig(new_config));
+    }
+
+    /// @Wrapper to invoke the Controller's checkConfig method.  Please
+    /// refer to DControllerBase::checkConfig for details.
+    isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                           new_config) {
+        return (getController()->checkConfig(new_config));
     }
 
     /// @Wrapper to invoke the Controller's executeCommand method.  Please

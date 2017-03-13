@@ -268,24 +268,24 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     isc::data::ElementPtr config_set = isc::data::Element::fromJSON(config);
 
     // Verify that a valid config gets a successful update result.
-    answer = updateConfig(config_set, false);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Verify that a valid config gets a successful check result.
-    answer = updateConfig(config_set, true);
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
-    answer = updateConfig(config_set, false);
+    answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 
     // Verify that an error is handled too when the config is checked for.
     SimFailure::set(SimFailure::ftProcessConfigure);
-    answer = updateConfig(config_set, true);
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }

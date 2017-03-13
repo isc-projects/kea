@@ -112,7 +112,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
             initProcess();
 
             isc::data::ConstElementPtr answer;
-            answer = updateConfig(module_config, true);
+            answer = checkConfig(module_config);
             int rcode = 0;
             answer = isc::config::parseAnswer(rcode, answer);
             if (rcode != 0) {
@@ -351,7 +351,7 @@ DControllerBase::configFromFile() {
                                  getAppName() << "' entry.");
         }
 
-        answer = updateConfig(module_config, false);
+        answer = updateConfig(module_config);
         int rcode = 0;
         isc::config::parseAnswer(rcode, answer);
         if (!rcode) {
@@ -390,9 +390,14 @@ DControllerBase::runProcess() {
 
 // Instance method for handling new config
 isc::data::ConstElementPtr
-DControllerBase::updateConfig(isc::data::ConstElementPtr new_config,
-                              bool check_only) {
-    return (process_->configure(new_config, check_only));
+DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
+    return (process_->configure(new_config, false));
+}
+
+// Instance method for checking new config
+isc::data::ConstElementPtr
+DControllerBase::checkConfig(isc::data::ConstElementPtr new_config) {
+    return (process_->configure(new_config, true));
 }
 
 
