@@ -136,6 +136,18 @@ public:
     /// @param config_file pathname of the configuration file
     void setConfigFile(const std::string& config_file);
 
+    /// @brief Writes current configuration to specified file
+    ///
+    /// This method writes the current configuration to specified file.
+    /// @todo: this logically more belongs to CPL process file. Once
+    /// Daemon is merged with CPL architecture, it will be a better
+    /// fit.
+    ///
+    /// @param config_file name of the file to write the configuration to
+    /// @return number of files written
+    virtual size_t
+    writeConfigFile(const std::string& config_file) const;
+
     /// @brief returns the process name
     /// This value is used as when forming the default PID file name
     /// @return text string

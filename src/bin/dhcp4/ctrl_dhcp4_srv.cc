@@ -75,6 +75,77 @@ ControlledDhcpv4Srv::commandGetConfigHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandWriteConfigHandler(const string&,
+                                             ConstElementPtr args) {
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
+    string filename;
+
+    if (args) {
+        if (args->getType() != Element::map) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
+        }
+        ConstElementPtr filename_param = args->get("filename");
+        if (filename_param) {
+            if (filename_param->getType() != Element::string) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "passed parameter 'filename' is not a string"));
+            }
+            filename = filename_param->stringValue();
+        }
+    }
+
+    if (filename.empty()) {
+        // filename parameter was not specified, so let's use whatever we remember
+        filename = getConfigFile();
+        if (filename.empty()) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    }
+
+    // Now do the sanity checks on the filename
+    if (filename.find("..") != string::npos) {
+        // Trying to escape the directory.. nope.
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Using '..' in filename is not allowed."));
+    }
+
+    if (filename.find("\\") != string::npos) {
+        // Trying to inject escapes (possibly to inject quotes and something
+        // nasty afterward)
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Using \\ in filename is not allowed."));
+    }
+
+    if (filename[0] == '/') {
+        // Absolute paths are not allowed.
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Absolute path in filename is not allowed."));
+    }
+
+    size_t size = 0;
+    try {
+        size = writeConfigFile(filename);
+    } catch (const isc::Exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
+                             + ex.what()));
+    }
+    if (size == 0) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "Error writing configuration to "
+                             + filename));
+    }
+
+    // Ok, it's time to return the successful response
+    ElementPtr params = Element::createMap();
+    params->set("size", Element::create(static_cast<long long>(size)));
+    params->set("filename", Element::create(filename));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Configuration written to "
+                         + filename + " successful", params));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = 1; // 1 indicates an error
@@ -194,6 +265,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
+        } else if (command == "write-config") {
+            return (srv->commandWriteConfigHandler(command, args));
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);
@@ -358,6 +431,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("write-config",
+        boost::bind(&ControlledDhcpv4Srv::commandWriteConfigHandler, this, _1, _2));
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -389,6 +465,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-get-all");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
+        CommandMgr::instance().deregisterCommand("write-config");
 
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
