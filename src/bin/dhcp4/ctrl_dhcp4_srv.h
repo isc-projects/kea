@@ -64,6 +64,7 @@ public:
     /// - libreload
     /// - config-reload
     /// - leases-reclaim
+    /// ...
     ///
     /// @note It never throws.
     ///
@@ -88,6 +89,16 @@ public:
     /// @return status of the config update
     static isc::data::ConstElementPtr
     processConfig(isc::data::ConstElementPtr new_config);
+
+    /// @brief Configuration checker
+    ///
+    /// This is a method for checking incoming configuration.
+    ///
+    /// @param new_config textual representation of the new configuration
+    ///
+    /// @return status of the config check
+    isc::data::ConstElementPtr
+    checkConfig(isc::data::ConstElementPtr new_config);
 
     /// @brief Returns pointer to the sole instance of Dhcpv4Srv
     ///
@@ -157,6 +168,20 @@ private:
     isc::data::ConstElementPtr
     commandSetConfigHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'test-config' command
+    ///
+    /// This handler processes test-config command, which checks
+    /// configuration specified in args parameter.
+    /// @param command (parameter ignored)
+    /// @param args configuration to be checked. Expected format:
+    /// map containing Dhcp4 map that contains DHCPv4 server configuration.
+    /// May also contain Logging map that specifies logging configuration.
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandTestConfigHandler(const std::string& command,
+                             isc::data::ConstElementPtr args);
 
     /// @brief handler for processing 'get-version' command
     ///

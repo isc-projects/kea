@@ -129,6 +129,44 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandTestConfigHandler(const string&,
+                                              ConstElementPtr args) {
+    const int status_code = 1; // 1 indicates an error
+    ConstElementPtr dhcp4;
+    string message;
+
+    // Command arguments are expected to be:
+    // { "Dhcp4": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp4 = args->get("Dhcp4");
+        if (!dhcp4) {
+            message = "Missing mandatory 'Dhcp4' parameter.";
+        } else if (dhcp4->getType() != Element::map) {
+            message = "'Dhcp4' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Now we check the server proper.
+    return (checkConfig(dhcp4));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandConfigGetVersion(const string&, ConstElementPtr) {
     ConstElementPtr answer =
         isc::config::createAnswer(0, Dhcpv4Srv::getVersion(false));
@@ -202,6 +240,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
+
+        } else if (command == "test-config") {
+            return (srv->commandTestConfigHandler(command, args));
 
         } else if (command == "get-version") {
             return (srv->commandConfigGetVersion(command, args));
@@ -334,6 +375,25 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     return (answer);
 }
 
+isc::data::ConstElementPtr
+ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
+              .arg(config->str());
+
+    ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
+
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+
+    if (!srv) {
+        err << "Server object not initialized, can't process config.";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    return (configureDhcp4Server(*srv, config, true));
+}
+
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
@@ -353,6 +413,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
 
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("test-config",
+        boost::bind(&ControlledDhcpv4Srv::commandTestConfigHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("get-version",
         boost::bind(&ControlledDhcpv4Srv::commandConfigGetVersion, this, _1, _2));
@@ -407,6 +470,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");
+        CommandMgr::instance().deregisterCommand("test-config");
         CommandMgr::instance().deregisterCommand("get-version");
         CommandMgr::instance().deregisterCommand("get-extended-version");
         CommandMgr::instance().deregisterCommand("get-config-report");
