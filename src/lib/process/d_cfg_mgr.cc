@@ -122,7 +122,8 @@ DCfgMgrBase::setContext(DCfgContextBasePtr& context) {
 }
 
 isc::data::ConstElementPtr
-DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
+DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set,
+                         bool check_only) {
     LOG_DEBUG(dctl_logger, DBGLVL_COMMAND,
                 DCTL_CONFIG_START).arg(config_set->str());
 
@@ -245,9 +246,15 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         }
 
         // Everything was fine. Configuration set processed successfully.
-        LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
-        answer = isc::config::createAnswer(0, "Configuration committed.");
-
+        if (!check_only) {
+            LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
+            answer = isc::config::createAnswer(0, "Configuration committed.");
+        } else {
+            answer = isc::config::createAnswer(0, "Configuration seems sane.");
+            LOG_INFO(dctl_logger, DCTL_CONFIG_CHECK_COMPLETE)
+                .arg(getConfigSummary(0))
+                .arg(config::answerToText(answer));
+        }
     } catch (const std::exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
@@ -255,6 +262,12 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         // An error occurred, so make sure that we restore original context.
         context_ = original_context;
         return (answer);
+    }
+
+    if (check_only) {
+        // If this is a configuration check only, then don't actually apply
+        // the configuration and reverse to the previous one.
+        context_ = original_context;
     }
 
     return (answer);

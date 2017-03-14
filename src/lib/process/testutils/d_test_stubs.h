@@ -492,6 +492,13 @@ public:
         return (getController()->updateConfig(new_config));
     }
 
+    /// @Wrapper to invoke the Controller's checkConfig method.  Please
+    /// refer to DControllerBase::checkConfig for details.
+    isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                           new_config) {
+        return (getController()->checkConfig(new_config));
+    }
+
     /// @Wrapper to invoke the Controller's executeCommand method.  Please
     /// refer to DControllerBase::executeCommand for details.
     isc::data::ConstElementPtr executeCommand(const std::string& command,

@@ -272,9 +272,20 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
+    // Verify that a valid config gets a successful check result.
+    answer = checkConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode);
+
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
     answer = updateConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
+
+    // Verify that an error is handled too when the config is checked for.
+    SimFailure::set(SimFailure::ftProcessConfigure);
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }
