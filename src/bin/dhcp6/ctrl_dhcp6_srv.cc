@@ -420,7 +420,7 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
         return (no_srv);
     }
 
-    return (configureDhcp6Server(*srv, config));
+    return (configureDhcp6Server(*srv, config, true));
 }
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)

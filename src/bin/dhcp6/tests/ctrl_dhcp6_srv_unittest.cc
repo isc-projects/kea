@@ -488,6 +488,150 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
     CfgMgr::instance().clear();
 }
 
+  // Verify that the "test-config" command will do what we expect.
+TEST_F(CtrlChannelDhcpv6SrvTest, test_config) {
+    createUnixChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string test_config_txt = "{ \"command\": \"test-config\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp6_cfg_txt =
+        "    \"Dhcp6\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"preferred-lifetime\": 3000, \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet6\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"3002::/64\", \n"
+        "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"3003::/64\", \n"
+        "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
+    string bad_subnet =
+        "               {\"BOGUS\": \"3005::/64\", \n"
+        "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "    \"Logging\": { \n"
+        "        \"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output_options\": [{ \n"
+        "                \"output\": \"/dev/null\" \n"
+        "            }] \n"
+        "        }] \n"
+        "    } \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp6_cfg_txt
+        << subnet1
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp6
+        << ","
+        << logger_txt
+        << "}}";
+
+    // Send the set-config command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << test_config_txt << ","
+        << args_txt
+        << dhcp6_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp6
+        "}}";
+
+    // Send the test-config command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:21:17)\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a valid config with two subnets and no command channel.
+    os.str("");
+    os << test_config_txt << ","
+        << args_txt
+        << dhcp6_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp6
+        << "}}";
+
+    /* Verify the control channel socket exists */
+    ASSERT_TRUE(fileExists(socket_path_));
+
+    // Send the test-config command
+    sendUnixCommand(os.str(), response);
+
+    /* Verify the control channel socket still exists */
+    EXPECT_TRUE(fileExists(socket_path_));
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. Control-socket, hook-libraries, and D2 configuration were sanity checked, but not applied.\" }",
+              response);
+
+    // Check that the config was not applied.
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
 
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
