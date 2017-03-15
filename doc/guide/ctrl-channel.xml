@@ -113,6 +113,57 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     <section id="commands-common">
       <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
 
+      <section id="command-config-get">
+        <title>config-get</title>
+
+        <para>The <emphasis>config-get</emphasis> command retrieves the current
+        configuration used by the server. This command does not take any
+        parameters. The configuration returned is roughly equal to the
+        configuration that was loaded using -c command line option during server
+        start-up or later set using set-config command. However, there may be
+        certain differences. Comments are not retained. If the original
+        configuration used file inclusion, the returned configuration will
+        include all parameters from all the included files.</para>
+
+        <para> Note that returned configuration is not redacted, i.e. it will
+        contain database passwords in plain text if those were specified in the
+        original configuration. Care should be taken to not expose the command
+        channel to unprivileged users.</para>
+
+        <para>
+          An example command invocation looks like this:
+<screen>
+{
+    "command": "config-get"
+}
+</screen>
+        </para>
+      </section>
+
+      <section id="command-config-write">
+        <title>config-write</title>
+
+        <para>The <emphasis>config-write</emphasis> command instructs Kea server
+        to write its current configuration to a file on disk. It takes one
+        optional argument called <emphasis>filename</emphasis> that specifies
+        the name of the file to write configuration to. If not specifed, the
+        name used when starting Kea (passed as -c argument) will be used. Note
+        that the filename specified must not contain .. or backslashes. Kea
+        should be able to write its files only in the directory it is running
+        and any attempts to step out of that directory is rejected.</para>
+        <para>
+          An example command invocation looks like this:
+<screen>
+{
+    "command": "config-write",
+    "parameters": {
+        "filename": "config-modified-2017-03-15.json"
+    }
+}
+</screen>
+        </para>
+      </section>
+
       <section id="command-leases-reclaim">
         <title>leases-reclaim</title>
         <para>

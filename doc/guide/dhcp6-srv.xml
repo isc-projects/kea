@@ -4131,6 +4131,8 @@ If not specified, the default value is:
 
       <para>The DHCPv6 server supports the following operational commands:
         <itemizedlist>
+            <listitem>config-get</listitem>
+            <listitem>config-write</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
             <listitem>set-config</listitem>
