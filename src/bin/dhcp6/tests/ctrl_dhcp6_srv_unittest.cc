@@ -211,6 +211,91 @@ public:
         client->disconnectFromServer();
         ASSERT_NO_THROW(server_->receivePacket(0));
     }
+
+    /// @brief Checks response for list-commands
+    ///
+    /// This method checks if the list-commands response is generally sane
+    /// and whether specified command is mentioned in the response.
+    ///
+    /// @param rsp response sent back by the server
+    /// @param command command expected to be on the list.
+    void checkListCommands(const ConstElementPtr& rsp, const std::string& command) {
+        ConstElementPtr params;
+        int status_code;
+        EXPECT_NO_THROW(params = parseAnswer(status_code, rsp));
+        EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+        ASSERT_TRUE(params);
+        ASSERT_EQ(Element::list, params->getType());
+
+        int cnt = 0;
+        for (int i=0; i < params->size(); ++i) {
+            string tmp = params->get(i)->stringValue();
+            if (tmp == command) {
+                // Command found, but that's not enough. Need to continue working
+                // through the list to see if there are no duplicates.
+                cnt++;
+            }
+        }
+
+        // Exactly one command on the list is expected.
+        EXPECT_EQ(1, cnt) << "Command " << command << " not found";
+    }
+
+    /// @brief Check if the answer for write-config command is correct
+    ///
+    /// @param response_txt response in text form (as read from the control socket)
+    /// @param exp_status expected status (0 success, 1 failure)
+    /// @param exp_txt for success cases this defines the expected filename,
+    ///                for failure cases this defines the expected error message
+    void checkConfigWrite(const std::string& response_txt, int exp_status,
+                          const std::string& exp_txt = "") {
+
+        ConstElementPtr rsp;
+        EXPECT_NO_THROW(rsp = Element::fromJSON(response_txt));
+        ASSERT_TRUE(rsp);
+
+        int status;
+        ConstElementPtr params = parseAnswer(status, rsp);
+        EXPECT_EQ(exp_status, status);
+
+        if (exp_status == CONTROL_RESULT_SUCCESS) {
+            // Let's check couple things...
+
+            // The parameters must include filename
+            ASSERT_TRUE(params);
+            ASSERT_TRUE(params->get("filename"));
+            EXPECT_EQ(Element::string, params->get("filename")->getType());
+            EXPECT_EQ(exp_txt, params->get("filename")->stringValue());
+
+            // The parameters must include size. And the size
+            // must indicate some content.
+            ASSERT_TRUE(params->get("size"));
+            EXPECT_EQ(Element::integer, params->get("size")->getType());
+            int64_t size = params->get("size")->intValue();
+            EXPECT_LE(1, size);
+
+            // Now check if the file is really there and suitable for
+            // opening.
+            ifstream f(exp_txt, ios::binary | ios::ate);
+            ASSERT_TRUE(f.good());
+
+            // Now check that it is the correct size as reported.
+            EXPECT_EQ(size, static_cast<int64_t>(f.tellg()));
+
+            // Finally, check that it's really a JSON.
+            ElementPtr from_file = Element::fromJSONFile(exp_txt);
+            ASSERT_TRUE(from_file);
+        } else if (exp_status == CONTROL_RESULT_ERROR) {
+
+            // Let's check if the reason for failure was given.
+            ConstElementPtr text = rsp->get("text");
+            ASSERT_TRUE(text);
+            ASSERT_EQ(Element::string, text->getType());
+            EXPECT_EQ(exp_txt, text->stringValue());
+        } else {
+            ADD_FAILURE() << "Invalid expected status: " << exp_status;
+        }
+    }
 };
 
 
@@ -709,6 +794,120 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
                     "  \"arguments\": {}}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
               response);
+}
+
+// Tests that the server properly responds to shtudown command sent
+// via ControlChannel
+TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"list-commands\" }", response);
+
+    ConstElementPtr rsp;
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+
+    // We expect the server to report at least the following commands:
+    checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-write");
+    checkListCommands(rsp, "list-commands");
+    checkListCommands(rsp, "leases-reclaim");
+    checkListCommands(rsp, "libreload");
+    checkListCommands(rsp, "set-config");
+    checkListCommands(rsp, "shutdown");
+    checkListCommands(rsp, "statistic-get");
+    checkListCommands(rsp, "statistic-get-all");
+    checkListCommands(rsp, "statistic-remove");
+    checkListCommands(rsp, "statistic-remove-all");
+    checkListCommands(rsp, "statistic-reset");
+    checkListCommands(rsp, "statistic-reset-all");
+}
+
+// Tests if the server returns its configuration using get-config.
+// Note there are separate tests that verify if toElement() called by the
+// config-get handler are actually converting the configuration correctly.
+TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-get\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // Ok, now roughly check if the response seems legit.
+    ASSERT_TRUE(cfg);
+    ASSERT_EQ(Element::map, cfg->getType());
+    EXPECT_TRUE(cfg->get("Dhcp6"));
+}
+
+// Tests if config-write can be called without any parameters.
+TEST_F(CtrlChannelDhcpv6SrvTest, configWriteNoFilename) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
+    // If the filename is not explicitly specified, the name used
+    // in -c command line switch is used.
+    sendUnixCommand("{ \"command\": \"config-write\" }", response);
+
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test1.json");
+    ::remove("test1.json");
+}
+
+// Tests if config-write can be called with a valid filename as parameter.
+TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFilename) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"test2.json\" } }", response);
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
+    ::remove("test2.json");
+}
+
+// Tests if config-write rejects invalid filename (a one that tries to escape
+// the current directory).
+TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidJailEscape) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
+                    "{ \"filename\": \"../test3.json\" } }", response);
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
+                     "Using '..' in filename is not allowed.");
+}
+
+// Tests if config-write rejects invalid filename (absolute paths are not allowed)
+TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidAbsPath) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
+                    "{ \"filename\": \"/tmp/test4.json\" } }", response);
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
+                     "Absolute path in filename is not allowed.");
+}
+
+// Tests if config-write rejects invalid filename (one with backslashes, which may
+// lead to some other tricks)
+TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidEscape) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This will be converted to foo(single backslash)test5.json
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
+                    "{ \"filename\": \"foo\\\\test5.json\" } }", response);
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
+                     "Using \\ in filename is not allowed.");
 }
 
 } // End of anonymous namespace
