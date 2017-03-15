@@ -67,7 +67,7 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandGetConfigHandler(const string&,
+ControlledDhcpv4Srv::commandConfigGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
@@ -75,8 +75,8 @@ ControlledDhcpv4Srv::commandGetConfigHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandWriteConfigHandler(const string&,
-                                             ConstElementPtr args) {
+ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
+                                               ConstElementPtr args) {
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
     string filename;
@@ -124,6 +124,7 @@ ControlledDhcpv4Srv::commandWriteConfigHandler(const string&,
                              "Absolute path in filename is not allowed."));
     }
 
+    // Ok, it's time to write the file.
     size_t size = 0;
     try {
         size = writeConfigFile(filename);
@@ -136,7 +137,7 @@ ControlledDhcpv4Srv::commandWriteConfigHandler(const string&,
                              + filename));
     }
 
-    // Ok, it's time to return the successful response
+    // Ok, it's time to return the successful response.
     ElementPtr params = Element::createMap();
     params->set("size", Element::create(static_cast<long long>(size)));
     params->set("filename", Element::create(filename));
@@ -260,13 +261,15 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
 
-        } else if (command == "get-config") {
-            return (srv->commandGetConfigHandler(command, args));
+        } else if (command == "config-get") {
+            return (srv->commandConfigGetHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
-        } else if (command == "write-config") {
-            return (srv->commandWriteConfigHandler(command, args));
+
+        } else if (command == "config-write") {
+            return (srv->commandConfigWriteHandler(command, args));
+
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);
@@ -395,23 +398,27 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     }
     server_ = this; // remember this instance for later use in handlers
 
-    // Register supported commands in CommandMgr
-    CommandMgr::instance().registerCommand("shutdown",
-        boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
+    // These are the commands always supported by the DHCPv4 server.
+    // Please keep the list in alphabetic order.
+    CommandMgr::instance().registerCommand("config-get",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("config-write",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("get-config",
-        boost::bind(&ControlledDhcpv4Srv::commandGetConfigHandler, this, _1, _2));
-
-    CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("shutdown",
+        boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
@@ -432,8 +439,6 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("write-config",
-        boost::bind(&ControlledDhcpv4Srv::commandWriteConfigHandler, this, _1, _2));
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -453,19 +458,19 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();
 
-        // Deregister any registered commands
-        CommandMgr::instance().deregisterCommand("get-config");
-        CommandMgr::instance().deregisterCommand("shutdown");
+        // Deregister any registered commands (please keep in alphabetic order)
+        CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-write");
+        CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("set-config");
-        CommandMgr::instance().deregisterCommand("leases-reclaim");
+        CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
-        CommandMgr::instance().deregisterCommand("statistic-reset");
-        CommandMgr::instance().deregisterCommand("statistic-remove");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
-        CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-remove");
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
-        CommandMgr::instance().deregisterCommand("write-config");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
 
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
