@@ -282,13 +282,9 @@ public:
             // Now check that it is the correct size as reported.
             EXPECT_EQ(size, static_cast<int64_t>(f.tellg()));
 
-            // Check that it's really a JSON.
-            ElementPtr from_file = parseJSON(exp_txt);
-            EXPECT_TRUE(from_file);
-
-            // Finally check it is a DHCPv6 config
-            EXPECT_NO_THROW(from_file = parseDHCP6(exp_txt, true));
-            EXPECT_TRUE(from_file);
+            // Finally, check that it's really a JSON.
+            ElementPtr from_file = Element::fromJSONFile(exp_txt);
+            ASSERT_TRUE(from_file);
         } else if (exp_status == CONTROL_RESULT_ERROR) {
 
             // Let's check if the reason for failure was given.
