@@ -146,7 +146,7 @@ will be sent to Kea and the responses received from Kea printed to standard outp
         <para>The <emphasis>config-write</emphasis> command instructs Kea server
         to write its current configuration to a file on disk. It takes one
         optional argument called <emphasis>filename</emphasis> that specifies
-        the name of the file to write configuration to. If not specifed, the
+        the name of the file to write configuration to. If not specified, the
         name used when starting Kea (passed as -c argument) will be used. Note
         that the filename specified must not contain .. or backslashes. Kea
         should be able to write its files only in the directory it is running
