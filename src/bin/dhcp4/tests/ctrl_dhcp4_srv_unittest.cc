@@ -208,14 +208,14 @@ public:
     /// @param command command expected to be on the list.
     void checkListCommands(const ConstElementPtr& rsp, const std::string& command) {
         ConstElementPtr params;
-        int status_code;
+        int status_code = -1;
         EXPECT_NO_THROW(params = parseAnswer(status_code, rsp));
         EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
         ASSERT_TRUE(params);
         ASSERT_EQ(Element::list, params->getType());
 
         int cnt = 0;
-        for (int i=0; i < params->size(); ++i) {
+        for (size_t i = 0; i < params->size(); ++i) {
             string tmp = params->get(i)->stringValue();
             if (tmp == command) {
                 // Command found, but that's not enough. Need to continue working
@@ -237,7 +237,7 @@ public:
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
-        cout << "#### response=" << response_txt << endl;
+        // cout << "#### response=" << response_txt << endl;
 
         ConstElementPtr rsp;
         EXPECT_NO_THROW(rsp = Element::fromJSON(response_txt));
@@ -253,13 +253,13 @@ public:
             // The parameters must include filename
             ASSERT_TRUE(params);
             ASSERT_TRUE(params->get("filename"));
-            EXPECT_EQ(Element::string, params->get("filename")->getType());
+            ASSERT_EQ(Element::string, params->get("filename")->getType());
             EXPECT_EQ(exp_txt, params->get("filename")->stringValue());
 
             // The parameters must include size. And the size
             // must indicate some content.
             ASSERT_TRUE(params->get("size"));
-            EXPECT_EQ(Element::integer, params->get("size")->getType());
+            ASSERT_EQ(Element::integer, params->get("size")->getType());
             int64_t size = params->get("size")->intValue();
             EXPECT_LE(1, size);
 
@@ -271,9 +271,13 @@ public:
             // Now check that it is the correct size as reported.
             EXPECT_EQ(size, static_cast<int64_t>(f.tellg()));
 
-            // Finally, check that it's really a JSON.
-            ElementPtr from_file = Element::fromJSONFile(exp_txt);
-            ASSERT_TRUE(from_file);
+            // Check that it's really a JSON.
+            ElementPtr from_file = parseJSON(exp_txt);
+            EXPECT_TRUE(from_file);
+
+            // Finally check it is a DHCPv4 config
+            EXPECT_NO_THROW(from_file = parseDHCP4(exp_txt, true));
+            EXPECT_TRUE(from_file);
         } else if (exp_status == CONTROL_RESULT_ERROR) {
 
             // Let's check if the reason for failure was given.
@@ -739,9 +743,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-reset-all");
 }
 
-// Tests if the server returns its configuration using get-config.
+// Tests if the server returns its configuration using config-get.
 // Note there are separate tests that verify if toElement() called by the
-// get-config handler are actually converting the configuration correctly.
+// config-get handler are actually converting the configuration correctly.
 TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
     createUnixChannelServer();
     std::string response;
@@ -759,7 +763,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
 
     // Ok, now roughly check if the response seems legit.
     ASSERT_TRUE(cfg);
-    EXPECT_EQ(Element::map, cfg->getType());
+    ASSERT_EQ(Element::map, cfg->getType());
     EXPECT_TRUE(cfg->get("Dhcp4"));
 }
 

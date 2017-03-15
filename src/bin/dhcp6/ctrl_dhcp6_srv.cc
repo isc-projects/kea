@@ -81,8 +81,6 @@ ControlledDhcpv6Srv::commandConfigGetHandler(const string&,
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr args) {
-    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
-
     string filename;
 
     if (args) {
