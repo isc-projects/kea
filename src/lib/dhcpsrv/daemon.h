@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,6 +145,8 @@ public:
     ///
     /// @param config_file name of the file to write the configuration to
     /// @return number of files written
+    /// @throw Unexpected if CfgMgr can't retrieve configuation or file cannot
+    ///                   be written
     virtual size_t
     writeConfigFile(const std::string& config_file) const;
 

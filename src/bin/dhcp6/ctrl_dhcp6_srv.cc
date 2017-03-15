@@ -72,11 +72,83 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr a
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandGetConfigHandler(const string&,
+ControlledDhcpv6Srv::commandConfigGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
 
     return (createAnswer(0, config));
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr args) {
+    ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
+    string filename;
+
+    if (args) {
+        if (args->getType() != Element::map) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
+        }
+        ConstElementPtr filename_param = args->get("filename");
+        if (filename_param) {
+            if (filename_param->getType() != Element::string) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "passed parameter 'filename' is not a string"));
+            }
+            filename = filename_param->stringValue();
+        }
+    }
+
+    if (filename.empty()) {
+        // filename parameter was not specified, so let's use whatever we remember
+        // from the command-line
+        filename = getConfigFile();
+        if (filename.empty()) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    }
+
+    // Now do the sanity checks on the filename
+    if (filename.find("..") != string::npos) {
+        // Trying to escape the directory with .. nope.
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Using '..' in filename is not allowed."));
+    }
+
+    if (filename.find("\\") != string::npos) {
+        // Trying to inject escapes (possibly to inject quotes and something
+        // nasty afterward)
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Using \\ in filename is not allowed."));
+    }
+
+    if (filename[0] == '/') {
+        // Absolute paths are not allowed.
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Absolute path in filename is not allowed."));
+    }
+
+    // Ok, it's time to write the file.
+    size_t size = 0;
+    try {
+        size = writeConfigFile(filename);
+    } catch (const isc::Exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
+                             + ex.what()));
+    }
+    if (size == 0) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "Error writing configuration to "
+                             + filename));
+    }
+
+    // Ok, it's time to return the successful response.
+    ElementPtr params = Element::createMap();
+    params->set("size", Element::create(static_cast<long long>(size)));
+    params->set("filename", Element::create(filename));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Configuration written to "
+                         + filename + " successful", params));
 }
 
 ConstElementPtr
@@ -186,8 +258,6 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         if (command == "shutdown") {
             return (srv->commandShutdownHandler(command, args));
 
-        /// @todo: register config-reload (see CtrlDhcpv6Srv::commandConfigReloadHandler)
-
         } else if (command == "libreload") {
             return (srv->commandLibReloadHandler(command, args));
 
@@ -197,11 +267,15 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         } else if (command == "set-config") {
             return (srv->commandSetConfigHandler(command, args));
 
-        } else if (command == "get-config") {
-            return (srv->commandGetConfigHandler(command, args));
+        } else if (command == "config-get") {
+            return (srv->commandConfigGetHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
+
+        } else if (command == "config-write") {
+            return (srv->commandConfigWriteHandler(command, args));
+
         }
 
         return (isc::config::createAnswer(1, "Unrecognized command:"
@@ -353,9 +427,18 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     }
     server_ = this; // remember this instance for use in callback
 
-    // Register supported commands in CommandMgr
-    CommandMgr::instance().registerCommand("shutdown",
-        boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
+    // These are the commands always supported by the DHCPv6 server.
+    // Please keep the list in alphabetic order.
+    CommandMgr::instance().registerCommand("config-get",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
+
+    /// @todo: register config-reload (see CtrlDhcpv6Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("config-write",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
@@ -363,27 +446,24 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("set-config",
         boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("get-config",
-        boost::bind(&ControlledDhcpv6Srv::commandGetConfigHandler, this, _1, _2));
-
-    CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("shutdown",
+        boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
         boost::bind(&StatsMgr::statisticGetHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-reset",
-        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("statistic-remove",
-        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
-
     CommandMgr::instance().registerCommand("statistic-get-all",
         boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
 
+    CommandMgr::instance().registerCommand("statistic-reset",
+        boost::bind(&StatsMgr::statisticResetHandler, _1, _2));
+
     CommandMgr::instance().registerCommand("statistic-reset-all",
         boost::bind(&StatsMgr::statisticResetAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-remove",
+        boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
@@ -406,18 +486,19 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();
 
-        // Deregister any registered commands
-        CommandMgr::instance().deregisterCommand("get-config");
-        CommandMgr::instance().deregisterCommand("shutdown");
+        // Deregister any registered commands (please keep in alphabetic order)
+        CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("libreload");
-        CommandMgr::instance().deregisterCommand("set-config");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
+        CommandMgr::instance().deregisterCommand("set-config");
+        CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
-        CommandMgr::instance().deregisterCommand("statistic-reset");
-        CommandMgr::instance().deregisterCommand("statistic-remove");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
-        CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-remove");
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
+        CommandMgr::instance().deregisterCommand("statistic-reset");
+        CommandMgr::instance().deregisterCommand("statistic-reset-all");
 
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
