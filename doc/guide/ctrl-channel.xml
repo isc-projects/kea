@@ -45,9 +45,9 @@
 {
     "command": "foo",
     "arguments": {
-	"param1": "value1",
-	"param2": "value2",
-	...
+        "param1": "value1",
+        "param2": "value2",
+        ...
     }
 }
 </screen>
@@ -64,9 +64,9 @@
     "result": 0|1,
     "text": "textual description",
     "arguments": {
-	"argument1": "value1",
-	"argument2": "value2",
-	...
+        "argument1": "value1",
+        "argument2": "value2",
+        ...
     }
 }
 </screen>
@@ -218,9 +218,9 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       <title>list-commands</title>
 
       <para>
-	The <emphasis>list-commands</emphasis> command retrieves a list of all
-	commands supported by the server. It does not take any arguments.
-	An example command may look like this:
+        The <emphasis>list-commands</emphasis> command retrieves a list of all
+        commands supported by the server. It does not take any arguments.
+        An example command may look like this:
 <screen>
 {
     "command": "list-commands",
@@ -229,9 +229,9 @@ will be sent to Kea and the responses received from Kea printed to standard outp
 </screen>
       </para>
       <para>
-	The server will respond with a list of all supported commands. The
-	arguments element will be a list of strings. Each string will convey
-	one supported command.
+        The server will respond with a list of all supported commands. The
+        arguments element will be a list of strings. Each string will convey
+        one supported command.
       </para>
     </section> <!-- end of command-list-commands -->
 
@@ -282,7 +282,7 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     reload is triggered via a signal, the server will use the configuration
     stored in its configuration file.
 
-	The server's response will contain a numeric code, "result" (0 for success,
+        The server's response will contain a numeric code, "result" (0 for success,
     non-zero on failure), and  a string, "text", describing the outcome:
 <screen>
     {"result": 0, "text": "Configuration successful." }
@@ -298,10 +298,10 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       <title>shutdown</title>
 
       <para>
-	The <emphasis>shutdown</emphasis> command instructs the server to initiate
-	its shutdown procedure. It is the equivalent of sending a SIGTERM signal
-	to the process. This command does not take any arguments.  An example
-	command may look like this:
+        The <emphasis>shutdown</emphasis> command instructs the server to initiate
+        its shutdown procedure. It is the equivalent of sending a SIGTERM signal
+        to the process. This command does not take any arguments.  An example
+        command may look like this:
 <screen>
 {
     "command": "shutdown",
@@ -310,8 +310,8 @@ will be sent to Kea and the responses received from Kea printed to standard outp
 </screen>
       </para>
       <para>
-	The server will respond with a confirmation that the shutdown procedure
-	has been initiated.
+        The server will respond with a confirmation that the shutdown procedure
+        has been initiated.
       </para>
     </section> <!-- end of command-shutdown -->
 
