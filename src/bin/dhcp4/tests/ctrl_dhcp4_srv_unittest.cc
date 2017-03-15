@@ -234,7 +234,7 @@ public:
     /// @param exp_status expected status (0 success, 1 failure)
     /// @param exp_txt for success cases this defines the expected filename,
     ///                for failure cases this defines the expected error message
-    void checkWriteConfig(const std::string& response_txt, int exp_status,
+    void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
         cout << "#### response=" << response_txt << endl;
@@ -724,7 +724,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     EXPECT_NO_THROW(rsp = Element::fromJSON(response));
 
     // We expect the server to report at least the following commands:
-    checkListCommands(rsp, "get-config");
+    checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
@@ -736,17 +737,16 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");
     checkListCommands(rsp, "statistic-reset-all");
-    checkListCommands(rsp, "write-config");
 }
 
 // Tests if the server returns its configuration using get-config.
 // Note there are separate tests that verify if toElement() called by the
 // get-config handler are actually converting the configuration correctly.
-TEST_F(CtrlChannelDhcpv4SrvTest, getConfig) {
+TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
     createUnixChannelServer();
     std::string response;
 
-    sendUnixCommand("{ \"command\": \"get-config\" }", response);
+    sendUnixCommand("{ \"command\": \"config-get\" }", response);
     ConstElementPtr rsp;
 
     // The response should be a valid JSON.
@@ -763,7 +763,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getConfig) {
     EXPECT_TRUE(cfg->get("Dhcp4"));
 }
 
-
+// Tests if config-write can be called without any parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigNoFilename) {
     createUnixChannelServer();
     std::string response;
@@ -773,50 +773,56 @@ TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigNoFilename) {
 
     // If the filename is not explicitly specified, the name used
     // in -c command line switch is used.
-    sendUnixCommand("{ \"command\": \"write-config\" }", response);
+    sendUnixCommand("{ \"command\": \"config-write\" }", response);
 
-    checkWriteConfig(response, CONTROL_RESULT_SUCCESS, "test1.json");
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test1.json");
     ::remove("test1.json");
 }
 
+// Tests if config-write can be called with a valid filename as parameter.
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigFilename) {
     createUnixChannelServer();
     std::string response;
 
-    sendUnixCommand("{ \"command\": \"write-config\", "
+    sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }", response);
-    checkWriteConfig(response, CONTROL_RESULT_SUCCESS, "test2.json");
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
 
+// Tests if config-write rejects invalid filename (a one that tries to escape
+// the current directory).
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigInvalidJailEscape) {
     createUnixChannelServer();
     std::string response;
 
-    sendUnixCommand("{ \"command\": \"write-config\", \"arguments\": "
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
                     "{ \"filename\": \"../test3.json\" } }", response);
-    checkWriteConfig(response, CONTROL_RESULT_ERROR,
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
                      "Using '..' in filename is not allowed.");
 }
 
+// Tests if config-write rejects invalid filename (absolute paths are not allowed)
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigInvalidAbsPath) {
     createUnixChannelServer();
     std::string response;
 
-    sendUnixCommand("{ \"command\": \"write-config\", \"arguments\": "
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
                     "{ \"filename\": \"/tmp/test4.json\" } }", response);
-    checkWriteConfig(response, CONTROL_RESULT_ERROR,
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
                      "Absolute path in filename is not allowed.");
 }
 
+// Tests if config-write rejects invalid filename (one with backslashes, which may
+// lead to some other tricks)
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigInvalidEscape) {
     createUnixChannelServer();
     std::string response;
 
     // This will be converted to foo(single backslash)test5.json
-    sendUnixCommand("{ \"command\": \"write-config\", \"arguments\": "
+    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
                     "{ \"filename\": \"foo\\\\test5.json\" } }", response);
-    checkWriteConfig(response, CONTROL_RESULT_ERROR,
+    checkConfigWrite(response, CONTROL_RESULT_ERROR,
                      "Using \\ in filename is not allowed.");
 }
 

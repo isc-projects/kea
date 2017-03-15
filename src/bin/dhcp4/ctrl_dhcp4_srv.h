@@ -153,7 +153,7 @@ private:
     /// @param args (ignored)
     /// @return current configuration wrapped in a response
     isc::data::ConstElementPtr
-    commandGetConfigHandler(const std::string& command,
+    commandConfigGetHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
     /// @brief handler for processing 'write-config' command
@@ -162,15 +162,15 @@ private:
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during
-    /// Kea start-up will be used. The filename must be within the
-    /// {prefix} directory specified during Kea compilation. This is
+    /// Kea start-up will be used. To avoid any exploits, the path is
+    /// always relative and .. is not allowed in the filename. This is
     /// a security measure against exploiting file writes remotely.
     ///
     /// @param command (ignored)
     /// @param args may contain optional string argument filename
     /// @return status of the configuration file write
     isc::data::ConstElementPtr
-    commandWriteConfigHandler(const std::string& command,
+    commandConfigWriteHandler(const std::string& command,
                               isc::data::ConstElementPtr args);
 
     /// @brief handler for processing 'set-config' command
