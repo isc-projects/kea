@@ -102,7 +102,7 @@ public:
     ///  
     /// @throw DProcessBaseError if an operational error is encountered.
     virtual isc::data::ConstElementPtr 
-        shutdown(isc::data::ConstElementPtr args) = 0;
+    shutdown(isc::data::ConstElementPtr args) = 0;
 
     /// @brief Processes the given configuration.
     ///
@@ -118,7 +118,8 @@ public:
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr
-    configure(isc::data::ConstElementPtr config_set, bool check_only) = 0;
+    configure(isc::data::ConstElementPtr config_set,
+              bool check_only = false) = 0;
 
     /// @brief Processes the given command.
     ///

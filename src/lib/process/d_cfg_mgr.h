@@ -246,7 +246,7 @@ typedef std::vector<std::string> ElementIdList;
 ///        update context with parsed results
 ///        break on error
 ///
-///    if an error occurred
+///    if an error occurred or this is only a check
 ///        restore configuration context from backup
 /// @endcode
 ///
@@ -281,7 +281,7 @@ typedef std::vector<std::string> ElementIdList;
 /// 1. implementation calls simpleParseConfig from its configure method.
 /// 2. simpleParseConfig makes a configuration context
 /// 3. parse method from the derived class is called
-/// 4. if the configuration was unsuccessful of this is only a check, the
+/// 4. if the configuration was unsuccessful or this is only a check, the
 ///    old context is reinstantiated. If not, the configuration is kept.
 ///
 /// See @ref isc::agent::CtrlAgentCfgMgr and @ref isc::agent::CtrlAgentProcess
@@ -303,12 +303,14 @@ public:
     /// the parsing as described in the class brief.
     ///
     /// @param config_set is a set of configuration elements to be parsed.
+    /// @param check_only true if the config is to be checked only, but not applied
     ///
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    isc::data::ConstElementPtr parseConfig(isc::data::ConstElementPtr
-                                           config_set);
+    isc::data::ConstElementPtr
+    parseConfig(isc::data::ConstElementPtr config_set,
+                bool check_only = false);
 
 
     /// @brief Acts as the receiver of new configurations.

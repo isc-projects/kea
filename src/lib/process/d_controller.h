@@ -24,6 +24,7 @@ namespace isc {
 namespace process {
 
 /// @brief Exception thrown when the command line is invalid.
+/// Can be used to transmit negative messages too.
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
@@ -34,7 +35,7 @@ public:
 /// Since command line argument parsing is done as part of
 /// DControllerBase::launch(), it uses this exception to propagate
 /// version information up to main(), when command line argument
-/// -v or -V is given.
+/// -v, -V or -W is given. Can be used to transmit positive messages too.
 class VersionMessage : public isc::Exception {
 public:
     VersionMessage(const char* file, size_t line, const char* what) :
@@ -128,7 +129,7 @@ public:
     /// arguments.
     ///
     /// This function can be run in "test mode". It prevents initialization
-    /// of D2 module logger. This is used in unit tests which initialize logger
+    /// of module logger. This is used in unit tests which initialize logger
     /// in their main function. Such a logger uses environmental variables to
     /// control severity, verbosity etc.
     ///
@@ -161,6 +162,21 @@ public:
     virtual isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr
                                                     new_config);
 
+    /// @brief Instance method invoked by the configuration event handler and
+    /// which processes the actual configuration check.  Provides behavioral
+    /// path for both integrated and stand-alone modes. The current
+    /// implementation will merge the configuration update into the existing
+    /// configuration and then invoke the application process' configure method
+    /// with a final rollback.
+    ///
+    /// @param  new_config is the new configuration
+    ///
+    /// @return returns an Element that contains the results of configuration
+    /// update composed of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                                   new_config);
+
     /// @brief Reconfigures the process from a configuration file
     ///
     /// By default the file is assumed to be a JSON text file whose contents
@@ -191,7 +207,7 @@ public:
     ///
     /// It then extracts the set of configuration elements for the
     /// module-name that matches the controller's app_name_ and passes that
-    /// set into @c updateConfig().
+    /// set into @c updateConfig() (or @c checkConfig()).
     ///
     /// The file may contain an arbitrary number of other modules.
     ///
@@ -223,10 +239,10 @@ public:
     /// @return an Element that contains the results of command composed
     /// of an integer status value and a string explanation of the outcome.
     /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
+    ///   COMMAND_SUCCESS - Command executed successfully
+    ///   COMMAND_ERROR - Command is valid but suffered an operational
     ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as valid be either
+    ///   COMMAND_INVALID - Command is not recognized as valid be either
     ///   the controller or the application process.
     virtual isc::data::ConstElementPtr executeCommand(const std::string&
                                                       command,
@@ -283,10 +299,10 @@ protected:
     /// @return an Element that contains the results of command composed
     /// of an integer status value and a string explanation of the outcome.
     /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
+    ///   COMMAND_SUCCESS - Command executed successfully
+    ///   COMMAND_ERROR - Command is valid but suffered an operational
     ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as a valid custom
+    ///   COMMAND_INVALID - Command is not recognized as a valid custom
     ///   controller command.
     virtual isc::data::ConstElementPtr customControllerCommand(
             const std::string& command, isc::data::ConstElementPtr args);
@@ -302,13 +318,20 @@ protected:
 
     /// @brief Virtual method which returns a string containing the option
     /// letters for any custom command line options supported by the derivation.
-    /// These are added to the stock options of "c" and "v" during command
+    /// These are added to the stock options of "c", "d", ..., during command
     /// line interpretation.
     ///
     /// @return returns a string containing the custom option letters.
     virtual const std::string getCustomOpts() const {
         return ("");
     }
+
+    /// @brief Check the configuration
+    ///
+    /// Called by @c launch() when @c check_only_ mode is enabled
+    /// @throw VersionMessage when successful but a message should be displayed
+    /// @throw InvalidUsage when an error was detected
+    void checkConfigOnly();
 
     /// @brief Application-level signal processing method.
     ///
@@ -340,6 +363,22 @@ protected:
     /// @param value is the new value to assign the flag.
     void setVerbose(bool value) {
         verbose_ = value;
+    }
+
+    /// @brief Supplies whether or not check only mode is enabled.
+    ///
+    /// @return returns true if check only is enabled.
+    bool isCheckOnly() const {
+        return (check_only_);
+    }
+
+    /// @brief Method for enabling or disabling check only mode.
+    ///
+    /// @todo this method and @c setVerbose are currently not used.
+    ///
+    /// @param value is the new value to assign the flag.
+    void setCheckOnly(bool value) {
+        check_only_ = value;
     }
 
     /// @brief Getter for fetching the controller's IOService
@@ -385,14 +424,15 @@ protected:
     /// list of options with those returned by getCustomOpts(), and uses
     /// cstdlib's getopt to loop through the command line.
     /// It handles stock options directly, and passes any custom options into
-    /// the customOption method.  Currently there are only two stock options
-    /// -c for specifying the configuration file, and -v for verbose logging.
+    /// the customOption method.  Currently there are only some stock options
+    /// -c/t for specifying the configuration file, -d for verbose logging,
+    /// and -v/V/W for version reports.
     ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
     ///
     /// @throw InvalidUsage when there are usage errors.
-    /// @throw VersionMessage if the -v or -V arguments is given.
+    /// @throw VersionMessage if the -v, -V or -W arguments is given.
     void parseArgs(int argc, char* argv[]);
 
 
@@ -535,6 +575,10 @@ private:
 
     /// @brief Indicates if the verbose logging mode is enabled.
     bool verbose_;
+
+    /// @brief Indicates if the check only mode for the configuration
+    /// is enabled (usually specified by the command line -t argument).
+    bool check_only_;
 
     /// @brief The absolute file name of the JSON spec file.
     std::string spec_file_name_;
