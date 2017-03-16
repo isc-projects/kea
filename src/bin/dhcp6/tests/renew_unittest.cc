@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -290,8 +290,16 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     ASSERT_EQ(1, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
-    // The lease should have been renewed.
-    EXPECT_EQ(1000, leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
+    // The lease should have been renewed. Allow some time skew.
+#ifdef STRICT_TEST_TIMING
+    EXPECT_EQ(1000,
+              leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
+#else
+    EXPECT_LE(995,
+              leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
+    EXPECT_GE(1005,
+              leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
+#endif
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
