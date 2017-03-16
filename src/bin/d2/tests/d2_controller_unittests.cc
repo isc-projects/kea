@@ -181,10 +181,20 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
+    // Verify that given a valid config we get a successful check result.
+    answer = checkConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode);
+
     // Use an invalid configuration to verify parsing error return.
     std::string config = "{ \"bogus\": 1000 } ";
     config_set = isc::data::Element::fromJSON(config);
     answer = updateConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(1, rcode);
+
+    // Use an invalid configuration to verify checking error return.
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
 }

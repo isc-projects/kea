@@ -152,7 +152,7 @@ public:
         // try DHCPDDNS configure
         ConstElementPtr status;
         try {
-            status = srv_->parseConfig(d2);
+            status = srv_->parseConfig(d2, false);
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "configure for " << operation
                           << " failed with " << ex.what()
