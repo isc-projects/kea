@@ -218,7 +218,8 @@ Daemon::writeConfigFile(const std::string& config_file) const {
         isc_throw(Unexpected, "Unable to open file " + config_file + " for writing");
     }
 
-    out << cfg->str();
+    // Write the actual content using pretty printing.
+    isc::data::prettyPrint(cfg, out);
 
     size_t bytes = static_cast<size_t>(out.tellp());
 

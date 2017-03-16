@@ -237,8 +237,6 @@ public:
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
-        // cout << "#### response=" << response_txt << endl;
-
         ConstElementPtr rsp;
         EXPECT_NO_THROW(rsp = Element::fromJSON(response_txt));
         ASSERT_TRUE(rsp);

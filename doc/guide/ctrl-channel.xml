@@ -150,7 +150,7 @@ will be sent to Kea and the responses received from Kea printed to standard outp
         name used when starting Kea (passed as -c argument) will be used. Note
         that the filename specified must not contain .. or backslashes. Kea
         should be able to write its files only in the directory it is running
-        and any attempts to step out of that directory is rejected.</para>
+        and any attempts to step out of that directory will be rejected.</para>
         <para>
           An example command invocation looks like this:
 <screen>
