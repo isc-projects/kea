@@ -4,7 +4,7 @@
 	checking. Note that some parameters, such as ip-address, port, and
 	DNS server addresses for instance for kea-dhcp-ddns are not fully
 	checked as sockets are not opened or connections are not attempted.
-	(Trac #5152, git xxx)
+	(Trac #5152, git 2231d79ebebd3cdf432cd4a8ac32018d180e27b6)
 
 1225.	[func]		tomek
 	Two new command config-get (retrieves current configuration)
