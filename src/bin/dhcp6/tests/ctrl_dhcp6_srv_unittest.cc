@@ -49,6 +49,7 @@ class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
     // "Naked" DHCPv6 server, exposes internal fields
 public:
     NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
+        CfgMgr::instance().setFamily(AF_INET6);
     }
 
     /// Expose internal methods for the sake of testing
@@ -576,7 +577,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
 
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
-// This test checks which commands are registered by the DHCPv4 server.
+// This test checks which commands are registered by the DHCPv6 server.
 TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 
     ConstElementPtr list_cmds = createCommand("list-commands");

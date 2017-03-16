@@ -41,16 +41,18 @@ void
 IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                           const isc::data::ConstElementPtr& ifaces_config) {
 
-    // Get the pointer to the interface configuration.
+    // Check for re-detect before calling parseInterfacesList() 
+    bool re_detect = getBoolean(ifaces_config, "re-detect");
+    cfg->setReDetect(re_detect);
+    if (re_detect) {
+        IfaceMgr::instance().clearIfaces();
+        IfaceMgr::instance().detectIfaces();
+    }
+
     bool socket_type_specified = false;
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
-            // Check for re-detect before calling parseInterfacesList() 
             if (element.first == "re-detect") {
-                if (element.second->boolValue()) {
-                    IfaceMgr::instance().clearIfaces();
-                    IfaceMgr::instance().detectIfaces();
-                }
                 continue;
             }
 

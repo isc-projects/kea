@@ -625,6 +625,13 @@ for MySQL and PostgreSQL databases.</para></note>
 It is anticipated that this will form of usage only be used where it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
+
+  <para>As for the DHCPv4 server binding to specific addresses and
+  disabling re-detection of interfaces are supported. But
+  <command>dhcp-socket-type</command> is not because DHCPv6 uses
+  UDP/IPv6 sockets only.
+  </para>
+
 </section>
 
     <section id="ipv6-subnet-id">

@@ -437,7 +437,8 @@ TEST_F(SrvConfigTest, unparse) {
 
     std::string defaults = "\"decline-probation-period\": 0,\n";
     defaults += "\"dhcp4o6-port\": 0,\n";
-    defaults += "\"interfaces-config\": { \"interfaces\": [ ] },\n";
+    defaults += "\"interfaces-config\": { \"interfaces\": [ ],\n";
+    defaults += " \"re-detect\": false },\n";
     defaults += "\"option-def\": [ ],\n";
     defaults += "\"option-data\": [ ],\n";
     defaults += "\"expired-leases-processing\": ";

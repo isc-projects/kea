@@ -639,6 +639,18 @@ public:
     NakedDhcpv6Srv srv_;
 };
 
+/// @brief Patch the server config to add interface-config/re-detect=false
+/// @param json the server config
+inline void
+patchIfacesReDetect(isc::data::ConstElementPtr json) {
+    isc::data::ConstElementPtr ifaces_cfg = json->get("interfaces-config");
+    if (ifaces_cfg) {
+        isc::data::ElementPtr mutable_cfg =
+            boost::const_pointer_cast<isc::data::Element>(ifaces_cfg);
+        mutable_cfg->set("re-detect", isc::data::Element::create(false));
+    }
+}
+
 /// @brief Runs parser in JSON mode, useful for parser testing
 ///
 /// @param in string to be parsed
@@ -663,7 +675,10 @@ parseDHCP6(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser6Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
+        isc::data::ElementPtr json;
+        json = ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6);
+        patchIfacesReDetect(json);
+        return (json);
     }
     catch (const std::exception& ex) {
         if (verbose) {
