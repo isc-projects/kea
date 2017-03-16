@@ -37,7 +37,7 @@ DControllerBasePtr DControllerBase::controller_;
 // Note that the constructor instantiates the controller's primary IOService.
 DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
-      verbose_(false), spec_file_name_(""),
+      verbose_(false), check_only_(false), spec_file_name_(""),
       io_service_(new isc::asiolink::IOService()),
       io_signal_queue_() {
 }
@@ -74,60 +74,10 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     setProcName(bin_name_);
 
-    if (!test_mode && check_only_) {
-        try {
-            // We need to initialize logging, in case any error
-            // messages are to be printed.
-            // This is just a test, so we don't care about lockfile.
-            setenv("KEA_LOCKFILE_DIR", "none", 0);
-            isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
-            isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
-            Daemon::loggerInit(bin_name_.c_str(), verbose_);
-
-            // Check the syntax first.
-            std::string config_file = getConfigFile();
-            if (config_file.empty()) {
-                // Basic sanity check: file name must not be empty.
-                isc_throw(InvalidUsage,
-                          "JSON configuration file not specified");
-            }
-            isc::data::ConstElementPtr whole_config = parseFile(config_file);
-            if (!whole_config) {
-                // No fallback to fromJSONFile
-                isc_throw(InvalidUsage, "No configuration found");
-            }
-            if (verbose_) {
-                std::cerr << "Syntax check OK" << std::endl;
-            }
-
-            // Check the logic next.
-            isc::data::ConstElementPtr module_config;
-            module_config = whole_config->get(getAppName());
-            if (!module_config) {
-                isc_throw(InvalidUsage, "Config file " << config_file <<
-                          " does not include '" << getAppName() << "' entry");
-            }
-
-            // Get an application process object.
-            initProcess();
-
-            isc::data::ConstElementPtr answer;
-            answer = checkConfig(module_config);
-            int rcode = 0;
-            answer = isc::config::parseAnswer(rcode, answer);
-            if (rcode != 0) {
-                isc_throw(InvalidUsage, "Error encountered: "
-                          << answer->stringValue());
-            }
-        } catch (const VersionMessage&) {
-            throw;
-        } catch (const InvalidUsage&) {
-            throw;
-        } catch (const std::exception& ex) {
-            isc_throw(InvalidUsage, "Syntax check failed with: " << ex.what());
-        }
+    if (isCheckOnly()) {
+        checkConfigOnly();
         return;
-    }   
+    }
 
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
@@ -200,6 +150,61 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // All done, so bail out.
     LOG_INFO(dctl_logger, DCTL_SHUTDOWN)
         .arg(app_name_).arg(getpid()).arg(VERSION);
+}
+
+void
+DControllerBase::checkConfigOnly() {
+    try {
+        // We need to initialize logging, in case any error
+        // messages are to be printed.
+        // This is just a test, so we don't care about lockfile.
+        setenv("KEA_LOCKFILE_DIR", "none", 0);
+        isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
+        isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
+        Daemon::loggerInit(bin_name_.c_str(), verbose_);
+
+        // Check the syntax first.
+        std::string config_file = getConfigFile();
+        if (config_file.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(InvalidUsage, "JSON configuration file not specified");
+        }
+        isc::data::ConstElementPtr whole_config = parseFile(config_file);
+        if (!whole_config) {
+            // No fallback to fromJSONFile
+            isc_throw(InvalidUsage, "No configuration found");
+        }
+        if (verbose_) {
+            std::cerr << "Syntax check OK" << std::endl;
+        }
+
+        // Check the logic next.
+        isc::data::ConstElementPtr module_config;
+        module_config = whole_config->get(getAppName());
+        if (!module_config) {
+            isc_throw(InvalidUsage, "Config file " << config_file <<
+                      " does not include '" << getAppName() << "' entry");
+        }
+
+        // Get an application process object.
+        initProcess();
+
+        isc::data::ConstElementPtr answer;
+        answer = checkConfig(module_config);
+        int rcode = 0;
+        answer = isc::config::parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            isc_throw(InvalidUsage, "Error encountered: "
+                      << answer->stringValue());
+        }
+    } catch (const VersionMessage&) {
+        throw;
+    } catch (const InvalidUsage&) {
+        throw;
+    } catch (const std::exception& ex) {
+        isc_throw(InvalidUsage, "Syntax check failed with: " << ex.what());
+    }
+    return;
 }
 
 void

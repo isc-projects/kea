@@ -158,7 +158,8 @@ public:
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr
-    configure(isc::data::ConstElementPtr config_set, bool check_only);
+    configure(isc::data::ConstElementPtr config_set,
+              bool check_only = false);
 
     /// @brief Processes the given command.
     ///

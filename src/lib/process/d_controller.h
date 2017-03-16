@@ -326,6 +326,13 @@ protected:
         return ("");
     }
 
+    /// @brief Check the configuration
+    ///
+    /// Called by @c launch() when @c check_only_ mode is enabled
+    /// @throw VersionMessage when successful but a message should be displayed
+    /// @throw InvalidUsage when an error was detected
+    void checkConfigOnly();
+
     /// @brief Application-level signal processing method.
     ///
     /// This method is the last step in processing a OS signal occurrence.  It
@@ -366,6 +373,8 @@ protected:
     }
 
     /// @brief Method for enabling or disabling check only mode.
+    ///
+    /// @todo this method and @c setVerbose are currently not used.
     ///
     /// @param value is the new value to assign the flag.
     void setCheckOnly(bool value) {
@@ -567,7 +576,8 @@ private:
     /// @brief Indicates if the verbose logging mode is enabled.
     bool verbose_;
 
-    /// @brief Indicates if the check only mode is enabled.
+    /// @brief Indicates if the check only mode for the configuration
+    /// is enabled (usually specified by the command line -t argument).
     bool check_only_;
 
     /// @brief The absolute file name of the JSON spec file.
