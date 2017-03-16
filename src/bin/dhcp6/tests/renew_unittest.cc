@@ -291,7 +291,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The lease should have been renewed. Allow some time skew.
-#ifdef STRICT_REQUEST_PREFIX_IN_RENEW
+#ifdef STRICT_TEST_TIMING
     EXPECT_EQ(1000,
               leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_);
 #else
