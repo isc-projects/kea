@@ -16,7 +16,11 @@
 {
   // Kea is told to listen on ethX network interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "ethX" ],
+
+	// This makes interfaces to be re-detected at each (re-)configuration.
+	// By default it is true.
+	"re-detect": true
   },
 
   // We need to specify the the database used to store leases. As of
