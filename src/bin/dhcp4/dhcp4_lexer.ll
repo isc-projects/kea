@@ -226,6 +226,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"re-detect\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_RE_DETECT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("re-detect", driver.loc_);
+    }
+}
+
 \"lease-database\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

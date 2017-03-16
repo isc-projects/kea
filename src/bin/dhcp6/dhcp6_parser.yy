@@ -52,6 +52,7 @@ using namespace std;
   DHCP6 "Dhcp6"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
+  RE_DETECT "re-detect"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -449,7 +450,7 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
-} COLON LCURLY_BRACKET interface_config_map RCURLY_BRACKET {
+} COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -458,11 +459,19 @@ sub_interfaces6: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} interface_config_map RCURLY_BRACKET {
+} interfaces_config_params RCURLY_BRACKET {
     // parsing completed
 };
 
-interface_config_map: INTERFACES {
+interfaces_config_params: interfaces_config_param
+                        | interfaces_config_params COMMA interfaces_config_param
+                        ;
+
+interfaces_config_param: interfaces_list
+                       | re_detect
+                       ;
+
+interfaces_list: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
@@ -471,6 +480,12 @@ interface_config_map: INTERFACES {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+re_detect: RE_DETECT COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("re-detect", b);
+};
+
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));

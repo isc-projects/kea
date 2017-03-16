@@ -29,7 +29,11 @@
         // 'udp' is generally better if you have only relayed traffic. Kea
         // than opens up normal UDP socket and the kernel does all the
         // Ethernet/IP stack processing.
-        "dhcp-socket-type": "udp"
+        "dhcp-socket-type": "udp",
+
+	// This makes interfaces to be re-detected at each (re-)configuration.
+	// By default it is true.
+	"re-detect": true
     },
 
     // We need to specify the the database used to store leases. As of

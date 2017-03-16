@@ -55,6 +55,7 @@ using namespace std;
   DHCP_SOCKET_TYPE "dhcp-socket-type"
   RAW "raw"
   UDP "udp"
+  RE_DETECT "re-detect"
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
@@ -456,6 +457,7 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | dhcp_socket_type
+                       | re_detect
                        ;
 
 sub_interfaces4: LCURLY_BRACKET {
@@ -486,6 +488,12 @@ dhcp_socket_type: DHCP_SOCKET_TYPE {
 socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
            | UDP { $$ = ElementPtr(new StringElement("udp", ctx.loc2pos(@1))); }
            ;
+
+re_detect: RE_DETECT COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("re-detect", b);
+};
+
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));

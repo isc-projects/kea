@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ namespace dhcp {
 
 void
 IfacesConfigParser::parseInterfacesList(const CfgIfacePtr& cfg_iface,
-                                           ConstElementPtr ifaces_list) {
+                                        ConstElementPtr ifaces_list) {
     BOOST_FOREACH(ConstElementPtr iface, ifaces_list->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
@@ -45,6 +45,15 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     bool socket_type_specified = false;
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
+            // Check for re-detect before calling parseInterfacesList() 
+            if (element.first == "re-detect") {
+                if (element.second->boolValue()) {
+                    IfaceMgr::instance().clearIfaces();
+                    IfaceMgr::instance().detectIfaces();
+                }
+                continue;
+            }
+
             if (element.first == "interfaces") {
                 parseInterfacesList(cfg, element.second);
                 continue;
