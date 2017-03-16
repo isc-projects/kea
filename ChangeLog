@@ -1,3 +1,11 @@
+1226.	[func]		fdupont
+	Command line option -t support added to libprocess and implemented
+	for kea-dhcp-ddns and kea-ctrl-agent. It allows configuration sanity
+	checking. Note that some parameters, such as ip-address, port, and
+	DNS server addresses for instance for kea-dhcp-ddns are not fully
+	checked as sockets are not opened or connections are not attempted.
+	(Trac #5152, git xxx)
+
 1225.	[func]		tomek
 	Two new command config-get (retrieves current configuration)
 	and config-write (writes current configuration to disk) have been
