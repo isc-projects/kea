@@ -60,7 +60,8 @@ HttpConnection::close() {
 void
 HttpConnection::stopThisConnection() {
     try {
-        LOG_DEBUG(http_logger, DBGLVL_TRACE_BASIC, HTTP_CONNECTION_STOP)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_CONNECTION_STOP)
             .arg(getRemoteEndpointAddressAsText());
         connection_pool_.stop(shared_from_this());
     } catch (...) {
@@ -128,7 +129,8 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
     acceptor_callback_(ec);
 
     if (!ec) {
-        LOG_DEBUG(http_logger, DBGLVL_TRACE_DETAIL, HTTP_REQUEST_RECEIVE_START)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  HTTP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText())
             .arg(static_cast<unsigned>(request_timeout_/1000));
         request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback, this),
@@ -140,7 +142,8 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 void
 HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
     if (length != 0) {
-        LOG_DEBUG(http_logger, DBGLVL_TRACE_DETAIL_DATA, HTTP_DATA_RECEIVED)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                  HTTP_DATA_RECEIVED)
             .arg(length)
             .arg(getRemoteEndpointAddressAsText());
     }
@@ -151,7 +154,8 @@ HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
         doRead();
 
     } else {
-        LOG_DEBUG(http_logger, DBGLVL_TRACE_DETAIL, HTTP_REQUEST_RECEIVED)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  HTTP_REQUEST_RECEIVED)
             .arg(getRemoteEndpointAddressAsText());
         try {
             request_->finalize();
@@ -159,7 +163,8 @@ HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
         }
 
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
-        LOG_DEBUG(http_logger, DBGLVL_TRACE_DETAIL, HTTP_RESPONSE_SEND)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  HTTP_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
         asyncSendResponse(response);
@@ -181,7 +186,8 @@ HttpConnection::socketWriteCallback(boost::system::error_code,
 
 void
 HttpConnection::requestTimeoutCallback() {
-    LOG_DEBUG(http_logger, DBGLVL_TRACE_DETAIL, HTTP_REQUEST_TIMEOUT_OCCURRED)
+    LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+              HTTP_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     HttpResponsePtr response =
         response_creator_->createStockHttpResponse(request_,
