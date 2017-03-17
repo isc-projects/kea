@@ -31,6 +31,15 @@ static const std::string VERSION_GET_COMMAND("version-get");
 /// @brief String value for the build-report command.
 static const std::string BUILD_REPORT_COMMAND("build-report");
 
+/// @brief String value for the config-get command.
+static const std::string CONFIG_GET_COMMAND("config-get");
+
+/// @brief String value for the config-write command.
+static const std::string CONFIG_WRITE_COMMAND("config-write");
+
+/// @brief String value for the config-test command.
+static const std::string CONFIG_TEST_COMMAND("config-test");
+
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 
