@@ -82,7 +82,7 @@ LoggerImpl::~LoggerImpl() {
 std::string
 LoggerImpl::getVersion() {
     std::ostringstream ver;
-    ver << "log4plus ";
+    ver << "log4cplus ";
     ver << log4cplus::versionStr;
     return (ver.str());
 }

@@ -8,6 +8,7 @@
 
 #include <agent/ca_controller.h>
 #include <agent/ca_process.h>
+#include <agent/ca_command_mgr.h>
 #include <agent/parser_context.h>
 
 using namespace isc::process;
@@ -45,6 +46,25 @@ isc::data::ConstElementPtr
 CtrlAgentController::parseFile(const std::string& name) {
     ParserContext parser;
     return (parser.parseFile(name, ParserContext::PARSER_AGENT));
+}
+
+void
+CtrlAgentController::registerCommands() {
+    CtrlAgentCommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
+        boost::bind(&DControllerBase::versionGetHandler, this, _1, _2));
+
+    CtrlAgentCommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
+        boost::bind(&DControllerBase::buildReportHandler, this, _1, _2));
+
+    CtrlAgentCommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
+        boost::bind(&DControllerBase::shutdownHandler, this, _1, _2));
+}
+
+void
+CtrlAgentController::deregisterCommands() {
+    CtrlAgentCommandMgr::instance().deregisterCommand(VERSION_GET_COMMAND);
+    CtrlAgentCommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
+    CtrlAgentCommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);
 }
 
 CtrlAgentController::CtrlAgentController()

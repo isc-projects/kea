@@ -602,12 +602,20 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     std::string command_list = answer->get("arguments")->str();
 
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"set-config\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
     srv.reset();
@@ -643,6 +651,24 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
+}
+
+// This test verifies that the DHCP server handles version-get commands
+TEST_F(CtrlChannelDhcpv6SrvTest, getversion) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the build-report command
+    sendUnixCommand("{ \"command\": \"build-report\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
 // This test verifies that the DHCP server immediately reclaims expired

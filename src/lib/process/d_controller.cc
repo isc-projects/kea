@@ -29,6 +29,9 @@
 #include <sstream>
 #include <unistd.h>
 
+using namespace isc::data;
+using namespace isc::config;
+
 namespace isc {
 namespace process {
 
@@ -54,9 +57,9 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     controller_ = controller;
 }
 
-isc::data::ConstElementPtr
+ConstElementPtr
 DControllerBase::parseFile(const std::string&) {
-    isc::data::ConstElementPtr elements;
+    ConstElementPtr elements;
     return (elements);
 }
 
@@ -125,8 +128,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     // Step 3 is to load configuration from file.
     int rcode;
-    isc::data::ConstElementPtr comment
-        = isc::config::parseAnswer(rcode, configFromFile());
+    ConstElementPtr comment = parseAnswer(rcode, configFromFile());
     if (rcode != 0) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
                   .arg(app_name_).arg(comment->stringValue());
@@ -169,7 +171,7 @@ DControllerBase::checkConfigOnly() {
             // Basic sanity check: file name must not be empty.
             isc_throw(InvalidUsage, "JSON configuration file not specified");
         }
-        isc::data::ConstElementPtr whole_config = parseFile(config_file);
+        ConstElementPtr whole_config = parseFile(config_file);
         if (!whole_config) {
             // No fallback to fromJSONFile
             isc_throw(InvalidUsage, "No configuration found");
@@ -179,7 +181,7 @@ DControllerBase::checkConfigOnly() {
         }
 
         // Check the logic next.
-        isc::data::ConstElementPtr module_config;
+        ConstElementPtr module_config;
         module_config = whole_config->get(getAppName());
         if (!module_config) {
             isc_throw(InvalidUsage, "Config file " << config_file <<
@@ -189,10 +191,9 @@ DControllerBase::checkConfigOnly() {
         // Get an application process object.
         initProcess();
 
-        isc::data::ConstElementPtr answer;
-        answer = checkConfig(module_config);
+        ConstElementPtr answer = checkConfig(module_config);
         int rcode = 0;
-        answer = isc::config::parseAnswer(rcode, answer);
+        answer = parseAnswer(rcode, answer);
         if (rcode != 0) {
             isc_throw(InvalidUsage, "Error encountered: "
                       << answer->stringValue());
@@ -312,15 +313,15 @@ DControllerBase::initProcess() {
     process_->init();
 }
 
-isc::data::ConstElementPtr
+ConstElementPtr
 DControllerBase::configFromFile() {
     // Rollback any previous staging configuration. For D2, only a
     // logger configuration is used here.
     isc::dhcp::CfgMgr::instance().rollback();
     // Will hold configuration.
-    isc::data::ConstElementPtr module_config;
+    ConstElementPtr module_config;
     // Will receive configuration result.
-    isc::data::ConstElementPtr answer;
+    ConstElementPtr answer;
     try {
         std::string config_file = getConfigFile();
         if (config_file.empty()) {
@@ -331,10 +332,10 @@ DControllerBase::configFromFile() {
 
         // If parseFile returns an empty pointer, then pass the file onto the
         // original JSON parser.
-        isc::data::ConstElementPtr whole_config = parseFile(config_file);
+        ConstElementPtr whole_config = parseFile(config_file);
         if (!whole_config) {
             // Read contents of the file and parse it as JSON
-            whole_config = isc::data::Element::fromJSONFile(config_file, true);
+            whole_config = Element::fromJSONFile(config_file, true);
         }
 
         // Let's configure logging before applying the configuration,
@@ -358,7 +359,7 @@ DControllerBase::configFromFile() {
 
         answer = updateConfig(module_config);
         int rcode = 0;
-        isc::config::parseAnswer(rcode, answer);
+        parseAnswer(rcode, answer);
         if (!rcode) {
             // Configuration successful, so apply the logging configuration
             // to log4cplus.
@@ -370,9 +371,8 @@ DControllerBase::configFromFile() {
         // Rollback logging configuration.
         isc::dhcp::CfgMgr::instance().rollback();
         // build an error result
-        isc::data::ConstElementPtr error =
-            isc::config::createAnswer(1,
-                std::string("Configuration parsing failed: ") + ex.what());
+        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+                 std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
 
@@ -394,55 +394,45 @@ DControllerBase::runProcess() {
 }
 
 // Instance method for handling new config
-isc::data::ConstElementPtr
-DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
+ConstElementPtr
+DControllerBase::updateConfig(ConstElementPtr new_config) {
     return (process_->configure(new_config, false));
 }
 
 // Instance method for checking new config
-isc::data::ConstElementPtr
-DControllerBase::checkConfig(isc::data::ConstElementPtr new_config) {
+ConstElementPtr
+DControllerBase::checkConfig(ConstElementPtr new_config) {
     return (process_->configure(new_config, true));
 }
 
+ConstElementPtr
+DControllerBase::versionGetHandler(const std::string&, ConstElementPtr args) {
+    ConstElementPtr answer;
 
-// Instance method for executing commands
-isc::data::ConstElementPtr
-DControllerBase::executeCommand(const std::string& command,
-                            isc::data::ConstElementPtr args) {
+    // For version-get put the extended version in arguments
+    ElementPtr extended = Element::create(getVersion(true));
+    ElementPtr arguments = Element::createMap();
+    arguments->set("extended", extended);
+    answer = createAnswer(COMMAND_SUCCESS, getVersion(false), arguments);
+    return (answer);
+}
+
+ConstElementPtr
+DControllerBase::buildReportHandler(const std::string&, ConstElementPtr args) {
+    return (createAnswer(COMMAND_SUCCESS, isc::detail::getConfigReport()));
+}
+
+ConstElementPtr
+DControllerBase::shutdownHandler(const std::string&, ConstElementPtr args) {
     // Shutdown is universal.  If its not that, then try it as
     // a custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
-    isc::data::ConstElementPtr answer;
-    if (command.compare(SHUT_DOWN_COMMAND) == 0) {
-        answer = shutdownProcess(args);
-    } else {
-        // It wasn't shutdown, so it may be a custom controller command.
-        int rcode = 0;
-        answer = customControllerCommand(command, args);
-        isc::config::parseAnswer(rcode, answer);
-        if (rcode == COMMAND_INVALID)
-        {
-            // It wasn't a controller command, so it may be an application command.
-            answer = process_->command(command, args);
-        }
-    }
-
-    return (answer);
+    return (shutdownProcess(args));
 }
 
-isc::data::ConstElementPtr
-DControllerBase::customControllerCommand(const std::string& command,
-                                     isc::data::ConstElementPtr /* args */) {
-
-    // Default implementation always returns invalid command.
-    return (isc::config::createAnswer(COMMAND_INVALID,
-                                      "Unrecognized command: " + command));
-}
-
-isc::data::ConstElementPtr
-DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
+ConstElementPtr
+DControllerBase::shutdownProcess(ConstElementPtr args) {
     if (process_) {
         return (process_->shutdown(args));
     }
@@ -450,7 +440,7 @@ DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    return (isc::config::createAnswer(0, "Process has not been initialized."));
+    return (createAnswer(COMMAND_SUCCESS, "Process has not been initialized"));
 }
 
 void
@@ -498,9 +488,7 @@ DControllerBase::processSignal(int signum) {
             LOG_INFO(dctl_logger, DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD)
                      .arg(signum).arg(getConfigFile());
             int rcode;
-            isc::data::ConstElementPtr comment = isc::config::
-                                                 parseAnswer(rcode,
-                                                             configFromFile());
+            ConstElementPtr comment = parseAnswer(rcode, configFromFile());
             if (rcode != 0) {
                 LOG_ERROR(dctl_logger, DCTL_CFG_FILE_RELOAD_ERROR)
                           .arg(comment->stringValue());
@@ -514,8 +502,8 @@ DControllerBase::processSignal(int signum) {
         {
             LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
                       DCTL_SHUTDOWN_SIGNAL_RECVD).arg(signum);
-            isc::data::ElementPtr arg_set;
-            executeCommand(SHUT_DOWN_COMMAND, arg_set);
+            ElementPtr arg_set;
+            shutdownHandler(SHUT_DOWN_COMMAND, arg_set);
             break;
         }
 

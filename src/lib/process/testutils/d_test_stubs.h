@@ -499,18 +499,11 @@ public:
         return (getController()->checkConfig(new_config));
     }
 
-    /// @Wrapper to invoke the Controller's executeCommand method.  Please
-    /// refer to DControllerBase::executeCommand for details.
-    isc::data::ConstElementPtr executeCommand(const std::string& command,
-                                       isc::data::ConstElementPtr args){
-        return (getController()->executeCommand(command, args));
-    }
-
     /// @brief Callback that will generate shutdown command via the
     /// command callback function.
     static void genShutdownCallback() {
         isc::data::ElementPtr arg_set;
-        getController()->executeCommand(SHUT_DOWN_COMMAND, arg_set);
+        getController()->shutdownHandler(SHUT_DOWN_COMMAND, arg_set);
     }
 
     /// @brief Callback that throws an exception.

@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <agent/ca_process.h>
+#include <agent/ca_controller.h>
 #include <agent/ca_response_creator_factory.h>
 #include <agent/ca_log.h>
 #include <asiolink/io_address.h>
@@ -47,13 +48,20 @@ CtrlAgentProcess::run() {
 
     try {
 
+        // Register commands.
+        CtrlAgentControllerPtr controller =
+            boost::dynamic_pointer_cast<CtrlAgentController>(
+                CtrlAgentController::instance());
+        controller->registerCommands();
+
         // Create response creator factory first. It will be used to generate
         // response creators. Each response creator will be used to generate
         // answer to specific request.
         HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
 
         DCfgContextBasePtr base_ctx = getCfgMgr()->getContext();
-        CtrlAgentCfgContextPtr ctx = boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
+        CtrlAgentCfgContextPtr ctx =
+            boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
         if (!ctx) {
             isc_throw(Unexpected, "Interal logic error: bad context type");
         }
@@ -99,6 +107,16 @@ CtrlAgentProcess::run() {
                   "Process run method failed: " << ex.what());
     }
 
+    try {
+        // Deregister commands.
+        CtrlAgentControllerPtr controller =
+            boost::dynamic_pointer_cast<CtrlAgentController>(
+                CtrlAgentController::instance());
+        controller->deregisterCommands();
+    } catch (const std::exception&) {
+        // What to do? Simply ignore...
+    }
+
     LOG_DEBUG(agent_logger, DBGLVL_START_SHUT, CTRL_AGENT_RUN_EXIT);
 }
 
@@ -116,13 +134,6 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                                                                        check_only);
     config::parseAnswer(rcode, answer);
     return (answer);
-}
-
-isc::data::ConstElementPtr
-CtrlAgentProcess::command(const std::string& command,
-                          isc::data::ConstElementPtr /*args*/) {
-    return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
-                                      + command));
 }
 
 

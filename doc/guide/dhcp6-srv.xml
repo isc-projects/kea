@@ -196,7 +196,7 @@ opening curly bracket (or brace). Each configuration consists of
 one or more objects. In this specific example, we have only one
 object, called Dhcp6. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
-<command>DhcpDns</command>, but we omit them now for clarity. The Dhcp6
+<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp6
 configuration starts with the <command>"Dhcp6": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
@@ -2892,7 +2892,7 @@ should include options from the isc option space:
     <userinput>"option-data": [
     {
         "name": "vendor-opts",
-        "data": 4491"
+        "data": 4491
     },
     {
         "name": "tftp-servers",
@@ -4131,12 +4131,14 @@ If not specified, the default value is:
 
       <para>The DHCPv6 server supports the following operational commands:
         <itemizedlist>
+            <listitem>build-report</listitem>
             <listitem>config-get</listitem>
             <listitem>config-write</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
             <listitem>set-config</listitem>
             <listitem>shutdown</listitem>
+            <listitem>version-get</listitem>
         </itemizedlist>
          as described in <xref linkend="commands-common"/>.  In addition,
          it supports the following statistics related commands:

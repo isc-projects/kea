@@ -381,12 +381,20 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     std::string command_list = answer->get("arguments")->str();
 
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"set-config\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
     server_.reset();
@@ -482,6 +490,25 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     EXPECT_TRUE(lease1->stateExpiredReclaimed());
 }
 
+// This test verifies that the DHCP server handles version-get commands
+TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the build-report command
+    sendUnixCommand("{ \"command\": \"build-report\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// This test verifies that the DHCP server immediately removed expired
 // This test verifies that the DHCP server immediately removed expired
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
@@ -722,6 +749,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     EXPECT_NO_THROW(rsp = Element::fromJSON(response));
 
     // We expect the server to report at least the following commands:
+    checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
@@ -735,6 +763,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");
     checkListCommands(rsp, "statistic-reset-all");
+    checkListCommands(rsp, "version-get");
 }
 
 // Tests if the server returns its configuration using config-get.

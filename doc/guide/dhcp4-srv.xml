@@ -195,7 +195,7 @@ opening curly bracket (or brace). Each configuration consists of
 one or more objects. In this specific example, we have only one
 object, called Dhcp4. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
-<command>DhcpDns</command>, but we omit them now for clarity. The Dhcp4
+<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp4
 configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
@@ -2475,7 +2475,7 @@ It is merely echoed by the server
      indicates that the server will use the "client identifier" for lease
      lookups and "chaddr" if the first lookup returns no results. The
      <command>false</command> means that the server will only
-     use the "chaddr" to search for client"s lease. Whether the DHCID for
+     use the "chaddr" to search for client's lease. Whether the DHCID for
      DNS updates is generated from the "client identifier" or "chaddr" is
      controlled through the same parameter accordingly.</para>
 
@@ -3723,12 +3723,14 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>The DHCPv4 server supports the following operational commands:
         <itemizedlist>
+            <listitem>build-report</listitem>
             <listitem>config-get</listitem>
             <listitem>config-write</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
             <listitem>set-config</listitem>
             <listitem>shutdown</listitem>
+            <listitem>version-get</listitem>
         </itemizedlist>
          as described in <xref linkend="commands-common"/>.  In addition,
          it supports the following statistics related commands:

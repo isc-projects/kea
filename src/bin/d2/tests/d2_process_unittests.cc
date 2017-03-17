@@ -394,20 +394,6 @@ TEST_F(D2ProcessTest, badConfigureRecovery) {
     EXPECT_FALSE(getReconfQueueFlag());
 }
 
-/// @brief Verifies basic command method behavior.
-/// @TODO IF the D2Process is extended to support extra commands this testing
-/// will need to augmented accordingly.
-TEST_F(D2ProcessTest, command) {
-    // Verify that the process will process unsupported command and
-    // return a failure response.
-    int rcode = -1;
-    string args = "{ \"arg1\": 77 } ";
-    isc::data::ElementPtr json = isc::data::Element::fromJSON(args);
-    isc::data::ConstElementPtr answer = command("bogus_command", json);
-    parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_INVALID, rcode);
-}
-
 /// @brief Tests shutdown command argument parsing
 /// The shutdown command supports an optional "type" argument. This test
 /// checks that for valid values, the shutdown() method: sets the shutdown
