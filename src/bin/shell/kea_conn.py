@@ -17,6 +17,7 @@ class CARequest:
      - http-port - TCP port of the CA
      - command - specifies the command to send (e.g. list-commands)
      - timeout - timeout (in ms)
+     - args - extra arguments my be added here
      - headers - extra HTTP headers may be added here
      - version - version to be reported in HTTP header
     """
@@ -25,7 +26,7 @@ class CARequest:
     http_port = 0
     command = ''
     timeout = 0
-    params = ''
+    args = ''
     headers = {}
     version = ""
     # This is a storage for generated command (input data to be sent over POST)
@@ -35,12 +36,11 @@ class CARequest:
         """
         Generates the content, out of specified command line
         and optional content.
-        @todo: Add support for parameters
         this stores the output in self.content
         """
         self.content = '{ "command": "' + self.command + '"'
-        if len(self.params):
-            self.content += ', "parameters": { ' + self.params + ' }'
+        if len(self.args) > 1:
+            self.content += ', "arguments": { ' + self.args + ' }'
         self.content += ' }'
 
     def generate_headers(self):

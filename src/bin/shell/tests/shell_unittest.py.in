@@ -26,27 +26,27 @@ class CARequestUnitTest(unittest.TestCase):
         """
         pass
 
-    def test_body_without_params(self):
+    def test_body_without_args(self):
         """
         This test verifies if the CARequest object generates the request
-        content properly when there are no parameters.
+        content properly when there are no arguments.
         """
         request = CARequest()
         request.command = "foo"
         request.generate_body()
         self.assertEqual(request.content, '{ "command": "foo" }')
 
-    def test_body_with_params(self):
+    def test_body_with_args(self):
         """
         This test verifies if the CARequest object generates the request
-        content properly when there are parameters.
+        content properly when there are arguments.
         """
         request = CARequest()
         request.command = "foo"
-        request.params = '"bar": "baz"'
+        request.args = '"bar": "baz"'
         request.generate_body()
         self.assertEqual(request.content,
-                         '{ "command": "foo", "parameters": { "bar": "baz" } }')
+                         '{ "command": "foo", "arguments": { "bar": "baz" } }')
 
     @staticmethod
     def check_header(headers, header_name, value):
