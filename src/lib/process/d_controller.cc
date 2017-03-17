@@ -121,7 +121,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_STANDALONE)
+        .arg(app_name_);
 
     // Step 3 is to load configuration from file.
     int rcode;
@@ -292,7 +293,8 @@ DControllerBase::customOption(int /* option */, char* /*optarg*/)
 
 void
 DControllerBase::initProcess() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_INIT_PROCESS).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_INIT_PROCESS)
+        .arg(app_name_);
 
     // Invoke virtual method to instantiate the application process.
     try {
@@ -382,7 +384,8 @@ DControllerBase::configFromFile() {
 
 void
 DControllerBase::runProcess() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_RUN_PROCESS).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_RUN_PROCESS)
+        .arg(app_name_);
     if (!process_) {
         // This should not be possible.
         isc_throw(DControllerBaseError, "Process not initialized");
@@ -512,7 +515,7 @@ DControllerBase::processSignal(int signum) {
         case SIGINT:
         case SIGTERM:
         {
-            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+            LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT,
                       DCTL_SHUTDOWN_SIGNAL_RECVD).arg(signum);
             isc::data::ElementPtr arg_set;
             executeCommand(SHUT_DOWN_COMMAND, arg_set);
