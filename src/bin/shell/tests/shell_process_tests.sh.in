@@ -178,6 +178,6 @@ version_test() {
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"list-commands\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
     "[ { \"result\": 1, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""

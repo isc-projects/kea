@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfg_db_access.h>
 #include <config/command_mgr.h>
 #include <stats/stats_mgr.h>
+#include <cfgrpt/config_report.h>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -206,6 +207,25 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
+    ElementPtr extended = Element::create(Dhcpv4Srv::getVersion(true));
+    ElementPtr arguments = Element::createMap();
+    arguments->set("extended", extended);
+    ConstElementPtr answer = isc::config::createAnswer(0,
+                                Dhcpv4Srv::getVersion(false),
+                                arguments);
+    return (answer);
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandBuildReportHandler(const string&,
+                                               ConstElementPtr) {
+    ConstElementPtr answer =
+        isc::config::createAnswer(0, isc::detail::getConfigReport());
+    return (answer);
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
     int status_code = 1;
@@ -261,6 +281,12 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
+
+        } else if (command == "version-get") {
+            return (srv->commandVersionGetHandler(command, args));
+
+        } else if (command == "build-report") {
+            return (srv->commandBuildReportHandler(command, args));
 
         } else if (command == "leases-reclaim") {
             return (srv->commandLeasesReclaimHandler(command, args));
@@ -398,6 +424,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
 
     // These are the commands always supported by the DHCPv4 server.
     // Please keep the list in alphabetic order.
+    CommandMgr::instance().registerCommand("build-report",
+        boost::bind(&ControlledDhcpv4Srv::commandBuildReportHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("config-get",
         boost::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
 
@@ -417,6 +446,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("version-get",
+        boost::bind(&ControlledDhcpv4Srv::commandVersionGetHandler, this, _1, _2));
 
     // Register statistic related commands
     CommandMgr::instance().registerCommand("statistic-get",
@@ -457,6 +489,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().closeCommandSocket();
 
         // Deregister any registered commands (please keep in alphabetic order)
+        CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
@@ -469,6 +502,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server

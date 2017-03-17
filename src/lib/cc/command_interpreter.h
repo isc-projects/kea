@@ -126,6 +126,23 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
 
+/// @brief Combines lists of commands carried in two responses.
+///
+/// This method is used to combine list of commands returned by the
+/// two command managers.
+///
+/// If the same command appears in two responses only a single
+/// instance is returned in the combined response.
+///
+/// @param response1 First command response.
+/// @param response2 Second command response.
+///
+/// @return Pointer to the 'list-commands' response holding combined
+/// list of commands.
+isc::data::ConstElementPtr
+combineCommandsLists(const isc::data::ConstElementPtr& response1,
+                     const isc::data::ConstElementPtr& response2);
+
 }; // end of namespace isc::config
 }; // end of namespace isc
 
