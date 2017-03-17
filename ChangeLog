@@ -7,7 +7,7 @@
 	(Trac #5152, git 2231d79ebebd3cdf432cd4a8ac32018d180e27b6)
 
 1225.	[func]		tomek
-	Two new command config-get (retrieves current configuration)
+	Two new commands: config-get (retrieves current configuration)
 	and config-write (writes current configuration to disk) have been
 	implemented.
 	(Trac #5151, git ffb26811736a2ae6f9b5556b9823aa284b7e0aec)
