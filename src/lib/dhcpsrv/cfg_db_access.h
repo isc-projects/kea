@@ -75,7 +75,7 @@ protected:
 
     /// @brief Returns lease or host database access string.
     ///
-    /// @param Access string without additional (appended) parameters.
+    /// @param access_string without additional (appended) parameters.
     std::string getAccessString(const std::string& access_string) const;
 
     /// @brief Parameters to be appended to the database access
@@ -103,7 +103,7 @@ struct CfgLeaseDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
 
     /// @brief Unparse
     ///
-    /// @ref CfgToElement::toElement
+    /// @ref isc::data::CfgToElement::toElement
     ///
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
@@ -117,7 +117,7 @@ struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
 
     /// @brief Unparse
     ///
-    /// @ref CfgToElement::toElement
+    /// @ref isc::data::CfgToElement::toElement
     ///
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
