@@ -58,10 +58,9 @@ static bool ready;
 
 using namespace std;
 
-bool * shutdown_reference = NULL;
+static volatile bool * shutdown_reference = NULL;
 
-
-void kea_shutdown() {
+void kea_shutdown(void) {
     if (shutdown_reference) {
         // do we have the reference to shutdown flag from Dhcp6Srv?
         // If yes, then let's set it to true. Kea will shutdown on
@@ -79,7 +78,7 @@ void kea_shutdown() {
 // Then it wait for a conditional, which is called in kea_fuzz_notify() from
 // Kea main loop.
 static void *
-kea_main_client(void *arg) {
+kea_main_client(void *) {
     const char *host;
     struct sockaddr_in6 servaddr;
     int sockfd;
@@ -122,7 +121,7 @@ kea_main_client(void *arg) {
           << " to address." << endl;
         exit(EXIT_FAILURE);
     }
-    servaddr.sin6_port = htons(547);
+    servaddr.sin6_port = htons(atoi(port.c_str()));
     servaddr.sin6_scope_id = iface_id;
 
     sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -162,6 +161,7 @@ kea_main_client(void *arg) {
 
         if (pthread_mutex_lock(&mutex) != 0) {
             f << "#### Failed to lock mutex" << endl;
+	    abort();
         }
 
         ready = false;
@@ -184,6 +184,7 @@ kea_main_client(void *arg) {
         if (sent != length) {
             f << "#### Error: expected to send " << length
               << ", but really sent " << sent << endl;
+	    f << "#### errno=" << errno << endl;
         }
 
         /* unclog */
@@ -194,6 +195,7 @@ kea_main_client(void *arg) {
 
         if (pthread_mutex_unlock(&mutex) != 0) {
             f << "#### Failed to unlock mutex" << endl;
+	    abort();
         }
     }
 
@@ -224,26 +226,26 @@ kea_fuzz_notify(void) {
 #ifdef ENABLE_AFL
     if (getenv("AFL_CMIN")) {
         kea_shutdown();
-        /// @todo: What does this piece of code do?
-        /* ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
-           isc_app_shutdown(); */
         return;
     }
 
     raise(SIGSTOP);
 
     if (pthread_mutex_lock(&mutex) != 0) {
-        cout << "#### unable to lock mutex" << endl;
+        cerr << "#### unable to lock mutex" << endl;
+        abort();
     }
 
     ready = true;
 
     if (pthread_cond_signal(&cond) != 0) {
-
+        cerr << "#### unable to cond signal" << endl;
+        abort();
     }
 
     if (pthread_mutex_unlock(&mutex) != 0) {
-        cout << "Unable to unlock mutex" << endl;
+        cerr << "Unable to unlock mutex" << endl;
+        abort();
     }
 #endif /* ENABLE_AFL */
 }
@@ -252,21 +254,25 @@ void
 kea_fuzz_setup(volatile bool* shutdown) {
 #ifdef ENABLE_AFL
 
+    shutdown_reference = shutdown;
+
     /// @todo: What are those variables? What do they do?
     if (getenv("__AFL_PERSISTENT") || getenv("AFL_CMIN")) {
         pthread_t thread;
 
         if (pthread_mutex_init(&mutex, NULL) != 0) {
-
+	    cerr << "#### unable to init mutex" << endl;
+	    abort();
         }
 
-        if (pthread_cond_init(&cond, NULL) == 0) {
-
+        if (pthread_cond_init(&cond, NULL) != 0) {
+	    cerr << "#### unable to init condition variable" << endl;
+	    abort();
         }
 
-
-        if (pthread_create(&thread, NULL, kea_main_client, (void*)shutdown) != 0) {
-
+        if (pthread_create(&thread, NULL, kea_main_client, NULL) != 0) {
+	    cerr << "#### unable to create fuzz thread" << endl;
+	    abort();
         }
     }
 
