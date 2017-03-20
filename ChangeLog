@@ -1,3 +1,9 @@
+1227.	[func]		fdupont, tomek
+	Additional commands: version-get, build-report have been
+	implemented for DHCPv4, DHCPv6 and Control Agent
+	components. Control Agent also now supports shutdown command.
+	(Trac #102, git 9d2b8326fc032876d74c1768c61c630987c25cc5)
+
 1226.	[func]		fdupont
 	Command line option -t support added to libprocess and implemented
 	for kea-dhcp-ddns and kea-ctrl-agent. It allows configuration sanity
