@@ -87,26 +87,6 @@ public:
     configure(isc::data::ConstElementPtr config_set,
               bool check_only = false);
 
-    /// @brief Processes the given command.
-    ///
-    /// This method is called to execute any custom commands supported by the
-    /// process. This method must not throw, it should catch any processing
-    /// errors and return a success or failure answer as described below.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value:
-    ///
-    /// - COMMAND_SUCCESS indicates a command was successful.
-    /// - COMMAND_ERROR indicates a valid command failed execute.
-    /// - COMMAND_INVALID indicates a command is not valid.
-    ///
-    /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-    command(const std::string& command, isc::data::ConstElementPtr args);
-
     /// @brief Returns a pointer to the configuration manager.
     CtrlAgentCfgMgrPtr getCtrlAgentCfgMgr();
 };
