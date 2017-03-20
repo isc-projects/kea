@@ -199,35 +199,6 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     EXPECT_EQ(1, rcode);
 }
 
-/// @brief Command execution tests.
-/// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions.
-/// This test verifies that:
-/// 1. That an unrecognized command is detected and returns a status of
-/// d2::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a d2::COMMAND_SUCCESS status.
-TEST_F(D2ControllerTest, executeCommandTests) {
-    int rcode = -1;
-    isc::data::ConstElementPtr answer;
-    isc::data::ElementPtr arg_set;
-
-    // Initialize the application process.
-    ASSERT_NO_THROW(initProcess());
-    EXPECT_TRUE(checkProcess());
-
-    // Verify that an unknown command returns an COMMAND_INVALID response.
-    std::string bogus_command("bogus");
-    answer = executeCommand(bogus_command, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_INVALID, rcode);
-
-    // Verify that shutdown command returns COMMAND_SUCCESS response.
-    //answer = executeCommand(SHUT_DOWN_COMMAND, isc::data::ElementPtr());
-    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
-}
-
 // Tests that the original configuration is retained after a SIGHUP triggered
 // reconfiguration fails due to invalid config content.
 TEST_F(D2ControllerTest, invalidConfigReload) {

@@ -161,20 +161,6 @@ public:
     configure(isc::data::ConstElementPtr config_set,
               bool check_only = false);
 
-    /// @brief Processes the given command.
-    ///
-    /// This method is called to execute any custom commands supported by the
-    /// process. This method must not throw, it should catch any processing
-    /// errors and return a success or failure answer as described below.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command. It can be a NULL pointer if no arguments exist for a command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value (0 means successful, non-zero means failure),
-    /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr command(const std::string& command,
-                                               isc::data::ConstElementPtr args);
     /// @brief Destructor
     virtual ~D2Process();
 

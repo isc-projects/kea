@@ -19,6 +19,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <string>
+#include <set>
 
 namespace isc {
 namespace process {
@@ -216,39 +218,6 @@ public:
     /// non-zero means failure), and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr configFromFile();
 
-    /// @brief Instance method invoked by the command event handler and  which
-    /// processes the actual command directive.
-    ///
-    /// It supports the execution of:
-    ///
-    ///   1. Stock controller commands - commands common to all DControllerBase
-    /// derivations.  Currently there is only one, the shutdown command.
-    ///
-    ///   2. Custom controller commands - commands that the deriving controller
-    /// class implements.  These commands are executed by the deriving
-    /// controller.
-    ///
-    ///   3. Custom application commands - commands supported by the application
-    /// process implementation.  These commands are executed by the application
-    /// process.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    ///
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is one of the following:
-    ///   COMMAND_SUCCESS - Command executed successfully
-    ///   COMMAND_ERROR - Command is valid but suffered an operational
-    ///   failure.
-    ///   COMMAND_INVALID - Command is not recognized as valid be either
-    ///   the controller or the application process.
-    virtual isc::data::ConstElementPtr executeCommand(const std::string&
-                                                      command,
-                                                      isc::data::
-                                                      ConstElementPtr args);
-
     /// @brief Fetches the name of the application under control.
     ///
     /// @return returns the controller service name string
@@ -262,6 +231,41 @@ public:
     std::string getBinName() const {
         return (bin_name_);
     }
+
+    /// @brief handler for version-get command
+    ///
+    /// This method handles the version-get command. It returns the basic and
+    /// extended version.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer with version details.
+    isc::data::ConstElementPtr
+    versionGetHandler(const std::string& command,
+                      isc::data::ConstElementPtr args);
+
+    /// @brief handler for 'build-report' command
+    ///
+    /// This method handles build-report command. It returns the output printed
+    /// by configure script which contains most compilation parameters.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer with build report
+    isc::data::ConstElementPtr
+    buildReportHandler(const std::string& command,
+                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for 'shutdown' command
+    ///
+    /// This method handles shutdown command. It initiates the shutdown procedure
+    /// using CPL methods.
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer confirming that the shutdown procedure is started
+    isc::data::ConstElementPtr
+    shutdownHandler(const std::string& command,
+                    isc::data::ConstElementPtr args);
 
 protected:
     /// @brief Virtual method that provides derivations the opportunity to
@@ -286,26 +290,6 @@ protected:
     /// or NULL if the create fails.
     /// Note this value is subsequently wrapped in a smart pointer.
     virtual DProcessBase* createProcess() = 0;
-
-    /// @brief Virtual method that provides derivations the opportunity to
-    /// support custom external commands executed by the controller.  This
-    /// method is invoked by the processCommand if the received command is
-    /// not a stock controller command.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    ///
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is one of the following:
-    ///   COMMAND_SUCCESS - Command executed successfully
-    ///   COMMAND_ERROR - Command is valid but suffered an operational
-    ///   failure.
-    ///   COMMAND_INVALID - Command is not recognized as a valid custom
-    ///   controller command.
-    virtual isc::data::ConstElementPtr customControllerCommand(
-            const std::string& command, isc::data::ConstElementPtr args);
 
     /// @brief Virtual method which can be used to contribute derivation
     /// specific usage text.  It is invoked by the usage() method under

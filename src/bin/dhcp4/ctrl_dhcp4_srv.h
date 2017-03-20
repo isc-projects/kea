@@ -187,6 +187,31 @@ private:
     commandSetConfigHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
+    /// @brief handler for processing 'version-get' command
+    ///
+    /// This handler processes version-get command, which returns
+    /// over the control channel the -v and -V command line arguments.
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored) 
+    ///
+    /// @return status of the command with the version in text and
+    /// the extended version in arguments.
+    isc::data::ConstElementPtr
+    commandVersionGetHandler(const std::string& command,
+                             isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'build-report' command
+    ///
+    /// This handler processes build-report command, which returns
+    /// over the control channel the -W command line argument.
+    /// @param command (parameter ignored)
+    /// @param args (parameter ignored) 
+    ///
+    /// @return status of the command with the config report
+    isc::data::ConstElementPtr
+    commandBuildReportHandler(const std::string& command,
+                              isc::data::ConstElementPtr args);
+
     /// @brief Handler for processing 'leases-reclaim' command
     ///
     /// This handler processes leases-reclaim command, which triggers

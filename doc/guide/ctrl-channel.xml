@@ -113,6 +113,22 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     <section id="commands-common">
       <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
 
+      <section id="command-build-report">
+        <title>build-report</title>
+        <para>
+          The <emphasis>build-report</emphasis> command returns
+          on the control channel what the command line
+          <command>-W</command> argument displays, i.e. the embedded
+          content of the <filename>config.report</filename> file.
+          This command does not take any parameters.
+        </para>
+<screen>
+{
+    "command": "build-report"
+}
+</screen>
+      </section> <!-- end of command-build-report -->
+
       <section id="command-config-get">
         <title>config-get</title>
 
@@ -315,7 +331,21 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       </para>
     </section> <!-- end of command-shutdown -->
 
-
+      <section id="command-version-get">
+        <title>version-get</title>
+        <para>
+          The <emphasis>version-get</emphasis> command returns on the control
+          channel what the command line <command>-v</command> argument
+          displays with in arguments the extended version, i.e., what
+          the command line <command>-V</command> argument displays. This command
+          does not take any parameters.
+        </para>
+<screen>
+{
+    "command": "version-get"
+}
+</screen>
+      </section> <!-- end of command-version-get -->
 
     </section> <!-- end of commands supported by both servers -->
 
