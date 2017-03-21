@@ -60,10 +60,11 @@ public:
     /// in them.
     ///
     /// Currently supported commands are:
-    /// - shutdown
-    /// - libreload
     /// - config-reload
+    /// - config-test
     /// - leases-reclaim
+    /// - libreload    
+    /// - shutdown
     /// ...
     ///
     /// @note It never throws.
@@ -94,7 +95,7 @@ public:
     ///
     /// This is a method for checking incoming configuration.
     ///
-    /// @param new_config textual representation of the new configuration
+    /// @param new_config JSON representation of the new configuration
     ///
     /// @return status of the config check
     isc::data::ConstElementPtr

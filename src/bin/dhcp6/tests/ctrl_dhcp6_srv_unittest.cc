@@ -430,7 +430,7 @@ TEST_F(CtrlDhcpv6SrvTest, configReload) {
 }
 
 // Check that the "set-config" command will replace current configuration
-TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
+TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
@@ -552,13 +552,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
         << "}\n"                      // close dhcp6
         << "}}";
 
-    /* Verify the control channel socket exists */
+    // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the set-config command
+    // Send the set-config command.
     sendUnixCommand(os.str(), response);
 
-    /* Verify the control channel socket no longer exists */
+    // Verify the control channel socket no longer exists.
     EXPECT_FALSE(fileExists(socket_path_));
 
     // With no command channel, should still receive the response.
@@ -574,7 +574,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, set_config) {
 }
 
   // Verify that the "config-test" command will do what we expect.
-TEST_F(CtrlChannelDhcpv6SrvTest, config_test) {
+TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
@@ -677,7 +677,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, config_test) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:21:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter "
+              "is missing for a subnet being configured (<string>:21:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -696,17 +697,19 @@ TEST_F(CtrlChannelDhcpv6SrvTest, config_test) {
         << "}\n"                      // close dhcp6
         << "}}";
 
-    /* Verify the control channel socket exists */
+    // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the config-test command
+    // Send the config-test command.
     sendUnixCommand(os.str(), response);
 
-    /* Verify the control channel socket still exists */
+    // Verify the control channel socket still exists.
     EXPECT_TRUE(fileExists(socket_path_));
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. Control-socket, hook-libraries, and D2 configuration were sanity checked, but not applied.\" }",
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
+	      "Control-socket, hook-libraries, and D2 configuration were "
+	      "sanity checked, but not applied.\" }",
               response);
 
     // Check that the config was not applied.
@@ -716,7 +719,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, config_test) {
     // Clean up after the test.
     CfgMgr::instance().clear();
 }
-
 
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
