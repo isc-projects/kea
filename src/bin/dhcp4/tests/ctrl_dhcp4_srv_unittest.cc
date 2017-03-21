@@ -696,7 +696,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:20:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured (<string>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -716,13 +717,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << "}\n"                      // close dhcp4
         << "}}";
 
-    /* Verify the control channel socket exists */
+    // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the set-config command
+    // Send the set-config command.
     sendUnixCommand(os.str(), response);
 
-    /* Verify the control channel socket no longer exists */
+    // Verify the control channel socket no longer exists.
     EXPECT_FALSE(fileExists(socket_path_));
 
     // With no command channel, should still receive the response.
@@ -893,7 +894,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:20:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured (<string>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -912,17 +914,19 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         << "}\n"                      // close dhcp4
         << "}}";
 
-    /* Verify the control channel socket exists */
+    // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
     // Send the config-test command
     sendUnixCommand(os.str(), response);
 
-    /* Verify the control channel socket still exists */
+    // Verify the control channel socket still exists.
     EXPECT_TRUE(fileExists(socket_path_));
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. Control-socket, hook-libraries, and D2 configuration were sanity checked, but not applied.\" }",
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
+	      "Control-socket, hook-libraries, and D2 configuration were "
+	      "sanity checked, but not applied.\" }",
               response);
 
     // Check that the config was not applied

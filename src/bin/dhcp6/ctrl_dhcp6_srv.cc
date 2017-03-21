@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -153,7 +154,7 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
 ConstElementPtr
 ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp6;
     string message;
 
@@ -201,7 +202,7 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     // the logging first in case there's a configuration failure.
     int rcode = 0;
     isc::config::parseAnswer(rcode, result);
-    if (rcode == 0) {
+    if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Use new configuration.
@@ -214,7 +215,7 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
 ConstElementPtr
 ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
                                               ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp6;
     string message;
 
@@ -359,8 +360,9 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, can't process config.");
+        ConstElementPtr no_srv = isc::config::createAnswer(
+            CONTROL_RESULT_ERROR,
+            "Server object not initialized, can't process config.");
         return (no_srv);
     }
 

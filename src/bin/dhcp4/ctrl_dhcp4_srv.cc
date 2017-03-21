@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
@@ -148,7 +149,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
     string message;
 
@@ -209,7 +210,7 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
                                               ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
     string message;
 
@@ -266,7 +267,7 @@ ControlledDhcpv4Srv::commandBuildReportHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
-    int status_code = 1;
+    int status_code = CONTROL_RESULT_ERROR;
     string message;
 
     // args must be { "remove": <bool> }
