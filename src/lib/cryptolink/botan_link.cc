@@ -8,6 +8,8 @@
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 
+#define BOTAN_NO_DEPRECATED_WARNINGS
+
 #include <botan/botan.h>
 #include <botan/init.h>
 
