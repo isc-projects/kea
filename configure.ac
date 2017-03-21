@@ -815,7 +815,7 @@ else
             # Ok so no script found, see if pkg-config knows of it.
             # Unfortunately, the botan.pc files also have their minor version
             # in their name, so we need to try them one by one
-            BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+            BOTAN_VERSIONS="botan-2 botan-1.11 botan-1.10 botan-1.9 botan-1.8"
             for version in $BOTAN_VERSIONS; do
                 ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
                                    [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
