@@ -489,22 +489,23 @@ DControllerBase::configWriteHandler(const std::string&,
 
 ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
-    const int status_code = CONTROL_RESULT_SUCCESS; // 1 indicates an error
-    ConstElementPtr dhcp4;
+    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    ConstElementPtr module_config;
+    std::string module = getAppName();
     std::string message;
 
     // Command arguments are expected to be:
-    // { "Dhcp4": { ... }, "Logging": { ... } }
-    // The Lnogging component is technically optional. If it's not supplied
+    // { "Module": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
     // logging will revert to default logging.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
-        dhcp4 = args->get("Dhcp4");
-        if (!dhcp4) {
-            message = "Missing mandatory 'Dhcp4' parameter.";
-        } else if (dhcp4->getType() != Element::map) {
-            message = "'Dhcp4' parameter expected to be a map.";
+      module_config = args->get(module);
+        if (!module_config) {
+            message = "Missing mandatory '" + module + "' parameter.";
+        } else if (module_config->getType() != Element::map) {
+            message = "'" + module + "' parameter expected to be a map.";
         }
     }
 
@@ -521,7 +522,7 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     isc::dhcp::CfgMgr::instance().rollback();
 
     // Now we check the server proper.
-    return (checkConfig(dhcp4));
+    return (checkConfig(module_config));
 }
 
 ConstElementPtr
