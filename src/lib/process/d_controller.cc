@@ -491,7 +491,7 @@ ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     const int status_code = COMMAND_ERROR; // 1 indicates an error
     ConstElementPtr module_config;
-    std::string module = getAppName();
+    std::string app_name = getAppName();
     std::string message;
 
     // Command arguments are expected to be:
@@ -501,11 +501,11 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
-      module_config = args->get(module);
+      module_config = args->get(app_name);
         if (!module_config) {
-            message = "Missing mandatory '" + module + "' parameter.";
+            message = "Missing mandatory '" + app_name + "' parameter.";
         } else if (module_config->getType() != Element::map) {
-            message = "'" + module + "' parameter expected to be a map.";
+            message = "'" + app_name + "' parameter expected to be a map.";
         }
     }
 
