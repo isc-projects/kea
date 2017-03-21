@@ -406,7 +406,7 @@ DControllerBase::checkConfig(ConstElementPtr new_config) {
 }
 
 ConstElementPtr
-DControllerBase::versionGetHandler(const std::string&, ConstElementPtr args) {
+DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ConstElementPtr answer;
 
     // For version-get put the extended version in arguments
@@ -418,7 +418,7 @@ DControllerBase::versionGetHandler(const std::string&, ConstElementPtr args) {
 }
 
 ConstElementPtr
-DControllerBase::buildReportHandler(const std::string&, ConstElementPtr args) {
+DControllerBase::buildReportHandler(const std::string&, ConstElementPtr) {
     return (createAnswer(COMMAND_SUCCESS, isc::detail::getConfigReport()));
 }
 
