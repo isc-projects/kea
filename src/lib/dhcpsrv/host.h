@@ -184,7 +184,8 @@ public:
         IDENT_HWADDR,
         IDENT_DUID,
         IDENT_CIRCUIT_ID,
-        IDENT_CLIENT_ID
+        IDENT_CLIENT_ID,
+        IDENT_FLEX, ///< Flexible host identifier.
     };
 
     /// @brief Constant pointing to the last identifier of the

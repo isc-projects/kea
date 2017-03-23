@@ -100,16 +100,18 @@ struct Dhcp6Hooks {
     int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
     int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
     int hook_index_lease6_decline_; ///< index for "lease6_decline" hook point
+    int hook_index_host6_identifier_;///< index for "host6_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
-        hook_index_buffer6_receive_= HooksManager::registerHook("buffer6_receive");
-        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
-        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
-        hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
-        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
-        hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
-        hook_index_lease6_decline_ = HooksManager::registerHook("lease6_decline");
+        hook_index_buffer6_receive_ = HooksManager::registerHook("buffer6_receive");
+        hook_index_pkt6_receive_    = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_  = HooksManager::registerHook("subnet6_select");
+        hook_index_lease6_release_  = HooksManager::registerHook("lease6_release");
+        hook_index_pkt6_send_       = HooksManager::registerHook("pkt6_send");
+        hook_index_buffer6_send_    = HooksManager::registerHook("buffer6_send");
+        hook_index_lease6_decline_  = HooksManager::registerHook("lease6_decline");
+        hook_index_host6_identifier_= HooksManager::registerHook("host6_identifier");
     }
 };
 
@@ -323,7 +325,40 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
                     ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
                 }
                 break;
+            case Host::IDENT_FLEX:
+                // At this point the information in the packet has been unpacked into
+                // the various packet fields and option objects has been created.
+                // Execute callouts registered for packet6_receive.
+                if (HooksManager::calloutsPresent(Hooks.hook_index_host6_identifier_)) {
+                    CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
 
+                    Host::IdentifierType type = Host::IDENT_FLEX;
+                    std::vector<uint8_t> id;
+
+                    // Delete previously set arguments
+                    callout_handle->deleteAllArguments();
+
+                    // Pass incoming packet as argument
+                    callout_handle->setArgument("query6", pkt);
+                    callout_handle->setArgument("id_type", type);
+                    callout_handle->setArgument("id_value", id);
+
+                    // Call callouts
+                    HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
+
+                    callout_handle->getArgument("id_type", type);
+                    callout_handle->getArgument("id_value", id);
+
+                    if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                        !id.empty()) {
+
+                        LOG_DEBUG(packet6_logger, DBGLVL_TRACE_BASIC, DHCP6_FLEX_ID)
+                            .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+
+                        ctx.addHostIdentifier(type, id);
+                    }
+                }
+                break;
             default:
                 ;
             }

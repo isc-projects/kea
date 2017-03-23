@@ -204,6 +204,8 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
     case IDENT_CLIENT_ID:
         s << "client-id";
         break;
+    case IDENT_FLEX:
+        s << "flex";
     default:
         // This should never happen actually, unless we add new identifier
         // and forget to add a case for it above.
