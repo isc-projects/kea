@@ -64,13 +64,13 @@ public:
 // This checks the empty expression: it should raise EvalBadStack
 // when evaluated with a Pkt4. (The actual packet is not used)
 TEST_F(EvaluateTest, empty4) {
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalBadStack);
 }
 
 // This checks the empty expression: it should raise EvalBadStack
 // when evaluated with a Pkt6. (The actual packet is not used)
 TEST_F(EvaluateTest, empty6) {
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalBadStack);
 }
 
 // This checks the { "false" } expression: it should return false
@@ -79,7 +79,7 @@ TEST_F(EvaluateTest, false4) {
     TokenPtr tfalse;
     ASSERT_NO_THROW(tfalse.reset(new TokenString("false")));
     e_.push_back(tfalse);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
 }
 
@@ -89,7 +89,7 @@ TEST_F(EvaluateTest, false6) {
     TokenPtr tfalse;
     ASSERT_NO_THROW(tfalse.reset(new TokenString("false")));
     e_.push_back(tfalse);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -99,7 +99,7 @@ TEST_F(EvaluateTest, true4) {
     TokenPtr ttrue;
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
 }
 
@@ -109,7 +109,7 @@ TEST_F(EvaluateTest, true6) {
     TokenPtr ttrue;
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -119,7 +119,7 @@ TEST_F(EvaluateTest, bad4) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalTypeError);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalTypeError);
 }
 
 // This checks the evaluation must lead to "false" or "true"
@@ -128,7 +128,7 @@ TEST_F(EvaluateTest, bad6) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalTypeError);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalTypeError);
 }
 
 // This checks the evaluation must leave only one value on the stack
@@ -138,7 +138,7 @@ TEST_F(EvaluateTest, two4) {
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
     e_.push_back(ttrue);
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalBadStack);
 }
 
 // This checks the evaluation must leave only one value on the stack
@@ -148,7 +148,7 @@ TEST_F(EvaluateTest, two6) {
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
     e_.push_back(ttrue);
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalBadStack);
 }
 
 // A more complex test evaluated with a Pkt4. (The actual packet is not used)
@@ -164,7 +164,7 @@ TEST_F(EvaluateTest, compare4) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
 }
 
@@ -181,7 +181,7 @@ TEST_F(EvaluateTest, compare6) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -192,9 +192,9 @@ TEST_F(EvaluateTest, exists) {
     ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::EXISTS)));
     e_.push_back(toption);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -205,9 +205,9 @@ TEST_F(EvaluateTest, dontExists) {
     ASSERT_NO_THROW(toption.reset(new TokenOption(101, TokenOption::EXISTS)));
     e_.push_back(toption);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -224,9 +224,9 @@ TEST_F(EvaluateTest, packet) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -243,9 +243,9 @@ TEST_F(EvaluateTest, optionHex) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -277,9 +277,9 @@ TEST_F(EvaluateTest, complex) {
     e_.push_back(tequal);
 
     // Should return true for v4 and v6 packets
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -315,11 +315,11 @@ public:
 
         switch (u) {
         case Option::V4:
-            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt4_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt4_))
                 << " for expression " << expr;
             break;
         case Option::V6:
-            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt6_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt6_))
                 << " for expression " << expr;
             break;
         }
