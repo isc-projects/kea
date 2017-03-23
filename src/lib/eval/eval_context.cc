@@ -27,11 +27,11 @@ EvalContext::~EvalContext()
 }
 
 bool
-EvalContext::parseString(const std::string& str)
+EvalContext::parseString(const std::string& str, ParserType type)
 {
     file_ = "<string>";
     string_ = str;
-    scanStringBegin();
+    scanStringBegin(type);
     isc::eval::EvalParser parser(*this);
     parser.set_debug_level(trace_parsing_);
     int res = parser.parse();

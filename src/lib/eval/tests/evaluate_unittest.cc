@@ -294,7 +294,7 @@ TEST_F(EvaluateTest, complex) {
 class ExpressionsTest : public EvaluateTest {
 public:
 
-    /// @brief Checks if expression can be parsed and evaluated
+    /// @brief Checks if expression can be parsed and evaluated to bool
     ///
     /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
     /// tweak them as needed before calling this method.
@@ -320,6 +320,39 @@ public:
             break;
         case Option::V6:
             ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt6_))
+                << " for expression " << expr;
+            break;
+        }
+
+        EXPECT_EQ(exp_result, result) << " for expression " << expr;
+    }
+
+    /// @brief Checks if expression can be parsed and evaluated to string
+    ///
+    /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
+    /// tweak them as needed before calling this method.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param expr expression to be parsed
+    /// @param exp_result expected result (string)
+    void testExpressionString(const Option::Universe& u, const std::string& expr,
+                              const std::string& exp_result) {
+
+        EvalContext eval(u);
+        string result;
+        bool parsed = false;
+
+        EXPECT_NO_THROW(parsed = eval.parseString(expr, EvalContext::PARSER_STRING))
+            << " while parsing expression " << expr;
+        EXPECT_TRUE(parsed) << " for expression " << expr;
+
+        switch (u) {
+        case Option::V4:
+            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt4_))
+                << " for expression " << expr;
+            break;
+        case Option::V6:
+            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt6_))
                 << " for expression " << expr;
             break;
         }
@@ -440,4 +473,14 @@ TEST_F(ExpressionsTest, invalidIntegers) {
     // Oops, one too much.
     testExpressionNegative<EvalParseError>("4294967296 == 0");
 }
+
+// Tests whether expressions can be evaluated to a string.
+TEST_F(ExpressionsTest, evaluateString) {
+
+    testExpressionString(Option::V4, "option[100].hex", "hundred4");
+    testExpressionString(Option::V6, "option[100].hex", "hundred6");
+    testExpressionString(Option::V4, "option[200].hex", "");
+    testExpressionString(Option::V6, "option[200].hex", "");
+}
+
 };
