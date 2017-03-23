@@ -9,7 +9,7 @@
 namespace isc {
 namespace dhcp {
 
-bool evaluate(const Expression& expr, Pkt& pkt) {
+bool evaluateBool(const Expression& expr, Pkt& pkt) {
     ValueStack values;
     for (Expression::const_iterator it = expr.begin();
          it != expr.end(); ++it) {
@@ -21,6 +21,20 @@ bool evaluate(const Expression& expr, Pkt& pkt) {
     }
     return (Token::toBool(values.top()));
 }
+
+std::string
+evaluateString(const Expression& expr, Pkt& pkt) {
+    ValueStack values;
+    for (auto it = expr.begin(); it != expr.end(); ++it) {
+        (*it)->evaluate(pkt, values);
+    }
+    if (values.size() != 1) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected exactly "
+                  "1 value at the end of evaluatuion, got " << values.size());
+    }
+    return (values.top());
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

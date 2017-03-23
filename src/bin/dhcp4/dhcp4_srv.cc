@@ -2713,7 +2713,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
-            bool status = evaluate(*expr_ptr, *pkt);
+            bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(options4_logger, EVAL_RESULT)
                     .arg(it->first)
