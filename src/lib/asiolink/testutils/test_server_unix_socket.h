@@ -21,7 +21,7 @@ namespace test {
 
 /// @brief Provides unix domain socket functionality for unit tests.
 class TestServerUnixSocket {
-public: 
+public:
 
     /// @brief Constructor.
     ///

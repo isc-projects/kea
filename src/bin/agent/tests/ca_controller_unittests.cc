@@ -7,11 +7,15 @@
 #include <config.h>
 #include <agent/ca_controller.h>
 #include <agent/ca_process.h>
+#include <cc/data.h>
 #include <process/testutils/d_test_stubs.h>
 #include <boost/pointer_cast.hpp>
+#include <sstream>
 
 using namespace isc::agent;
+using namespace isc::data;
 using namespace isc::process;
+using namespace boost::posix_time;
 
 namespace {
 
@@ -19,7 +23,17 @@ namespace {
 const char* valid_agent_config =
     "{"
     "  \"http-host\": \"127.0.0.1\","
-    "  \"http-port\": 8081"
+    "  \"http-port\": 8081,"
+    "  \"control-sockets\": {"
+    "    \"dhcp4-server\": {"
+    "      \"socket-type\": \"unix\","
+    "      \"socket-name\": \"/first/dhcp4/socket\""
+    "    },"
+    "    \"dhcp6-server\": {"
+    "      \"socket-type\": \"unix\","
+    "      \"socket-name\": \"/first/dhcp6/socket\""
+    "    }"
+    "  }"
     "}";
 
 /// @brief test fixture class for testing CtrlAgentController class. This
@@ -33,6 +47,48 @@ public:
     /// @brief Constructor.
     CtrlAgentControllerTest()
         : DControllerTest(CtrlAgentController::instance) {
+    }
+
+    /// @brief Returns pointer to CtrlAgentProcess instance.
+    CtrlAgentProcessPtr getCtrlAgentProcess() {
+        return (boost::dynamic_pointer_cast<CtrlAgentProcess>(getProcess()));
+    }
+
+    /// @brief Returns pointer to CtrlAgentCfgMgr instance for a process.
+    CtrlAgentCfgMgrPtr getCtrlAgentCfgMgr() {
+        CtrlAgentCfgMgrPtr p;
+        if (getCtrlAgentProcess()) {
+            p = getCtrlAgentProcess()->getCtrlAgentCfgMgr();
+        }
+        return (p);
+    }
+
+    /// @brief Returns a pointer to the configuration context.
+    CtrlAgentCfgContextPtr getCtrlAgentCfgContext() {
+        CtrlAgentCfgContextPtr p;
+        if (getCtrlAgentCfgMgr()) {
+            p = getCtrlAgentCfgMgr()->getCtrlAgentCfgContext();
+        }
+        return (p);
+    }
+
+    /// @brief Tests that socket info structure contains 'unix' socket-type
+    /// value and the expected socket-name.
+    ///
+    /// @param type Server type.
+    /// @param exp_socket_name Expected socket name.
+    void testUnixSocketInfo(const CtrlAgentCfgContext::ServerType& type,
+                            const std::string& exp_socket_name) {
+        CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+        ASSERT_TRUE(ctx);
+
+        ConstElementPtr sock_info = ctx->getControlSocketInfo(type);
+        ASSERT_TRUE(sock_info);
+        ASSERT_TRUE(sock_info->contains("socket-type"));
+        EXPECT_EQ("unix", sock_info->get("socket-type")->stringValue());
+        ASSERT_TRUE(sock_info->contains("socket-name"));
+        EXPECT_EQ(exp_socket_name,
+                  sock_info->get("socket-name")->stringValue());
     }
 
 };
@@ -140,6 +196,41 @@ TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
     // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Tests that the configuration is updated as a result of agent reconfiguration.
+TEST_F(CtrlAgentControllerTest, configUpdate) {
+    const char* second_config =
+        "{"
+        "  \"http-host\": \"127.0.0.1\","
+        "  \"http-port\": 8080,"
+        "  \"control-sockets\": {"
+        "    \"dhcp4-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "    },"
+        "    \"dhcp6-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "    }"
+        "  }"
+        "}";
+
+    scheduleTimedWrite(second_config, 100);
+
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    time_duration elapsed_time;
+    runWithConfig(valid_agent_config, 500, elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8080, ctx->getHttpPort());
+
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/second/dhcp4/socket");
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/second/dhcp6/socket");
 }
 
 }
