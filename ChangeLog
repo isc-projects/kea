@@ -3,7 +3,7 @@
 	is given the default facility is local0, and with an unrecognized
 	value user (log4cplus default). The syslog openlog() ident
 	parameter is the program name.
-	(Trac #5053, git xxx)
+	(Trac #5053, git 532d9f0e459ab1450a83a5015a2dd54745794383)
 
 1227.	[func]		fdupont, tomek
 	Additional commands: version-get, build-report have been
