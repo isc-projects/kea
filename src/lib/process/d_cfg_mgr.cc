@@ -275,7 +275,8 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set,
 
 isc::data::ConstElementPtr
 DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
-                               bool check_only) {
+                               bool check_only,
+                               const std::function<void()>& post_config_cb) {
     if (!config_set) {
         return (isc::config::createAnswer(1,
                                     std::string("Can't parse NULL config")));
@@ -301,6 +302,10 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
 
         // Everything was fine. Configuration set processed successfully.
         if (!check_only) {
+            if (post_config_cb) {
+                post_config_cb();
+            }
+
             LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
             answer = isc::config::createAnswer(0, "Configuration committed.");
         } else {

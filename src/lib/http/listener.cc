@@ -46,6 +46,9 @@ public:
                      const HttpResponseCreatorFactoryPtr& creator_factory,
                      const long request_timeout);
 
+    /// @brief Returns reference to the current listener endpoint.
+    const TCPEndpoint& getEndpoint() const;
+
     /// @brief Starts accepting new connections.
     ///
     /// This method starts accepting and handling new HTTP connections on
@@ -126,6 +129,11 @@ HttpListenerImpl::HttpListenerImpl(IOService& io_service,
     }
 }
 
+const TCPEndpoint&
+HttpListenerImpl::getEndpoint() const {
+    return (*endpoint_);
+}
+
 void
 HttpListenerImpl::start() {
     try {
@@ -184,6 +192,16 @@ HttpListener::HttpListener(IOService& io_service,
 
 HttpListener::~HttpListener() {
     stop();
+}
+
+IOAddress
+HttpListener::getLocalAddress() const {
+    return (impl_->getEndpoint().getAddress());
+}
+
+uint16_t
+HttpListener::getLocalPort() const {
+    return (impl_->getEndpoint().getPort());
 }
 
 void

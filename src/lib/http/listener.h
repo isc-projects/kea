@@ -12,6 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <http/response_creator_factory.h>
 #include <boost/shared_ptr.hpp>
+#include <stdint.h>
 
 namespace isc {
 namespace http {
@@ -80,6 +81,12 @@ public:
     /// Stops all active connections and closes TCP acceptor service.
     ~HttpListener();
 
+    /// @brief Returns local address on which server is listening.
+    asiolink::IOAddress getLocalAddress() const;
+
+    /// @brief Returns local port on which server is listening.
+    uint16_t getLocalPort() const;
+
     /// @brief Starts accepting new connections.
     ///
     /// This method starts accepting and handling new HTTP connections on
@@ -100,6 +107,12 @@ private:
     boost::shared_ptr<HttpListenerImpl> impl_;
 
 };
+
+/// @brief Pointer to the @ref HttpListener.
+typedef boost::shared_ptr<HttpListener> HttpListenerPtr;
+
+/// @brief Pointer to the const @ref HttpListener.
+typedef boost::shared_ptr<const HttpListener> ConstHttpListenerPtr;
 
 } // end of namespace isc::http
 } // end of namespace isc
