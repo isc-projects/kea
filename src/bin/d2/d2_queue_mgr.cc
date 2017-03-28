@@ -48,7 +48,8 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
                 enqueue(ncr);
 
                 // Log that we got the request
-                LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA,
+                LOG_DEBUG(dhcp_to_d2_logger,
+                          isc::log::DBGLVL_TRACE_DETAIL_DATA,
                           DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE)
                           .arg(ncr->getRequestId());
                 return;
@@ -137,7 +138,8 @@ D2QueueMgr::startListening() {
                   << ex.what());
     }
 
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_QUEUE_MGR_STARTED);
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
+              DHCP_DDNS_QUEUE_MGR_STARTED);
 }
 
 void
@@ -172,7 +174,8 @@ D2QueueMgr::stopListening(const State target_stop_state) {
 void
 D2QueueMgr::updateStopState() {
     mgr_state_ = target_stop_state_;
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_QUEUE_MGR_STOPPED);
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC,
+              DHCP_DDNS_QUEUE_MGR_STOPPED);
 }
 
 

@@ -56,7 +56,7 @@ void D2UpdateMgr::sweep() {
     // frequently.  It will likely achieve max transactions quickly on its own.
     if (getQueueCount() > 0)  {
         if (getTransactionCount() >= max_transactions_) {
-            LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA,
+            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                       DHCP_DDNS_AT_MAX_TRANSACTIONS).arg(getQueueCount())
                       .arg(getMaxTransactions());
 
@@ -110,8 +110,9 @@ void D2UpdateMgr::pickNextJob() {
 
     // There were no eligible jobs. All of the current DHCIDs already have
     // transactions pending.
-    LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA, DHCP_DDNS_NO_ELIGIBLE_JOBS)
-              .arg(getQueueCount()).arg(getTransactionCount());
+    LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+              DHCP_DDNS_NO_ELIGIBLE_JOBS)
+        .arg(getQueueCount()).arg(getTransactionCount());
 }
 
 void
@@ -132,7 +133,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     if (next_ncr->isForwardChange()) {
         if (!cfg_mgr_->forwardUpdatesEnabled()) {
             next_ncr->setForwardChange(false);
-            LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA,
+            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                       DHCP_DDNS_FWD_REQUEST_IGNORED)
                       .arg(next_ncr->getRequestId())
                       .arg(next_ncr->toText());
@@ -158,7 +159,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     if (next_ncr->isReverseChange()) {
         if (!cfg_mgr_->reverseUpdatesEnabled()) {
             next_ncr->setReverseChange(false);
-            LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA,
+            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                       DHCP_DDNS_REV_REQUEST_IGNORED)
                       .arg(next_ncr->getRequestId())
                       .arg(next_ncr->toText());
@@ -182,7 +183,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     // If there is nothing to actually do, then the request falls on the floor.
     // Should we log this?
     if (!direction_count) {
-        LOG_DEBUG(dhcp_to_d2_logger, DBGLVL_TRACE_DETAIL_DATA,
+        LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                   DHCP_DDNS_REQUEST_DROPPED)
                   .arg(next_ncr->getRequestId())
                   .arg(next_ncr->toText());

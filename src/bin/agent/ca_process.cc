@@ -117,7 +117,7 @@ CtrlAgentProcess::run() {
         // What to do? Simply ignore...
     }
 
-    LOG_DEBUG(agent_logger, DBGLVL_START_SHUT, CTRL_AGENT_RUN_EXIT);
+    LOG_DEBUG(agent_logger, isc::log::DBGLVL_START_SHUT, CTRL_AGENT_RUN_EXIT);
 }
 
 isc::data::ConstElementPtr

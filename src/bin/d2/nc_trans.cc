@@ -83,7 +83,7 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
-    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_STARTING_TRANSACTION)
               .arg(getRequestId());
 
@@ -98,7 +98,7 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
-    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_UPDATE_RESPONSE_RECEIVED)
               .arg(getRequestId())
               .arg(current_server_->toText())
@@ -177,7 +177,7 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
                               d2_params->getDnsServerTimeout(), tsig_key_);
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
-        LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+        LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   DHCP_DDNS_UPDATE_REQUEST_SENT)
                   .arg(getRequestId())
                   .arg(comment)

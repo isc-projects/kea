@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,14 +19,14 @@ namespace hooks {
 /// Note that higher numbers equate to more verbose (and detailed) output.
 
 // The first level traces normal operations,
-const int HOOKS_DBG_TRACE = DBGLVL_TRACE_BASIC;
+const int HOOKS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
 
 // The next level traces each call to hook code.
-const int HOOKS_DBG_CALLS = DBGLVL_TRACE_BASIC_DATA;
+const int HOOKS_DBG_CALLS = isc::log::DBGLVL_TRACE_BASIC_DATA;
 
 // Additional information on the calls.  Report each call to a callout (even
 // if there are multiple callouts on a hook) and each status return.
-const int HOOKS_DBG_EXTENDED_CALLS = DBGLVL_TRACE_DETAIL_DATA;
+const int HOOKS_DBG_EXTENDED_CALLS = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 
 
 /// @brief Hooks Logger
