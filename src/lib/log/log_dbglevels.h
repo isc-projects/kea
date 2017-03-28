@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,8 @@
 /// enabling debugging.  Symbols are prefixed DBGLVL so as not to clash with
 /// DBG_ symbols in the various modules.
 
-namespace {
+namespace isc {
+namespace log {
 
 /// Process startup/shutdown debug messages.  Note that these are _debug_
 /// messages, as other messages related to startup and shutdown may be output
@@ -46,35 +47,33 @@ namespace {
 /// up, the "server started" message could be output at a severity of INFO.
 /// "Server starting" and messages indicating the stages in startup should be
 /// debug messages output at this severity.
-///
-/// This is given a value of 0 as that is the level selected if debugging is
-/// enabled without giving a level.
-const int DBGLVL_START_SHUT = 0;
+extern const int DBGLVL_START_SHUT;
 
 /// This debug level is reserved for logging the exchange of messages/commands
 /// between processes, including configuration messages.
-const int DBGLVL_COMMAND = 10;
+extern const int DBGLVL_COMMAND;
 
 /// If the commands have associated data, this level is when they are printed.
 /// This includes configuration messages.
-const int DBGLVL_COMMAND_DATA = 20;
+extern const int DBGLVL_COMMAND_DATA;
 
 // The following constants are suggested values for common operations.
 // Depending on the exact nature of the code, modules may or may not use these
 // levels.
 
 /// Trace basic operations.
-const int DBGLVL_TRACE_BASIC = 40;
+extern const int DBGLVL_TRACE_BASIC;
 
 /// Trace data associated with the basic operations.
-const int DBGLVL_TRACE_BASIC_DATA = 45;
+extern const int DBGLVL_TRACE_BASIC_DATA;
 
 /// Trace detailed operations.
-const int DBGLVL_TRACE_DETAIL = 50;
+extern const int DBGLVL_TRACE_DETAIL;
 
 /// Trace data associated with detailed operations.
-const int DBGLVL_TRACE_DETAIL_DATA = 55;
+extern const int DBGLVL_TRACE_DETAIL_DATA;
 
-}   // Anonymous namespace
+}   // log namespace
+}   // isc namespace
 
 #endif // LOG_DBGLVLS_H

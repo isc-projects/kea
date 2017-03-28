@@ -80,7 +80,7 @@ D2Process::run() {
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
 
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
 };
 
@@ -147,9 +147,9 @@ D2Process::canShutdown() const {
         }
 
         if (all_clear) {
-            LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
+            LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
                      DHCP_DDNS_CLEARED_FOR_SHUTDOWN)
-                     .arg(getShutdownTypeStr(shutdown_type_));
+                .arg(getShutdownTypeStr(shutdown_type_));
         }
     }
 
@@ -158,8 +158,9 @@ D2Process::canShutdown() const {
 
 isc::data::ConstElementPtr
 D2Process::shutdown(isc::data::ConstElementPtr args) {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN_COMMAND)
-              .arg(args ? args->str() : "(no arguments)");
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
+              DHCP_DDNS_SHUTDOWN_COMMAND)
+        .arg(args ? args->str() : "(no arguments)");
 
     // Default shutdown type is normal.
     std::string type_str(getShutdownTypeStr(SD_NORMAL));
@@ -192,7 +193,7 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
 
 isc::data::ConstElementPtr
 D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_CONFIGURE)
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC, DHCP_DDNS_CONFIGURE)
         .arg(check_only ? "check" : "update")
         .arg(config_set->str());
 
@@ -243,10 +244,9 @@ D2Process::checkQueueStatus() {
             // canceling active listening which may generate an IO event, so
             // instigate the stop and get out.
             try {
-                LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
+                LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
                           DHCP_DDNS_QUEUE_MGR_STOPPING)
-                         .arg(reconf_queue_flag_ ? "reconfiguration"
-                                                 : "shutdown");
+                    .arg(reconf_queue_flag_ ? "reconfiguration" : "shutdown");
                 queue_mgr_->stopListening();
             } catch (const isc::Exception& ex) {
                 // It is very unlikely that we would experience an error
@@ -303,7 +303,7 @@ D2Process::checkQueueStatus() {
         // we can do the reconfigure. In other words, we aren't RUNNING or
         // STOPPING.
         if (reconf_queue_flag_) {
-            LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC,
                       DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
             reconfigureQueueMgr();
         }
