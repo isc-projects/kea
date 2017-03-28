@@ -492,9 +492,6 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
  
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
  
-    // Single stream instance used in all error clauses
-    std::ostringstream err;
- 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
             "Server object not initialized, can't process config.");
