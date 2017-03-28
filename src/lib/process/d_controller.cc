@@ -529,7 +529,7 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
 }
 
 ConstElementPtr
-DControllerBase::versionGetHandler(const std::string&, ConstElementPtr args) {
+DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ConstElementPtr answer;
 
     // For version-get put the extended version in arguments
