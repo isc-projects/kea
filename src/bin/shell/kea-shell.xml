@@ -64,7 +64,7 @@
       The <command>kea-shell</command> provides a REST client for the
       Kea Control Agent (CA). It takes command as a command-line parameter
       that is being sent to CA with proper JSON
-      encapsulation. Optional parameters may be specified on the
+      encapsulation. Optional arguments may be specified on the
       standard input. The request it sent of HTTP and a response is
       retrieved. That response is displayed out on the standard output.
     </para>

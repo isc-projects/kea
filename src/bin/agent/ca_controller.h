@@ -48,16 +48,9 @@ public:
     parseFile(const std::string& name);
 
     /// @brief Register commands.
-    ///
-    /// For all commands in the commands_ set at the exception of
-    /// list-commands register the command with the generic
-    /// @ref isc::process::DControllerBase::executeCommand() handler.
     void registerCommands();
 
     /// @brief Deregister commands.
-    ///
-    /// For all commands in the commands_ set at the exception of
-    /// list-commands deregister the command.
     void deregisterCommands();
 
 private:

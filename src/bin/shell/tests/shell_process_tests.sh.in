@@ -111,7 +111,7 @@ shell_command_test() {
     shell_exit_code=$?
     if [ ${shell_exit_code} -ne 0 ]; then
         echo "ERROR:" \
-	"kea-shell returned ${shell_exit_code} exit code,  expected 0."
+        "kea-shell returned ${shell_exit_code} exit code,  expected 0."
     else
         echo "kea-shell returned ${shell_exit_code} exit code as expected."
     fi
@@ -123,8 +123,8 @@ shell_command_test() {
     diff_code=$?
     if [ ${diff_code} -ne 0 ]; then
         echo "ERROR:" \
-	"content returned is different than expected." \
-	"See ${tmpfile_path}/shell-*.txt"
+        "content returned is different than expected." \
+        "See ${tmpfile_path}/shell-*.txt"
         echo "EXPECTED:"
         cat ${tmpfile_path}/shell-expected.txt
         echo "ACTUAL RESULT:"
@@ -171,13 +171,24 @@ version_test() {
         test_finish 0
     else
         echo "ERROR:" \
-	"Expected version ${EXPECTED_VERSION}, got ${REPORTED_VERSION}"
+        "Expected version ${EXPECTED_VERSION}, got ${REPORTED_VERSION}"
         test_finish 1
     fi
 }
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"build-report\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
     "[ { \"result\": 1, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
+shell_command_test "shell.empty-config-test" "config-test" \
+    "[ { \"result\": 1, \"text\": \"Missing mandatory 'arguments' parameter.\" } ]" ""
+shell_command_test "shell.no-app-config-test" "config-test" \
+    "[ { \"result\": 1, \"text\": \"Missing mandatory 'Control-agent' parameter.\" } ]" \
+    "\"FooBar\": { }"
+shell_command_test "shell.no-map-config-test" "config-test" \
+    "[ { \"result\": 1, \"text\": \"'Control-agent' parameter expected to be a map.\" } ]" \
+    "\"Control-agent\": [ ]"
+shell_command_test "shell.bad-value-config-test" "config-test" \
+    "[ { \"result\": 2, \"text\": \"out of range value (80000) specified for parameter 'http-port' (<string>:1:76)\" } ]" \
+    "\"Control-agent\": { \"http-port\": 80000 }"

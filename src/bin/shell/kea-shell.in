@@ -80,17 +80,18 @@ def shell_body():
     params.timeout = cmd_args.timeout
     params.version = VERSION
 
-    params.generate_body()
-    params.generate_headers()
-
     # Load command processor
     # @todo - command specific processing will be added as part of
     # future work (either #5138 or #5139, whichever is implemented
     # first)
 
-    # Read parameters from stdin (they're optional for some commands)
+    # Read arguments from stdin (they're optional for some commands)
     for line in sys.stdin:
-        params.params += line
+        params.args += line
+
+    # Now we have the arguments so we can build the request
+    params.generate_body()
+    params.generate_headers()
 
     # Set the timeout timer. If the connection takes too long,
     # it will send a signal to us.

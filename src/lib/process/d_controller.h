@@ -256,6 +256,47 @@ public:
     buildReportHandler(const std::string& command,
                        isc::data::ConstElementPtr args);
 
+    /// @brief handler for config-get command
+    ///
+    /// This method handles the config-get command, which retrieves
+    /// the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    configGetHandler(const std::string& command,
+                     isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-write command
+    ///
+    /// This handle processes write-config comamnd, which writes the
+    /// current configuration to disk. This command takes one optional
+    /// parameter called filename. If specified, the current configuration
+    /// will be written to that file. If not specified, the file used during
+    /// Kea start-up will be used. To avoid any exploits, the path is
+    /// always relative and .. is not allowed in the filename. This is
+    /// a security measure against exploiting file writes remotely.
+    ///
+    /// @param command (ignored)
+    /// @param args may contain optional string argument filename
+    /// @return status of the configuration file write
+    isc::data::ConstElementPtr
+    configWriteHandler(const std::string& command,
+                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-test command
+    ///
+    /// This method handles the config-test command, which checks
+    /// configuration specified in args parameter.
+    ///
+    /// @param command (ignored)
+    /// @param args configuration to be checked.
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configTestHandler(const std::string& command,
+                      isc::data::ConstElementPtr args);
+
     /// @brief handler for 'shutdown' command
     ///
     /// This method handles shutdown command. It initiates the shutdown procedure

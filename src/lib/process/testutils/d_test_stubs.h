@@ -45,8 +45,6 @@ public:
         ftCreateProcessNull,
         ftProcessInit,
         ftProcessConfigure,
-        ftControllerCommand,
-        ftProcessCommand,
         ftProcessShutdown,
         ftElementBuild,
         ftElementCommit,
@@ -104,9 +102,6 @@ public:
 class DStubProcess : public DProcessBase {
 public:
 
-    /// @brief Static constant that defines a custom process command string.
-    static const char* stub_proc_command_;
-
     /// @brief Constructor
     ///
     /// @param name name is a text label for the process. Generally used
@@ -152,24 +147,6 @@ public:
     virtual isc::data::ConstElementPtr
     configure(isc::data::ConstElementPtr config_set, bool check_only);
 
-    /// @brief Executes the given command.
-    ///
-    /// This implementation will recognizes one "custom" process command,
-    /// stub_proc_command_.  It will fail if SimFailure is set to
-    /// ftProcessCommand.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is:
-    /// COMMAND_SUCCESS if the command is recognized and executes successfully.
-    /// COMMAND_ERROR if the command is recognized but fails to execute.
-    /// COMMAND_INVALID if the command is not recognized.
-    virtual isc::data::ConstElementPtr command(const std::string& command,
-                                               isc::data::ConstElementPtr args);
-
     /// @brief Returns configuration summary in the textual format.
     ///
     /// @return Always an empty string.
@@ -197,10 +174,6 @@ public:
     ///
     /// @return returns a pointer reference to the singleton instance.
     static DControllerBasePtr& instance();
-
-    /// @brief Defines a custom controller command string. This is a
-    /// custom command supported by DStubController.
-    static const char* stub_ctl_command_;
 
     /// @brief Defines a custom command line option supported by
     /// DStubController.
@@ -265,23 +238,6 @@ protected:
     /// @throw throws std::runtime_error if SimFailure is set to
     /// ftCreateProcessException.
     virtual DProcessBase* createProcess();
-
-    /// @brief Executes custom controller commands are supported by
-    /// DStubController. This implementation supports one custom controller
-    /// command, stub_ctl_command_.  It will fail if SimFailure is set
-    /// to ftControllerCommand.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is:
-    /// COMMAND_SUCCESS if the command is recognized and executes successfully.
-    /// COMMAND_ERROR if the command is recognized but fails to execute.
-    /// COMMAND_INVALID if the command is not recognized.
-    virtual isc::data::ConstElementPtr customControllerCommand(
-            const std::string& command, isc::data::ConstElementPtr args);
 
     /// @brief Provides a string of the additional command line options
     /// supported by DStubController.  DStubController supports one

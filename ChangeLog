@@ -1,3 +1,9 @@
+1229.	[func]		fdupont
+	A new command: config-test has been implemented in DHCPv4, DHCPv6
+	and control agent servers. It allows checking whether new
+	configuration looks correct.
+	(Trac #5150, git xxx)
+
 1228.	[bug]		fdupont
 	Logging on syslog now uses correctly the given facility. If none
 	is given the default facility is local0, and with an unrecognized
