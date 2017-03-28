@@ -2,7 +2,7 @@
 	A new command: config-test has been implemented in DHCPv4, DHCPv6
 	and control agent servers. It allows checking whether new
 	configuration looks correct.
-	(Trac #5150, git xxx)
+	(Trac #5150, git 5f6cf226e848baef8d9af64e16c1dbf617a0a798)
 
 1228.	[bug]		fdupont
 	Logging on syslog now uses correctly the given facility. If none
