@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <config/module_spec.h>
+#include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
@@ -561,6 +562,21 @@ TEST_F(DStubCfgMgrTest, simpleParseConfig) {
 
     answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
+}
+
+// This test checks that the post configuration callback function is
+// executed by the simpleParseConfig function.
+TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
+    string config = "{ \"bool_test\": true , \n"
+                    "  \"uint32_test\": 77 , \n"
+                    "  \"string_test\": \"hmmm chewy\" }";
+    ASSERT_NO_THROW(fromJSON(config));
+
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false,
+                                          [this]() {
+        isc_throw(Unexpected, "unexpected configuration error");
+    });
+    EXPECT_TRUE(checkAnswer(1));
 }
 
 } // end of anonymous namespace

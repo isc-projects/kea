@@ -309,6 +309,8 @@ TEST_F(HttpListenerTest, listen) {
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                           factory_, REQUEST_TIMEOUT);
     ASSERT_NO_THROW(listener.start());
+    ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
+    ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(io_service_.run());
     ASSERT_EQ(1, clients_.size());

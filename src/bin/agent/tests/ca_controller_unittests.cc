@@ -14,6 +14,7 @@
 
 using namespace isc::agent;
 using namespace isc::data;
+using namespace isc::http;
 using namespace isc::process;
 using namespace boost::posix_time;
 
@@ -198,8 +199,9 @@ TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
-// Tests that the configuration is updated as a result of agent reconfiguration.
-TEST_F(CtrlAgentControllerTest, configUpdate) {
+// Tests that the sockets settings are updated upon successful reconfiguration.
+TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
+    // This configuration should be used to override the initial conifguration.
     const char* second_config =
         "{"
         "  \"http-host\": \"127.0.0.1\","
@@ -216,21 +218,144 @@ TEST_F(CtrlAgentControllerTest, configUpdate) {
         "  }"
         "}";
 
+    // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
-
+    // Schedule SIGHUP signal to trigger reconfiguration.
     TimedSignal sighup(*getIOService(), SIGHUP, 200);
 
+    // Start the server.
     time_duration elapsed_time;
     runWithConfig(valid_agent_config, 500, elapsed_time);
 
     CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
 
+    // The server should now hold the new listener configuration.
     EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
     EXPECT_EQ(8080, ctx->getHttpPort());
 
+    // The forwarding configuration should have been updated too.
     testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/second/dhcp4/socket");
     testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/second/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+
+    // Check that the HTTP listener still exists after reconfiguration.
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_TRUE(listener);
+    EXPECT_TRUE(process->isListening());
+
+    // The listener should have been reconfigured to use new address and port.
+    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+    EXPECT_EQ(8080, listener->getLocalPort());
+}
+
+// Tests that the server continues to use an old configuration when the listener
+// reconfiguration is unsuccessful.
+TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
+    // This is invalid configuration. We're using restricted port number and
+    // IP address of 1.1.1.1.
+    const char* second_config =
+        "{"
+        "  \"http-host\": \"1.1.1.1\","
+        "  \"http-port\": 1,"
+        "  \"control-sockets\": {"
+        "    \"dhcp4-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "    },"
+        "    \"dhcp6-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "    }"
+        "  }"
+        "}";
+
+    // Schedule reconfiguration.
+    scheduleTimedWrite(second_config, 100);
+    // Schedule SIGHUP signal to trigger reconfiguration.
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(valid_agent_config, 500, elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    // The reconfiguration should have been unsuccessful, and the server should
+    // still use the original configuration.
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8081, ctx->getHttpPort());
+
+    // Same for forwarding.
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/first/dhcp4/socket");
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/first/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+
+    // We should still be using an original listener.
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_TRUE(listener);
+    EXPECT_TRUE(process->isListening());
+
+    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+    EXPECT_EQ(8081, listener->getLocalPort());
+}
+
+// Tests that it is possible to update the configuration in such a way that the
+// listener configuration remains the same. The server should continue using the
+// listener instance it has been using prior to the reconfiguration.
+TEST_F(CtrlAgentControllerTest, noListenerChange) {
+    // This configuration should be used to override the initial conifguration.
+    const char* second_config =
+        "{"
+        "  \"http-host\": \"127.0.0.1\","
+        "  \"http-port\": 8081,"
+        "  \"control-sockets\": {"
+        "    \"dhcp4-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "    },"
+        "    \"dhcp6-server\": {"
+        "      \"socket-type\": \"unix\","
+        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "    }"
+        "  }"
+        "}";
+
+    // Schedule reconfiguration.
+    scheduleTimedWrite(second_config, 100);
+    // Schedule SIGHUP signal to trigger reconfiguration.
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(valid_agent_config, 500, elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    // The server should use a correct listener configuration.
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8081, ctx->getHttpPort());
+
+    // The forwarding configuration should have been updated.
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/second/dhcp4/socket");
+    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/second/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+
+    // The listener should keep listening.
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_TRUE(listener);
+    EXPECT_TRUE(process->isListening());
+
+    EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+    EXPECT_EQ(8081, listener->getLocalPort());
 }
 
 }
