@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -153,7 +154,7 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
 ConstElementPtr
 ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp6;
     string message;
 
@@ -201,7 +202,7 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     // the logging first in case there's a configuration failure.
     int rcode = 0;
     isc::config::parseAnswer(rcode, result);
-    if (rcode == 0) {
+    if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
         // Use new configuration.
@@ -211,6 +212,43 @@ ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
     return (result);
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
+                                              ConstElementPtr args) {
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
+    ConstElementPtr dhcp6;
+    string message;
+
+    // Command arguments are expected to be:
+    // { "Dhcp6": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp6 = args->get("Dhcp6");
+        if (!dhcp6) {
+            message = "Missing mandatory 'Dhcp6' parameter.";
+        } else if (dhcp6->getType() != Element::map) {
+            message = "'Dhcp6' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Now we check the server proper.
+    return (checkConfig(dhcp6));
+}
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
@@ -287,6 +325,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
 
+        } else if (command == "config-test") {
+            return (srv->commandConfigTestHandler(command, args));
+
         } else if (command == "version-get") {
             return (srv->commandVersionGetHandler(command, args));
 
@@ -319,8 +360,9 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
-          "Server object not initialized, can't process config.");
+        ConstElementPtr no_srv = isc::config::createAnswer(
+            CONTROL_RESULT_ERROR,
+            "Server object not initialized, can't process config.");
         return (no_srv);
     }
 
@@ -442,6 +484,26 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     return (answer);
 }
 
+isc::data::ConstElementPtr
+ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
+ 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
+        .arg(config->str());
+ 
+    ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
+ 
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+ 
+    if (!srv) {
+        ConstElementPtr no_srv = isc::config::createAnswer(1,
+            "Server object not initialized, can't process config.");
+        return (no_srv);
+    }
+ 
+    return (configureDhcp6Server(*srv, config, true));
+}
+
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (server_) {
@@ -459,6 +521,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
         boost::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv6Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("config-test",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
@@ -518,6 +583,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");

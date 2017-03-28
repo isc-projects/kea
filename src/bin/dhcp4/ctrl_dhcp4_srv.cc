@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
@@ -148,7 +149,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
                                              ConstElementPtr args) {
-    const int status_code = 1; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
     string message;
 
@@ -207,6 +208,44 @@ ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
+                                              ConstElementPtr args) {
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
+    ConstElementPtr dhcp4;
+    string message;
+
+    // Command arguments are expected to be:
+    // { "Dhcp4": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        dhcp4 = args->get("Dhcp4");
+        if (!dhcp4) {
+            message = "Missing mandatory 'Dhcp4' parameter.";
+        } else if (dhcp4->getType() != Element::map) {
+            message = "'Dhcp4' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    CfgMgr::instance().rollback();
+
+    // Now we check the server proper.
+    return (checkConfig(dhcp4));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
     ElementPtr extended = Element::create(Dhcpv4Srv::getVersion(true));
     ElementPtr arguments = Element::createMap();
@@ -228,7 +267,7 @@ ControlledDhcpv4Srv::commandBuildReportHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
-    int status_code = 1;
+    int status_code = CONTROL_RESULT_ERROR;
     string message;
 
     // args must be { "remove": <bool> }
@@ -281,6 +320,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
+
+        } else if (command == "config-test") {
+            return (srv->commandConfigTestHandler(command, args));
 
         } else if (command == "version-get") {
             return (srv->commandVersionGetHandler(command, args));
@@ -414,6 +456,25 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     return (answer);
 }
 
+isc::data::ConstElementPtr
+ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
+              .arg(config->str());
+
+    ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
+
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+
+    if (!srv) {
+        err << "Server object not initialized, can't process config.";
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
+    return (configureDhcp4Server(*srv, config, true));
+}
+
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
@@ -431,6 +492,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
         boost::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
 
     /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+
+    CommandMgr::instance().registerCommand("config-test",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
@@ -491,6 +555,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");

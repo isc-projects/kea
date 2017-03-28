@@ -19,9 +19,6 @@ namespace process {
 // Initialize the static failure flag.
 SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
 
-// Define custom process command supported by DStubProcess.
-const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
-
 DStubProcess::DStubProcess(const char* name, asiolink::IOServicePtr io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new DStubCfgMgr())) {
 };
@@ -77,31 +74,10 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) 
     return (getCfgMgr()->parseConfig(config_set, check_only));
 }
 
-isc::data::ConstElementPtr
-DStubProcess::command(const std::string& command,
-                      isc::data::ConstElementPtr /* args */) {
-    isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
-        // Simulates a process command execution failure.
-        answer = isc::config::createAnswer(COMMAND_ERROR,
-                                          "SimFailure::ftProcessCommand");
-    } else if (command.compare(stub_proc_command_) == 0) {
-        answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
-    } else {
-        answer = isc::config::createAnswer(COMMAND_INVALID,
-                                           "Unrecognized command:" + command);
-    }
-
-    return (answer);
-}
-
 DStubProcess::~DStubProcess() {
 };
 
 //************************** DStubController *************************
-
-// Define custom controller command supported by DStubController.
-const char* DStubController::stub_ctl_command_("spiffy");
 
 // Define custom command line option command supported by DStubController.
 const char* DStubController::stub_option_x_ = "x";
@@ -160,24 +136,6 @@ DProcessBase* DStubController::createProcess() {
 
     // This should be a successful instantiation.
     return (new DStubProcess(getAppName().c_str(), getIOService()));
-}
-
-isc::data::ConstElementPtr
-DStubController::customControllerCommand(const std::string& command,
-                                     isc::data::ConstElementPtr /* args */) {
-    isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftControllerCommand)) {
-        // Simulates command failing to execute.
-        answer = isc::config::createAnswer(COMMAND_ERROR,
-                                          "SimFailure::ftControllerCommand");
-    } else if (command.compare(stub_ctl_command_) == 0) {
-        answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
-    } else {
-        answer = isc::config::createAnswer(COMMAND_INVALID,
-                                           "Unrecognized command:" + command);
-    }
-
-    return (answer);
 }
 
 const std::string DStubController::getCustomOpts() const {

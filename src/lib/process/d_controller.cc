@@ -409,7 +409,127 @@ DControllerBase::checkConfig(ConstElementPtr new_config) {
 }
 
 ConstElementPtr
-DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
+DControllerBase::configGetHandler(const std::string&,
+                                  ConstElementPtr /*args*/) {
+    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+
+    return (createAnswer(COMMAND_SUCCESS, config));
+}
+
+ConstElementPtr
+DControllerBase::configWriteHandler(const std::string&,
+                                    ConstElementPtr args) {
+    std::string filename;
+
+    if (args) {
+        if (args->getType() != Element::map) {
+            return (createAnswer(COMMAND_ERROR, "Argument must be a map"));
+        }
+        ConstElementPtr filename_param = args->get("filename");
+        if (filename_param) {
+            if (filename_param->getType() != Element::string) {
+                return (createAnswer(COMMAND_ERROR,
+                                     "passed parameter 'filename' "
+                                     "is not a string"));
+            }
+            filename = filename_param->stringValue();
+        }
+    }
+
+    if (filename.empty()) {
+        // filename parameter was not specified, so let's use
+        // whatever we remember
+        filename = getConfigFile();
+        if (filename.empty()) {
+            return (createAnswer(COMMAND_ERROR,
+                                 "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    }
+
+    // Now do the sanity checks on the filename
+    if (filename.find("..") != std::string::npos) {
+        // Trying to escape the directory.. nope.
+        return (createAnswer(COMMAND_ERROR,
+                             "Using '..' in filename is not allowed."));
+    }
+
+    if (filename.find("\\") != std::string::npos) {
+        // Trying to inject escapes (possibly to inject quotes and something
+        // nasty afterward)
+        return (createAnswer(COMMAND_ERROR,
+                             "Using \\ in filename is not allowed."));
+    }
+
+    if (filename[0] == '/') {
+        // Absolute paths are not allowed.
+        return (createAnswer(COMMAND_ERROR,
+                             "Absolute path in filename is not allowed."));
+    }
+
+    // Ok, it's time to write the file.
+    size_t size = 0;
+    try {
+        size = writeConfigFile(filename);
+    } catch (const isc::Exception& ex) {
+        return (createAnswer(COMMAND_ERROR,
+                             std::string("Error during write-config:")
+                             + ex.what()));
+    }
+    if (size == 0) {
+        return (createAnswer(COMMAND_ERROR,
+                             "Error writing configuration to " + filename));
+    }
+
+    // Ok, it's time to return the successful response.
+    ElementPtr params = Element::createMap();
+    params->set("size", Element::create(static_cast<long long>(size)));
+    params->set("filename", Element::create(filename));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Configuration written to "
+                         + filename + " successful", params));
+}
+
+ConstElementPtr
+DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
+    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    ConstElementPtr module_config;
+    std::string app_name = getAppName();
+    std::string message;
+
+    // Command arguments are expected to be:
+    // { "Module": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+      module_config = args->get(app_name);
+        if (!module_config) {
+            message = "Missing mandatory '" + app_name + "' parameter.";
+        } else if (module_config->getType() != Element::map) {
+            message = "'" + app_name + "' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    isc::dhcp::CfgMgr::instance().rollback();
+
+    // Now we check the server proper.
+    return (checkConfig(module_config));
+}
+
+ConstElementPtr
+DControllerBase::versionGetHandler(const std::string&, ConstElementPtr args) {
     ConstElementPtr answer;
 
     // For version-get put the extended version in arguments
