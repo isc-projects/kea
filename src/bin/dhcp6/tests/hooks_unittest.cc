@@ -656,9 +656,20 @@ public:
     /// @return always 0
     static int
     host6_identifier_foo_callout(CalloutHandle& handle) {
-        callback_name_ = string("host4_identifier");
+        callback_name_ = string("host6_identifier");
 
-        std::vector<uint8_t> id(3);
+        // Make sure the query6 parameter is passed.
+        handle.getArgument("query6", callback_qry_pkt6_);
+
+        // Make sure id_type parameter is passed.
+        Host::IdentifierType type = Host::IDENT_FLEX;
+        handle.getArgument("id_type", type);
+
+        // Make sure id_value parameter is passed.
+        std::vector<uint8_t> id;
+        handle.getArgument("id_value", id);
+
+        id.resize(3);
         id[0] = 0x66; // f
         id[1] = 0x6f; // o
         id[2] = 0x6f; // o
@@ -2260,23 +2271,24 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
 
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
-    string config = "{ \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
-        "    \"subnet\": \"2001:db8::/48\", "
-        "    \"interface\": \"" + valid_iface_ + "\", "
-        "    \"reservations\": ["
-        "        {"
-        "            \"flex-id\": \"'foo'\","
-        "            \"ip-addresses\": \"2001:db8::f00\""
-        "        }"
-        "    ]"
-        " } ],"
+    string config = "{ \"interfaces-config\": {\n"
+        "  \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000,\n"
+        "\"host-reservation-identifiers\": [ \"flex-id\" ],\n"
+        "\"subnet6\": [ {\n"
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],\n"
+        "    \"subnet\": \"2001:db8::/48\", \n"
+        "    \"interface\": \"" + valid_iface_ + "\",\n"
+        "    \"reservations\": [\n"
+        "        {\n"
+        "            \"flex-id\": \"'foo'\",\n"
+        "            \"ip-addresses\": [ \"2001:db8::f00\" ]\n"
+        "        }\n"
+        "    ]\n"
+        " } ]\n,"
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
