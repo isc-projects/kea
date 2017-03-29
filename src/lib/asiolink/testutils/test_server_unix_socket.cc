@@ -37,7 +37,7 @@ TestServerUnixSocket::bindServerSocket() {
 }
 
 void
-TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
+TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
     server_socket_.async_read_some(boost::asio::buffer(&raw_buf_[0],
                                                        raw_buf_.size()),
                                    boost::bind(&TestServerUnixSocket::
@@ -45,7 +45,7 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
 }
 
 void
-TestServerUnixSocket::readHandler(const boost::system::error_code& ec,
+TestServerUnixSocket::readHandler(const boost::system::error_code&,
                                   size_t bytes_transferred) {
     if (!custom_response_.empty()) {
         boost::asio::write(server_socket_, boost::asio::buffer(custom_response_.c_str(),

@@ -184,7 +184,7 @@ public:
 
     /// @brief Receive response from the server.
     void receivePartialResponse() {
-        socket_.async_read_some(boost::asio::buffer(buf_),
+        socket_.async_read_some(boost::asio::buffer(buf_.data(), buf_.size()),
                                 [this](const boost::system::error_code& ec,
                                        std::size_t bytes_transferred) {
             if (ec) {
