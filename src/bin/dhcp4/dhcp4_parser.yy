@@ -122,6 +122,7 @@ using namespace std;
   CIRCUIT_ID "circuit-id"
   CLIENT_ID "client-id"
   HOSTNAME "hostname"
+  FLEX_ID "flex-id"
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
@@ -631,6 +632,7 @@ host_reservation_identifier: duid_id
                            | hw_address_id
                            | circuit_id
                            | client_id
+                           | flex_id
                            ;
 
 duid_id : DUID {
@@ -652,6 +654,11 @@ client_id : CLIENT_ID {
     ElementPtr client(new StringElement("client-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(client);
 };
+
+flex_id: FLEX_ID {
+    ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(flex_id);
+}
 
 hooks_libraries: HOOKS_LIBRARIES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1241,6 +1248,7 @@ reservation_param: duid
                  | reservation_client_classes
                  | client_id_value
                  | circuit_id_value
+                 | flex_id_value
                  | ip_address
                  | hw_address
                  | hostname
@@ -1315,6 +1323,13 @@ circuit_id_value: CIRCUIT_ID {
     ctx.leave();
 };
 
+flex_id_value: FLEX_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("flex-id", hw);
+    ctx.leave();
+};
 
 hostname: HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
