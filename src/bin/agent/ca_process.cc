@@ -191,8 +191,8 @@ CtrlAgentProcess::garbageCollectListeners() {
         // related to these listeners. Need to invoke these handlers.
         getIoService()->get_io_service().poll();
         // Finally, we're ready to remove no longer used listeners.
-        http_listeners_.erase(http_listeners_.cbegin(),
-                              http_listeners_.cend() - 1);
+        http_listeners_.erase(http_listeners_.begin(),
+                              http_listeners_.end() - 1);
     }
 }
 
