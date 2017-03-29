@@ -344,7 +344,8 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
                     callout_handle->setArgument("id_value", id);
 
                     // Call callouts
-                    HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
+                    HooksManager::callCallouts(Hooks.hook_index_host6_identifier_,
+                                               *callout_handle);
 
                     callout_handle->getArgument("id_type", type);
                     callout_handle->getArgument("id_value", id);
