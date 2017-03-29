@@ -205,28 +205,23 @@
               example and create your own custom logging hooks.</entry>
             </row>
             <row>
-              <entry>Lightweight 4over6</entry>
+              <entry>Flexible Indentifier</entry>
               <entry>Support customers</entry>
-              <entry>Autumn 2016</entry>
-              <entry>Lightweight 4over6
-              (<ulink url="http://tools.ietf.org/html/rfc7596">RFC 7596</ulink>)
-              is a new IPv6 transition
-              technology that provides IPv4 as a service in IPv6-only
-              network. It assumes that dual-stack clients will get a regular IPv6
-              address and IPv6 prefix, but only a fraction of an IPv4 address. The
-              fraction is specified as port-set, which is essentially a range of
-              TCP and UDP ports a client can use. By doing the transition on the
-              client side, this technology eliminates the need to deploy
-              expensive Carrier Grade NATs within the operator's network. The
-              problem on the DHCP side is the non-trivial logic behind it: each
-              client needs to receive an unique set of lightweight 4over6 options
-              (<ulink url="http://tools.ietf.org/html/rfc7598">RFC 7598</ulink>),
-              that include the IPv4 address (shared among several
-              clients), port-set (which is unique among clients sharing the same
-              IPv4 address) and a number of additional parameters. This hooks
-              library will generate values of those options dynamically, thus
-              eliminating the need to manually configure values for each client
-              separately.
+              <entry>Kea 1.2.0 beta</entry>
+              <entry>Kea software provides a way to handle host reservations
+              that include addresses, prefixes, options, client classes and
+              other features. The reservation can be based on hardware address,
+              DUID, circuit-id or client-id in DHCPv4 and using hardware address
+              or DUID in DHCPv6. However, there are sometimes scenario where the
+              reservation is more complex, e.g. uses other options that
+              mentioned above, uses part of specific options or perhaps even a
+              combination of several options and fields to uniquely identify a
+              client. Those scenarios are addressed by the Flexible Identifier
+              hook application. It allows defining an expression, similar to
+              the one used in client classiciation,
+	      e.g. substring(relay6[0].option[37],0,6). Each incoming packet is
+	      evaluated against that expression and its value is then searched
+	      in the reservations database.
               </entry>
             </row>
           </tbody>
@@ -341,7 +336,7 @@ and may have the zero or more of the following entries:
 
       </section>
       <section>
-        <title>Forensic Logging Hooks</title>
+        <title>legal_log: Forensic Logging Hooks</title>
         <para>
         This section describes the forensic log hooks library. This library
         provides hooks that record a detailed log of lease assignments
@@ -551,6 +546,14 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           </para>
         </section>
       </section>
+
+      <section>
+        <title>flex_id: Flexible Identifiers for Host Reservations</title>
+        <para>
+          This section describes ... TODO.
+	</para>
+      </section>
+
     </section>
     <section id="user-context">
       <title>User contexts</title>
