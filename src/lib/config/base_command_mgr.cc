@@ -31,9 +31,31 @@ BaseCommandMgr::registerCommand(const std::string& cmd, CommandHandler handler) 
                   << "' is already installed.");
     }
 
-    handlers_.insert(make_pair(cmd, handler));
+    HandlersPair handlers;
+    handlers.handler = handler;
+    handlers_.insert(make_pair(cmd, handlers));
 
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_REGISTERED).arg(cmd);
+}
+
+void
+BaseCommandMgr::registerExtendedCommand(const std::string& cmd,
+                                        ExtendedCommandHandler handler) {
+    if (!handler) {
+        isc_throw(InvalidCommandHandler, "Specified command handler is NULL");
+    }
+
+    HandlerContainer::const_iterator it = handlers_.find(cmd);
+    if (it != handlers_.end()) {
+        isc_throw(InvalidCommandName, "Handler for command '" << cmd
+                  << "' is already installed.");
+    }
+
+    HandlersPair handlers;
+    handlers.extended_handler = handler;
+    handlers_.insert(make_pair(cmd, handlers));
+
+    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_EXTENDED_REGISTERED).arg(cmd);
 }
 
 void
@@ -76,7 +98,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
-        return (handleCommand(name, arg));
+        return (handleCommand(name, arg, cmd));
 
     } catch (const Exception& e) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR2).arg(e.what());
@@ -88,16 +110,20 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
 ConstElementPtr
 BaseCommandMgr::handleCommand(const std::string& cmd_name,
-                              const ConstElementPtr& params) {
+                              const ConstElementPtr& params,
+                              const ConstElementPtr& original_cmd) {
     auto it = handlers_.find(cmd_name);
     if (it == handlers_.end()) {
         // Ok, there's no such command.
-        return (createAnswer(CONTROL_RESULT_ERROR,
+        return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED,
                              "'" + cmd_name + "' command not supported."));
     }
 
     // Call the actual handler and return whatever it returned
-    return (it->second(cmd_name, params));
+    if (it->second.handler) {
+        return (it->second.handler(cmd_name, params));
+    }
+    return (it->second.extended_handler(cmd_name, params, original_cmd));
 }
 
 isc::data::ConstElementPtr

@@ -44,7 +44,8 @@ HookedCommandMgr::HookedCommandMgr()
 
 ConstElementPtr
 HookedCommandMgr::handleCommand(const std::string& cmd_name,
-                                const ConstElementPtr& params) {
+                                const ConstElementPtr& params,
+                                const ConstElementPtr& original_cmd) {
     if (!callout_handle_) {
         isc_throw(Unexpected, "callout handle not configured for the Command "
                   "Manager: this is a programming error");
@@ -52,6 +53,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
 
     std::string final_cmd_name = cmd_name;
     ConstElementPtr final_params = boost::const_pointer_cast<Element>(params);
+    ConstElementPtr final_cmd = original_cmd;
 
     ConstElementPtr hook_response;
     if (HooksManager::calloutsPresent(Hooks.hook_index_control_command_receive_)) {
@@ -59,13 +61,11 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
         // Delete previously set arguments.
         callout_handle_->deleteAllArguments();
 
-        // Being in this function we don't have access to the original data
-        // object holding the whole command (name and arguments). Let's
-        // recreate it.
-        ConstElementPtr original_command = createCommand(cmd_name, params);
+        ConstElementPtr command = original_cmd ? original_cmd :
+            createCommand(cmd_name, params);
 
         // And pass it to the hook library.
-        callout_handle_->setArgument("command", original_command);
+        callout_handle_->setArgument("command", command);
         callout_handle_->setArgument("response", hook_response);
 
         HooksManager::callCallouts(Hooks.hook_index_control_command_receive_,
@@ -89,6 +89,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
         ConstElementPtr hook_command;
         callout_handle_->getArgument("command", hook_command);
         final_cmd_name = parseCommand(final_params, hook_command);
+        final_cmd = hook_command;
     }
 
     // If we're here it means that the callouts weren't called or the 'skip'
@@ -96,7 +97,8 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
     // is being processed. Anyhow, we need to handle the command using local
     // Command Mananger.
     ConstElementPtr response = BaseCommandMgr::handleCommand(final_cmd_name,
-                                                             final_params);
+                                                             final_params,
+                                                             final_cmd);
 
     // For the 'list-commands' case we will have to combine commands supported
     // by the hook libraries with the commands that this Command Manager supports.

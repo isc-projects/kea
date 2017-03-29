@@ -10,7 +10,7 @@
 #include <config.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
-#include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <array>
 #include <string>
@@ -28,9 +28,11 @@ public:
     /// @param io_service IO service.
     /// @param socket_file_path Socket file path.
     /// @param test_timeout Test timeout in milliseconds.
+    /// @param custom_response Custom response to be sent to the client.
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
-                         const long test_timeout);
+                         const long test_timeout,
+                         const std::string& custom_response = "");
 
     /// @brief Creates and binds server socket.
     void bindServerSocket();
@@ -59,7 +61,6 @@ private:
 
     /// @brief Server endpoint.
     boost::asio::local::stream_protocol::endpoint server_endpoint_;
-
     /// @brief Server acceptor.
     boost::asio::local::stream_protocol::acceptor server_acceptor_;
 
@@ -71,7 +72,13 @@ private:
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
+
+    /// @brief Holds custom response to be sent to the client.
+    std::string custom_response_;
 };
+
+/// @brief Pointer to the @ref TestServerUnixSocket.
+typedef boost::shared_ptr<TestServerUnixSocket> TestServerUnixSocketPtr;
 
 } // end of namespace isc::asiolink::test
 } // end of namespace isc::asiolink

@@ -86,5 +86,10 @@ CtrlAgentController::CtrlAgentController()
 CtrlAgentController::~CtrlAgentController() {
 }
 
+CtrlAgentProcessPtr
+CtrlAgentController::getCtrlAgentProcess() {
+    return (boost::dynamic_pointer_cast<CtrlAgentProcess>(getProcess()));
+}
+
 } // namespace isc::agent
 } // namespace isc

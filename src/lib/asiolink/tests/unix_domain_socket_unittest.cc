@@ -72,7 +72,7 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);
-    ASSERT_NO_THROW(socket.connect(TEST_SOCKET));
+    ASSERT_NO_THROW(socket.connect(unixSocketFilePath()));
 
     // Send "foo".
     const std::string outbound_data = "foo";
@@ -100,7 +100,7 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
 // is not available.
 TEST_F(UnixDomainSocketTest, clientErrors) {
     UnixDomainSocket socket(io_service_);
-    ASSERT_THROW(socket.connect(TEST_SOCKET), UnixDomainSocketError);
+    ASSERT_THROW(socket.connect(unixSocketFilePath()), UnixDomainSocketError);
     const std::string outbound_data = "foo";
     ASSERT_THROW(socket.write(outbound_data.c_str(), outbound_data.size()),
                  UnixDomainSocketError);
@@ -117,7 +117,7 @@ TEST_F(UnixDomainSocketTest, getNative) {
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);
-    ASSERT_NO_THROW(socket.connect(TEST_SOCKET));
+    ASSERT_NO_THROW(socket.connect(unixSocketFilePath()));
     ASSERT_GE(socket.getNative(), 0);
 }
 
