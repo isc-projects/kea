@@ -113,12 +113,25 @@
 # set. Three supported fields are next-server, server-hostname and
 # boot-file-name
          {
-             "client-id": "01:0a:0b:0c:0d:0e:of",
+             "client-id": "01:0a:0b:0c:0d:0e:0f",
              "ip-address": "192.0.2.205",
              "next-server": "192.0.2.1",
              "server-hostname": "hal9000",
              "boot-file-name": "/dev/null"
+         },
+
+// This reservation is using flexible identifier. Instead of relying on specific
+// field, sysadmin can define an expression similar to what is used for client
+// classification, e.g. substring(relay[0].option[17],0,6). Then, based on the
+// value of that expression for incoming packet, the reservation is matched.
+// Expression can be specified either as hex or plain text using single
+// quotes.
+// Note: flexible identifier requires flex_id hook library to be loaded to work.
+         {
+             "flex-id": "s0mEVaLue",
+             "ip-address": "192.0.2.206"
          }
+
        ]
     }
   ]
