@@ -48,12 +48,14 @@ protected:
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.
+    /// @param original_cmd Original command received.
     ///
     /// @return Pointer to the const data element representing response
     /// to a command.
     virtual isc::data::ConstElementPtr
     handleCommand(const std::string& cmd_name,
-                  const isc::data::ConstElementPtr& params);
+                  const isc::data::ConstElementPtr& params,
+                  const isc::data::ConstElementPtr& original_cmd);
 
     /// @brief Pointer to a callout handle used by this class.
     isc::hooks::CalloutHandlePtr callout_handle_;

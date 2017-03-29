@@ -6,6 +6,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
+#include <boost/bind.hpp>
 
 namespace isc {
 namespace asiolink {
@@ -13,12 +14,14 @@ namespace test {
 
 TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
                                            const std::string& socket_file_path,
-                                           const long test_timeout)
+                                           const long test_timeout,
+                                           const std::string& custom_response)
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
       server_acceptor_(io_service_.get_io_service()),
       server_socket_(io_service_.get_io_service()),
-      test_timer_(io_service_) {
+      test_timer_(io_service_),
+      custom_response_(custom_response) {
     test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
 }
@@ -35,9 +38,6 @@ TestServerUnixSocket::bindServerSocket() {
 
 void
 TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
-    if (ec) {
-        ADD_FAILURE() << ec.message();
-    }
     server_socket_.async_read_some(boost::asio::buffer(&raw_buf_[0],
                                                        raw_buf_.size()),
                                    boost::bind(&TestServerUnixSocket::
@@ -47,10 +47,15 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
 void
 TestServerUnixSocket::readHandler(const boost::system::error_code& ec,
                                   size_t bytes_transferred) {
-    std::string received(&raw_buf_[0], bytes_transferred);
-    std::string response("received " + received);
-    boost::asio::write(server_socket_, boost::asio::buffer(response.c_str(),
-                                                           response.size()));
+    if (!custom_response_.empty()) {
+        boost::asio::write(server_socket_, boost::asio::buffer(custom_response_.c_str(),
+                                                               custom_response_.size()));
+    } else {
+        std::string received(&raw_buf_[0], bytes_transferred);
+        std::string response("received " + received);
+        boost::asio::write(server_socket_, boost::asio::buffer(response.c_str(),
+                                                               response.size()));
+    }
     io_service_.stop();
 }
 

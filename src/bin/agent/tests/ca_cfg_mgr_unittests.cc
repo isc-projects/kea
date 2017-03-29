@@ -7,6 +7,7 @@
 #include <config.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
+#include <exceptions/exceptions.h>
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <agent/tests/test_libraries.h>
@@ -26,6 +27,18 @@ class NakedAgentCfgMgr : public CtrlAgentCfgMgr {
 public:
     using CtrlAgentCfgMgr::parse;
 };
+
+// Tests conversion of the 'service' parameter to ServerType.
+TEST(CtrlAgentCfgContextTest, toServerType) {
+    EXPECT_EQ(CtrlAgentCfgContext::TYPE_DHCP4,
+              CtrlAgentCfgContext::toServerType("dhcp4"));
+    EXPECT_EQ(CtrlAgentCfgContext::TYPE_DHCP6,
+              CtrlAgentCfgContext::toServerType("dhcp6"));
+    EXPECT_EQ(CtrlAgentCfgContext::TYPE_D2,
+              CtrlAgentCfgContext::toServerType("d2"));
+    EXPECT_THROW(CtrlAgentCfgContext::toServerType("other"),
+                 isc::BadValue);
+}
 
 // Tests construction of CtrlAgentCfgMgr class.
 TEST(CtrlAgentCfgMgr, construction) {

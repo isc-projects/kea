@@ -10,6 +10,7 @@
 #include <agent/simple_parser.h>
 #include <cc/simple_parser.h>
 #include <cc/command_interpreter.h>
+#include <exceptions/exceptions.h>
 
 using namespace isc::dhcp;
 using namespace isc::process;
@@ -34,6 +35,20 @@ CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     ctrl_sockets_[TYPE_DHCP6] = orig.ctrl_sockets_[TYPE_DHCP6];
 }
 
+CtrlAgentCfgContext::ServerType
+CtrlAgentCfgContext::toServerType(const std::string& service) {
+    if (service == "dhcp4") {
+        return (CtrlAgentCfgContext::TYPE_DHCP4);
+
+    } else if (service == "dhcp6") {
+        return (CtrlAgentCfgContext::TYPE_DHCP6);
+
+    } else if (service == "d2") {
+        return (CtrlAgentCfgContext::TYPE_D2);
+    }
+
+    isc_throw(isc::BadValue, "invalid service value " << service);
+}
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
     : DCfgMgrBase(DCfgContextBasePtr(new CtrlAgentCfgContext())) {

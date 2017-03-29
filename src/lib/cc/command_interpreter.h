@@ -38,6 +38,9 @@ const int CONTROL_RESULT_SUCCESS = 0;
 /// @brief Status code indicating a general failure
 const int CONTROL_RESULT_ERROR = 1;
 
+/// @brief Status code indicating that the specified command is not supported.
+const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {
