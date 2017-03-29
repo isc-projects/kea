@@ -43,9 +43,7 @@ public:
 
     /// @brief Connects the socket to the specified endpoint.
     ///
-    /// @param endpoint Endpoint to connect to.
-    /// @param [out] ec Error code returned as a result of an attempt to
-    /// connect.
+    /// @param path Path to the unix socket to which we should connect.
     ///
     /// @throw UnixDomainSocketError if error occurs.
     void connect(const std::string& path);

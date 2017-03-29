@@ -94,7 +94,7 @@ public:
     /// This method deals with this problem by opening a new listener aside of
     /// the currently running listener (if the new listener settings are
     /// different than current settings). Both instances are held until the
-    /// @ref CtrlAgentProcess::garbageCollectListeners is invoked, which
+    /// CtrlAgentProcess::garbageCollectListeners is invoked, which
     /// removes any listeners which are no longer used.
     ///
     /// @param config_set a new configuration (JSON) for the process
