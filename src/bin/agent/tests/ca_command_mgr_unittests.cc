@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <cstdlib>
 
 using namespace isc::agent;
 using namespace isc::asiolink;
@@ -83,9 +84,20 @@ public:
     }
 
     /// @brief Returns socket file path.
+    ///
+    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
+    /// socket file is created in the location pointed to by this variable.
+    /// Otherwise, it is created in the build directory.
     static std::string unixSocketFilePath() {
         std::ostringstream s;
-        s << TEST_DATA_BUILDDIR << "/" << TEST_SOCKET;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            s << std::string(env);
+        } else {
+            s << TEST_DATA_BUILDDIR;
+        }
+
+        s << "/" << TEST_SOCKET;
         return (s.str());
     }
 
