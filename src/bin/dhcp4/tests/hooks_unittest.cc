@@ -42,6 +42,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     int hook_index_lease4_release  = -1;
     int hook_index_pkt4_send       = -1;
     int hook_index_buffer4_send    = -1;
+    int hook_index_host4_identifier= -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
@@ -56,6 +57,8 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
                     .getIndex("pkt4_send"));
     EXPECT_NO_THROW(hook_index_buffer4_send = ServerHooks::getServerHooks()
                     .getIndex("buffer4_send"));
+    EXPECT_NO_THROW(hook_index_host4_identifier = ServerHooks::getServerHooks()
+                    .getIndex("host4_identifier"));
 
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
     EXPECT_TRUE(hook_index_pkt4_receive > 0);
@@ -63,6 +66,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_lease4_release > 0);
     EXPECT_TRUE(hook_index_pkt4_send > 0);
     EXPECT_TRUE(hook_index_buffer4_send > 0);
+    EXPECT_TRUE(hook_index_host4_identifier > 0);
 }
 
 // A dummy MAC address, padded with 0s
@@ -111,6 +115,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_renew");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
 
         HooksManager::getSharedCalloutManager().reset();
         delete srv_;
@@ -540,6 +545,24 @@ public:
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
         return (lease4_decline_callout(callout_handle));
+    }
+
+    /// @brief Test host4_identifier by setting identifier to "foo"
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    host4_identifier_foo_callout(CalloutHandle& handle) {
+        callback_name_ = string("host4_identifier");
+
+        std::vector<uint8_t> id(3);
+        id[0] = 0x66; // f
+        id[1] = 0x6f; // o
+        id[2] = 0x6f; // o
+        handle.setArgument("id_value", id);
+        handle.setArgument("id_type", Host::IDENT_FLEX);
+
+        return (0);
     }
 
     /// resets buffers used to store data received by callouts
@@ -1701,6 +1724,74 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     EXPECT_EQ(addr, callback_lease4_->addr_);
 }
 
+
+// Checks if callout installed on host4_identifier can generate an
+// identifier and whether that identifier is actually used.
+TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Configure a subnet with host reservation. The reservation is based on
+    // flexible identifier value of 'foo'. That's exactly what the
+    // host4_identifier_foo_callout sets.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"host-reservation-identifiers\": [ \"flex-id\" ], "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\", "
+        "    \"reservations\": ["
+        "        {"
+        "            \"flex-id\": \"'foo'\","
+        "            \"ip-address\": \"192.0.2.201\""
+        "        }"
+        "    ]"
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    ASSERT_TRUE(json);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Install host4_identifier_foo_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "host4_identifier", host4_identifier_foo_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a response
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Make sure the address offered is the one that was reserved.
+    EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
+}
 
 // Verifies that libraries are unloaded by server destruction
 // The callout libraries write their library index number to a marker
