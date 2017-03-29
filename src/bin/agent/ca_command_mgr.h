@@ -69,7 +69,7 @@ public:
     virtual isc::data::ConstElementPtr
     handleCommand(const std::string& cmd_name,
                   const isc::data::ConstElementPtr& params,
-                  const isc::data::ConstElementPtr& orginal_cmd);
+                  const isc::data::ConstElementPtr& original_cmd);
 
 private:
 
