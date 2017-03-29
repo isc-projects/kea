@@ -547,7 +547,7 @@ public:
         return (lease4_decline_callout(callout_handle));
     }
 
-    /// @brief Test host4_identifier by setting identifier to "foo"
+    /// @brief Test host4_identifier callout by setting identifier to "foo"
     ///
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0

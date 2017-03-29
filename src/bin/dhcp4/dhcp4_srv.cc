@@ -289,6 +289,7 @@ void
 Dhcpv4Exchange::setHostIdentifiers() {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
+
     // Collect host identifiers. The identifiers are stored in order of preference.
     // The server will use them in that order to search for host reservations.
     BOOST_FOREACH(const Host::IdentifierType& id_type,
@@ -341,7 +342,11 @@ Dhcpv4Exchange::setHostIdentifiers() {
             }
             break;
         case Host::IDENT_FLEX:
-            if (HooksManager::calloutsPresent(Hooks.hook_index_host4_identifier_)) {
+            {
+                if (!HooksManager::calloutsPresent(Hooks.hook_index_host4_identifier_)) {
+                    break;
+                }
+
                 CalloutHandlePtr callout_handle = getCalloutHandle(context_->query_);
 
                 Host::IdentifierType type = Host::IDENT_FLEX;
@@ -355,25 +360,23 @@ Dhcpv4Exchange::setHostIdentifiers() {
                 callout_handle->setArgument("id_type", type);
                 callout_handle->setArgument("id_value", id);
 
-                    // Call callouts
-                    HooksManager::callCallouts(Hooks.hook_index_host4_identifier_,
-                                               *callout_handle);
+                // Call callouts
+                HooksManager::callCallouts(Hooks.hook_index_host4_identifier_,
+                                           *callout_handle);
 
-                    callout_handle->getArgument("id_type", type);
-                    callout_handle->getArgument("id_value", id);
+                callout_handle->getArgument("id_type", type);
+                callout_handle->getArgument("id_value", id);
 
-                    if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
-                        !id.empty()) {
+                if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                    !id.empty()) {
 
-                        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
-                            .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+                    LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
+                        .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
 
-                        context_->addHostIdentifier(type, id);
-                    }
+                    context_->addHostIdentifier(type, id);
                 }
                 break;
-
-            
+            }
         default:
             ;
         }

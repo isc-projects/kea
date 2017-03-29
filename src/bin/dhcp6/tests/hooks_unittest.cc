@@ -62,6 +62,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_pkt6_received   = -1;
     int hook_index_select_subnet   = -1;
     int hook_index_pkt6_send       = -1;
+    int hook_index_host6_identifier= -1;
+
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer6_receive = ServerHooks::getServerHooks()
@@ -82,6 +84,9 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("subnet6_select"));
     EXPECT_NO_THROW(hook_index_pkt6_send     = ServerHooks::getServerHooks()
                     .getIndex("pkt6_send"));
+    EXPECT_NO_THROW(hook_index_host6_identifier = ServerHooks::getServerHooks()
+                    .getIndex("host6_identifier"));
+
 
     EXPECT_TRUE(hook_index_pkt6_received   > 0);
     EXPECT_TRUE(hook_index_select_subnet   > 0);
@@ -92,6 +97,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_lease6_release  > 0);
     EXPECT_TRUE(hook_index_lease6_rebind   > 0);
     EXPECT_TRUE(hook_index_lease6_decline  > 0);
+    EXPECT_TRUE(hook_index_host6_identifier > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -643,6 +649,25 @@ public:
 
         return (lease6_decline_callout(callout_handle));
     }
+
+    /// @brief Test host6_identifier by setting identifier to "foo"
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    host6_identifier_foo_callout(CalloutHandle& handle) {
+        callback_name_ = string("host4_identifier");
+
+        std::vector<uint8_t> id(3);
+        id[0] = 0x66; // f
+        id[1] = 0x6f; // o
+        id[2] = 0x6f; // o
+        handle.setArgument("id_value", id);
+        handle.setArgument("id_type", Host::IDENT_FLEX);
+
+        return (0);
+    }
+
 
     /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
@@ -2227,6 +2252,80 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     // Now check that it's NOT declined.
     EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
 }
+
+
+// Checks if callout installed on host6_identifier can generate an
+// identifier and whether that identifier is actually used.
+TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/48\", "
+        "    \"interface\": \"" + valid_iface_ + "\", "
+        "    \"reservations\": ["
+        "        {"
+        "            \"flex-id\": \"'foo'\","
+        "            \"ip-addresses\": \"2001:db8::f00\""
+        "        }"
+        "    ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP6(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = isc::config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Install host6_identifier_foo_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "host6_identifier", host6_identifier_foo_callout));
+
+    // Prepare solicit packet. Server should select first subnet for it
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface(valid_iface_);
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv_->processSolicit(sol);
+
+    // Check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("host6_identifier", callback_name_);
+
+    // Check that pkt6 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_qry_pkt6_.get() == sol.get());
+
+    // Now check if we got the reserved address
+    OptionPtr tmp = adv->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(adv, 234, 1000, 2000);
+
+    ASSERT_TRUE(addr_opt);
+    ASSERT_EQ("2001:db8::f00", addr_opt->getAddress().toText());
+}
+
 
 // Verifies that libraries are unloaded by server destruction
 // The callout libraries write their library index number to a marker
