@@ -70,6 +70,7 @@ UnixDomainSocket::write(const void* data, size_t length) {
     boost::system::error_code ec;
     size_t res = boost::asio::write(impl_->socket_,
                                     boost::asio::buffer(data, length),
+                                    boost::asio::transfer_all(),
                                     ec);
     if (ec) {
         isc_throw(UnixDomainSocketError, ec.message());
