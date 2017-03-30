@@ -55,8 +55,6 @@ CtrlAgentProcess::run() {
                 CtrlAgentController::instance());
         controller->registerCommands();
 
-        CtrlAgentCfgContextPtr ctx =
-            boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
         while (!shouldShutdown()) {

@@ -34,6 +34,48 @@ CtrlAgentCommandMgr::instance() {
 
 CtrlAgentCommandMgr::CtrlAgentCommandMgr()
     : HookedCommandMgr() {
+    // The base class automatically registers 'list-commands'. This
+    // command should be forwarded if the 'service' is specified, so
+    // we have to indicate it by adding it to the set of commands
+    // for which forwarding takes precedence.
+    forward_first_commands_.insert("list-commands");
+}
+
+void
+CtrlAgentCommandMgr::forwardOrHandle(const std::string& cmd,
+                                     const ForceForward& force_forward,
+                                     CommandHandler handler) {
+    BaseCommandMgr::registerCommand(cmd, handler);
+    if (force_forward.forward_) {
+        forward_first_commands_.insert(cmd);
+    }
+}
+
+void
+CtrlAgentCommandMgr::forwardOrHandleExtended(const std::string& cmd,
+                                             const ForceForward& force_forward,
+                                             ExtendedCommandHandler handler) {
+    BaseCommandMgr::registerExtendedCommand(cmd, handler);
+    if (force_forward.forward_) {
+        forward_first_commands_.insert(cmd);
+    }
+}
+
+void
+CtrlAgentCommandMgr::deregisterCommand(const std::string& cmd) {
+    BaseCommandMgr::deregisterCommand(cmd);
+    forward_first_commands_.erase(cmd);
+}
+
+void
+CtrlAgentCommandMgr::deregisterAll() {
+    BaseCommandMgr::deregisterAll();
+    forward_first_commands_.clear();
+    // The base class automatically registers 'list-commands'. This
+    // command should be forwarded if the 'service' is specified, so
+    // we have to indicate it by adding it to the set of commands
+    // for which forwarding takes precedence.
+    forward_first_commands_.insert("list-commands");
 }
 
 ConstElementPtr
@@ -43,11 +85,9 @@ CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
     ConstElementPtr answer;
 
     try {
-        // list-commands is a special case. The Control Agent always supports this
-        // command but most of the time users don't want to list commands supported
-        // by the CA but by one of the Kea servers. The user would indicate that
-        // by specifying 'service' value.
-        if (cmd_name == "list-commands") {
+        // There are certain commands that have to be forwarded if the 'service'
+        // parameter is specified.
+        if (forward_first_commands_.count(cmd_name) > 0) {
             if (original_cmd && original_cmd->contains("service")) {
                 ConstElementPtr services = original_cmd->get("service");
                 if (services && !services->empty()) {
@@ -56,7 +96,7 @@ CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
                     // cheat that Control Agent doesn't support this command to
                     // avoid it being handled by CA.
                     answer = createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED,
-                                          "forwarding list-commands command");
+                                          "forwarding command");
                 }
             }
         }

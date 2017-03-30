@@ -50,22 +50,28 @@ CtrlAgentController::parseFile(const std::string& name) {
 
 void
 CtrlAgentController::registerCommands() {
-    CtrlAgentCommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(BUILD_REPORT_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::buildReportHandler, this, _1, _2));
 
-    CtrlAgentCommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(CONFIG_GET_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::configGetHandler, this, _1, _2));
 
-    CtrlAgentCommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(CONFIG_TEST_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::configTestHandler, this, _1, _2));
 
-    CtrlAgentCommandMgr::instance().registerCommand(CONFIG_WRITE_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(CONFIG_WRITE_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::configWriteHandler, this, _1, _2));
 
-    CtrlAgentCommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(SHUT_DOWN_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::shutdownHandler, this, _1, _2));
 
-    CtrlAgentCommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
+    CtrlAgentCommandMgr::instance().forwardOrHandle(VERSION_GET_COMMAND,
+                                                    ForceForward(true),
         boost::bind(&DControllerBase::versionGetHandler, this, _1, _2));
 }
 

@@ -12,6 +12,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <array>
+#include <set>
 
 namespace isc {
 namespace agent {
@@ -29,6 +30,14 @@ class CommandForwardingSkip : public Exception {
 public:
     CommandForwardingSkip(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
+};
+
+struct ForceForward {
+    bool forward_;
+
+    explicit ForceForward(const bool forward)
+        : forward_(forward) {
+    }
 };
 
 /// @brief Command Manager for Control Agent.
@@ -50,6 +59,59 @@ public:
 
     /// @brief Returns sole instance of the Command Manager.
     static CtrlAgentCommandMgr& instance();
+
+    /// @brief Registers a command handler.
+    ///
+    /// This method is similar to the @ref BaseCommandMgr::registerCommand
+    /// in that it registers a new command along with a handler. However,
+    /// it also allows specifying a @ref ForceForward flag which indicates
+    /// if the command should be forwarded to a specified Kea server before
+    /// this command manager attempts to handle it on its own. The command
+    /// to be forwarded must include 'service' parameter which holds the
+    /// name of the service to which the command should be forwarded. If
+    /// the 'service' parameter is not specified the control agent will
+    /// try to handle it on its own.
+    ///
+    /// @param cmd Command name.
+    /// @param force_forward Indicates if the command should be forwarded
+    /// to the specified Kea server before it is handled by the Control
+    /// Agent.
+    /// @param handler Handler associated with the command.
+    void forwardOrHandle(const std::string& cmd,
+                         const ForceForward& force_forward,
+                         CommandHandler handler);
+
+    /// @brief Registers a command handler.
+    ///
+    /// This method is similar to the @ref BaseCommandMgr::registerExtendedCommand
+    /// in that it registers a new command along with a handler. However,
+    /// it also allows specifying a @ref ForceForward flag which indicates
+    /// if the command should be forwarded to a specified Kea server before
+    /// this command manager attempts to handle it on its own. The command
+    /// to be forwarded must include 'service' parameter which holds the
+    /// name of the service to which the command should be forwarded. If
+    /// the 'service' parameter is not specified the control agent will
+    /// try to handle it on its own.
+    ///
+    /// @param cmd Command name.
+    /// @param force_forward Indicates if the command should be forwarded
+    /// to the specified Kea server before it is handled by the Control
+    /// Agent.
+    /// @param handler Handler associated with the command.
+    void forwardOrHandleExtended(const std::string& cmd,
+                                 const ForceForward& force_forward,
+                                 ExtendedCommandHandler handler);
+
+    /// @brief Deregisters specified command handler.
+    ///
+    /// @param cmd Name of the command that's no longer handled.
+    virtual void deregisterCommand(const std::string& cmd);
+
+    /// @brief Auxiliary method that removes all installed commands.
+    ///
+    /// The only unwipeable method is list-commands, which is internally
+    /// handled at all times.
+    virtual void deregisterAll();
 
     /// @brief Handles the command having a given name and arguments.
     ///
@@ -110,6 +172,10 @@ private:
 
     /// @brief Buffer into which responses to forwarded commands are stored.
     std::array<char, 8192> receive_buf_;
+
+    /// @brief A set of commands which are forwarded before CA handles them
+    /// if the 'service' parameter is specified.
+    std::set<std::string> forward_first_commands_;
 
 };
 

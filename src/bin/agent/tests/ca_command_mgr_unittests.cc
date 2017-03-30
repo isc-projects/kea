@@ -24,6 +24,7 @@
 
 using namespace isc::agent;
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::process;
 
@@ -181,6 +182,25 @@ public:
         return (command);
     }
 
+    /// @brief Registers stub command handler.
+    ///
+    /// @param command Command name.
+    /// @param force_forward Indicates if the command should rather be forwarded
+    /// (if the 'service' is specified) or the local handler should be invoked.
+    void registerStubHandler(const std::string& command,
+                             const ForceForward& force_forward) {
+        CtrlAgentCommandMgr::instance().forwardOrHandle(command, force_forward,
+            boost::bind(&CtrlAgentCommandMgrTest::stubHandler, this, _1, _2));
+    }
+
+    /// @brief Stub command handler.
+    ///
+    /// @return Answer with status code 1001.
+    ConstElementPtr
+    stubHandler(const std::string&, const ConstElementPtr&) {
+        return (createAnswer(1001, "stub handler invoked"));
+    }
+
     /// @brief Test forwarding the command.
     ///
     /// @param server_type Server for which the client socket should be
@@ -308,6 +328,69 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // command is forwarded. So having this value returned means that
     // the command was forwarded as expected.
     checkAnswer(answer, 3);
+}
+
+// Check that the command for which forwarding takes precedence over
+// handling locally is forwarded if the 'service' value is specified.
+// Check that the command is handled locally if the 'service' is
+// not specified or if it is specified during the command registration
+// that the command should be handled locally before it is forwarded.
+TEST_F(CtrlAgentCommandMgrTest, forwardPrecedence) {
+
+    // Register stub handler and configure the manager to forward the
+    // command if the 'service' parameter is not specified.
+    registerStubHandler("foo", ForceForward(true));
+
+    // Configure client side socket.
+    configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP6);
+    // Create server side socket.
+    bindServerSocket("{ \"result\" : 3 }");
+
+    // The client side communication is synchronous. To be able to respond
+    // to this we need to run the server side socket at the same time.
+    // Running IO service in a thread guarantees that the server responds
+    // as soon as it receives the control command.
+    isc::util::thread::Thread(boost::bind(&IOService::run,
+                                          getIOService().get()));
+
+    ConstElementPtr command = createCommand("foo", "dhcp6");
+    ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
+                                                command);
+
+    // Answer of 3 is specific to the stub response we send when the
+    // command is forwarded. So having this value returned means that
+    // the command was forwarded as expected.
+    checkAnswer(answer, 3);
+
+    // Recreate the command but this time do not specify the 'service'.
+    command = createCommand("foo", "");
+
+    // Reset IO service so as we can run again.
+    getIOService().reset();
+    isc::util::thread::Thread(boost::bind(&IOService::run,
+                                          getIOService().get()));
+
+    // This time the command should not be forwarded but handled by the stub
+    // handler. We check that by expecting the status code of 1001.
+    answer = mgr_.handleCommand("foo", ConstElementPtr(), command);
+    checkAnswer(answer, 1001);
+
+    // Deregister the handler and register it again with the flag indicating
+    // that the command should rather be handled locally.
+    CtrlAgentCommandMgr::instance().deregisterAll();
+    registerStubHandler("foo", ForceForward(false));
+
+    // Recreate the command and specify 'service' value again.
+    command = createCommand("foo", "dhcp6");
+
+    // Reset IO service so as we can run again.
+    getIOService().reset();
+    isc::util::thread::Thread(boost::bind(&IOService::run,
+                                          getIOService().get()));
+
+    // The local handler should be ran this time again.
+    answer = mgr_.handleCommand("foo", ConstElementPtr(), command);
+    checkAnswer(answer, 1001);
 }
 
 }
