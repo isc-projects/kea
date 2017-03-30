@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,7 +238,7 @@ information.
 % DHCP4_FLEX_ID flexible identifier generated for incoming packet: %1
 This debug message is printed when host reservation type is set to flexible identifier
 and the expression specified in its configuration generated (was evaluated to)
-an indetifier for incoming packet. This debug message is mainly intended as a
+an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
 % DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be be generated for the client
