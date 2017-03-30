@@ -116,9 +116,9 @@ to the end of this list.
    - name: @b id_type, type isc::dhcp::Host::IdentifierType, direction: <b>in/out</b>
    - name: @b id_value, type std::vector<uint8_t>, direction: <b>out</b>
 
- - @b Description: this callout is executed only if flexible identifers are
+ - @b Description: this callout is executed only if flexible identifiers are
    enabled, i.e. host-reservation-identifiers contain 'flex-id' value. This
-   callout enables external library to provide values for flexible identifers.
+   callout enables external library to provide values for flexible identifiers.
    To be able to use this feature, flex_id hook library is needed.
 
  - <b>Next step status</b>: If a callout installed on the "host6_identifier" hook

@@ -205,7 +205,7 @@
               example and create your own custom logging hooks.</entry>
             </row>
             <row>
-              <entry>Flexible Indentifier</entry>
+              <entry>Flexible Identifier</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.2.0 beta</entry>
               <entry>Kea software provides a way to handle host reservations
@@ -218,7 +218,7 @@
               combination of several options and fields to uniquely identify a
               client. Those scenarios are addressed by the Flexible Identifiers
               hook application. It allows defining an expression, similar to
-              the one used in client classifiation,
+              the one used in client classification,
 	      e.g. substring(relay6[0].option[37],0,6). Each incoming packet is
 	      evaluated against that expression and its value is then searched
 	      in the reservations database.
