@@ -1,0 +1,44 @@
+// This is a basic configuraton for the Kea Control Agent.
+{
+    // RESTful interface to be available at http://127.0.0.1:8080/
+    "Control-agent": {
+        "http-host": "127.0.0.1",
+        "http-port": 8080,
+
+        // Specify location of the files to which the Control Agent
+        // should connect to forward commands to the DHCPv4 and DHCPv6
+        // server via unix domain socket.
+        "control-sockets": {
+            "dhcp4-server": {
+                "socket-type": "unix",
+                "socket-name": "/tmp/kea-ctrl-dhcp4.sock"
+            },
+            "dhcp6-server": {
+                "socket-type": "unix",
+                "socket-name": "/tmp/kea-ctrl-dhcp6.sock"
+            }
+        },
+
+       // Specify hooks libraries that are attached to the Control Agent.
+       // Such hooks libraries should support 'control_command_receive'
+       // hook point. This is currently commented out because it has to
+       // point to the existing hooks library. Otherwise the Control
+       // Agent will fail to start.
+        "hooks-libraries": [
+//      {
+//          "library": "/opt/local/control-agent-commands.so",
+//          "parameters": {
+//              "param1": "foo"
+//          }
+//      }
+        ]
+    },
+
+    // Basic logging configuration for the Control Agent.
+    "Logging": {
+        "loggers": [ {
+            "name": "kea-ctrl-agent",
+            "severity": "INFO"
+        } ]
+    }
+}
