@@ -10,7 +10,7 @@
   <section id="agent-overview">
     <title>Overview</title>
     <para>Kea Control Agent (CA) is a daemon, first included in Kea 1.2, which
-    exposes RESTful control interface for managing Kea servers. The deamon
+    exposes a RESTful control interface for managing Kea servers. The daemon
     can receive control commands over HTTP and either forward these commands
     to the respective Kea servers or handle these commands on its own. The
     determination whether the command should be handled by the CA or forwarded
@@ -19,9 +19,10 @@
     supported commands as well as their structures are provided in
     <xref linkend="ctrl-channel"/>.</para>
     <para>Hook libraries can be attached to the CA to provide support for
-    additional commands. Such hook libraries must implement callouts
-    for 'control_command_receive' hook point. Details about creating new
-    hook libraries and supported hook points can be found in
+    additional commands or custom behavior of existing commands. Such hook
+    libraries must implement callouts for 'control_command_receive' hook point.
+    Details about creating new hook libraries and supported hook points can be
+    found in
     <ulink url="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</ulink>.
     </para>
   </section>
@@ -87,7 +88,7 @@
 
     <para>
       It has been mentioned in the <xref linkend="agent-overview"/> that
-      CA can forward some received commands to the respective Kea servers for
+      CA can forward received commands to the specific Kea servers for
       processing. For example, <command>config-get</command> is sent to
       retrieve configuration of one of the Kea services. When CA receives
       this command, including a <command>service</command> parameter
@@ -106,7 +107,7 @@
       of the configuration above, the CA will connect to the DHCPv4 server
       via <filename>/path/to/the/unix/socket-v4</filename> to forward the
       commands to it. Obviously, the DHCPv4 server must be configured to
-      listen to connections via this socket. In other words, the command
+      listen to connections via this same socket. In other words, the command
       socket configuration for the DHCPv4 server and CA (for this server)
       must match. Consult the <xref linkend="dhcp4-ctrl-channel"/> and the
       <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
@@ -118,8 +119,8 @@
       DHCPv4 and DHCPv6 servers. It currently supports one hook point
       'control_command_receive' which makes it possible to delegate
       processing of some commands to the hooks library. The
-      <command>hooks-libraries</command> list contains hooks libraries
-      that should be loaded by the CA, along with their configuration
+      <command>hooks-libraries</command> list contains the list of hooks
+      libraries that should be loaded by the CA, along with their configuration
       information specified with <command>parameters</command>.
     </para>
 

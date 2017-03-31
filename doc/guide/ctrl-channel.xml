@@ -32,7 +32,7 @@
     see <xref linkend="dhcp4-ctrl-channel" /> and <xref
     linkend="dhcp6-ctrl-channel" />. While it is possible control
     the servers directly using unix domain sockets it requires that
-    the controlling client is either running on the same machine as
+    the controlling client be running on the same machine as
     the server. In order to connect remotely SSH is usually used to
     connect to the controlled machine.</para>
 
@@ -40,7 +40,7 @@
     of a RESTful API to control the servers, rather than using unix
     domain sockets directly. Therefore, as of Kea 1.2.0 release,
     Kea includes a new component called Control Agent (or CA) which
-    exposes RESTful API to the controlling clients and can forward
+    exposes a RESTful API to the controlling clients and can forward
     commands to the respective Kea services over the unix domain
     sockets. The CA configuration has been described in
     <xref linkend="agent-configuration"/>.</para>
@@ -158,7 +158,7 @@
       <simpara>
         When sending commands via Control Agent, it is possible to specify
         multiple services at which the command is targetted. CA will forward this
-        command to each service separatelly. Thus, the CA response to the
+        command to each service individually. Thus, the CA response to the
         controlling client will contain an array of individual responses.
       </simpara>
     </note>
@@ -168,10 +168,10 @@
     <section id="ctrl-channel-client">
     <title>Using the Control Channel</title>
 
-    <para>Kea development team is actively working on the providing implementations
-    of the client applications which can be used to control the servers. However,
-    these clients have certain limitations as of Kea 1.2.0 release. The easiest
-    way to start playing with the control API is to use common Unix/Linux tools
+    <para>Kea development team is actively working on providing client applications
+    which can be used to control the servers. These applications are, however, in the
+    early stages of development and as of Kea 1.2.0 release have certain limitatins.
+    The easiest way to start playing with the control API is to use common Unix/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
     <para>In order to control the given Kea service via unix domain socket, use
