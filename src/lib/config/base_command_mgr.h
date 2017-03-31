@@ -135,13 +135,13 @@ public:
     /// @brief Deregisters specified command handler.
     ///
     /// @param cmd Name of the command that's no longer handled.
-    virtual void deregisterCommand(const std::string& cmd);
+    void deregisterCommand(const std::string& cmd);
 
     /// @brief Auxiliary method that removes all installed commands.
     ///
     /// The only unwipeable method is list-commands, which is internally
     /// handled at all times.
-    virtual void deregisterAll();
+    void deregisterAll();
 
 protected:
 
