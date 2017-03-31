@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2017;" >
+]>
+
+<chapter id="kea-ctrl-agent">
+  <title>Kea Control Agent</title>
+
+  <section id="agent-overview">
+    <title>Overview</title>
+    <para>Kea Control Agent (CA) is a daemon, first included in Kea 1.2, which
+    exposes RESTful control interface for managing Kea servers. The deamon
+    can receive control commands over HTTP and either forward these commands
+    to the respective Kea servers or handle these commands on its own. The
+    determination whether the command should be handled by the CA or forwarded
+    is made by checking the value of the 'service' parameter which may be
+    included in the command from the controlling client. The details of the
+    supported commands as well as their structures are provided in
+    <xref linkend="ctrl-channel"/>.</para>
+    <para>Hook libraries can be attached to the CA to provide support for
+    additional commands. Such hook libraries must implement callouts
+    for 'control_command_receive' hook point. Details about creating new
+    hook libraries and supported hook points can be found in
+    <ulink url="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</ulink>.
+    </para>
+  </section>
+
+  <section id="agent-configuration">
+    <title>Configuration</title>
+    <para>The following example demonstrates the basic CA configuration.</para>
+    <para>
+<screen>
+{
+    "Control-agent": {
+        "http-host": "10.20.30.40",
+        "http-port": 8080,
+
+        "control-sockets": {
+            "dhcp4-server": {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-v4"
+            },
+            "dhcp6-server": {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-v4"
+            }
+        },
+
+        "hooks-libraries": [
+        {
+            "library": "/opt/local/control-agent-commands.so",
+            "parameters": {
+                "param1": "foo"
+            }
+        } ]
+    },
+
+    "Logging": {
+        "loggers": [ {
+            "name": "kea-ctrl-agent",
+            "severity": "INFO"
+        } ]
+    }
+}</screen>
+    </para>
+
+    <warning>
+      <simpara>
+        In the Kea 1.2 beta release the Control Agent configuration can't be
+        specified within the same configuration file as DHCPv4, DHCPv6 and D2
+        configuration. The default configuration file for the CA is installed
+        in the <filename>etc/kea/kea-ca.conf</filename>. In the Kea 1.2 final
+        release the CA configuration will be merged into the default
+        <filename>etc/kea/kea.conf.</filename>
+      </simpara>
+    </warning>
+
+    <para>
+      The <command>http-host</command> and <command>http-port</command>
+      specify an IP address and port to which HTTP service will be bound.
+      In case of the example configuration provided above, the RESTful
+      service will be available under the URL of
+      <command>http://10.20.30.40:8080/</command>. If these parameters
+      are not specified, the default URL is http://127.0.0.1:8000/
+    </para>
+
+    <para>
+      It has been mentioned in the <xref linkend="agent-overview"/> that
+      CA can forward some received commands to the respective Kea servers for
+      processing. For example, <command>config-get</command> is sent to
+      retrieve configuration of one of the Kea services. When CA receives
+      this command, including a <command>service</command> parameter
+      indicating that the client desires to retrieve configuration of
+      the DHCPv4 server, the CA will forward this command to this server
+      and then pass the received response back to the client. More about
+      the <command>service</command> parameter and general structure of
+      the commands can be found in <xref linkend="ctrl-channel"/>.
+    </para>
+
+    <para>
+      The CA uses unix domain sockets to forward control commands and receive
+      responses from other Kea services. The <command>dhcp4-server</command>,
+      <command>dhcp6-server</command> and <command>d2-server</command> maps
+      specify the files to which unix domain sockets are bound. In case
+      of the configuration above, the CA will connect to the DHCPv4 server
+      via <filename>/path/to/the/unix/socket-v4</filename> to forward the
+      commands to it. Obviously, the DHCPv4 server must be configured to
+      listen to connections via this socket. In other words, the command
+      socket configuration for the DHCPv4 server and CA (for this server)
+      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/> and the
+      <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
+      configuration is specified for the DHCPv4 and DHCPv6 services.
+    </para>
+
+    <para>
+      Hooks libraries can be attached to the Control Agent just like to
+      DHCPv4 and DHCPv6 servers. It currently supports one hook point
+      'control_command_receive' which makes it possible to delegate
+      processing of some commands to the hooks library. The
+      <command>hooks-libraries</command> list contains hooks libraries
+      that should be loaded by the CA, along with their configuration
+      information specified with <command>parameters</command>.
+    </para>
+
+    <para>
+      Please consult <xref linkend="logging"/> for the details how to
+      configure logging. The CA's root logger's name is
+      <command>kea-ctrl-agent</command> as given in the example above.
+    </para>
+  </section>
+
+  <section id="agent-secure-connection">
+    <title>Secure Connections</title>
+    <para>
+      Control Agent doesn't natively support secure HTTP connections like
+      SSL or TLS. In order to setup secure connection please use one
+      of the available third party HTTP servers and configure it to run
+      as a reverse proxy to the Control Agent.
+    </para>
+  </section>
+
+  <section id="agent-limitations">
+    <title>Control Agent Limitations</title>
+    <para>
+      Control Agent is a new component, first released in Kea 1.2 beta. In
+      this release it comes with two notable limitations:
+      <itemizedlist>
+        <listitem>
+          <simpara>
+            CA configuration must be specified in a separate configuration file
+            from the configurations of other components. The default confirguation
+            file for CA is located in <filename>etc/kea/kea-ca.conf</filename>.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            keactrl hasn't been updated to manage the Control Agent (start, stop
+            reload). As a result, the CA must be started directly as described in
+            <xref linkend="agent-launch"/>
+          </simpara>
+        </listitem>
+      </itemizedlist>
+    </para>
+  </section>
+
+  <section id="agent-launch">
+    <title>Starting Control Agent</title>
+    <para>
+      The CA is started by running its binary and specifying the configuration file
+      it should use. For example:
+<screen>
+$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ca.conf
+</screen>
+    </para>
+  </section>
+</chapter>
