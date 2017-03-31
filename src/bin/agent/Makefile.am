@@ -14,6 +14,7 @@ CLEANFILES  = *.gcno *.gcda ca_messages.h ca_messages.cc s-messages
 man_MANS = kea-ctrl-agent.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-ctrl-agent.xml
+EXTRA_DIST += agent_hooks.dox
 
 if GENERATE_DOCS
 kea-ctrl-agent.8: kea-ctrl-agent.xml
