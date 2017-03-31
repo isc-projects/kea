@@ -183,6 +183,22 @@
         <itemizedlist>
           <listitem>
             <simpara>
+              <command>kea-ctrl-agent</command> - the root logger for the
+              Control Agent exposing RESTful control API. All components used
+              by the Control Agent inherit the settings from this logger.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-ctrl-agent.http</command> - a logger which outputs
+              log messages related to receiving, parsing and sending HTTP
+              messages.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-dhcp4</command> - the root logger for the DHCPv4
               server. All components used by the DHCPv4 server inherit the
               settings from this logger.

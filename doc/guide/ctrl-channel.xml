@@ -24,14 +24,40 @@
     Both servers can be instructed to open control sockets, which
     is a communication channel. The server is able to receive
     commands on that channel, act on them and report back status.
-    While the set of commands in Kea 1.1.0 is limited,
+    While the set of commands in Kea 1.2.0 is limited,
     the number is expected to grow over time.</para>
 
-    <para>Currently the only supported type of control channel
-    is UNIX stream socket. For details how to configure it, see
-    <xref linkend="dhcp4-ctrl-channel" /> and <xref
-    linkend="dhcp6-ctrl-channel" />. It is likely that support
-    for other control channel types will be added in the future.
+    <para>The DHCPv4 and DHCPv6 servers receive commands over the
+    unix domain sockets. The details how to configure these sockets,
+    see <xref linkend="dhcp4-ctrl-channel" /> and <xref
+    linkend="dhcp6-ctrl-channel" />. While it is possible control
+    the servers directly using unix domain sockets it requires that
+    the controlling client is either running on the same machine as
+    the server. In order to connect remotely SSH is usually used to
+    connect to the controlled machine.</para>
+
+    <para>The network administrators usually prefer using some form
+    of a RESTful API to control the servers, rather than using unix
+    domain sockets directly. Therefore, as of Kea 1.2.0 release,
+    Kea includes a new component called Control Agent (or CA) which
+    exposes RESTful API to the controlling clients and can forward
+    commands to the respective Kea services over the unix domain
+    sockets. The CA configuration has been described in
+    <xref linkend="agent-configuration"/>.</para>
+
+    <para>The HTTP requests received by the CA contain the control
+    commands encapsulated within HTTP requests. Simply speaking,
+    the CA is responsible for stripping the HTTP layer from the
+    received commands and forwarding the commands in a JSON format
+    over the unix domain sockets to respective services. Because the
+    CA receives commands for all services it requires additional
+    "forwarding" information to be included in the client's messages.
+    This "forwarding" information is carried within the
+    <command>service</command> parameter of the received command.
+    If the <command>service</command> parameter is not included or if
+    the parameter is a blank list the CA will assume that the control
+    command is targetted at the CA itself and will try to handle
+    it on its own.
     </para>
 
     <section id="ctrl-channel-syntax">
@@ -44,6 +70,7 @@
 <screen>
 {
     "command": "foo",
+    "service": [ "dhcp4" ]
     "arguments": {
         "param1": "value1",
         "param2": "value2",
@@ -52,13 +79,60 @@
 }
 </screen>
 
+    The same command sent over the RESTful interface to the CA will have
+    the following structure.
+
+<screen>
+    POST / HTTP/1.1\r\n
+    Content-Type: application/json\r\n
+    Content-Length: 147\r\n\r\n
+    {
+        "command": "foo",
+        "service": [ "dhcp4" ]
+        "arguments": {
+            "param1": "value1",
+            "param2": "value2",
+            ...
+        }
+    }
+</screen>
+
     <command>command</command> is the name of command to execute and
     is mandatory. <command>arguments</command> is a map of parameters
     required to carry out the given command.  The exact content and
     format of the map is command specific.</para>
 
-    <para>The server will process the incoming command and then send a
-    response of the form:
+    <para>
+      <command>service</command> is a list of the servers at which the control
+      command is targetted. In the example above, the control command is
+      targetted at the DHCPv4 server. In most cases, the CA will simply forward this
+      command to the DHCPv4 server for processing via unix domain socket.
+      Sometimes, the command including a service value may also be processed by the
+      CA, if the CA is running a hooks library which handles such command for the
+      given server. As an example, the hooks library attached to the CA
+      may perform some operations on the database (like adding host reservations,
+      modifying leases etc.). An advantage of performing DHCPv4 specific
+      administrative operations in the CA rather than forwarding it to
+      the DHCPv4 server is the ability to perform these operations without
+      disrupting the DHCPv4 service (DHCPv4 server doesn't have to stop
+      processing DHCP messages to apply changes to the database). Nevetheless,
+      these situations are rather rare and, in most cases, when the
+      <command>service</command> parameter contains a name of the service
+      the commands are simply forwarded by the CA.
+    </para>
+
+    <para>
+      If the command received by the CA does not include a <command>service</command>
+      parameter or this list is empty, the CA will simply process this message
+      on its own. For example, the <command>config-get</command> command which
+      doesn't include service parameter will return Control Agent's own
+      configuration. The <command>config-get</command> including a service
+      value "dhcp4" will be forwarded to the DHCPv4 server and will return
+      DHCPv4 server's configuration and so on.
+    </para>
+
+    <para>The server processing the incoming command will send a response of
+    the form:
 <screen>
 {
     "result": 0|1,
@@ -79,23 +153,29 @@
     <command>arguments</command> is a map of additional data values returned by
     the server which is specific to the command issued. The map is always present, even
     if it contains no data values.</para>
+
+    <note>
+      <simpara>
+        When sending commands via Control Agent, it is possible to specify
+        multiple services at which the command is targetted. CA will forward this
+        command to each service separatelly. Thus, the CA response to the
+        controlling client will contain an array of individual responses.
+      </simpara>
+    </note>
+
     </section>
 
     <section id="ctrl-channel-client">
     <title>Using the Control Channel</title>
 
-    <para>Kea does not currently provide a client for using the control channel.  The primary
-    reason for this is the expectation is that the entity using the control channel
-    is typically an IPAM or similar network management/monitoring software which
-    may have quite varied expectations regarding the client and is even likely to
-    be written in languages different than C or C++. Therefore only examples are provided to show
-    how one can take advantage of the API.</para>
+    <para>Kea development team is actively working on the providing implementations
+    of the client applications which can be used to control the servers. However,
+    these clients have certain limitations as of Kea 1.2.0 release. The easiest
+    way to start playing with the control API is to use common Unix/Linux tools
+    such as <command>socat</command> and <command>curl</command>.</para>
 
-    <para>The easiest way is to use a tool called <command>socat</command>,
-    a tool available from <ulink url="http://www.dest-unreach.org/socat/">socat
-    homepage</ulink>, but it is also widely available in Linux and BSD
-    distributions. Once Kea is started, one could connect to the control
-    interface using the following command:
+    <para>In order to control the given Kea service via unix domain socket, use
+    <command>socat</command> as follows:
 <screen>
 $ socat UNIX:/path/to/the/kea/socket -
 </screen>
@@ -107,6 +187,16 @@ will be sent to Kea and the responses received from Kea printed to standard outp
     <para>It is also easy to open UNIX socket programatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
+
+    <para>In order to use Kea's RESTful API with <command>curl</command> try the
+    following:
+<screen>
+$ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }' http://ca.example.org:8000/
+</screen>
+
+    This assumes that the Control Agent is running on host
+    <filename>ca.example.org</filename> and runs RESTful service on port 8000.
+    </para>
 
     </section>
 
@@ -403,5 +493,37 @@ will be sent to Kea and the responses received from Kea printed to standard outp
       </section> <!-- end of command-version-get -->
 
     </section> <!-- end of commands supported by both servers -->
+
+    <section id="agent-commands">
+      <title>Commands Supported by Control Agent</title>
+      <para>The following commands listed in <xref linkend="commands-common"/>
+      are also supported by the Control Agent, i.e. when the
+      <command>service</command> parameter is blank the commands are handled
+      by the CA and they relate to the CA process itself:
+      <itemizedlist>
+        <listitem>
+          <simpara>build-report</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-test</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-write</simpara>
+        </listitem>
+        <listitem>
+          <simpara>list-commands</simpara>
+        </listitem>
+        <listitem>
+          <simpara>shutdown</simpara>
+        </listitem>
+        <listitem>
+          <simpara>version-get</simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+    </section>
 
   </chapter>
