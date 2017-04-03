@@ -182,8 +182,9 @@ TEST_F(HostTest, getIdentifier) {
     EXPECT_EQ(Host::IDENT_DUID, Host::getIdentifierType("duid"));
     EXPECT_EQ(Host::IDENT_CIRCUIT_ID, Host::getIdentifierType("circuit-id"));
     EXPECT_EQ(Host::IDENT_CLIENT_ID, Host::getIdentifierType("client-id"));
+    EXPECT_EQ(Host::IDENT_FLEX, Host::getIdentifierType("flex-id"));
 
-    EXPECT_THROW(Host::getIdentifierType("unuspported"), isc::BadValue);
+    EXPECT_THROW(Host::getIdentifierType("unusupported"), isc::BadValue);
 }
 
 // This test verifies that it is possible to create a Host object

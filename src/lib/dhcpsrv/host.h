@@ -190,7 +190,7 @@ public:
 
     /// @brief Constant pointing to the last identifier of the
     /// @ref IdentifierType enumeration.
-    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_CLIENT_ID;
+    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_FLEX;
 
     /// @brief Constructor.
     ///
