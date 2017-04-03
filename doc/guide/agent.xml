@@ -25,6 +25,33 @@
     found in
     <ulink url="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</ulink>.
     </para>
+
+    <para>
+      The CA processes received commands according to the following algorithm:
+      <itemizedlist>
+        <listitem>
+          <simpara>
+            Pass command into any installed hooks (regardless of service value(s)).
+            If the command is handled by a hook, return the response.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            If the service specifies one more or services, the CA will forward the
+            command to specified services and return the accumulated responses.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            If service is not specified or is an empty list, the CA will handle
+            the command if it supports it.
+          </simpara>
+        </listitem>
+
+      </itemizedlist>
+    </para>
   </section>
 
   <section id="agent-configuration">
