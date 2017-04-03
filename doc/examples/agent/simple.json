@@ -6,7 +6,7 @@
 	// We need to specify where the agent should listen to incoming HTTP
 	// queries. Note that agent does not provide SSL or TLS protection
 	// on its own, so limiting the traffic to localhost is a good idea.
-	"http-host": "localhost",
+	"http-host": "127.0.0.1",
 
 	// Another mandatory parameter is the HTTP port.
 	"http-port": 8000,
