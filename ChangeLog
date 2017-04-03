@@ -1,3 +1,12 @@
+1232.	[func]		tomek
+	host4_identifier and host6_identifier hook points have been added.
+	Premium: Flexible Identifier (flex-id) hook point has been developed.
+	It allows users to specify a custom expression that takes any
+	option, field, characteristic or property of the packet to be
+	used as identifier and then do reservations based on the evaluated
+	expression for each incoming packet.
+	(Trac #5132, git cd497526d5bff7ae55bb41c9264fb33943a0cf62)
+
 1231.	[func]		marcin
 	Control agent forwards commands to be handled by other Kea
 	servers.
