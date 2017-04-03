@@ -1,3 +1,7 @@
+1234.	[build]		fdupont
+	Imprived installation procedure for kea-shell.
+	(Trac #5170, git xxx)
+
 1233.	[doc]		marcin
 	Documented new component Kea Control Agent in the Administrator's
 	Manual and the Developer's Guide.
