@@ -31,7 +31,7 @@ with hooks libraries attached. The hooks libraries must implement
 callouts for the "control_command_receive" hook point, which will be
 invoked by the CA when the command is received. If the hooks libraries
 set the 'skip' status, it is an indication to the CA that the command
-has been processed by the CA and that it should return the response created 
+has been processed by the CA and that it should return the response created
 by the hooks libraries to the client. An example of the hooks library attached
 to the CA and handling the commands for other services is a library which
 stores or retrieves some data from the SQL database.
