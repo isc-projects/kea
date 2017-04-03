@@ -21,8 +21,6 @@ namespace agent {
 class CtrlAgentController : public process::DControllerBase {
 public:
 
-    using DControllerBase::getIOService;
-
     /// @brief Static singleton instance method.
     ///
     /// This method returns the base class singleton instance member.

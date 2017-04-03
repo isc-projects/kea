@@ -15,12 +15,14 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <boost/pointer_cast.hpp>
+#include <iterator>
 #include <string>
 #include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::hooks;
 using namespace isc::process;
 
 namespace isc {
@@ -40,66 +42,99 @@ ConstElementPtr
 CtrlAgentCommandMgr::handleCommand(const std::string& cmd_name,
                                    const isc::data::ConstElementPtr& params,
                                    const isc::data::ConstElementPtr& original_cmd) {
-    ConstElementPtr answer;
+    ConstElementPtr answer = handleCommandInternal(cmd_name, params, original_cmd);
 
-    try {
-        // list-commands is a special case. The Control Agent always supports this
-        // command but most of the time users don't want to list commands supported
-        // by the CA but by one of the Kea servers. The user would indicate that
-        // by specifying 'service' value.
-        if (cmd_name == "list-commands") {
-            if (original_cmd && original_cmd->contains("service")) {
-                ConstElementPtr services = original_cmd->get("service");
-                if (services && !services->empty()) {
-                    // The non-empty control command 'service' parameter exists which
-                    // means we will forward this command to the Kea server. Let's
-                    // cheat that Control Agent doesn't support this command to
-                    // avoid it being handled by CA.
-                    answer = createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED,
-                                          "forwarding list-commands command");
-                }
-            }
-        }
-    } catch (const std::exception& ex) {
-        answer = createAnswer(CONTROL_RESULT_ERROR, "invalid service parameter value: "
-                              + std::string(ex.what()));
+    if (answer->getType() == Element::list) {
+        return (answer);
     }
 
-    if (!answer) {
-        // Try handling this command on our own.
-        answer = HookedCommandMgr::handleCommand(cmd_name, params, original_cmd);
-    }
-
-    int rcode = 0;
-    static_cast<void>(parseAnswer(rcode, answer));
-
-    // We have tried handling the command on our own but it seems that neither
-    // the Control Agent nor a hook library can handle this command. We need
-    // to try forwarding the command to one of the Kea servers.
-    if (original_cmd && (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED)) {
-        try {
-            answer = tryForwardCommand(cmd_name, original_cmd);
-
-        } catch (const CommandForwardingError& ex) {
-            // This is apparently some configuration error or client's error.
-            // We have notify the client.
-            answer = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        } catch (const CommandForwardingSkip& ex) {
-            // Command is not intended to be forwarded so do nothing.
-        }
-    }
-
-    // We have a response, so let's wrap it in the list.
+    // In general, the handlers should return a list of answers rather than a
+    // single answer, but in some cases we rely on the generic handlers,
+    // e.g. 'list-commands', which may return a single answer not wrapped in
+    // the list. Such answers need to be wrapped in the list here.
     ElementPtr answer_list = Element::createList();
     answer_list->add(boost::const_pointer_cast<Element>(answer));
 
     return (answer_list);
 }
 
+
 ConstElementPtr
-CtrlAgentCommandMgr::tryForwardCommand(const std::string& cmd_name,
-                                       const isc::data::ConstElementPtr& command) {
+CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
+                                           isc::data::ConstElementPtr params,
+                                           isc::data::ConstElementPtr original_cmd) {
+
+    ConstElementPtr services = Element::createList();
+
+    // Retrieve 'service' parameter to determine if we should forward the
+    // command or handle it on our own.
+    if (original_cmd && original_cmd->contains("service")) {
+        services = original_cmd->get("service");
+        // If 'service' value is not a list, this is a fatal error. We don't want
+        // to try processing commands that don't adhere to the required format.
+        if (services->getType() != Element::list) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "service value must be a list"));
+        }
+    }
+
+    // 'service' parameter hasn't been specified which indicates that the command
+    // is intended to be processed by the CA. The following command will try to
+    // process the command with hooks libraries (if available) or by one of the
+    // CA's native handlers.
+    if (services->empty()) {
+        return (HookedCommandMgr::handleCommand(cmd_name, params, original_cmd));
+    }
+
+    ElementPtr answer_list = Element::createList();
+
+    // Before the command is forwarded it should be processed by the hooks libraries.
+    if (HookedCommandMgr::delegateCommandToHookLibrary(cmd_name, params, original_cmd,
+                                                       answer_list)) {
+        // If the hooks libraries set the 'skip' flag, they indicate that the
+        // commands have been processed. The answer_list should contain the list
+        // of answers with each answer pertaining to one service.
+        if (callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+                LOG_DEBUG(agent_logger, isc::log::DBGLVL_COMMAND,
+                          CTRL_AGENT_COMMAND_PROCESS_SKIP)
+                    .arg(cmd_name);
+            return (answer_list);
+        }
+    }
+
+    // We don't know whether the hooks libraries modified the value of the
+    //  answer list, so let's be safe and re-create the answer_list.
+    answer_list = Element::createList();
+
+    // For each value within 'service' we have to try forwarding the command.
+    for (unsigned i = 0; i < services->size(); ++i) {
+        if (original_cmd) {
+            ConstElementPtr answer;
+            try {
+                LOG_DEBUG(agent_logger, isc::log::DBGLVL_COMMAND,
+                          CTRL_AGENT_COMMAND_FORWARD_BEGIN)
+                    .arg(cmd_name).arg(services->get(i)->stringValue());
+
+                answer = forwardCommand(services->get(i)->stringValue(),
+                                        cmd_name, original_cmd);
+
+            } catch (const CommandForwardingError& ex) {
+                LOG_DEBUG(agent_logger, isc::log::DBGLVL_COMMAND,
+                          CTRL_AGENT_COMMAND_FORWARD_FAILED)
+                    .arg(cmd_name).arg(ex.what());
+                answer = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            }
+
+            answer_list->add(boost::const_pointer_cast<Element>(answer));
+        }
+    }
+
+    return (answer_list);
+}
+
+ConstElementPtr
+CtrlAgentCommandMgr::forwardCommand(const std::string& service,
+                                    const std::string& cmd_name,
+                                    const isc::data::ConstElementPtr& command) {
     // Context will hold the server configuration.
     CtrlAgentCfgContextPtr ctx;
 
@@ -126,42 +161,11 @@ CtrlAgentCommandMgr::tryForwardCommand(const std::string& cmd_name,
                   " Control Agent configuration information");
     }
 
-    // If the service is not specified it means that the Control Agent is the
-    // intended receiver of this message. This is not a fatal error, we simply
-    // skip forwarding the command and rely on the internal logic of the
-    // Control Agent to generate response.
-    ConstElementPtr service_elements = command->get("service");
-    if (!service_elements) {
-        isc_throw(CommandForwardingSkip, "service parameter not specified");
-    }
-
-    // If the service exists it must be a list, even though we currently allow
-    // only one service.
-    std::vector<ElementPtr> service_vec;
-    try {
-        service_vec = service_elements->listValue();
-
-    } catch (const std::exception& ex) {
-        isc_throw(CommandForwardingError, "service parameter is not a list");
-    }
-
-    // service list may be empty in which case we treat it as it is not specified.
-    if (service_vec.empty()) {
-        isc_throw(CommandForwardingSkip, "service parameter is empty");
-    }
-
-    // Do not allow more than one service value. This will be allowed in the
-    // future.
-    if (service_vec.size() > 1) {
-        isc_throw(CommandForwardingError, "service parameter must contain 0 or 1"
-                  " service value");
-    }
-
     // Convert the service to the server type values. Make sure the client
     // provided right value.
     CtrlAgentCfgContext::ServerType server_type;
     try {
-        server_type = CtrlAgentCfgContext::toServerType(service_vec.at(0)->stringValue());
+        server_type = CtrlAgentCfgContext::toServerType(service);
 
     } catch (const std::exception& ex) {
         // Invalid value in service list. Can't proceed.
@@ -174,7 +178,7 @@ CtrlAgentCommandMgr::tryForwardCommand(const std::string& cmd_name,
     ConstElementPtr socket_info = ctx->getControlSocketInfo(server_type);
     if (!socket_info) {
         isc_throw(CommandForwardingError, "forwarding socket is not configured"
-                  " for the server type " << service_vec.at(0)->stringValue());
+                  " for the server type " << service);
     }
 
     // If the configuration does its job properly the socket-name must be
@@ -191,9 +195,9 @@ CtrlAgentCommandMgr::tryForwardCommand(const std::string& cmd_name,
         unix_socket.write(&wire_command[0], wire_command.size());
         receive_len = unix_socket.receive(&receive_buf_[0], receive_buf_.size());
 
-    } catch (...) {
+    } catch (const std::exception& ex) {
         isc_throw(CommandForwardingError, "unable to forward command to the "
-                  + service_vec.at(0)->stringValue() + " service. The server "
+                  << service << " service: " << ex.what() << ". The server "
                   "is likely to be offline");
     }
 
@@ -212,8 +216,7 @@ CtrlAgentCommandMgr::tryForwardCommand(const std::string& cmd_name,
         answer = Element::fromJSON(reply);
 
         LOG_INFO(agent_logger, CTRL_AGENT_COMMAND_FORWARDED)
-            .arg(cmd_name)
-            .arg(service_vec.at(0)->stringValue());
+            .arg(cmd_name).arg(service);
 
     } catch (const std::exception& ex) {
         isc_throw(CommandForwardingError, "internal server error: unable to parse"

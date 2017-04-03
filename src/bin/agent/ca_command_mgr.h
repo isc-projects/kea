@@ -24,13 +24,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Exception thrown when command forwarding has been skipped.
-class CommandForwardingSkip : public Exception {
-public:
-    CommandForwardingSkip(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief Command Manager for Control Agent.
 ///
 /// This is an implementation of the Command Manager within Control Agent.
@@ -54,18 +47,24 @@ public:
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method extends the base implementation with the ability to forward
-    /// commands to Kea servers if the Control Agent failed to handle it itself.
+    /// commands to Kea servers.
     ///
-    /// @todo Currently this method only wraps an answer within a list Element.
-    /// This will be later used to include multiple answers within this list.
-    /// For now it is just a single answer from the Control Agent.
+    /// If the received command doesn't include 'service' parameter or this
+    /// parameter is blank, the command is handled by the Control Agent or the
+    /// attached hooks libraries.
+    ///
+    /// If the non-blank 'service' parameter has been specified the callouts
+    /// are executed. If the callouts process the command the result is returned
+    /// to the controlling client. Otherwise, the command is forwarded to each
+    /// Kea server listed in the 'service' parameter.
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.
     /// @param original_cmd Original command being processed.
     ///
-    /// @return Pointer to the const data element representing response
-    /// to a command.
+    /// @return Pointer to the const data element representing a list of
+    /// responses to the command. If the command has been handled by the CA,
+    /// this list includes one response.
     virtual isc::data::ConstElementPtr
     handleCommand(const std::string& cmd_name,
                   const isc::data::ConstElementPtr& params,
@@ -73,34 +72,42 @@ public:
 
 private:
 
+    /// @brief Implements the logic for @ref CtrlAgentCommandMgr::handleCommand.
+    ///
+    /// All parameters are passed by value because they may be modified within
+    /// the method.
+    ///
+    /// @param cmd_name Command name.
+    /// @param params Command arguments.
+    /// @param original_cmd Original command being processed.
+    ///
+    /// @return Pointer to the const data element representing a list of responses
+    /// to the command or a single response (not wrapped in a list). The
+    /// @ref CtrlAgentCommandMgr::handleCommand will wrap non-list value returned
+    /// in a single element list.
+    isc::data::ConstElementPtr
+    handleCommandInternal(std::string cmd_name,
+                          isc::data::ConstElementPtr params,
+                          isc::data::ConstElementPtr original_cmd);
+
     /// @brief Tries to forward received control command to Kea servers.
     ///
     /// When the Control Agent was unable to process the control command
     /// because it doesn't recognize it, the command should be forwarded to
-    /// the specific Kea services listed within a 'service' parameter.
+    /// the specific Kea services listed within a 'service' parameter. This
+    /// method forwards the command to the specified Kea service.
     ///
-    /// @todo Currently only one service per control command is supported.
-    /// Forwarding to multiple services should be allowed in the future.
-    ///
-    /// This method makes an attempt to forward the control command. If
-    /// the 'service' parameter is not specified or it is empty, the
-    /// command is not forwarded and the @ref CommandForwardingSkip exception
-    /// is thrown. The caller catching this exception should not treat
-    /// this situation as an error but this is normal situation when the
-    /// message is not intended to be forwarded.
-    ///
-    /// All other exceptions should be treated as an error.
-    ///
+    /// @param service Contains name of the service where the command should be
+    /// forwarded.
     /// @param cmd_name Command name.
     /// @param command Pointer to the object representing the forwarded command.
     ///
     /// @return Response to forwarded command.
     /// @throw CommandForwardingError when an error occurred during forwarding.
-    /// @throw CommandForwardingSkip when 'service' parameter hasn't been
-    /// specified which means that the command should not be forwarded.
     isc::data::ConstElementPtr
-    tryForwardCommand(const std::string& cmd_name,
-                      const isc::data::ConstElementPtr& command);
+    forwardCommand(const std::string& destination,
+                   const std::string& cmd_name,
+                   const isc::data::ConstElementPtr& command);
 
     /// @brief Private constructor.
     ///
