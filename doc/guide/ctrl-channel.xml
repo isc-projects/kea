@@ -118,7 +118,10 @@
       processing DHCP messages to apply changes to the database). Nevetheless,
       these situations are rather rare and, in most cases, when the
       <command>service</command> parameter contains a name of the service
-      the commands are simply forwarded by the CA.
+      the commands are simply forwarded by the CA. The forwarded command
+      includes the <command>service</command> parameter but this parameter
+      is ignored by the receiving server. This parameter is only meaningful
+      to the CA.
     </para>
 
     <para>
@@ -129,6 +132,29 @@
       configuration. The <command>config-get</command> including a service
       value "dhcp4" will be forwarded to the DHCPv4 server and will return
       DHCPv4 server's configuration and so on.
+    </para>
+
+    <para>
+      The following list contains a mapping of the values carried within the
+      <command>service</command> parameter to the servers to which the commands
+      are forwarded:
+
+      <itemizedlist>
+        <listitem>
+          <simpara><command>dhcp4</command> - the command is forwarded to the
+          <command>kea-dhcp4</command> server,</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>dhcp6</command> - the command is forwarded to the
+          <command>kea-dhcp6</command> server,</simpara>
+        </listitem>
+
+        <listitem>
+          <simpara><command>d2</command> - the command is forwarded to the
+          <command>kea-d2</command> server.</simpara>
+        </listitem>
+      </itemizedlist>
     </para>
 
     <para>The server processing the incoming command will send a response of
