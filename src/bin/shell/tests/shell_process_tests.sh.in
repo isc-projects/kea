@@ -180,7 +180,7 @@ version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
     "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
-    "[ { \"result\": 1, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
+    "[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
 shell_command_test "shell.empty-config-test" "config-test" \
     "[ { \"result\": 1, \"text\": \"Missing mandatory 'arguments' parameter.\" } ]" ""
 shell_command_test "shell.no-app-config-test" "config-test" \
