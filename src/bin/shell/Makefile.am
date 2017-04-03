@@ -5,10 +5,9 @@ EXTRA_DIST =
 if KEA_SHELL
 
 # Kea-shell is enabled, here are proper rules for it.
-kea_shell_PYTHON = kea_conn.py kea_connector2.py kea_connector3.py
-kea_shelldir = @localstatedir@/@PACKAGE@
+pkgpython_PYTHON = kea_conn.py kea_connector2.py kea_connector3.py
 
-bin_SCRIPTS = kea-shell
+sbin_SCRIPTS = kea-shell
 
 else
 
@@ -36,12 +35,6 @@ $(man_MANS):
 	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
-
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
-
-install-data-hook:
-	-chmod 2770 $(DESTDIR)/@localstatedir@/@PACKAGE@
 
 CLEANDIRS = __pycache__
 
