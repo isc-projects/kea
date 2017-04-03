@@ -66,7 +66,7 @@ protected:
         boost::shared_ptr<PktType> pkt(new PktType(family == AF_INET ?
                                                    DHCPDISCOVER : DHCPV6_SOLICIT,
                                                    123));
-        EXPECT_FALSE(evaluate(*parsed_expr, *pkt));
+        EXPECT_FALSE(evaluateBool(*parsed_expr, *pkt));
 
         // Now add the option so it will pass. Use a standard option carrying a
         // single string value, i.e. hostname for DHCPv4 and bootfile url for
@@ -76,7 +76,7 @@ protected:
                                        DHO_HOST_NAME : D6O_BOOTFILE_URL,
                                        option_string));
         pkt->addOption(opt);
-        EXPECT_TRUE(evaluate(*parsed_expr, *pkt));
+        EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
     }
 };
 
@@ -328,12 +328,12 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass) {
 
     // Build a packet that will fail evaluation.
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
-    EXPECT_FALSE(evaluate(*match_expr, *pkt4));
+    EXPECT_FALSE(evaluateBool(*match_expr, *pkt4));
 
     // Now add the option so it will pass.
     OptionPtr opt(new OptionString(Option::V4, 100, "works right"));
     pkt4->addOption(opt);
-    EXPECT_TRUE(evaluate(*match_expr, *pkt4));
+    EXPECT_TRUE(evaluateBool(*match_expr, *pkt4));
 }
 
 // Verifies you can create a class with a name and options,
@@ -414,12 +414,12 @@ TEST_F(ClientClassDefParserTest, basicValidClass) {
 
     // Build a packet that will fail evaluation.
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 123));
-    EXPECT_FALSE(evaluate(*match_expr, *pkt4));
+    EXPECT_FALSE(evaluateBool(*match_expr, *pkt4));
 
     // Now add the option so it will pass.
     OptionPtr opt(new OptionString(Option::V4, 100, "booya"));
     pkt4->addOption(opt);
-    EXPECT_TRUE(evaluate(*match_expr, *pkt4));
+    EXPECT_TRUE(evaluateBool(*match_expr, *pkt4));
 }
 
 // Verifies that a class with no name, fails to parse.

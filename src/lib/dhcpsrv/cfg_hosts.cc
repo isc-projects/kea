@@ -713,8 +713,12 @@ CfgHosts::toElement4() const {
             const std::vector<uint8_t>& bin = (*host)->getIdentifier();
             std::string client_id = util::encode::encodeHex(bin);
             map->set("client-id", Element::create(client_id));
+        } else if (id_type == Host::IDENT_FLEX) {
+            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
+            std::string flex = util::encode::encodeHex(bin);
+            map->set("flex-id", Element::create(flex));
         } else {
-            isc_throw(ToElementError, "invalid DUID type: " << id_type);
+            isc_throw(ToElementError, "invalid identifier type: " << id_type);
         }
         // Set the reservation
         const IOAddress& address = (*host)->getIPv4Reservation();
@@ -771,6 +775,10 @@ CfgHosts::toElement6() const {
             isc_throw(ToElementError, "unexpected circuit-id DUID type");
         } else if (id_type == Host::IDENT_CLIENT_ID) {
             isc_throw(ToElementError, "unexpected client-id DUID type");
+        } else if (id_type == Host::IDENT_FLEX) {
+            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
+            std::string flex = util::encode::encodeHex(bin);
+            map->set("flex-id", Element::create(flex));
         } else {
             isc_throw(ToElementError, "invalid DUID type: " << id_type);
         }

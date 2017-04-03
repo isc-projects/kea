@@ -76,23 +76,25 @@ using namespace std;
 
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
-    int hook_index_buffer4_receive_;///< index for "buffer4_receive" hook point
-    int hook_index_pkt4_receive_;   ///< index for "pkt4_receive" hook point
-    int hook_index_subnet4_select_; ///< index for "subnet4_select" hook point
-    int hook_index_lease4_release_; ///< index for "lease4_release" hook point
-    int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
-    int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
-    int hook_index_lease4_decline_; ///< index for "lease4_decline" hook point
+    int hook_index_buffer4_receive_; ///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;    ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_;  ///< index for "subnet4_select" hook point
+    int hook_index_lease4_release_;  ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;       ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;    ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_;  ///< index for "lease4_decline" hook point
+    int hook_index_host4_identifier_;///< index for "host4_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
-        hook_index_buffer4_receive_= HooksManager::registerHook("buffer4_receive");
-        hook_index_pkt4_receive_   = HooksManager::registerHook("pkt4_receive");
-        hook_index_subnet4_select_ = HooksManager::registerHook("subnet4_select");
-        hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
-        hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
-        hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
-        hook_index_lease4_decline_ = HooksManager::registerHook("lease4_decline");
+        hook_index_buffer4_receive_  = HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_     = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_   = HooksManager::registerHook("subnet4_select");
+        hook_index_pkt4_send_        = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_   = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_     = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_   = HooksManager::registerHook("lease4_decline");
+        hook_index_host4_identifier_ = HooksManager::registerHook("host4_identifier");
     }
 };
 
@@ -287,6 +289,7 @@ void
 Dhcpv4Exchange::setHostIdentifiers() {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
+
     // Collect host identifiers. The identifiers are stored in order of preference.
     // The server will use them in that order to search for host reservations.
     BOOST_FOREACH(const Host::IdentifierType& id_type,
@@ -338,7 +341,42 @@ Dhcpv4Exchange::setHostIdentifiers() {
                 }
             }
             break;
+        case Host::IDENT_FLEX:
+            {
+                if (!HooksManager::calloutsPresent(Hooks.hook_index_host4_identifier_)) {
+                    break;
+                }
 
+                CalloutHandlePtr callout_handle = getCalloutHandle(context_->query_);
+
+                Host::IdentifierType type = Host::IDENT_FLEX;
+                std::vector<uint8_t> id;
+
+                // Delete previously set arguments
+                callout_handle->deleteAllArguments();
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("query4", context_->query_);
+                callout_handle->setArgument("id_type", type);
+                callout_handle->setArgument("id_value", id);
+
+                // Call callouts
+                HooksManager::callCallouts(Hooks.hook_index_host4_identifier_,
+                                           *callout_handle);
+
+                callout_handle->getArgument("id_type", type);
+                callout_handle->getArgument("id_value", id);
+
+                if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                    !id.empty()) {
+
+                    LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
+                        .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+
+                    context_->addHostIdentifier(type, id);
+                }
+                break;
+            }
         default:
             ;
         }
@@ -2713,7 +2751,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
-            bool status = evaluate(*expr_ptr, *pkt);
+            bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(options4_logger, EVAL_RESULT)
                     .arg(it->first)

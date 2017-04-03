@@ -25,6 +25,11 @@
 // variable will be useful for logging errors.
 static isc::eval::location loc;
 
+namespace {
+    bool start_token_flag = false;
+    isc::eval::EvalContext::ParserType start_token_value;
+};
+
 // To avoid the call to exit... oops!
 #define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
 %}
@@ -77,6 +82,18 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 %{
     // Code run each time evallex is called.
     loc.step();
+
+    if (start_token_flag) {
+        start_token_flag = false;
+        switch (start_token_value) {
+        case EvalContext::PARSER_BOOL:
+            return isc::eval::EvalParser::make_TOPLEVEL_BOOL(loc);
+        default:
+        case EvalContext::PARSER_STRING:
+            return isc::eval::EvalParser::make_TOPLEVEL_STRING(loc);
+        }
+    }
+
 %}
 
 {blank}+   {
@@ -194,8 +211,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 using namespace isc::eval;
 
 void
-EvalContext::scanStringBegin()
+EvalContext::scanStringBegin(ParserType type)
 {
+    start_token_flag = true;
+    start_token_value = type;
+
     loc.initialize(&file_);
     eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;

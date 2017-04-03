@@ -34,6 +34,14 @@ public:
 class EvalContext
 {
 public:
+
+    /// @brief Specifies what type of expression the parser is expected to see
+    typedef enum {
+        PARSER_BOOL,  ///< expression is expected to evaluate to bool
+        PARSER_STRING ///< expression is expected to evaluate to string
+    } ParserType;
+
+
     /// @brief Default constructor.
     ///
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
@@ -48,16 +56,19 @@ public:
     isc::dhcp::Expression expression;
 
     /// @brief Method called before scanning starts on a string.
-    void scanStringBegin();
+    ///
+    /// @param type specifies type of the expression to be parsed
+    void scanStringBegin(ParserType type);
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
 
     /// @brief Run the parser on the string specified.
     ///
-    /// @param str string to be written
+    /// @param str string to be parsed
+    /// @param type type of the expression expected/parser type to be created
     /// @return true on success.
-    bool parseString(const std::string& str);
+    bool parseString(const std::string& str, ParserType type = PARSER_BOOL);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.

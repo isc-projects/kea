@@ -80,6 +80,9 @@ using namespace isc::eval;
   ANY "*"
   DATA "data"
   ENTERPRISE "enterprise"
+
+  TOPLEVEL_BOOL "top-level bool"
+  TOPLEVEL_STRING "top-level string"
 ;
 
 %token <std::string> STRING "constant string"
@@ -106,8 +109,14 @@ using namespace isc::eval;
 
 %%
 
-// The whole grammar starts with an expression.
-%start expression;
+// The whole grammar starts with a 'start' symbol...
+%start start;
+
+// ... that expects either TOPLEVEL_BOOL or TOPLEVEL_STRING. Depending on which
+// token appears first, it will determine what is allowed and what it not.
+start: TOPLEVEL_BOOL expression
+     | TOPLEVEL_STRING string_expr
+;
 
 // Expression can either be a single token or a (something == something) expression
 

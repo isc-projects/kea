@@ -1311,13 +1311,14 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(4, ids.size());
+    ASSERT_EQ(5, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
     EXPECT_EQ(*id++, Host::IDENT_CLIENT_ID);
+    EXPECT_EQ(*id++, Host::IDENT_FLEX);
 }
 
 // This test verifies that use of "auto" together with an explicit
@@ -1354,11 +1355,12 @@ TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(2, ids.size());
+    ASSERT_EQ(3, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
+    EXPECT_EQ(*id++, Host::IDENT_FLEX);
 }
 
 // This test verifies that use of "auto" together with an explicit

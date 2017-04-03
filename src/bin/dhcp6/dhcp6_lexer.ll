@@ -1002,6 +1002,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"flex-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_FLEX_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("flex-id", driver.loc_);
+    }
+}
+
 \"space\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:

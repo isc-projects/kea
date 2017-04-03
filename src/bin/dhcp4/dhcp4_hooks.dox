@@ -108,6 +108,22 @@ to the end of this list.
    sets the next step status to SKIP, the server will not select any subnet.
    Packet processing will continue, but will be severely limited.
 
+@subsection dhcpv4HooksHost4Identifier host4_identifier
+
+ - @b Arguments:
+   - name: @b query4, type isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b id_type, type isc::dhcp::Host::IdentifierType, direction: <b>in/out</b>
+   - name: @b id_value, type std::vector<uint8_t>, direction: <b>out</b>
+
+ - @b Description: this callout is executed only if flexible identifiers are
+   enabled, i.e. host-reservation-identifiers contain 'flex-id' value. This
+   callout enables external library to provide values for flexible identifiers.
+   To be able to use this feature, flex_id hook library is required.
+
+ - <b>Next step status</b>: If a callout installed on the "host4_identifier" hook
+   point sets the next step status to value other than NEXT_STEP_CONTINUE, the
+   identifier will not be used.
+
 @subsection dhcpv4HooksLeaseSelect lease4_select
 
  - @b Arguments:
