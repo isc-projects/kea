@@ -11,6 +11,7 @@
 #include <cc/cfg_to_element.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <functional>
 
 #include <stdint.h>
 #include <string>
@@ -326,12 +327,19 @@ public:
     ///
     /// @param config set of configuration elements to be parsed
     /// @param check_only true if the config is to be checked only, but not applied
+    /// @param post_config_cb Callback to be executed after the usual parsing stage.
+    /// This can be specified as a C++ lambda which configures other parts of the
+    /// system based on the parsed configuration information. The callback should
+    /// throw an exception to signal an error. This method will catch this
+    /// exception and place an exception string within the result returned.
+    ///
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
     isc::data::ConstElementPtr
     simpleParseConfig(isc::data::ConstElementPtr config,
-                      bool check_only = false);
+                      bool check_only = false,
+                      const std::function<void()>& post_config_cb = nullptr);
 
     /// @brief Adds a given element id to the end of the parse order list.
     ///

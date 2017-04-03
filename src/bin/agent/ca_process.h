@@ -8,7 +8,9 @@
 #define CTRL_AGENT_PROCESS_H
 
 #include <agent/ca_cfg_mgr.h>
+#include <http/listener.h>
 #include <process/d_process.h>
+#include <vector>
 
 namespace isc {
 namespace agent {
@@ -78,6 +80,23 @@ public:
     /// processing errors and return a success or failure answer as described
     /// below.
     ///
+    /// A usual problem related to the system reconfiguration is how to preserve
+    /// configuration integrity in case of errors. In this case, when the
+    /// HTTP listener's configuration is modified there is a need to close all
+    /// existing connections and gracefully shutdown the listener's instance.
+    /// This, however, makes it possible that the control agent looses
+    /// connectivity if opening a new listener is unsuccessful. In fact, this
+    /// is quite possible scenario when the user is setting up the listener to
+    /// use a restricted port range or non-existing IP address. In this case,
+    /// the configuration parser will not signal the problem because IP address
+    /// and/or port are syntactically correcect.
+    ///
+    /// This method deals with this problem by opening a new listener aside of
+    /// the currently running listener (if the new listener settings are
+    /// different than current settings). Both instances are held until the
+    /// CtrlAgentProcess::garbageCollectListeners is invoked, which
+    /// removes any listeners which are no longer used.
+    ///
     /// @param config_set a new configuration (JSON) for the process
     /// @param check_only true if configuration is to be verified only, not applied
     /// @return an Element that contains the results of configuration composed
@@ -89,6 +108,39 @@ public:
 
     /// @brief Returns a pointer to the configuration manager.
     CtrlAgentCfgMgrPtr getCtrlAgentCfgMgr();
+
+    /// @brief Returns a const pointer to the HTTP listener used by the process.
+    ///
+    /// @return Const pointer to the currently used listener or null pointer if
+    /// we're not listening. In fact, the latter should never be the case given
+    /// that we provide default listener configuration.
+    http::ConstHttpListenerPtr getHttpListener() const;
+
+    /// @brief Checks if the process is listening to the HTTP requests.
+    ///
+    /// @return true if the process is listening.
+    bool isListening() const;
+
+private:
+
+    /// @brief Removes listeners which are no longer in use.
+    ///
+    /// This method should be called after executing
+    /// @ref CtrlAgentProcess::configure to remove listeners used previously
+    /// (no longer used because the listening address and port has changed as
+    // a result of the reconfiguration). If there are no listeners additional
+    /// to the one that is currently in use, the method has no effect.
+    void garbageCollectListeners();
+
+    /// @brief Polls all ready handlers and then runs one handler if none
+    /// handlers have been executed as a result of polling.
+    ///
+    /// @return Number of executed handlers.
+    size_t runIO();
+
+    /// @brief Holds a list of pointers to the active listeners.
+    std::vector<http::HttpListenerPtr> http_listeners_;
+
 };
 
 /// @brief Defines a shared pointer to CtrlAgentProcess.

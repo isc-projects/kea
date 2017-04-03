@@ -6,6 +6,10 @@
 
 $NAMESPACE isc::agent
 
+% CTRL_AGENT_COMMAND_FORWARDED command %1 successfully forwarded to the service %2
+This informational message is issued when the CA successfully forwards
+the control message to the specified Kea service and receives a response.
+
 % CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
 This informational message indicates that the server has started HTTP service
 on the specified address and port. All control commands should be sent to this
@@ -20,9 +24,23 @@ This is a debug message issued when the Control Agent exits its
 event loop.
 
 % CTRL_AGENT_STARTED Kea Control Agent version %1 started
-This informational message indicates that the DHCP-DDNS server has
+This informational message indicates that the Control Agent has
 processed all configuration information and is ready to begin processing.
 The version is also printed.
+
+% CTRL_AGENT_COMMAND_FORWARD_BEGIN begin forwarding command %1 to service %2
+This debug message is issued when the Control Agent starts forwarding a
+received command to one of the Kea servers.
+
+% CTRL_AGENT_COMMAND_FORWARD_FAILED failed forwarding command %1: %2
+This debug message is issued when the Control Agent failed forwarding a
+received command to one of the Kea servers. The second argument provides
+the details of the error.
+
+% CTRL_AGENT_COMMAND_PROCESS_SKIP command %1 already processed by hooks libraries, skipping
+This debug message is issued when the Control Agent skips processing
+received command because it has determined that the hooks libraries
+already processed the command.
 
 % CTRL_AGENT_CONFIG_FAIL Control Agent configuration failed: %1
 This error message indicates that the CA had failed configuration
