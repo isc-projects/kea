@@ -50,11 +50,11 @@ public:
     /// commands to Kea servers.
     ///
     /// If the received command doesn't include 'service' parameter or this
-    /// parameter is blank, the command is handled by the Control Agent or the
-    /// attached hooks libraries.
+    /// parameter is blank, the command is first handled by the attached hooks
+    /// libraries, and if still unhandled, the Control Agent itself.
     ///
-    /// If the non-blank 'service' parameter has been specified the callouts
-    /// are executed. If the callouts process the command the result is returned
+    /// If the non-blank 'service' parameter has been specified the hooks
+    /// are executed. If the hooks process the command the result is returned
     /// to the controlling client. Otherwise, the command is forwarded to each
     /// Kea server listed in the 'service' parameter.
     ///
@@ -90,12 +90,7 @@ private:
                           isc::data::ConstElementPtr params,
                           isc::data::ConstElementPtr original_cmd);
 
-    /// @brief Tries to forward received control command to Kea servers.
-    ///
-    /// When the Control Agent was unable to process the control command
-    /// because it doesn't recognize it, the command should be forwarded to
-    /// the specific Kea services listed within a 'service' parameter. This
-    /// method forwards the command to the specified Kea service.
+    /// @brief Tries to forward received control command to a specified server.
     ///
     /// @param service Contains name of the service where the command should be
     /// forwarded.
@@ -105,8 +100,7 @@ private:
     /// @return Response to forwarded command.
     /// @throw CommandForwardingError when an error occurred during forwarding.
     isc::data::ConstElementPtr
-    forwardCommand(const std::string& destination,
-                   const std::string& cmd_name,
+    forwardCommand(const std::string& service, const std::string& cmd_name,
                    const isc::data::ConstElementPtr& command);
 
     /// @brief Private constructor.
