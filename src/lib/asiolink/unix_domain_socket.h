@@ -52,8 +52,6 @@ public:
     ///
     /// @param data Pointer to data to be written.
     /// @param length Number of bytes to be written.
-    /// @param [out] ec Error code returned as a result of an attempt to
-    /// write to socket.
     ///
     /// @return Number of bytes written.
     /// @throw UnixDomainSocketError if error occurs.
@@ -64,8 +62,6 @@ public:
     /// @param [out] data Pointer to a location into which the read data should
     /// be stored.
     /// @param length Length of the buffer.
-    /// @param [out] ec Error code returned as a result of an attempt to
-    /// read from socket.
     ///
     /// @return Number of bytes read.
     /// @throw UnixDomainSocketError if error occurs.

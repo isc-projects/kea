@@ -32,10 +32,13 @@ public:
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
                          const long test_timeout,
-                         const std::string& custom_response = "");
+                         const std::string& custom_respons_ = "");
 
     /// @brief Creates and binds server socket.
-    void bindServerSocket();
+    ///
+    /// @param stop_after_count Number of received messages after which the
+    /// IO service should be stopped.
+    void bindServerSocket(const unsigned int stop_after_count = 1);
 
     /// @brief Server acceptor handler.
     ///
@@ -56,6 +59,9 @@ public:
 
 private:
 
+    /// @brief Asynchronously accept new connections.
+    void accept();
+
     /// @brief IO service used by the tests.
     IOService& io_service_;
 
@@ -75,6 +81,12 @@ private:
 
     /// @brief Holds custom response to be sent to the client.
     std::string custom_response_;
+
+    /// @brief Number of messages received after which IO service gets stopped.
+    unsigned int stop_after_count_;
+
+    /// @brief Number of messages received so far.
+    unsigned int read_count_;
 };
 
 /// @brief Pointer to the @ref TestServerUnixSocket.

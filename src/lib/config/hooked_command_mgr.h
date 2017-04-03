@@ -36,15 +36,35 @@ protected:
         return (callout_handle_);
     }
 
+    /// @brief Handles the command within the hooks libraries.
+    ///
+    /// This method checks if the hooks libraries are installed which implement
+    /// callouts for the 'control_command_receive' hook point, and calls them
+    /// if they exist. If the hooks library supports the given command it creates
+    /// a response and returns it in the @c answer argument.
+    ///
+    /// Values of all arguments can be modified by the hook library.
+    ///
+    /// @param [out] cmd_name Command name.
+    /// @param [out] params Command arguments.
+    /// @param [out] original_cmd Original command received.
+    /// @param [out] answer Command processing result returned by the hook.
+    ///
+    /// @return Boolean value indicating if any callouts have been executed.
+    bool
+    delegateCommandToHookLibrary(std::string& cmd_name,
+                                 isc::data::ConstElementPtr& params,
+                                 isc::data::ConstElementPtr& original_cmd,
+                                 isc::data::ElementPtr& answer);
+
     /// @brief Handles the command having a given name and arguments.
     ///
-    /// This method checks if the hook library is installed which implements
-    /// callouts for the 'control_command_receive' hook point, and calls them
-    /// if they exist. If the hook library supports the given command it creates
-    /// a response and returns it in the 'response' argument of the
-    /// @ref isc::data::ConstElementPtr type. If the callout also sets the 'skip'
-    /// status, the response created by the callout is returned. Otherwise, the
-    /// @ref BaseCommandMgr::handleCommand is called.
+    /// This method calls @ref HookedCommandMgr::delegateCommandToHookLibrary to
+    /// try to process the command with the hook libraries, if they are installed.
+    /// If the returned @c skip value indicates that the callout set the 'skip' flag
+    /// the command is assumed to have been processed and the response is returned.
+    /// If the 'skip' flag is not set, the @ref BaseCommandMgr::handleCommand is
+    /// called.
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.

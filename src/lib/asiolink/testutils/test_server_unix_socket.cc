@@ -21,19 +21,21 @@ TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
       server_acceptor_(io_service_.get_io_service()),
       server_socket_(io_service_.get_io_service()),
       test_timer_(io_service_),
-      custom_response_(custom_response) {
+      custom_response_(custom_response),
+      stop_after_count_(1),
+      read_count_(0) {
     test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
 }
 
 void
-TestServerUnixSocket::bindServerSocket() {
+TestServerUnixSocket::bindServerSocket(const unsigned int stop_after_count) {
     server_acceptor_.open();
     server_acceptor_.bind(server_endpoint_);
     server_acceptor_.listen();
-    server_acceptor_.async_accept(server_socket_,
-                                  boost::bind(&TestServerUnixSocket::
-                                              acceptHandler, this, _1));
+    accept();
+
+    stop_after_count_ = stop_after_count;
 }
 
 void
@@ -45,18 +47,39 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
 }
 
 void
+TestServerUnixSocket::accept() {
+    server_acceptor_.async_accept(server_socket_,
+                                  boost::bind(&TestServerUnixSocket::
+                                              acceptHandler, this, _1));
+}
+
+
+void
 TestServerUnixSocket::readHandler(const boost::system::error_code&,
                                   size_t bytes_transferred) {
     if (!custom_response_.empty()) {
         boost::asio::write(server_socket_, boost::asio::buffer(custom_response_.c_str(),
                                                                custom_response_.size()));
+
     } else {
         std::string received(&raw_buf_[0], bytes_transferred);
         std::string response("received " + received);
         boost::asio::write(server_socket_, boost::asio::buffer(response.c_str(),
                                                                response.size()));
     }
-    io_service_.stop();
+
+    // Close the connection as we might be expecting another connection over the
+    // same socket.
+    server_socket_.close();
+
+    // Stop IO service if we have reached the maximum number of read messages.
+    if (++read_count_ >= stop_after_count_) {
+        io_service_.stop();
+
+    } else {
+        // Previous connection is done, so let's accept another connection.
+        accept();
+    }
 }
 
 void

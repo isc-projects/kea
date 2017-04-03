@@ -21,6 +21,7 @@
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <vector>
 
 using namespace isc::agent;
 using namespace isc::asiolink;
@@ -68,18 +69,40 @@ public:
     /// verification of the response parameters.
     ///
     /// @param answer answer to be verified
-    /// @param expected_code code expected to be returned in the answer
-    void checkAnswer(ConstElementPtr answer, int expected_code) {
+    /// @param expected_code0 code expected to be returned in first result within
+    /// the answer.
+    /// @param expected_code1 code expected to be returned in second result within
+    /// the answer.
+    /// @param expected_code2 code expected to be returned in third result within
+    /// the answer.
+    void checkAnswer(const ConstElementPtr& answer, const int expected_code0 = 0,
+                     const int expected_code1 = -1, const int expected_code2 = -1) {
+        std::vector<int> expected_codes;
+        if (expected_code0 >= 0) {
+            expected_codes.push_back(expected_code0);
+        }
+
+        if (expected_code1 >= 0) {
+            expected_codes.push_back(expected_code1);
+        }
+
+        if (expected_code2 >= 0) {
+            expected_codes.push_back(expected_code2);
+        }
+
         int status_code;
         // There may be multiple answers returned within a list.
         std::vector<ElementPtr> answer_list = answer->listValue();
-        // There must be at least one answer.
-        ASSERT_GE(answer_list.size(), 1);
-        // Check that all answers indicate success.
+
+        ASSERT_EQ(expected_codes.size(), answer_list.size());
+        // Check all answers.
         for (auto ans = answer_list.cbegin(); ans != answer_list.cend();
              ++ans) {
-            ASSERT_NO_THROW(isc::config::parseAnswer(status_code, *ans));
-            EXPECT_EQ(expected_code, status_code);
+            ConstElementPtr text;
+            ASSERT_NO_THROW(text = isc::config::parseAnswer(status_code, *ans));
+            EXPECT_EQ(expected_codes[std::distance(answer_list.cbegin(), ans)],
+                      status_code)
+                << "answer contains text: " << text->stringValue();
         }
     }
 
@@ -148,32 +171,34 @@ public:
     ///
     /// @param response Stub response to be sent from the server socket to the
     /// client.
-    void bindServerSocket(const std::string& response) {
+    /// @param stop_after_count Number of received messages received over the
+    /// server socket after which the IO service should be stopped.
+    void bindServerSocket(const std::string& response,
+                          const unsigned int stop_after_count = 1) {
         server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
                                                             unixSocketFilePath(),
                                                             TEST_TIMEOUT,
                                                             response));
-        server_socket_->bindServerSocket();
+        server_socket_->bindServerSocket(stop_after_count);
     }
 
     /// @brief Creates command with no arguments.
     ///
     /// @param command_name Command name.
-    /// @param service Service value to be added to the command. If this value
-    /// holds an empty string, the service parameter is not added.
+    /// @param service Service value to be added to the command. This value is
+    /// specified as a list of comma separated values, e.g. "dhcp4, dhcp6".
     ///
     /// @return Pointer to the instance of the created command.
     ConstElementPtr createCommand(const std::string& command_name,
                                   const std::string& service) {
         ElementPtr command = Element::createMap();
-
         command->set("command", Element::create(command_name));
 
         // Only add the 'service' parameter if non-empty.
         if (!service.empty()) {
-            ElementPtr services = Element::createList();
-            services->add(Element::create(service));
-            command->set("service", services);
+            std::string s = boost::replace_all_copy(service, ",", "\",\"");
+            s = std::string("[ \"") + s + std::string("\" ]");
+            command->set("service", Element::fromJSON(s));
         }
 
         command->set("arguments", Element::createMap());
@@ -186,16 +211,23 @@ public:
     /// @param server_type Server for which the client socket should be
     /// configured.
     /// @param service Service to be included in the command.
-    /// @param expected_result Expected result in response from the server.
+    /// @param expected_result0 Expected first result in response from the server.
+    /// @param expected_result1 Expected second result in response from the server.
+    /// @param expected_result2 Expected third result in response from the server.
+    /// @param stop_after_count Number of received messages received over the
+    /// server socket after which the IO service should be stopped.
     /// @param server_response Stub response to be sent by the server.
     void testForward(const CtrlAgentCfgContext::ServerType& server_type,
                      const std::string& service,
-                     const int expected_result,
+                     const int expected_result0,
+                     const int expected_result1 = -1,
+                     const int expected_result2 = -1,
+                     const unsigned stop_after_count = 1,
                      const std::string& server_response = "{ \"result\": 0 }") {
         // Configure client side socket.
         configureControlSocket(server_type);
         // Create server side socket.
-        bindServerSocket(server_response);
+        bindServerSocket(server_response, stop_after_count);
 
         // The client side communication is synchronous. To be able to respond
         // to this we need to run the server side socket at the same time.
@@ -208,7 +240,7 @@ public:
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
-        checkAnswer(answer, expected_result);
+        checkAnswer(answer, expected_result0, expected_result1, expected_result2);
     }
 
     /// @brief a convenience reference to control agent command manager
@@ -249,6 +281,24 @@ TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv6Server) {
                 isc::config::CONTROL_RESULT_SUCCESS);
 }
 
+/// Check that the same command is forwarded to multiple servers.
+TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
+    configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP6);
+
+    testForward(CtrlAgentCfgContext::TYPE_DHCP4, "dhcp4,dhcp6",
+                isc::config::CONTROL_RESULT_SUCCESS,
+                isc::config::CONTROL_RESULT_SUCCESS,
+                -1, 2);
+}
+
+/// Check that the command may forwarded to the second server even if
+/// forwarding to a first server fails.
+TEST_F(CtrlAgentCommandMgrTest, failForwardToServer) {
+    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp4,dhcp6",
+                isc::config::CONTROL_RESULT_ERROR,
+                isc::config::CONTROL_RESULT_SUCCESS);
+}
+
 /// Check that control command is not forwarded if the service is not specified.
 TEST_F(CtrlAgentCommandMgrTest, noService) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP6, "",
@@ -259,7 +309,7 @@ TEST_F(CtrlAgentCommandMgrTest, noService) {
 /// command was forwarded sent an invalid message.
 TEST_F(CtrlAgentCommandMgrTest, invalidAnswer) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
-                isc::config::CONTROL_RESULT_ERROR,
+                isc::config::CONTROL_RESULT_ERROR, -1, -1, 1,
                 "{ \"result\": 0");
 }
 
