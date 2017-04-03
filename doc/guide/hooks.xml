@@ -212,7 +212,7 @@
               that include addresses, prefixes, options, client classes and
               other features. The reservation can be based on hardware address,
               DUID, circuit-id or client-id in DHCPv4 and using hardware address
-              or DUID in DHCPv6. However, there are sometimes scenario where the
+              or DUID in DHCPv6. However, there are sometimes scenarios where the
               reservation is more complex, e.g. uses other options that
               mentioned above, uses part of specific options or perhaps even a
               combination of several options and fields to uniquely identify a
