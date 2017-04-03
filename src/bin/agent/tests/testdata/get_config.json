@@ -22,7 +22,7 @@
                 }
             }
         ],
-        "http-host": "localhost",
+        "http-host": "127.0.0.1",
         "http-port": 8000
     }
 }
