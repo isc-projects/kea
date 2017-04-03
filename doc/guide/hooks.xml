@@ -205,28 +205,23 @@
               example and create your own custom logging hooks.</entry>
             </row>
             <row>
-              <entry>Lightweight 4over6</entry>
+              <entry>Flexible Identifier</entry>
               <entry>Support customers</entry>
-              <entry>Autumn 2016</entry>
-              <entry>Lightweight 4over6
-              (<ulink url="http://tools.ietf.org/html/rfc7596">RFC 7596</ulink>)
-              is a new IPv6 transition
-              technology that provides IPv4 as a service in IPv6-only
-              network. It assumes that dual-stack clients will get a regular IPv6
-              address and IPv6 prefix, but only a fraction of an IPv4 address. The
-              fraction is specified as port-set, which is essentially a range of
-              TCP and UDP ports a client can use. By doing the transition on the
-              client side, this technology eliminates the need to deploy
-              expensive Carrier Grade NATs within the operator's network. The
-              problem on the DHCP side is the non-trivial logic behind it: each
-              client needs to receive an unique set of lightweight 4over6 options
-              (<ulink url="http://tools.ietf.org/html/rfc7598">RFC 7598</ulink>),
-              that include the IPv4 address (shared among several
-              clients), port-set (which is unique among clients sharing the same
-              IPv4 address) and a number of additional parameters. This hooks
-              library will generate values of those options dynamically, thus
-              eliminating the need to manually configure values for each client
-              separately.
+              <entry>Kea 1.2.0 beta</entry>
+              <entry>Kea software provides a way to handle host reservations
+              that include addresses, prefixes, options, client classes and
+              other features. The reservation can be based on hardware address,
+              DUID, circuit-id or client-id in DHCPv4 and using hardware address
+              or DUID in DHCPv6. However, there are sometimes scenarios where the
+              reservation is more complex, e.g. uses other options that
+              mentioned above, uses part of specific options or perhaps even a
+              combination of several options and fields to uniquely identify a
+              client. Those scenarios are addressed by the Flexible Identifiers
+              hook application. It allows defining an expression, similar to
+              the one used in client classification,
+	      e.g. substring(relay6[0].option[37],0,6). Each incoming packet is
+	      evaluated against that expression and its value is then searched
+	      in the reservations database.
               </entry>
             </row>
           </tbody>
@@ -341,7 +336,7 @@ and may have the zero or more of the following entries:
 
       </section>
       <section>
-        <title>Forensic Logging Hooks</title>
+        <title>legal_log: Forensic Logging Hooks</title>
         <para>
         This section describes the forensic log hooks library. This library
         provides hooks that record a detailed log of lease assignments
@@ -551,6 +546,114 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           </para>
         </section>
       </section>
+
+      <section>
+        <title>flex_id: Flexible Identifiers for Host Reservations</title>
+        <para>
+          This section describes a hook application dedicated to generate
+          flexible identifiers for host reservation. Kea software provides a way
+          to handle host reservations that include addresses, prefixes, options,
+          client classes and other features. The reservation can be based on
+          hardware address, DUID, circuit-id or client-id in DHCPv4 and using
+          hardware address or DUID in DHCPv6. However, there are sometimes
+          scenario where the reservation is more complex, e.g. uses other
+          options that mentioned above, uses part of specific options or perhaps
+          even a combination of several options and fields to uniquely identify
+          a client. Those scenarios are addressed by the Flexible Identifiers
+          hook application.</para>
+
+	<para>The library allows defining an expression, using notation
+	initially used for client classification only. See <xref
+	linkend="classification-using-expressions" /> for detailed description
+	of the syntax available. One notable difference is that for client
+	classification the expression currently has to evaluate to either true
+	or false, while the flexible identifier expression is expected to
+	evaluate to a string that will be used as identifier. It is a valid case
+	for the expression to evaluate to empty string (e.g. in cases where a
+	client does not sent specific options). This expression is then
+	evaluated for each incoming packet. This evaluation generates an
+	identifier that is used to identify the client. In particular, there may
+	be host reservations that are tied to specific values of the flexible
+	identifier.</para>
+
+	<para>
+	  The library can be loaded in similar way as other hook libraries. It
+	  takes one mandatory parameter identifier-expression:
+<screen>
+"Dhcp6": { <userinput>
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "<userinput>expression</userinput>"
+            }
+        },
+        ...
+    ] </userinput>
+}
+</screen>
+	</para>
+
+	<para>
+	  The flexible identifier library supports both DHCPv4 and DHCPv6.
+	</para>
+
+	<para>
+	  EXAMPLE: Let's consider a case of an IPv6 network that has an
+	  independent interface for each of the connected customers. Customers
+	  are able to plug in whatever device they want, so any type of
+	  identifier (e.g. a client-id) is unreliable. Therefore the operator
+	  may decide to use an option inserted by a relay agent to differentiate
+	  between clients. In this particular deployment, the operator verified
+	  that the interface-id is unique for each customer facing
+	  interface. Therefore it is suitable for usage as reservation. However,
+	  only the first 6 bytes of the interface-id are interesting, because
+	  remaining bytes are either randomly changed or not unique between
+	  devices. Therefore the customer decided to use first 6 bytes of the
+	  interface-id option inserted by the relay agent. This could be
+	  achieved by using the following configuration:
+<screen>
+"Dhcp6": {
+    "subnet6": [{ ..., // subnet definition starts here
+    "reservations": [
+        <userinput>"flex-id": "'port1234'"</userinput>, // value of the first 8 bytes of the interface-id
+        "ip-addresses": [ "2001:db8::1" ]
+    ],
+    }], // end of subnet definitions
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "<userinput>substring(relay6[0].option[18],0,8)</userinput>"
+            }
+        },
+        ...
+    ]
+}
+</screen>
+	</para>
+
+	<para>
+	  NOTE: Care should be taken when adjusting the expression. If the
+	  expression changes, then all the flex-id values may change, possibly
+	  rendering all reservations based on flex-id unusable until they're
+	  manually updated. Therefore it is strongly recommended to start with
+	  the expression and a handful reservations, adjust the expression as
+	  needed and only after it was confirmed the expression does exactly
+	  what is expected out of it go forward with host reservations on any
+	  broader scale.
+	</para>
+
+	<para>
+	  flex-id values in host reservations can be specified in two
+	  ways. First, they can be expressed as hex string, e.g. bar string
+	  can be represented as 626174. Alternatively, it can be expressed
+	  as quoted value (using double and single quotes), e.g. "'bar'".
+	  The former is more convenient for printable characters, while hex
+	  string values are more convenient for non-printable characters.
+	</para>
+      </section>
+
     </section>
     <section id="user-context">
       <title>User contexts</title>

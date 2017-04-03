@@ -27,9 +27,9 @@ public:
         ASSERT_TRUE(eval.parseString(expr));
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
         if (expected) {
-            EXPECT_TRUE(evaluate(eval.expression, *pkt4));
+            EXPECT_TRUE(evaluateBool(eval.expression, *pkt4));
         } else {
-            EXPECT_FALSE(evaluate(eval.expression, *pkt4));
+            EXPECT_FALSE(evaluateBool(eval.expression, *pkt4));
         }
     }
 };

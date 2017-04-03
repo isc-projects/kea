@@ -119,6 +119,7 @@ using namespace std;
   DUID "duid"
   HW_ADDRESS "hw-address"
   HOSTNAME "hostname"
+  FLEX_ID "flex-id"
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
@@ -642,11 +643,17 @@ host_reservation_identifiers_list: host_reservation_identifier
 
 host_reservation_identifier: duid_id
                            | hw_address_id
+                           | flex_id
                            ;
 
 hw_address_id : HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(hwaddr);
+};
+
+flex_id : FLEX_ID {
+    ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(flex_id);
 };
 
 // list_content below accepts any value when options are by name (string)
@@ -1308,6 +1315,7 @@ reservation_param: duid
                  | prefixes
                  | hw_address
                  | hostname
+                 | flex_id_value
                  | option_data_list
                  | unknown_map_entry
                  ;
@@ -1353,6 +1361,14 @@ hostname: HOSTNAME {
 } COLON STRING {
     ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname", host);
+    ctx.leave();
+};
+
+flex_id_value: FLEX_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 };
 
