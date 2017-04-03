@@ -366,10 +366,11 @@ public:
     /// @param expr expression to be evaluated
     template<typename ex>
     void testExpressionNegative(const std::string& expr,
-                                const Option::Universe& u = Option::V4) {
+                                const Option::Universe& u = Option::V4,
+                                EvalContext::ParserType type = EvalContext::PARSER_BOOL) {
         EvalContext eval(u);
 
-        EXPECT_THROW(eval.parseString(expr), ex) << "while parsing expression "
+        EXPECT_THROW(eval.parseString(expr, type), ex) << "while parsing expression "
                                                  << expr;
     }
 };
@@ -477,10 +478,18 @@ TEST_F(ExpressionsTest, invalidIntegers) {
 // Tests whether expressions can be evaluated to a string.
 TEST_F(ExpressionsTest, evaluateString) {
 
+    // Check that content of the options is returned properly.
     testExpressionString(Option::V4, "option[100].hex", "hundred4");
     testExpressionString(Option::V6, "option[100].hex", "hundred6");
+
+    // Check that content of non-existing option returns empty string.
     testExpressionString(Option::V4, "option[200].hex", "");
     testExpressionString(Option::V6, "option[200].hex", "");
+
+    testExpressionNegative<EvalParseError>("pkt4.msgtype == 1", Option::V4,
+                                           EvalContext::PARSER_STRING);
+    testExpressionNegative<EvalParseError>("pkt6.msgtype == 1", Option::V6,
+                                           EvalContext::PARSER_STRING);
 }
 
 };

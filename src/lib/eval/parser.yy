@@ -115,13 +115,7 @@ using namespace isc::eval;
 // ... that expects either TOPLEVEL_BOOL or TOPLEVEL_STRING. Depending on which
 // token appears first, it will determine what is allowed and what it not.
 start: TOPLEVEL_BOOL expression
-     | TOPLEVEL_STRING string_expression
-;
-
-// string expression can be either a string (proper) or boolean (that is internally
-// stored as "true" or "false")
-string_expression: bool_expr
-      | string_expr
+     | TOPLEVEL_STRING string_expr
 ;
 
 // Expression can either be a single token or a (something == something) expression
