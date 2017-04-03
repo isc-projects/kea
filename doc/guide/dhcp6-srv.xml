@@ -3998,10 +3998,9 @@ If not specified, the default value is:
             "prefix-len": 56,
             "delegated-len": 64,
             <userinput>"user-context": {
-                "sharing-ratio": 64,
-                "v4-pool": "192.0.2.0/24",
-                "sysports-exclude": true,
-                "bind-prefix-len": 56
+                "threshold-percent": 85,
+                "v4-network": "192.168.0.0/16",
+                "v4-overflow": "10.0.0.0/16"
             }</userinput>
         } ],
         "subnet": "2001:db8::/32"
@@ -4011,9 +4010,9 @@ If not specified, the default value is:
         </para>
 
         <para>
-          Kea does not interpret or use the information in the user context:
-          it just stores it makes it available to the hook
-          libraries. It is up to the hook library to extract that information
+          Kea does not interpret or use the content of the user context:
+          it just stores it, making it available to the hook
+          libraries. It is up to each hook library to extract the information
           and make use of it.
         </para>
         <para>
