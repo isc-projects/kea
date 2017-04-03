@@ -11,6 +11,7 @@
 #include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
+#include <string>
 
 namespace isc {
 namespace agent {
@@ -41,6 +42,11 @@ public:
 
     /// @brief Used check that specified ServerType is within valid range.
     static const uint32_t MAX_TYPE_SUPPORTED = TYPE_D2;
+
+    /// @brief Converts service specified as a string to ServerType.
+    ///
+    /// @param service Service value as a string: 'dhcp4', 'dhcp6', 'd2'.
+    static ServerType toServerType(const std::string& service);
 
     /// @brief Creates a clone of this context object.
     ///

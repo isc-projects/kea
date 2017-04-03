@@ -8,11 +8,21 @@
 #define CTRL_AGENT_COMMAND_MGR_H
 
 #include <config/hooked_command_mgr.h>
+#include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <array>
 
 namespace isc {
 namespace agent {
+
+/// @brief Exception thrown when an error occurred during control command
+/// forwarding.
+class CommandForwardingError : public Exception {
+public:
+    CommandForwardingError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Command Manager for Control Agent.
 ///
@@ -37,27 +47,70 @@ public:
     /// @brief Handles the command having a given name and arguments.
     ///
     /// This method extends the base implementation with the ability to forward
-    /// commands to Kea servers if the Control Agent failed to handle it itself.
+    /// commands to Kea servers.
     ///
-    /// @todo Currently this method only wraps an answer within a list Element.
-    /// This will be later used to include multiple answers within this list.
-    /// For now it is just a single answer from the Control Agent.
+    /// If the received command doesn't include 'service' parameter or this
+    /// parameter is blank, the command is first handled by the attached hooks
+    /// libraries, and if still unhandled, the Control Agent itself.
+    ///
+    /// If the non-blank 'service' parameter has been specified the hooks
+    /// are executed. If the hooks process the command the result is returned
+    /// to the controlling client. Otherwise, the command is forwarded to each
+    /// Kea server listed in the 'service' parameter.
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.
+    /// @param original_cmd Original command being processed.
     ///
-    /// @return Pointer to the const data element representing response
-    /// to a command.
+    /// @return Pointer to the const data element representing a list of
+    /// responses to the command. If the command has been handled by the CA,
+    /// this list includes one response.
     virtual isc::data::ConstElementPtr
     handleCommand(const std::string& cmd_name,
-                  const isc::data::ConstElementPtr& params);
+                  const isc::data::ConstElementPtr& params,
+                  const isc::data::ConstElementPtr& original_cmd);
 
 private:
+
+    /// @brief Implements the logic for @ref CtrlAgentCommandMgr::handleCommand.
+    ///
+    /// All parameters are passed by value because they may be modified within
+    /// the method.
+    ///
+    /// @param cmd_name Command name.
+    /// @param params Command arguments.
+    /// @param original_cmd Original command being processed.
+    ///
+    /// @return Pointer to the const data element representing a list of responses
+    /// to the command or a single response (not wrapped in a list). The
+    /// @ref CtrlAgentCommandMgr::handleCommand will wrap non-list value returned
+    /// in a single element list.
+    isc::data::ConstElementPtr
+    handleCommandInternal(std::string cmd_name,
+                          isc::data::ConstElementPtr params,
+                          isc::data::ConstElementPtr original_cmd);
+
+    /// @brief Tries to forward received control command to a specified server.
+    ///
+    /// @param service Contains name of the service where the command should be
+    /// forwarded.
+    /// @param cmd_name Command name.
+    /// @param command Pointer to the object representing the forwarded command.
+    ///
+    /// @return Response to forwarded command.
+    /// @throw CommandForwardingError when an error occurred during forwarding.
+    isc::data::ConstElementPtr
+    forwardCommand(const std::string& service, const std::string& cmd_name,
+                   const isc::data::ConstElementPtr& command);
+
     /// @brief Private constructor.
     ///
     /// The instance should be created using @ref CtrlAgentCommandMgr::instance,
     /// thus the constructor is private.
     CtrlAgentCommandMgr();
+
+    /// @brief Buffer into which responses to forwarded commands are stored.
+    std::array<char, 8192> receive_buf_;
 
 };
 

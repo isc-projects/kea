@@ -69,6 +69,7 @@ ca_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
+ca_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 ca_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

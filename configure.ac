@@ -1722,6 +1722,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
                  src/lib/asiolink/Makefile
+                 src/lib/asiolink/testutils/Makefile
                  src/lib/asiolink/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/tests/Makefile

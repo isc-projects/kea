@@ -81,6 +81,20 @@ public:
     typedef boost::function<isc::data::ConstElementPtr (const std::string& name,
         const isc::data::ConstElementPtr& params)> CommandHandler;
 
+    /// @brief Defines extended command handler type.
+    ///
+    /// This command handler includes third parameter which holds the
+    /// entire command control message. The handler can retrieve
+    /// additional information from this parameter, e.g. 'service'.
+    ///
+    /// @param name name of the commands
+    /// @param params parameters specific to the command
+    /// @param original original control command.
+    /// @return response (created with createAnswer())
+    typedef boost::function<isc::data::ConstElementPtr (const std::string& name,
+        const isc::data::ConstElementPtr& params,
+        const isc::data::ConstElementPtr& original)> ExtendedCommandHandler;
+
     /// @brief Constructor.
     ///
     /// Registers "list-commands" command.
@@ -105,6 +119,19 @@ public:
     /// @param handler Pointer to the method that will handle the command.
     void registerCommand(const std::string& cmd, CommandHandler handler);
 
+    /// @brief Registers specified command handler for a given command.
+    ///
+    /// This variant of the method uses extended command handler which, besides
+    /// command name and arguments, also has a third parameter 'original_cmd'
+    /// in its signature. Such handlers can retrieve additional parameters from
+    /// the command, e.g. 'service' indicating where the command should be
+    /// routed.
+    ///
+    /// @param cmd Name of the command to be handled.
+    /// @param handler Pointer to the method that will handle the command.
+    void registerExtendedCommand(const std::string& cmd,
+                                 ExtendedCommandHandler handler);
+
     /// @brief Deregisters specified command handler.
     ///
     /// @param cmd Name of the command that's no longer handled.
@@ -127,15 +154,24 @@ protected:
     ///
     /// @param cmd_name Command name.
     /// @param params Command arguments.
+    /// @param original_cmd Pointer to the entire command received. It may
+    /// be sometimes useful to retrieve additional parameters from this
+    /// command.
     ///
     /// @return Pointer to the const data element representing response
     /// to a command.
     virtual isc::data::ConstElementPtr
     handleCommand(const std::string& cmd_name,
-                  const isc::data::ConstElementPtr& params);
+                  const isc::data::ConstElementPtr& params,
+                  const isc::data::ConstElementPtr& original_cmd);
+
+    struct HandlersPair {
+        CommandHandler handler;
+        ExtendedCommandHandler extended_handler;
+    };
 
     /// @brief Type of the container for command handlers.
-    typedef std::map<std::string, CommandHandler> HandlerContainer;
+    typedef std::map<std::string, HandlersPair> HandlerContainer;
 
     /// @brief Container for command handlers.
     HandlerContainer handlers_;

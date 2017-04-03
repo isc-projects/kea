@@ -7,6 +7,7 @@
 #ifndef CTRL_AGENT_CONTROLLER_H
 #define CTRL_AGENT_CONTROLLER_H
 
+#include <agent/ca_process.h>
 #include <process/d_controller.h>
 
 namespace isc {
@@ -31,6 +32,9 @@ public:
 
     /// @brief Destructor
     virtual ~CtrlAgentController();
+
+    /// @brief Returns pointer to an instance of the underlying process object.
+    CtrlAgentProcessPtr getCtrlAgentProcess();
 
     /// @brief Defines the application name, this is passed into base class
     /// and appears in log statements.

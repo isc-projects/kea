@@ -222,7 +222,7 @@ TEST_F(CommandMgrTest, bogusCommand) {
     ASSERT_TRUE(answer);
     int status_code;
     parseAnswer(status_code, answer);
-    EXPECT_EQ(CONTROL_RESULT_ERROR, status_code);
+    EXPECT_EQ(CONTROL_RESULT_COMMAND_UNSUPPORTED, status_code);
 }
 
 // Test checks whether handlers installation is sanitized. In particular,

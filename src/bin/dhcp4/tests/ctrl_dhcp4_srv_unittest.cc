@@ -413,7 +413,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelNegative) {
     std::string response;
 
     sendUnixCommand("{ \"command\": \"bogus\" }", response);
-    EXPECT_EQ("{ \"result\": 1,"
+    EXPECT_EQ("{ \"result\": 2,"
               " \"text\": \"'bogus' command not supported.\" }", response);
 
     sendUnixCommand("utter nonsense", response);

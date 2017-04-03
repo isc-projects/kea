@@ -6,6 +6,11 @@
 
 $NAMESPACE isc::config
 
+% COMMAND_EXTENDED_REGISTERED Command %1 registered
+This debug message indicates that the daemon started supporting specified
+command. The handler for the registered command includes a parameter holding
+entire command to be processed.
+
 % COMMAND_DEREGISTERED Command %1 deregistered
 This debug message indicates that the daemon stopped supporting specified
 command. This command can no longer be issued. If the command socket is
