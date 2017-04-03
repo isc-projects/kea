@@ -36,13 +36,13 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     NakedDhcpv4Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_buffer4_receive = -1;
-    int hook_index_pkt4_receive    = -1;
-    int hook_index_select_subnet   = -1;
-    int hook_index_lease4_release  = -1;
-    int hook_index_pkt4_send       = -1;
-    int hook_index_buffer4_send    = -1;
-    int hook_index_host4_identifier= -1;
+    int hook_index_buffer4_receive  = -1;
+    int hook_index_pkt4_receive     = -1;
+    int hook_index_select_subnet    = -1;
+    int hook_index_lease4_release   = -1;
+    int hook_index_pkt4_send        = -1;
+    int hook_index_buffer4_send     = -1;
+    int hook_index_host4_identifier = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
@@ -555,15 +555,53 @@ public:
     host4_identifier_foo_callout(CalloutHandle& handle) {
         callback_name_ = string("host4_identifier");
 
-        std::vector<uint8_t> id(3);
-        id[0] = 0x66; // f
-        id[1] = 0x6f; // o
-        id[2] = 0x6f; // o
+        // Make sure the query4 parameter is passed.
+        handle.getArgument("query4", callback_qry_pkt4_);
+
+        // Make sure id_type parameter is passed.
+        Host::IdentifierType type = Host::IDENT_FLEX;
+        handle.getArgument("id_type", type);
+
+        // Make sure id_value parameter is passed.
+        std::vector<uint8_t> id_test;
+        handle.getArgument("id_value", id_test);
+
+        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f }; // foo
         handle.setArgument("id_value", id);
         handle.setArgument("id_type", Host::IDENT_FLEX);
 
         return (0);
     }
+
+    /// @brief Test host4_identifier callout by setting identifier to hwaddr
+    ///
+    /// This callout always returns fixed HWADDR: 00:01:02:03:04:05
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    host4_identifier_hwaddr_callout(CalloutHandle& handle) {
+        callback_name_ = string("host4_identifier");
+
+        // Make sure the query4 parameter is passed.
+        handle.getArgument("query4", callback_qry_pkt4_);
+
+        // Make sure id_type parameter is passed.
+        Host::IdentifierType type = Host::IDENT_FLEX;
+        handle.getArgument("id_type", type);
+
+        // Make sure id_value parameter is passed.
+        std::vector<uint8_t> id_test;
+        handle.getArgument("id_value", id_test);
+
+        // Ok, now set the identifier to 00:01:02:03:04:05
+        std::vector<uint8_t> id = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+        handle.setArgument("id_value", id);
+        handle.setArgument("id_type", Host::IDENT_HWADDR);
+
+        return (0);
+    }
+
 
     /// resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
@@ -1792,6 +1830,75 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
     // Make sure the address offered is the one that was reserved.
     EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
 }
+
+// Checks if callout installed on host4_identifier can generate identifier of
+// other type. This particular callout always returns hwaddr.
+TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Configure a subnet with host reservation. The reservation is based on
+    // flexible identifier value of 'foo'. That's exactly what the
+    // host4_identifier_foo_callout sets.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"host-reservation-identifiers\": [ \"flex-id\" ], "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\", "
+        "    \"reservations\": ["
+        "        {"
+        "            \"hw-address\": \"00:01:02:03:04:05\","
+        "            \"ip-address\": \"192.0.2.201\""
+        "        }"
+        "    ]"
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    ASSERT_TRUE(json);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Install host4_identifier_hwaddr_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "host4_identifier", host4_identifier_hwaddr_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a response
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Make sure the address offered is the one that was reserved.
+    EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
+}
+
 
 // Verifies that libraries are unloaded by server destruction
 // The callout libraries write their library index number to a marker

@@ -775,6 +775,10 @@ CfgHosts::toElement6() const {
             isc_throw(ToElementError, "unexpected circuit-id DUID type");
         } else if (id_type == Host::IDENT_CLIENT_ID) {
             isc_throw(ToElementError, "unexpected client-id DUID type");
+        } else if (id_type == Host::IDENT_FLEX) {
+            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
+            std::string flex = util::encode::encodeHex(bin);
+            map->set("flex-id", Element::create(flex));
         } else {
             isc_throw(ToElementError, "invalid DUID type: " << id_type);
         }
