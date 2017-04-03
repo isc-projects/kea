@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,7 @@
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
  * - @subpage dhcpv6Hooks
+ * - @subpage agentHooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
  * - @subpage libdhcp_user_chk
@@ -80,6 +81,11 @@
  *   - @subpage d2TransDetail
  *   - @subpage d2StateModel
  *   - @subpage d2TransExecExample
+ * - @subpage controlAgent
+ *   - @subpage ctrlAgentHttp
+ *   - @subpage ctrlAgentCreatingResponse
+ *   - @subpage ctrlAgentCommandMgr
+ *   - @subpage CtrlAgentSecurity
  * - @subpage lfc
  *   - @subpage lfcProcessing
  *   - @subpage lfcFiles
