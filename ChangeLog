@@ -1,3 +1,8 @@
+1233.	[doc]		marcin
+	Documented new component Kea Control Agent in the Administrator's
+	Manual and the Developer's Guide.
+	(Trac #5175, git abf7887ad65eb4b221a1fe61ea0c9773b4feaddb)
+
 1232.	[func]		tomek
 	host4_identifier and host6_identifier hook points have been added.
 	Premium: Flexible Identifier (flex-id) hook point has been developed.
