@@ -33,7 +33,7 @@ public:
     ///
     /// @param io_service Reference to IOService to be used by this
     /// class.
-    UnixDomainSocket(IOService& io_service);
+    explicit UnixDomainSocket(IOService& io_service);
 
     /// @brief Returns native socket representation.
     virtual int getNative() const;
