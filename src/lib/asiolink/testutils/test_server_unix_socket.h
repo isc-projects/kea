@@ -12,14 +12,32 @@
 #include <asiolink/io_service.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
-#include <array>
+#include <list>
 #include <string>
 
 namespace isc {
 namespace asiolink {
 namespace test {
 
+class ConnectionPool;
+
 /// @brief Provides unix domain socket functionality for unit tests.
+///
+/// This class represents a server side socket. It can be used to
+/// test client's transmission over the unix domain socket. By default,
+/// the server side socket echoes the client's message so the client's
+/// message (prefixed with the word "received").
+///
+/// It is also possible to specify a custom response from the server
+/// instead of eachoing back the request.
+///
+/// It is possible to make multiple connections to the server side
+/// socket simultaneously.
+///
+/// The test should perform IOService::run_one until it finds that
+/// the number of responses sent by the server is greater than
+/// expected. The number of responses sent so far can be retrieved
+/// using @ref TestServerUnixSocket::getResponseNum.
 class TestServerUnixSocket {
 public:
 
@@ -32,30 +50,28 @@ public:
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
                          const long test_timeout,
-                         const std::string& custom_respons_ = "");
+                         const std::string& custom_response = "");
+
+    /// @brief Destructor.
+    ///
+    /// Closes active connections.
+    ~TestServerUnixSocket();
 
     /// @brief Creates and binds server socket.
-    ///
-    /// @param stop_after_count Number of received messages after which the
-    /// IO service should be stopped.
-    void bindServerSocket(const unsigned int stop_after_count = 1);
+    void bindServerSocket();
 
     /// @brief Server acceptor handler.
     ///
     /// @param ec Error code.
     void acceptHandler(const boost::system::error_code& ec);
 
-    /// @brief Server read handler.
-    ///
-    /// @param ec Error code.
-    /// @param bytes_transferred Number of bytes read.
-    void readHandler(const boost::system::error_code& ec,
-                     size_t bytes_transferred);
-
     /// @brief Callback function invoke upon test timeout.
     ///
     /// It stops the IO service and reports test timeout.
     void timeoutHandler();
+
+    /// @brief Return number of responses sent so far to the clients.
+    size_t getResponseNum() const;
 
 private:
 
@@ -70,23 +86,14 @@ private:
     /// @brief Server acceptor.
     boost::asio::local::stream_protocol::acceptor server_acceptor_;
 
-    /// @brief Server side unix domain socket.
-    boost::asio::local::stream_protocol::socket server_socket_;
-
-    /// @brief Receive buffer.
-    std::array<char, 1024> raw_buf_;
-
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
 
     /// @brief Holds custom response to be sent to the client.
     std::string custom_response_;
 
-    /// @brief Number of messages received after which IO service gets stopped.
-    unsigned int stop_after_count_;
-
-    /// @brief Number of messages received so far.
-    unsigned int read_count_;
+    /// @brief Pool of connections.
+    boost::shared_ptr<ConnectionPool> connection_pool_;
 };
 
 /// @brief Pointer to the @ref TestServerUnixSocket.

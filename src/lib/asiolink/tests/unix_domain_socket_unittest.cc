@@ -95,7 +95,9 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
     ASSERT_EQ(outbound_data.size(), sent_size);
 
     // Run IO service to generate server's response.
-    io_service_.run();
+    while (test_socket_.getResponseNum() < 1) {
+        io_service_.run_one();
+    }
 
     // Receive response from the socket.
     std::array<char, 1024> read_buf;
