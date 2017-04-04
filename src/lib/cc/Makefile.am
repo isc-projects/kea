@@ -13,7 +13,7 @@ libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
 libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cc_la_LIBADD += $(BOOST_LIBS)
 
-libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
+libkea_cc_la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 # Since data.h is now used in the hooks interface, it needs to be
 # installed on target system.
