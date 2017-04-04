@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <array>
+#include <list>
 #include <string>
 
 namespace isc {
@@ -33,6 +34,11 @@ public:
                          const std::string& socket_file_path,
                          const long test_timeout,
                          const std::string& custom_respons_ = "");
+
+    /// @brief Destructor.
+    ///
+    /// Closes active connections.
+    ~TestServerUnixSocket();
 
     /// @brief Creates and binds server socket.
     ///
@@ -70,8 +76,8 @@ private:
     /// @brief Server acceptor.
     boost::asio::local::stream_protocol::acceptor server_acceptor_;
 
-    /// @brief Server side unix domain socket.
-    boost::asio::local::stream_protocol::socket server_socket_;
+    /// @brief Server side unix domain sockets.
+    std::list<boost::asio::local::stream_protocol::socket> server_sockets_;
 
     /// @brief Receive buffer.
     std::array<char, 1024> raw_buf_;

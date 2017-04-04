@@ -19,13 +19,19 @@ TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
       server_acceptor_(io_service_.get_io_service()),
-      server_socket_(io_service_.get_io_service()),
+      server_sockets_(),
       test_timer_(io_service_),
       custom_response_(custom_response),
       stop_after_count_(1),
       read_count_(0) {
     test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
+}
+
+TestServerUnixSocket::~TestServerUnixSocket() {
+    for (auto sock = server_sockets_.begin(); sock != server_sockets_.end(); ++sock) {
+        sock->close();
+    }
 }
 
 void
@@ -40,15 +46,16 @@ TestServerUnixSocket::bindServerSocket(const unsigned int stop_after_count) {
 
 void
 TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
-    server_socket_.async_read_some(boost::asio::buffer(&raw_buf_[0],
-                                                       raw_buf_.size()),
-                                   boost::bind(&TestServerUnixSocket::
-                                               readHandler, this, _1, _2));
+    server_sockets_.back().async_read_some(boost::asio::buffer(&raw_buf_[0],
+                                                               raw_buf_.size()),
+        boost::bind(&TestServerUnixSocket::readHandler, this, _1, _2));
 }
 
 void
 TestServerUnixSocket::accept() {
-    server_acceptor_.async_accept(server_socket_,
+    server_sockets_.push_back(boost::asio::local::stream_protocol::
+                              socket(io_service_.get_io_service()));
+    server_acceptor_.async_accept(server_sockets_.back(),
                                   boost::bind(&TestServerUnixSocket::
                                               acceptHandler, this, _1));
 }
@@ -58,19 +65,16 @@ void
 TestServerUnixSocket::readHandler(const boost::system::error_code&,
                                   size_t bytes_transferred) {
     if (!custom_response_.empty()) {
-        boost::asio::write(server_socket_, boost::asio::buffer(custom_response_.c_str(),
-                                                               custom_response_.size()));
+        boost::asio::write(server_sockets_.back(),
+                           boost::asio::buffer(custom_response_.c_str(),
+                                               custom_response_.size()));
 
     } else {
         std::string received(&raw_buf_[0], bytes_transferred);
         std::string response("received " + received);
-        boost::asio::write(server_socket_, boost::asio::buffer(response.c_str(),
-                                                               response.size()));
+        boost::asio::write(server_sockets_.back(),
+                           boost::asio::buffer(response.c_str(), response.size()));
     }
-
-    // Close the connection as we might be expecting another connection over the
-    // same socket.
-    server_socket_.close();
 
     // Stop IO service if we have reached the maximum number of read messages.
     if (++read_count_ >= stop_after_count_) {
