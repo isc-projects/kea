@@ -136,6 +136,9 @@ We have received the following contributions:
  - Marvin Frick (MrMarvin)
    2017-04: -h and --host parameters added to kea-admin
 
+ - Olivier Clavel (zeitounator)
+   2017-04: Improvements in valgrind test script
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
