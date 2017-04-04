@@ -52,6 +52,13 @@ public:
 
     /// @brief Handler invoked when data have been received over the socket.
     ///
+    /// This is the handler invoked when the data have been received over the
+    /// socket. If custom response has been specified, this response is sent
+    /// back to the client. Otherwise, the handler echoes back the request
+    /// and prepends the word "received ". Finally, it calls a custom
+    /// callback function (specified in the constructor) to notify that the
+    /// response has been sent over the socket.
+    ///
     /// @param bytes_transferred Number of bytes received.
     void
     readHandler(const boost::system::error_code&, size_t bytes_transferred) {

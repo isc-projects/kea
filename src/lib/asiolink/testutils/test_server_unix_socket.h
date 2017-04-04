@@ -22,6 +22,22 @@ namespace test {
 class ConnectionPool;
 
 /// @brief Provides unix domain socket functionality for unit tests.
+///
+/// This class represents a server side socket. It can be used to
+/// test client's transmission over the unix domain socket. By default,
+/// the server side socket echoes the client's message so the client's
+/// message (prefixed with the word "received").
+///
+/// It is also possible to specify a custom response from the server
+/// instead of eachoing back the request.
+///
+/// It is possible to make multiple connections to the server side
+/// socket simultaneously.
+///
+/// The test should perform IOService::run_one until it finds that
+/// the number of responses sent by the server is greater than
+/// expected. The number of responses sent so far can be retrieved
+/// using @ref TestServerUnixSocket::getResponseNum.
 class TestServerUnixSocket {
 public:
 
@@ -34,7 +50,7 @@ public:
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
                          const long test_timeout,
-                         const std::string& custom_respons_ = "");
+                         const std::string& custom_response = "");
 
     /// @brief Destructor.
     ///
