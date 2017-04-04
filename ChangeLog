@@ -2,7 +2,7 @@
 	kea-admin now supports -h (and --host) parameter that can specify
 	MySQL or PostgreSQL database locations other than the default
 	localhost.
-	(Github #14, git tbd)
+	(Github #14, git 4038157a3499ad90956c98a2172c57b173f2b985)
 
 1234.	[build]		fdupont
 	Improved installation procedure for kea-shell.
