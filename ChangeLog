@@ -87,7 +87,7 @@
 	DHCPv4 and DHCPv6 parsers have updated to accept database port
 	parameter. The parameter for Cassandra is now called
 	"contact-points" (was "contact_points" previously).
-	(Trac #5061, git xxx)
+	(Trac #5061, git d12b6f4a6d80d6bc854f2a8a086e412dc37867bc)
 
 1219.   [func]		marcin
 	Control Agent uses libkea-http to process commands over
