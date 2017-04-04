@@ -3,6 +3,8 @@
 	reservations into the configuration file.
 	(Trac #5207, git ea42c6f479918235ae4a67a60d08720e2664720c)
 
+Kea 1.2.0-beta released on April 7, 2017
+
 1238.	[build]		tmark,tomek
 	Library version numbers bumped for release.
 	(Trac #5201	git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
@@ -167,7 +169,7 @@
 	(Github #45, git ce72998382b62269823fa0dcbfa41dfa9c72b69e)
 
 1209.	[func]		tomek
-	Relay options are now printed in DHCPv6 when suffiently detailed
+	Relay options are now printed in DHCPv6 when sufficiently detailed
 	debug logging is requested.
 	(Trac #5131, git 5bf58b21fcf07f2e2e97275efa1f76cde913b30a)
 
