@@ -48,7 +48,7 @@ libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
-libkea_log_la_LDFLAGS = -no-undefined -version-info 2:0:0
+libkea_log_la_LDFLAGS = -no-undefined -version-info 3:0:0
 
 # Specify the headers for copying into the installation directory tree. User-
 # written libraries only need the definitions for logger.h and dependencies.
