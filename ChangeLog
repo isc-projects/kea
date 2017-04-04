@@ -1,3 +1,7 @@
+1238.	[build]		tmark,tomek
+	Library version numbers bumped for release.
+	(Trac #5201	git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
+
 1237.	[bug]		marcin
 	Fixed hanging Control Agent unit tests.
 	(Trac #5200, git 65daafd135965f9eb0bd4c3a22085d4bd3c6ffbe)
