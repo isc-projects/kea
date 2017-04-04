@@ -51,6 +51,11 @@ HookedCommandMgr::delegateCommandToHookLibrary(std::string& cmd_name,
     ConstElementPtr hook_response;
     if (HooksManager::calloutsPresent(Hooks.hook_index_control_command_receive_)) {
 
+        callout_handle_ = HooksManager::createCalloutHandle();
+
+        // Set status to normal.
+        callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
         // Delete previously set arguments.
         callout_handle_->deleteAllArguments();
 
