@@ -520,13 +520,13 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
   enable_shell=$enableval, enable_shell=no)
 
 PKGPYTHONDIR=
+m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+ [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
+  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
 if test "x$enable_shell" != xno ; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
 # We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([3], [found="yes"], [found="no"])
-  if test "x$found" = xno ; then
-    AM_PATH_PYTHON([2.7])
-  fi
+  AM_PATH_PYTHON([2.7])
   # pkgpythondir needs to be expanded
   PKGPYTHONDIR="$pkgpythondir"
   OLD=
