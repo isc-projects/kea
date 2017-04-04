@@ -1,8 +1,14 @@
+12XX.	[func]		MrMarvin
+	kea-admin now supports -h (and --host) parameter that can specify
+	MySQL or PostgreSQL database locations other than the default
+	localhost.
+	(Github #14, git tbd)
+
 1230.	[bug]		fdupont
 	kea-dhcp-ddns now correctly populates the original ID in the TSIG rdata
 	when doing signed updates.  Prior to this the value was set to zero
 	causing PowerDNS to reject then requests with a bad key error.
-	(Trac #5071, git cafa3d5c24f0112b0b9384a9c1083fe8a3eeb2bf) 
+	(Trac #5071, git cafa3d5c24f0112b0b9384a9c1083fe8a3eeb2bf)
 
 1229.	[func]		fdupont
 	A new command: config-test has been implemented in DHCPv4, DHCPv6
