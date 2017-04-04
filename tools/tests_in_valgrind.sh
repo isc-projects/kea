@@ -1,12 +1,13 @@
 #!/bin/sh
 
 ###########################################
-# This script runs all tests in valgrind. Configure and compile bind the way
-# you want it to be tested (you should use --with-gtest, however, or you get
-# no tests). Then run this script from the top build directory.
+# This script runs all tests in valgrind. Configure and compile kea the way
+# you want it to be tested (you should use --with-gtest or --with-gtest-source,
+# however, or you get no tests). Then run this script from the top build
+# directory.
 #
 # Note that the test isn't what you would call "production quality" (it is
-# expected to be used by the bind10 developers, not end user) and might break,
+# expected to be used by the kea developers, not end user) and might break,
 # some ways of breaking it are known.
 #
 # There are two variables that modify it's behaviour.
@@ -21,7 +22,7 @@
 make
 
 if [ $? = 2 ] ; then
-    echo "Did you run configure? Or maybe you're running the script from the tools directory? (you need to run it from the top bind10 build directory)"
+    echo "Did you run configure? Or maybe you're running the script from the tools directory? (you need to run it from the top kea build directory)"
     exit 1
 fi
 
