@@ -10,24 +10,6 @@ $NAMESPACE isc::agent
 This informational message is issued when the CA successfully forwards
 the control message to the specified Kea service and receives a response.
 
-% CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
-This informational message indicates that the server has started HTTP service
-on the specified address and port. All control commands should be sent to this
-address and port.
-
-% CTRL_AGENT_FAILED application experienced a fatal error: %1
-This is a debug message issued when the Control Agent application
-encounters an unrecoverable error from within the event loop.
-
-% CTRL_AGENT_RUN_EXIT application is exiting the event loop
-This is a debug message issued when the Control Agent exits its
-event loop.
-
-% CTRL_AGENT_STARTED Kea Control Agent version %1 started
-This informational message indicates that the Control Agent has
-processed all configuration information and is ready to begin processing.
-The version is also printed.
-
 % CTRL_AGENT_COMMAND_FORWARD_BEGIN begin forwarding command %1 to service %2
 This debug message is issued when the Control Agent starts forwarding a
 received command to one of the Kea servers.
@@ -42,12 +24,30 @@ This debug message is issued when the Control Agent skips processing
 received command because it has determined that the hooks libraries
 already processed the command.
 
+% CTRL_AGENT_CONFIG_CHECK_FAIL Control Agent configuration check failed: %1
+This error message indicates that the CA had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
 % CTRL_AGENT_CONFIG_FAIL Control Agent configuration failed: %1
 This error message indicates that the CA had failed configuration
 attempt. Details are provided. Additional details may be available
 in earlier log entries, possibly on lower levels.
 
-% CTRL_AGENT_CONFIG_CHECK_FAIL Control Agent configuration check failed: %1
-This error message indicates that the CA had failed configuration
-check. Details are provided. Additional details may be available
-in earlier log entries, possibly on lower levels.
+% CTRL_AGENT_FAILED application experienced a fatal error: %1
+This is a debug message issued when the Control Agent application
+encounters an unrecoverable error from within the event loop.
+
+% CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
+This informational message indicates that the server has started HTTP service
+on the specified address and port. All control commands should be sent to this
+address and port.
+
+% CTRL_AGENT_RUN_EXIT application is exiting the event loop
+This is a debug message issued when the Control Agent exits its
+event loop.
+
+% CTRL_AGENT_STARTED Kea Control Agent version %1 started
+This informational message indicates that the Control Agent has
+processed all configuration information and is ready to begin processing.
+The version is also printed.

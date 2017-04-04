@@ -22,24 +22,24 @@ of the request. The first argument specifies the amount of received data.
 The second argument specifies an address of the remote endpoint which
 produced the data.
 
+% HTTP_REQUEST_RECEIVED received HTTP request from %1
+This debug message is issued when the server finished receiving a HTTP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
+
 % HTTP_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
-% HTTP_REQUEST_RECEIVED received HTTP request from %1
-This debug message is issued when the server finished receiving a HTTP
-request from the remote endpoint. The address of the remote endpoint is
-specified as an argument.
+% HTTP_REQUEST_TIMEOUT_OCCURRED HTTP request timeout occurred when communicating with %1
+This debug message is issued when the HTTP request timeout has occurred and
+the server is going to send a response with Http Request timeout status
+code.
 
 % HTTP_RESPONSE_SEND sending HTTP response %1 to %2
 This debug message is issued when the server is starting to send a HTTP
 response to a remote endpoint. The first argument holds basic information
 about the response (HTTP version number and status code). The second
 argument specifies an address of the remote endpoint.
-
-% HTTP_REQUEST_TIMEOUT_OCCURRED HTTP request timeout occurred when communicating with %1
-This debug message is issued when the HTTP request timeout has occurred and
-the server is going to send a response with Http Request timeout status
-code.

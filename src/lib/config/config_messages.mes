@@ -6,15 +6,15 @@
 
 $NAMESPACE isc::config
 
-% COMMAND_EXTENDED_REGISTERED Command %1 registered
-This debug message indicates that the daemon started supporting specified
-command. The handler for the registered command includes a parameter holding
-entire command to be processed.
-
 % COMMAND_DEREGISTERED Command %1 deregistered
 This debug message indicates that the daemon stopped supporting specified
 command. This command can no longer be issued. If the command socket is
 open and this command is issued, the daemon will not be able to process it.
+
+% COMMAND_EXTENDED_REGISTERED Command %1 registered
+This debug message indicates that the daemon started supporting specified
+command. The handler for the registered command includes a parameter holding
+entire command to be processed.
 
 % COMMAND_HOOK_RECEIVE_SKIP command %1 has been handled by the hook library which returned the skip state
 This debug message is issued when a hook library has processed the control
@@ -64,17 +64,17 @@ but may also mean a timeout.
 This is an informational message that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
 
-% COMMAND_SOCKET_FAIL_NONBLOCK Failed to set non-blocking mode for socket %1 created for incoming connection on socket %2: %3
-This error message indicates that the server failed to set non-blocking mode
-on just created socket. That socket was created for accepting specific
-incoming connection. Additional information may be provided as third parameter.
-
 % COMMAND_SOCKET_DUP_WARN Failed to duplicate socket for response: %1
 This debug message indicates that the commandReader was unable to duplicate
 the connection socket prior to executing the command. This is most likely a
 system resource issue.  The command should still be processed and the response
 sent, unless the command caused the command channel to be closed (e.g. a
 reconfiguration command).
+
+% COMMAND_SOCKET_FAIL_NONBLOCK Failed to set non-blocking mode for socket %1 created for incoming connection on socket %2: %3
+This error message indicates that the server failed to set non-blocking mode
+on just created socket. That socket was created for accepting specific
+incoming connection. Additional information may be provided as third parameter.
 
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
 This debug message indicates that specified number of bytes was received
