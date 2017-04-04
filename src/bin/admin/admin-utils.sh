@@ -22,7 +22,7 @@ mysql_execute() {
         mysql -N -B  $* -e "${QUERY}"
         retcode=$?
     else
-        mysql -N -B --user=$db_user --password=$db_password -e "${QUERY}" $db_name
+        mysql -N -B --host=$db_host --user=$db_user --password=$db_password -e "${QUERY}" $db_name
         retcode="$?"
     fi
 
@@ -52,7 +52,7 @@ pgsql_execute() {
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name
+        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h $db_host -q -U $db_user -d $db_name
         retcode=$?
     fi
     return $retcode
@@ -76,7 +76,7 @@ pgsql_execute_script() {
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U $db_user -d $db_name -f $file
+        psql --set ON_ERROR_STOP=1 -A -t -h $db_host -q -U $db_user -d $db_name -f $file
         retcode=$?
     fi
     return $retcode
