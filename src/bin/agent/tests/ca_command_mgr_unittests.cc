@@ -270,19 +270,19 @@ TEST_F(CtrlAgentCommandMgrTest, listCommands) {
 };
 
 /// Check that control command is successfully forwarded to the DHCPv4 server.
-TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv4Server) {
+TEST_F(CtrlAgentCommandMgrTest, DISABLED_forwardToDHCPv4Server) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP4, "dhcp4",
                 isc::config::CONTROL_RESULT_SUCCESS);
 }
 
 /// Check that control command is successfully forwarded to the DHCPv6 server.
-TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv6Server) {
+TEST_F(CtrlAgentCommandMgrTest, DISABLED_forwardToDHCPv6Server) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
                 isc::config::CONTROL_RESULT_SUCCESS);
 }
 
 /// Check that the same command is forwarded to multiple servers.
-TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
+TEST_F(CtrlAgentCommandMgrTest, DISABLED_forwardToBothDHCPServers) {
     configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP6);
 
     testForward(CtrlAgentCfgContext::TYPE_DHCP4, "dhcp4,dhcp6",
