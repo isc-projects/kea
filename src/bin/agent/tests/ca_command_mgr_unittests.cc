@@ -171,15 +171,12 @@ public:
     ///
     /// @param response Stub response to be sent from the server socket to the
     /// client.
-    /// @param stop_after_count Number of received messages received over the
-    /// server socket after which the IO service should be stopped.
-    void bindServerSocket(const std::string& response,
-                          const unsigned int stop_after_count = 1) {
+    void bindServerSocket(const std::string& response) {
         server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
                                                             unixSocketFilePath(),
                                                             TEST_TIMEOUT,
                                                             response));
-        server_socket_->bindServerSocket(stop_after_count);
+        server_socket_->bindServerSocket();
     }
 
     /// @brief Creates command with no arguments.
@@ -214,33 +211,52 @@ public:
     /// @param expected_result0 Expected first result in response from the server.
     /// @param expected_result1 Expected second result in response from the server.
     /// @param expected_result2 Expected third result in response from the server.
-    /// @param stop_after_count Number of received messages received over the
     /// server socket after which the IO service should be stopped.
+    /// @param expected_responses Number of responses after which the test finishes.
     /// @param server_response Stub response to be sent by the server.
     void testForward(const CtrlAgentCfgContext::ServerType& server_type,
                      const std::string& service,
                      const int expected_result0,
                      const int expected_result1 = -1,
                      const int expected_result2 = -1,
-                     const unsigned stop_after_count = 1,
+                     const size_t expected_responses = 1,
                      const std::string& server_response = "{ \"result\": 0 }") {
         // Configure client side socket.
         configureControlSocket(server_type);
         // Create server side socket.
-        bindServerSocket(server_response, stop_after_count);
+        bindServerSocket(server_response);
 
         // The client side communication is synchronous. To be able to respond
         // to this we need to run the server side socket at the same time.
         // Running IO service in a thread guarantees that the server responds
         // as soon as it receives the control command.
-        isc::util::thread::Thread(boost::bind(&IOService::run,
-                                              getIOService().get()));
+        isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
+                                              getIOService(), server_socket_,
+                                              expected_responses));
 
         ConstElementPtr command = createCommand("foo", service);
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
+    }
+
+    /// @brief Runs IO service until number of sent responses is lower than
+    /// expected.
+    ///
+    /// @param server_socket Pointer to the server socket.
+    /// @param expected_responses Number of expected responses.
+    static void runIO(IOServicePtr& io_service,
+                      const test::TestServerUnixSocketPtr& server_socket,
+                      const size_t expected_responses) {
+        while (server_socket->getResponseNum() < expected_responses) {
+            io_service->run_one();
+        }
+    }
+
+
+    CtrlAgentCommandMgrTest* getTestSelf() {
+        return (this);
     }
 
     /// @brief a convenience reference to control agent command manager
@@ -347,8 +363,8 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // to this we need to run the server side socket at the same time.
     // Running IO service in a thread guarantees that the server responds
     // as soon as it receives the control command.
-    isc::util::thread::Thread(boost::bind(&IOService::run,
-                                          getIOService().get()));
+    isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
+                                          getIOService(), server_socket_, 1));
 
     ConstElementPtr command = createCommand("list-commands", "dhcp4");
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
