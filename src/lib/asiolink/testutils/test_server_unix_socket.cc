@@ -17,14 +17,30 @@ namespace isc {
 namespace asiolink {
 namespace test {
 
+/// @brief ASIO unix domain socket.
 typedef stream_protocol::socket UnixSocket;
+
+/// @brief Pointer to the ASIO unix domain socket.
 typedef boost::shared_ptr<UnixSocket> UnixSocketPtr;
 
+/// @brief Callback function invoked when response is sent from the server.
 typedef std::function<void()> SentResponseCallback;
 
+/// @brief Connection to the server over unix domain socket.
+///
+/// It reads the data over the socket, sends responses and closes a socket.
 class Connection {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// It starts asynchronous read operation.
+    ///
+    /// @param unix_socket Pointer to the unix domain socket into which
+    /// connection has been accepted.
+    /// @param custom_response Custom response that the server should send.
+    /// @param sent_response_callback Callback function to be invoked when
+    /// server sends a response.
     Connection(const UnixSocketPtr& unix_socket,
                const std::string custom_response,
                const SentResponseCallback& sent_response_callback)
@@ -34,6 +50,9 @@ public:
            boost::bind(&Connection::readHandler, this, _1, _2));
     }
 
+    /// @brief Handler invoked when data have been received over the socket.
+    ///
+    /// @param bytes_transferred Number of bytes received.
     void
     readHandler(const boost::system::error_code&, size_t bytes_transferred) {
         if (!custom_response_.empty()) {
@@ -47,36 +66,61 @@ public:
                 boost::asio::buffer(response.c_str(), response.size()));
         }
 
+        // Invoke callback function to notify that the response has been sent.
         sent_response_callback_();
     }
 
+    /// @brief Closes the socket.
     void stop() {
         socket_->close();
     }
 
 private:
 
+    /// @brief Pointer to the unix domain socket.
     UnixSocketPtr socket_;
 
+    /// @brief Custom response to be sent to the client.
     std::string custom_response_;
 
     /// @brief Receive buffer.
     std::array<char, 1024> raw_buf_;
 
+    /// @brief Pointer to the callback function to be invoked when response
+    /// has been sent.
     SentResponseCallback sent_response_callback_;
 
 };
 
+/// @brief Pointer to a Connection object.
 typedef boost::shared_ptr<Connection> ConnectionPtr;
 
+/// @brief Connection pool.
+///
+/// Holds all connections established with the server and gracefully
+/// terminates these connections.
 class ConnectionPool {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// @param io_service Reference to the IO service.
     ConnectionPool(IOService& io_service)
         : io_service_(io_service), connections_(), next_socket_(),
           response_num_(0) {
     }
 
+    /// @brief Destructor.
+    ~ConnectionPool() {
+        stopAll();
+    }
+
+    /// @brief Creates new unix domain socket and returns it.
+    ///
+    /// This convenience method creates a socket which can be used to accept
+    /// new connections. If such socket already exists, it is returned.
+    ///
+    /// @return Pointer to the socket.
     UnixSocketPtr getSocket() {
         if (!next_socket_) {
             next_socket_.reset(new UnixSocket(io_service_.get_io_service()));
@@ -84,6 +128,14 @@ public:
         return (next_socket_);
     }
 
+    /// @brief Starts new connection.
+    ///
+    /// The socket returned by the @ref ConnectionPool::getSocket is used to
+    /// create new connection. Then, the @ref next_socket_ is reset, to force
+    /// the @ref ConnectionPool::getSocket to generate a new socket for a
+    /// next connection.
+    ///
+    /// @param custom_response Custom response to be sent to the client.
     void start(const std::string& custom_response) {
         ConnectionPtr conn(new Connection(next_socket_, custom_response, [this] {
             ++response_num_;
@@ -93,11 +145,15 @@ public:
         next_socket_.reset();
     }
 
+    /// @brief Stops the given connection.
+    ///
+    /// @param conn Pointer to the connection to be stopped.
     void stop(const ConnectionPtr& conn) {
         conn->stop();
         connections_.erase(conn);
     }
 
+    /// @brief Stops all connections.
     void stopAll() {
         for (auto conn = connections_.begin(); conn != connections_.end();
              ++conn) {
@@ -106,18 +162,25 @@ public:
         connections_.clear();
     }
 
+    /// @brief Returns number of responses sent so far.
     size_t getResponseNum() const {
         return (response_num_);
     }
 
 private:
 
+    /// @brief Reference to the IO service.
     IOService& io_service_;
 
+    /// @brief Container holding established connections.
     std::set<ConnectionPtr> connections_;
 
+    /// @brief Holds pointer to the generated socket.
+    ///
+    /// This socket will be used by the next connection.
     UnixSocketPtr next_socket_;
 
+    /// @brief Holds the number of sent responses.
     size_t response_num_;
 };
 
