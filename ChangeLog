@@ -1,3 +1,7 @@
+1237.	[bug]		marcin
+	Fixed hanging Control Agent unit tests.
+	(Trac #5200, git 65daafd135965f9eb0bd4c3a22085d4bd3c6ffbe)
+
 1236.	[build]		zeitounator
 	Improvements in tools/tests_in_valgrind.sh script.
 	(Github #49, git 272e7babf9ebeab5f78850394d72c9431041e2e9)
