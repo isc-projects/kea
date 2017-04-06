@@ -96,18 +96,19 @@ getSupportedParams6(const bool identifiers_only = false) {
 namespace isc {
 namespace dhcp {
 
-void
+HostPtr
 HostReservationParser::parse(const SubnetID& subnet_id,
                              isc::data::ConstElementPtr reservation_data) {
-    parseInternal(subnet_id, reservation_data);
+    return (parseInternal(subnet_id, reservation_data));
 }
 
-void
+HostPtr
 HostReservationParser::parseInternal(const SubnetID&,
                                      isc::data::ConstElementPtr reservation_data) {
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
+    HostPtr host;
 
     try {
         // Gather those parameters that are common for both IPv4 and IPv6
@@ -153,7 +154,7 @@ HostReservationParser::parseInternal(const SubnetID&,
         }
 
         // Create a host object from the basic parameters we already parsed.
-        host_.reset(new Host(identifier, identifier_name, SubnetID(0),
+        host.reset(new Host(identifier, identifier_name, SubnetID(0),
                              SubnetID(0), IOAddress("0.0.0.0"), hostname));
 
     } catch (const std::exception& ex) {
@@ -161,18 +162,8 @@ HostReservationParser::parseInternal(const SubnetID&,
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << reservation_data->getPosition() << ")");
     }
-}
 
-void
-HostReservationParser::addHost(isc::data::ConstElementPtr reservation_data) {
-    try {
-        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host_);
-
-    } catch (const std::exception& ex) {
-        // Append line number to the exception string.
-        isc_throw(DhcpConfigError, ex.what() << " ("
-                  << reservation_data->getPosition() << ")");
-    }
+    return (host);
 }
 
 bool
@@ -185,19 +176,19 @@ HostReservationParser::isSupportedParameter(const std::string& param_name) const
     return (getSupportedParameters(false).count(param_name) > 0);
 }
 
-void
+HostPtr
 HostReservationParser4::parseInternal(const SubnetID& subnet_id,
                                       isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::parseInternal(subnet_id, reservation_data);
+    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv4SubnetID(subnet_id);
+    host->setIPv4SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // For 'option-data' element we will use another parser which
         // already returns errors with position appended, so don't
         // surround it with try-catch.
         if (element.first == "option-data") {
-            CfgOptionPtr cfg_option = host_->getCfgOption4();
+            CfgOptionPtr cfg_option = host->getCfgOption4();
 
             // This parser is converted to SimpleParser already. It
             // parses the Element structure immediately, there's no need
@@ -210,21 +201,21 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
         } else {
             try {
                 if (element.first == "ip-address") {
-                    host_->setIPv4Reservation(IOAddress(element.second->
+                    host->setIPv4Reservation(IOAddress(element.second->
                                                         stringValue()));
                 } else if (element.first == "next-server") {
-                    host_->setNextServer(IOAddress(element.second->stringValue()));
+                    host->setNextServer(IOAddress(element.second->stringValue()));
 
                 } else if (element.first == "server-hostname") {
-                    host_->setServerHostname(element.second->stringValue());
+                    host->setServerHostname(element.second->stringValue());
 
                 } else if (element.first == "boot-file-name") {
-                    host_->setBootFileName(element.second->stringValue());
+                    host->setBootFileName(element.second->stringValue());
 
                 } else if (element.first == "client-classes") {
                     BOOST_FOREACH(ConstElementPtr class_element,
                                   element.second->listValue()) {
-                        host_->addClientClass4(class_element->stringValue());
+                        host->addClientClass4(class_element->stringValue());
                     }
                 }
 
@@ -236,7 +227,7 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
         }
     }
 
-    addHost(reservation_data);
+    return (host);
 }
 
 const std::set<std::string>&
@@ -244,12 +235,12 @@ HostReservationParser4::getSupportedParameters(const bool identifiers_only) cons
     return (getSupportedParams4(identifiers_only));
 }
 
-void
+HostPtr
 HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                                       isc::data::ConstElementPtr reservation_data) {
-    HostReservationParser::parseInternal(subnet_id, reservation_data);
+    HostPtr host = HostReservationParser::parseInternal(subnet_id, reservation_data);
 
-    host_->setIPv6SubnetID(subnet_id);
+    host->setIPv6SubnetID(subnet_id);
 
     BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
         // Parse option values. Note that the configuration option parser
@@ -257,7 +248,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
         // need to surround it with try-clause (and rethrow with position
         // appended).
         if (element.first == "option-data") {
-            CfgOptionPtr cfg_option = host_->getCfgOption6();
+            CfgOptionPtr cfg_option = host->getCfgOption6();
 
             // This parser is converted to SimpleParser already. It
             // parses the Element structure immediately, there's no need
@@ -318,7 +309,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                     }
 
                     // Create a reservation for an address or prefix.
-                    host_->addReservation(IPv6Resrv(resrv_type,
+                    host->addReservation(IPv6Resrv(resrv_type,
                                                     IOAddress(prefix),
                                                     prefix_len));
 
@@ -334,7 +325,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
             try {
                 BOOST_FOREACH(ConstElementPtr class_element,
                               element.second->listValue()) {
-                    host_->addClientClass6(class_element->stringValue());
+                    host->addClientClass6(class_element->stringValue());
                 }
             } catch (const std::exception& ex) {
                 // Append line number where the error occurred.
@@ -344,8 +335,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
         }
     }
 
-    // This may fail, but the addHost function will handle this on its own.
-    addHost(reservation_data);
+    return (host);
 }
 
 const std::set<std::string>&

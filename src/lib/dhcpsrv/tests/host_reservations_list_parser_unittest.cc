@@ -163,11 +163,15 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
+    HostCollection hosts;
     HostReservationsListParser<HostReservationParser4> parser;
-    ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element));
+    ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element, hosts));
+
+    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
 
     // Get the first reservation for the host identified by the HW address.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
@@ -229,8 +233,14 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
+        HostCollection hosts;
         HostReservationsListParser<HostReservationParser4> parser;
-        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
+        EXPECT_THROW({
+            parser.parse(SubnetID(1), config_element, hosts);
+            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+            }
+        }, isc::Exception);
     }
 }
 
@@ -254,11 +264,15 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration.
+    HostCollection hosts;
     HostReservationsListParser<HostReservationParser6> parser;
-    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element));
+    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element, hosts));
+
+    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
 
     // Get the reservation for the host identified by the HW address.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
@@ -338,8 +352,14 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
+        HostCollection hosts;
         HostReservationsListParser<HostReservationParser6> parser;
-        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
+        EXPECT_THROW({
+            parser.parse(SubnetID(1), config_element, hosts);
+            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+            }
+        }, isc::Exception);
     }
 }
 
