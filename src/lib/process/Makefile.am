@@ -57,6 +57,7 @@ libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
