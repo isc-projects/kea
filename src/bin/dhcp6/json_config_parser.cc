@@ -309,8 +309,12 @@ public:
         // Parse Host Reservations for this subnet if any.
         ConstElementPtr reservations = subnet->get("reservations");
         if (reservations) {
+            HostCollection hosts;
             HostReservationsListParser<HostReservationParser6> parser;
-            parser.parse(subnet_->getID(), reservations);
+            parser.parse(subnet_->getID(), reservations, hosts);
+            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+            }
         }
 
         return (sn6ptr);

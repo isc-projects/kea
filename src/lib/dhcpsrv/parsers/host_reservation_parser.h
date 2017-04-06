@@ -28,9 +28,11 @@ public:
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
+    /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
-    void parse(const SubnetID& subnet_id,
-               isc::data::ConstElementPtr reservation_data);
+    virtual HostPtr
+    parse(const SubnetID& subnet_id,
+          isc::data::ConstElementPtr reservation_data) final;
 
 protected:
 
@@ -44,20 +46,10 @@ protected:
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
+    /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(const SubnetID& subnet_id,
-                               isc::data::ConstElementPtr reservation_data);
-
-    /// @brief Inserts @c host_ object to the staging configuration.
-    ///
-    /// This method should be called by derived classes to insert the fully
-    /// parsed host reservation configuration to the @c CfgMgr.
-    ///
-    /// @param reservation_data Data element holding host reservation. It
-    /// used by this method to append the line number to the error string.
-    ///
-    /// @throw DhcpConfigError When operation to add a configured host fails.
-    void addHost(isc::data::ConstElementPtr reservation_data);
+    virtual HostPtr parseInternal(const SubnetID& subnet_id,
+                                  isc::data::ConstElementPtr reservation_data);
 
     /// @brief Checks if the specified parameter is a host identifier.
     ///
@@ -83,11 +75,6 @@ protected:
     /// @return Set of supported parameter names.
     virtual const std::set<std::string>&
     getSupportedParameters(const bool identifiers_only) const = 0;
-
-    /// @brief Holds a pointer to @c Host object representing a parsed
-    /// host reservation configuration.
-    HostPtr host_;
-
 };
 
 /// @brief Parser for a single host reservation for DHCPv4.
@@ -101,9 +88,10 @@ protected:
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
+    /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(const SubnetID& subnet_id,
-                               isc::data::ConstElementPtr reservation_data);
+    virtual HostPtr parseInternal(const SubnetID& subnet_id,
+                                  isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv4.
     ///
@@ -127,9 +115,10 @@ protected:
     /// @param reservation_data Data element holding map with a host
     /// reservation configuration.
     ///
+    /// @return Pointer to the object representing parsed host.
     /// @throw DhcpConfigError If the configuration is invalid.
-    virtual void parseInternal(const SubnetID& subnet_id,
-                               isc::data::ConstElementPtr reservation_data);
+    virtual HostPtr parseInternal(const SubnetID& subnet_id,
+                                  isc::data::ConstElementPtr reservation_data);
 
     /// @brief Returns set of the supported parameters for DHCPv6.
     ///
