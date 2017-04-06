@@ -318,7 +318,8 @@ TEST_F(CtrlAgentCommandMgrTest, failForwardToServer) {
 /// Check that control command is not forwarded if the service is not specified.
 TEST_F(CtrlAgentCommandMgrTest, noService) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP6, "",
-                isc::config::CONTROL_RESULT_COMMAND_UNSUPPORTED);
+                isc::config::CONTROL_RESULT_COMMAND_UNSUPPORTED,
+                -1, -1, 0);
 }
 
 /// Check that error is returned to the client when the server to which the
