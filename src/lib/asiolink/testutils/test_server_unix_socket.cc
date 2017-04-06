@@ -61,7 +61,13 @@ public:
     ///
     /// @param bytes_transferred Number of bytes received.
     void
-    readHandler(const boost::system::error_code&, size_t bytes_transferred) {
+    readHandler(const boost::system::error_code& ec,
+                size_t bytes_transferred) {
+        // This is most likely due to the abort.
+        if (ec) {
+            return;
+        }
+
         if (!custom_response_.empty()) {
             boost::asio::write(*socket_,
                boost::asio::buffer(custom_response_.c_str(), custom_response_.size()));
