@@ -26,6 +26,7 @@ man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
 EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
+EXTRA_DIST += dhcp6_parser.yy
 
 if GENERATE_DOCS
 
