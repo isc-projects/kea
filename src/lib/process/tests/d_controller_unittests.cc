@@ -418,6 +418,17 @@ TEST_F(DStubControllerTest, sigintShutdown) {
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
+// Verifies that version and extended version information is correct
+TEST_F(DStubControllerTest, getVersion) {
+    std::string text = controller_->getVersion(false);
+    EXPECT_EQ(text,VERSION);
+
+    text = controller_->getVersion(true);
+    EXPECT_NE(std::string::npos, text.find(VERSION));
+    EXPECT_NE(std::string::npos, text.find(EXTENDED_VERSION));
+    EXPECT_NE(std::string::npos, text.find(controller_->getVersionAddendum()));
+}
+
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigtermShutdown) {
     // Setup to raise SIGHUP in 1 ms.

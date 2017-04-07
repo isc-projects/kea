@@ -7,7 +7,6 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <cfgrpt/config_report.h>
-#include <cryptolink/cryptolink.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <log/logger.h>
@@ -674,20 +673,7 @@ DControllerBase::getVersion(bool extended) {
         tmp << std::endl << EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
-        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-        tmp << "database:" << std::endl;
-#ifdef HAVE_MYSQL
-        tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_CQL
-        tmp << isc::dhcp::CqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-        tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
-
-        // @todo: more details about database runtime
+        tmp << getVersionAddendum();
     }
 
     return (tmp.str());
