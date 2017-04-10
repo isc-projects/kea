@@ -212,6 +212,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
     identifiers.push_back("hw-address");
     identifiers.push_back("duid");
     identifiers.push_back("circuit-id");
+    identifiers.push_back("flex-id");
 
     for (unsigned int i = 0; i < identifiers.size(); ++i) {
         SCOPED_TRACE("Using identifier " + identifiers[i]);
@@ -236,11 +237,17 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
         HostCollection hosts;
         HostReservationsListParser<HostReservationParser4> parser;
         EXPECT_THROW({
-            parser.parse(SubnetID(1), config_element, hosts);
-            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
-            }
-        }, isc::Exception);
+                parser.parse(SubnetID(1), config_element, hosts);
+                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+                }
+            }, DuplicateHost);
+        // The code threw exception, because the second insertion failed.
+        // Nevertheless, the first host insertion succeeded, so the next
+        // time we try to insert them, we will get ReservedAddress exception,
+        // rather than DuplicateHost. Therefore we need to remove the
+        // first host that's still there.
+        CfgMgr::instance().clear();
     }
 }
 
@@ -331,6 +338,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
     std::vector<std::string> identifiers;
     identifiers.push_back("hw-address");
     identifiers.push_back("duid");
+    identifiers.push_back("flex-id");
 
     for (unsigned int i = 0; i < identifiers.size(); ++i) {
         SCOPED_TRACE("Using identifier " + identifiers[i]);
@@ -359,7 +367,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
             for (auto h = hosts.begin(); h != hosts.end(); ++h) {
                 CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
             }
-        }, isc::Exception);
+        }, DuplicateHost);
     }
 }
 

@@ -573,7 +573,9 @@ CfgHosts::add(const HostPtr& host) {
 
 void
 CfgHosts::add4(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+    /// @todo: Should we add this host at all if IPv4 subnet-id is 0?
+    /// Why, if it's IPv6-only host?
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
@@ -633,7 +635,16 @@ CfgHosts::add4(const HostPtr& host) {
                   << ": There's already a reservation for this address");
     }
 
-    /// @todo This may need further sanity checks.
+    // Check if the (identifier type, identifier) tuple is already used.
+    const std::vector<uint8_t>& id = host->getIdentifier();
+    if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
+        if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
+                 id.size())) {
+            isc_throw(DuplicateHost, "failed to add duplicate host using identifier: "
+                      << Host::getIdentifierAsText(host->getIdentifierType(),
+                                                   &id[0], id.size()));
+        }
+    }
 
     // This is a new instance - add it.
     hosts_.insert(host);
@@ -641,12 +652,25 @@ CfgHosts::add4(const HostPtr& host) {
 
 void
 CfgHosts::add6(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+
+    /// @todo: Should we add this host at all if IPv6 subnet-id is 0?
+    /// Why, if it's IPv4-only host?
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
     // Get all reservations for this host.
     IPv6ResrvRange reservations = host->getIPv6Reservations();
+
+    // Check if the (identifier type, identifier) tuple is already used.
+    const std::vector<uint8_t>& id = host->getIdentifier();
+    if ((host->getIPv6SubnetID() > 0) && !id.empty()) {
+        if (get6(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
+                 id.size())) {
+            isc_throw(DuplicateHost, "failed to add duplicate host using identifier: "
+                      << Host::getIdentifierAsText(host->getIdentifierType(),
+                                                   &id[0], id.size()));
+        }
+    }
 
     // Check if there are any IPv6 reservations.
     if (std::distance(reservations.first, reservations.second) == 0) {
