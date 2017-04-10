@@ -573,14 +573,13 @@ CfgHosts::add(const HostPtr& host) {
 
 void
 CfgHosts::add4(const HostPtr& host) {
-    /// @todo: Should we add this host at all if IPv4 subnet-id is 0?
-    /// Why, if it's IPv6-only host?
 
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
     // There should be at least one resource reserved: hostname, IPv4
     // address, siaddr, sname, file or IPv6 address or prefix.
+    /// @todo: this check should be done in add(), not in add4()
     if (host->getHostname().empty() &&
         (host->getIPv4Reservation().isV4Zero()) &&
         !host->hasIPv6Reservation() &&
@@ -601,6 +600,11 @@ CfgHosts::add4(const HostPtr& host) {
                   << " must include at least one resource, i.e. "
                   "hostname, IPv4 address, IPv6 address/prefix, "
                   "options");
+    }
+
+    if (host->getIPv4SubnetID() == 0) {
+        // This is IPv6-only host. No need to add it to v4 tables.
+        return;
     }
 
     // Check for duplicates for the specified IPv4 subnet.
@@ -640,7 +644,7 @@ CfgHosts::add4(const HostPtr& host) {
     if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
         if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
                  id.size())) {
-            isc_throw(DuplicateHost, "failed to add duplicate host using identifier: "
+            isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
                       << Host::getIdentifierAsText(host->getIdentifierType(),
                                                    &id[0], id.size()));
         }
@@ -653,8 +657,11 @@ CfgHosts::add4(const HostPtr& host) {
 void
 CfgHosts::add6(const HostPtr& host) {
 
-    /// @todo: Should we add this host at all if IPv6 subnet-id is 0?
-    /// Why, if it's IPv4-only host?
+    if (host->getIPv6SubnetID() == 0) {
+        // This is IPv4-only host. No need to add it to v6 tables.
+        return;
+    }
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
@@ -664,9 +671,9 @@ CfgHosts::add6(const HostPtr& host) {
     // Check if the (identifier type, identifier) tuple is already used.
     const std::vector<uint8_t>& id = host->getIdentifier();
     if ((host->getIPv6SubnetID() > 0) && !id.empty()) {
-        if (get6(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
+        if (get6(host->getIPv6SubnetID(), host->getIdentifierType(), &id[0],
                  id.size())) {
-            isc_throw(DuplicateHost, "failed to add duplicate host using identifier: "
+            isc_throw(DuplicateHost, "failed to add duplicate IPv6 host using identifier: "
                       << Host::getIdentifierAsText(host->getIdentifierType(),
                                                    &id[0], id.size()));
         }
