@@ -476,9 +476,12 @@ private:
     ReturnType getHostInternal6(const asiolink::IOAddress& prefix,
                                 const uint8_t prefix_len) const;
 
-    /// @brief Adds a new host to the v4 collection.
+    /// @brief Adds a new host to the collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. Contrary to its
+    /// name, this is useful for both IPv4 and IPv6 hosts, as this adds the
+    /// host to hosts_ storage that is shared by both families. Notes that
+    /// for IPv6 host additional steps may be required (see @ref add6).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///
@@ -486,9 +489,11 @@ private:
     /// has already been added to the IPv4 subnet.
     virtual void add4(const HostPtr& host);
 
-    /// @brief Adds a new host to the v6 collection.
+    /// @brief Adds IPv6-specific reservation to hosts collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. This method adds
+    /// IPv6 reservations (IPv6 addresses or prefixes reserved) to the hosts6_
+    /// storage. Note the host has been added to the hosts_ already (in @ref add4).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///

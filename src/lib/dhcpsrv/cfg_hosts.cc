@@ -602,11 +602,6 @@ CfgHosts::add4(const HostPtr& host) {
                   "options");
     }
 
-    if (host->getIPv4SubnetID() == 0) {
-        // This is IPv6-only host. No need to add it to v4 tables.
-        return;
-    }
-
     // Check for duplicates for the specified IPv4 subnet.
     if ((host->getIPv4SubnetID() > 0) &&
         get4(host->getIPv4SubnetID(), hwaddr, duid)) {
@@ -667,17 +662,6 @@ CfgHosts::add6(const HostPtr& host) {
 
     // Get all reservations for this host.
     IPv6ResrvRange reservations = host->getIPv6Reservations();
-
-    // Check if the (identifier type, identifier) tuple is already used.
-    const std::vector<uint8_t>& id = host->getIdentifier();
-    if ((host->getIPv6SubnetID() > 0) && !id.empty()) {
-        if (get6(host->getIPv6SubnetID(), host->getIdentifierType(), &id[0],
-                 id.size())) {
-            isc_throw(DuplicateHost, "failed to add duplicate IPv6 host using identifier: "
-                      << Host::getIdentifierAsText(host->getIdentifierType(),
-                                                   &id[0], id.size()));
-        }
-    }
 
     // Check if there are any IPv6 reservations.
     if (std::distance(reservations.first, reservations.second) == 0) {
