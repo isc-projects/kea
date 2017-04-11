@@ -42,6 +42,10 @@ public:
     /// by convention this should match the executable name.
     static const char* d2_bin_name_;
 
+protected:
+    /// @brief Returns version info specific to D2
+    virtual std::string getVersionAddendum();
+
 private:
     /// @brief Creates an instance of the DHCP-DDNS specific application
     /// process.  This method is invoked during the process initialization

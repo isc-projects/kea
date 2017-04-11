@@ -115,7 +115,7 @@ public:
 
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref isc::dhcp::Daemon::getVersion()
-    static std::string getVersion(bool extended);
+    std::string getVersion(bool extended);
 
     /// @brief Acts as the primary entry point into the controller execution
     /// and provides the outermost application control logic:
@@ -586,6 +586,15 @@ protected:
     /// @param text is a string message which will preceded the usage text.
     /// This is intended to be used for specific usage violation messages.
     void usage(const std::string& text);
+
+    /// @brief Fetches text containing additional version specifics
+    ///
+    /// This method is provided so derivations can append any additional
+    /// desired information such as library dependencies to the extended
+    /// version text returned when DControllerBase::getVersion(true) is
+    /// invoked.
+    /// @return a string containing additonal version info
+    virtual std::string getVersionAddendum() { return (""); }
 
 private:
     /// @brief Name of the service under control.
