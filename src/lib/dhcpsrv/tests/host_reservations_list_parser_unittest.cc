@@ -163,11 +163,15 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
+    HostCollection hosts;
     HostReservationsListParser<HostReservationParser4> parser;
-    ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element));
+    ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element, hosts));
+
+    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
 
     // Get the first reservation for the host identified by the HW address.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
@@ -208,6 +212,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
     identifiers.push_back("hw-address");
     identifiers.push_back("duid");
     identifiers.push_back("circuit-id");
+    identifiers.push_back("flex-id");
 
     for (unsigned int i = 0; i < identifiers.size(); ++i) {
         SCOPED_TRACE("Using identifier " + identifiers[i]);
@@ -229,8 +234,20 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
+        HostCollection hosts;
         HostReservationsListParser<HostReservationParser4> parser;
-        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
+        EXPECT_THROW({
+                parser.parse(SubnetID(1), config_element, hosts);
+                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+                }
+            }, DuplicateHost);
+        // The code threw exception, because the second insertion failed.
+        // Nevertheless, the first host insertion succeeded, so the next
+        // time we try to insert them, we will get ReservedAddress exception,
+        // rather than DuplicateHost. Therefore we need to remove the
+        // first host that's still there.
+        CfgMgr::instance().clear();
     }
 }
 
@@ -254,11 +271,15 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration.
+    HostCollection hosts;
     HostReservationsListParser<HostReservationParser6> parser;
-    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element));
+    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element, hosts));
+
+    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-    HostCollection hosts;
 
     // Get the reservation for the host identified by the HW address.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
@@ -317,6 +338,7 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
     std::vector<std::string> identifiers;
     identifiers.push_back("hw-address");
     identifiers.push_back("duid");
+    identifiers.push_back("flex-id");
 
     for (unsigned int i = 0; i < identifiers.size(); ++i) {
         SCOPED_TRACE("Using identifier " + identifiers[i]);
@@ -338,8 +360,14 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
+        HostCollection hosts;
         HostReservationsListParser<HostReservationParser6> parser;
-        EXPECT_THROW(parser.parse(SubnetID(1), config_element), DhcpConfigError);
+        EXPECT_THROW({
+            parser.parse(SubnetID(1), config_element, hosts);
+            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+            }
+        }, DuplicateHost);
     }
 }
 
