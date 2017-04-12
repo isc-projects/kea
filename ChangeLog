@@ -1,3 +1,8 @@
+1239.	[func]		marcin
+	Implemented additional sanity checks when adding host
+	reservations into the configuration file.
+	(Trac #5207, git ea42c6f479918235ae4a67a60d08720e2664720c)
+
 1238.	[build]		tmark,tomek
 	Library version numbers bumped for release.
 	(Trac #5201	git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
