@@ -1001,4 +1001,93 @@ TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigInvalidEscape) {
                      "Using \\ in filename is not allowed.");
 }
 
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test6.json");
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // test6.json (and fail, because the file is not there).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test6.json': Unable to open file "
+              "test6.json\" }",
+              response);
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is not a valid JSON.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test7.json");
+
+    // Although Kea is smart, its AI routines are not smart enough to handle
+    // this one... at least not yet.
+    ofstream f("test7.json", ios::trunc);
+    f << "can u give me some addr?";
+    f.close();
+
+    // Now tell Kea to reload its config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    // Verify the reload will fail.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test7.json': "
+              "test7.json:1.1: Invalid character: c\" }",
+              response);
+
+    ::remove("test7.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is loaded correctly.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"subnet\": \"192.0.2.0/24\" },"
+        "        { \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    // This command should reload test8.json config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    ::remove("test8.json");
+}
+
 } // End of anonymous namespace
