@@ -208,8 +208,7 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
         LOG_ERROR(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Failed to reload configuration from file "
-                             + file));
+                             "Config reload failed:" + string(ex.what())));
     }
 }
 
