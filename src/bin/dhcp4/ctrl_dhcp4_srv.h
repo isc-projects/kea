@@ -34,14 +34,24 @@ public:
 
     /// @brief Initializes the server.
     ///
-    /// Depending on the configuration backend, it establishes msgq session,
-    /// reads the JSON file from disk or may perform any other setup
-    /// operation. For specific details, see actual implementation in
-    /// *_backend.cc
+    /// It reads the JSON file from disk or may perform any other setup
+    /// operation. In particular, it also install signal handlers.
     ///
-    /// This method may throw if initialization fails. Exception types may be
-    /// specific to used configuration backend.
+    /// This method may throw if initialization fails.
     void init(const std::string& config_file);
+
+    /// @brief loads specific config file
+    ///
+    /// This utility method is called whenever we know a filename of the config
+    /// and need to load it. It calls config-set command once the content of
+    /// the file has been loaded and verified to be a sane JSON configuration.
+    /// config-set handler will process the config file (load it as current
+    /// configuration).
+    ///
+    /// @param file_name name of the file to be loaded
+    /// @return status of the file loading and outcome of config-set
+    isc::data::ConstElementPtr
+    loadConfigFile(const std::string& file_name);
 
     /// @brief Performs cleanup, immediately before termination
     ///

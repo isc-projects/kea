@@ -383,10 +383,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"set-config\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -594,13 +594,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
               response);
 }
 
-// Check that the "set-config" command will replace current configuration
-TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
+// Check that the "config-set" command will replace current configuration
+TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp4_cfg_txt =
         "    \"Dhcp4\": { \n"
@@ -665,7 +665,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
@@ -691,7 +691,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << "}\n"                      // close dhcp4
         "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     sendUnixCommand(os.str(), response);
 
     // Should fail with a syntax error
@@ -720,7 +720,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
     // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the set-config command.
+    // Send the config-set command.
     sendUnixCommand(os.str(), response);
 
     // Verify the control channel socket no longer exists.
@@ -752,11 +752,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-reload");
+    checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
-    checkListCommands(rsp, "set-config");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
@@ -797,7 +798,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string config_test_txt = "{ \"command\": \"config-test\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp4_cfg_txt =
@@ -863,7 +864,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
