@@ -69,10 +69,12 @@ namespace {
 ///     - IP address 10.0.0.7 for HW address aa:bb:cc:dd:ee:ff
 ///     - IP address 10.0.0.8 for DUID 01:02:03:04:05
 ///     - IP address 10.0.0.9 for circuit-id 'charter950'
+///     - IP address 10.0.0.1 for client-id
 ///
 /// - Configuration 5:
 ///   - The same as configuration 4, but using the following order of
-///     host-reservation-identifiers: duid, circuit-id, hw-address.
+///     host-reservation-identifiers: duid, circuit-id, hw-address,
+///     client-id.
 ///
 /// - Configuration 6:
 ///   - This configuration provides reservations for next-server,
