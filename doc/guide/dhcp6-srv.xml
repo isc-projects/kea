@@ -951,9 +951,26 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-        Most of the parameters in the "option-data" structure are optional and
-        can be omitted in some circumstances as discussed in the
-        <xref linkend="dhcp6-option-data-defaults"/>.
+        Most of the parameters in the "option-data" structure are
+        optional and can be omitted in some circumstances as discussed
+        in the <xref linkend="dhcp6-option-data-defaults"/>. Only one
+        of name or code is required, so you don't need to specify
+        both. Space has a default value of "dhcp6", so you can skip
+        this as well if you define a regular (not encapsulated) DHCPv6
+        option.  Finally, csv-format defaults to true, so it too can
+        be skipped, unless you want to specify the option value as
+        hexstring. Therefore the above example can be simplified to:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "dns-servers",
+           "data": "2001:db8::cafe, 2001:db8::babe"</userinput>
+        },
+        ...
+    ]
+} </screen>
+
       </para>
 
 

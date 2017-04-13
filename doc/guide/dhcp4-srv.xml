@@ -923,22 +923,38 @@ temporarily override a list of interface names and listen on all interfaces.
         ...
     ]
 }
-</screen>
+        </screen>
+        Note that only one of name or code is required, you don't need to
+        specify both. Space has a default value of "dhcp4", so you can skip this
+        as well if you define a regular (not encapsulated) DHCPv4 option.
+        Finally, csv-format defaults to true, so it too can be skipped, unless
+        you want to specify the option value as hexstring. Therefore the
+        above example can be simplified to:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2"</userinput>
+        },
+        ...
+    ]
+} </screen>
+
       </para>
     <para>
-      The <command>name</command> parameter specifies the
-      option name. For a list of currently supported names, see
-      <xref linkend="dhcp4-std-options-list"/> below.
-      The <command>code</command> parameter specifies the option code, which must match one of the
-      values from that list. The next line specifies the option space, which must always
-      be set to "dhcp4" as these are standard DHCPv4 options. For
-      other option spaces, including custom option spaces, see <xref
+      The <command>name</command> parameter specifies the option name. For a
+      list of currently supported names, see <xref
+      linkend="dhcp4-std-options-list"/> below.  The <command>code</command>
+      parameter specifies the option code, which must match one of the values
+      from that list. The next line specifies the option space, which must
+      always be set to "dhcp4" as these are standard DHCPv4 options. For other
+      option spaces, including custom option spaces, see <xref
       linkend="dhcp4-option-spaces"/>. The next line specifies the format in
-      which the data will be entered: use of CSV (comma
-      separated values) is recommended. The sixth line gives the actual value to
-      be sent to clients. Data is specified as normal text, with
-      values separated by commas if more than one value is
-      allowed.
+      which the data will be entered: use of CSV (comma separated values) is
+      recommended. The sixth line gives the actual value to be sent to
+      clients. Data is specified as normal text, with values separated by commas
+      if more than one value is allowed.
     </para>
 
     <para>
@@ -1009,8 +1025,7 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         The currently supported standard DHCPv4 options are
-        listed in <xref linkend="dhcp4-std-options-list"/>
-        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        listed in <xref linkend="dhcp4-std-options-list"/>.
         The "Name" and "Code"
         are the values that should be used as a name in the option-data
         structures. "Type" designates the format of the data: the meanings of
@@ -1101,32 +1116,6 @@ This rather belong to the DDNS configuration
 <row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
-
-          </tbody>
-          </tgroup>
-        </table>
-      </para>
-
-      <para>
-        <table frame="all" id="dhcp4-std-options-list-part2">
-          <title>List of standard DHCPv4 options (continued)</title>
-          <tgroup cols='5'>
-          <colspec colname='name'/>
-          <colspec colname='code' align='center'/>
-          <colspec colname='type' align='center'/>
-          <colspec colname='array' align='center'/>
-          <colspec colname='always-returned' align='center'/>
-          <thead>
-            <row>
-              <entry>Name</entry>
-              <entry>Code</entry>
-              <entry>Type</entry>
-              <entry>Array?</entry>
-              <entry>Returned if not requested?</entry>
-            </row>
-          </thead>
-          <tbody>
-
 <row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
