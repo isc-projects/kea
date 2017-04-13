@@ -1,3 +1,7 @@
+1240.	[bug]		marcin
+	Corrected IOFetch unit test failures on Debian.
+	(Trac #5216, git a7c2946678c43aedfb2e3c37b9730a10067528f3)
+
 1239.	[func]		marcin
 	Implemented additional sanity checks when adding host
 	reservations into the configuration file.
