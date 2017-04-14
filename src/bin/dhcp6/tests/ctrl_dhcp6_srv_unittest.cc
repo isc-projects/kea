@@ -371,71 +371,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
-// Check that the "configReload" command will reload libraries
-TEST_F(CtrlDhcpv6SrvTest, configReload) {
-
-    // Sending commands for processing now requires a server that can process
-    // them.
-    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
-    ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv6Srv(0))
-    );
-
-    // Now execute the "config-reload" command.  This should cause the libraries
-    // to unload and to reload.
-
-    // Use empty parameters list
-    // Prepare configuration file.
-    string config_txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-        "  \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"preferred-lifetime\": 3000,"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet6\": [ { "
-        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
-        "    \"subnet\": \"2001:db8:1::/64\" "
-        " },"
-        " {"
-        "    \"pools\": [ { \"pool\": \"2001:db8:2::/80\" } ],"
-        "    \"subnet\": \"2001:db8:2::/64\", "
-        "    \"id\": 0"
-        " },"
-        " {"
-        "    \"pools\": [ { \"pool\": \"2001:db8:3::/80\" } ],"
-        "    \"subnet\": \"2001:db8:3::/64\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }}";
-
-    ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseJSON(config_txt));
-
-    // Make sure there are no subnets configured.
-    CfgMgr::instance().clear();
-
-    // Now send the command
-    int rcode = -1;
-    ConstElementPtr result =
-        ControlledDhcpv6Srv::processCommand("config-reload", config);
-    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode); // Expect success
-
-    // Check that the config was indeed applied.
-    const Subnet6Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    EXPECT_EQ(3, subnets->size());
-
-    // Clean up after the test.
-    CfgMgr::instance().clear();
-}
-
-// Check that the "set-config" command will replace current configuration
+// Check that the "config-set" command will replace current configuration
 TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp6_cfg_txt =
         "    \"Dhcp6\": { \n"
@@ -501,7 +443,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
@@ -527,7 +469,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         << "}\n"                      // close dhcp6
         "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     sendUnixCommand(os.str(), response);
 
     // Should fail with a syntax error
@@ -555,7 +497,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the set-config command.
+    // Send the config-set command.
     sendUnixCommand(os.str(), response);
 
     // Verify the control channel socket no longer exists.
@@ -579,7 +521,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string config_test_txt = "{ \"command\": \"config-test\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp6_cfg_txt =
@@ -646,7 +588,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
@@ -753,7 +695,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"set-config\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -982,12 +924,12 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
-    checkListCommands(rsp, "set-config");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
@@ -1083,6 +1025,96 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidEscape) {
                     "{ \"filename\": \"foo\\\\test5.json\" } }", response);
     checkConfigWrite(response, CONTROL_RESULT_ERROR,
                      "Using \\ in filename is not allowed.");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadMissingFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test6.json");
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // test6.json (and fail, because the file is not there).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload was rejected.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test6.json': Unable to open file "
+              "test6.json\" }",
+              response);
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is not a valid JSON.
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test7.json");
+
+    // Although Kea is smart, its AI routines are not smart enough to handle
+    // this one... at least not yet.
+    ofstream f("test7.json", ios::trunc);
+    f << "gimme some addr, bro!";
+    f.close();
+
+    // Now tell Kea to reload its config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload will fail.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test7.json': "
+              "test7.json:1.1: Invalid character: g\" }",
+              response);
+
+    ::remove("test7.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is loaded correctly.
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp6\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet6\": ["
+        "        { \"subnet\": \"2001:db8:1::/64\" },"
+        "        { \"subnet\": \"2001:db8:2::/64\" }"
+        "     ],"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    // This command should reload test8.json config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    ::remove("test8.json");
 }
 
 } // End of anonymous namespace
