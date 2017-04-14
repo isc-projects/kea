@@ -140,16 +140,39 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 }
 
 void
-HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
+HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) {
+    if (ec) {
+        // IO service has been stopped and the connection is probably
+        // going to be shutting down.
+        if (ec.value() == boost::asio::error::operation_aborted) {
+            return;
+
+        // EWOULDBLOCK and EAGAIN are special cases. Everything else is
+        // treated as fatal error.
+        } else if ((ec.value() != boost::asio::error::try_again) &&
+                   (ec.value() != boost::asio::error::would_block)) {
+            stopThisConnection();
+
+        // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
+        // read something from the socket on the next attempt. Just make sure
+        // we don't try to read anything now in case there is any garbage
+        // passed in length.
+        } else {
+            length = 0;
+        }
+    }
+
     if (length != 0) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                   HTTP_DATA_RECEIVED)
             .arg(length)
             .arg(getRemoteEndpointAddressAsText());
+
+        std::string s(&buf_[0], buf_[0] + length);
+        parser_->postBuffer(static_cast<void*>(buf_.data()), length);
+        parser_->poll();
     }
-    std::string s(&buf_[0], buf_[0] + length);
-    parser_->postBuffer(static_cast<void*>(buf_.data()), length);
-    parser_->poll();
+
     if (parser_->needData()) {
         doRead();
 
@@ -172,8 +195,26 @@ HttpConnection::socketReadCallback(boost::system::error_code, size_t length) {
 }
 
 void
-HttpConnection::socketWriteCallback(boost::system::error_code,
-                                    size_t length) {
+HttpConnection::socketWriteCallback(boost::system::error_code ec, size_t length) {
+    if (ec) {
+        // IO service has been stopped and the connection is probably
+        // going to be shutting down.
+        if (ec.value() == boost::asio::error::operation_aborted) {
+            return;
+
+        // EWOULDBLOCK and EAGAIN are special cases. Everything else is
+        // treated as fatal error.
+        } else if ((ec.value() != boost::asio::error::try_again) &&
+                   (ec.value() != boost::asio::error::would_block)) {
+            stopThisConnection();
+
+        // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
+        // read something from the socket on the next attempt.
+        } else {
+            doWrite();
+        }
+    }
+
     if (length <= output_buf_.size()) {
         output_buf_.erase(0, length);
         doWrite();
