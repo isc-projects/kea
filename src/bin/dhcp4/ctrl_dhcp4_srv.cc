@@ -438,15 +438,17 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
+    string txt = args? args->str() : "(none)";
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
+              .arg(command).arg(txt);
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
           "Server object not initialized, so can't process command '" +
-          command + "', arguments: '" + args->str() + "'.");
+          command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -488,7 +490,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
     } catch (const Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
                                           + command + "':" + ex.what() +
-                                          ", params: '" + args->str() + "'"));
+                                          ", params: '" + txt + "'"));
     }
 }
 

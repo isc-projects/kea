@@ -441,15 +441,17 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
+    string txt = args? args->str() : "(none)";
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
+              .arg(command).arg(txt);
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
           "Server object not initialized, can't process command '" +
-          command + "'.");
+          command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -630,18 +632,18 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
- 
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
         .arg(config->str());
- 
+
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
- 
+
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
             "Server object not initialized, can't process config.");
         return (no_srv);
     }
- 
+
     return (configureDhcp6Server(*srv, config, true));
 }
 
