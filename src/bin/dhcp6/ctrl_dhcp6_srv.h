@@ -34,14 +34,24 @@ public:
 
     /// @brief Initializes the server.
     ///
-    /// Depending on the configuration backend, it establishes msgq session,
-    /// reads the JSON file from disk or may perform any other setup
-    /// operation. For specific details, see actual implementation in
-    /// *_backend.cc
+    /// It reads the JSON file from disk or may perform any other setup
+    /// operation. In particular, it also install signal handlers.
     ///
-    /// This method may throw if initialization fails. Exception types may be
-    /// specific to used configuration backend.
+    /// This method may throw if initialization fails.
     void init(const std::string& config_file);
+
+    /// @brief loads specific configuration file
+    ///
+    /// This utility method is called whenever we know a filename of the config
+    /// and need to load it. It calls config-set command once the content of
+    /// the file has been loaded and verified to be a sane JSON configuration.
+    /// config-set handler will process the config file (apply it as current
+    /// configuration).
+    ///
+    /// @param file_name name of the file to be loaded
+    /// @return status of the file loading and outcome of config-set
+    isc::data::ConstElementPtr
+    loadConfigFile(const std::string& file_name);
 
     /// @brief Performs cleanup, immediately before termination
     ///
@@ -63,7 +73,7 @@ public:
     /// - config-reload
     /// - config-test
     /// - leases-reclaim
-    /// - libreload    
+    /// - libreload
     /// - shutdown
     /// ...
     ///
@@ -218,7 +228,7 @@ private:
     /// This handler processes version-get command, which returns
     /// over the control channel the -v and -V command line arguments.
     /// @param command (parameter ignored)
-    /// @param args (parameter ignored) 
+    /// @param args (parameter ignored)
     ///
     /// @return status of the command with the version in text and
     /// the extended version in arguments.
@@ -231,7 +241,7 @@ private:
     /// This handler processes build-report command, which returns
     /// over the control channel the -W command line argument.
     /// @param command (parameter ignored)
-    /// @param args (parameter ignored) 
+    /// @param args (parameter ignored)
     ///
     /// @return status of the command with the config report
     isc::data::ConstElementPtr

@@ -18,6 +18,7 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
+#include <signal.h>
 
 using namespace isc::data;
 using namespace isc::hooks;

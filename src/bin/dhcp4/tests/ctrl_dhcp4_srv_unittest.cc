@@ -1014,7 +1014,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
     // Tell the server to reload its configuration. It should attempt to load
     // test6.json (and fail, because the file is not there).
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
-    // Verify the configuration was successful.
+
+    // Verify the reload was rejected.
     EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
               "configuration error using file 'test6.json': Unable to open file "
               "test6.json\" }",
@@ -1034,15 +1035,16 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
     // Although Kea is smart, its AI routines are not smart enough to handle
     // this one... at least not yet.
     ofstream f("test7.json", ios::trunc);
-    f << "can u give me some addr?";
+    f << "gimme some addrs, bro!";
     f.close();
 
     // Now tell Kea to reload its config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
     // Verify the reload will fail.
     EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
               "configuration error using file 'test7.json': "
-              "test7.json:1.1: Invalid character: c\" }",
+              "test7.json:1.1: Invalid character: g\" }",
               response);
 
     ::remove("test7.json");
