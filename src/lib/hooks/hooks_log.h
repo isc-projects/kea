@@ -19,14 +19,14 @@ namespace hooks {
 /// Note that higher numbers equate to more verbose (and detailed) output.
 
 // The first level traces normal operations,
-const int HOOKS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int HOOKS_DBG_TRACE;
 
 // The next level traces each call to hook code.
-const int HOOKS_DBG_CALLS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int HOOKS_DBG_CALLS;
 
 // Additional information on the calls.  Report each call to a callout (even
 // if there are multiple callouts on a hook) and each status return.
-const int HOOKS_DBG_EXTENDED_CALLS = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int HOOKS_DBG_EXTENDED_CALLS;
 
 
 /// @brief Hooks Logger
