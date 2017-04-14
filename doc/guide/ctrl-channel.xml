@@ -252,7 +252,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         configuration used by the server. This command does not take any
         parameters. The configuration returned is roughly equal to the
         configuration that was loaded using -c command line option during server
-        start-up or later set using set-config command. However, there may be
+        start-up or later set using config-set command. However, there may be
         certain differences. Comments are not retained. If the original
         configuration used file inclusion, the returned configuration will
         include all parameters from all the included files.</para>
@@ -282,7 +282,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
      configuration for the target server along with an optional Logger
      configuration. As for the <command>-t</command> command some sanity checks
      are not performed so it is possible a configuration which successfully
-     passes this command will still fail in <command>set-config</command>
+     passes this command will still fail in <command>config-set</command>
      command or at launch time.
      The structure of the command is as follows:
       </para>
@@ -422,11 +422,11 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-list-commands -->
 
-    <section id="command-set-config">
-      <title>set-config</title>
+    <section id="command-config-set">
+      <title>config-set</title>
 
       <para>
-    The <emphasis>set-config</emphasis> command instructs the server to replace
+    The <emphasis>config-set</emphasis> command instructs the server to replace
     its current configuration with the new configuration supplied in the
     command's arguments. The supplied configuration is expected to be the full
     configuration for the target server along with an optional Logger
@@ -436,7 +436,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
 <screen>
 {
-    "command": "set-config",
+    "command": "config-set",
     "arguments":  {
         "&#60;server&#62;": {
         },
@@ -451,7 +451,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
 <screen>
 {
-    "command": "set-config",
+    "command": "config-set",
     "arguments":  {
         "Dhcp6": {
             :
@@ -479,7 +479,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     {"result": 1, "text": "unsupported parameter: BOGUS (&#60;string&#62;:16:26)" }
 </screen>
       </para>
-    </section> <!-- end of command-set-config -->
+    </section> <!-- end of command-config-set -->
 
     <section id="command-shutdown">
       <title>shutdown</title>
