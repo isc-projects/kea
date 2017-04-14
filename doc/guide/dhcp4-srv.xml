@@ -3725,11 +3725,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         <itemizedlist>
             <listitem>build-report</listitem>
             <listitem>config-get</listitem>
+            <listitem>config-set</listitem>
             <listitem>config-test</listitem>
             <listitem>config-write</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
-            <listitem>set-config</listitem>
             <listitem>shutdown</listitem>
             <listitem>version-get</listitem>
         </itemizedlist>
