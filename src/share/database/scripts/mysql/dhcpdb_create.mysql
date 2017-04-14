@@ -420,9 +420,9 @@ CREATE TABLE IF NOT EXISTS host_identifier_type (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO host_identifier_type VALUES (0, 'hw-address'); # Non-temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (1, 'duid');       # Temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (2, 'circuit-id'); # Prefix delegations
+INSERT INTO host_identifier_type VALUES (0, 'hw-address');
+INSERT INTO host_identifier_type VALUES (1, 'duid');
+INSERT INTO host_identifier_type VALUES (2, 'circuit-id');
 COMMIT;
 
 # Add a constraint that any identifier type value added to the hosts
@@ -479,6 +479,19 @@ ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
 UPDATE schema_version
 SET version = '5', minor = '0';
 # This line concludes database upgrade to version 5.0.
+
+# Add indexes for lease tables which will be used to perform searches
+# for all leases by subnet id.
+CREATE INDEX lease4_subnet_id ON lease4 (subnet_id ASC);
+CREATE INDEX lease6_subnet_id ON lease6 (subnet_id ASC);
+
+# Add missing 'client-id' host identifier type.
+INSERT INTO host_identifier_type VALUES (3, 'client-id');
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '1';
+# This line concludes database upgrade to version 5.1.
 
 # Notes:
 #

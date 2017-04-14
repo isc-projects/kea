@@ -483,6 +483,17 @@ UPDATE schema_version
 
 -- Schema 3.0 specification ends here.
 
+-- This is a placeholder for the changes between 3.0 and 3.1. Even if there
+-- are no further changes the schema version should be set to 3.1, because
+-- we have added a missing 'client-id' host reservation type entry in the
+-- 3.0 -> 3.1 upgrade script. This entry had been accidentally omitted when
+-- the 2.0 -> 3.0 upgrade script was created.
+
+-- Set 3.1 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '1';
+
+
 -- Commit the script transaction.
 COMMIT;
 
