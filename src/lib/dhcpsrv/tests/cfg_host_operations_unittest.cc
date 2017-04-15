@@ -97,6 +97,7 @@ TEST(CfgHostOperationsTest, createConfig4) {
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_HWADDR, 0));
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_DUID, 1));
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_CIRCUIT_ID, 2));
+    EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_CLIENT_ID, 3));
 }
 
 // This test verifies that the default DHCPv6 configuration is created

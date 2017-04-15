@@ -26,6 +26,7 @@ CfgHostOperations::createConfig4() {
     cfg->addIdentifierType("hw-address");
     cfg->addIdentifierType("duid");
     cfg->addIdentifierType("circuit-id");
+    cfg->addIdentifierType("client-id");
     return (cfg);
 }
 
