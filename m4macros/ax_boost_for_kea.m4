@@ -210,6 +210,7 @@ cat > conftest.cpp << EOF
 AUTOCONF_BOOST_LIB_VERSION=BOOST_LIB_VERSION
 EOF
 
+dnl CPPP is defined in configure to $CPP or $CPP -P
 BOOST_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_BOOST_LIB_VERSION=' | $SED -e 's/^AUTOCONF_BOOST_LIB_VERSION=//' -e 's/_/./g' -e 's/"//g' 2> /dev/null`
 if test -z "$BOOST_VERSION"; then
   BOOST_VERSION="unknown"

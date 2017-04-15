@@ -152,7 +152,6 @@ AC_DEFUN([KEA_CXX_TRY_FLAG], [
 ])
 
 CXX_VERSION="unknown"
-CPPP="$CPP"
 
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
@@ -190,6 +189,7 @@ if test "$CXX_DUMP_VERSION" \< "4.5"; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
+CPPP="$CPP"
 # gcc 5 preprocessor requires -P for checking its output
 if test "$CXX_DUMP_VERSION" \> "5"; then
        CPPP="$CPP -P"
