@@ -221,6 +221,12 @@ TEST_F(PgSqlHostDataSourceTest, get4ByCircuitId) {
     testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
 }
 
+// Test verifies if a host reservation can be added and later retrieved by
+// client-id.
+TEST_F(PgSqlHostDataSourceTest, get4ByClientId) {
+    testGet4ByIdentifier(Host::IDENT_CLIENT_ID);
+}
+
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(PgSqlHostDataSourceTest, hwaddrNotClientId1) {
     testHWAddrNotClientId();
