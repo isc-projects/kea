@@ -374,6 +374,9 @@ public:
     /// @return true if option has the format of OpaqueDataTuples type options.
     bool haveOpaqueDataTuplesFormat() const;
 
+    /// @brief Check if the option has format of CompressedFqdnList options.
+    bool haveCompressedFqdnListFormat() const;
+
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
@@ -577,6 +580,19 @@ public:
     }
 
 private:
+
+    /// @brief Factory function to create option with a compressed FQDN list.
+    ///
+    /// @param u universe (V4 or V6).
+    /// @param type option type.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
+    ///
+    /// @return instance of the DHCP option where FQDNs are uncompressed.
+    /// @throw InvalidOptionValue if data for the option is invalid.
+    OptionPtr factoryFqdnList(Option::Universe u,
+                              OptionBufferConstIter begin,
+                              OptionBufferConstIter end) const;
 
     /// @brief Creates an instance of an option having special format.
     ///
