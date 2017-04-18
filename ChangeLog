@@ -1,3 +1,9 @@
+1241.	[func]		fdupont
+	Support for tuple-based options added. DHCPv6 option
+	bootfile-param (code 60) can now be set in a more convenient
+	manner.
+	(Trac #4070, git xxx)
+
 1240.	[bug]		marcin
 	Corrected IOFetch unit test failures on Debian.
 	(Trac #5216, git a7c2946678c43aedfb2e3c37b9730a10067528f3)
