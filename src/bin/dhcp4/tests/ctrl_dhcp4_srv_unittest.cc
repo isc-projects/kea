@@ -383,10 +383,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"set-config\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -594,13 +594,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
               response);
 }
 
-// Check that the "set-config" command will replace current configuration
-TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
+// Check that the "config-set" command will replace current configuration
+TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp4_cfg_txt =
         "    \"Dhcp4\": { \n"
@@ -665,7 +665,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
@@ -691,7 +691,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
         << "}\n"                      // close dhcp4
         "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     sendUnixCommand(os.str(), response);
 
     // Should fail with a syntax error
@@ -720,7 +720,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, set_config) {
     // Verify the control channel socket exists.
     ASSERT_TRUE(fileExists(socket_path_));
 
-    // Send the set-config command.
+    // Send the config-set command.
     sendUnixCommand(os.str(), response);
 
     // Verify the control channel socket no longer exists.
@@ -752,11 +752,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-reload");
+    checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
-    checkListCommands(rsp, "set-config");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
@@ -797,7 +798,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"set-config\" \n";
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
     string config_test_txt = "{ \"command\": \"config-test\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp4_cfg_txt =
@@ -863,7 +864,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         << logger_txt
         << "}}";
 
-    // Send the set-config command
+    // Send the config-set command
     std::string response;
     sendUnixCommand(os.str(), response);
 
@@ -925,8 +926,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Verify the configuration was successful.
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
-	      "Control-socket, hook-libraries, and D2 configuration were "
-	      "sanity checked, but not applied.\" }",
+              "Control-socket, hook-libraries, and D2 configuration were "
+              "sanity checked, but not applied.\" }",
               response);
 
     // Check that the config was not applied
@@ -998,6 +999,97 @@ TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigInvalidEscape) {
                     "{ \"filename\": \"foo\\\\test5.json\" } }", response);
     checkConfigWrite(response, CONTROL_RESULT_ERROR,
                      "Using \\ in filename is not allowed.");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test6.json");
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // test6.json (and fail, because the file is not there).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload was rejected.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test6.json': Unable to open file "
+              "test6.json\" }",
+              response);
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is not a valid JSON.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test7.json");
+
+    // Although Kea is smart, its AI routines are not smart enough to handle
+    // this one... at least not yet.
+    ofstream f("test7.json", ios::trunc);
+    f << "gimme some addrs, bro!";
+    f.close();
+
+    // Now tell Kea to reload its config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload will fail.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+              "configuration error using file 'test7.json': "
+              "test7.json:1.1: Invalid character: g\" }",
+              response);
+
+    ::remove("test7.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is loaded correctly.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"subnet\": \"192.0.2.0/24\" },"
+        "        { \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    // This command should reload test8.json config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    ::remove("test8.json");
 }
 
 } // End of anonymous namespace
