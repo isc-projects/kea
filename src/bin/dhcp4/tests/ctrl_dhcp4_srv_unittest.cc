@@ -926,8 +926,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Verify the configuration was successful.
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
-	      "Control-socket, hook-libraries, and D2 configuration were "
-	      "sanity checked, but not applied.\" }",
+              "Control-socket, hook-libraries, and D2 configuration were "
+              "sanity checked, but not applied.\" }",
               response);
 
     // Check that the config was not applied
