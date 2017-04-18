@@ -22,6 +22,7 @@
 #include <signal.h>
 
 using namespace isc::config;
+using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::stats;
@@ -44,11 +45,11 @@ static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 void signalHandler(int signo) {
     // SIGHUP signals a request to reconfigure the server.
     if (signo == SIGHUP) {
-        isc::dhcp::ControlledDhcpv6Srv::processCommand("config-reload",
-                                                       ConstElementPtr());
+        ControlledDhcpv6Srv::processCommand("config-reload",
+                                            ConstElementPtr());
     } else if ((signo == SIGTERM) || (signo == SIGINT)) {
-        isc::dhcp::ControlledDhcpv6Srv::processCommand("shutdown",
-                                                       ConstElementPtr());
+        ControlledDhcpv6Srv::processCommand("shutdown",
+                                            ConstElementPtr());
     }
 }
 

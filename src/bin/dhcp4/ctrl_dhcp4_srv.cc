@@ -21,6 +21,7 @@
 #include <signal.h>
 
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::config;
 using namespace isc::stats;
@@ -40,9 +41,11 @@ namespace {
 void signalHandler(int signo) {
     // SIGHUP signals a request to reconfigure the server.
     if (signo == SIGHUP) {
-        isc::dhcp::ControlledDhcpv4Srv::processCommand("config-reload", ConstElementPtr());
+        ControlledDhcpv4Srv::processCommand("config-reload",
+                                            ConstElementPtr());
     } else if ((signo == SIGTERM) || (signo == SIGINT)) {
-        isc::dhcp::ControlledDhcpv4Srv::processCommand("shutdown", ConstElementPtr());
+        ControlledDhcpv4Srv::processCommand("shutdown",
+                                            ConstElementPtr());
     }
 }
 
