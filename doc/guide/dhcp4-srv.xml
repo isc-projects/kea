@@ -1338,6 +1338,12 @@ It is merely echoed by the server
        <command>"1"</command>. Future versions of Kea will accept all those values
        for all boolean parameters.</para>
      </note>
+     <note>
+       <para>Numbers can be specified in decimal or hexadecimal format.
+        The hexadecimal format can be either plain (e.g. abcd) or
+        prefixed with 0x (e.g. 0xabcd).
+       </para>
+     </note>
     </section>
 
     <section id="dhcp4-vendor-opts">
