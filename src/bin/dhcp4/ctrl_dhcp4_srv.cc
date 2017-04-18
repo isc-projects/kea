@@ -7,27 +7,162 @@
 #include <config.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
-#include <hooks/hooks_manager.h>
+#include <dhcp4/parser_context.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
-#include <config/command_mgr.h>
+#include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
+#include <signal.h>
 
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::config;
 using namespace isc::stats;
 using namespace std;
 
+namespace {
+
+/// @brief Signals handler for DHCPv4 server.
+///
+/// This signal handler handles the following signals received by the DHCPv4
+/// server process:
+/// - SIGHUP - triggers server's dynamic reconfiguration.
+/// - SIGTERM - triggers server's shut down.
+/// - SIGINT - triggers server's shut down.
+///
+/// @param signo Signal number received.
+void signalHandler(int signo) {
+    // SIGHUP signals a request to reconfigure the server.
+    if (signo == SIGHUP) {
+        ControlledDhcpv4Srv::processCommand("config-reload",
+                                            ConstElementPtr());
+    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+        ControlledDhcpv4Srv::processCommand("shutdown",
+                                            ConstElementPtr());
+    }
+}
+
+}
+
 namespace isc {
 namespace dhcp {
 
 ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
+
+void
+ControlledDhcpv4Srv::init(const std::string& file_name) {
+    // Configure the server using JSON file.
+    ConstElementPtr result = loadConfigFile(file_name);
+    int rcode;
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+    if (rcode != 0) {
+        string reason = comment ? comment->stringValue() :
+            "no details available";
+        isc_throw(isc::BadValue, reason);
+    }
+
+    // We don't need to call openActiveSockets() or startD2() as these
+    // methods are called in processConfig() which is called by
+    // processCommand("config-set", ...)
+
+    // Set signal handlers. When the SIGHUP is received by the process
+    // the server reconfiguration will be triggered. When SIGTERM or
+    // SIGINT will be received, the server will start shutting down.
+    signal_set_.reset(new isc::util::SignalSet(SIGINT, SIGHUP, SIGTERM));
+    // Set the pointer to the handler function.
+    signal_handler_ = signalHandler;
+}
+
+void ControlledDhcpv4Srv::cleanup() {
+    // Nothing to do here. No need to disconnect from anything.
+}
+
+/// @brief Configure DHCPv4 server using the configuration file specified.
+///
+/// This function is used to both configure the DHCP server on its startup
+/// and dynamically reconfigure the server when SIGHUP signal is received.
+///
+/// It fetches DHCPv4 server's configuration from the 'Dhcp4' section of
+/// the JSON configuration file.
+///
+/// @param file_name Configuration file location.
+/// @return status of the command
+ConstElementPtr
+ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
+    // This is a configuration backend implementation that reads the
+    // configuration from a JSON file.
+
+    isc::data::ConstElementPtr json;
+    isc::data::ConstElementPtr dhcp4;
+    isc::data::ConstElementPtr logger;
+    isc::data::ConstElementPtr result;
+
+    // Basic sanity check: file name must not be empty.
+    try {
+        if (file_name.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(isc::BadValue, "JSON configuration file not specified."
+                      " Please use -c command line option.");
+        }
+
+        // Read contents of the file and parse it as JSON
+        Parser4Context parser;
+        json = parser.parseFile(file_name, Parser4Context::PARSER_DHCP4);
+        if (!json) {
+            isc_throw(isc::BadValue, "no configuration found");
+        }
+
+        // Let's do sanity check before we call json->get() which
+        // works only for map.
+        if (json->getType() != isc::data::Element::map) {
+            isc_throw(isc::BadValue, "Configuration file is expected to be "
+                      "a map, i.e., start with { and end with } and contain "
+                      "at least an entry called 'Dhcp4' that itself is a map. "
+                      << file_name
+                      << " is a valid JSON, but its top element is not a map."
+                      " Did you forget to add { } around your configuration?");
+        }
+
+        // Use parsed JSON structures to configure the server
+        result = ControlledDhcpv4Srv::processCommand("config-set", json);
+        if (!result) {
+            // Undetermined status of the configuration. This should never
+            // happen, but as the configureDhcp4Server returns a pointer, it is
+            // theoretically possible that it will return NULL.
+            isc_throw(isc::BadValue, "undefined result of "
+                      "processCommand(\"config-set\", json)");
+        }
+
+        // Now check is the returned result is successful (rcode=0) or not
+        // (see @ref isc::config::parseAnswer).
+        int rcode;
+        ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+        if (rcode != 0) {
+            string reason = comment ? comment->stringValue() :
+                "no details available";
+            isc_throw(isc::BadValue, reason);
+        }
+    }  catch (const std::exception& ex) {
+        // If configuration failed at any stage, we drop the staging
+        // configuration and continue to use the previous one.
+        CfgMgr::instance().rollback();
+
+        LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
+            .arg(file_name).arg(ex.what());
+        isc_throw(isc::BadValue, "configuration error using file '"
+                  << file_name << "': " << ex.what());
+    }
+
+    return (result);
+}
+
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr) {
@@ -63,9 +198,22 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
-                                                ConstElementPtr args) {
-    // Use set-config as it handles logging and server config
-    return (commandSetConfigHandler("set-config", args));
+                                                ConstElementPtr /*args*/) {
+
+    // Get configuration file name.
+    std::string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
+    try {
+        LOG_INFO(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION).arg(file);
+        return (loadConfigFile(file));
+    } catch (const std::exception& ex) {
+        // Log the unsuccessful reconfiguration. The reason for failure
+        // should be already logged. Don't rethrow an exception so as
+        // the server keeps working.
+        LOG_ERROR(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
+            .arg(file);
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Config reload failed:" + string(ex.what())));
+    }
 }
 
 ConstElementPtr
@@ -147,7 +295,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
+ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
@@ -293,15 +441,17 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
+    string txt = args ? args->str() : "(none)";
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
+              .arg(command).arg(txt);
 
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
           "Server object not initialized, so can't process command '" +
-          command + "', arguments: '" + args->str() + "'.");
+          command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -315,8 +465,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
 
-        } else if (command == "set-config") {
-            return (srv->commandSetConfigHandler(command, args));
+        } else if (command == "config-set") {
+            return (srv->commandConfigSetHandler(command, args));
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
@@ -343,7 +493,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
     } catch (const Exception& ex) {
         return (isc::config::createAnswer(1, "Error while processing command '"
                                           + command + "':" + ex.what() +
-                                          ", params: '" + args->str() + "'"));
+                                          ", params: '" + txt + "'"));
     }
 }
 
@@ -491,7 +641,11 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("config-get",
         boost::bind(&ControlledDhcpv4Srv::commandConfigGetHandler, this, _1, _2));
 
-    /// @todo: register config-reload (see CtrlDhcpv4Srv::commandConfigReloadHandler)
+    CommandMgr::instance().registerCommand("config-reload",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigReloadHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("config-set",
+        boost::bind(&ControlledDhcpv4Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-test",
         boost::bind(&ControlledDhcpv4Srv::commandConfigTestHandler, this, _1, _2));
@@ -504,9 +658,6 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
-
-    CommandMgr::instance().registerCommand("set-config",
-        boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
@@ -555,11 +706,12 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-reload");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
-        CommandMgr::instance().deregisterCommand("set-config");
+        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
