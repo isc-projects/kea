@@ -249,30 +249,11 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
         // filename parameter was not specified, so let's use whatever we remember
         // from the command-line
         filename = getConfigFile();
-        if (filename.empty()) {
-            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
-                                 "Please specify filename explicitly."));
-        }
     }
 
-    // Now do the sanity checks on the filename
-    if (filename.find("..") != string::npos) {
-        // Trying to escape the directory with .. nope.
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Using '..' in filename is not allowed."));
-    }
-
-    if (filename.find("\\") != string::npos) {
-        // Trying to inject escapes (possibly to inject quotes and something
-        // nasty afterward)
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Using \\ in filename is not allowed."));
-    }
-
-    if (filename[0] == '/') {
-        // Absolute paths are not allowed.
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Absolute path in filename is not allowed."));
+    if (filename.empty()) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
+                             "Please specify filename explicitly."));
     }
 
     // Ok, it's time to write the file.
