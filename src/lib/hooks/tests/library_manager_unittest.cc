@@ -128,6 +128,13 @@ public:
 };
 
 
+// Check that LibraryManager constructor requires a not null manager
+
+TEST_F(LibraryManagerTest, NullManager) {
+    EXPECT_THROW(PublicLibraryManager(std::string("foo"), 0, 0),
+                 NoCalloutManager);
+}
+
 // Check that openLibrary() reports an error when it can't find the specified
 // library.
 

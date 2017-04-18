@@ -555,6 +555,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();
     ASSERT_TRUE(mgr);
+    EXPECT_EQ("forward-ddns", mgr->getName());
 
     // Verify that the forward manager has the correct number of domains.
     DdnsDomainMapPtr domains = mgr->getDomains();
@@ -578,6 +579,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // Verify that the reverse manager can be retrieved.
     mgr = context->getReverseMgr();
     ASSERT_TRUE(mgr);
+    EXPECT_EQ("reverse-ddns", mgr->getName());
 
     // Verify that the reverse manager has the correct number of domains.
     domains = mgr->getDomains();
