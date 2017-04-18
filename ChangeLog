@@ -2,7 +2,7 @@
 	Support for tuple-based options added. DHCPv6 option
 	bootfile-param (code 60) can now be set in a more convenient
 	manner.
-	(Trac #4070, git xxx)
+	(Trac #4070, git 30102cacee95b91e6c4666f0c11f06232f19eeb9)
 
 1240.	[bug]		marcin
 	Corrected IOFetch unit test failures on Debian.
