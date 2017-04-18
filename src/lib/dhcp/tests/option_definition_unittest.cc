@@ -18,6 +18,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_opaque_data_tuples.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
@@ -1508,6 +1509,212 @@ TEST_F(OptionDefinitionTest, psidArrayTokenized) {
     psid2 = option_cast_v6->readPsid(2);
     EXPECT_EQ(3, psid2.first.asUnsigned());
     EXPECT_EQ(7, psid2.second.asUint16());
+}
+
+// This test verifies that a definition of an option with a single DHCPv4
+// tuple can be created and used to create an instance of the option.
+TEST_F(OptionDefinitionTest, tuple4) {
+    OptionDefinition opt_def("option-tuple", 232, "tuple");
+
+    OptionPtr option;
+
+    // Create a buffer holding tuple
+    const char data[] = {
+        6, 102, 111, 111, 98, 97, 114 // "foobar"
+    };
+    OptionBuffer buf(data, data + sizeof(data));
+
+    // Create an instance of this option from the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V4, 232, buf);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    ASSERT_NO_THROW(option_cast->readTuple(tuple));
+    EXPECT_EQ("foobar", tuple.getText());
+}
+
+// This test verifies that a definition of an option with a single DHCPv6
+// tuple can be created and used to create an instance of the option.
+TEST_F(OptionDefinitionTest, tuple6) {
+    OptionDefinition opt_def("option-tuple", 1000, "tuple");
+
+    OptionPtr option;
+
+    // Create a buffer holding tuple
+    const char data[] = {
+        0, 6, 102, 111, 111, 98, 97, 114 // "foobar"
+    };
+    OptionBuffer buf(data, data + sizeof(data));
+
+    // Create an instance of this option from the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V6, 1000, buf);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    ASSERT_NO_THROW(option_cast->readTuple(tuple));
+    EXPECT_EQ("foobar", tuple.getText());
+}
+
+// This test verifies that a definition of an option with a single DHCPv4
+// tuple can be created and that the instance of this option can be
+// created by specifying tuple value in the textual format.
+TEST_F(OptionDefinitionTest, tuple4Tokenized) {
+    OptionDefinition opt_def("option-tuple", 232, "tuple");
+
+    OptionPtr option;
+    // Specify a single tuple with "foobar" content.
+    std::vector<std::string> values(1, "foobar");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V4, 232, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    ASSERT_NO_THROW(option_cast->readTuple(tuple));
+    EXPECT_EQ("foobar", tuple.getText());
+}    
+
+// This test verifies that a definition of an option with a single DHCPv6
+// tuple can be created and that the instance of this option can be
+// created by specifying tuple value in the textual format.
+TEST_F(OptionDefinitionTest, tuple6Tokenized) {
+    OptionDefinition opt_def("option-tuple", 1000, "tuple");
+
+    OptionPtr option;
+    // Specify a single tuple with "foobar" content.
+    std::vector<std::string> values(1, "foobar");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
+
+    // Validate the value.
+    OptionCustomPtr option_cast =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    ASSERT_NO_THROW(option_cast->readTuple(tuple));
+    EXPECT_EQ("foobar", tuple.getText());
+}    
+
+// This test verifies that a definition of an option with an array
+// of DHCPv4 tuples can be created and that the instance of this option
+// can be created by specifying multiple DHCPv4 tuples in the textual format.
+TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
+    OptionDefinition opt_def("option-tuple", 232, "tuple", true);
+
+    OptionPtr option;
+
+    // Specify 3 tuples.
+    std::vector<std::string> values;
+    values.push_back("hello");
+    values.push_back("the");
+    values.push_back("world");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V4, 232, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionOpaqueDataTuples));
+
+    // Validate the value.
+    OptionOpaqueDataTuplesPtr option_cast =
+        boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
+
+    // There should be 3 tuples in this option.
+    ASSERT_EQ(3, option_cast->getTuplesNum());
+
+    // Check their values.
+    OpaqueDataTuple tuple0 = option_cast->getTuple(0);
+    EXPECT_EQ("hello", tuple0.getText());
+
+    OpaqueDataTuple tuple1 = option_cast->getTuple(1);
+    EXPECT_EQ("the", tuple1.getText());
+
+    OpaqueDataTuple tuple2 = option_cast->getTuple(2);
+    EXPECT_EQ("world", tuple2.getText());
+}
+
+// This test verifies that a definition of an option with an array
+// of DHCPv6 tuples can be created and that the instance of this option
+// can be created by specifying multiple DHCPv6 tuples in the textual format.
+TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
+    OptionDefinition opt_def("option-tuple", 1000, "tuple", true);
+
+    OptionPtr option;
+
+    // Specify 3 tuples.
+    std::vector<std::string> values;
+    values.push_back("hello");
+    values.push_back("the");
+    values.push_back("world");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V6, 1000, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionOpaqueDataTuples));
+
+    // Validate the value.
+    OptionOpaqueDataTuplesPtr option_cast =
+        boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
+
+    // There should be 3 tuples in this option.
+    ASSERT_EQ(3, option_cast->getTuplesNum());
+
+    // Check their values.
+    OpaqueDataTuple tuple0 = option_cast->getTuple(0);
+    EXPECT_EQ("hello", tuple0.getText());
+
+    OpaqueDataTuple tuple1 = option_cast->getTuple(1);
+    EXPECT_EQ("the", tuple1.getText());
+
+    OpaqueDataTuple tuple2 = option_cast->getTuple(2);
+    EXPECT_EQ("world", tuple2.getText());
 }
 
 } // anonymous namespace

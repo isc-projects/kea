@@ -205,6 +205,14 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         case OPT_STRING_TYPE:
             return (OptionPtr(new OptionString(u, type, begin, end)));
 
+        case OPT_TUPLE_TYPE:
+            // Handle array type only here (see comments for
+            // OPT_IPV4_ADDRESS_TYPE case).
+            if (array_type_) {
+                return (factoryOpaqueDataTuples(u, type, begin, end));
+            }
+            break;
+
         default:
             // Do nothing. We will return generic option a few lines down.
             ;
@@ -231,11 +239,11 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
         } else {
-            writeToBuffer(util::str::trim(values[0]), type_, buf);
+            writeToBuffer(u, util::str::trim(values[0]), type_, buf);
         }
     } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
         for (size_t i = 0; i < values.size(); ++i) {
-            writeToBuffer(util::str::trim(values[i]), type_, buf);
+            writeToBuffer(u, util::str::trim(values[i]), type_, buf);
         }
     } else if (type_ == OPT_RECORD_TYPE) {
         const RecordFieldsCollection& records = getRecordFields();
@@ -245,8 +253,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                       << " of values provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
-            writeToBuffer(util::str::trim(values[i]),
-                          records[i], buf);
+            writeToBuffer(u, util::str::trim(values[i]), records[i], buf);
         }
     }
     return (optionFactory(u, type, buf.begin(), buf.end()));
@@ -433,7 +440,7 @@ OptionDefinition::haveStatusCodeFormat() const {
 
 bool
 OptionDefinition::haveOpaqueDataTuplesFormat() const {
-    return (getType() == OPT_BINARY_TYPE);
+    return (haveType(OPT_TUPLE_TYPE) && getArrayType());
 }
 
 bool
@@ -507,7 +514,8 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
 }
 
 void
-OptionDefinition::writeToBuffer(const std::string& value,
+OptionDefinition::writeToBuffer(Option::Universe u,
+                                const std::string& value,
                                 const OptionDataType type,
                                 OptionBuffer& buf) const {
     // We are going to write value given by value argument to the buffer.
@@ -653,6 +661,13 @@ OptionDefinition::writeToBuffer(const std::string& value,
     case OPT_FQDN_TYPE:
         OptionDataTypeUtil::writeFqdn(value, buf);
         return;
+    case OPT_TUPLE_TYPE:
+    {
+        OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
+            OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+        OptionDataTypeUtil::writeTuple(value, lft, buf);
+        return;
+    }
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been
@@ -740,6 +755,17 @@ OptionDefinition::factoryIAPrefix6(uint16_t type,
 }
 
 OptionPtr
+OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
+                                          uint16_t type,
+                                          OptionBufferConstIter begin,
+                                          OptionBufferConstIter end) {
+    boost::shared_ptr<OptionOpaqueDataTuples>
+        option(new OptionOpaqueDataTuples(u, type, begin, end));
+
+    return (option);
+}
+
+OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end) const {
@@ -778,7 +804,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option6StatusCode(begin, end)));
         } else if (getCode() == D6O_BOOTFILE_PARAM && haveOpaqueDataTuplesFormat()) {
             // Bootfile params (option code 60)
-            return (OptionPtr(new OptionOpaqueDataTuples(Option::V6, getCode(), begin, end)));
+            return (factoryOpaqueDataTuples(Option::V6, getCode(), begin, end));
         } else if ((getCode() == D6O_PD_EXCLUDE) && haveType(OPT_IPV6_PREFIX_TYPE)) {
             // Prefix Exclude (option code 67)
             return (OptionPtr(new Option6PDExclude(begin, end)));

@@ -85,7 +85,9 @@ class OptionIntArray;
 /// value. For example, DHCPv6 option 8 comprises a two-byte option code, a
 /// two-byte option length and two-byte field that carries a uint16 value
 /// (RFC 3315 - http://ietf.org/rfc/rfc3315.txt).  In such a case, the option
-/// type is defined as "uint16".
+/// type is defined as "uint16". Length and string tuples are a length
+/// on one (DHCPv4) or two (DHCPv6) bytes followed by a string of
+/// the given length.
 ///
 /// When the option has a more complex structure, the option type may be
 /// defined as "array", "record" or even "array of records".
@@ -123,6 +125,7 @@ class OptionIntArray;
 /// - "psid" (PSID length / value)
 /// - "string"
 /// - "fqdn" (fully qualified name)
+/// - "tuple" (length and string)
 /// - "record" (set of data fields of different types)
 ///
 /// @todo Extend the comment to describe "generic factories".
@@ -518,6 +521,20 @@ public:
                                       OptionBufferConstIter begin,
                                       OptionBufferConstIter end);
 
+    /// @brief Factory to create option with tuple list.
+    ///
+    /// @param u option universe (V4 or V6).
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of tuples.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of tuples.
+    ///
+    /// @return instance of the DHCP option.
+    static OptionPtr factoryOpaqueDataTuples(Option::Universe u,
+                                             uint16_t type,
+                                             OptionBufferConstIter begin,
+                                             OptionBufferConstIter end);
+
     /// @brief Factory function to create option with integer value.
     ///
     /// @param u universe (V4 or V6).
@@ -644,13 +661,14 @@ private:
     /// if it is successful it will store the data in the buffer
     /// in a binary format.
     ///
+    /// @param u option universe (V4 or V6).
     /// @param value string representation of the value to be written.
     /// @param type the actual data type to be stored.
     /// @param [in, out] buf buffer where the value is to be stored.
     ///
     /// @throw BadDataTypeCast if data write was unsuccessful.
-    void writeToBuffer(const std::string& value, const OptionDataType type,
-                       OptionBuffer& buf) const;
+    void writeToBuffer(Option::Universe u, const std::string& value,
+                       const OptionDataType type, OptionBuffer& buf) const;
 
     /// Option name.
     std::string name_;
