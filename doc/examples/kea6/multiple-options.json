@@ -73,6 +73,13 @@
             {
                 "code": 12,
                 "data": "2001:db8:1:0:ff00::1"
+            },
+            // Options that take integer values can either be specified in
+            // dec or hex format. Hex format could be either plain (e.g. abcd)
+            // or prefixed with 0x (e.g. 0xabcd).
+            {
+                "name": "preference",
+                "data": "0xf0"
             }
       ],
       "pools": [
