@@ -195,9 +195,9 @@ private:
     commandConfigWriteHandler(const std::string& command,
                               isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'set-config' command
+    /// @brief handler for processing 'config-set' command
     ///
-    /// This handler processes set-config command, which processes
+    /// This handler processes config-set command, which processes
     /// configuration specified in args parameter.
     /// @param command (parameter ignored)
     /// @param args configuration to be processed. Expected format:
