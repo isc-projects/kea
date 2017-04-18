@@ -371,7 +371,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 <screen>
 {
     "command": "config-write",
-    "parameters": {
+    "arguments": {
         "filename": "config-modified-2017-03-15.json"
     }
 }
