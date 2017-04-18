@@ -389,6 +389,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"flush\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
+        return isc::d2::D2Parser::make_FLUSH(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("flush", driver.loc_);
+    }
+}
+
+\"maxsize\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
+        return isc::d2::D2Parser::make_MAXSIZE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("maxsize", driver.loc_);
+    }
+}
+
+\"maxver\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
+        return isc::d2::D2Parser::make_MAXVER(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("maxver", driver.loc_);
+    }
+}
+
 \"name\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
