@@ -150,7 +150,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, ":46dvVWp:x:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dhvVWp:x:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -163,12 +163,12 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'v':
-            // Print just Kea vesion and exit.
+            // Print just Kea version and exit.
             std::cout << getVersion(false) << std::endl;
             exit(EXIT_SUCCESS);
 
         case 'V':
-            // Print extended  Kea vesion and exit.
+            // Print extended  Kea version and exit.
             std::cout << getVersion(true) << std::endl;
             exit(EXIT_SUCCESS);
 
@@ -236,6 +236,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
         case '?':
             // Unknown argument
+            // note this will catch all the prevous ... name missing
             isc_throw(InvalidUsage, "Unknown argument");
 
         case ':':

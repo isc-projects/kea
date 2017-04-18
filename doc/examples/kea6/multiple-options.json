@@ -72,8 +72,8 @@
         },
         {
             // A few options are encoded in (length, string) tuples
-	    // which can be defined using only strings as the CSV
-	    // processing computes lengths.
+            // which can be defined using only strings as the CSV
+            // processing computes lengths.
             "name": "bootfile-param",
             "data": "root=/dev/sda2, quiet, splash"
         }

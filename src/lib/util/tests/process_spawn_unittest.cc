@@ -90,6 +90,21 @@ bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
     return (true);
 }
 
+// This test verifies that if the thread calling spawn has SIGCHLD
+// already block ProcessSpawnError is thrown (@todo the second error
+// case: fork() failling)
+TEST(ProcessSpawn, sigchldBlocked) {
+    std::vector<std::string> args;
+    ProcessSpawn process(getApp(), args);
+    sigset_t sset;
+    sigemptyset(&sset);
+    sigaddset(&sset, SIGCHLD);
+    sigset_t osset;
+    pthread_sigmask(SIG_BLOCK, &sset, &osset);
+    EXPECT_THROW(process.spawn(), ProcessSpawnError);
+    sigprocmask(SIG_SETMASK, &osset, 0);
+}
+
 // This test verifies that the external application can be ran with
 // arguments and that the exit code is gathered.
 TEST(ProcessSpawn, spawnWithArgs) {
