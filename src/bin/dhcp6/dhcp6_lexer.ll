@@ -897,6 +897,34 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"flush\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp6Parser::make_FLUSH(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("flush", driver.loc_);
+    }
+}
+
+\"maxsize\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp6Parser::make_MAXSIZE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("maxsize", driver.loc_);
+    }
+}
+
+\"maxver\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp6Parser::make_MAXVER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("maxver", driver.loc_);
+    }
+}
+
+
 \"debuglevel\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
