@@ -1,3 +1,8 @@
+1242.	[func]		fdupont
+	Integer fields in options can now be specified in either
+	decimal or hexadecimal format.
+	(Trac $4540, git xxx)
+
 1241.	[func]		fdupont
 	Support for tuple-based options added. DHCPv6 option
 	bootfile-param (code 60) can now be set in a more convenient
