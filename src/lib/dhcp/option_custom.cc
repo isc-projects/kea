@@ -65,6 +65,26 @@ OptionCustom::addArrayDataField(const IOAddress& address) {
 }
 
 void
+OptionCustom::addArrayDataField(const std::string& value) {
+    checkArrayType();
+
+    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
+        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OptionBuffer buf;
+    OptionDataTypeUtil::writeTuple(value, lft, buf);
+    buffers_.push_back(buf);
+}
+
+void
+OptionCustom::addArrayDataField(const OpaqueDataTuple& value) {
+    checkArrayType();
+
+    OptionBuffer buf;
+    OptionDataTypeUtil::writeTuple(value, buf);
+    buffers_.push_back(buf);
+}
+
+void
 OptionCustom::addArrayDataField(const bool value) {
     checkArrayType();
 
@@ -244,7 +264,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // that the validate() function in OptionDefinition object
                     // should have checked wheter it is a case for this option.
                     data_size = std::distance(data, data_buf.end());
-                } else if (*field == OPT_IPV6_PREFIX_TYPE ) {
+                } else if (*field == OPT_IPV6_PREFIX_TYPE) {
                     // The size of the IPV6 prefix type is determined as
                     // one byte (which is the size of the prefix in bits)
                     // followed by the prefix bits (right-padded with
@@ -252,6 +272,18 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     if (std::distance(data, data_buf.end()) > 0) {
                         data_size = static_cast<size_t>(sizeof(uint8_t) + (*data + 7) / 8);
                     }
+                } else if (*field == OPT_TUPLE_TYPE) {
+                    OpaqueDataTuple::LengthFieldType lft =
+                        getUniverse() == Option::V4 ?
+                        OpaqueDataTuple::LENGTH_1_BYTE :
+                        OpaqueDataTuple::LENGTH_2_BYTES;
+                    std::string value =
+                        OptionDataTypeUtil::readTuple(OptionBuffer(data, data_buf.end()),
+                                                      lft);
+                    data_size = value.size();
+                    // The size of the buffer holding a tuple is always
+                    // 1 or 2 byte larger than the size of the string
+                    data_size += getUniverse() == Option::V4 ? 1 : 2;
                 } else {
                     // If we reached the end of buffer we assume that this option is
                     // truncated because there is no remaining data to initialize
@@ -314,6 +346,19 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // Data size comprises 1 byte holding a prefix length and the
                     // prefix length (in bytes) rounded to the nearest byte boundary.
                     data_size = sizeof(uint8_t) + (prefix.first.asUint8() + 7) / 8;
+                } else if (data_type == OPT_TUPLE_TYPE) {
+                    OpaqueDataTuple::LengthFieldType lft =
+                        getUniverse() == Option::V4 ?
+                        OpaqueDataTuple::LENGTH_1_BYTE :
+                        OpaqueDataTuple::LENGTH_2_BYTES;
+                    std::string value =
+                        OptionDataTypeUtil::readTuple(OptionBuffer(data, data_buf.end()),
+                                                      lft);
+                    data_size = value.size();
+                    // The size of the buffer holding a tuple is always
+                    // 1 or 2 byte larger than the size of the string
+                    data_size += getUniverse() == Option::V4 ? 1 : 2;
+
                 }
                 // We don't perform other checks for data types that can't be
                 // used together with array indicator such as strings, empty field
@@ -351,6 +396,19 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                         data_size = static_cast<size_t>
                             (sizeof(uint8_t) + (data_buf[0] + 7) / 8);
                     }
+                } else if (data_type == OPT_TUPLE_TYPE) {
+                    OpaqueDataTuple::LengthFieldType lft =
+                        getUniverse() == Option::V4 ?
+                        OpaqueDataTuple::LENGTH_1_BYTE :
+                        OpaqueDataTuple::LENGTH_2_BYTES;
+                    std::string value =
+                        OptionDataTypeUtil::readTuple(OptionBuffer(data, data_buf.end()),
+                                                      lft);
+                    data_size = value.size();
+                    // The size of the buffer holding a tuple is always
+                    // 1 or 2 byte larger than the size of the string
+                    data_size += getUniverse() == Option::V4 ? 1 : 2;
+
                 } else {
                     data_size = std::distance(data, data_buf.end());
                 }
@@ -414,6 +472,9 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         break;
     case OPT_FQDN_TYPE:
         text << "\"" << readFqdn(index) << "\"";
+        break;
+    case OPT_TUPLE_TYPE:
+        text << "\"" << readTuple(index) << "\"";
         break;
     case OPT_STRING_TYPE:
         text << "\"" << readString(index) << "\"";
@@ -497,6 +558,39 @@ OptionCustom::writeBinary(const OptionBuffer& buf,
                           const uint32_t index) {
     checkIndex(index);
     buffers_[index] = buf;
+}
+
+std::string
+OptionCustom::readTuple(const uint32_t index) const {
+    checkIndex(index);
+    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
+        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    return (OptionDataTypeUtil::readTuple(buffers_[index], lft));
+}
+
+void
+OptionCustom::readTuple(OpaqueDataTuple& tuple,
+                        const uint32_t index) const {
+    checkIndex(index);
+    OptionDataTypeUtil::readTuple(buffers_[index], tuple);
+}
+
+void
+OptionCustom::writeTuple(const std::string& value, const uint32_t index) {
+    checkIndex(index);
+
+    buffers_[index].clear();
+    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
+        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OptionDataTypeUtil::writeTuple(value, lft, buffers_[index]);
+}
+
+void
+OptionCustom::writeTuple(const OpaqueDataTuple& value, const uint32_t index) {
+    checkIndex(index);
+
+    buffers_[index].clear();
+    OptionDataTypeUtil::writeTuple(value, buffers_[index]);
 }
 
 bool
