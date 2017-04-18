@@ -296,7 +296,7 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
+ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp6;
@@ -466,7 +466,7 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
             return (srv->commandConfigReloadHandler(command, args));
 
         } else if (command == "config-set") {
-            return (srv->commandSetConfigHandler(command, args));
+            return (srv->commandConfigSetHandler(command, args));
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
@@ -679,7 +679,7 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
+        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));

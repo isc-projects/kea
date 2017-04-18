@@ -292,7 +292,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandSetConfigHandler(const string&,
+ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
@@ -463,7 +463,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
             return (srv->commandConfigReloadHandler(command, args));
 
         } else if (command == "config-set") {
-            return (srv->commandSetConfigHandler(command, args));
+            return (srv->commandConfigSetHandler(command, args));
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
@@ -642,7 +642,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
         boost::bind(&ControlledDhcpv4Srv::commandConfigReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv4Srv::commandSetConfigHandler, this, _1, _2));
+        boost::bind(&ControlledDhcpv4Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-test",
         boost::bind(&ControlledDhcpv4Srv::commandConfigTestHandler, this, _1, _2));
