@@ -4777,10 +4777,10 @@ TEST_F(Dhcp4ParserTest, outsideSubnetPool) {
     ASSERT_NO_THROW(text = comment->stringValue());
 
     EXPECT_EQ(1, rcode);
-    string expected = "subnet configuration failed (<string>:5:14): "
+    string expected = "subnet configuration failed: "
 	"a pool of type V4, with the following address range: "
 	"192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
-	"10.0.2.0/24 to which it is being added";
+	"10.0.2.0/24 to which it is being added (<string>:5:14)";
     EXPECT_EQ(expected, text);
 }
 
