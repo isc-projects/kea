@@ -641,7 +641,7 @@ private:
     /// This function performs lexical cast of a string value to integer
     /// value and checks if the resulting value is within a range of a
     /// target type. The target type should be one of the supported
-    /// integer types.
+    /// integer types. Hexadecimal input is supported.
     ///
     /// @param value_str input value given as string.
     /// @tparam T target integer type for lexical cast.

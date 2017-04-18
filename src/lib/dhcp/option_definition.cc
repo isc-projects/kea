@@ -29,6 +29,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <sstream>
 
 using namespace std;
 using namespace isc::util;
@@ -496,8 +497,15 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
         result = boost::lexical_cast<int64_t>(value_str);
 
     } catch (const boost::bad_lexical_cast&) {
-        isc_throw(BadDataTypeCast, "unable to convert the value '"
-                  << value_str << "' to integer data type");
+        // boost::lexical_cast does not handle hexadecimal
+        // but stringstream does so do it the hard way.
+        std::stringstream ss;
+        ss << std::hex << value_str;
+        ss >> result;
+        if (ss.fail() || !ss.eof()) {
+            isc_throw(BadDataTypeCast, "unable to convert the value '"
+                      << value_str << "' to integer data type");
+        }
     }
     // Perform range checks.
     if (OptionDataTypeTraits<T>::integer_type) {
