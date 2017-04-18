@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2017;" >
+]>
+
+<chapter id="kea-shell">
+  <title>Kea Shell</title>
+
+  <section id="shell-overview">
+    <title>Overview</title>
+    <para>Kea 1.2.0 introduced Control Agent (see <xref linkend="kea-ctrl-agent"/>) that
+    provides a RESTful control interface over HTTP. That API is typically expected to be used by
+    various IPAMs and similar management systems. Nevertheless, there are cases when a simple
+    client is required to issue commands.  Kea shell fulfills that need. It is a simple,
+    command-line, scripting friendly text client that is able connect to CA, send commands with
+    parameters, retrieve and print CA responses.</para>
+
+    <para>The primary use case for shell is to be used as a tool in scriting environment,
+    therefore the tool is not interactive. However, with simple tricks it can be run manually.
+    </para>
+  </section>
+
+  <section id="shell-usage">
+    <title>Shell Usage</title>
+
+    <para>kea-shell accepts a number of optional parameters:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <simpara>
+          <command>--host <replaceable>hostname</replaceable></command> specifies the hostname
+          of CA. If not specified, "localhost" is used.
+        </simpara>
+      </listitem>
+
+      <listitem>
+        <simpara>
+          <command>--port <replaceable>number</replaceable></command> specifies the TCP port
+          on which CA listens. If not specified, 8000 is used.
+        </simpara>
+      </listitem>
+
+      <listitem>
+        <simpara>
+          <command>--timeout <replaceable>seconds</replaceable></command> specifies the
+          timeout in seconds for connection. If not specified, 10 seconds is used.
+        </simpara>
+      </listitem>
+
+      <listitem>
+        <simpara>
+          <command>-h</command> prints out help message.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara>
+          <command>-v</command> prints software version.
+        </simpara>
+      </listitem>
+      <listitem>
+        <simpara>
+          <command>command</command> specifies the command to be sent. If not specified,
+          <command>list-commands</command> command is used.
+        </simpara>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Once started, the shell reads command parameters from the standard input. Those are
+      expected to be in JSON format. After read ends, the shell establishes connection using
+      http protocol to CA, sends the command and awaits response. Once the response becomes
+      available it is being printed on standart output.
+    </para>
+
+    <para>
+      For a list of available commands, see <xref linkend="ctrl-channel"/>. Additional commands
+      may be provided by hook libraries. If unsure which commands are supported, please use
+      <command>list-commands</command> command. It will instruct CA to list all supported commands.
+    </para>
+
+    <para>Several examples of kea-shell usage are presented below. This example will expect
+    parameters to be provided on standard input. Since list-commands does not take any
+    arguments, ctrl-d may be pressed to indicate end of file. Kea shell will then contact
+    CA and will print out a list of available commands.
+<screen>
+$ <userinput>kea-shell --host 192.0.2.1 --port 8001 list-commands</userinput>
+</screen>
+    </para>
+
+    <para>Kea shell is envisaged to be most frequently used in scripts. Here is an example of
+    very simple scripted execution. It will issue command "config-write" with parameters
+    specified in param.json. The result will be stored in result.json.
+<screen>
+$ cat param.json
+"filename": "my-config-file.json"
+$ <userinput>cat param.json | kea-shell --host 192.0.2.1 config-write > result.json</userinput>
+</screen>
+    </para>
+
+    <para>Kea shell requires python to run. It was tested with python 2.7 and various versions
+    of python 3, up to 3.5. Since not every Kea deployment uses this feature and there are
+    certainly deployments that do not have python, Kea shell is not enabled by default. To
+    enable it, make sure you pass <command>--enable-shell</command> to configure script.</para>
+
+    <para>Kea shell is intended to serve more a demonstration of the RESTful interface
+    capabilities and perhaps an illustration for people interested in integrating their
+    management evironments with Kea, rather than a serious management client. Do not expect it
+    to be significantly expanded in the future. It is and will remain a simple tool.</para>
+  </section>
+</chapter>
