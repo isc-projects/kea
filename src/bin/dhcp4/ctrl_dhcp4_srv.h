@@ -206,7 +206,7 @@ private:
     ///
     /// @return status of the command
     isc::data::ConstElementPtr
-    commandSetConfigHandler(const std::string& command,
+    commandConfigSetHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
     /// @brief handler for processing 'config-test' command
