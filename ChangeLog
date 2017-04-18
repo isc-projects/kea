@@ -1,3 +1,7 @@
+1244.	[doc]		tomek
+	User's Guide section about Kea shell added.
+	(Trac #5171, git 3dc4908fe02e86c57ccd5ad2d2f8330655f438be)
+
 1243.	[func]		tomek
 	config-reload command implemented. It allows Kea DHCPv4 and DHCPv6
 	servers to reload its original configuration file. Also,
