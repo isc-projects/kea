@@ -69,6 +69,13 @@
             // only so for instance '\x' is translated into '\x'. But
             // as it works on a JSON string value each of these '\'
             // characters must be doubled on JSON input.
+        },
+        {
+            // A few options are encoded in (length, string) tuples
+	    // which can be defined using only strings as the CSV
+	    // processing computes lengths.
+            "name": "bootfile-param",
+            "data": "root=/dev/sda2, quiet, splash"
         }
       ],
       "pools": [
