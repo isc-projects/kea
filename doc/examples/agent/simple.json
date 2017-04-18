@@ -69,7 +69,16 @@
 		"name": "kea-ctrl-agent",
 		"output_options": [
 		    {
-			"output": "/var/log/kea-ctrl-agent.log"
+			"output": "/var/log/kea-ctrl-agent.log",
+                        // Several additional parameters are possible in addition
+                        // to the typical output. Flush determines whether logger
+                        // flushes output to a file. Maxsize determines maximum
+                        // filesize before the file is being rotated. maxver
+                        // specifies the maximum number of rotated files being
+                        // kept.
+                        "flush": true,
+                        "maxsize": 204800,
+                        "maxver": 4
 		    }
 		],
 		"severity": "INFO",
