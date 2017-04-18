@@ -441,7 +441,7 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
-    string txt = args? args->str() : "(none)";
+    string txt = args ? args->str() : "(none)";
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
               .arg(command).arg(txt);

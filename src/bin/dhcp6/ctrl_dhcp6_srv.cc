@@ -69,6 +69,7 @@ ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 /// the JSON configuration file.
 ///
 /// @param file_name Configuration file location.
+/// @return status of the command
 ConstElementPtr
 ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     // This is a configuration backend implementation that reads the
@@ -154,7 +155,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
     // We don't need to call openActiveSockets() or startD2() as these
     // methods are called in processConfig() which is called by
-    // processCommand("reload-config", ...)
+    // processCommand("config-set", ...)
 
     // Set signal handlers. When the SIGHUP is received by the process
     // the server reconfiguration will be triggered. When SIGTERM or
@@ -442,7 +443,7 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
-    string txt = args? args->str() : "(none)";
+    string txt = args ? args->str() : "(none)";
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
               .arg(command).arg(txt);
