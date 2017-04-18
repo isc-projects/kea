@@ -15,11 +15,14 @@
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/json_config_parser.h>
+#include <dhcp6/parser_context.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
+#include <signal.h>
 
 using namespace isc::config;
+using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::stats;
@@ -30,12 +33,142 @@ namespace {
 // Name of the file holding server identifier.
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
+/// @brief Signals handler for DHCPv6 server.
+///
+/// This signal handler handles the following signals received by the DHCPv6
+/// server process:
+/// - SIGHUP - triggers server's dynamic reconfiguration.
+/// - SIGTERM - triggers server's shut down.
+/// - SIGINT - triggers server's shut down.
+///
+/// @param signo Signal number received.
+void signalHandler(int signo) {
+    // SIGHUP signals a request to reconfigure the server.
+    if (signo == SIGHUP) {
+        ControlledDhcpv6Srv::processCommand("config-reload",
+                                            ConstElementPtr());
+    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+        ControlledDhcpv6Srv::processCommand("shutdown",
+                                            ConstElementPtr());
+    }
+}
+
 }
 
 namespace isc {
 namespace dhcp {
 
 ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
+
+/// @brief Configure DHCPv6 server using the configuration file specified.
+///
+/// This function is used to both configure the DHCP server on its startup
+/// and dynamically reconfigure the server when SIGHUP signal is received.
+///
+/// It fetches DHCPv6 server's configuration from the 'Dhcp6' section of
+/// the JSON configuration file.
+///
+/// @param file_name Configuration file location.
+/// @return status of the command
+ConstElementPtr
+ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
+    // This is a configuration backend implementation that reads the
+    // configuration from a JSON file.
+
+    isc::data::ConstElementPtr json;
+    isc::data::ConstElementPtr dhcp6;
+    isc::data::ConstElementPtr logger;
+    isc::data::ConstElementPtr result;
+
+    // Basic sanity check: file name must not be empty.
+    try {
+        if (file_name.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(isc::BadValue, "JSON configuration file not specified. Please "
+                      "use -c command line option.");
+        }
+
+        // Read contents of the file and parse it as JSON
+        Parser6Context parser;
+        json = parser.parseFile(file_name, Parser6Context::PARSER_DHCP6);
+        if (!json) {
+            isc_throw(isc::BadValue, "no configuration found");
+        }
+
+        // Let's do sanity check before we call json->get() which
+        // works only for map.
+        if (json->getType() != isc::data::Element::map) {
+            isc_throw(isc::BadValue, "Configuration file is expected to be "
+                      "a map, i.e., start with { and end with } and contain "
+                      "at least an entry called 'Dhcp6' that itself is a map. "
+                      << file_name
+                      << " is a valid JSON, but its top element is not a map."
+                      " Did you forget to add { } around your configuration?");
+        }
+
+        // Use parsed JSON structures to configure the server
+        result = ControlledDhcpv6Srv::processCommand("config-set", json);
+        if (!result) {
+            // Undetermined status of the configuration. This should never
+            // happen, but as the configureDhcp6Server returns a pointer, it is
+            // theoretically possible that it will return NULL.
+            isc_throw(isc::BadValue, "undefined result of "
+                      "processCommand(\"config-set\", json)");
+        }
+
+        // Now check is the returned result is successful (rcode=0) or not
+        // (see @ref isc::config::parseAnswer).
+        int rcode;
+        isc::data::ConstElementPtr comment =
+            isc::config::parseAnswer(rcode, result);
+        if (rcode != 0) {
+            string reason = comment ? comment->stringValue() :
+                "no details available";
+            isc_throw(isc::BadValue, reason);
+        }
+    }  catch (const std::exception& ex) {
+        // If configuration failed at any stage, we drop the staging
+        // configuration and continue to use the previous one.
+        CfgMgr::instance().rollback();
+
+        LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL)
+            .arg(file_name).arg(ex.what());
+        isc_throw(isc::BadValue, "configuration error using file '"
+                  << file_name << "': " << ex.what());
+    }
+
+    return (result);
+}
+
+
+void
+ControlledDhcpv6Srv::init(const std::string& file_name) {
+    // Configure the server using JSON file.
+    ConstElementPtr result = loadConfigFile(file_name);
+    int rcode;
+    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+    if (rcode != 0) {
+        string reason = comment ? comment->stringValue() :
+            "no details available";
+        isc_throw(isc::BadValue, reason);
+    }
+
+    // We don't need to call openActiveSockets() or startD2() as these
+    // methods are called in processConfig() which is called by
+    // processCommand("config-set", ...)
+
+    // Set signal handlers. When the SIGHUP is received by the process
+    // the server reconfiguration will be triggered. When SIGTERM or
+    // SIGINT will be received, the server will start shutting down.
+    signal_set_.reset(new isc::util::SignalSet(SIGINT, SIGHUP, SIGTERM));
+    // Set the pointer to the handler function.
+    signal_handler_ = signalHandler;
+}
+
+void ControlledDhcpv6Srv::cleanup() {
+    // Nothing to do here. No need to disconnect from anything.
+}
+
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
@@ -68,9 +201,22 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandConfigReloadHandler(const string&, ConstElementPtr args) {
-    // Use set-config as it handles logging and server config
-    return (commandSetConfigHandler("set-config", args));
+ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
+                                                ConstElementPtr /*args*/) {
+    // Get configuration file name.
+    std::string file = ControlledDhcpv6Srv::getInstance()->getConfigFile();
+    try {
+        LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION).arg(file);
+        return (loadConfigFile(file));
+    } catch (const std::exception& ex) {
+        // Log the unsuccessful reconfiguration. The reason for failure
+        // should be already logged. Don't rethrow an exception so as
+        // the server keeps working.
+        LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
+            .arg(file);
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Config reload failed:" + string(ex.what())));
+    }
 }
 
 ConstElementPtr
@@ -152,7 +298,7 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandSetConfigHandler(const string&,
+ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
     const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp6;
@@ -297,15 +443,17 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
+    string txt = args ? args->str() : "(none)";
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
-              .arg(command).arg(args->str());
+              .arg(command).arg(txt);
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
           "Server object not initialized, can't process command '" +
-          command + "'.");
+          command + "', arguments: '" + txt + "'.");
         return (no_srv);
     }
 
@@ -319,8 +467,8 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
 
-        } else if (command == "set-config") {
-            return (srv->commandSetConfigHandler(command, args));
+        } else if (command == "config-set") {
+            return (srv->commandConfigSetHandler(command, args));
 
         } else if (command == "config-get") {
             return (srv->commandConfigGetHandler(command, args));
@@ -486,18 +634,18 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
- 
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
         .arg(config->str());
- 
+
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
- 
+
     if (!srv) {
         ConstElementPtr no_srv = isc::config::createAnswer(1,
             "Server object not initialized, can't process config.");
         return (no_srv);
     }
- 
+
     return (configureDhcp6Server(*srv, config, true));
 }
 
@@ -517,7 +665,8 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("config-get",
         boost::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
 
-    /// @todo: register config-reload (see CtrlDhcpv6Srv::commandConfigReloadHandler)
+    CommandMgr::instance().registerCommand("config-reload",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-test",
         boost::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
@@ -531,8 +680,8 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("set-config",
-        boost::bind(&ControlledDhcpv6Srv::commandSetConfigHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("config-set",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
@@ -580,11 +729,12 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
+        CommandMgr::instance().deregisterCommand("config-set");
+        CommandMgr::instance().deregisterCommand("config-reload");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
-        CommandMgr::instance().deregisterCommand("set-config");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
