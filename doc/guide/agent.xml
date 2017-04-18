@@ -205,7 +205,7 @@ $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ca.conf
   </section>
 
   <section id="agent-clients">
-    <title>Connecting to Control Agent</title>
+    <title>Connecting to the Control Agent</title>
     <para>For an example of tool that can take advantage of the
     RESTful API, see <xref linkend="kea-shell"/>.</para>
   </section>
