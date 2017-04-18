@@ -1,7 +1,13 @@
+1243.	[func]		tomek
+	config-reload command implemented. It allows Kea DHCPv4 and DHCPv6
+	servers to reload its original configuration file. Also,
+	set-config command was renamed to config-set.
+	(Trac #5213, git b209c2b577a2f9da71cc918d7a551f8efdc1c4cb)
+
 1242.	[func]		fdupont
 	Integer fields in options can now be specified in either
 	decimal or hexadecimal format.
-	(Trac $4540, git xxx)
+	(Trac #4540, git 4cbf341f4169cf1e1eae0721644797a726d89702)
 
 1241.	[func]		fdupont
 	Support for tuple-based options added. DHCPv6 option
