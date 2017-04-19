@@ -192,12 +192,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    // The following options need a special encoding of data
-    // being carried by them. Therefore, there is no way they can
-    // be handled by OptionCustom. We may need to implement
-    // dedicated classes to handle them. Until that happens
-    // let's treat them as 'binary' options.
-    { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "domain-search", DHO_DOMAIN_SEARCH, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, OPT_RECORD_TYPE,
       false, RECORD_DEF(VIVCO_RECORDS), "" },
     // Vendor-Identifying Vendor Specific Information option payload begins with a

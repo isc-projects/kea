@@ -25,6 +25,8 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 #include <util/encode/hex.h>
+#include <dns/labelsequence.h>
+#include <dns/name.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -445,6 +447,11 @@ OptionDefinition::haveOpaqueDataTuplesFormat() const {
 }
 
 bool
+OptionDefinition::haveCompressedFqdnListFormat() const {
+    return (haveType(OPT_FQDN_TYPE) && getArrayType());
+}
+
+bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
     // Case-insensitive check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
@@ -774,6 +781,37 @@ OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
 }
 
 OptionPtr
+OptionDefinition::factoryFqdnList(Option::Universe u,
+                                  OptionBufferConstIter begin,
+                                  OptionBufferConstIter end) const {
+    
+    const std::vector<uint8_t> data(begin, end);
+    if (data.empty()) {
+        isc_throw(InvalidOptionValue, "FQDN list option has invalid length of 0");
+    }
+    InputBuffer in_buf(static_cast<const void*>(&data[0]), data.size());
+    std::vector<uint8_t> out_buf;
+    out_buf.reserve(data.size());
+    while (in_buf.getPosition() < in_buf.getLength()) {
+        // Reuse readFqdn and writeFqdn code but on the whole buffer
+        // so the DNS name code handles compression for us.
+        try {
+            isc::dns::Name name(in_buf);
+            isc::dns::LabelSequence labels(name);
+            if (labels.getDataLength() > 0) {
+                size_t read_len = 0;
+                const uint8_t* label = labels.getData(&read_len);
+                out_buf.insert(out_buf.end(), label, label + read_len);
+            }
+        } catch (const isc::Exception& ex) {
+            isc_throw(InvalidOptionValue, ex.what());
+        }
+    }
+    return OptionPtr(new OptionCustom(*this, u,
+                                      out_buf.begin(), out_buf.end()));
+}
+
+OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end) const {
@@ -820,6 +858,8 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
+        } else if (haveCompressedFqdnListFormat()) {
+            return (factoryFqdnList(Option::V4, begin, end));
         } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
                    haveVendorClass4Format()) {
             // V-I Vendor Class (option code 124).

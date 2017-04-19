@@ -2930,6 +2930,22 @@ TEST_F(Dhcp4ParserTest, DISABLED_Uint32Parser) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+// The goal of this test is to verify that the domain-search option
+// can be set using domain names
+TEST_F(Dhcp4ParserTest, domainSearchOption) {
+    // Create configuration.
+    std::map<std::string, std::string> params;
+    params["name"] = "domain-search";
+    params["space"] = DHCP4_OPTION_SPACE;
+    params["code"] = "119"; // DHO_DOMAIN_SEARCH
+    params["data"] = "mydomain.example.com, example.com";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    EXPECT_TRUE(executeConfiguration(config, "parse configuration with a"
+                                     " domain-search option"));
+}
+
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
@@ -4748,7 +4764,7 @@ TEST_F(Dhcp4ParserTest, invalidPoolRange) {
 
     EXPECT_EQ(1, rcode);
     string expected = "Failed to create pool defined by: "
-	"192.0.2.1-19.2.0.200 (<string>:6:26)";
+        "192.0.2.1-19.2.0.200 (<string>:6:26)";
     EXPECT_EQ(expected, text);
 }
 
@@ -4778,9 +4794,9 @@ TEST_F(Dhcp4ParserTest, outsideSubnetPool) {
 
     EXPECT_EQ(1, rcode);
     string expected = "subnet configuration failed: "
-	"a pool of type V4, with the following address range: "
-	"192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
-	"10.0.2.0/24 to which it is being added (<string>:5:14)";
+        "a pool of type V4, with the following address range: "
+        "192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
+        "10.0.2.0/24 to which it is being added (<string>:5:14)";
     EXPECT_EQ(expected, text);
 }
 
