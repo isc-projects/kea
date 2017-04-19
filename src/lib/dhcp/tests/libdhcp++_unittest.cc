@@ -1685,6 +1685,8 @@ TEST_F(LibDhcpTest, fqdnList) {
         3, 99, 111, 109,                          // "com"
         0
     };
+    /* This size is used later so protect ourselves against changes */
+    static_assert(sizeof(fqdn) == 40);
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
 
@@ -1732,8 +1734,8 @@ TEST_F(LibDhcpTest, fqdnListCompressed) {
     ASSERT_TRUE(option);
     OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
     ASSERT_TRUE(names);
-    // Why is this failing? It seems the option does not use compression.
-    EXPECT_EQ(sizeof(compressed), names->len() - names->getHeaderLen());
+    /* Use the uncompress length here (cf fqdnList) */
+    EXPECT_EQ(40, names->len() - names->getHeaderLen());
     ASSERT_EQ(3, names->getDataFieldsNum());
     EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
     EXPECT_EQ("example.com.", names->readFqdn(1));
