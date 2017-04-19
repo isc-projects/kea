@@ -1686,7 +1686,8 @@ TEST_F(LibDhcpTest, fqdnList) {
         0
     };
     /* This size is used later so protect ourselves against changes */
-    static_assert(sizeof(fqdn) == 40);
+    static_assert(sizeof(fqdn) == 40,
+                  "incorrect uncompressed domain list size");
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
 
