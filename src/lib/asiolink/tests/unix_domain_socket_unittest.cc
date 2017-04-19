@@ -109,6 +109,101 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
     EXPECT_EQ("received foo", response);
 }
 
+// This test verifies that the client can send the data over the unix
+// domain socket and receive a response asynchronously.
+TEST_F(UnixDomainSocketTest, asyncSendReceive) {
+    // Start the server.
+    test_socket_->bindServerSocket();
+
+    // Setup client side.
+    UnixDomainSocket socket(io_service_);
+
+    // We're going to asynchronously connect to the server. The boolean value
+    // below will be modified by the connect handler function (lambda) invoked
+    // when the connection is established or if an error occurs.
+    bool connect_handler_invoked = false;
+    ASSERT_NO_THROW(socket.asyncConnect(unixSocketFilePath(),
+        [this, &connect_handler_invoked](const boost::system::error_code& ec) {
+            // Indicate that the handler has been called so as the loop below gets
+            // interrupted.
+            connect_handler_invoked = true;
+            // Operation aborted indicates that IO service has been stopped. This
+            // shouldn't happen here.
+            if (ec && ec.value() != boost::asio::error::operation_aborted) {
+                ADD_FAILURE() << "error occurred while asynchronously connecting"
+                    " via unix domain socket: " << ec.message();
+            }
+        }
+    ));
+    // Run IO service until connect handler is invoked.
+    while (!connect_handler_invoked) {
+        io_service_.run_one();
+    }
+
+    // We are going to asynchronously send the 'foo' over the unix socket.
+    const std::string outbound_data = "foo";
+    size_t sent_size = 0;
+    ASSERT_NO_THROW(socket.asyncSend(outbound_data.c_str(), outbound_data.size(),
+        [this, &sent_size](const boost::system::error_code& ec, size_t length) {
+        // If we have been successful sending the data, record the number of
+        // bytes we have sent.
+        if (!ec) {
+            sent_size = length;
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
+            ADD_FAILURE() << "error occurred while asynchronously sending the"
+            " data over unix domain socket: " << ec.message();
+        }
+    }
+    ));
+
+    // Run IO service to generate server's response.
+    while (test_socket_->getResponseNum() < 1) {
+        io_service_.run_one();
+    }
+
+    // There is no guarantee that all data have been sent so we only check that
+    // some data have been sent.
+    ASSERT_GT(sent_size, 0);
+
+    // Receive response from the socket.
+    std::array<char, 1024> read_buf;
+    size_t bytes_read = 0;
+    bool receive_handler_invoked = false;
+    ASSERT_NO_THROW(socket.asyncReceive(&read_buf[0], read_buf.size(),
+        [this, &receive_handler_invoked, &bytes_read]
+            (const boost::system::error_code& ec, size_t length) mutable {
+        // Indicate that the handler has been called to interrupt the
+        // loop below.
+        receive_handler_invoked = true;
+
+        // If we have been successful receiving the data, record the number of
+        // bytes received.
+        if (!ec) {
+            bytes_read = length;
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
+            ADD_FAILURE() << "error occurred while asynchronously receiving"
+                " data via unix domain socket: " << ec.message();
+        }
+
+    }));
+    // Run IO service until we get some response from the server.
+    while (!receive_handler_invoked) {
+        io_service_.run_one();
+    }
+
+    // Make sure we have received something.
+    ASSERT_GT(bytes_read, 0);
+
+    std::string response(&read_buf[0], bytes_read);
+
+    // What we have received should be a substring of the sent data prepended
+    // with 'received'. For such short chunks of data it is usually 'received foo'
+    // that we receive but there is no guarantee.
+    EXPECT_EQ(0, std::string("received foo").find(response));
+}
+
 // This test verifies that UnixDomainSocketError exception is thrown
 // on attempt to connect, write or receive when the server socket
 // is not available.
@@ -121,6 +216,49 @@ TEST_F(UnixDomainSocketTest, clientErrors) {
     std::array<char, 1024> read_buf;
     ASSERT_THROW(socket.receive(&read_buf[0], read_buf.size()),
                  UnixDomainSocketError);
+}
+
+// This test verifies that an error is returned on attempt to asynchronously
+// connect, write or receive when the server socket is not available.
+TEST_F(UnixDomainSocketTest, asyncClientErrors) {
+    UnixDomainSocket socket(io_service_);
+
+    // Connect
+    bool connect_handler_invoked = false;
+    socket.asyncConnect(unixSocketFilePath(),
+        [this, &connect_handler_invoked](const boost::system::error_code& ec) {
+        connect_handler_invoked = true;
+        EXPECT_TRUE(ec);
+    });
+    while (!connect_handler_invoked) {
+        io_service_.run_one();
+    }
+
+    // Send
+    const std::string outbound_data = "foo";
+    bool send_handler_invoked = false;
+    socket.asyncSend(outbound_data.c_str(), outbound_data.size(),
+        [this, &send_handler_invoked]
+        (const boost::system::error_code& ec, size_t length) {
+        send_handler_invoked = true;
+        EXPECT_TRUE(ec);
+    });
+    while (!send_handler_invoked) {
+        io_service_.run_one();
+    }
+
+    // Receive
+    bool receive_handler_invoked = false;
+    std::array<char, 1024> read_buf;
+    socket.asyncReceive(&read_buf[0], read_buf.size(),
+        [this, &receive_handler_invoked]
+        (const boost::system::error_code& ec, size_t length) {
+        receive_handler_invoked = true;
+        EXPECT_TRUE(ec);
+    });
+    while (!receive_handler_invoked) {
+        io_service_.run_one();
+    }
 }
 
 // Check that native socket descriptor is returned correctly when
