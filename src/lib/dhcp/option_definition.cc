@@ -786,6 +786,9 @@ OptionDefinition::factoryFqdnList(Option::Universe u,
                                   OptionBufferConstIter end) const {
     
     const std::vector<uint8_t> data(begin, end);
+    if (data.empty()) {
+        isc_throw(InvalidOptionValue, "FQDN list option has invalid length of 0");
+    }
     InputBuffer in_buf(static_cast<const void*>(&data[0]), data.size());
     std::vector<uint8_t> out_buf;
     out_buf.reserve(data.size());

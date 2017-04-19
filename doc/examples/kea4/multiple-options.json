@@ -84,6 +84,14 @@
              "code": 15,
              "data": "example.org"
          },
+             // Domain search is also a popular option. It tells the client to
+             // attempt to resolve names within those specificed domains. For
+             // example, name "foo" would be attempted to be resolved as
+             // foo.mydomain.example.com and if it fails, then as foo.example.com
+         {
+             "name": "domain-search",
+             "data": "mydomain.example.com, example.com"
+         },
             // String options that have a comma in their values need to have
             // it escaped (i.e. each comma is predeced by two backslashes).
             // That's because commas are reserved for separating fields in
