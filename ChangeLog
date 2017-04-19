@@ -1,3 +1,8 @@
+1245.	[func]		fdupont
+	DHCPv4 domain-search option can now be defined using
+	comma separated values.
+	(Trac #5087, git xxx)
+
 1244.	[doc]		tomek
 	User's Guide section about Kea shell added.
 	(Trac #5171, git 3dc4908fe02e86c57ccd5ad2d2f8330655f438be)
