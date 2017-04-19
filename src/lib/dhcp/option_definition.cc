@@ -858,8 +858,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
-        } else if ((getCode() == DHO_DOMAIN_SEARCH) &&
-                   haveCompressedFqdnListFormat()) {
+        } else if (haveCompressedFqdnListFormat()) {
             return (factoryFqdnList(Option::V4, begin, end));
         } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
                    haveVendorClass4Format()) {
