@@ -1667,7 +1667,7 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
     }
 }
 
-// This test checks handling of compressed FQDN list.
+// This test checks handling of uncompressed FQDN list.
 TEST_F(LibDhcpTest, fqdnList) {
     OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
                                                     DHO_DOMAIN_SEARCH);
@@ -1704,6 +1704,15 @@ TEST_F(LibDhcpTest, fqdnList) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
                                     fqdn_buf.end(), typeid(OptionCustom));
+}
+
+// This test checks handling of compressed FQDN list.
+// See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
+// compression algorithm).
+TEST_F(LibDhcpTest, fqdnListCompressed) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
 
     const uint8_t compressed[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -1715,19 +1724,29 @@ TEST_F(LibDhcpTest, fqdnList) {
     };
     std::vector<uint8_t> compressed_buf(compressed,
                                         compressed + sizeof(compressed));
-
+    OptionPtr option;
     ASSERT_NO_THROW(option = def->optionFactory(Option::V4,
                                                 DHO_DOMAIN_SEARCH,
                                                 compressed_buf.begin(),
                                                 compressed_buf.end()));
     ASSERT_TRUE(option);
-    names = boost::dynamic_pointer_cast<OptionCustom>(option);
+    OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
     ASSERT_TRUE(names);
-    EXPECT_EQ(sizeof(fqdn), names->len() - names->getHeaderLen());
+    // Why is this failing? It seems the option does not use compression.
+    EXPECT_EQ(sizeof(compressed), names->len() - names->getHeaderLen());
     ASSERT_EQ(3, names->getDataFieldsNum());
     EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
     EXPECT_EQ("example.com.", names->readFqdn(1));
     EXPECT_EQ("com.", names->readFqdn(2));
+}
+
+// Check that incorrect FQDN list compression is rejected.
+// See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
+// compression algorithm).
+TEST_F(LibDhcpTest, fqdnListBad) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
 
     const uint8_t bad[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -1739,10 +1758,27 @@ TEST_F(LibDhcpTest, fqdnList) {
     };
     std::vector<uint8_t> bad_buf(bad, bad + sizeof(bad));
 
-    EXPECT_THROW(option = def->optionFactory(Option::V4, 
+    OptionPtr option;
+    EXPECT_THROW(option = def->optionFactory(Option::V4,
                                              DHO_DOMAIN_SEARCH,
                                              bad_buf.begin(),
                                              bad_buf.end()),
+                 InvalidOptionValue);
+}
+
+// Check that empty (truncated) option is rejected.
+TEST_F(LibDhcpTest, fqdnListTrunc) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
+
+    std::vector<uint8_t> empty;
+
+    OptionPtr option;
+    EXPECT_THROW(option = def->optionFactory(Option::V4,
+                                             DHO_DOMAIN_SEARCH,
+                                             empty.begin(),
+                                             empty.end()),
                  InvalidOptionValue);
 }
 
