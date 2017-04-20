@@ -363,16 +363,15 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         to write its current configuration to a file on disk. It takes one
         optional argument called <emphasis>filename</emphasis> that specifies
         the name of the file to write configuration to. If not specified, the
-        name used when starting Kea (passed as -c argument) will be used. Note
-        that the filename specified must not contain .. or backslashes. Kea
-        should be able to write its files only in the directory it is running
-        and any attempts to step out of that directory will be rejected.</para>
+        name used when starting Kea (passed as -c argument) will be
+        used. If relative path is specified, Kea will write its files
+        only in the directory it is running.</para>
         <para>
           An example command invocation looks like this:
 <screen>
 {
     "command": "config-write",
-    "parameters": {
+    "arguments": {
         "filename": "config-modified-2017-03-15.json"
     }
 }
