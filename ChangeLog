@@ -1,3 +1,11 @@
+1247.	[bug]		marcin
+	Resolved issues with DHCPv4 host reservations by 'client-id'
+	when MySQL or PostgreSQL host database backend is in use.
+	Also, the 'client-id' is used together with other host
+	identifier types when 'host-reservation-identifiers' parameter
+	is not specified.
+	(Trac #5102, git 390d687d0f61635f5562d13860ff6362eee67853)
+
 1246.	[func,bug]	tomek
 	Restrictions in filename argument in config-write command have
 	been removed. It is now possible to use absolute paths.
