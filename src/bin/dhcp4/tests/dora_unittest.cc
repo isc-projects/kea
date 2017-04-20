@@ -948,7 +948,8 @@ TEST_F(DORATest, reservationByCircuitId) {
 // client-id.
 TEST_F(DORATest, reservationByClientId) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-    // Use relay agent so as the circuit-id can be inserted.
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
     // Specify client identifier.
     client.includeClientId("01:11:22:33:44:55:66");
