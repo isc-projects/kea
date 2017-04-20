@@ -1,3 +1,11 @@
+1246.	[func,bug]	tomek
+	Restrictions in filename argument in config-write command have
+	been removed. It is now possible to use absolute paths.
+	DHCPv4, DHCPv6, D2 and Agent parsers did not handle flush,
+	maxsize or maxver parameters in logger configuration correctly.
+	This is now fixed.
+	(Trac #5187, git a30ffcc67cfb7370c586d3c85147792e27aab4c7)
+
 1245.	[func]		fdupont
 	DHCPv4 domain-search option can now be defined using
 	comma separated values.
