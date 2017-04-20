@@ -446,26 +446,6 @@ DControllerBase::configWriteHandler(const std::string&,
         }
     }
 
-    // Now do the sanity checks on the filename
-    if (filename.find("..") != std::string::npos) {
-        // Trying to escape the directory.. nope.
-        return (createAnswer(COMMAND_ERROR,
-                             "Using '..' in filename is not allowed."));
-    }
-
-    if (filename.find("\\") != std::string::npos) {
-        // Trying to inject escapes (possibly to inject quotes and something
-        // nasty afterward)
-        return (createAnswer(COMMAND_ERROR,
-                             "Using \\ in filename is not allowed."));
-    }
-
-    if (filename[0] == '/') {
-        // Absolute paths are not allowed.
-        return (createAnswer(COMMAND_ERROR,
-                             "Absolute path in filename is not allowed."));
-    }
-
     // Ok, it's time to write the file.
     size_t size = 0;
     try {
