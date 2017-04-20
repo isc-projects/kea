@@ -480,8 +480,9 @@ UPDATE schema_version
 SET version = '5', minor = '0';
 # This line concludes database upgrade to version 5.0.
 
-# Add missing 'client-id' host identifier type.
+# Add missing 'client-id' and new 'flex-id' host identifier types.
 INSERT INTO host_identifier_type VALUES (3, 'client-id');
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 
 # Update the schema version number
 UPDATE schema_version
