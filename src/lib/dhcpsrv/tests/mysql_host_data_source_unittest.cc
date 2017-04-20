@@ -264,6 +264,12 @@ TEST_F(MySqlHostDataSourceTest, get4ByCircuitId) {
     testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
 }
 
+// Test verifies if a host reservation can be added and later retrieved by
+// client-id.
+TEST_F(MySqlHostDataSourceTest, get4ByClientId) {
+    testGet4ByIdentifier(Host::IDENT_CLIENT_ID);
+}
+
 // Test verifies if hardware address and client identifier are not confused.
 TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1) {
     testHWAddrNotClientId();

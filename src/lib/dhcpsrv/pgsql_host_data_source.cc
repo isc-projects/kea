@@ -44,7 +44,7 @@ const size_t OPTION_VALUE_MAX_LEN = 4096;
 ///
 /// This value is used to validate whether the identifier type stored in
 /// a database is within bounds. of supported identifiers.
-const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID);
+const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_TYPE);
 
 /// @brief Maximum length of DHCP identifier value.
 const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
