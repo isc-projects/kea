@@ -78,7 +78,8 @@ HttpRequestParser::poll() {
 
 bool
 HttpRequestParser::needData() const {
-    return (getNextEvent() == NEED_MORE_DATA_EVT);
+    return ((getNextEvent() == NEED_MORE_DATA_EVT) ||
+            (getNextEvent() == START_EVT));
 }
 
 bool
