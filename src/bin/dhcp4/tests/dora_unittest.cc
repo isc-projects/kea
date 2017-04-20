@@ -69,10 +69,12 @@ namespace {
 ///     - IP address 10.0.0.7 for HW address aa:bb:cc:dd:ee:ff
 ///     - IP address 10.0.0.8 for DUID 01:02:03:04:05
 ///     - IP address 10.0.0.9 for circuit-id 'charter950'
+///     - IP address 10.0.0.1 for client-id
 ///
 /// - Configuration 5:
 ///   - The same as configuration 4, but using the following order of
-///     host-reservation-identifiers: duid, circuit-id, hw-address.
+///     host-reservation-identifiers: duid, circuit-id, hw-address,
+///     client-id.
 ///
 /// - Configuration 6:
 ///   - This configuration provides reservations for next-server,
@@ -890,7 +892,7 @@ TEST_F(DORATest, reservation) {
 // DUID carried in the Client Identifier option.
 TEST_F(DORATest, reservationByDUID) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-    // Use relay agent so as the circuit-id can be inserted.
+    // Use relay agent.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
     // Modify HW address so as the server doesn't assign reserved
     // address by HW address.
@@ -940,6 +942,31 @@ TEST_F(DORATest, reservationByCircuitId) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Make sure that the client has got the lease for the reserved address.
     ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+}
+
+// This test checks that it is possible to make a reservation by
+// client-id.
+TEST_F(DORATest, reservationByClientId) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.1", client.config_.lease_.addr_.toText());
 }
 
 // This test verifies that order in which host identifiers are used to

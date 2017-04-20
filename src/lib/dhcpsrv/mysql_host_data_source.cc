@@ -73,7 +73,7 @@ const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 ///
 /// This value is used to validate whether the identifier type stored in
 /// a database is within bounds. of supported identifiers.
-const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID);
+const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_TYPE);
 
 /// @brief This class provides mechanisms for sending and retrieving
 /// information from the 'hosts' table.
