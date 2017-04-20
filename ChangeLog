@@ -1,3 +1,9 @@
+1248.	[bug]		marcin
+	Improved socket connection handling code, corrected numerous
+	failing and crashing tests for libkea-asiolink, libkea-http
+	and kea-ctrl-agent on Debian, Fedora and Ubuntu.
+	(Trac #5217, git 4bcb45f0c88aba3d0f70ca48d9fff6f1d4616bc2)
+
 1247.	[bug]		marcin
 	Resolved issues with DHCPv4 host reservations by 'client-id'
 	when MySQL or PostgreSQL host database backend is in use.
