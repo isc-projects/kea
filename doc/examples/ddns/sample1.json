@@ -1,40 +1,40 @@
-# This is an example configuration file for D2, Kea's DHCP-DDNS processor.
-# It supports updating two Forward DNS zones "four.example.com" and
-# "six.example.com"; and one Reverse DNS zone, "2.0.192.in-addr.arpa."
+// This is an example configuration file for D2, Kea's DHCP-DDNS processor.
+// It supports updating two Forward DNS zones "four.example.com" and
+// "six.example.com"; and one Reverse DNS zone, "2.0.192.in-addr.arpa."
 
 {
-# ------------------ DHCP-DDNS ---------------------
-#
+// ------------------ DHCP-DDNS ---------------------
+//
 "DhcpDdns":
 {
 
-# --------------  Global Parameters ----------------
-#
-#   D2 will listen for update requests for Kea DHCP servers at 172.16.1.10
-#   on port 53001.  Maximum time to we will  wait for a DNS server to
-#   respond to us is 1000 ms.
+// --------------  Global Parameters ----------------
+//
+//   D2 will listen for update requests for Kea DHCP servers at 172.16.1.10
+//   on port 53001.  Maximum time to we will  wait for a DNS server to
+//   respond to us is 1000 ms.
 
     "ip-address": "172.16.1.10",
     "port": 53001,
     "dns-server-timeout" : 1000,
 
-#
-# ----------------- Forward DDNS  ------------------
-#
-#   1. Zone - "four.example.com.
-#      It uses TSIG, key name is "d2.md5.key"
-#      It is served by one DNS server which listens for DDNS requests at
-#      172.16.1.1 on the default port 53 (standard  DNS port)
-#
-#   2. Zone - "six.example.com."
-#      It does not use TSIG.
-#      It is server by one DNS server at "2001:db8:1::10" on port 7802
+//
+// ----------------- Forward DDNS  ------------------
+//
+//   1. Zone - "four.example.com.
+//      It uses TSIG, key name is "d2.md5.key"
+//      It is served by one DNS server which listens for DDNS requests at
+//      172.16.1.1 on the default port 53 (standard  DNS port)
+//
+//   2. Zone - "six.example.com."
+//      It does not use TSIG.
+//      It is server by one DNS server at "2001:db8:1::10" on port 7802
 
     "forward-ddns":
     {
         "ddns-domains":
         [
-#           DdnsDomain for zone "four.example.com."
+//           DdnsDomain for zone "four.example.com."
             {
                 "name": "four.example.com.",
                 "key-name": "d2.md5.key",
@@ -46,7 +46,7 @@
                 ]
             },
 
-#           DdnsDomain for zone "six.example.com."
+//           DdnsDomain for zone "six.example.com."
             {
                 "name": "six.example.com.",
                 "dns-servers":
@@ -60,13 +60,12 @@
         ]
     },
 
-#
-# ----------------- Reverse DDNS  ------------------
-#
-# We will update Reverse DNS for one zone "2.0.192.in-addr-arpa". It
-# uses TSIG with key "d2.sha1.key" and is served by two DNS servers:
-# one listening at "172.16.1.1" on 53001 and the other at "192.168.2.10".
-#
+// ----------------- Reverse DDNS  ------------------
+//
+// We will update Reverse DNS for one zone "2.0.192.in-addr-arpa". It
+// uses TSIG with key "d2.sha1.key" and is served by two DNS servers:
+// one listening at "172.16.1.1" on 53001 and the other at "192.168.2.10".
+//
     "reverse-ddns":
     {
         "ddns-domains":
@@ -88,12 +87,11 @@
         ]
     },
 
-#
-# ------------------ TSIG keys ---------------------
-#
-#   Each key has a name, an algorithm (HMAC-MD5, HMAC-SHA1, HMAC-SHA224...)
-#   and a base-64 encoded shared secret.
-#
+// ------------------ TSIG keys ---------------------
+//
+//   Each key has a name, an algorithm (HMAC-MD5, HMAC-SHA1, HMAC-SHA224...)
+//   and a base-64 encoded shared secret.
+//
     "tsig-keys":
     [
         {
@@ -113,6 +111,33 @@
             "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
         }
     ]
+},
+
+// The following configures logging. It assumes that messages with at least
+// informational level (info, warn, error and fatal) should be logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp-ddns",
+            "output_options": [
+                {
+                    "output": "stdout",
+                    // Several additional parameters are possible in addition
+                    // to the typical output. Flush determines whether logger
+                    // flushes output to a file. Maxsize determines maximum
+                    // filesize before the file is being rotated. maxver
+                    // specifies the maximum number of rotated files being
+                    // kept.
+                    "flush": true,
+                    "maxsize": 204800,
+                    "maxver": 4
+                }
+            ],
+            "debuglevel": 0,
+            "severity": "INFO"
+        }
+    ]
 }
+    
 
 }

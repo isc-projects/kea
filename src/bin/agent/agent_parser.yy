@@ -71,6 +71,9 @@ using namespace std;
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
+  FLUSH "flush"
+  MAXSIZE "maxsize"
+  MAXVER "maxver"
 
   DHCP4 "Dhcp4"
   DHCP6 "Dhcp6"
@@ -549,21 +552,42 @@ output_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
-} output_params RCURLY_BRACKET {
+} output_params_list RCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-output_params: output_param
-             | output_params COMMA output_param
+output_params_list: output_params
+             | output_params_list COMMA output_params
              ;
 
-output_param: OUTPUT {
+output_params: output
+             | flush
+             | maxsize
+             | maxver
+             ;
+
+output: OUTPUT {
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 };
+
+flush: FLUSH COLON BOOLEAN {
+    ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("flush", flush);
+}
+
+maxsize: MAXSIZE COLON INTEGER {
+    ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("maxsize", maxsize);
+}
+
+maxver: MAXVER COLON INTEGER {
+    ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("maxver", maxver);
+}
 
 %%
 

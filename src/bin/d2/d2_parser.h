@@ -377,19 +377,22 @@ namespace isc { namespace d2 {
         TOKEN_OUTPUT = 290,
         TOKEN_DEBUGLEVEL = 291,
         TOKEN_SEVERITY = 292,
-        TOKEN_TOPLEVEL_JSON = 293,
-        TOKEN_TOPLEVEL_DHCPDDNS = 294,
-        TOKEN_SUB_DHCPDDNS = 295,
-        TOKEN_SUB_TSIG_KEY = 296,
-        TOKEN_SUB_TSIG_KEYS = 297,
-        TOKEN_SUB_DDNS_DOMAIN = 298,
-        TOKEN_SUB_DDNS_DOMAINS = 299,
-        TOKEN_SUB_DNS_SERVER = 300,
-        TOKEN_SUB_DNS_SERVERS = 301,
-        TOKEN_STRING = 302,
-        TOKEN_INTEGER = 303,
-        TOKEN_FLOAT = 304,
-        TOKEN_BOOLEAN = 305
+        TOKEN_FLUSH = 293,
+        TOKEN_MAXSIZE = 294,
+        TOKEN_MAXVER = 295,
+        TOKEN_TOPLEVEL_JSON = 296,
+        TOKEN_TOPLEVEL_DHCPDDNS = 297,
+        TOKEN_SUB_DHCPDDNS = 298,
+        TOKEN_SUB_TSIG_KEY = 299,
+        TOKEN_SUB_TSIG_KEYS = 300,
+        TOKEN_SUB_DDNS_DOMAIN = 301,
+        TOKEN_SUB_DDNS_DOMAINS = 302,
+        TOKEN_SUB_DNS_SERVER = 303,
+        TOKEN_SUB_DNS_SERVERS = 304,
+        TOKEN_STRING = 305,
+        TOKEN_INTEGER = 306,
+        TOKEN_FLOAT = 307,
+        TOKEN_BOOLEAN = 308
       };
     };
 
@@ -650,6 +653,18 @@ namespace isc { namespace d2 {
 
     static inline
     symbol_type
+    make_FLUSH (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MAXSIZE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MAXVER (const location_type& l);
+
+    static inline
+    symbol_type
     make_TOPLEVEL_JSON (const location_type& l);
 
     static inline
@@ -906,11 +921,11 @@ namespace isc { namespace d2 {
     {
       yyeof_ = 0,
       yylast_ = 247,     ///< Last index in yytable_.
-      yynnts_ = 127,  ///< Number of nonterminal symbols.
+      yynnts_ = 131,  ///< Number of nonterminal symbols.
       yyfinal_ = 20, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 51  ///< Number of tokens.
+      yyntokens_ = 54  ///< Number of tokens.
     };
 
 
@@ -957,9 +972,9 @@ namespace isc { namespace d2 {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50
+      45,    46,    47,    48,    49,    50,    51,    52,    53
     };
-    const unsigned int user_token_number_max_ = 305;
+    const unsigned int user_token_number_max_ = 308;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -992,24 +1007,24 @@ namespace isc { namespace d2 {
   {
       switch (other.type_get ())
     {
-      case 62: // value
-      case 89: // ncr_protocol_value
+      case 65: // value
+      case 92: // ncr_protocol_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 50: // "boolean"
+      case 53: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 49: // "floating point"
+      case 52: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 48: // "integer"
+      case 51: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 47: // "constant string"
+      case 50: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1030,24 +1045,24 @@ namespace isc { namespace d2 {
     (void) v;
       switch (this->type_get ())
     {
-      case 62: // value
-      case 89: // ncr_protocol_value
+      case 65: // value
+      case 92: // ncr_protocol_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 50: // "boolean"
+      case 53: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 49: // "floating point"
+      case 52: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 48: // "integer"
+      case 51: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 47: // "constant string"
+      case 50: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1127,24 +1142,24 @@ namespace isc { namespace d2 {
     // Type destructor.
     switch (yytype)
     {
-      case 62: // value
-      case 89: // ncr_protocol_value
+      case 65: // value
+      case 92: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 50: // "boolean"
+      case 53: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 49: // "floating point"
+      case 52: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 48: // "integer"
+      case 51: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 47: // "constant string"
+      case 50: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1171,24 +1186,24 @@ namespace isc { namespace d2 {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 62: // value
-      case 89: // ncr_protocol_value
+      case 65: // value
+      case 92: // ncr_protocol_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 50: // "boolean"
+      case 53: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 49: // "floating point"
+      case 52: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 48: // "integer"
+      case 51: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 47: // "constant string"
+      case 50: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1252,7 +1267,7 @@ namespace isc { namespace d2 {
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305
+     305,   306,   307,   308
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1474,6 +1489,24 @@ namespace isc { namespace d2 {
   }
 
   D2Parser::symbol_type
+  D2Parser::make_FLUSH (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLUSH, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_MAXSIZE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXSIZE, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_MAXVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXVER, l);
+  }
+
+  D2Parser::symbol_type
   D2Parser::make_TOPLEVEL_JSON (const location_type& l)
   {
     return symbol_type (token::TOKEN_TOPLEVEL_JSON, l);
@@ -1554,7 +1587,7 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy" // lalr1.cc:377
 } } // isc::d2
-#line 1558 "d2_parser.h" // lalr1.cc:377
+#line 1591 "d2_parser.h" // lalr1.cc:377
 
 
 

@@ -991,42 +991,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFilename) {
     ::remove("test2.json");
 }
 
-// Tests if config-write rejects invalid filename (a one that tries to escape
-// the current directory).
-TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidJailEscape) {
-    createUnixChannelServer();
-    std::string response;
-
-    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
-                    "{ \"filename\": \"../test3.json\" } }", response);
-    checkConfigWrite(response, CONTROL_RESULT_ERROR,
-                     "Using '..' in filename is not allowed.");
-}
-
-// Tests if config-write rejects invalid filename (absolute paths are not allowed)
-TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidAbsPath) {
-    createUnixChannelServer();
-    std::string response;
-
-    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
-                    "{ \"filename\": \"/tmp/test4.json\" } }", response);
-    checkConfigWrite(response, CONTROL_RESULT_ERROR,
-                     "Absolute path in filename is not allowed.");
-}
-
-// Tests if config-write rejects invalid filename (one with backslashes, which may
-// lead to some other tricks)
-TEST_F(CtrlChannelDhcpv6SrvTest, configWriteInvalidEscape) {
-    createUnixChannelServer();
-    std::string response;
-
-    // This will be converted to foo(single backslash)test5.json
-    sendUnixCommand("{ \"command\": \"config-write\", \"arguments\": "
-                    "{ \"filename\": \"foo\\\\test5.json\" } }", response);
-    checkConfigWrite(response, CONTROL_RESULT_ERROR,
-                     "Using \\ in filename is not allowed.");
-}
-
 // Tests if config-reload attempts to reload a file and reports that the
 // file is missing.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadMissingFile) {

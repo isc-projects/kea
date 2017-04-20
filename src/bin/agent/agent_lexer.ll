@@ -329,6 +329,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"flush\" {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
+        return AgentParser::make_FLUSH(driver.loc_);
+    default:
+        return AgentParser::make_STRING("flush", driver.loc_);
+    }
+}
+
+\"maxsize\" {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
+        return AgentParser::make_MAXSIZE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("maxsize", driver.loc_);
+    }
+}
+
+\"maxver\" {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
+        return AgentParser::make_MAXVER(driver.loc_);
+    default:
+        return AgentParser::make_STRING("maxver", driver.loc_);
+    }
+}
+
 \"debuglevel\" {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
