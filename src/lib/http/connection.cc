@@ -118,6 +118,12 @@ HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response) {
 
 void
 HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
+    // Operation is aborted when the acceptor is cancelled, as a result
+    // of stopping the connection. This is not an error condition.
+    if (ec.value() == boost::asio::error::operation_aborted) {
+        return;
+    }
+
     if (!acceptor_.isOpen()) {
         return;
     }
