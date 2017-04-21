@@ -187,12 +187,6 @@ private:
     /// @brief Socket used by this connection.
     asiolink::TCPSocket<SocketCallback> socket_;
 
-    /// @brief Callback invoked when data received over the socket.
-    SocketCallback socket_callback_;
-
-    /// @brief Callback invoked when data sent over the socket.
-    SocketCallback socket_write_callback_;
-
     /// @brief Reference to the TCP acceptor used to accept new connections.
     HttpAcceptor& acceptor_;
 
