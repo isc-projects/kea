@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <list>
+#include <stdint.h>
 #include <string>
 
 namespace isc {
@@ -45,17 +46,25 @@ public:
     ///
     /// @param io_service IO service.
     /// @param socket_file_path Socket file path.
-    /// @param test_timeout Test timeout in milliseconds.
     /// @param custom_response Custom response to be sent to the client.
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
-                         const long test_timeout,
                          const std::string& custom_response = "");
 
     /// @brief Destructor.
     ///
     /// Closes active connections.
     ~TestServerUnixSocket();
+
+    /// @brief Starts timer for detecting test timeout.
+    ///
+    /// @param test_timeout Test timeout in milliseconds.
+    void startTimer(const long test_timeout);
+
+    /// @brief Generates response of a given length.
+    ///
+    /// @param response_size Desired response size.
+    void generateCustomResponse(const uint64_t response_size);
 
     /// @brief Creates and binds server socket.
     void bindServerSocket();
@@ -72,6 +81,12 @@ public:
 
     /// @brief Return number of responses sent so far to the clients.
     size_t getResponseNum() const;
+
+    /// @brief Checks if IO service has been stopped as a result of the
+    /// timeout.
+    bool isStopped() const {
+        return (stopped_);
+    }
 
 private:
 
@@ -94,6 +109,10 @@ private:
 
     /// @brief Pool of connections.
     boost::shared_ptr<ConnectionPool> connection_pool_;
+
+    /// @brief Indicates if IO service has been stopped as a result of
+    /// a timeout.
+    bool stopped_;
 };
 
 /// @brief Pointer to the @ref TestServerUnixSocket.

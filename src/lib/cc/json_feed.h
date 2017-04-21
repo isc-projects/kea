@@ -7,14 +7,24 @@
 #ifndef JSON_FEED_H
 #define JSON_FEED_H
 
+#include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
+#include <boost/shared_ptr.hpp>
 #include <list>
 #include <stdint.h>
 #include <string>
 
 namespace isc {
 namespace config {
+
+class JSONFeed;
+
+/// @brief Pointer to the @ref JSONFeed.
+typedef boost::shared_ptr<JSONFeed> JSONFeedPtr;
+
+/// @brief Pointer to the const @ref JSONFeed.
+typedef boost::shared_ptr<const JSONFeed> ConstJSONFeedPtr;
 
 /// @brief A generic exception thrown upon an error in the @ref JSONFeed.
 class JSONFeedError : public Exception {
@@ -140,7 +150,9 @@ public:
     bool feedOk() const;
 
     /// @brief Returns error string when data processing has failed.
-    std::string getErrorMessage() const;
+    std::string getErrorMessage() const {
+        return (error_message_);
+    }
 
     /// @brief Returns processed data as a structure of @ref isc::data::Element
     /// objects.
