@@ -70,52 +70,48 @@ TEST_F(AllocEngine6Test, constructor) {
 // This test checks if the simple allocation (REQUEST) can succeed
 // and the stats counter is properly bumped by 1
 TEST_F(AllocEngine6Test, simpleAlloc6) {
-
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     simpleAlloc6Test(pool_, IOAddress("::"), false);
 
-    // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(1, stat->getInteger().first);
+    // We should have bumped the assigned counter by 1
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
 // and the stats counter is properly bumped by 1
 TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
 
     simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
 
-    // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(1, stat->getInteger().first);
+    // We should have bumped the assigned counter by 1
+    EXPECT_TRUE(testStatistics("assigned-pds", 1, subnet_->getID()));
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
 // and the stats counter isn't bumped
 TEST_F(AllocEngine6Test, fakeAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
     simpleAlloc6Test(pool_, IOAddress("::"), true);
 
-    // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(0, stat->getInteger().first);
+    // We should not have bumped the assigned counter.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // This test checks if the fake PD allocation (for SOLICIT) can succeed
 // and the stats counter isn't bumped
 TEST_F(AllocEngine6Test, pdFakeAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
+
     simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
 
-    // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(0, stat->getInteger().first);
+    // We should not have bumped the assigned counter
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
 };
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -507,6 +503,11 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // Initialize FQDN data for the lease.
     initFqdn("myhost.example.com", true, true);
+
+    // Verify the none of relelvant stats are zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
@@ -1839,6 +1840,14 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     IOAddress addr(addr_txt);
     initSubnet(IOAddress("2001:db8:1::"), addr, addr);
 
+    // Stats should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
+
+
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
     Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
@@ -1856,7 +1865,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
 }
 
-// This test checks if statistics are not updated when expired declined lease
+// This test checks if statistics are updated when expired declined lease
 // is reused when responding to REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
 
@@ -1870,6 +1879,13 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     IOAddress addr(addr_txt);
     initSubnet(IOAddress("2001:db8::"), addr, addr);
 
+    // Stats should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
+
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
     Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
@@ -1880,6 +1896,11 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     testReuseLease6(engine, declined, "::", false, SHOULD_PASS, assigned);
 
     // Check that the stats were modified as expected.
+    // assigned-nas should NOT get incremented. Currently we do not adjust assigned
+    // counts when we declines
+    // declined-addresses will -1, as the artificial creation of declined lease
+    // doens't increment it from zero.  reclaimed-declined-addresses will be 1
+    // becuase the leases are implicitly reclaimed before they can be assigned.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));

@@ -744,7 +744,8 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
     // Check that the stats are correct.  Note that assigned-addresses does
     // not get decremented when a lease is declined, ergo not incremented
-    // when it is reused.
+    // when it is reused.  Declined address stats will be -1 since
+    // lease was created as declined which does not increment the stat.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
