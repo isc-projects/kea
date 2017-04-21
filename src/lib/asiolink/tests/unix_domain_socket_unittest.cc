@@ -95,7 +95,8 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
     ASSERT_EQ(outbound_data.size(), sent_size);
 
     // Run IO service to generate server's response.
-    while (test_socket_.getResponseNum() < 1) {
+    while ((test_socket_->getResponseNum() < 1) &&
+           (!test_socket_->isStopped())) {
         io_service_.run_one();
     }
 
@@ -136,7 +137,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
         }
     ));
     // Run IO service until connect handler is invoked.
-    while (!connect_handler_invoked) {
+    while (!connect_handler_invoked && (!test_socket_->isStopped())) {
         io_service_.run_one();
     }
 
@@ -158,7 +159,8 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     ));
 
     // Run IO service to generate server's response.
-    while (test_socket_->getResponseNum() < 1) {
+    while ((test_socket_->getResponseNum() < 1) &&
+           (!test_socket_->isStopped())) {
         io_service_.run_one();
     }
 
@@ -189,7 +191,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
 
     }));
     // Run IO service until we get some response from the server.
-    while (!receive_handler_invoked) {
+    while (!receive_handler_invoked && !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 
@@ -230,7 +232,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         connect_handler_invoked = true;
         EXPECT_TRUE(ec);
     });
-    while (!connect_handler_invoked) {
+    while (!connect_handler_invoked && !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 
@@ -243,7 +245,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         send_handler_invoked = true;
         EXPECT_TRUE(ec);
     });
-    while (!send_handler_invoked) {
+    while (!send_handler_invoked && !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 
@@ -256,7 +258,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         receive_handler_invoked = true;
         EXPECT_TRUE(ec);
     });
-    while (!receive_handler_invoked) {
+    while (!receive_handler_invoked && !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 }

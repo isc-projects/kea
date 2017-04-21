@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <set>
+#include <sstream>
 
 using namespace boost::asio::local;
 
@@ -200,20 +201,36 @@ private:
 
 TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
                                            const std::string& socket_file_path,
-                                           const long test_timeout,
                                            const std::string& custom_response)
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
       server_acceptor_(io_service_.get_io_service()),
       test_timer_(io_service_),
       custom_response_(custom_response),
-      connection_pool_(new ConnectionPool(io_service)) {
-    test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
-                      test_timeout, IntervalTimer::ONE_SHOT);
+      connection_pool_(new ConnectionPool(io_service)),
+      stopped_(false) {
 }
 
 TestServerUnixSocket::~TestServerUnixSocket() {
     connection_pool_->stopAll();
+}
+
+void
+TestServerUnixSocket::generateCustomResponse(const uint64_t response_size) {
+    std::ostringstream s;
+    s << "{";
+    while (s.tellp() < response_size) {
+        s << "\"param\": \"value\",";
+    }
+    s << "}";
+    custom_response_ = s.str();
+}
+
+void
+TestServerUnixSocket::startTimer(const long test_timeout) {
+    test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler,
+                                  shared_from_this()),
+                      test_timeout, IntervalTimer::ONE_SHOT);
 }
 
 void
@@ -233,13 +250,14 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
 void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
-        boost::bind(&TestServerUnixSocket::acceptHandler, this, _1));
+        boost::bind(&TestServerUnixSocket::acceptHandler, shared_from_this(), _1));
 }
 
 void
 TestServerUnixSocket::timeoutHandler() {
     ADD_FAILURE() << "Timeout occurred while running the test!";
     io_service_.stop();
+    stopped_ = true;
 }
 
 size_t

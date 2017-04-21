@@ -7,7 +7,6 @@
 #include <cc/data.h>
 #include <cc/json_feed.h>
 #include <boost/bind.hpp>
-#include <iostream>
 
 using namespace isc::data;
 using namespace isc::util;
