@@ -3857,6 +3857,29 @@ If not specified, the default value is:
             </row>
 
             <row>
+              <entry>reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic shows the number of expired leases that have
+              and been reclaimed since server startup. It increases every time an
+              expired lease undergoes expiration reclamation. This statistic is reset
+              during reconfiguration event. Note it counts both NA and PD reclamations.
+              This statistic is reset during reconfiguration event.
+              </entry>
+            </row>
+
+            <row>
+              <entry>subnet[id].reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic shows the number of expired leases that have
+              and been reclaimed since server startup. It increases every time an expired
+              lease undergoes expiration reclamation. The <emphasis>id</emphasis> is
+              the subnet-id of the subnet. This statistic is exposed for each subnet
+              separately. Note it counts both NA and PD reclamations.
+              This statistic is reset during reconfiguration event.
+              </entry>
+            </row>
+
+            <row>
             <entry>declined-addresses</entry>
             <entry>integer</entry>
             <entry>
