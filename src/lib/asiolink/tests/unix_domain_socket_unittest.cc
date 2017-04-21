@@ -33,9 +33,11 @@ public:
     /// @brief Constructor.
     ///
     /// Removes unix socket descriptor before the test.
-    UnixDomainSocketTest() : io_service_(),
-                             test_socket_(io_service_, unixSocketFilePath(),
-                                          TEST_TIMEOUT) {
+    UnixDomainSocketTest() :
+        io_service_(),
+        test_socket_(new test::TestServerUnixSocket(io_service_,
+                                                    unixSocketFilePath())) {
+        test_socket_->startTimer(TEST_TIMEOUT);
         removeUnixSocketFile();
     }
 
@@ -73,14 +75,14 @@ public:
     IOService io_service_;
 
     /// @brief Server side unix socket used in these tests.
-    test::TestServerUnixSocket test_socket_;
+    test::TestServerUnixSocketPtr test_socket_;
 };
 
 // This test verifies that the client can send data over the unix
 // domain socket and receive a response.
 TEST_F(UnixDomainSocketTest, sendReceive) {
     // Start the server.
-    test_socket_.bindServerSocket();
+    test_socket_->bindServerSocket();
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);
@@ -267,7 +269,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
 // the socket is connected.
 TEST_F(UnixDomainSocketTest, getNative) {
     // Start the server.
-    test_socket_.bindServerSocket();
+    test_socket_->bindServerSocket();
 
     // Setup client side.
     UnixDomainSocket socket(io_service_);

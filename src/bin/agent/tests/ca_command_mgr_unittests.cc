@@ -174,8 +174,8 @@ public:
     void bindServerSocket(const std::string& response) {
         server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
                                                             unixSocketFilePath(),
-                                                            TEST_TIMEOUT,
                                                             response));
+        server_socket_->startTimer(TEST_TIMEOUT);
         server_socket_->bindServerSocket();
     }
 
@@ -252,11 +252,6 @@ public:
         while (server_socket->getResponseNum() < expected_responses) {
             io_service->run_one();
         }
-    }
-
-
-    CtrlAgentCommandMgrTest* getTestSelf() {
-        return (this);
     }
 
     /// @brief a convenience reference to control agent command manager
