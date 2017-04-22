@@ -285,6 +285,43 @@ public:
         alternate_source_ = source;
     }
 
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
+
 private:
 
     /// @brief Private default constructor.

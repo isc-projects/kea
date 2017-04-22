@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -533,6 +533,21 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
 /// from a database for a host.
 TEST_F(MySqlHostDataSourceTest, messageFields) {
     testMessageFields4();
+}
+
+// Check that delete(subnet-id, addr4) works.
+TEST_F(MySqlHostDataSourceTest, deleteByAddr4) {
+    testDeleteByAddr4();
+}
+
+// Check that delete(subnet4-id, identifier-type, identifier) works.
+TEST_F(MySqlHostDataSourceTest, deleteById4) {
+    testDeleteById4();
+}
+
+// Check that delete(subnet6-id, identifier-type, identifier) works.
+TEST_F(MySqlHostDataSourceTest, deleteById6) {
+    testDeleteById6();
 }
 
 }; // Of anonymous namespace

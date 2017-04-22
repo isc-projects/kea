@@ -1463,6 +1463,103 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
+void GenericHostDataSourceTest::testDeleteByAddr4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Now try to delete it: del(subnet-id, addr4)
+    EXPECT_TRUE(hdsptr_->del(subnet1, IOAddress("192.0.2.1")));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
+void GenericHostDataSourceTest::testDeleteById4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
+void GenericHostDataSourceTest::testDeleteById6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    SubnetID subnet1 = host1->getIPv6SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get6(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get6(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
