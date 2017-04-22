@@ -222,5 +222,39 @@ HostMgr::add(const HostPtr& host) {
     alternate_source_->add(host);
 }
 
+bool
+HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "unable to delete a host because there is "
+                  "no alternate host data source present");
+    }
+
+    return (alternate_source_->del(subnet_id, addr));
+}
+
+bool
+HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "unable to delete a host because there is "
+                  "no alternate host data source present");
+    }
+
+    return (alternate_source_->del4(subnet_id, identifier_type,
+                                    identifier_begin, identifier_len));
+}
+
+bool
+HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "unable to delete a host because there is "
+                  "no alternate host data source present");
+    }
+
+    return (alternate_source_->del6(subnet_id, identifier_type,
+                                    identifier_begin, identifier_len));
+}
+
 } // end of isc::dhcp namespace
 } // end of isc namespace

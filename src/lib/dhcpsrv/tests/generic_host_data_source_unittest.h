@@ -522,8 +522,22 @@ public:
     /// from a database for a host.
     ///
     /// Uses gtest macros to report failures.
-    ///
     void testMessageFields4();
+
+    /// @brief Tests that delete(subnet-id, addr4) call works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteByAddr4();
+
+    /// @brief Tests that delete(subnet4-id, identifier-type, identifier) works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById4();
+
+    /// @brief Tests that delete(subnet6-id, identifier-type, identifier) works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById6();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///
