@@ -269,6 +269,22 @@ public:
         return (alternate_source_);
     }
 
+    /// @brief Sets the alternate host data source.
+    ///
+    /// Note: This should be used only for testing. Do not use
+    /// in production. Normal control flow assumes that
+    /// HostMgr::create(...) is called and it instnatiates
+    /// appropriate host data source. However, some tests
+    /// (e.g. host_cmds) implement their own very simple
+    /// data source. It's not production ready by any means,
+    /// so it does not belong in host_data_source_factory.cc.
+    /// The testing nature of this method is reflected in its name.
+    ///
+    /// @param source new source to be set (may be NULL)
+    void setTestHostDataSource(const HostDataSourcePtr& source) {
+        alternate_source_ = source;
+    }
+
 private:
 
     /// @brief Private default constructor.
