@@ -8,6 +8,7 @@
 #define HOST_H
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -543,6 +544,16 @@ public:
     HostID getHostId() const {
         return (host_id_);
     }
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement4() const;
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement6() const;
 
 private:
 
