@@ -138,8 +138,8 @@ protected:
     /// @param identifier_type Identifier type.
     void testIdentifier4(const std::string& identifier_name,
                          const std::string& identifier_value,
-                         const Host::IdentifierType& expected_identifier_type,
-                         const std::vector<uint8_t>& expected_identifier) const {
+                         const Host::IdentifierType& /*expected_identifier_type*/,
+                         const std::vector<uint8_t>& /*expected_identifier*/) const {
         std::ostringstream config;
         config << "{ \"" << identifier_name << "\": \"" << identifier_value
                << "\","
