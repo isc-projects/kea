@@ -131,7 +131,8 @@ public:
 // Check that LibraryManager constructor requires a not null manager
 
 TEST_F(LibraryManagerTest, NullManager) {
-    EXPECT_THROW(PublicLibraryManager(std::string("foo"), 0, 0),
+    boost::shared_ptr<CalloutManager> null_manager;
+    EXPECT_THROW(PublicLibraryManager(std::string("foo"), 0, null_manager),
                  NoCalloutManager);
 }
 
