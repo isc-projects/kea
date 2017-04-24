@@ -54,8 +54,9 @@ TEST(ServerHooksTest, RegisterHooks) {
 }
 
 // Check that duplicate names cannot be registered.
-
-TEST(ServerHooksTest, DuplicateHooks) {
+// This test has been updated. See #5251 for details. The old
+// code is retained in case we decide to get back to it.
+TEST(ServerHooksTest, DISABLED_OldDuplicateHooks) {
     ServerHooks& hooks = ServerHooks::getServerHooks();
     hooks.reset();
 
@@ -66,6 +67,29 @@ TEST(ServerHooksTest, DuplicateHooks) {
     int gamma = hooks.registerHook("gamma");
     EXPECT_EQ(2, gamma);
     EXPECT_THROW(hooks.registerHook("gamma"), DuplicateHook);
+}
+
+// Check that duplicate names are handled properly. The code used to throw,
+// but it now returns the existing index. See #5251 for details.
+TEST(ServerHooksTest, NewDuplicateHooks) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+
+    int index = hooks.getIndex("context_create");
+
+    // Ensure we can duplicate one of the existing names.
+    // Instead of throwing, we just check that a resonable
+    // index has been returned.
+    EXPECT_EQ(index, hooks.registerHook("context_create"));
+
+    // Check that mutiple attempts to register the same hook will return
+    // existing index.
+    int gamma = hooks.registerHook("gamma");
+    EXPECT_EQ(2, gamma);
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
 }
 
 // Checks that we can get the name of the hooks.
