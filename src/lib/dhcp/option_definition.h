@@ -527,6 +527,7 @@ public:
     /// @brief Factory to create option with tuple list.
     ///
     /// @param u option universe (V4 or V6).
+    /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer
     /// with a list of tuples.
     /// @param end iterator pointing to the end of the buffer with
