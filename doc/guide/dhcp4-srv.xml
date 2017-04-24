@@ -3614,7 +3614,25 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
               separately. This statistic is reset during reconfiguration event.
               </entry>
             </row>
-
+            <row>
+              <entry>reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases that have
+              been reclaimed since server startup. It is incremented each time
+              an expired lease is reclaimed and is reset when the server is
+              reconfigured.
+              </entry>
+            </row>
+            <row>
+              <entry>subnet[id].reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases associated
+              with a given subnet (<emphasis>id</emphasis> is the subnet-id)
+              that have been reclaimed since server startup. It is incremented
+              each time an expired lease is reclaimed and is reset when the
+              server is reconfigured.
+              </entry>
+            </row>
             <row>
             <entry>declined-addresses</entry>
             <entry>integer</entry>

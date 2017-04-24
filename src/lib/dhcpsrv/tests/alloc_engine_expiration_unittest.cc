@@ -1437,13 +1437,12 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
     // initially reclaimed.
     if (use_reclaimed || (msg_type == DHCPV6_SOLICIT)) {
         EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
-
     } else {
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-nas", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
-
     }
 
 }
@@ -2099,6 +2098,7 @@ ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
     } else if (msg_type == DHCPREQUEST) {
         // Re-allocation of expired leases should result in reclamations.
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
