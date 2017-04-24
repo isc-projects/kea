@@ -1,6 +1,6 @@
 1250.	[bug]		fdupont
 	Do not unregister timers when running the config-test command.
-	(Trac #5186, git xxx)
+	(Trac #5186, git e891b06940e41b4cfaa324c2ace8fdd761ee6662)
 
 1249.	[bug]		tmark
 	The assigned lease statistics were not being probably adjusted
