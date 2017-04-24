@@ -1929,7 +1929,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
     cfg_mgr.commit();
 
-    // Verify relevant stats are zero. 
+    // Verify relevant stats are zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
