@@ -300,7 +300,7 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
-    assert_eq 4 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
+    assert_eq 5 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
 
     # verify that foreign key fk_host_identifier_type exists
     qry="show create table hosts";
