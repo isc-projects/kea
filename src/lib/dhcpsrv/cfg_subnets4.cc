@@ -250,6 +250,9 @@ CfgSubnets4::removeStatistics() {
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "declined-reclaimed-addresses"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "reclaimed-leases"));
     }
 }
 

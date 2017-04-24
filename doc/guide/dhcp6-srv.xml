@@ -982,9 +982,26 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-        Most of the parameters in the "option-data" structure are optional and
-        can be omitted in some circumstances as discussed in the
-        <xref linkend="dhcp6-option-data-defaults"/>.
+        Most of the parameters in the "option-data" structure are
+        optional and can be omitted in some circumstances as discussed
+        in the <xref linkend="dhcp6-option-data-defaults"/>. Only one
+        of name or code is required, so you don't need to specify
+        both. Space has a default value of "dhcp6", so you can skip
+        this as well if you define a regular (not encapsulated) DHCPv6
+        option.  Finally, csv-format defaults to true, so it too can
+        be skipped, unless you want to specify the option value as
+        hexstring. Therefore the above example can be simplified to:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "dns-servers",
+           "data": "2001:db8::cafe, 2001:db8::babe"</userinput>
+        },
+        ...
+    ]
+} </screen>
+
       </para>
 
 
@@ -1204,7 +1221,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>lq-relay-data</entry><entry>47</entry><entry>record (ipv6-address, binary)</entry><entry>false</entry></row>
 <row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>bootfile-url</entry><entry>59</entry><entry>string</entry><entry>false</entry></row>
-<row><entry>bootfile-param</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>bootfile-param</entry><entry>60</entry><entry>tuple</entry><entry>true</entry></row>
 <row><entry>client-arch-type</entry><entry>61</entry><entry>uint16</entry><entry>true</entry></row>
 <row><entry>nii</entry><entry>62</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry></row>
 <row><entry>aftr-name</entry><entry>64</entry><entry>fqdn</entry><entry>false</entry></row>
@@ -3840,6 +3857,27 @@ If not specified, the default value is:
             </row>
 
             <row>
+              <entry>reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry> This statistic is the number of expired leases that have been
+              reclaimed since server startup. It is incremented each time an expired
+              lease is reclaimed (it counts both NA and PD reclamations) and is reset
+              when the server is reconfigured.
+              </entry>
+            </row>
+
+            <row>
+              <entry>subnet[id].reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases associated with
+              a given subnet (<emphasis>"id"</emphasis> is the subnet-id) that have
+              been reclaimed since server startup. It is incremented each time an expired
+              lease is reclaimed (it counts both NA and PD reclamations) and is reset
+              when the server is reconfigured.
+              </entry>
+            </row>
+
+            <row>
             <entry>declined-addresses</entry>
             <entry>integer</entry>
             <entry>
@@ -3944,11 +3982,12 @@ If not specified, the default value is:
         <itemizedlist>
             <listitem>build-report</listitem>
             <listitem>config-get</listitem>
+            <listitem>config-reload</listitem>
+            <listitem>config-set</listitem>
             <listitem>config-test</listitem>
             <listitem>config-write</listitem>
             <listitem>leases-reclaim</listitem>
             <listitem>list-commands</listitem>
-            <listitem>set-config</listitem>
             <listitem>shutdown</listitem>
             <listitem>version-get</listitem>
         </itemizedlist>

@@ -1319,8 +1319,21 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
                                     typeid(OptionCustom));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, begin, end,
-                                    typeid(Option));
+    // Prepare buffer holding an array of FQDNs.
+    const char fqdn_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn_buf(fqdn_data, fqdn_data + sizeof(fqdn_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
+                                    fqdn_buf.end(), typeid(OptionCustom));
 
     // V-I Vendor option requires specially crafted data.
     const char vivco_data[] = {
@@ -1652,6 +1665,124 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
         ASSERT_TRUE(def_by_name);
         ASSERT_TRUE(**def == *def_by_name);
     }
+}
+
+// This test checks handling of uncompressed FQDN list.
+TEST_F(LibDhcpTest, fqdnList) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
+
+    // Prepare buffer holding an array of FQDNs.
+    const uint8_t fqdn[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    /* This size is used later so protect ourselves against changes */
+    static_assert(sizeof(fqdn) == 40,
+                  "incorrect uncompressed domain list size");
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
+
+    OptionPtr option;
+    ASSERT_NO_THROW(option = def->optionFactory(Option::V4,
+                                                DHO_DOMAIN_SEARCH,
+                                                fqdn_buf.begin(),
+                                                fqdn_buf.end()));
+    ASSERT_TRUE(option);
+    OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_TRUE(names);
+    EXPECT_EQ(sizeof(fqdn), names->len() - names->getHeaderLen());
+    ASSERT_EQ(3, names->getDataFieldsNum());
+    EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
+    EXPECT_EQ("example.com.", names->readFqdn(1));
+    EXPECT_EQ("com.", names->readFqdn(2));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
+                                    fqdn_buf.end(), typeid(OptionCustom));
+}
+
+// This test checks handling of compressed FQDN list.
+// See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
+// compression algorithm).
+TEST_F(LibDhcpTest, fqdnListCompressed) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
+
+    const uint8_t compressed[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        192, 9,                                   // pointer to example.com
+        192, 17                                   // pointer to com
+    };
+    std::vector<uint8_t> compressed_buf(compressed,
+                                        compressed + sizeof(compressed));
+    OptionPtr option;
+    ASSERT_NO_THROW(option = def->optionFactory(Option::V4,
+                                                DHO_DOMAIN_SEARCH,
+                                                compressed_buf.begin(),
+                                                compressed_buf.end()));
+    ASSERT_TRUE(option);
+    OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
+    ASSERT_TRUE(names);
+    /* Use the uncompress length here (cf fqdnList) */
+    EXPECT_EQ(40, names->len() - names->getHeaderLen());
+    ASSERT_EQ(3, names->getDataFieldsNum());
+    EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
+    EXPECT_EQ("example.com.", names->readFqdn(1));
+    EXPECT_EQ("com.", names->readFqdn(2));
+}
+
+// Check that incorrect FQDN list compression is rejected.
+// See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
+// compression algorithm).
+TEST_F(LibDhcpTest, fqdnListBad) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
+
+    const uint8_t bad[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+        192, 80,                                  // too big/forward pointer
+        192, 11                                   // pointer to com
+    };
+    std::vector<uint8_t> bad_buf(bad, bad + sizeof(bad));
+
+    OptionPtr option;
+    EXPECT_THROW(option = def->optionFactory(Option::V4,
+                                             DHO_DOMAIN_SEARCH,
+                                             bad_buf.begin(),
+                                             bad_buf.end()),
+                 InvalidOptionValue);
+}
+
+// Check that empty (truncated) option is rejected.
+TEST_F(LibDhcpTest, fqdnListTrunc) {
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(def);
+
+    std::vector<uint8_t> empty;
+
+    OptionPtr option;
+    EXPECT_THROW(option = def->optionFactory(Option::V4,
+                                             DHO_DOMAIN_SEARCH,
+                                             empty.begin(),
+                                             empty.end()),
+                 InvalidOptionValue);
 }
 
 // tests whether v6 vendor-class option can be parsed properly.

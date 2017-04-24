@@ -298,6 +298,109 @@ TEST_F(OptionCustomTest, booleanData) {
 }
 
 // The purpose of this test is to verify that the data from a buffer
+// can be read as a DHCPv4 tuple.
+TEST_F(OptionCustomTest, tupleData4) {
+    OptionDefinition opt_def("option-foo", 232, "tuple", "option-foo-space");
+
+    const char data[] = {
+        6, 102, 111, 111, 98, 97, 114 // "foobar"
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Append suboption. It should be present in the parsed packet.
+    appendV4Suboption(buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    // Check it
+    std::string value;
+    ASSERT_NO_THROW(value = option->readTuple(0));
+    EXPECT_EQ("foobar", value);
+
+    // Now as a tuple
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    EXPECT_NO_THROW(option->readTuple(tuple, 0));
+    EXPECT_EQ("foobar", tuple.getText());
+
+    // There should be one suboption present.
+    EXPECT_TRUE(hasV4Suboption(option.get()));
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4,
+                                      buf.begin(), buf.begin() + 6)),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    // Check that the option with "no data" is rejected.
+    buf.clear();
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4,
+                                      buf.begin(), buf.end())),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+// The purpose of this test is to verify that the data from a buffer
+// can be read as a DHCPv6 tuple.
+TEST_F(OptionCustomTest, tupleData6) {
+    OptionDefinition opt_def("option-foo", 1000, "tuple", "option-foo-space");
+
+    const char data[] = {
+        0, 6, 102, 111, 111, 98, 97, 114 // "foobar"
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Append suboption. It should be present in the parsed packet.
+    appendV6Suboption(buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have just one data field.
+    ASSERT_EQ(1, option->getDataFieldsNum());
+
+    // Check it
+    std::string value;
+    ASSERT_NO_THROW(value = option->readTuple(0));
+    EXPECT_EQ("foobar", value);
+
+    // Now as a tuple
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    EXPECT_NO_THROW(option->readTuple(tuple, 0));
+    EXPECT_EQ("foobar", tuple.getText());
+
+    // There should be one suboption present.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 1)),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 7)),
+        isc::dhcp::BadDataTypeCast
+    );
+
+}
+
+// The purpose of this test is to verify that the data from a buffer
 // can be read as FQDN.
 TEST_F(OptionCustomTest, fqdnData) {
     OptionDefinition opt_def("option-foo", 1000, "fqdn", "option-foo-space");
@@ -954,6 +1057,96 @@ TEST_F(OptionCustomTest, psidDataArray) {
     // PSID value is equal to '1b' (1).
     EXPECT_EQ(1, psid2.first.asUnsigned());
     EXPECT_EQ(0x01, psid2.second.asUint16());
+}
+
+// The purpose of this test is to verify that the data from a buffer
+// can be read as DHCPv4 tuples.
+TEST_F(OptionCustomTest, tupleDataArray4) {
+    OptionDefinition opt_def("option-foo", 232, "tuple", true);
+
+    const char data[] = {
+        5, 104, 101, 108, 108, 111, // "hello"
+        1, 32,                      // " "
+        5, 119, 111, 114, 108, 100   // "world"
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 3 data fields
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check them
+    std::string value;
+    ASSERT_NO_THROW(value = option->readTuple(0));
+    EXPECT_EQ("hello", value);
+    ASSERT_NO_THROW(value = option->readTuple(1));
+    EXPECT_EQ(" ", value);
+    ASSERT_NO_THROW(value = option->readTuple(2));
+    EXPECT_EQ("world", value);
+
+    // There should be no suboption present.
+    EXPECT_FALSE(hasV4Suboption(option.get()));
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4,
+                                      buf.begin(), buf.begin() + 12)),
+        isc::dhcp::BadDataTypeCast
+    );
+}
+
+// The purpose of this test is to verify that the data from a buffer
+// can be read as DHCPv6 tuples.
+TEST_F(OptionCustomTest, tupleDataArray6) {
+    OptionDefinition opt_def("option-foo", 1000, "tuple", true);
+
+    const char data[] = {
+        0, 5, 104, 101, 108, 108, 111, // "hello"
+        0, 1, 32,                      // " "
+        0, 5, 119, 111, 114, 108, 100   // "world"
+    };
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6, buf));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 3 data fields
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Check them
+    std::string value;
+    ASSERT_NO_THROW(value = option->readTuple(0));
+    EXPECT_EQ("hello", value);
+    ASSERT_NO_THROW(value = option->readTuple(1));
+    EXPECT_EQ(" ", value);
+    ASSERT_NO_THROW(value = option->readTuple(2));
+    EXPECT_EQ("world", value);
+
+    // There should be no suboption present.
+    EXPECT_FALSE(hasV6Suboption(option.get()));
+
+    // Check that the option with truncated data can't be created.
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 8)),
+        isc::dhcp::BadDataTypeCast
+    );
+
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 16)),
+        isc::dhcp::BadDataTypeCast
+    );
 }
 
 // The purpose of this test is to verify that the opton definition comprising
@@ -1626,6 +1819,96 @@ TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
     });
 }
 
+/// The purpose of this test is to verify that an option comprising an
+/// array of DHCPv4 tuples can be created with no tuples and that
+/// tuples can be later added after the option has been created.
+TEST_F(OptionCustomTest, setTupleDataArray4) {
+    OptionDefinition opt_def("option-foo", 232, "tuple", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new DHCPv4 tuple into the array.
+    ASSERT_NO_THROW(option->addArrayDataField(std::string("hello")));
+    ASSERT_NO_THROW(option->addArrayDataField(std::string(" ")));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple.append("world");
+    ASSERT_NO_THROW(option->addArrayDataField(tuple));
+
+    // We should have now 3 tuples added.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Verify the stored values.
+    ASSERT_NO_THROW({
+        std::string value = option->readTuple(0);
+        EXPECT_EQ("hello", value);
+    });
+
+    ASSERT_NO_THROW({
+        std::string value = option->readTuple(1);
+        EXPECT_EQ(" ", value);
+    });
+
+    ASSERT_NO_THROW({
+        OpaqueDataTuple value(OpaqueDataTuple::LENGTH_1_BYTE);
+        option->readTuple(value, 2);
+        EXPECT_EQ("world", value.getText());
+    });
+}
+
+/// The purpose of this test is to verify that an option comprising an
+/// array of DHCPv6 tuples can be created with no tuples and that
+/// tuples can be later added after the option has been created.
+TEST_F(OptionCustomTest, setTupleDataArray6) {
+    OptionDefinition opt_def("option-foo", 1000, "tuple", true);
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // Initially, the array does not contain any data fields.
+    ASSERT_EQ(0, option->getDataFieldsNum());
+
+    // Add 3 new DHCPv6 tuple into the array.
+    ASSERT_NO_THROW(option->addArrayDataField(std::string("hello")));
+    ASSERT_NO_THROW(option->addArrayDataField(std::string(" ")));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple.append("world");
+    ASSERT_NO_THROW(option->addArrayDataField(tuple));
+
+    // We should have now 3 tuples added.
+    ASSERT_EQ(3, option->getDataFieldsNum());
+
+    // Verify the stored values.
+    ASSERT_NO_THROW({
+        std::string value = option->readTuple(0);
+        EXPECT_EQ("hello", value);
+    });
+
+    ASSERT_NO_THROW({
+        std::string value = option->readTuple(1);
+        EXPECT_EQ(" ", value);
+    });
+
+    ASSERT_NO_THROW({
+        OpaqueDataTuple value(OpaqueDataTuple::LENGTH_2_BYTES);
+        option->readTuple(value, 2);
+        EXPECT_EQ("world", value.getText());
+    });
+}
+
 TEST_F(OptionCustomTest, setRecordData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "record");
 
@@ -1636,6 +1919,7 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
     ASSERT_NO_THROW(opt_def.addRecordField("psid"));
     ASSERT_NO_THROW(opt_def.addRecordField("ipv6-prefix"));
+    ASSERT_NO_THROW(opt_def.addRecordField("tuple"));
     ASSERT_NO_THROW(opt_def.addRecordField("string"));
 
     // Create an option and let the data field be initialized
@@ -1648,7 +1932,7 @@ TEST_F(OptionCustomTest, setRecordData) {
 
     // The number of elements should be equal to number of elements
     // in the record.
-    ASSERT_EQ(8, option->getDataFieldsNum());
+    ASSERT_EQ(9, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
     uint16_t value0;
@@ -1674,9 +1958,12 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(0, value6.first.asUnsigned());
     EXPECT_EQ("::", value6.second.toText());
-    std::string value7 = "xyz";
-    ASSERT_NO_THROW(value7 = option->readString(7));
-    EXPECT_TRUE(value7.empty());
+    std::string value7 = "abc";
+    // Tuple has no default value
+    EXPECT_THROW(option->readTuple(7), BadDataTypeCast);
+    std::string value8 = "xyz";
+    ASSERT_NO_THROW(value8 = option->readString(8));
+    EXPECT_TRUE(value8.empty());
 
     // Override each value with a new value.
     ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
@@ -1687,7 +1974,8 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8), 5));
     ASSERT_NO_THROW(option->writePrefix(PrefixLen(48),
                                         IOAddress("2001:db8:1::"), 6));
-    ASSERT_NO_THROW(option->writeString("hello world", 7));
+    ASSERT_NO_THROW(option->writeTuple("foobar", 7));
+    ASSERT_NO_THROW(option->writeString("hello world", 8));
 
     // Check that the new values have been correctly set.
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
@@ -1706,8 +1994,10 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
     EXPECT_EQ(48, value6.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", value6.second.toText());
-    ASSERT_NO_THROW(value7 = option->readString(7));
-    EXPECT_EQ(value7, "hello world");
+    ASSERT_NO_THROW(value7 = option->readTuple(7));
+    EXPECT_EQ(value7, "foobar");
+    ASSERT_NO_THROW(value8 = option->readString(8));
+    EXPECT_EQ(value8, "hello world");
 }
 
 // The purpose of this test is to verify that pack function for

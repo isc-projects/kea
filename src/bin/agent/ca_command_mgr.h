@@ -110,7 +110,7 @@ private:
     CtrlAgentCommandMgr();
 
     /// @brief Buffer into which responses to forwarded commands are stored.
-    std::array<char, 8192> receive_buf_;
+    std::array<char, 65535> receive_buf_;
 
 };
 

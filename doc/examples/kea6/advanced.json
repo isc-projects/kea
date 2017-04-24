@@ -116,7 +116,16 @@
             "name": "kea-dhcp6",
             "output_options": [
                 {
-                    "output": "stdout"
+                    "output": "stdout",
+                    // Several additional parameters are possible in addition
+                    // to the typical output. Flush determines whether logger
+                    // flushes output to a file. Maxsize determines maximum
+                    // filesize before the file is being rotated. maxver
+                    // specifies the maximum number of rotated files being
+                    // kept.
+                    "flush": true,
+                    "maxsize": 204800,
+                    "maxver": 4
                 }
             ],
             "debuglevel": 0,

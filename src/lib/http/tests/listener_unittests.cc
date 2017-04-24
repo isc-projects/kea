@@ -133,11 +133,21 @@ public:
         tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
                                SERVER_PORT);
         socket_.async_connect(endpoint,
-                              [this, request](const boost::system::error_code& ec) {
+        [this, request](const boost::system::error_code& ec) {
             if (ec) {
-                ADD_FAILURE() << "error occurred while connecting: "
-                              << ec.message();
-                io_service_.stop();
+                // One would expect that async_connect wouldn't return
+                // EINPROGRESS error code, but simply wait for the connection
+                // to get established before the handler is invoked. It turns out,
+                // however, that on some OSes the connect handler may receive this
+                // error code which doesn't neccessarily indicate a problem.
+                // Making an attempt to write and read from this socket will
+                // typically succeed. So, we ignore this error.
+                if (ec.value() != boost::asio::error::in_progress) {
+                    ADD_FAILURE() << "error occurred while connecting: "
+                                  << ec.message();
+                    io_service_.stop();
+                    return;
+                }
             }
             sendRequest(request);
         });

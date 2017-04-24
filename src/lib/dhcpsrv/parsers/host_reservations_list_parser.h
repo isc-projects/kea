@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/foreach.hpp>
 
@@ -30,14 +31,19 @@ public:
     /// belong.
     /// @param hr_list Data element holding a list of host reservations.
     /// Each host reservation is described by a map object.
+    /// @param [out] hosts_list Hosts representing parsed reservations are stored
+    /// in this list.
     ///
     /// @throw DhcpConfigError If the configuration if any of the reservations
     /// is invalid.
-    void parse(const SubnetID& subnet_id, isc::data::ConstElementPtr hr_list) {
+    void parse(const SubnetID& subnet_id, isc::data::ConstElementPtr hr_list,
+               HostCollection& hosts_list) {
+        HostCollection hosts;
         BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
             HostReservationParserType parser;
-            parser.parse(subnet_id, reservation);
+            hosts.push_back(parser.parse(subnet_id, reservation));
         }
+        hosts_list.swap(hosts);
     }
 };
 

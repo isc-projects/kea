@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "5.0" ]; then
+    printf "This script upgrades 5.0 to 5.1. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Add missing 'client-id' and new 'flex-id' host identifier types.
+INSERT INTO host_identifier_type VALUES (3, 'client-id');
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
+
+# Recreate the trigger removing dependent host entries.
+DROP TRIGGER host_BDEL;
+
+DELIMITER $$
+CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM ipv6_reservations WHERE ipv6_reservations.host_id = OLD.host_id;
+DELETE FROM dhcp4_options WHERE dhcp4_options.host_id = OLD.host_id;
+DELETE FROM dhcp6_options WHERE dhcp6_options.host_id = OLD.host_id;
+END
+$$
+DELIMITER ;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '1';
+# This line concludes database upgrade to version 5.1.
+
+EOF
+
+RESULT=$?
+
+exit $?

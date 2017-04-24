@@ -322,6 +322,45 @@ public:
     /// has already been added to the IPv4 or IPv6 subnet.
     virtual void add(const HostPtr& host);
 
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -476,9 +515,12 @@ private:
     ReturnType getHostInternal6(const asiolink::IOAddress& prefix,
                                 const uint8_t prefix_len) const;
 
-    /// @brief Adds a new host to the v4 collection.
+    /// @brief Adds a new host to the collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. Contrary to its
+    /// name, this is useful for both IPv4 and IPv6 hosts, as this adds the
+    /// host to hosts_ storage that is shared by both families. Notes that
+    /// for IPv6 host additional steps may be required (see @ref add6).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///
@@ -486,9 +528,11 @@ private:
     /// has already been added to the IPv4 subnet.
     virtual void add4(const HostPtr& host);
 
-    /// @brief Adds a new host to the v6 collection.
+    /// @brief Adds IPv6-specific reservation to hosts collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. This method adds
+    /// IPv6 reservations (IPv6 addresses or prefixes reserved) to the hosts6_
+    /// storage. Note the host has been added to the hosts_ already (in @ref add4).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///

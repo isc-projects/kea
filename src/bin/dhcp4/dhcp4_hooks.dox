@@ -331,7 +331,7 @@ to the end of this list.
    will only return the list of commands supported by the hook library.
    The callout can modify the command arguments to influence the command
    processing by the Command Manager. For example, it may freely modify
-   the configuration received in 'set-config' before it is processed by
+   the configuration received in 'config-set' before it is processed by
    the server. The SKIP action is not set in this case.
 
  - <b>Next step status</b>: if any callout sets the next step action to SKIP,

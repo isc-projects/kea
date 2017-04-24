@@ -483,6 +483,17 @@ UPDATE schema_version
 
 -- Schema 3.0 specification ends here.
 
+-- This is a placeholder for the changes between 3.0 and 3.1. We have added a
+-- missing 'client-id' host reservation type entry that had been accidentally
+-- omitted when the 2.0 -> 3.0 upgrade script was created.
+-- Also, new flexible identifier has been added.
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
+
+-- Set 3.1 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '1';
+
+
 -- Commit the script transaction.
 COMMIT;
 

@@ -375,6 +375,12 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
+// Checks if there is no lease manager NoLeaseManager is thrown.
+TEST_F(MemfileLeaseMgrTest, noLeaseManager) {
+    LeaseMgrFactory::destroy();
+    EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
+}
+
 // Checks if the getType() and getName() methods both return "memfile".
 TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
     startBackend(V4);

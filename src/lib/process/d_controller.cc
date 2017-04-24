@@ -7,7 +7,6 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <cfgrpt/config_report.h>
-#include <cryptolink/cryptolink.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <log/logger.h>
@@ -447,26 +446,6 @@ DControllerBase::configWriteHandler(const std::string&,
         }
     }
 
-    // Now do the sanity checks on the filename
-    if (filename.find("..") != std::string::npos) {
-        // Trying to escape the directory.. nope.
-        return (createAnswer(COMMAND_ERROR,
-                             "Using '..' in filename is not allowed."));
-    }
-
-    if (filename.find("\\") != std::string::npos) {
-        // Trying to inject escapes (possibly to inject quotes and something
-        // nasty afterward)
-        return (createAnswer(COMMAND_ERROR,
-                             "Using \\ in filename is not allowed."));
-    }
-
-    if (filename[0] == '/') {
-        // Absolute paths are not allowed.
-        return (createAnswer(COMMAND_ERROR,
-                             "Absolute path in filename is not allowed."));
-    }
-
     // Ok, it's time to write the file.
     size_t size = 0;
     try {
@@ -674,20 +653,7 @@ DControllerBase::getVersion(bool extended) {
         tmp << std::endl << EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
-        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-        tmp << "database:" << std::endl;
-#ifdef HAVE_MYSQL
-        tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_CQL
-        tmp << isc::dhcp::CqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-        tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
-
-        // @todo: more details about database runtime
+        tmp << getVersionAddendum();
     }
 
     return (tmp.str());

@@ -1,13 +1,13 @@
-# This is an example configuration file for the DHCPv6 server of
-# DHCPv4-over-DHCPv6 tests in Kea.
+// This is an example configuration file for the DHCPv6 server of
+// DHCPv4-over-DHCPv6 tests in Kea.
 
 {
 
-# DHCPv6 conf
+// DHCPv6 conf
 "Dhcp6":
 {
   "interfaces-config": {
-# Enable unicast
+// Enable unicast
     "interfaces": [ "eno33554984/2001:db8:1:1::1" ]
   },
 
@@ -27,16 +27,16 @@
        "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ] }
    ],
 
-# This enables DHCPv4-over-DHCPv6 support
+// This enables DHCPv4-over-DHCPv6 support
   "dhcp4o6-port": 6767,
 
-# Required by DHCPv4-over-DHCPv6 clients
+// Required by DHCPv4-over-DHCPv6 clients
   "option-data": [
    {  "name": "dhcp4o6-server-addr",
       "code": 88,
       "space": "dhcp6",
       "csv-format": true,
-# Put the server address here
+// Put the server address here
       "data": "2001:db8:1:1::1" }
    ]
 },

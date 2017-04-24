@@ -1,3 +1,97 @@
+Kea 1.2.0 released on April 28, 2017
+
+1254.	[func]		tomek
+	Various improvements needed for upcoming host commands library:
+	host data source is now able to delete hosts, hosts can be exported
+	to JSON format, C++11 code for configure script moved to separate
+	file, several compilation warnings removed.
+	(Trac #5208, git 88555d8f23745f3d615448e906796920cc7f44d0)
+
+1253.	[func,doc]		tomek
+	Default configuration file has been overhauled significantly. It
+	now covers many additional options and features. Command channel
+	is now enabled by default. Thanks to Dan Mahoney for his review.
+	(Trac #5198, git 280de81cfe957ccab8a28074bdb0a4bc0e45104e)
+
+1252.	[bug]		tmark
+	kea-dhcp6 now correctly resets lease state and increments the
+	assigned statistic when it reissues an expired-reclaimed lease
+	to the lease's original client, in response to a REQUEST from
+	said client.
+	(Trac #5252, git 85bde7adbe6a78238bd5e17fecabfa918755f16c)
+
+1251.	[func]		tomek
+	New type of host identifier (flex-id) used in reservations has
+	by added to MySQL and PostgreSQL schemas.
+	(Trac #5195, git 37c26cc30b717019fbd6b7349279541edb351382)
+
+1250.	[bug]		fdupont
+	Do not unregister timers when running the config-test command.
+	(Trac #5186, git e891b06940e41b4cfaa324c2ace8fdd761ee6662)
+
+1249.	[bug]		tmark
+	The assigned lease statistics were not being probably adjusted
+	by either kea-dhcp4 or kea-dhcp6 when reclaimed expired leases
+	were reissued.
+	(Trac #5247, git 4e5193fb32b14325ccf5824614e58bcceb3e6388)
+
+1248.	[bug]		marcin
+	Improved socket connection handling code, corrected numerous
+	failing and crashing tests for libkea-asiolink, libkea-http
+	and kea-ctrl-agent on Debian, Fedora and Ubuntu.
+	(Trac #5217, git 4bcb45f0c88aba3d0f70ca48d9fff6f1d4616bc2)
+
+1247.	[bug]		marcin
+	Resolved issues with DHCPv4 host reservations by 'client-id'
+	when MySQL or PostgreSQL host database backend is in use.
+	Also, the 'client-id' is used together with other host
+	identifier types when 'host-reservation-identifiers' parameter
+	is not specified.
+	(Trac #5102, git 390d687d0f61635f5562d13860ff6362eee67853)
+
+1246.	[func,bug]	tomek
+	Restrictions in filename argument in config-write command have
+	been removed. It is now possible to use absolute paths.
+	DHCPv4, DHCPv6, D2 and Agent parsers did not handle flush,
+	maxsize or maxver parameters in logger configuration correctly.
+	This is now fixed.
+	(Trac #5187, git a30ffcc67cfb7370c586d3c85147792e27aab4c7)
+
+1245.	[func]		fdupont
+	DHCPv4 domain-search option can now be defined using
+	comma separated values.
+	(Trac #5087, git eca0b8c6425bc922587675100f100b1aae54aee2)
+
+1244.	[doc]		tomek
+	User's Guide section about Kea shell added.
+	(Trac #5171, git 3dc4908fe02e86c57ccd5ad2d2f8330655f438be)
+
+1243.	[func]		tomek
+	config-reload command implemented. It allows Kea DHCPv4 and DHCPv6
+	servers to reload its original configuration file. Also,
+	set-config command was renamed to config-set.
+	(Trac #5213, git b209c2b577a2f9da71cc918d7a551f8efdc1c4cb)
+
+1242.	[func]		fdupont
+	Integer fields in options can now be specified in either
+	decimal or hexadecimal format.
+	(Trac #4540, git 4cbf341f4169cf1e1eae0721644797a726d89702)
+
+1241.	[func]		fdupont
+	Support for tuple-based options added. DHCPv6 option
+	bootfile-param (code 60) can now be set in a more convenient
+	manner.
+	(Trac #4070, git 30102cacee95b91e6c4666f0c11f06232f19eeb9)
+
+1240.	[bug]		marcin
+	Corrected IOFetch unit test failures on Debian.
+	(Trac #5216, git a7c2946678c43aedfb2e3c37b9730a10067528f3)
+
+1239.	[func]		marcin
+	Implemented additional sanity checks when adding host
+	reservations into the configuration file.
+	(Trac #5207, git ea42c6f479918235ae4a67a60d08720e2664720c)
+
 Kea 1.2.0-beta released on April 7, 2017
 
 1238.	[build]		tmark,tomek

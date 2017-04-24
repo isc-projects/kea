@@ -420,9 +420,9 @@ CREATE TABLE IF NOT EXISTS host_identifier_type (
 ) ENGINE = INNODB;
 
 START TRANSACTION;
-INSERT INTO host_identifier_type VALUES (0, 'hw-address'); # Non-temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (1, 'duid');       # Temporary v6 addresses
-INSERT INTO host_identifier_type VALUES (2, 'circuit-id'); # Prefix delegations
+INSERT INTO host_identifier_type VALUES (0, 'hw-address');
+INSERT INTO host_identifier_type VALUES (1, 'duid');
+INSERT INTO host_identifier_type VALUES (2, 'circuit-id');
 COMMIT;
 
 # Add a constraint that any identifier type value added to the hosts
@@ -479,6 +479,30 @@ ALTER TABLE hosts ADD COLUMN dhcp4_boot_file_name VARCHAR(128) NULL;
 UPDATE schema_version
 SET version = '5', minor = '0';
 # This line concludes database upgrade to version 5.0.
+
+# Add missing 'client-id' and new 'flex-id' host identifier types.
+INSERT INTO host_identifier_type VALUES (3, 'client-id');
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
+
+# Recreate the trigger removing dependent host entries.
+DROP TRIGGER host_BDEL;
+
+DELIMITER $$
+CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM ipv6_reservations WHERE ipv6_reservations.host_id = OLD.host_id;
+DELETE FROM dhcp4_options WHERE dhcp4_options.host_id = OLD.host_id;
+DELETE FROM dhcp6_options WHERE dhcp6_options.host_id = OLD.host_id;
+END
+$$
+DELIMITER ;
+
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '1';
+# This line concludes database upgrade to version 5.1.
 
 # Notes:
 #

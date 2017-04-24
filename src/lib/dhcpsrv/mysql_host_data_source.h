@@ -220,6 +220,40 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
+    ///
+    /// This method supports v4 hosts only.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier type, identifier)
+    ///
+    /// This method supports v6 hosts only.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

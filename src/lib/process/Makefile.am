@@ -61,7 +61,7 @@ libkea_process_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
 # Specify the headers for copying into the installation directory tree.
 libkea_process_includedir = $(pkgincludedir)/process

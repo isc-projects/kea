@@ -118,124 +118,7 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Check for C++11 features support
-CXX_SAVED=$CXX
-feature=
-for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
-	if test "$retry" = "fail"; then
-		AC_MSG_ERROR([$feature (a C++11 feature) is not supported])
-	fi
-	if test "$retry" != "none"; then
-		AC_MSG_WARN([unsupported C++11 feature])
-		AC_MSG_NOTICE([retrying by adding $retry to $CXX])
-		CXX="$CXX_SAVED $retry"
-		AC_MSG_CHECKING($retry support)
-		AC_COMPILE_IFELSE(
-			[AC_LANG_PROGRAM(
-				[],
-				[int myincr = 1;])],
-			[AC_MSG_RESULT([yes])],
-			[AC_MSG_RESULT([no])
-			 continue])
-	fi
-
-	AC_MSG_CHECKING(std::unique_ptr support)
-	feature="std::unique_ptr"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[#include <memory>],
-			[std::unique_ptr<int> a;])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(cbegin/cend support)
-	feature="cbegin/cend"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[#include <string>],
-			[const std::string& s = "abcd";
-			 unsigned count = 0;
-			 for (std::string::const_iterator i = s.cbegin();
-			      i != s.cend(); ++i)
-				if (*i == 'b')
-					++count;])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(final method support)
-	feature="final method"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[class Foo {
-			 public:
-			 	virtual ~Foo() {};
-				virtual void bar() final;
-			 };],[])],
-		 [AC_MSG_RESULT([yes])],
-		 [AC_MSG_RESULT([no])
-		  continue])
-
-	AC_MSG_CHECKING(aggregate initialization support)
-	feature="aggregate initialization"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[#include <vector>],
-			[std::vector<int> foo = { 1, 2, 3};])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(variadic template support)
-	feature="variadic template"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[template<typename ... Args>
-			 struct A {
-			 void foo(Args... myargs) { return; };
-			 };],
-			 [A<> a;
-			  a.foo();])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(static_assert support)
-	feature="static_assert"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[static_assert(1 + 1 == 2, "");],
-			[])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(template alias)
-	feature="template alias"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[template<int i>
-			 class I {
-			 public: int get() { return i; };
-			 };
-			 using Zero = I<0>;],
-			[Zero Z;
-			 return Z.get();])],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])
-		 continue])
-
-	AC_MSG_CHECKING(lambda support)
-	feature="lambda"
-	AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM(
-			[],
-			[auto myincr = [[]](int x) { return x + 1; };])],
-		[AC_MSG_RESULT([yes])
-		 break],
-		[AC_MSG_RESULT([no])
-		 continue])
-done
+AX_ISC_CPP11
 
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
@@ -338,6 +221,11 @@ if expr "$CXX_DUMP_VERSION" \< "4.5" > /dev/null; then
        WARNING_GCC_44_STRICT_ALIASING_CFLAG="-fno-strict-aliasing"
 fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
+CPPP="$CPP"
+# gcc 5 preprocessor requires -P for checking its output
+if test "$CXX_DUMP_VERSION" \> "5"; then
+       CPPP="$CPP -P"
+fi
 
 case "$host" in
 *-solaris*)
@@ -863,7 +751,7 @@ then
 AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
 EOF
 
-   CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[     ]]//g' -e 's/"//g' 2> /dev/null`
+   CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
    if test -z "$CRYPTO_VERSION"; then
       CRYPTO_VERSION="unknown"
    fi
@@ -1028,7 +916,7 @@ else
 AUTOCONF_OPENSSL_VERSION=OPENSSL_VERSION_TEXT
 EOF
 
-    CRYPTO_VERSION=`$CPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
+    CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
     if test -z "$CRYPTO_VERSION" ; then
        CRYPTO_VERSION="unknown"
     fi
@@ -1298,7 +1186,7 @@ cat > conftest.cpp << EOF
 AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
 EOF
 
-LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[      ]]//g' -e 's/"//g' 2> /dev/null`
+LOG4CPLUS_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
 if test -z "$LOG4CPLUS_VERSION"; then
   LOG4CPLUS_VERSION="unknown"
 fi
@@ -1377,6 +1265,7 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
+	GTEST_VERSION="`basename $GTEST_SOURCE`"
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -1805,9 +1694,11 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_3.0_to_4.0.sh
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
+                 src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
+                 src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])

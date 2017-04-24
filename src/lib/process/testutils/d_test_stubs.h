@@ -275,6 +275,17 @@ protected:
     /// otherwise it return an empty pointer.
     virtual isc::data::ConstElementPtr parseFile(const std::string&);
 
+public:
+
+    /// @brief Provides addtional extended version text
+    ///
+    /// Overrides the base class implementation so we can
+    /// verify the getting the extended version text
+    /// contains derivaiton specific contributions.
+    virtual std::string getVersionAddendum() {
+        return ("StubController Version Text");
+    }
+
 private:
     /// @brief Constructor is private to protect singleton integrity.
     DStubController();

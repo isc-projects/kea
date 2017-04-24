@@ -22,14 +22,15 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <string>
+#include <algorithm>
 #include <arpa/inet.h>
+#include <cstddef>
+#include <cstdlib>
+#include <errno.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <algorithm>
-#include <cstdlib>
-#include <cstddef>
+#include <string>
 #include <vector>
 
 using namespace boost::asio;
@@ -355,7 +356,15 @@ TEST(TCPSocket, sequenceTest) {
     EXPECT_EQ(0, server_cb.getCode());
 
     EXPECT_EQ(TCPCallback::OPEN, client_cb.called());
-    EXPECT_EQ(0, client_cb.getCode());
+
+    // On some operating system the async_connect may return EINPROGRESS.
+    // This doesn't neccessarily indicate an error. In most cases trying
+    // to asynchrouonsly write and read from the socket would work just
+    // fine.
+    if ((client_cb.getCode()) != 0 && (client_cb.getCode() != EINPROGRESS)) {
+        ADD_FAILURE() << "expected error code of 0 or " << EINPROGRESS
+            << " as a result of async_connect, got " << client_cb.getCode();
+    }
 
     // Step 2.  Get the client to write to the server asynchronously.  The
     // server will loop reading the data synchronously.

@@ -2404,7 +2404,7 @@ void
 GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     // Global accumulators
     int64_t declined_addresses = 0;
-    int64_t declined_reclaimed_addresses = 0;
+    int64_t reclaimed_declined_addresses = 0;
 
     // Iterate over all stats for each subnet
     for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
@@ -2417,15 +2417,15 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
             // Add the value to globals as needed.
             if (expectedStat.first == "declined-addresses") {
                 declined_addresses += expectedStat.second;
-            } else if (expectedStat.first == "declined-reclaimed-addresses") {
-                declined_reclaimed_addresses += expectedStat.second;
+            } else if (expectedStat.first == "reclaimed-declined-addresses") {
+                reclaimed_declined_addresses += expectedStat.second;
             }
         }
     }
 
     // Verify the globals.
     checkStat("declined-addresses", declined_addresses);
-    checkStat("declined-reclaimed-addresses", declined_reclaimed_addresses);
+    checkStat("reclaimed-declined-addresses", reclaimed_declined_addresses);
 }
 
 void
@@ -2501,7 +2501,8 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
         expectedStats[i]["total-addresses"] = 256;
         expectedStats[i]["assigned-addresses"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
-        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
     }
 
     // Make sure stats are as expected.
@@ -2604,8 +2605,9 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     for (int i = 0; i < num_subnets; ++i) {
         expectedStats[i]["assigned-nas"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
-        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
         expectedStats[i]["assigned-pds"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
     }
 
     // Make sure stats are as expected.

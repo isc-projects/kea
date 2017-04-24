@@ -573,12 +573,13 @@ CfgHosts::add(const HostPtr& host) {
 
 void
 CfgHosts::add4(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
     // There should be at least one resource reserved: hostname, IPv4
     // address, siaddr, sname, file or IPv6 address or prefix.
+    /// @todo: this check should be done in add(), not in add4()
     if (host->getHostname().empty() &&
         (host->getIPv4Reservation().isV4Zero()) &&
         !host->hasIPv6Reservation() &&
@@ -633,7 +634,16 @@ CfgHosts::add4(const HostPtr& host) {
                   << ": There's already a reservation for this address");
     }
 
-    /// @todo This may need further sanity checks.
+    // Check if the (identifier type, identifier) tuple is already used.
+    const std::vector<uint8_t>& id = host->getIdentifier();
+    if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
+        if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
+                 id.size())) {
+            isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
+                      << Host::getIdentifierAsText(host->getIdentifierType(),
+                                                   &id[0], id.size()));
+        }
+    }
 
     // This is a new instance - add it.
     hosts_.insert(host);
@@ -641,7 +651,12 @@ CfgHosts::add4(const HostPtr& host) {
 
 void
 CfgHosts::add6(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+
+    if (host->getIPv6SubnetID() == 0) {
+        // This is IPv4-only host. No need to add it to v6 tables.
+        return;
+    }
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
@@ -673,6 +688,33 @@ CfgHosts::add6(const HostPtr& host) {
     }
 }
 
+bool
+CfgHosts::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
+bool
+CfgHosts::del4(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
+bool
+CfgHosts::del6(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
 ElementPtr
 CfgHosts::toElement() const {
     uint16_t family = CfgMgr::instance().getFamily();
@@ -693,60 +735,12 @@ CfgHosts::toElement4() const {
     const HostContainerIndex0& idx = hosts_.get<0>();
     for (HostContainerIndex0::const_iterator host = idx.begin();
          host != idx.end(); ++host) {
-        // Get the subnet ID
+
+        // Convert host to element representation
+        ElementPtr map = (*host)->toElement4();
+
+        // Push it on the list
         SubnetID subnet_id = (*host)->getIPv4SubnetID();
-        // Prepare the map
-        ElementPtr map = Element::createMap();
-        // Set the identifier
-        Host::IdentifierType id_type = (*host)->getIdentifierType();
-        if (id_type == Host::IDENT_HWADDR) {
-            HWAddrPtr hwaddr = (*host)->getHWAddress();
-            map->set("hw-address", Element::create(hwaddr->toText(false)));
-        } else if (id_type == Host::IDENT_DUID) {
-            DuidPtr duid = (*host)->getDuid();
-            map->set("duid", Element::create(duid->toText()));
-        } else if (id_type == Host::IDENT_CIRCUIT_ID) {
-            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
-            std::string circuit_id = util::encode::encodeHex(bin);
-            map->set("circuit-id", Element::create(circuit_id));
-        } else if (id_type == Host::IDENT_CLIENT_ID) {
-            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
-            std::string client_id = util::encode::encodeHex(bin);
-            map->set("client-id", Element::create(client_id));
-        } else if (id_type == Host::IDENT_FLEX) {
-            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
-            std::string flex = util::encode::encodeHex(bin);
-            map->set("flex-id", Element::create(flex));
-        } else {
-            isc_throw(ToElementError, "invalid identifier type: " << id_type);
-        }
-        // Set the reservation
-        const IOAddress& address = (*host)->getIPv4Reservation();
-        map->set("ip-address", Element::create(address.toText()));
-        // Set the hostname
-        const std::string& hostname = (*host)->getHostname();
-        map->set("hostname", Element::create(hostname));
-        // Set next-server
-        const IOAddress& next_server = (*host)->getNextServer();
-        map->set("next-server", Element::create(next_server.toText()));
-        // Set server-hostname
-        const std::string& server_hostname = (*host)->getServerHostname();
-        map->set("server-hostname", Element::create(server_hostname));
-        // Set boot-file-name
-        const std::string& boot_file_name = (*host)->getBootFileName();
-        map->set("boot-file-name", Element::create(boot_file_name));
-        // Set client-classes
-        const ClientClasses& cclasses = (*host)->getClientClasses4();
-        ElementPtr classes = Element::createList();
-        for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-             cclass != cclasses.end(); ++cclass) {
-            classes->add(Element::create(*cclass));
-        }
-        map->set("client-classes", classes);
-        // Set option-data
-        ConstCfgOptionPtr opts = (*host)->getCfgOption4();
-        map->set("option-data", opts->toElement());
-        // Push the map on the list
         result.add(subnet_id, map);
     }
     return (result.externalize());
@@ -759,62 +753,12 @@ CfgHosts::toElement6() const {
     const HostContainerIndex0& idx = hosts_.get<0>();
     for (HostContainerIndex0::const_iterator host = idx.begin();
          host != idx.end(); ++host) {
-        // Get the subnet ID
+
+        // Convert host to Element representation
+        ElementPtr map = (*host)->toElement6();
+
+        // Push it on the list
         SubnetID subnet_id = (*host)->getIPv6SubnetID();
-        // Prepare the map
-        ElementPtr map = Element::createMap();
-        // Set the identifier
-        Host::IdentifierType id_type = (*host)->getIdentifierType();
-        if (id_type == Host::IDENT_HWADDR) {
-            HWAddrPtr hwaddr = (*host)->getHWAddress();
-            map->set("hw-address", Element::create(hwaddr->toText(false)));
-        } else if (id_type == Host::IDENT_DUID) {
-            DuidPtr duid = (*host)->getDuid();
-            map->set("duid", Element::create(duid->toText()));
-        } else if (id_type == Host::IDENT_CIRCUIT_ID) {
-            isc_throw(ToElementError, "unexpected circuit-id DUID type");
-        } else if (id_type == Host::IDENT_CLIENT_ID) {
-            isc_throw(ToElementError, "unexpected client-id DUID type");
-        } else if (id_type == Host::IDENT_FLEX) {
-            const std::vector<uint8_t>& bin = (*host)->getIdentifier();
-            std::string flex = util::encode::encodeHex(bin);
-            map->set("flex-id", Element::create(flex));
-        } else {
-            isc_throw(ToElementError, "invalid DUID type: " << id_type);
-        }
-        // Set reservations (ip-addresses)
-        IPv6ResrvRange na_resv =
-            (*host)->getIPv6Reservations(IPv6Resrv::TYPE_NA);
-        ElementPtr resvs = Element::createList();
-        for (IPv6ResrvIterator resv = na_resv.first;
-             resv != na_resv.second; ++resv) {
-            resvs->add(Element::create(resv->second.toText()));
-        }
-        map->set("ip-addresses", resvs);
-        // Set reservations (prefixes)
-        IPv6ResrvRange pd_resv =
-                (*host)->getIPv6Reservations(IPv6Resrv::TYPE_PD);
-        resvs = Element::createList();
-        for (IPv6ResrvIterator resv = pd_resv.first;
-             resv != pd_resv.second; ++resv) {
-            resvs->add(Element::create(resv->second.toText()));
-        }
-        map->set("prefixes", resvs);
-        // Set the hostname
-        const std::string& hostname = (*host)->getHostname();
-        map->set("hostname", Element::create(hostname));
-        // Set client-classes
-        const ClientClasses& cclasses = (*host)->getClientClasses6();
-        ElementPtr classes = Element::createList();
-        for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-             cclass != cclasses.end(); ++cclass) {
-            classes->add(Element::create(*cclass));
-        }
-        map->set("client-classes", classes);
-        // Set option-data
-        ConstCfgOptionPtr opts = (*host)->getCfgOption6();
-        map->set("option-data", opts->toElement());
-        // Push the map on the list
         result.add(subnet_id, map);
     }
     return (result.externalize());

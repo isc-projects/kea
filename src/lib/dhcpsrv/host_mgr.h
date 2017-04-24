@@ -269,6 +269,59 @@ public:
         return (alternate_source_);
     }
 
+    /// @brief Sets the alternate host data source.
+    ///
+    /// Note: This should be used only for testing. Do not use
+    /// in production. Normal control flow assumes that
+    /// HostMgr::create(...) is called and it instnatiates
+    /// appropriate host data source. However, some tests
+    /// (e.g. host_cmds) implement their own very simple
+    /// data source. It's not production ready by any means,
+    /// so it does not belong in host_data_source_factory.cc.
+    /// The testing nature of this method is reflected in its name.
+    ///
+    /// @param source new source to be set (may be NULL)
+    void setTestHostDataSource(const HostDataSourcePtr& source) {
+        alternate_source_ = source;
+    }
+
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
+
 private:
 
     /// @brief Private default constructor.

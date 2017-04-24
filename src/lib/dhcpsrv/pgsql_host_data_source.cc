@@ -44,7 +44,7 @@ const size_t OPTION_VALUE_MAX_LEN = 4096;
 ///
 /// This value is used to validate whether the identifier type stored in
 /// a database is within bounds. of supported identifiers.
-const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID);
+const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_TYPE);
 
 /// @brief Maximum length of DHCP identifier value.
 const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
@@ -392,7 +392,7 @@ private:
     /// DHCPv6 options.
     ///
     /// The following are the basic functions of this class:
-    /// - bind class members to specific columns in MySQL binding tables,
+    /// - bind class members to specific columns in PgSQL binding tables,
     /// - set DHCP options specific column names,
     /// - create instances of options retrieved from the database.
     ///
@@ -826,8 +826,6 @@ public:
     /// @brief Creates IPv6 reservation from the data contained in the
     /// currently processed row.
     ///
-    /// Called after the MYSQL_BIND array created by createBindForReceive().
-    ///
     /// @return IPv6Resrv object (containing IPv6 address or prefix reservation)
     IPv6Resrv retrieveReservation(const PgSqlResult& r, int row) {
 
@@ -936,7 +934,7 @@ private:
 
 };
 
-/// @brief This class is used for storing IPv6 reservations in a MySQL database.
+/// @brief This class is used for storing IPv6 reservations in a PgSQL database.
 ///
 /// This class is only used to insert IPv6 reservations into the
 /// ipv6_reservations table. It is not used to retrieve IPv6 reservations. To
@@ -1180,6 +1178,9 @@ public:
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
         INSERT_V6_HOST_OPTION,  // Insert DHCPv6 option
+        DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
+        DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1202,8 +1203,7 @@ public:
     /// @brief Executes statements which insert a row into one of the tables.
     ///
     /// @param stindex Index of a statement being executed.
-    /// @param bind Vector of MYSQL_BIND objects to be used when making the
-    /// query.
+    /// @param bind Vector of PgsqlBindArray objects to be used for the query
     /// @param return_last_id flag indicating whether or not the insert
     /// returns the primary key of from the row inserted via " RETURNING
     /// <primary key> as pid" clause on the INSERT statement.  The RETURNING
@@ -1218,6 +1218,14 @@ public:
     uint64_t addStatement(PgSqlHostDataSourceImpl::StatementIndex stindex,
                           PsqlBindArrayPtr& bind,
                           const bool return_last_id = false);
+
+    /// @brief Executes statements that delete records.
+    ///
+    /// @param stindex Index of a statement being executed.
+    /// @param bind pointer to PsqlBindArray objects to be used for the query
+    /// @return true if any records were deleted, false otherwise
+    bool delStatement(PgSqlHostDataSourceImpl::StatementIndex stindex,
+                      PsqlBindArrayPtr& bind);
 
     /// @brief Inserts IPv6 Reservation into ipv6_reservation table.
     ///
@@ -1244,7 +1252,8 @@ public:
     /// @param stindex Index of a statement being executed.
     /// @param options_cfg An object holding a collection of options to be
     /// inserted into the database.
-    /// @param host_id Host identifier retrieved using @c mysql_insert_id.
+    /// @param host_id Host identifier retrieved using getColumnValue
+    ///                in addStatement method
     void addOptions(const StatementIndex& stindex,
                     const ConstCfgOptionPtr& options_cfg,
                     const uint64_t host_id);
@@ -1260,7 +1269,7 @@ public:
     /// @ref Host objects depends on the type of the exchange object.
     ///
     /// @param stindex Statement index.
-    /// @param bind Pointer to an array of MySQL bindings.
+    /// @param bind Pointer to an array of PgSQL bindings.
     /// @param exchange Pointer to the exchange object used for the
     /// particular query.
     /// @param [out] result Reference to the collection of hosts returned.
@@ -1334,7 +1343,7 @@ public:
     /// or dhcp6_options table.
     boost::shared_ptr<PgSqlOptionExchange> host_option_exchange_;
 
-    /// @brief MySQL connection
+    /// @brief PgSQL connection
     PgSqlConnection conn_;
 
     /// @brief Indicates if the database is opened in read only mode.
@@ -1508,7 +1517,7 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // PgSqlHostDataSourceImpl::GET_VERSION
-    // Retrieves MySQL schema version.
+    // Retrieves PgSQL schema version.
     {0,
      { OID_NONE },
      "get_version",
@@ -1561,6 +1570,34 @@ TaggedStatementArray tagged_statements = { {
      "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
      "  persistent, host_id, scope_id) "
      "VALUES ($1, $2, $3, $4, $5, $6, 3)"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_ADDR4
+    // Deletes a v4 host that matches (subnet-id, addr4)
+    {2,
+     { OID_INT4, OID_INT8 },
+     "del_host_addr4",
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 AND ipv4_address = $2"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
+    // Deletes a v4 host that matches (subnet4-id, identifier-type, identifier)
+    {3,
+     { OID_INT4, OID_INT2, OID_BYTEA },
+     "del_host_subid4_id",
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 "
+     "AND dhcp_identifier_type = $2 "
+     "AND dhcp_identifier = $3"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID
+    // Deletes a v6 host that matches (subnet6-id, identifier-type, identifier)
+    {3,
+     { OID_INT4, OID_INT2, OID_BYTEA },
+     "del_host_subid6_id",
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = $1 "
+     "AND dhcp_identifier_type = $2 "
+     "AND dhcp_identifier = $3"
     }
 }
 };
@@ -1632,6 +1669,33 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 
     return (last_id);
 
+}
+
+bool
+PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
+                                      PsqlBindArrayPtr& bind_array) {
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+                                 tagged_statements[stindex].nbparams,
+                                 &bind_array->values_[0],
+                                 &bind_array->lengths_[0],
+                                 &bind_array->formats_[0], 0));
+
+    int s = PQresultStatus(r);
+
+    if (s != PGRES_COMMAND_OK) {
+        // Connection determines if the error is fatal or not, and
+        // throws the appropriate exception
+        conn_.checkStatementError(r, tagged_statements[stindex]);
+    }
+
+    // Now check how many rows (hosts) were deleted. This should be either
+    // "0" or "1".
+    char* rows_deleted = PQcmdTuples(r);
+    if (!rows_deleted) {
+        isc_throw(DbOperationError,
+                  "Could not retrieve the number of deleted rows.");
+    }
+    return (rows_deleted[0] != '0');
 }
 
 void
@@ -1787,7 +1851,7 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     // the PgSqlTransaction class.
     PgSqlTransaction transaction(impl_->conn_);
 
-    // Create the MYSQL_BIND array for the host
+    // Create the PgSQL Bind array for the host
     PsqlBindArrayPtr bind_array = impl_->host_exchange_->createBindForSend(host);
 
     // ... and insert the host.
@@ -1819,6 +1883,71 @@ PgSqlHostDataSource::add(const HostPtr& host) {
 
     // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
+}
+
+bool
+PgSqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
+    if (addr.isV4()) {
+        PsqlBindArrayPtr bind_array(new PsqlBindArray());
+        bind_array->add(subnet_id);
+        bind_array->add(addr);
+        return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_ADDR4,
+                                    bind_array));
+    }
+
+    ConstHostPtr host = get6(subnet_id, addr);
+    if (!host) {
+        return (false);
+    }
+
+    return del6(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
+                host->getIdentifier().size());
+}
+
+bool
+PgSqlHostDataSource::del4(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin,
+                          const size_t identifier_len) {
+
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Subnet-id
+    bind_array->add(subnet_id);
+
+    // identifier-type
+    bind_array->add(static_cast<uint8_t>(identifier_type));
+
+    // identifier
+    bind_array->add(identifier_begin, identifier_len);
+
+    return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
+                                bind_array));
+
+}
+
+bool
+PgSqlHostDataSource::del6(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin,
+                          const size_t identifier_len) {
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Subnet-id
+    bind_array->add(subnet_id);
+
+    // identifier-type
+    bind_array->add(static_cast<uint8_t>(identifier_type));
+
+    // identifier
+    bind_array->add(identifier_begin, identifier_len);
+
+    return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
+                                bind_array));
+
 }
 
 ConstHostCollection
@@ -1880,11 +2009,11 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
 
     /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
     if (hwaddr && duid) {
-        isc_throw(BadValue, "MySQL host data source get4() called with both"
+        isc_throw(BadValue, "PgSQL host data source get4() called with both"
                   " hwaddr and duid, only one of them is allowed");
     }
     if (!hwaddr && !duid) {
-        isc_throw(BadValue, "MySQL host data source get4() called with "
+        isc_throw(BadValue, "PgSQL host data source get4() called with "
                   "neither hwaddr or duid specified, one of them is required");
     }
 
@@ -1949,11 +2078,11 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
 
     /// @todo: Rethink the logic in BaseHostDataSource::get6(subnet, hwaddr, duid)
     if (hwaddr && duid) {
-        isc_throw(BadValue, "MySQL host data source get6() called with both"
+        isc_throw(BadValue, "PgSQL host data source get6() called with both"
                   " hwaddr and duid, only one of them is allowed");
     }
     if (!hwaddr && !duid) {
-        isc_throw(BadValue, "MySQL host data source get6() called with "
+        isc_throw(BadValue, "PgSQL host data source get6() called with "
                   "neither hwaddr or duid specified, one of them is required");
     }
 

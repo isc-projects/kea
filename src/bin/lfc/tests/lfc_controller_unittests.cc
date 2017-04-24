@@ -145,6 +145,8 @@ TEST_F(LFCControllerTest, initialValues) {
     EXPECT_TRUE(lfc_controller.getPidFile().empty());
 }
 
+/// @todo verify that parsing -v/V/W/h works well without ASSERT_EXIT
+
 /// @brief Verify that parsing a full command line works.
 /// Parse a complete command line then verify the parsed
 /// and saved data matches our expectations.
@@ -662,5 +664,7 @@ TEST_F(LFCControllerTest, launch6) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
 }
+
+// @todo double launch (how to do that)
 
 } // end of anonymous namespace

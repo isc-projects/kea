@@ -72,5 +72,14 @@ D2Controller::parseFile(const std::string& file_name) {
 D2Controller::~D2Controller() {
 }
 
+std::string
+D2Controller::getVersionAddendum() {
+    std::stringstream stream;
+    // Currently the only dependency D2 adds to base is cryptolink
+    stream << isc::cryptolink::CryptoLink::getVersion() << std::endl;
+    return (stream.str());
+
+}
+
 }; // end namespace isc::d2
 }; // end namespace isc

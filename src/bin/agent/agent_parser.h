@@ -368,16 +368,19 @@ namespace isc { namespace agent {
         TOKEN_OUTPUT = 282,
         TOKEN_DEBUGLEVEL = 283,
         TOKEN_SEVERITY = 284,
-        TOKEN_DHCP4 = 285,
-        TOKEN_DHCP6 = 286,
-        TOKEN_DHCPDDNS = 287,
-        TOKEN_START_JSON = 288,
-        TOKEN_START_AGENT = 289,
-        TOKEN_START_SUB_AGENT = 290,
-        TOKEN_STRING = 291,
-        TOKEN_INTEGER = 292,
-        TOKEN_FLOAT = 293,
-        TOKEN_BOOLEAN = 294
+        TOKEN_FLUSH = 285,
+        TOKEN_MAXSIZE = 286,
+        TOKEN_MAXVER = 287,
+        TOKEN_DHCP4 = 288,
+        TOKEN_DHCP6 = 289,
+        TOKEN_DHCPDDNS = 290,
+        TOKEN_START_JSON = 291,
+        TOKEN_START_AGENT = 292,
+        TOKEN_START_SUB_AGENT = 293,
+        TOKEN_STRING = 294,
+        TOKEN_INTEGER = 295,
+        TOKEN_FLOAT = 296,
+        TOKEN_BOOLEAN = 297
       };
     };
 
@@ -606,6 +609,18 @@ namespace isc { namespace agent {
 
     static inline
     symbol_type
+    make_FLUSH (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MAXSIZE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_MAXVER (const location_type& l);
+
+    static inline
+    symbol_type
     make_DHCP4 (const location_type& l);
 
     static inline
@@ -711,7 +726,7 @@ namespace isc { namespace agent {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const signed char yypact_[];
+  static const short int yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -850,11 +865,11 @@ namespace isc { namespace agent {
     {
       yyeof_ = 0,
       yylast_ = 172,     ///< Last index in yytable_.
-      yynnts_ = 88,  ///< Number of nonterminal symbols.
+      yynnts_ = 92,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 40  ///< Number of tokens.
+      yyntokens_ = 43  ///< Number of tokens.
     };
 
 
@@ -900,9 +915,9 @@ namespace isc { namespace agent {
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39
+      35,    36,    37,    38,    39,    40,    41,    42
     };
-    const unsigned int user_token_number_max_ = 294;
+    const unsigned int user_token_number_max_ = 297;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -935,24 +950,24 @@ namespace isc { namespace agent {
   {
       switch (other.type_get ())
     {
-      case 48: // value
-      case 97: // socket_type_value
+      case 51: // value
+      case 100: // socket_type_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 39: // "boolean"
+      case 42: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 38: // "floating point"
+      case 41: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 37: // "integer"
+      case 40: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 36: // "constant string"
+      case 39: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -973,24 +988,24 @@ namespace isc { namespace agent {
     (void) v;
       switch (this->type_get ())
     {
-      case 48: // value
-      case 97: // socket_type_value
+      case 51: // value
+      case 100: // socket_type_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 39: // "boolean"
+      case 42: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 38: // "floating point"
+      case 41: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 37: // "integer"
+      case 40: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 36: // "constant string"
+      case 39: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1070,24 +1085,24 @@ namespace isc { namespace agent {
     // Type destructor.
     switch (yytype)
     {
-      case 48: // value
-      case 97: // socket_type_value
+      case 51: // value
+      case 100: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 39: // "boolean"
+      case 42: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 38: // "floating point"
+      case 41: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 37: // "integer"
+      case 40: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 36: // "constant string"
+      case 39: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1114,24 +1129,24 @@ namespace isc { namespace agent {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 48: // value
-      case 97: // socket_type_value
+      case 51: // value
+      case 100: // socket_type_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 39: // "boolean"
+      case 42: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 38: // "floating point"
+      case 41: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 37: // "integer"
+      case 40: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 36: // "constant string"
+      case 39: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1193,7 +1208,8 @@ namespace isc { namespace agent {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294
+     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
+     295,   296,   297
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1367,6 +1383,24 @@ namespace isc { namespace agent {
   }
 
   AgentParser::symbol_type
+  AgentParser::make_FLUSH (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLUSH, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_MAXSIZE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXSIZE, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_MAXVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXVER, l);
+  }
+
+  AgentParser::symbol_type
   AgentParser::make_DHCP4 (const location_type& l)
   {
     return symbol_type (token::TOKEN_DHCP4, l);
@@ -1429,7 +1463,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy" // lalr1.cc:377
 } } // isc::agent
-#line 1433 "agent_parser.h" // lalr1.cc:377
+#line 1467 "agent_parser.h" // lalr1.cc:377
 
 
 

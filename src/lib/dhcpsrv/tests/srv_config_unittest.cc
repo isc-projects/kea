@@ -450,7 +450,7 @@ TEST_F(SrvConfigTest, unparse) {
     std::string defaults4 = "\"echo-client-id\": true,\n";
     defaults4 += "\"subnet4\": [ ],\n";
     defaults4 += "\"host-reservation-identifiers\": ";
-    defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\" ],\n";
+    defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n";
 
     std::string defaults6 = "\"relay-supplied-options\": [ \"65\" ],\n";
     defaults6 += "\"subnet6\": [ ],\n";
