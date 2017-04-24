@@ -431,7 +431,7 @@ TEST_F(HooksManagerTest, PrePostCalloutShared) {
 
     HooksManager::callCallouts(hookpt_two_index_, *handle);
 
-    // Expect same value i.e. 1027 * 2 
+    // Expect same value i.e. 1027 * 2
     result = 0;
     handle->getArgument("result", result);
     EXPECT_EQ(2054, result);
@@ -564,8 +564,13 @@ TEST_F(HooksManagerTest, RegisterHooks) {
     EXPECT_EQ(2, HooksManager::registerHook(string("alpha")));
     EXPECT_EQ(3, HooksManager::registerHook(string("beta")));
     EXPECT_EQ(4, HooksManager::registerHook(string("gamma")));
-    EXPECT_THROW(static_cast<void>(HooksManager::registerHook(string("alpha"))),
-                 DuplicateHook);
+
+
+    // The code used to throw, but it now allows to register the same
+    // hook several times. It simply returns existing index.
+    //EXPECT_THROW(static_cast<void>(HooksManager::registerHook(string("alpha"))),
+    //             DuplicateHook);
+    EXPECT_EQ(2, HooksManager::registerHook(string("alpha")));
 
     // ... an check the hooks are as we expect.
     EXPECT_EQ(5, ServerHooks::getServerHooks().getCount());

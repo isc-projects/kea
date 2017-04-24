@@ -322,6 +322,45 @@ public:
     /// has already been added to the IPv4 or IPv6 subnet.
     virtual void add(const HostPtr& host);
 
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)

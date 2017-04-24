@@ -21,6 +21,20 @@ mysql "$@" <<EOF
 INSERT INTO host_identifier_type VALUES (3, 'client-id');
 INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 
+# Recreate the trigger removing dependent host entries.
+DROP TRIGGER host_BDEL;
+
+DELIMITER $$
+CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM ipv6_reservations WHERE ipv6_reservations.host_id = OLD.host_id;
+DELETE FROM dhcp4_options WHERE dhcp4_options.host_id = OLD.host_id;
+DELETE FROM dhcp6_options WHERE dhcp6_options.host_id = OLD.host_id;
+END
+$$
+DELIMITER ;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '5', minor = '1';
