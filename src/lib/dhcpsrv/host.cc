@@ -407,8 +407,6 @@ Host::setBootFileName(const std::string& boot_file_name) {
 ElementPtr
 Host::toElement4() const {
 
-    // Get the subnet ID
-    SubnetID subnet_id = getIPv4SubnetID();
     // Prepare the map
     ElementPtr map = Element::createMap();
     // Set the identifier
@@ -466,8 +464,6 @@ Host::toElement4() const {
 
 ElementPtr
 Host::toElement6() const {
-    // Get the subnet ID
-    SubnetID subnet_id = getIPv6SubnetID();
     // Prepare the map
     ElementPtr map = Element::createMap();
     // Set the identifier
