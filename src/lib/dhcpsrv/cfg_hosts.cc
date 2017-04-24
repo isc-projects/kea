@@ -689,25 +689,27 @@ CfgHosts::add6(const HostPtr& host) {
 }
 
 bool
-CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+CfgHosts::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
     /// @todo: Implement host removal
     isc_throw(NotImplemented, "sorry, not implemented");
     return (false);
 }
 
 bool
-CfgHosts::del4(const SubnetID& subnet_id,
-              const Host::IdentifierType& identifier_type,
-              const uint8_t* identifier_begin, const size_t identifier_len) {
+CfgHosts::del4(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
     /// @todo: Implement host removal
     isc_throw(NotImplemented, "sorry, not implemented");
     return (false);
 }
 
 bool
-CfgHosts::del6(const SubnetID& subnet_id,
-              const Host::IdentifierType& identifier_type,
-              const uint8_t* identifier_begin, const size_t identifier_len) {
+CfgHosts::del6(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
     /// @todo: Implement host removal
     isc_throw(NotImplemented, "sorry, not implemented");
     return (false);
