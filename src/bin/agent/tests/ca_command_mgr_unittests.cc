@@ -230,13 +230,15 @@ public:
         // to this we need to run the server side socket at the same time.
         // Running IO service in a thread guarantees that the server responds
         // as soon as it receives the control command.
-        isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
-                                              getIOService(), server_socket_,
-                                              expected_responses));
+        isc::util::thread::Thread th(boost::bind(&CtrlAgentCommandMgrTest::runIO,
+                                                 getIOService(), server_socket_,
+                                                 expected_responses));
 
         ConstElementPtr command = createCommand("foo", service);
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
+
+        th.wait();
 
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
     }
@@ -364,12 +366,14 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // to this we need to run the server side socket at the same time.
     // Running IO service in a thread guarantees that the server responds
     // as soon as it receives the control command.
-    isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
-                                          getIOService(), server_socket_, 1));
+    isc::util::thread::Thread th(boost::bind(&CtrlAgentCommandMgrTest::runIO,
+                                             getIOService(), server_socket_, 1));
 
     ConstElementPtr command = createCommand("list-commands", "dhcp4");
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
+
+    th.wait();
 
     // Answer of 3 is specific to the stub response we send when the
     // command is forwarded. So having this value returned means that

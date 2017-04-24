@@ -225,7 +225,11 @@ TestServerUnixSocket::bindServerSocket() {
 }
 
 void
-TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
+TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
+    if (ec) {
+        return;
+    }
+
     connection_pool_->start(custom_response_);
     accept();
 }
