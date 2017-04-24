@@ -1,3 +1,10 @@
+1254.	[func]		tomek
+	Various improvements needed for upcoming host commands library:
+	host data source is now able to delete hosts, hosts can be exported
+	to JSON format, C++11 code for configure script moved to separate
+	file, several compilation warnings removed.
+	(Trac #5208, git 88555d8f23745f3d615448e906796920cc7f44d0)
+
 1253.	[func,doc]		tomek
 	Default configuration file has been overhauled significantly. It
 	now covers many additional options and features. Command channel
