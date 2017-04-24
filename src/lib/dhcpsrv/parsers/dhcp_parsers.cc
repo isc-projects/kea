@@ -644,7 +644,7 @@ PoolParser::parse(PoolStoragePtr pools,
 
     if (!text_pool) {
         isc_throw(DhcpConfigError, "Mandatory 'pool' entry missing in "
-                  "definition: (" << text_pool->getPosition() << ")");
+                  "definition: (" << pool_structure->getPosition() << ")");
     }
 
     // That should be a single pool representation. It should contain
