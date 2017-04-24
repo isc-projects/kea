@@ -1326,7 +1326,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
     ASSERT_EQ(1, leases.size());
 
-    // Assigned count should be one. 
+    // Assigned count should be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // This is what the client will send in his renew message.
@@ -1946,6 +1946,9 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
+    // Verify that the lease state is indeed expired-reclaimed
+    EXPECT_EQ(lease->state_, Lease::STATE_EXPIRED_RECLAIMED);
+
     // Same client comes along and issues a request
     AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
@@ -1963,6 +1966,9 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
+
+    // Verify that the lease state has been set back to the default.
+    EXPECT_EQ(lease->state_, Lease::STATE_DEFAULT);
 
     // Verify assigned-nas got bumped.  Reclaimed stats should still
     // be zero as we artifically marked it reclaimed.
