@@ -1326,7 +1326,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
     ASSERT_EQ(1, leases.size());
 
-    // Assigned count should be one. 
+    // Assigned count should be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // This is what the client will send in his renew message.
@@ -1907,6 +1907,74 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1, subnet_->getID()));
 
+}
+
+// This test checks if an expired-reclaimed lease can be reused by
+// a returning client via REQUEST, rather than renew/rebind.  This
+// would be typical of cable modem clients which do not retain lease
+// data across reboots.
+TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    cfg_mgr.commit();
+
+    // Verify relevant stats are zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
+
+    // Let's create an expired lease
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               501, 502, 503, 504, subnet_->getID(), HWAddrPtr(),
+                               0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    lease->fqdn_fwd_ = true;
+    lease->fqdn_rev_ = true;
+    lease->hostname_ = "myhost.example.com.";
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Verify that the lease state is indeed expired-reclaimed
+    EXPECT_EQ(lease->state_, Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Same client comes along and issues a request
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+
+    // Check that he got the orginal lease back.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Verify that the lease state has been set back to the default.
+    EXPECT_EQ(lease->state_, Lease::STATE_DEFAULT);
+
+    // Verify assigned-nas got bumped.  Reclaimed stats should still
+    // be zero as we artifically marked it reclaimed.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
 
 }; // namespace test

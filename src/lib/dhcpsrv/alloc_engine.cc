@@ -1443,6 +1443,22 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
         if (!ctx.fake_allocation_) {
+
+            if (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
+                // Transition lease state to default (aka assigned)
+                lease->state_ = Lease::STATE_DEFAULT;
+
+                // If the lease is in the current subnet we need to account
+                // for the re-assignment of The lease.
+                if (ctx.subnet_->inPool(ctx.currentIA().type_, lease->addr_)) {
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                               ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds"),
+                        static_cast<int64_t>(1));
+                }
+            }
+
             bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
                                  !(lease->hasIdenticalFqdn(**lease_it)));
 
