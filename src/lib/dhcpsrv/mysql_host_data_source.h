@@ -226,7 +226,8 @@ public:
     ///
     /// @param subnet_id subnet identfier.
     /// @param addr specified address.
-    /// @return true if deletion was successful, false otherwise.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
     virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
 
     /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
@@ -235,7 +236,8 @@ public:
     ///
     /// @param subnet_id subnet identfier.
     /// @param addr specified address.
-    /// @return true if deletion was successful, false otherwise.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
     virtual bool del4(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
@@ -246,7 +248,8 @@ public:
     ///
     /// @param subnet_id subnet identfier.
     /// @param addr specified address.
-    /// @return true if deletion was successful, false otherwise.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
     virtual bool del6(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
