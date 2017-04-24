@@ -32,6 +32,9 @@ INSERT INTO host_identifier_type (type, name)
         SELECT type FROM host_identifier_type WHERE type = 3
     );
 
+-- We also add a new identifier type: flex-id.
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
+
 -- Set 3.1 schema version.
 UPDATE schema_version
     SET version = '3', minor = '1';
