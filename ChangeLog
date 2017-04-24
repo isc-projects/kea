@@ -1,3 +1,8 @@
+1251.	[func]		tomek
+	New type of host identifier (flex-id) used in reservations has
+	by added to MySQL and PostgreSQL schemas.
+	(Trac #5195, git 37c26cc30b717019fbd6b7349279541edb351382)
+
 1250.	[bug]		fdupont
 	Do not unregister timers when running the config-test command.
 	(Trac #5186, git e891b06940e41b4cfaa324c2ace8fdd761ee6662)
