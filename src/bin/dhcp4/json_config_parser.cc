@@ -413,7 +413,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     Subnet::resetSubnetID();
 
     // Remove any existing timers.
-    TimerMgr::instance()->unregisterTimers();
+    if (!check_only) {
+        TimerMgr::instance()->unregisterTimers();
+    }
 
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
