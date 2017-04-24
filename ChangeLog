@@ -1,3 +1,9 @@
+1253.	[func,doc]		tomek
+	Default configuration file has been overhauled significantly. It
+	now covers many additional options and features. Command channel
+	is now enabled by default. Thanks to Dan Mahoney for his review.
+	(Trac #5198, git 280de81cfe957ccab8a28074bdb0a4bc0e45104e)
+
 1252.	[bug]		tmark
 	kea-dhcp6 now correctly resets lease state and increments the
 	assigned statistic when it reissues an expired-reclaimed lease
