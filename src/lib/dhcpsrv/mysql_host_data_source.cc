@@ -295,11 +295,11 @@ public:
             // The address in the Host structure is an IOAddress object.  Convert
             // this to an integer for storage.
             ipv4_address_ = host->getIPv4Reservation().toUint32();
+            ipv4_address_null_ = ipv4_address_ == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[5].buffer_type = MYSQL_TYPE_LONG;
             bind_[5].buffer = reinterpret_cast<char*>(&ipv4_address_);
             bind_[5].is_unsigned = MLM_TRUE;
-            // bind_[5].is_null = &MLM_FALSE; // commented out for performance
-                                                      // reasons, see memset() above
+            bind_[5].is_null = &ipv4_address_null_;
 
             // hostname : VARCHAR(255) NULL
             strncpy(hostname_, host->getHostname().c_str(), HOSTNAME_MAX_LEN - 1);

@@ -207,7 +207,7 @@
             <row>
               <entry>Flexible Identifier</entry>
               <entry>Support customers</entry>
-              <entry>Kea 1.2.0 beta</entry>
+              <entry>Kea 1.2.0</entry>
               <entry>Kea software provides a way to handle host reservations
               that include addresses, prefixes, options, client classes and
               other features. The reservation can be based on hardware address,
@@ -582,7 +582,7 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         <para>Currently this library is only available to ISC customers with a
         support contract.</para>
 
-        <para>The library allows defining an expression, using notation
+        <para>The library allows for defining an expression, using notation
         initially used for client classification only. See <xref
         linkend="classification-using-expressions" /> for detailed description
         of the syntax available. One notable difference is that for client
