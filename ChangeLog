@@ -1,8 +1,12 @@
+1250.	[bug]		fdupont
+	Do not unregister timers when running the config-test command.
+	(Trac #5186, git xxx)
+
 1249.	[bug]		tmark
 	The assigned lease statistics were not being probably adjusted
 	by either kea-dhcp4 or kea-dhcp6 when reclaimed expired leases
 	were reissued.
-	(Trac #5247 git 4e5193fb32b14325ccf5824614e58bcceb3e6388)
+	(Trac #5247, git 4e5193fb32b14325ccf5824614e58bcceb3e6388)
 
 1248.	[bug]		marcin
 	Improved socket connection handling code, corrected numerous
