@@ -292,6 +292,39 @@ public:
         return (desc);
     }
 
+    /// @brief Returns number of entries in the v4 options table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// host options in a table.
+    ///
+    /// @param number of existing entries in options table
+    virtual int countDBOptions4() {
+        return (-1);
+    }
+
+    /// @brief Returns number of entries in the v6 options table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// host options in a table.
+    ///
+    /// @param number of existing entries in options table
+    virtual int countDBOptions6() {
+        return (-1);
+    }
+
+    /// @brief Returns number of entries in the v6 reservations table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// v6 reservations in a table.
+    ///
+    /// @param number of existing entries in v6_reservations table
+    virtual int countDBReservations6() {
+        return (-1);
+    }
+
     /// @brief Creates an instance of the vendor option.
     ///
     /// @param universe V4 or V6.
@@ -534,10 +567,18 @@ public:
     /// Uses gtest macros to report failures.
     void testDeleteById4();
 
+    /// @brief Tests that delete(subnet4-id, id-type, id) also deletes options.
+    void testDeleteById4Options();
+
     /// @brief Tests that delete(subnet6-id, identifier-type, identifier) works.
     ///
     /// Uses gtest macros to report failures.
     void testDeleteById6();
+
+    /// @brief Tests that delete(subnet6-id, id-type, id) also deletes options.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById6Options();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

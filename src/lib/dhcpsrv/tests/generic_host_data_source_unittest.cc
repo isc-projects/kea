@@ -1525,6 +1525,53 @@ void GenericHostDataSourceTest::testDeleteById4() {
     EXPECT_FALSE(after);
 }
 
+// Test checks when a IPv4 host with options is deleted that the options are
+// deleted as well.
+void GenericHostDataSourceTest::testDeleteById4Options() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    // Add a bunch of DHCPv4 and DHCPv6 options for the host.
+    ASSERT_NO_THROW(addTestOptions(host1, true, DHCP4_ONLY));
+    // Insert host and the options into respective tables.
+
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // There must be some options
+    EXPECT_NE(0, countDBOptions4());
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBOptions4());
+}
+
 void GenericHostDataSourceTest::testDeleteById6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -1558,6 +1605,54 @@ void GenericHostDataSourceTest::testDeleteById6() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+}
+
+void GenericHostDataSourceTest::testDeleteById6Options() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    SubnetID subnet1 = host1->getIPv6SubnetID();
+    ASSERT_NO_THROW(addTestOptions(host1, true, DHCP6_ONLY));
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // Check that the options are stored...
+    EXPECT_NE(0, countDBOptions6());
+
+    // ... and so are v6 reservations.
+    EXPECT_NE(0, countDBReservations6());
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get6(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get6(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBOptions6());
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBReservations6());
 }
 
 }; // namespace test
