@@ -1,3 +1,10 @@
+1252.	[bug]		tmark
+	kea-dhcp6 now correctly resets lease state and increments the
+	assigned statistic when it reissues an expired-reclaimed lease
+	to the lease's original client, in response to a REQUEST from
+	said client.
+	(Trac #5252, git 85bde7adbe6a78238bd5e17fecabfa918755f16c)
+
 1251.	[func]		tomek
 	New type of host identifier (flex-id) used in reservations has
 	by added to MySQL and PostgreSQL schemas.
