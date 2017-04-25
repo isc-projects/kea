@@ -45,7 +45,7 @@
     // more. For detailed description, see Sections 8.8, 16 and 15.
     "control-socket": {
         "socket-type": "unix",
-        "socket-name": "/tmp/kea4-ctrl-socket.sock"
+        "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
     },
 
     // Use Memfile lease database backend to store leases in a CSV file.
@@ -427,7 +427,7 @@
     // description, see Sections 9.12, 16 and 15.
     "control-socket": {
         "socket-type": "unix",
-        "socket-name": "/tmp/kea6-ctrl-socket.sock"
+        "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
     },
 
     // Use Memfile lease database backend to store leases in a CSV file.

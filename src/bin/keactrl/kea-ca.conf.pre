@@ -11,11 +11,11 @@
         "control-sockets": {
             "dhcp4-server": {
                 "socket-type": "unix",
-                "socket-name": "/tmp/kea-ctrl-dhcp4.sock"
+                "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
             },
             "dhcp6-server": {
                 "socket-type": "unix",
-                "socket-name": "/tmp/kea-ctrl-dhcp6.sock"
+                "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
             }
         },
 
