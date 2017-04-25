@@ -110,11 +110,6 @@ public:
     /// @param io_service Reference to the IO service.
     explicit ClientConnection(asiolink::IOService& io_service);
 
-    /// @brief Destructor.
-    ///
-    /// Closes current connection.
-    ~ClientConnection();
-
     /// @brief Starts asynchronous transaction with a remote endpoint.
     ///
     /// Starts asynchronous connection with the remote endpoint. If the
@@ -144,10 +139,7 @@ public:
     /// occurred during the transaction.
     /// @param timeout Connection timeout in milliseconds.
     void start(const SocketPath& socket_path, const ControlCommand& command,
-               const Handler& handler, const Timeout& timeout = Timeout(10000));
-
-    /// @brief Closes the connection.
-    void stop();
+               Handler handler, const Timeout& timeout = Timeout(10000));
 
 private:
 

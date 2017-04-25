@@ -230,28 +230,17 @@ public:
         // to this we need to run the server side socket at the same time.
         // Running IO service in a thread guarantees that the server responds
         // as soon as it receives the control command.
-        isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
-                                              getIOService(), server_socket_,
-                                              expected_responses));
+        isc::util::thread::Thread th(boost::bind(&IOService::run, getIOService().get()));
 
         ConstElementPtr command = createCommand("foo", service);
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
-        checkAnswer(answer, expected_result0, expected_result1, expected_result2);
-    }
+        getIOService()->stop();
 
-    /// @brief Runs IO service until number of sent responses is lower than
-    /// expected.
-    ///
-    /// @param server_socket Pointer to the server socket.
-    /// @param expected_responses Number of expected responses.
-    static void runIO(IOServicePtr& io_service,
-                      const test::TestServerUnixSocketPtr& server_socket,
-                      const size_t expected_responses) {
-        while (server_socket->getResponseNum() < expected_responses) {
-            io_service->run_one();
-        }
+        th.wait();
+
+        checkAnswer(answer, expected_result0, expected_result1, expected_result2);
     }
 
     /// @brief a convenience reference to control agent command manager
@@ -322,7 +311,7 @@ TEST_F(CtrlAgentCommandMgrTest, noService) {
 TEST_F(CtrlAgentCommandMgrTest, invalidAnswer) {
     testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
                 isc::config::CONTROL_RESULT_ERROR, -1, -1, 1,
-                "{ \"result\": 0");
+                "{ \"result\": }");
 }
 
 /// Check that error is returned to the client if the forwarding socket is
@@ -359,12 +348,15 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // to this we need to run the server side socket at the same time.
     // Running IO service in a thread guarantees that the server responds
     // as soon as it receives the control command.
-    isc::util::thread::Thread(boost::bind(&CtrlAgentCommandMgrTest::runIO,
-                                          getIOService(), server_socket_, 1));
+    isc::util::thread::Thread th(boost::bind(&IOService::run, getIOService().get()));
 
     ConstElementPtr command = createCommand("list-commands", "dhcp4");
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
+
+    getIOService()->stop();
+
+    th.wait();
 
     // Answer of 3 is specific to the stub response we send when the
     // command is forwarded. So having this value returned means that

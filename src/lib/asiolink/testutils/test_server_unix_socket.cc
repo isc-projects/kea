@@ -7,6 +7,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <set>
@@ -30,7 +31,7 @@ typedef std::function<void()> SentResponseCallback;
 /// @brief Connection to the server over unix domain socket.
 ///
 /// It reads the data over the socket, sends responses and closes a socket.
-class Connection {
+class Connection : public boost::enable_shared_from_this<Connection> {
 public:
 
     /// @brief Constructor.
@@ -44,11 +45,16 @@ public:
     /// server sends a response.
     Connection(const UnixSocketPtr& unix_socket,
                const std::string custom_response,
-               const SentResponseCallback& sent_response_callback)
+               SentResponseCallback sent_response_callback)
         : socket_(unix_socket), custom_response_(custom_response),
           sent_response_callback_(sent_response_callback) {
+    }
+
+    void start() {
        socket_->async_read_some(boost::asio::buffer(&raw_buf_[0], raw_buf_.size()),
-           boost::bind(&Connection::readHandler, this, _1, _2));
+           boost::bind(&Connection::readHandler, shared_from_this(),
+                       boost::asio::placeholders::error,
+                       boost::asio::placeholders::bytes_transferred));
     }
 
     /// @brief Handler invoked when data have been received over the socket.
@@ -80,13 +86,10 @@ public:
                 boost::asio::buffer(response.c_str(), response.size()));
         }
 
+        start();
+
         // Invoke callback function to notify that the response has been sent.
         sent_response_callback_();
-    }
-
-    /// @brief Closes the socket.
-    void stop() {
-        socket_->close();
     }
 
 private:
@@ -120,13 +123,12 @@ public:
     ///
     /// @param io_service Reference to the IO service.
     ConnectionPool(IOService& io_service)
-        : io_service_(io_service), connections_(), next_socket_(),
+        : io_service_(io_service), next_socket_(),
           response_num_(0) {
     }
 
     /// @brief Destructor.
     ~ConnectionPool() {
-        stopAll();
     }
 
     /// @brief Creates new unix domain socket and returns it.
@@ -154,26 +156,9 @@ public:
         ConnectionPtr conn(new Connection(next_socket_, custom_response, [this] {
             ++response_num_;
         }));
+        conn->start();
 
-        connections_.insert(conn);
         next_socket_.reset();
-    }
-
-    /// @brief Stops the given connection.
-    ///
-    /// @param conn Pointer to the connection to be stopped.
-    void stop(const ConnectionPtr& conn) {
-        conn->stop();
-        connections_.erase(conn);
-    }
-
-    /// @brief Stops all connections.
-    void stopAll() {
-        for (auto conn = connections_.begin(); conn != connections_.end();
-             ++conn) {
-            (*conn)->stop();
-        }
-        connections_.clear();
     }
 
     /// @brief Returns number of responses sent so far.
@@ -185,9 +170,6 @@ private:
 
     /// @brief Reference to the IO service.
     IOService& io_service_;
-
-    /// @brief Container holding established connections.
-    std::set<ConnectionPtr> connections_;
 
     /// @brief Holds pointer to the generated socket.
     ///
@@ -212,7 +194,6 @@ TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
 }
 
 TestServerUnixSocket::~TestServerUnixSocket() {
-    connection_pool_->stopAll();
 }
 
 void
@@ -228,8 +209,7 @@ TestServerUnixSocket::generateCustomResponse(const uint64_t response_size) {
 
 void
 TestServerUnixSocket::startTimer(const long test_timeout) {
-    test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler,
-                                  shared_from_this()),
+    test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
 }
 
@@ -242,7 +222,10 @@ TestServerUnixSocket::bindServerSocket() {
 }
 
 void
-TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
+TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
+    if (ec) {
+        return;
+    }
     connection_pool_->start(custom_response_);
     accept();
 }
@@ -250,7 +233,8 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code&) {
 void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
-        boost::bind(&TestServerUnixSocket::acceptHandler, shared_from_this(), _1));
+        boost::bind(&TestServerUnixSocket::acceptHandler, this,
+                    boost::asio::placeholders::error));
 }
 
 void
@@ -264,7 +248,6 @@ size_t
 TestServerUnixSocket::getResponseNum() const {
     return (connection_pool_->getResponseNum());
 }
-
 
 } // end of namespace isc::asiolink::test
 } // end of namespace isc::asiolink
