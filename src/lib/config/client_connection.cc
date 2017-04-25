@@ -40,7 +40,7 @@ public:
     /// @param timeout Connection timeout in milliseconds.
     void start(const ClientConnection::SocketPath& socket_path,
                const ClientConnection::ControlCommand& command,
-               const ClientConnection::Handler& handler,
+               ClientConnection::Handler handler,
                const ClientConnection::Timeout& timeout);
 
     /// @brief Closes the socket.
@@ -55,7 +55,7 @@ public:
     /// @param length Length of the data in the input buffer.
     /// @param handler User supplied callback.
     void doSend(const void* buffer, const size_t length,
-                const ClientConnection::Handler& handler);
+                ClientConnection::Handler handler);
 
     /// @brief Starts asynchronous receive from the server.
     ///
@@ -66,7 +66,7 @@ public:
     /// @ref JSONFeed is returned.
     ///
     /// @param handler User supplied callback.
-    void doReceive(const ClientConnection::Handler& handler);
+    void doReceive(ClientConnection::Handler handler);
 
     /// @brief Terminates the connection and invokes a user callback indicating
     /// an error.
@@ -74,12 +74,12 @@ public:
     /// @param ec Error code.
     /// @param handler User callback.
     void terminate(const boost::system::error_code& ec,
-                   const ClientConnection::Handler& handler);
+                   ClientConnection::Handler handler);
 
     /// @brief Callback invoked when the timeout occurs.
     ///
     /// It calls @ref terminate with the @c boost::asio::error::timed_out.
-    void timeoutCallback(const ClientConnection::Handler& handler);
+    void timeoutCallback(ClientConnection::Handler handler);
 
 private:
 
@@ -109,7 +109,7 @@ ClientConnectionImpl::ClientConnectionImpl(IOService& io_service)
 void
 ClientConnectionImpl::start(const ClientConnection::SocketPath& socket_path,
                             const ClientConnection::ControlCommand& command,
-                            const ClientConnection::Handler& handler,
+                            ClientConnection::Handler handler,
                             const ClientConnection::Timeout& timeout) {
     // Start the timer protecting against timeouts.
     timer_.setup(boost::bind(&ClientConnectionImpl::timeoutCallback,
@@ -142,19 +142,8 @@ ClientConnectionImpl::start(const ClientConnection::SocketPath& socket_path,
 }
 
 void
-ClientConnectionImpl::stop() {
-    try {
-        socket_.close();
-
-    } catch (...) {
-        // Suppress errors related to closing a socket. We can't really help
-        // if an error occurred.
-    }
-}
-
-void
 ClientConnectionImpl::doSend(const void* buffer, const size_t length,
-                             const ClientConnection::Handler& handler) {
+                             ClientConnection::Handler handler) {
     // Pass self to lambda to make sure that the instance of this class
     // lives as long as the lambda is held for async send.
     auto self(shared_from_this());
@@ -187,7 +176,7 @@ ClientConnectionImpl::doSend(const void* buffer, const size_t length,
 }
 
 void
-ClientConnectionImpl::doReceive(const ClientConnection::Handler& handler) {
+ClientConnectionImpl::doReceive(ClientConnection::Handler handler) {
     // Pass self to lambda to make sure that the instance of this class
     // lives as long as the lambda is held for async receive.
     auto self(shared_from_this());
@@ -201,6 +190,7 @@ ClientConnectionImpl::doReceive(const ClientConnection::Handler& handler) {
             terminate(ec, handler);
 
         } else {
+            std::string x(&read_buf_[0], length);
             // Lazy initialization of the JSONFeed. The feed will be "parsing"
             // received JSON stream and will detect when the whole response
             // has been received.
@@ -228,9 +218,8 @@ ClientConnectionImpl::doReceive(const ClientConnection::Handler& handler) {
 
 void
 ClientConnectionImpl::terminate(const boost::system::error_code& ec,
-                                const ClientConnection::Handler& handler) {
+                                ClientConnection::Handler handler) {
     try {
-        stop();
         current_command_.clear();
         handler(ec, feed_);
 
@@ -242,7 +231,7 @@ ClientConnectionImpl::terminate(const boost::system::error_code& ec,
 }
 
 void
-ClientConnectionImpl::timeoutCallback(const ClientConnection::Handler& handler) {
+ClientConnectionImpl::timeoutCallback(ClientConnection::Handler handler) {
     // Timeout has occurred. The remote server didn't provide the entire
     // response within the given time frame. Let's close the connection
     // and signal the timeout.
@@ -253,21 +242,12 @@ ClientConnection::ClientConnection(asiolink::IOService& io_service)
     : impl_(new ClientConnectionImpl(io_service)) {
 }
 
-ClientConnection::~ClientConnection() {
-    stop();
-}
-
 void
 ClientConnection::start(const ClientConnection::SocketPath& socket_path,
                         const ClientConnection::ControlCommand& command,
-                        const Handler& handler,
+                        ClientConnection::Handler handler,
                         const ClientConnection::Timeout& timeout) {
     impl_->start(socket_path, command, handler, timeout);
-}
-
-void
-ClientConnection::stop() {
-    impl_->stop();
 }
 
 

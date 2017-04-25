@@ -10,7 +10,6 @@
 #include <config.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <list>
@@ -44,8 +43,7 @@ class ConnectionPool;
 /// This class uses @c shared_from_this() to pass its instance to the
 /// @c boost::bind function, thus the caller must store shared pointer
 /// to this object.
-class TestServerUnixSocket
-    : public boost::enable_shared_from_this<TestServerUnixSocket> {
+class TestServerUnixSocket {
 public:
 
     /// @brief Constructor.
@@ -61,11 +59,6 @@ public:
     ///
     /// Closes active connections.
     ~TestServerUnixSocket();
-
-    /// @brief Starts timer for detecting test timeout.
-    ///
-    /// @param test_timeout Test timeout in milliseconds.
-    void startTimer(const long test_timeout);
 
     /// @brief Starts timer for detecting test timeout.
     ///
