@@ -95,7 +95,7 @@
 
     <warning>
       <simpara>
-        In the Kea 1.2 beta release the Control Agent configuration can't be
+        In the Kea 1.2 release the Control Agent configuration can't be
         specified within the same configuration file as DHCPv4, DHCPv6 and D2
         configuration. The default configuration file for the CA is installed
         in the <filename>etc/kea/kea-ca.conf</filename>. In the Kea 1.2 final
@@ -171,7 +171,7 @@
   <section id="agent-limitations">
     <title>Control Agent Limitations</title>
     <para>
-      Control Agent is a new component, first released in Kea 1.2 beta. In
+      Control Agent is a new component, first released in Kea 1.2. In
       this release it comes with two notable limitations:
       <itemizedlist>
         <listitem>
