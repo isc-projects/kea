@@ -93,7 +93,7 @@ const std::string FILE_HEADER =
     <title>Kea Messages Manual</title>\n\
 \n\
     <copyright>\n\
-      <year>2011-2015</year><holder>Internet Systems Consortium, Inc.</holder>\n\
+      <year>2011-2017</year><holder>Internet Systems Consortium, Inc.</holder>\n\
     </copyright>\n\
 \n\
     <abstract>\n\
