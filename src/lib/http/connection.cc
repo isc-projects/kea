@@ -50,6 +50,7 @@ HttpConnection::~HttpConnection() {
 
 void
 HttpConnection::close() {
+    request_timer_.cancel();
     socket_.close();
 }
 
@@ -67,6 +68,9 @@ HttpConnection::stopThisConnection() {
 
 void
 HttpConnection::asyncAccept() {
+    // Create instance of the callback. It is safe to pass the local instance
+    // of the callback, because the underlying boost functions make copies
+    // as needed.
     HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
                                           shared_from_this(),
                                           boost::asio::placeholders::error);
@@ -83,6 +87,9 @@ void
 HttpConnection::doRead() {
     try {
         TCPEndpoint endpoint;
+        // Create instance of the callback. It is safe to pass the local instance
+        // of the callback, because the underlying boost functions make copies
+        // as needed.
         SocketCallback cb(boost::bind(&HttpConnection::socketReadCallback,
                                       shared_from_this(),
                                       boost::asio::placeholders::error,
@@ -99,6 +106,9 @@ void
 HttpConnection::doWrite() {
     try {
         if (!output_buf_.empty()) {
+            // Create instance of the callback. It is safe to pass the local instance
+            // of the callback, because the underlying boost functions make copies
+            // as needed.
             SocketCallback cb(boost::bind(&HttpConnection::socketWriteCallback,
                                           shared_from_this(),
                                           boost::asio::placeholders::error,
