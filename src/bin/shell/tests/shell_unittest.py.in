@@ -26,6 +26,39 @@ class CARequestUnitTest(unittest.TestCase):
         """
         pass
 
+    def test_body_with_service(self):
+        """
+        This test verifies if the CARequest object generates the request
+        content properly when there is one target service.
+        """
+        request = CARequest()
+        request.command = "foo"
+        request.service= ["service1"]
+        request.generate_body()
+        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1"] }')
+
+    def test_body_with_multiple_service(self):
+        """
+        This test verifies if the CARequest object generates the request
+        content properly when there are two target service.
+        """
+        request = CARequest()
+        request.command = "foo"
+        request.service= ["service1","service2/2"]
+        request.generate_body()
+        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1","service2/2"] }')
+
+    def test_body_with_malformed_service(self):
+        """
+        This test verifies if the CARequest object generates the request
+        content properly when there are two target service, one is empty
+        """
+        request = CARequest()
+        request.command = "foo"
+        request.service= ["service1",""]
+        request.generate_body()
+        self.assertEqual(request.content, '{ "command": "foo", "service": ["service1"] }')
+
     def test_body_without_args(self):
         """
         This test verifies if the CARequest object generates the request

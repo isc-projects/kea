@@ -25,7 +25,7 @@
     <title>Shell Usage</title>
     <para><command>kea-shell</command> is run as follows:
 <screen>
-kea-shell [--host hostname] [--port number] [--timeout seconds] [command]
+kea-shell [--host hostname] [--port number] [--timeout seconds] [--service service-name] [command]
 </screen>
     where:
     </para>
@@ -50,6 +50,14 @@ kea-shell [--host hostname] [--port number] [--timeout seconds] [command]
           timeout (in seconds) for the connection. If not given, 10 seconds is used.
         </simpara>
       </listitem>
+
+      <listitem>
+        <simpara>
+          <command>--service <replaceable>serive-name</replaceable></command> specifies the
+          target of an command. If not given, CA will be used as target. May be used multiple times
+        </simpara>
+      </listitem>
+
 
       <listitem>
         <simpara>
@@ -89,18 +97,19 @@ kea-shell [--host hostname] [--port number] [--timeout seconds] [command]
 
     <para>The following shows a simple example of usage:
 <screen>
-$ <userinput>kea-shell --host 192.0.2.1 --port 8001 list-commands</userinput>
+$ <userinput>kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-commands</userinput>
 ^D
 </screen>
     After the command line is entered, the program waits for command parameters to be entered.
     Since <command>list-commands</command> does not take any
     arguments, CTRL-D (represented in the above example by "^D") is pressed to indicate end
     of file (and so terminate the parameter input). The Shell will then contact
-    the CA and print out the list of available commands returned.
+    the CA and print out the list of available commands returned for service named <command>dhcp4</command>.
     </para>
 
     <para>It is envisaged that Kea Shell will be most frequently used in scripts. The next example
-    shows a simple scripted execution. It sends the command "config-write" to the CA, along
+    shows a simple scripted execution. It sends the command "config-write" to the CA
+    (<command> --service </command> parameter hasn't been used), along
     with the parameters specified in param.json. The result will be stored in result.json.
 <screen>
 $ cat param.json

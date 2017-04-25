@@ -40,7 +40,7 @@
 
   <docinfo>
     <copyright>
-      <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -53,6 +53,7 @@
       <arg><option>--host</option></arg>
       <arg><option>--port</option></arg>
       <arg><option>--timeout</option></arg>
+      <arg><option>--service</option></arg>
       <arg><option>command</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -113,6 +114,14 @@
         <listitem><para>
           Specifies the connection timeout in seconds. If not
           specified, 10 (seconds) is used.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--service</option></term>
+        <listitem><para>
+          Specifies the service that is tartget of a command. If not
+          specified, Cotrol Agent will be targeted. May be used multiple times.
         </para></listitem>
       </varlistentry>
 
