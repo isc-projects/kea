@@ -120,8 +120,9 @@
       <varlistentry>
         <term><option>--service</option></term>
         <listitem><para>
-          Specifies the service that is tartget of a command. If not
-          specified, Cotrol Agent will be targeted. May be used multiple times.
+          Specifies the service that is the target of a command. If not
+          specified, Control Agent will be targeted. May be used more than
+          once to specify multiple targets.
         </para></listitem>
       </varlistentry>
 

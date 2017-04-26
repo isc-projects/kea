@@ -54,7 +54,8 @@ kea-shell [--host hostname] [--port number] [--timeout seconds] [--service servi
       <listitem>
         <simpara>
           <command>--service <replaceable>serive-name</replaceable></command> specifies the
-          target of an command. If not given, CA will be used as target. May be used multiple times
+          target of a command. If not given, CA will be used as target.  May be used more
+          than once to specify multiple targets.
         </simpara>
       </listitem>
 
@@ -104,7 +105,7 @@ $ <userinput>kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-command
     Since <command>list-commands</command> does not take any
     arguments, CTRL-D (represented in the above example by "^D") is pressed to indicate end
     of file (and so terminate the parameter input). The Shell will then contact
-    the CA and print out the list of available commands returned for service named <command>dhcp4</command>.
+    the CA and print out the list of available commands returned for the service named <command>dhcp4</command>.
     </para>
 
     <para>It is envisaged that Kea Shell will be most frequently used in scripts. The next example
