@@ -16,6 +16,7 @@ class CARequest:
      - http_host - hostname of the CA
      - http-port - TCP port of the CA
      - command - specifies the command to send (e.g. list-commands)
+     - service - specifies service that is target for the command (e.g. dhcp4)
      - timeout - timeout (in ms)
      - args - extra arguments my be added here
      - headers - extra HTTP headers may be added here
@@ -25,6 +26,7 @@ class CARequest:
     http_host = ''
     http_port = 0
     command = ''
+    service = ''
     timeout = 0
     args = ''
     headers = {}
@@ -39,6 +41,10 @@ class CARequest:
         this stores the output in self.content
         """
         self.content = '{ "command": "' + self.command + '"'
+        if self.service is not None:
+            self.service = [x for x in self.service if x]
+            if len(self.service) > 0:
+                self.content += ', "service": ["' +  '","'.join(self.service) + '"]'
         if len(self.args) > 1:
             self.content += ', "arguments": { ' + self.args + ' }'
         self.content += ' }'
