@@ -207,8 +207,12 @@ Daemon::createPIDFile(int pid) {
 }
 
 size_t
-Daemon::writeConfigFile(const std::string& config_file) const {
-    isc::data::ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+Daemon::writeConfigFile(const std::string& config_file,
+                        isc::data::ConstElementPtr cfg) const {
+    if (!cfg) {
+        cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+    }
+
     if (!cfg) {
         isc_throw(Unexpected, "Can't write configuration: conversion to JSON failed");
     }

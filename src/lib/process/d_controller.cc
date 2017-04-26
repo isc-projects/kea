@@ -446,10 +446,12 @@ DControllerBase::configWriteHandler(const std::string&,
         }
     }
 
+
     // Ok, it's time to write the file.
     size_t size = 0;
+    ConstElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
     try {
-        size = writeConfigFile(filename);
+        size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(COMMAND_ERROR,
                              std::string("Error during write-config:")

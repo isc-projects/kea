@@ -7,11 +7,14 @@
 #include <config.h>
 #include <agent/ca_controller.h>
 #include <agent/ca_process.h>
+#include <agent/ca_command_mgr.h>
 #include <cc/data.h>
+#include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
 #include <boost/pointer_cast.hpp>
 #include <sstream>
 
+using namespace std;
 using namespace isc::agent;
 using namespace isc::data;
 using namespace isc::http;
@@ -90,6 +93,72 @@ public:
         ASSERT_TRUE(sock_info->contains("socket-name"));
         EXPECT_EQ(exp_socket_name,
                   sock_info->get("socket-name")->stringValue());
+    }
+
+        /// @brief Compares the status in the given parse result to a given value.
+    ///
+    /// @param answer Element set containing an integer response and string
+    /// comment.
+    /// @param exp_status is an integer against which to compare the status.
+    /// @param exp_txt is expected text (not checked if "")
+    ///
+    void checkAnswer(isc::data::ConstElementPtr answer,
+                     int exp_status,
+                     string exp_txt = "") {
+
+        // Get rid of the outer list.
+        ASSERT_TRUE(answer);
+        ASSERT_EQ(Element::list, answer->getType());
+        ASSERT_LE(1, answer->size());
+        answer = answer->get(0);
+
+        int rcode = 0;
+        isc::data::ConstElementPtr comment;
+        comment = isc::config::parseAnswer(rcode, answer);
+
+        if (rcode != exp_status) {
+            ADD_FAILURE() << "Expected status code " << exp_status
+                          << " but received " << rcode << ", comment: "
+                          << (comment ? comment->str() : "(none)");
+        }
+
+        // Ok, parseAnswer interface is weird. If there are no arguments,
+        // it returns content of text. But if there is an argument,
+        // it returns the argument and it's not possible to retrieve
+        // "text" (i.e. comment).
+        if (comment->getType() != Element::string) {
+            comment = answer->get("text");
+        }
+
+        if (!exp_txt.empty()) {
+            EXPECT_EQ(exp_txt, comment->stringValue());
+        }
+    }
+
+    /// @brief Checks whether specified command is registered
+    ///
+    /// @param name name of the command to be checked
+    /// @param expect_true true - must be registered, false - must not be
+    void checkCommandRegistered(const std::string& name, bool expect_true = true) {
+
+        // First get the list of registered commands
+        ConstElementPtr lst = Element::fromJSON("{ \"command\": \"list-commands\" }");
+        ConstElementPtr rsp = CtrlAgentCommandMgr::instance().processCommand(lst);
+
+        // The response must be an array with at least one element
+        ASSERT_TRUE(rsp);
+        ASSERT_EQ(Element::list, rsp->getType());
+        ASSERT_LE(1, rsp->size());
+        ConstElementPtr args = rsp->get(0)->get("arguments");
+        ASSERT_TRUE(args);
+
+        string args_txt = args->str();
+
+        if (expect_true) {
+            EXPECT_TRUE(args_txt.find(name) != string::npos);
+        } else {
+            EXPECT_TRUE(args_txt.find(name) == string::npos);
+        }
     }
 
 };
@@ -356,6 +425,89 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
 
     EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
     EXPECT_EQ(8081, listener->getLocalPort());
+}
+
+// Tests that registerCommands actually registers anything.
+TEST_F(CtrlAgentControllerTest, registeredCommands) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution shoul
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl =
+        boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    ctrl->registerCommands();
+
+    // Check that the following command are really available.
+    checkCommandRegistered("build-report");
+    checkCommandRegistered("config-get");
+    checkCommandRegistered("config-test");
+    checkCommandRegistered("config-write");
+    checkCommandRegistered("list-commands");
+    checkCommandRegistered("shutdown");
+    checkCommandRegistered("version-get");
+
+    ctrl->deregisterCommands();
+}
+
+// Tests that config-write really writes a config file that contains
+// Control-agent configuration and not some other random nonsense.
+TEST_F(CtrlAgentControllerTest, configWrite) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution shoul
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // First, build the command:
+    string file = string(TEST_DATA_BUILDDIR) + string("/config-write.json");
+    string cmd_txt = "{ \"command\": \"config-write\" }";
+    ConstElementPtr cmd = Element::fromJSON(cmd_txt);
+    ConstElementPtr params = Element::fromJSON("{\"filename\": \"" + file + "\" }");
+    CtrlAgentCommandMgr& mgr_ =  CtrlAgentCommandMgr::instance();
+
+    // Send the command
+    ConstElementPtr answer = mgr_.handleCommand("config-write", params, cmd);
+
+    // Check that the command was successful
+    checkAnswer(answer, isc::config::CONTROL_RESULT_SUCCESS);
+
+    // Now check that the file is there.
+    ifstream f(file.c_str());
+    ASSERT_TRUE(f.good());
+
+    // Now that's some rough check that the the config written really contains
+    // something that looks like Control-agent configuration.
+    ConstElementPtr from_file = Element::fromJSONFile(file, true);
+    ASSERT_TRUE(from_file);
+    ConstElementPtr ca = from_file->get("Control-agent");
+    ASSERT_TRUE(ca);
+    EXPECT_TRUE(ca->get("control-sockets"));
+    EXPECT_TRUE(ca->get("hooks-libraries"));
+    EXPECT_TRUE(ca->get("http-host"));
+    EXPECT_TRUE(ca->get("http-port"));
+
+    // Remove the file.
+    ::remove(file.c_str());
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
 }
 
 }
