@@ -168,10 +168,21 @@ public:
                            [this, request](const boost::system::error_code& ec,
                                            std::size_t bytes_transferred) mutable {
             if (ec) {
-                ADD_FAILURE() << "error occurred while connecting: "
-                              << ec.message();
-                io_service_.stop();
-                return;
+                if (ec.value() == boost::asio::error::operation_aborted) {
+                    return;
+
+                } else if ((ec.value() == boost::asio::error::try_again) ||
+                           (ec.value() == boost::asio::error::would_block)) {
+                    // If we should try again make sure there is no garbage in the
+                    // bytes_transferred.
+                    bytes_transferred = 0;
+
+                } else {
+                    ADD_FAILURE() << "error occurred while connecting: "
+                                  << ec.message();
+                    io_service_.stop();
+                    return;
+                }
             }
 
             // Remove the part of the request which has been sent.
@@ -199,14 +210,21 @@ public:
                                        std::size_t bytes_transferred) {
             if (ec) {
                 // IO service stopped so simply return.
-                if (ec == boost::asio::error::operation_aborted) {
+                if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
-                }
 
-                // Error occurred, bail...
-                ADD_FAILURE() << "error occurred while receiving HTTP"
-                    " response from the server: " << ec.message();
-                io_service_.stop();
+                } else if ((ec.value() == boost::asio::error::try_again) ||
+                           (ec.value() == boost::asio::error::would_block)) {
+                    // If we should try again, make sure that there is no garbage
+                    // in the bytes_transferred.
+                    bytes_transferred = 0;
+
+                } else {
+                    // Error occurred, bail...
+                    ADD_FAILURE() << "error occurred while receiving HTTP"
+                        " response from the server: " << ec.message();
+                    io_service_.stop();
+                }
             }
 
             if (bytes_transferred > 0) {

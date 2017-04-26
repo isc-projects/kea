@@ -1,7 +1,11 @@
-1255.	[bug]		tomek
+1256.	[bug]		tomek
 	Control Agent now writes proper configuration when using
 	config-write command.
 	(Trac #5253, git a1b5da4db6ebfa9635bbe411ec363cdcc4fd1d28)
+
+1255.	[bug]		marcin
+	Fixed failing unit tests in libkea-http.
+	(Trac #5260, git 43394f76efb1634155c04b205dec7361fc21f4f9)
 
 1254.	[func]		tomek
 	Various improvements needed for upcoming host commands library:
