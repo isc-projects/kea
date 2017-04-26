@@ -143,12 +143,17 @@ public:
     /// Daemon is merged with CPL architecture, it will be a better
     /// fit.
     ///
+    /// If cfg is not specified, the current config (as returned by
+    /// CfgMgr::instance().getCurrentCfg() will be returned.
+    ///
     /// @param config_file name of the file to write the configuration to
+    /// @param cfg configuration to write (optional)
     /// @return number of files written
     /// @throw Unexpected if CfgMgr can't retrieve configuation or file cannot
     ///                   be written
     virtual size_t
-    writeConfigFile(const std::string& config_file) const;
+    writeConfigFile(const std::string& config_file,
+                    isc::data::ConstElementPtr cfg = isc::data::ConstElementPtr()) const;
 
     /// @brief returns the process name
     /// This value is used as when forming the default PID file name
