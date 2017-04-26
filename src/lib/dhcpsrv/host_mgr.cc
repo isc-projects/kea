@@ -131,9 +131,33 @@ HostMgr::get4(const SubnetID& subnet_id,
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (!host && alternate_source_) {
+
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER)
+            .arg(subnet_id)
+            .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                           identifier_len));
+
         host = alternate_source_->get4(subnet_id, identifier_type,
                                        identifier_begin, identifier_len);
+
+        if (host) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len))
+                .arg(host->toText());
+
+        } else {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_NULL)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len));
+        }
     }
+
     return (host);
 }
 
@@ -193,8 +217,33 @@ HostMgr::get6(const SubnetID& subnet_id,
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (!host && alternate_source_) {
+
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER)
+            .arg(subnet_id)
+            .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                           identifier_len));
+
+
         host = alternate_source_->get6(subnet_id, identifier_type,
                                        identifier_begin, identifier_len);
+
+        if (host) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len))
+                .arg(host->toText());
+
+        } else {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len));
+        }
+
     }
     return (host);
 }
