@@ -34,10 +34,6 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
     : request_timer_(io_service),
       request_timeout_(request_timeout),
       socket_(io_service),
-      socket_callback_(boost::bind(&HttpConnection::socketReadCallback, this,
-                                   _1, _2)),
-      socket_write_callback_(boost::bind(&HttpConnection::socketWriteCallback,
-                                         this, _1, _2)),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
@@ -54,6 +50,7 @@ HttpConnection::~HttpConnection() {
 
 void
 HttpConnection::close() {
+    request_timer_.cancel();
     socket_.close();
 }
 
@@ -71,8 +68,12 @@ HttpConnection::stopThisConnection() {
 
 void
 HttpConnection::asyncAccept() {
+    // Create instance of the callback. It is safe to pass the local instance
+    // of the callback, because the underlying boost functions make copies
+    // as needed.
     HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
-                                          this, _1);
+                                          shared_from_this(),
+                                          boost::asio::placeholders::error);
     try {
         acceptor_.asyncAccept(socket_, cb);
 
@@ -86,8 +87,15 @@ void
 HttpConnection::doRead() {
     try {
         TCPEndpoint endpoint;
+        // Create instance of the callback. It is safe to pass the local instance
+        // of the callback, because the underlying boost functions make copies
+        // as needed.
+        SocketCallback cb(boost::bind(&HttpConnection::socketReadCallback,
+                                      shared_from_this(),
+                                      boost::asio::placeholders::error,
+                                      boost::asio::placeholders::bytes_transferred));
         socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(),
-                             0, &endpoint, socket_callback_);
+                             0, &endpoint, cb);
 
     } catch (const std::exception& ex) {
         stopThisConnection();
@@ -98,9 +106,16 @@ void
 HttpConnection::doWrite() {
     try {
         if (!output_buf_.empty()) {
+            // Create instance of the callback. It is safe to pass the local instance
+            // of the callback, because the underlying boost functions make copies
+            // as needed.
+            SocketCallback cb(boost::bind(&HttpConnection::socketWriteCallback,
+                                          shared_from_this(),
+                                          boost::asio::placeholders::error,
+                                          boost::asio::placeholders::bytes_transferred));
             socket_.asyncSend(output_buf_.data(),
                               output_buf_.length(),
-                              socket_write_callback_);
+                              cb);
         } else {
             stopThisConnection();
         }
@@ -133,7 +148,8 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                   HTTP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText())
             .arg(static_cast<unsigned>(request_timeout_/1000));
-        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback, this),
+        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
+                                         shared_from_this()),
                              request_timeout_, IntervalTimer::ONE_SHOT);
         doRead();
     }
