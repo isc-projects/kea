@@ -448,6 +448,28 @@ DControllerBase::configWriteHandler(const std::string&,
 
     // Ok, it's time to write the file.
     size_t size = 0;
+    ElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
+
+    // Logging storage is messed up in CA. During its configuration (see
+    // DControllerBase::configFromFile() it calls Daemon::configureLogger()
+    // that stores the logging info in isc::dhcp::CfgMgr::getStagingCfg().
+    // This is later moved to getCurrentCfg() when the configuration is
+    // commited. All control-agent specific configuration is stored in
+    // a structure accessible by process_->getCfgMgr()->getContext(). Note
+    // logging information is not stored there.
+    //
+    // As a result, we need to extract the CA configuration from one
+    // place and logging from another.
+    ConstElementPtr loginfo = isc::dhcp::CfgMgr::instance().getCurrentCfg()->toElement();
+    if (loginfo) {
+        // If there was a config stored in dhcp::CfgMgr, try to get Logging info from it.
+        loginfo = loginfo->get("Logging");
+    }
+    if (loginfo) {
+        // If there is some logging information, add it to our config.
+        cfg->set("Logging", loginfo);
+    }
+
     try {
         size = writeConfigFile(filename);
     } catch (const isc::Exception& ex) {
