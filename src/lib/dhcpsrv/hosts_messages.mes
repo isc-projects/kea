@@ -160,20 +160,6 @@ identifier.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
-This debug message is issued when starting to retrieve a host holding
-IPv4 reservation, which is connected to a specific subnet and
-is identified by a specific unique identifier.
-
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
-This debug message includes the details of a host returned by an
-alternate hosts data source using a subnet id and specific host
-identifier.
-
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
-This debug message is issued when no host was found using the specified
-subnet id and host identifier.
-
 % HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate source for host using prefix %1/%2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
@@ -191,3 +177,17 @@ This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and identified by the specified
 DUID or HW Address, and it is starting to search for this host in the
 alternate host data source.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
+This debug message is issued when starting to retrieve a host holding
+IPv4 reservation, which is connected to a specific subnet and
+is identified by a specific unique identifier.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+This debug message includes the details of a host returned by an
+alternate hosts data source using a subnet id and specific host
+identifier.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.
