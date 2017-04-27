@@ -1,3 +1,7 @@
+1257.	[bug]		marcin
+	Improved logging in the hosts manager.
+	(Trac #5264, git 2fb9fd78e63f5d09810702847ad3e3b3020ea92b)
+
 1256.	[bug]		tomek
 	Control Agent now writes proper configuration when using
 	config-write command.
