@@ -556,7 +556,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
         if (conversion_needed) {
-            LOG_WARN(dhcpsrv_logger, DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES)
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
                     .arg(MAJOR_VERSION).arg(MINOR_VERSION);
         }
         lfcSetup(conversion_needed);

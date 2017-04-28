@@ -6,7 +6,7 @@
 
 $NAMESPACE isc::dhcp
 
-% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
+% DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
 A warning message issued when the server has detected lease files that need
 to be either upgraded or downgraded to match the server's schema, and that
 the server is automatically running the LFC process to perform the conversion.
