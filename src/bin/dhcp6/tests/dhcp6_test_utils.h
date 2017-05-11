@@ -642,7 +642,7 @@ public:
 /// @brief Patch the server config to add interface-config/re-detect=false
 /// @param json the server config
 inline void
-patchIfacesReDetect(isc::data::ConstElementPtr json) {
+disableIfacesReDetect(isc::data::ConstElementPtr json) {
     isc::data::ConstElementPtr ifaces_cfg = json->get("interfaces-config");
     if (ifaces_cfg) {
         isc::data::ElementPtr mutable_cfg =
@@ -677,7 +677,7 @@ parseDHCP6(const std::string& in, bool verbose = false)
         isc::dhcp::Parser6Context ctx;
         isc::data::ElementPtr json;
         json = ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6);
-        patchIfacesReDetect(json);
+        disableIfacesReDetect(json);
         return (json);
     }
     catch (const std::exception& ex) {
