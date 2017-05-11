@@ -1138,16 +1138,16 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
-CQL_CONFIG="no"
+cql_config="no"
 AC_ARG_WITH([cql],
   AC_HELP_STRING([--with-cql=PATH],
     [path to the Cassandra CQL 'cql_config' script]),
-    [CQL_CONFIG="$withval"])
+    [cql_config="$withval"])
 
-if test "${CQL_CONFIG}" = "yes" ; then
+if test "${cql_config}" = "yes" ; then
     CQL_CONFIG="/usr/bin/cql_config"
-elif test "${CQL_CONFIG}" != "no" ; then
-    CQL_CONFIG="${withval}"
+elif test "${cql_config}" != "no" ; then
+    CQL_CONFIG="${cql_config}"
 fi
 
 if test "$CQL_CONFIG" != "" ; then
