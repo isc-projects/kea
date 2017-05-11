@@ -416,12 +416,17 @@ if test "x$enable_shell" != xno ; then
 # We try to find 3.x first. If not found, we can do with 2.7.
   AM_PATH_PYTHON([2.7])
   # pkgpythondir needs to be expanded
+  saved_prefix="$prefix"
+  if test "$prefix" = "NONE"; then
+    prefix=$ac_default_prefix
+  fi
   PKGPYTHONDIR="$pkgpythondir"
   OLD=
   while test "x$OLD" != "x$PKGPYTHONDIR"; do
     OLD="$PKGPYTHONDIR"
     eval PKGPYTHONDIR="\"$OLD\""
   done
+  prefix="$saved_prefix"
 else
   PYTHON=no
 fi
