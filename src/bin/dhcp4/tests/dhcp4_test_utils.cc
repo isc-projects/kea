@@ -608,8 +608,8 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
 
-    // Patch the re-detect flag
-    patchIfacesReDetect(json);
+    // Disable the re-detect flag
+    disableIfacesReDetect(json);
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
