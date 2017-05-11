@@ -19,14 +19,15 @@
       "lfc-interval": 3600
   },
 
-// The following parameters control processing expired leases. Expired leases
-// will be reclaimed periodically according to the "reclaim-timer-wait-time"
-// parameter. Reclaimed leases will be held in the database for 1800s to
-// facilitate lease affinity. After this period the leases will be removed.
-// The frequency of removal is controlled by the "flush-reclaimed-timer-wait-time"
-// parameter. The lease reclamation routine will process at most 500 leases
-// or will last for at most 100ms, during a single run. If there are still
-// some unreclaimed leases after 10 attempts, a warning message is issued.
+// The following parameters control processing expired leases. Expired
+// leases will be reclaimed periodically according to the
+// "reclaim-timer-wait-time" parameter. Reclaimed leases will be held in
+// the database for 1800s to facilitate lease affinity. After this
+// period the leases will be removed.  The frequency of removal is
+// controlled by the "flush-reclaimed-timer-wait-time" parameter. The
+// lease reclamation routine will process at most 500 leases or will
+// last for at most 100ms, during a single run. If there are still some
+// unreclaimed leases after 10 attempts, a warning message is issued.
   "expired-leases-processing": {
     "reclaim-timer-wait-time": 5,
     "hold-reclaimed-time": 1800,
@@ -50,8 +51,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

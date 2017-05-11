@@ -66,12 +66,13 @@
                 "data": "2001:db8:2::45, 2001:db8:2::100"
             },
 
-            // Typically people prefer to refer to options by their names, so they
-            // don't need to remember the code names. However, some people like
-            // to use numerical values. For example, DHCPv6 can optionally use
-            // server unicast communication, if extra option is present. Option
-            // "unicast" uses option code 12, so you can reference to it either
-            // by "name": "unicast" or "code": 12.
+            // Typically people prefer to refer to options by their
+            // names, so they don't need to remember the code
+            // names. However, some people like to use numerical
+            // values. For example, DHCPv6 can optionally use server
+            // unicast communication, if extra option is present. Option
+            // "unicast" uses option code 12, so you can reference to it
+            // either by "name": "unicast" or "code": 12.
             {
                 "code": 12,
                 "data": "2001:db8:1:0:ff00::1"
@@ -145,8 +146,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

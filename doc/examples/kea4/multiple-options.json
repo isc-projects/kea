@@ -60,8 +60,10 @@
          },
             // Note the Kea provides some of the options on its own. In
             // particular:
-            // - IP address lease time (option 51) is governed by valid-lifetime
-            //   parameter, so you don't need to specify it as option.
+
+            // - IP address lease time (option 51) is governed by
+            //   valid-lifetime parameter, so you don't need to specify
+            //   it as option.
             // - Subnet mask (option 1) is calculated automatically from the
             //   subnet parameter specified for each "subnet4" entry.
             // - renewal-timer (option 58) is calculated from renew-timer
@@ -75,10 +77,12 @@
              "name": "routers",
              "data": "192.0.2.1"
          },
-            // Typically people prefer to refer to options by their names, so they
-            // don't need to remember the code names. However, some people like
-            // to use numerical values. For example, option "domain-name" uses
-            // option code 15, so you can reference to it either by
+
+            // Typically people prefer to refer to options by their
+            // names, so they don't need to remember the code names.
+            // However, some people like to use numerical values. For
+            // example, option "domain-name" uses option code 15, so you
+            // can reference to it either by
             // "name": "domain-name" or "code": 15.
          {
              "code": 15,
@@ -87,7 +91,9 @@
              // Domain search is also a popular option. It tells the client to
              // attempt to resolve names within those specificed domains. For
              // example, name "foo" would be attempted to be resolved as
-             // foo.mydomain.example.com and if it fails, then as foo.example.com
+             // foo.mydomain.example.com and if it fails, then as
+             // foo.example.com
+
          {
              "name": "domain-search",
              "data": "mydomain.example.com, example.com"
@@ -123,8 +129,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {
