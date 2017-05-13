@@ -367,7 +367,7 @@ bool
 Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
-    if (!inRange(addr)) {
+    if ((type != Lease::TYPE_PD) && !inRange(addr)) {
         return (false);
     }
 
