@@ -72,11 +72,12 @@ public:
 
     /// @brief checks if the specified address is in pools
     ///
-    /// Note the difference between inRange() and inPool(). For a given
-    /// subnet (e.g. 2001::/64) there may be one or more pools defined
-    /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
-    /// inPool() returning true implies inRange(), but the reverse implication
-    /// is not always true. For the given example, 2001::1234:abcd would return
+    /// Note the difference between inRange() and inPool() for addresses
+    /// (i.e. *not* prefixes). For a given subnet (e.g. 2001::/64) there
+    /// may be one or more pools defined that may or may not cover
+    /// entire subnet, e.g. pool 2001::1-2001::10). inPool() returning
+    /// true implies inRange(), but the reverse implication is not
+    /// always true. For the given example, 2001::1234:abcd would return
     /// true for inRange(), but false for inPool() check.
     ///
     /// @param type type of pools to iterate over
