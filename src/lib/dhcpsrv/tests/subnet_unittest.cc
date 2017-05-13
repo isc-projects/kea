@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1096,7 +1096,7 @@ TEST(Subnet6Test, inRangeinPool) {
                              IOAddress("2001:db8::20")));
     subnet->addPool(pool1);
 
-    // 192.1.1.1 belongs to the subnet...
+    // 2001:db8::1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
     // ... but it does not belong to any pool within
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::1")));
@@ -1120,6 +1120,40 @@ TEST(Subnet6Test, inRangeinPool) {
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
+}
+
+// This test verifies that inRange() and inPool() methods work properly
+// for prefixes too.
+TEST(Subnet6Test, PdinRangeinPool) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4));
+
+    // this one is in subnet
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"),
+                             96, 112));
+    subnet->addPool(pool1);
+
+    // this one is not in subnet
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
+                             96, 112));
+    subnet->addPool(pool2);
+
+    // 2001:db8::1:0:0 belongs to the subnet...
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1:0:0")));
+    // ... but it does not belong to any pool within
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8::1:0:0")));
+
+    // 2001:db8:1::1 does not belong to the subnet...
+    EXPECT_FALSE(subnet->inRange(IOAddress("2001:db8:1::1")));
+    // ... but it belongs to the second pool
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8:1::1")));
+
+    // 2001:db8::1 belongs to the subnet and to the first pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8::1")));
+
+    // 2001:db8:0:1:0:1:: does not belong to the subnet and any pool
+    EXPECT_FALSE(subnet->inRange(IOAddress("2001:db8:0:1:0:1::")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8:0:1:0:1::")));
 }
 
 // This test checks if the toText() method returns text representation

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,7 +112,7 @@ TEST(Pool4Test, unique_id) {
 }
 
 // Simple check if toText returns reasonable values
-TEST(Pool4Test,toText) {
+TEST(Pool4Test, toText) {
     Pool4 pool1(IOAddress("192.0.2.7"), IOAddress("192.0.2.17"));
     EXPECT_EQ("type=V4, 192.0.2.7-192.0.2.17", pool1.toText());
 
