@@ -805,11 +805,11 @@ int eval_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[51] =
     {   0,
-      100,  105,  111,  121,  127,  145,  152,  166,  167,  168,
-      169,  170,  171,  172,  173,  174,  175,  176,  177,  178,
-      179,  180,  181,  182,  183,  184,  185,  186,  187,  188,
-      189,  190,  191,  192,  193,  194,  195,  196,  197,  198,
-      199,  200,  201,  202,  203,  204,  205,  206,  207,  208
+      102,  107,  113,  123,  129,  147,  154,  168,  169,  170,
+      171,  172,  173,  174,  175,  176,  177,  178,  179,  180,
+      181,  182,  183,  184,  185,  186,  187,  188,  189,  190,
+      191,  192,  193,  194,  195,  196,  197,  198,  199,  200,
+      201,  202,  203,  204,  205,  206,  207,  208,  209,  210
     } ;
 
 static yy_state_type *yy_state_buf=0, *yy_state_ptr=0;
@@ -836,7 +836,7 @@ goto find_rule; \
 #define YY_RESTORE_YY_MORE_OFFSET
 char *evaltext;
 #line 1 "lexer.ll"
-/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -851,15 +851,17 @@ char *evaltext;
 #include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 
-// Work around an incompatibility in flex (at least versions
-// 2.5.31 through 2.5.33): it generates code that does
-// not conform to C89.  See Debian bug 333231
-// <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
+/* Please avoid C++ style comments (// ... eol) as they break flex 2.6.2 */
+
+/* Work around an incompatibility in flex (at least versions
+   2.5.31 through 2.5.33): it generates code that does
+   not conform to C89.  See Debian bug 333231
+   <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>. */
 # undef yywrap
 # define yywrap() 1
 
-// The location of the current token. The lexer will keep updating it. This
-// variable will be useful for logging errors.
+/* The location of the current token. The lexer will keep updating it. This
+   variable will be useful for logging errors. */
 static isc::eval::location loc;
 
 namespace {
@@ -867,9 +869,9 @@ namespace {
     isc::eval::EvalContext::ParserType start_token_value;
 };
 
-// To avoid the call to exit... oops!
+/* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
-#line 872 "lexer.cc"
+#line 874 "lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -889,13 +891,13 @@ namespace {
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
-#line 74 "lexer.ll"
-// This code run each time a pattern is matched. It updates the location
-// by moving it ahead by yyleng bytes. yyleng specifies the length of the
-// currently matched token.
+#line 76 "lexer.ll"
+/* This code run each time a pattern is matched. It updates the location
+   by moving it ahead by yyleng bytes. yyleng specifies the length of the
+   currently matched token. */
 #define YY_USER_ACTION  loc.columns(evalleng);
-#line 897 "lexer.cc"
-#line 898 "lexer.cc"
+#line 899 "lexer.cc"
+#line 900 "lexer.cc"
 
 #define INITIAL 0
 
@@ -1179,12 +1181,12 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 80 "lexer.ll"
+#line 82 "lexer.ll"
 
 
 
-#line 84 "lexer.ll"
-    // Code run each time evallex is called.
+#line 86 "lexer.ll"
+    /* Code run each time evallex is called. */
     loc.step();
 
     if (start_token_flag) {
@@ -1200,7 +1202,7 @@ YY_DECL
 
 
 
-#line 1203 "lexer.cc"
+#line 1205 "lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1315,29 +1317,29 @@ do_action:	/* This label is used only to access EOF actions. */
 /* %% [13.0] actions go here */
 case 1:
 YY_RULE_SETUP
-#line 100 "lexer.ll"
+#line 102 "lexer.ll"
 {
-    // Ok, we found a with space. Let's ignore it and update loc variable.
+    /* Ok, we found a with space. Let's ignore it and update loc variable. */
     loc.step();
 }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 105 "lexer.ll"
+#line 107 "lexer.ll"
 {
-    // Newline found. Let's update the location and continue.
+    /* Newline found. Let's update the location and continue. */
     loc.lines(evalleng);
     loc.step();
 }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 111 "lexer.ll"
+#line 113 "lexer.ll"
 {
-    // A string has been matched. It contains the actual string and single quotes.
-    // We need to get those quotes out of the way and just use its content, e.g.
-    // for 'foo' we should get foo
+    /* A string has been matched. It contains the actual string and single quotes.
+       We need to get those quotes out of the way and just use its content, e.g.
+       for 'foo' we should get foo */
     std::string tmp(evaltext+1);
     tmp.resize(tmp.size() - 1);
 
@@ -1346,53 +1348,53 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 121 "lexer.ll"
+#line 123 "lexer.ll"
 {
-    // A hex string has been matched. It contains the '0x' or '0X' header
-    // followed by at least one hexadecimal digit.
+    /* A hex string has been matched. It contains the '0x' or '0X' header
+       followed by at least one hexadecimal digit. */
     return isc::eval::EvalParser::make_HEXSTRING(evaltext, loc);
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 127 "lexer.ll"
+#line 129 "lexer.ll"
 {
-    // An integer was found.
+    /* An integer was found. */
     std::string tmp(evaltext);
 
     try {
-        // In substring we want to use negative values (e.g. -1).
-        // In enterprise-id we need to use values up to 0xffffffff.
-        // To cover both of those use cases, we need at least
-        // int64_t.
+        /* In substring we want to use negative values (e.g. -1).
+           In enterprise-id we need to use values up to 0xffffffff.
+           To cover both of those use cases, we need at least
+           int64_t. */
         static_cast<void>(boost::lexical_cast<int64_t>(tmp));
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }
 
-    // The parser needs the string form as double conversion is no lossless
+    /* The parser needs the string form as double conversion is no lossless */
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 145 "lexer.ll"
+#line 147 "lexer.ll"
 {
-    // This string specifies option name starting with a letter
-    // and further containing letters, digits, hyphens and
-    // underscores and finishing by letters or digits.
+    /* This string specifies option name starting with a letter
+       and further containing letters, digits, hyphens and
+       underscores and finishing by letters or digits. */
     return isc::eval::EvalParser::make_OPTION_NAME(evaltext, loc);
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 152 "lexer.ll"
+#line 154 "lexer.ll"
 {
-    // IPv4 or IPv6 address
+    /* IPv4 or IPv6 address */
     std::string tmp(evaltext);
 
-    // Some incorrect addresses can match so we have to check.
+    /* Some incorrect addresses can match so we have to check. */
     try {
         isc::asiolink::IOAddress ip(tmp);
     } catch (...) {
@@ -1404,229 +1406,229 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 166 "lexer.ll"
+#line 168 "lexer.ll"
 return isc::eval::EvalParser::make_EQUAL(loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 167 "lexer.ll"
+#line 169 "lexer.ll"
 return isc::eval::EvalParser::make_OPTION(loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 168 "lexer.ll"
+#line 170 "lexer.ll"
 return isc::eval::EvalParser::make_RELAY4(loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 169 "lexer.ll"
+#line 171 "lexer.ll"
 return isc::eval::EvalParser::make_RELAY6(loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 170 "lexer.ll"
+#line 172 "lexer.ll"
 return isc::eval::EvalParser::make_PEERADDR(loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 171 "lexer.ll"
+#line 173 "lexer.ll"
 return isc::eval::EvalParser::make_LINKADDR(loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 172 "lexer.ll"
+#line 174 "lexer.ll"
 return isc::eval::EvalParser::make_TEXT(loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 173 "lexer.ll"
+#line 175 "lexer.ll"
 return isc::eval::EvalParser::make_HEX(loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 174 "lexer.ll"
+#line 176 "lexer.ll"
 return isc::eval::EvalParser::make_EXISTS(loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 175 "lexer.ll"
+#line 177 "lexer.ll"
 return isc::eval::EvalParser::make_PKT(loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 176 "lexer.ll"
+#line 178 "lexer.ll"
 return isc::eval::EvalParser::make_IFACE(loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 177 "lexer.ll"
+#line 179 "lexer.ll"
 return isc::eval::EvalParser::make_SRC(loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 178 "lexer.ll"
+#line 180 "lexer.ll"
 return isc::eval::EvalParser::make_DST(loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 179 "lexer.ll"
+#line 181 "lexer.ll"
 return isc::eval::EvalParser::make_LEN(loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 180 "lexer.ll"
+#line 182 "lexer.ll"
 return isc::eval::EvalParser::make_PKT4(loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 181 "lexer.ll"
+#line 183 "lexer.ll"
 return isc::eval::EvalParser::make_CHADDR(loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 182 "lexer.ll"
+#line 184 "lexer.ll"
 return isc::eval::EvalParser::make_HLEN(loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 183 "lexer.ll"
+#line 185 "lexer.ll"
 return isc::eval::EvalParser::make_HTYPE(loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 184 "lexer.ll"
+#line 186 "lexer.ll"
 return isc::eval::EvalParser::make_CIADDR(loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 185 "lexer.ll"
+#line 187 "lexer.ll"
 return isc::eval::EvalParser::make_GIADDR(loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 186 "lexer.ll"
+#line 188 "lexer.ll"
 return isc::eval::EvalParser::make_YIADDR(loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 187 "lexer.ll"
+#line 189 "lexer.ll"
 return isc::eval::EvalParser::make_SIADDR(loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 188 "lexer.ll"
+#line 190 "lexer.ll"
 return isc::eval::EvalParser::make_PKT6(loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 189 "lexer.ll"
+#line 191 "lexer.ll"
 return isc::eval::EvalParser::make_MSGTYPE(loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 190 "lexer.ll"
+#line 192 "lexer.ll"
 return isc::eval::EvalParser::make_TRANSID(loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 191 "lexer.ll"
+#line 193 "lexer.ll"
 return isc::eval::EvalParser::make_VENDOR(loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 192 "lexer.ll"
+#line 194 "lexer.ll"
 return isc::eval::EvalParser::make_VENDOR_CLASS(loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 193 "lexer.ll"
+#line 195 "lexer.ll"
 return isc::eval::EvalParser::make_DATA(loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 194 "lexer.ll"
+#line 196 "lexer.ll"
 return isc::eval::EvalParser::make_ENTERPRISE(loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 195 "lexer.ll"
+#line 197 "lexer.ll"
 return isc::eval::EvalParser::make_SUBSTRING(loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 196 "lexer.ll"
+#line 198 "lexer.ll"
 return isc::eval::EvalParser::make_ALL(loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 197 "lexer.ll"
+#line 199 "lexer.ll"
 return isc::eval::EvalParser::make_CONCAT(loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 198 "lexer.ll"
+#line 200 "lexer.ll"
 return isc::eval::EvalParser::make_NOT(loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 199 "lexer.ll"
+#line 201 "lexer.ll"
 return isc::eval::EvalParser::make_AND(loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 200 "lexer.ll"
+#line 202 "lexer.ll"
 return isc::eval::EvalParser::make_OR(loc);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 201 "lexer.ll"
+#line 203 "lexer.ll"
 return isc::eval::EvalParser::make_DOT(loc);
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 202 "lexer.ll"
+#line 204 "lexer.ll"
 return isc::eval::EvalParser::make_LPAREN(loc);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 203 "lexer.ll"
+#line 205 "lexer.ll"
 return isc::eval::EvalParser::make_RPAREN(loc);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 204 "lexer.ll"
+#line 206 "lexer.ll"
 return isc::eval::EvalParser::make_LBRACKET(loc);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 205 "lexer.ll"
+#line 207 "lexer.ll"
 return isc::eval::EvalParser::make_RBRACKET(loc);
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 206 "lexer.ll"
+#line 208 "lexer.ll"
 return isc::eval::EvalParser::make_COMA(loc);
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 207 "lexer.ll"
+#line 209 "lexer.ll"
 return isc::eval::EvalParser::make_ANY(loc);
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 208 "lexer.ll"
+#line 210 "lexer.ll"
 driver.error (loc, "Invalid character: " + std::string(evaltext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 209 "lexer.ll"
+#line 211 "lexer.ll"
 return isc::eval::EvalParser::make_END(loc);
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 210 "lexer.ll"
+#line 212 "lexer.ll"
 ECHO;
 	YY_BREAK
-#line 1629 "lexer.cc"
+#line 1631 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2707,7 +2709,7 @@ void evalfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 210 "lexer.ll"
+#line 212 "lexer.ll"
 
 
 using namespace isc::eval;
@@ -2724,7 +2726,7 @@ EvalContext::scanStringBegin(ParserType type)
     buffer = eval_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         fatal("cannot scan string");
-        // fatal() throws an exception so this can't be reached
+        /* fatal() throws an exception so this can't be reached */
     }
 }
 
@@ -2735,9 +2737,9 @@ EvalContext::scanStringEnd()
 }
 
 namespace {
-/// To avoid unused function error
+/** To avoid unused function error */
 class Dummy {
-    // cppcheck-suppress unusedPrivateFunction
+    /* cppcheck-suppress unusedPrivateFunction */
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
