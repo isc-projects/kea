@@ -1,3 +1,8 @@
+1258.	[bug]		fdupont
+	Fixed wrong python package path when kea-shell was configured
+	without a prefix.
+	(Trac #5214, git xxx)
+
 Kea 1.2.0 released on April 28, 2017
 
 1257.	[bug]		marcin
