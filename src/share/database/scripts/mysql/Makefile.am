@@ -8,6 +8,7 @@ sqlscripts_DATA += upgrade_2.0_to_3.0.sh
 sqlscripts_DATA += upgrade_3.0_to_4.0.sh
 sqlscripts_DATA += upgrade_4.0_to_4.1.sh
 sqlscripts_DATA += upgrade_4.1_to_5.0.sh
+sqlscripts_DATA += upgrade_5.0_to_5.1.sh
 
 
 EXTRA_DIST = ${sqlscripts_DATA}
