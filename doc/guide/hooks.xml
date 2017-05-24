@@ -630,8 +630,9 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           only the first 6 bytes of the interface-id are interesting, because
           remaining bytes are either randomly changed or not unique between
           devices. Therefore the customer decided to use first 6 bytes of the
-          interface-id option inserted by the relay agent. This could be
-          achieved by using the following configuration:
+          interface-id option inserted by the relay agent. After adding "flex-id"
+          host-reservation-identifiers goal can be achieved by using the
+          following configuration:
 <screen>
 "Dhcp6": {
     "subnet6": [{ ..., // subnet definition starts here
@@ -640,11 +641,12 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         "ip-addresses": [ "2001:db8::1" ]
     ],
     }], // end of subnet definitions
+    "host-reservation-identifiers": ["duid", "flex-id"], // add "flex-id" to reservation identifiers
     "hooks-libraries": [
         {
             "library": "/path/libdhcp_flex_id.so",
             "parameters": {
-                "identifier-expression": "<userinput>substring(relay6[0].option[18],0,8)</userinput>"
+                "identifier-expression": "<userinput>substring(relay6[0].option[18].hex,0,8)</userinput>"
             }
         },
         ...
@@ -672,6 +674,26 @@ link address: 3001::1, hop count: 1, identified by remote-id:
           The former is more convenient for printable characters, while hex
           string values are more convenient for non-printable characters.
         </para>
+<screen>
+"Dhcp6": {
+    "subnet6": [{ ..., // subnet definition starts here
+    "reservations": [
+        <userinput>"flex-id": "01:02:03:04:05:06"</userinput>, // value of the first 8 bytes of the interface-id
+        "ip-addresses": [ "2001:db8::1" ]
+    ],
+    }], // end of subnet definitions
+    "host-reservation-identifiers": ["duid", "flex-id"], // add "flex-id" to reservation identifiers
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "<userinput>vendor[4491].option[1026].hex</userinput>"
+            }
+        },
+        ...
+    ]
+}
+</screen>
       </section>
 
       <section id="host-cmds">
