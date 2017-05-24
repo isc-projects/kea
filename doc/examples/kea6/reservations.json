@@ -27,12 +27,13 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-// Kea supports two types of identifiers in DHCPv6: hw-address (hardware/MAC address
-// of the client) and duid (DUID inserted by the client). When told to do so, Kea can
+// Kea supports three types of identifiers in DHCPv6: hw-address (hardware/MAC address
+// of the client), duid (DUID inserted by the client) and flex-id (flexible identifier
+// available when flex_id hook library is loaded) When told to do so, Kea can
 // check for each of these identifier types, but it takes a costly database lookup
 // to do so. It is therefore useful from a performance perspective to use only
 // the reservation types that are actually used in a given network.
-    "host-reservation-identifiers": [ "duid", "hw-address" ],
+    "host-reservation-identifiers": [ "duid", "hw-address", "flex-id" ],
 
 // The following list defines subnets. Subnet, pools and interface definitions
 // are the same as in the regular scenario, without host reservations.
