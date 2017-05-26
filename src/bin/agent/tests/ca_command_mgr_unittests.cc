@@ -171,12 +171,14 @@ public:
     ///
     /// @param response Stub response to be sent from the server socket to the
     /// client.
-    void bindServerSocket(const std::string& response) {
+    /// @param use_thread Indicates if the IO service will be ran in thread.
+    void bindServerSocket(const std::string& response,
+                          const bool use_thread = false) {
         server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
                                                             unixSocketFilePath(),
                                                             response));
         server_socket_->startTimer(TEST_TIMEOUT);
-        server_socket_->bindServerSocket();
+        server_socket_->bindServerSocket(use_thread);
     }
 
     /// @brief Creates command with no arguments.
@@ -224,21 +226,29 @@ public:
         // Configure client side socket.
         configureControlSocket(server_type);
         // Create server side socket.
-        bindServerSocket(server_response);
+        bindServerSocket(server_response, true);
 
         // The client side communication is synchronous. To be able to respond
         // to this we need to run the server side socket at the same time.
         // Running IO service in a thread guarantees that the server responds
         // as soon as it receives the control command.
-        isc::util::thread::Thread th(boost::bind(&IOService::run, getIOService().get()));
+        isc::util::thread::Thread th(boost::bind(&IOService::run,
+                                                 getIOService().get()));
+
+
+        // Wait for the IO service in thread to actually run.
+        server_socket_->waitForRunning();
 
         ConstElementPtr command = createCommand("foo", service);
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
-        getIOService()->stop();
+        server_socket_->stopServer();
+        getIOService()->stopWork();
 
         th.wait();
+
+        EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
 
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
     }
@@ -342,7 +352,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // Configure client side socket.
     configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP4);
     // Create server side socket.
-    bindServerSocket("{ \"result\" : 3 }");
+    bindServerSocket("{ \"result\" : 3 }", true);
 
     // The client side communication is synchronous. To be able to respond
     // to this we need to run the server side socket at the same time.
@@ -350,11 +360,15 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // as soon as it receives the control command.
     isc::util::thread::Thread th(boost::bind(&IOService::run, getIOService().get()));
 
+    // Wait for the IO service in thread to actually run.
+    server_socket_->waitForRunning();
+
     ConstElementPtr command = createCommand("list-commands", "dhcp4");
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
 
-    getIOService()->stop();
+    server_socket_->stopServer();
+    getIOService()->stopWork();
 
     th.wait();
 

@@ -50,11 +50,17 @@ public:
           sent_response_callback_(sent_response_callback) {
     }
 
+    /// @brief Starts asynchronous read from the socket.
     void start() {
        socket_->async_read_some(boost::asio::buffer(&raw_buf_[0], raw_buf_.size()),
            boost::bind(&Connection::readHandler, shared_from_this(),
                        boost::asio::placeholders::error,
                        boost::asio::placeholders::bytes_transferred));
+    }
+
+    /// @brief Closes the socket.
+    void stop() {
+        socket_->close();
     }
 
     /// @brief Handler invoked when data have been received over the socket.
@@ -123,12 +129,13 @@ public:
     ///
     /// @param io_service Reference to the IO service.
     ConnectionPool(IOService& io_service)
-        : io_service_(io_service), next_socket_(),
+        : io_service_(io_service), connections_(), next_socket_(),
           response_num_(0) {
     }
 
     /// @brief Destructor.
     ~ConnectionPool() {
+        stopAll();
     }
 
     /// @brief Creates new unix domain socket and returns it.
@@ -158,7 +165,25 @@ public:
         }));
         conn->start();
 
+        connections_.insert(conn);
         next_socket_.reset();
+    }
+
+    /// @brief Stops the given connection.
+    ///
+    /// @param conn Pointer to the connection to be stopped.
+    void stop(const ConnectionPtr& conn) {
+        conn->stop();
+        connections_.erase(conn);
+    }
+
+    /// @brief Stops all connections.
+    void stopAll() {
+        for (auto conn = connections_.begin(); conn != connections_.end();
+             ++conn) {
+            (*conn)->stop();
+        }
+        connections_.clear();
     }
 
     /// @brief Returns number of responses sent so far.
@@ -170,6 +195,9 @@ private:
 
     /// @brief Reference to the IO service.
     IOService& io_service_;
+
+    /// @brief Container holding established connections.
+    std::set<ConnectionPtr> connections_;
 
     /// @brief Holds pointer to the generated socket.
     ///
@@ -190,10 +218,12 @@ TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
       test_timer_(io_service_),
       custom_response_(custom_response),
       connection_pool_(new ConnectionPool(io_service)),
-      stopped_(false) {
+      stopped_(false),
+      running_(false) {
 }
 
 TestServerUnixSocket::~TestServerUnixSocket() {
+    server_acceptor_.close();
 }
 
 void
@@ -214,11 +244,23 @@ TestServerUnixSocket::startTimer(const long test_timeout) {
 }
 
 void
-TestServerUnixSocket::bindServerSocket() {
+TestServerUnixSocket::stopServer() {
+    test_timer_.cancel();
+    server_acceptor_.cancel();
+    connection_pool_->stopAll();
+}
+
+void
+TestServerUnixSocket::bindServerSocket(const bool use_thread) {
     server_acceptor_.open();
     server_acceptor_.bind(server_endpoint_);
     server_acceptor_.listen();
     accept();
+
+    if (use_thread) {
+        io_service_.post(boost::bind(&TestServerUnixSocket::signalRunning,
+                                     this));
+    }
 }
 
 void
@@ -235,6 +277,23 @@ TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
         boost::bind(&TestServerUnixSocket::acceptHandler, this,
                     boost::asio::placeholders::error));
+}
+
+void
+TestServerUnixSocket::signalRunning() {
+    {
+        isc::util::thread::Mutex::Locker lock(mutex_);
+        running_ = true;
+    }
+    condvar_.signal();
+}
+
+void
+TestServerUnixSocket::waitForRunning() {
+    isc::util::thread::Mutex::Locker lock(mutex_);
+    while (!running_) {
+        condvar_.wait(mutex_);
+    }
 }
 
 void

@@ -207,7 +207,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                    received_ec = ec;
                    received_feed = feed;
                    // Stop the IO service so as we can continue.
-                   io_service->stop();
+                   io_service->stopWork();
                }, ClientConnection::Timeout(CONNECTION_TIMEOUT));
     io_service->run();
 
