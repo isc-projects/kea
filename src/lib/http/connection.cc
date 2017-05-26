@@ -34,6 +34,10 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
     : request_timer_(io_service),
       request_timeout_(request_timeout),
       socket_(io_service),
+      socket_callback_(boost::bind(&HttpConnection::socketReadCallback, this,
+                                   _1, _2)),
+      socket_write_callback_(boost::bind(&HttpConnection::socketWriteCallback,
+                                         this, _1, _2)),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
@@ -68,7 +72,7 @@ HttpConnection::stopThisConnection() {
 void
 HttpConnection::asyncAccept() {
     HttpAcceptorCallback cb = boost::bind(&HttpConnection::acceptorCallback,
-                                          shared_from_this(), _1);
+                                          this, _1);
     try {
         acceptor_.asyncAccept(socket_, cb);
 
@@ -82,10 +86,8 @@ void
 HttpConnection::doRead() {
     try {
         TCPEndpoint endpoint;
-        SocketCallback cb(boost::bind(&HttpConnection::socketReadCallback,
-                                      shared_from_this(), _1, _2));
         socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(),
-                             0, &endpoint, cb);
+                             0, &endpoint, socket_callback_);
 
     } catch (const std::exception& ex) {
         stopThisConnection();
@@ -96,11 +98,9 @@ void
 HttpConnection::doWrite() {
     try {
         if (!output_buf_.empty()) {
-            SocketCallback cb(boost::bind(&HttpConnection::socketWriteCallback,
-                                          shared_from_this(), _1, _2));
             socket_.asyncSend(output_buf_.data(),
                               output_buf_.length(),
-                              cb);
+                              socket_write_callback_);
         } else {
             stopThisConnection();
         }
@@ -118,12 +118,6 @@ HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response) {
 
 void
 HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
-    // Operation is aborted when the acceptor is cancelled, as a result
-    // of stopping the connection. This is not an error condition.
-    if (ec.value() == boost::asio::error::operation_aborted) {
-        return;
-    }
-
     if (!acceptor_.isOpen()) {
         return;
     }
@@ -139,8 +133,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                   HTTP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText())
             .arg(static_cast<unsigned>(request_timeout_/1000));
-        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                         shared_from_this()),
+        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback, this),
                              request_timeout_, IntervalTimer::ONE_SHOT);
         doRead();
     }
