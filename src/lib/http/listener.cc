@@ -10,9 +10,7 @@
 #include <http/connection_pool.h>
 #include <http/http_acceptor.h>
 #include <http/listener.h>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <iostream>
 
 using namespace isc::asiolink;
 
@@ -20,7 +18,7 @@ namespace isc {
 namespace http {
 
 /// @brief Implementation of the @ref HttpListener.
-class HttpListenerImpl : public boost::enable_shared_from_this<HttpListenerImpl> {
+class HttpListenerImpl {
 public:
 
     /// @brief Constructor.
@@ -166,7 +164,7 @@ HttpListenerImpl::accept() {
     // depends on the use case.
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
-        boost::bind(&HttpListenerImpl::acceptHandler, shared_from_this(), _1);
+        boost::bind(&HttpListenerImpl::acceptHandler, this, _1);
     HttpConnectionPtr conn(new HttpConnection(io_service_, acceptor_,
                                               connections_,
                                               response_creator,
