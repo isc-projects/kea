@@ -1095,9 +1095,9 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    cql_config="/usr/bin/cql_config"
+    CQL_CONFIG="/usr/bin/cql_config"
 elif test "${cql_config}" != "no" ; then
-    CQL_CONFIG="${withval}"
+    CQL_CONFIG="${cql_config}"
 fi
 
 if test "$CQL_CONFIG" != "" ; then
