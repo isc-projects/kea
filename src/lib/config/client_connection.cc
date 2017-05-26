@@ -113,7 +113,7 @@ ClientConnectionImpl::start(const ClientConnection::SocketPath& socket_path,
                             const ClientConnection::Timeout& timeout) {
     // Start the timer protecting against timeouts.
     timer_.setup(boost::bind(&ClientConnectionImpl::timeoutCallback,
-                             shared_from_this(), handler),
+                             this, handler),
                  timeout.timeout_, IntervalTimer::ONE_SHOT);
 
     // Store the command in the class member to make sure it is valid
@@ -220,6 +220,7 @@ void
 ClientConnectionImpl::terminate(const boost::system::error_code& ec,
                                 ClientConnection::Handler handler) {
     try {
+        timer_.cancel();
         current_command_.clear();
         handler(ec, feed_);
 
