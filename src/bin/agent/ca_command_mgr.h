@@ -109,9 +109,6 @@ private:
     /// thus the constructor is private.
     CtrlAgentCommandMgr();
 
-    /// @brief Buffer into which responses to forwarded commands are stored.
-    std::array<char, 8192> receive_buf_;
-
 };
 
 } // end of namespace isc::agent
