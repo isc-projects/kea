@@ -30,6 +30,7 @@ using namespace isc::process;
 namespace {
 
 /// @brief Client side connection timeout.
+/// @todo Make it configurable.
 const long CONNECTION_TIMEOUT = 5000;
 
 }
@@ -206,7 +207,8 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                    // Capture error code and parsed data.
                    received_ec = ec;
                    received_feed = feed;
-                   // Stop the IO service so as we can continue.
+                   // Got the IO service so stop IO service. This causes to
+                   // stop IO service when all handlers have been invoked.
                    io_service->stopWork();
                }, ClientConnection::Timeout(CONNECTION_TIMEOUT));
     io_service->run();

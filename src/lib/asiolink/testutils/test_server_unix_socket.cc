@@ -257,6 +257,9 @@ TestServerUnixSocket::bindServerSocket(const bool use_thread) {
     server_acceptor_.listen();
     accept();
 
+    // When threads are in use, we need to post a handler which will be invoked
+    // when the thread has already started and the IO service is running. The
+    // main thread can move forward when it receives this signal from the handler.
     if (use_thread) {
         io_service_.post(boost::bind(&TestServerUnixSocket::signalRunning,
                                      this));
