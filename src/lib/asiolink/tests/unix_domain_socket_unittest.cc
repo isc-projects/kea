@@ -132,7 +132,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
             connect_handler_invoked = true;
             // Operation aborted indicates that IO service has been stopped. This
             // shouldn't happen here.
-            if (ec && ec.value() != boost::asio::error::operation_aborted) {
+            if (ec && (ec.value() != boost::asio::error::operation_aborted)) {
                 ADD_FAILURE() << "error occurred while asynchronously connecting"
                     " via unix domain socket: " << ec.message();
             }

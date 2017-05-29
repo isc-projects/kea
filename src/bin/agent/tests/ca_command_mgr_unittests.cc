@@ -229,9 +229,9 @@ public:
         bindServerSocket(server_response, true);
 
         // The client side communication is synchronous. To be able to respond
-        // to this we need to run the server side socket at the same time.
-        // Running IO service in a thread guarantees that the server responds
-        // as soon as it receives the control command.
+        // to this we need to run the server side socket at the same time as the
+        // client. Running IO service in a thread guarantees that the server
+        //responds as soon as it receives the control command.
         isc::util::thread::Thread th(boost::bind(&IOService::run,
                                                  getIOService().get()));
 
@@ -243,13 +243,15 @@ public:
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
+        // Cancel all asynchronous operations and let the handlers to be invoked
+        // with operation_aborted error code.
         server_socket_->stopServer();
         getIOService()->stopWork();
 
+        // Wait for the thread to finish.
         th.wait();
 
         EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
-
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
     }
 
@@ -367,9 +369,12 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
 
+    // Cancel all asynchronous operations and let the handlers to be invoked
+    // with operation_aborted error code.
     server_socket_->stopServer();
     getIOService()->stopWork();
 
+    // Wait for the thread to finish.
     th.wait();
 
     // Answer of 3 is specific to the stub response we send when the

@@ -105,7 +105,7 @@ public:
     /// @brief Asynchronously receive data over the socket.
     ///
     /// This method schedules asynchronous receive and installs the
-    /// @ref UnixDomainSocket::receiveHandler is a callback.
+    /// @ref UnixDomainSocketImpl::receiveHandler is a callback.
     ///
     /// @param data Pointer to a buffer into which the data should be read.
     /// @param length Length of the buffer.

@@ -80,7 +80,7 @@ public:
     ///
     /// @param data Pointer to data to be sent.
     /// @param length Number of bytes to be sent.
-    /// @param handler Callback to be invoked when data have been sent or an
+    /// @param handler Callback to be invoked when data have been sent or
     /// sending error is signalled.
     void asyncSend(const void* data, const size_t length, const Handler& handler);
 
