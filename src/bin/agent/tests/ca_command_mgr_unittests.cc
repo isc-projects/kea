@@ -326,6 +326,18 @@ TEST_F(CtrlAgentCommandMgrTest, invalidAnswer) {
                 "{ \"result\": }");
 }
 
+/// Check that connection is dropped if it takes too long. The test checks
+/// client's behavior when partial JSON is returned. Client will be waiting
+/// for the '}' and will timeout because it is never received.
+/// @todo Currently this test is disabled because we don't have configurable
+/// timeout value. It is hardcoded to 5 sec, which is too long for the
+/// unit test to run.
+TEST_F(CtrlAgentCommandMgrTest, DISABLED_connectionTimeout) {
+    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
+                isc::config::CONTROL_RESULT_ERROR, -1, -1, 1,
+                "{ \"result\": 0");
+}
+
 /// Check that error is returned to the client if the forwarding socket is
 /// not configured for the given service.
 TEST_F(CtrlAgentCommandMgrTest, noClientSocket) {
