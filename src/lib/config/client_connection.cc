@@ -221,6 +221,7 @@ ClientConnectionImpl::terminate(const boost::system::error_code& ec,
                                 ClientConnection::Handler handler) {
     try {
         timer_.cancel();
+        socket_.close();
         current_command_.clear();
         handler(ec, feed_);
 
