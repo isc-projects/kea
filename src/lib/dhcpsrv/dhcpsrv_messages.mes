@@ -1,17 +1,10 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
-
-% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
-A warning message issued when the server has detected lease files that need
-to be either upgraded or downgraded to match the server's schema, and that
-the server is automatically running the LFC process to perform the conversion.
-This should only occur the first time the server is launched following a Kea
-installation upgrade (or downgrade).
 
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 An info message issued when a new interface is being added to the collection of
@@ -365,6 +358,13 @@ with the specified address to the memory file backend database.
 % DHCPSRV_MEMFILE_COMMIT committing to memory file database
 The code has issued a commit call.  For the memory file database, this is
 a no-op.
+
+% DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
+A warning message issued when the server has detected lease files that need
+to be either upgraded or downgraded to match the server's schema, and that
+the server is automatically running the LFC process to perform the conversion.
+This should only occur the first time the server is launched following a Kea
+installation upgrade (or downgrade).
 
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
