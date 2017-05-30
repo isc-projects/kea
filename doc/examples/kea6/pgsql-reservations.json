@@ -24,11 +24,12 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-// Kea supports two types of identifiers in DHCPv6: hw-address (hardware/MAC address
-// of the client) and duid (DUID inserted by the client). When told to do so, Kea can
-// check for each of these identifier types, but it takes a costly database lookup
-// to do so. It is therefore useful from a performance perspective to use only
-// the reservation types that are actually used in a given network.
+// Kea supports two types of identifiers in DHCPv6: hw-address
+// (hardware/MAC address of the client) and duid (DUID inserted by the
+// client). When told to do so, Kea can check for each of these
+// identifier types, but it takes a costly database lookup to do so. It
+// is therefore useful from a performance perspective to use only the
+// reservation types that are actually used in a given network.
     "host-reservation-identifiers": [ "duid", "hw-address" ],
 
 // Specify connection to the database holding host reservations. The type
@@ -72,8 +73,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

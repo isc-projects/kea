@@ -1,16 +1,16 @@
-# This is an example configuration file for the DHCPv4 server in Kea.
-# The purpose of this example is to showcase how clients can be classified.
+// This is an example configuration file for the DHCPv4 server in Kea.
+// The purpose of this example is to showcase how clients can be classified.
 
 { "Dhcp6":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# Let's use the simplest backend: memfile and use some reasonable values
-# for timers. They are of no concern for the classification demonstration.
+// Let's use the simplest backend: memfile and use some reasonable values
+// for timers. They are of no concern for the classification demonstration.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
@@ -20,11 +20,11 @@
   "preferred-lifetime": 3000,
   "valid-lifetime": 4000,
 
-# This list defines several classes that incoming packets can be assigned to.
-# One packet can belong to zero or more classes.
+// This list defines several classes that incoming packets can be assigned to.
+// One packet can belong to zero or more classes.
   "client-classes": [
 
-# The first class attempts to match all packets coming in on ethX interface.
+// The first class attempts to match all packets coming in on ethX interface.
   {
       "name": "lab",
       "test": "pkt.iface == 'ethX'",
@@ -34,16 +34,16 @@
       }]
   },
 
-# Let's classify all incoming RENEW (message type 5) to a separate
-# class.
+// Let's classify all incoming RENEW (message type 5) to a separate
+// class.
   {
       "name": "renews",
       "test": "pkt6.msgtype == 5"
   },
 
-# Let's pick cable modems. In this simple example we'll assume the device
-# is a cable modem if it sends a vendor option with enterprise-id equal
-# to 4491.
+// Let's pick cable modems. In this simple example we'll assume the device
+// is a cable modem if it sends a vendor option with enterprise-id equal
+// to 4491.
   {
       "name": "cable-modems",
       "test": "vendor.enterprise == 4491"
@@ -52,8 +52,8 @@
   ],
 
 
-# The following list defines subnets. Each subnet consists of at
-# least subnet and pool entries.
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
   "subnet6": [
     {
         "pools": [ { "pool": "2001:db8:1::/80" } ],
@@ -61,9 +61,9 @@
         "client-class": "cable-modems",
         "interface": "ethX"
     },
-# The following subnet contains a class reservation for a client using
-# DUID 01:02:03:04:05:0A:0B:0C:0D:0E. This client will always be assigned
-# to this class.
+// The following subnet contains a class reservation for a client using
+// DUID 01:02:03:04:05:0A:0B:0C:0D:0E. This client will always be assigned
+// to this class.
     {
         "pools": [ { "pool": "2001:db8:2::/80" } ],
         "subnet": "2001:db8:2::/64",
@@ -77,8 +77,9 @@
   ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

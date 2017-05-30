@@ -66,12 +66,13 @@
     // when they get their own client-id. Kea can disable RFC6842 support.
     "echo-client-id": false,
 
-    // Some clients don't use stable client identifier, but rather generate them
-    // during each boot. This may cause a client that reboots frequently to get
-    // multiple leases, which may not be desirable. As such, sometimes admins
-    // prefer to tell their DHCPv4 server to ignore client-id value altogether
-    // and rely exclusively on MAC address. This is a parameter that is defined
-    // globally, but can be overridden on a subnet level.
+    // Some clients don't use stable client identifier, but rather
+    // generate them during each boot. This may cause a client that
+    // reboots frequently to get multiple leases, which may not be
+    // desirable. As such, sometimes admins prefer to tell their DHCPv4
+    // server to ignore client-id value altogether and rely exclusively
+    // on MAC address. This is a parameter that is defined globally, but
+    // can be overridden on a subnet level.
     "match-client-id": true,
 
     // The following list defines subnets. Each subnet consists of at
@@ -93,9 +94,10 @@
             "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
             "subnet": "192.0.4.0/24",
 
-            // Sometimes the relay may use an IPv4 address that does not match
-            // the subnet. This is discouraged, but there are valid cases when it
-            // makes sense. One case is when there is a shared subnet.
+            // Sometimes the relay may use an IPv4 address that does
+            // not match the subnet. This is discouraged, but there are
+            // valid cases when it makes sense. One case is when there
+            // is a shared subnet.
             "relay": {
                 "ip-address": "192.168.1.1"
             }
@@ -103,8 +105,9 @@
     ]
 },
 
-  // The following configures logging. It assumes that messages with at least
-  // informational level (info, warn, error and fatal) should be logged to stdout.
+  // The following configures logging. It assumes that messages with
+  // at least informational level (info, warn, error and fatal) should
+  // be logged to stdout.
   "Logging": {
       "loggers": [
           {
