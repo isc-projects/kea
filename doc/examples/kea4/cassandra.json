@@ -10,13 +10,14 @@
     "interfaces": [ "ethX" ]
   },
 
-// 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
-// sure it is up, running and properly initialized. See kea-admin documentation
-// for details on how to initialize the database. The only strictly required
-// parameters are type, keyspace and contact-points. At least one contact point
-// must be specified, but more than one is required for redundancy. Make sure
-// you specify the contact points without spaces. Kea must be compiled with
-// --with-cql option to use this backend.
+// 4. CQL (Cassandra) backend. Leases will be stored in Cassandra
+// database. Make sure it is up, running and properly initialized. See
+// kea-admin documentation for details on how to initialize the
+// database. The only strictly required parameters are type, keyspace
+// and contact-points. At least one contact point must be specified, but
+// more than one is required for redundancy. Make sure you specify the
+// contact points without spaces. Kea must be compiled with --with-cql
+// option to use this backend.
   "lease-database": {
       "type": "cql",
       "keyspace": "keatest",
@@ -45,8 +46,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

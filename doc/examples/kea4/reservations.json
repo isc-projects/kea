@@ -9,10 +9,10 @@
     "interfaces": [ "ethX" ]
   },
 
-// We need to specify the the database used to store leases. As of
-// September 2016, four database backends are supported: MySQL,
-// PostgreSQL, Cassandra, and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of September
+// 2016, four database backends are supported: MySQL, PostgreSQL, Cassandra, and
+// the in-memory database, Memfile.  We'll use memfile because it doesn't
+// require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
@@ -28,15 +28,15 @@
 //  "renew-timer": 1000,
 //  "rebind-timer": 2000,
 
-
 // Kea supports reservations by several different types of identifiers:
 // hw-address (hardware/MAC address of the client), duid (DUID inserted by the
 // client), client-id (client identifier inserted by the client), circuit-id
-// (circuit identifier inserted by the relay agent) and flex-id (flexible identifier
-// available when flex_id hook library is loaded). When told to do so, Kea can
-// check for all of those identifier types, but it takes a costly database lookup
-// to do so. It is therefore useful from a performance perspective to use only
-// the reservation types that are actually used in a given network.
+// (circuit identifier inserted by the relay agent) and flex-id (flexible
+// identifier available when flex_id hook library is loaded). When told to do
+// so, Kea can check for all of those identifier types, but it takes a costly
+// database lookup to do so. It is therefore useful from a performance
+// perspective to use only the reservation types that are actually used in a
+// given network.
 
 // The example below is not optimal from a performance perspective, but it
 // nicely showcases the host reservation capabilities. Please use the minimum
@@ -122,13 +122,15 @@
              "boot-file-name": "/dev/null"
          },
 
-// This reservation is using flexible identifier. Instead of relying on specific
-// field, sysadmin can define an expression similar to what is used for client
-// classification, e.g. substring(relay[0].option[17],0,6). Then, based on the
-// value of that expression for incoming packet, the reservation is matched.
+// This reservation is using flexible identifier. Instead of relying
+// on specific field, sysadmin can define an expression similar to what
+// is used for client classification,
+// e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+// that expression for incoming packet, the reservation is matched.
 // Expression can be specified either as hex or plain text using single
 // quotes.
-// Note: flexible identifier requires flex_id hook library to be loaded to work.
+// Note: flexible identifier requires flex_id hook library to be
+// loaded to work.
          {
              "flex-id": "s0mEVaLue",
              "ip-address": "192.0.2.206"
@@ -139,8 +141,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

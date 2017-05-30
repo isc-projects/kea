@@ -1,32 +1,33 @@
-# This is an example configuration file for DHCPv6 server in Kea.
-# It provides parameters controlling processing of expired leases,
-# a.k.a. leases reclamation.
+// This is an example configuration file for DHCPv6 server in Kea.
+// It provides parameters controlling processing of expired leases,
+// a.k.a. leases reclamation.
 
 { "Dhcp6":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify the the database used to store leases. As of
-# September 2016, four database backends are supported: MySQL,
-# PostgreSQL, Cassandra, and the in-memory database, Memfile.
-# We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
   },
 
-# The following parameters control processing expired leases. Expired leases
-# will be reclaimed periodically according to the "reclaim-timer-wait-time"
-# parameter. Reclaimed leases will be held in the database for 1800s to
-# facilitate lease affinity. After this period the leases will be removed.
-# The frequency of removal is controlled by the "flush-reclaimed-timer-wait-time"
-# parameter. The lease reclamation routine will process at most 500 leases
-# or will last for at most 100ms, during a single run. If there are still
-# some unreclaimed leases after 10 attempts, a warning message is issued.
+// The following parameters control processing expired leases. Expired leases
+// will be reclaimed periodically according to the "reclaim-timer-wait-time"
+// parameter. Reclaimed leases will be held in the database for 1800s to
+// facilitate lease affinity. After this period the leases will be removed.
+// The frequency of removal is controlled by the
+// "flush-reclaimed-timer-wait-time" parameter. The lease reclamation
+// routine will process at most 500 leases or will last for at most
+// 100ms, during a single run. If there are still some unreclaimed
+// leases after 10 attempts, a warning message is issued.
   "expired-leases-processing": {
     "reclaim-timer-wait-time": 5,
     "hold-reclaimed-time": 1800,
@@ -36,19 +37,19 @@
     "unwarned-reclaim-cycles": 10
   },
 
-# Addresses will be assigned with preferred and valid lifetimes
-# being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not respond
-# after 2000 seconds since the lease was granted, client is supposed
-# to start REBIND procedure (emergency renewal that allows switching
-# to a different server).
+// Addresses will be assigned with preferred and valid lifetimes
+// being 3000 and 4000, respectively. Client is told to start
+// renewing after 1000 seconds. If the server does not respond
+// after 2000 seconds since the lease was granted, client is supposed
+// to start REBIND procedure (emergency renewal that allows switching
+// to a different server).
   "preferred-lifetime": 3000,
   "valid-lifetime": 4000,
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-# The following list defines subnets. Each subnet consists of at
-# least subnet and pool entries.
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
   "subnet6": [
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
@@ -58,8 +59,9 @@
   ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

@@ -31,18 +31,20 @@
 //  "rebind-timer": 2000,
 
 
-// Kea supports reservations by several different types of identifiers:
-// hw-address (hardware/MAC address of the client), duid (DUID inserted by the
-// client), client-id (client identifier inserted by the client) and circuit-id
-// (circuit identifier inserted by the relay agent). When told to do so, Kea can
-// check for all of those identifier types, but it takes a costly database lookup
-// to do so. It is therefore useful from a performance perspective to use only
-// the reservation types that are actually used in a given network.
+// Kea supports reservations by several different types of
+// identifiers: hw-address (hardware/MAC address of the client), duid
+// (DUID inserted by the client), client-id (client identifier inserted
+// by the client) and circuit-id (circuit identifier inserted by the
+// relay agent). When told to do so, Kea can check for all of those
+// identifier types, but it takes a costly database lookup to do so. It
+// is therefore useful from a performance perspective to use only the
+// reservation types that are actually used in a given network.
 
 // The example below is not optimal from a performance perspective, but it
 // nicely showcases the host reservation capabilities. Please use the minimum
 // set of identifier types used in your network.
-  "host-reservation-identifiers": [ "circuit-id", "hw-address", "duid", "client-id" ],
+  "host-reservation-identifiers":
+    [ "circuit-id", "hw-address", "duid", "client-id" ],
 
 // Specify connection to the database holding host reservations. The type
 // specifies that the MySQL database is used. user and password are the
@@ -77,8 +79,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

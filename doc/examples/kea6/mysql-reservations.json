@@ -1,46 +1,47 @@
-# This is an example configuration file for the DHCPv6 server in Kea.
-# It contains configuration of the MySQL host database backend, used
-# to retrieve reserved addresses, host names, DHCPv4 message fields
-# and DHCP options from MySQL database.
+// This is an example configuration file for the DHCPv6 server in Kea.
+// It contains configuration of the MySQL host database backend, used
+// to retrieve reserved addresses, host names, DHCPv4 message fields
+// and DHCP options from MySQL database.
 { "Dhcp6":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify the the database used to store leases. As of
-# September 2016, four database backends are supported: MySQL,
-# PostgreSQL, Cassandra, and the in-memory database, Memfile.
-# We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
   },
 
-# This is pretty basic stuff, it has nothing to do with reservations.
+// This is pretty basic stuff, it has nothing to do with reservations.
   "preferred-lifetime": 3000,
   "valid-lifetime": 4000,
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-# Kea supports two types of identifiers in DHCPv6: hw-address (hardware/MAC address
-# of the client) and duid (DUID inserted by the client). When told to do so, Kea can
-# check for each of these identifier types, but it takes a costly database lookup
-# to do so. It is therefore useful from a performance perspective to use only
-# the reservation types that are actually used in a given network.
+// Kea supports two types of identifiers in DHCPv6: hw-address
+// (hardware/MAC address of the client) and duid (DUID inserted by the
+// client). When told to do so, Kea can check for each of these
+// identifier types, but it takes a costly database lookup to do so. It
+// is therefore useful from a performance perspective to use only the
+// reservation types that are actually used in a given network.
     "host-reservation-identifiers": [ "duid", "hw-address" ],
 
-# Specify connection to the database holding host reservations. The type
-# specifies that the MySQL database is used. user and password are the
-# credentials used to connect to the database. host and name specify
-# location of the host where the database instance is running, and the
-# name of the database to use. The server processing a packet will first
-# check if there are any reservations specified for this client in the
-# reservations list, within the subnet (configuration file). If there are
-# no reservations there, the server will try to retrieve reservations
-# from this database.
+// Specify connection to the database holding host reservations. The type
+// specifies that the MySQL database is used. user and password are the
+// credentials used to connect to the database. host and name specify
+// location of the host where the database instance is running, and the
+// name of the database to use. The server processing a packet will first
+// check if there are any reservations specified for this client in the
+// reservations list, within the subnet (configuration file). If there are
+// no reservations there, the server will try to retrieve reservations
+// from this database.
   "hosts-database": {
     "type": "mysql",
     "name": "kea",
@@ -51,11 +52,11 @@
     "readonly": true
   },
 
-# Define a subnet with a pool of dynamic addresses and a pool of dynamic
-# prefixes. Addresses and prefixes from those pools will be assigned to
-# clients which don't have reservations in the database. Subnet identifier
-# is equal to 1. If this subnet is selected for the client, this subnet
-# id will be used to search for the reservations within the database.
+// Define a subnet with a pool of dynamic addresses and a pool of dynamic
+// prefixes. Addresses and prefixes from those pools will be assigned to
+// clients which don't have reservations in the database. Subnet identifier
+// is equal to 1. If this subnet is selected for the client, this subnet
+// id will be used to search for the reservations within the database.
   "subnet6": [
     {
       "subnet": "2001:db8:1::/48",
@@ -75,8 +76,9 @@
   ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

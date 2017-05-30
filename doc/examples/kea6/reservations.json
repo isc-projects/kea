@@ -27,12 +27,13 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-// Kea supports three types of identifiers in DHCPv6: hw-address (hardware/MAC address
-// of the client), duid (DUID inserted by the client) and flex-id (flexible identifier
-// available when flex_id hook library is loaded) When told to do so, Kea can
-// check for each of these identifier types, but it takes a costly database lookup
-// to do so. It is therefore useful from a performance perspective to use only
-// the reservation types that are actually used in a given network.
+// Kea supports three types of identifiers in DHCPv6: hw-address (hardware/MAC
+// address of the client), duid (DUID inserted by the client) and flex-id
+// (flexible identifier available when flex_id hook library is loaded) When told
+// to do so, Kea can check for each of these identifier types, but it takes a
+// costly database lookup to do so. It is therefore useful from a performance
+// perspective to use only the reservation types that are actually used in a
+// given network.
     "host-reservation-identifiers": [ "duid", "hw-address", "flex-id" ],
 
 // The following list defines subnets. Subnet, pools and interface definitions
@@ -67,13 +68,13 @@
               "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
               "ip-addresses": [ "2001:db8:1::100" ]
           },
-// This is similar to the previous one, but this time the reservation is done
-// based on hardware/MAC address. The server will do its best to extract
-// the hardware/MAC address from received packets (see 'mac-sources' directive
-// for details). This particular reservation also specifies two extra options
-// to be available for this client. If there are options with the same code
-// specified in a global, subnet or class scope, the values defined at host level
-// take precedence.
+// This is similar to the previous one, but this time the reservation
+// is done based on hardware/MAC address. The server will do its best to
+// extract the hardware/MAC address from received packets (see
+// 'mac-sources' directive for details). This particular reservation
+// also specifies two extra options to be available for this client. If
+// there are options with the same code specified in a global, subnet or
+// class scope, the values defined at host level take precedence.
           {
               "hw-address": "00:01:02:03:04:05",
               "ip-addresses": [ "2001:db8:1::101" ],
@@ -110,13 +111,15 @@
               } ]
 
           },
-// This reservation is using flexible identifier. Instead of relying on specific
-// field, sysadmin can define an expression similar to what is used for client
-// classification, e.g. substring(relay[0].option[17],0,6). Then, based on the
-// value of that expression for incoming packet, the reservation is matched.
+// This reservation is using flexible identifier. Instead of relying
+// on specific field, sysadmin can define an expression similar to what
+// is used for client classification,
+// e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+// that expression for incoming packet, the reservation is matched.
 // Expression can be specified either as hex or plain text using single
 // quotes.
-// Note: flexible identifier requires flex_id hook library to be loaded to work.
+// Note: flexible identifier requires flex_id hook library to be
+//loaded to work.
          {
              "flex-id": "'somevalue'",
              "ip-addresses": [ "2001:db8:1:cafe::2" ]
@@ -127,8 +130,9 @@
   ]
 },
 
-// The following configures logging. It assumes that messages with at least
-// informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {
