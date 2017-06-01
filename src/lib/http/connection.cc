@@ -148,8 +148,11 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                   HTTP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText())
             .arg(static_cast<unsigned>(request_timeout_/1000));
+        // Use 'this' instead of shared_from_this() because the IntervalTimer
+        // class already submits shared pointer to IntervalTimerImpl to
+        // protect against premature class instance destruction.
         request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                         shared_from_this()),
+                                         this),
                              request_timeout_, IntervalTimer::ONE_SHOT);
         doRead();
     }
