@@ -22,6 +22,9 @@
 #include <unistd.h>
 #include <fstream>
 
+#ifdef HAVE_OPTRESET
+extern int optreset;
+#endif
 
 using namespace std;
 using namespace isc;
