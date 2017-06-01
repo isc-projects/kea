@@ -12,10 +12,10 @@
 #include <dhcp/protocol_util.h>
 #include <exceptions/exceptions.h>
 #include <fcntl.h>
+#include <net/ethernet.h>
 #include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
-#include <net/ethernet.h>
 
 namespace {
 
