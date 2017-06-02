@@ -89,20 +89,9 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        ConstElementPtr d2_socket = ctrl_sockets->get("d2");
-        ConstElementPtr d4_socket = ctrl_sockets->get("dhcp4");
-        ConstElementPtr d6_socket = ctrl_sockets->get("dhcp6");
-
-        if (d2_socket) {
-            ctx->setControlSocketInfo(d2_socket, CtrlAgentCfgContext::TYPE_D2);
-        }
-
-        if (d4_socket) {
-            ctx->setControlSocketInfo(d4_socket, CtrlAgentCfgContext::TYPE_DHCP4);
-        }
-
-        if (d6_socket) {
-            ctx->setControlSocketInfo(d6_socket, CtrlAgentCfgContext::TYPE_DHCP6);
+        auto sockets_map = ctrl_sockets->mapValue();
+        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
+            ctx->setControlSocketInfo(cs->second, cs->first);
         }
     }
 

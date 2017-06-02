@@ -28,18 +28,6 @@ public:
     using CtrlAgentCfgMgr::parse;
 };
 
-// Tests conversion of the 'service' parameter to ServerType.
-TEST(CtrlAgentCfgContextTest, toServerType) {
-    EXPECT_EQ(CtrlAgentCfgContext::TYPE_DHCP4,
-              CtrlAgentCfgContext::toServerType("dhcp4"));
-    EXPECT_EQ(CtrlAgentCfgContext::TYPE_DHCP6,
-              CtrlAgentCfgContext::toServerType("dhcp6"));
-    EXPECT_EQ(CtrlAgentCfgContext::TYPE_D2,
-              CtrlAgentCfgContext::toServerType("d2"));
-    EXPECT_THROW(CtrlAgentCfgContext::toServerType("other"),
-                 isc::BadValue);
-}
-
 // Tests construction of CtrlAgentCfgMgr class.
 TEST(CtrlAgentCfgMgr, construction) {
     boost::scoped_ptr<CtrlAgentCfgMgr> cfg_mgr;
@@ -84,9 +72,9 @@ TEST(CtrlAgentCfgMgr, contextSocketInfo) {
 
     // Check control socket parameters
     // By default, there are no control sockets stored.
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_FALSE(ctx.getControlSocketInfo("d2"));
+    EXPECT_FALSE(ctx.getControlSocketInfo("dhcp4"));
+    EXPECT_FALSE(ctx.getControlSocketInfo("dhcp6"));
 
     ConstElementPtr socket1 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
                                                 "  \"socket-name\": \"socket1\" }");
@@ -95,26 +83,26 @@ TEST(CtrlAgentCfgMgr, contextSocketInfo) {
     ConstElementPtr socket3 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
                                                 "  \"socket-name\": \"socket3\" }");
     // Ok, now set the control socket for D2
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket1, CtrlAgentCfgContext::TYPE_D2));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket1, "d2"));
 
     // Now check the values returned
-    EXPECT_EQ(socket1, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_EQ(socket1, ctx.getControlSocketInfo("d2"));
+    EXPECT_FALSE(ctx.getControlSocketInfo("dhcp4"));
+    EXPECT_FALSE(ctx.getControlSocketInfo("dhcp6"));
 
     // Now set the v6 socket and sanity check again
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket2, CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket2, "dhcp6"));
 
     // Should be possible to retrieve two sockets.
-    EXPECT_EQ(socket1, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
-    EXPECT_EQ(socket2, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
-    EXPECT_FALSE(ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
+    EXPECT_EQ(socket1, ctx.getControlSocketInfo("d2"));
+    EXPECT_EQ(socket2, ctx.getControlSocketInfo("dhcp6"));
+    EXPECT_FALSE(ctx.getControlSocketInfo("dhcp4"));
 
     // Finally, set the third control socket.
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket3, CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_EQ(socket1, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
-    EXPECT_EQ(socket2, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
-    EXPECT_EQ(socket3, ctx.getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket3, "dhcp4"));
+    EXPECT_EQ(socket1, ctx.getControlSocketInfo("d2"));
+    EXPECT_EQ(socket2, ctx.getControlSocketInfo("dhcp6"));
+    EXPECT_EQ(socket3, ctx.getControlSocketInfo("dhcp4"));
 }
 
 // Tests if copied context retains all parameters.
@@ -129,9 +117,9 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     ConstElementPtr socket3 = Element::fromJSON("{ \"socket-type\": \"unix\",\n"
                                                 "  \"socket-name\": \"socket3\" }");
     // Ok, now set the control sockets
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket1, CtrlAgentCfgContext::TYPE_D2));
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket2, CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket3, CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket1, "d2"));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket2, "dhcp4"));
+    EXPECT_NO_THROW(ctx.setControlSocketInfo(socket3, "dhcp6"));
 
     EXPECT_NO_THROW(ctx.setHttpPort(12345));
     EXPECT_NO_THROW(ctx.setHttpHost("bellatrix"));
@@ -151,12 +139,12 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     EXPECT_EQ("bellatrix", copy->getHttpHost());
 
     // Check socket info
-    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
-    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
-    ASSERT_TRUE(copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
-    EXPECT_EQ(socket1->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2)->str());
-    EXPECT_EQ(socket2->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4)->str());
-    EXPECT_EQ(socket3->str(), copy->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6)->str());
+    ASSERT_TRUE(copy->getControlSocketInfo("d2"));
+    ASSERT_TRUE(copy->getControlSocketInfo("dhcp4"));
+    ASSERT_TRUE(copy->getControlSocketInfo("dhcp6"));
+    EXPECT_EQ(socket1->str(), copy->getControlSocketInfo("d2")->str());
+    EXPECT_EQ(socket2->str(), copy->getControlSocketInfo("dhcp4")->str());
+    EXPECT_EQ(socket3->str(), copy->getControlSocketInfo("dhcp6")->str());
 
     // Check hook libs
     const HookLibsCollection& libs2 = copy->getHooksConfig().get();
@@ -327,12 +315,12 @@ TEST_F(AgentParserTest, configParseSocketDhcp4) {
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    ConstElementPtr socket = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4);
+    ConstElementPtr socket = ctx->getControlSocketInfo("dhcp4");
     ASSERT_TRUE(socket);
     EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v4\", \"socket-type\": \"unix\" }",
               socket->str());
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
+    EXPECT_FALSE(ctx->getControlSocketInfo("dhcp6"));
+    EXPECT_FALSE(ctx->getControlSocketInfo("d2"));
 }
 
 // Tests if a single socket can be configured. BTW this test also checks
@@ -343,13 +331,13 @@ TEST_F(AgentParserTest, configParseSocketD2) {
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    ConstElementPtr socket = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2);
+    ConstElementPtr socket = ctx->getControlSocketInfo("d2");
     ASSERT_TRUE(socket);
     EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-d2\", \"socket-type\": \"unix\" }",
               socket->str());
 
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6));
+    EXPECT_FALSE(ctx->getControlSocketInfo("dhcp4"));
+    EXPECT_FALSE(ctx->getControlSocketInfo("dhcp6"));
 }
 
 // Tests if a single socket can be configured. BTW this test also checks
@@ -360,12 +348,12 @@ TEST_F(AgentParserTest, configParseSocketDhcp6) {
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    ConstElementPtr socket = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6);
+    ConstElementPtr socket = ctx->getControlSocketInfo("dhcp6");
     ASSERT_TRUE(socket);
     EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v6\", \"socket-type\": \"unix\" }",
               socket->str());
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4));
-    EXPECT_FALSE(ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2));
+    EXPECT_FALSE(ctx->getControlSocketInfo("dhcp4"));
+    EXPECT_FALSE(ctx->getControlSocketInfo("d2"));
 }
 
 // This tests if all 3 sockets can be configured and makes sure the parser
@@ -374,9 +362,9 @@ TEST_F(AgentParserTest, configParse3Sockets) {
     configParse(AGENT_CONFIGS[3], 0);
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    ConstElementPtr socket2 = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2);
-    ConstElementPtr socket4 = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4);
-    ConstElementPtr socket6 = ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6);
+    ConstElementPtr socket2 = ctx->getControlSocketInfo("d2");
+    ConstElementPtr socket4 = ctx->getControlSocketInfo("dhcp4");
+    ConstElementPtr socket6 = ctx->getControlSocketInfo("dhcp6");
     ASSERT_TRUE(socket2);
     EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-d2\", \"socket-type\": \"unix\" }",
               socket2->str());
