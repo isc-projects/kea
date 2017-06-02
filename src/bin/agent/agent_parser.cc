@@ -967,7 +967,7 @@ namespace isc { namespace agent {
 #line 366 "agent_parser.yy" // lalr1.cc:859
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("dhcp4-server", m);
+    ctx.stack_.back()->set("dhcp4", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
@@ -987,7 +987,7 @@ namespace isc { namespace agent {
 #line 377 "agent_parser.yy" // lalr1.cc:859
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("dhcp6-server", m);
+    ctx.stack_.back()->set("dhcp6", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
@@ -1007,7 +1007,7 @@ namespace isc { namespace agent {
 #line 388 "agent_parser.yy" // lalr1.cc:859
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("d2-server", m);
+    ctx.stack_.back()->set("d2", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
@@ -1771,14 +1771,13 @@ namespace isc { namespace agent {
   {
   "\"end of file\"", "error", "$undefined", "\",\"", "\":\"", "\"[\"",
   "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"Control-agent\"",
-  "\"http-host\"", "\"http-port\"", "\"control-sockets\"",
-  "\"dhcp4-server\"", "\"dhcp6-server\"", "\"d2-server\"",
-  "\"socket-name\"", "\"socket-type\"", "\"unix\"", "\"hooks-libraries\"",
-  "\"library\"", "\"parameters\"", "\"Logging\"", "\"loggers\"",
-  "\"name\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
-  "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"Dhcp4\"",
-  "\"Dhcp6\"", "\"DhcpDdns\"", "START_JSON", "START_AGENT",
-  "START_SUB_AGENT", "\"constant string\"", "\"integer\"",
+  "\"http-host\"", "\"http-port\"", "\"control-sockets\"", "\"dhcp4\"",
+  "\"dhcp6\"", "\"d2\"", "\"socket-name\"", "\"socket-type\"", "\"unix\"",
+  "\"hooks-libraries\"", "\"library\"", "\"parameters\"", "\"Logging\"",
+  "\"loggers\"", "\"name\"", "\"output_options\"", "\"output\"",
+  "\"debuglevel\"", "\"severity\"", "\"flush\"", "\"maxsize\"",
+  "\"maxver\"", "\"Dhcp4\"", "\"Dhcp6\"", "\"DhcpDdns\"", "START_JSON",
+  "START_AGENT", "START_SUB_AGENT", "\"constant string\"", "\"integer\"",
   "\"floating point\"", "\"boolean\"", "$accept", "start", "$@1", "$@2",
   "$@3", "sub_agent", "$@4", "json", "value", "map", "$@5", "map_content",
   "not_empty_map", "list_generic", "$@6", "list_content", "not_empty_list",
@@ -1853,7 +1852,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy" // lalr1.cc:1167
 } } // isc::agent
-#line 1857 "agent_parser.cc" // lalr1.cc:1167
+#line 1856 "agent_parser.cc" // lalr1.cc:1167
 #line 592 "agent_parser.yy" // lalr1.cc:1168
 
 
