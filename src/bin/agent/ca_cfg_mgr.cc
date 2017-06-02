@@ -184,17 +184,17 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
-    // Set dhcp4-server
+    // Set dhcp4 server socket
     if (ctrl_sockets_[TYPE_DHCP4]) {
-        control_sockets->set("dhcp4-server", ctrl_sockets_[TYPE_DHCP4]);
+        control_sockets->set("dhcp4", ctrl_sockets_[TYPE_DHCP4]);
     }
-    // Set dhcp6-server
+    // Set dhcp6 server socket
     if (ctrl_sockets_[TYPE_DHCP6]) {
-        control_sockets->set("dhcp6-server", ctrl_sockets_[TYPE_DHCP6]);
+        control_sockets->set("dhcp6", ctrl_sockets_[TYPE_DHCP6]);
     }
-    // Set d2-server
+    // Set d2 server socket
     if (ctrl_sockets_[TYPE_D2]) {
-        control_sockets->set("d2-server", ctrl_sockets_[TYPE_D2]);
+        control_sockets->set("d2", ctrl_sockets_[TYPE_D2]);
     }
     ca->set("control-sockets", control_sockets);
     // Set Control-agent

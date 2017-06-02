@@ -65,11 +65,11 @@
         "http-port": 8080,
 
         "control-sockets": {
-            "dhcp4-server": {
+            "dhcp4": {
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             },
-            "dhcp6-server": {
+            "dhcp6": {
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             }
@@ -128,8 +128,8 @@
 
     <para>
       The CA uses unix domain sockets to forward control commands and receive
-      responses from other Kea services. The <command>dhcp4-server</command>,
-      <command>dhcp6-server</command> and <command>d2-server</command> maps
+      responses from other Kea services. The <command>dhcp4</command>,
+      <command>dhcp6</command> and <command>d2</command> maps
       specify the files to which unix domain sockets are bound. In case
       of the configuration above, the CA will connect to the DHCPv4 server
       via <filename>/path/to/the/unix/socket-v4</filename> to forward the

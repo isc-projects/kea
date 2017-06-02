@@ -205,30 +205,30 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"dhcp4-server\" {
+\"dhcp4\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_DHCP4_SERVER(driver.loc_);
     default:
-        return AgentParser::make_STRING("dhcp4-server", driver.loc_);
+        return AgentParser::make_STRING("dhcp4", driver.loc_);
     }
 }
 
-\"dhcp6-server\" {
+\"dhcp6\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_DHCP6_SERVER(driver.loc_);
     default:
-        return AgentParser::make_STRING("dhcp6-server", driver.loc_);
+        return AgentParser::make_STRING("dhcp6", driver.loc_);
     }
 }
 
-\"d2-server\" {
+\"d2\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKETS:
         return AgentParser::make_D2_SERVER(driver.loc_);
     default:
-        return AgentParser::make_STRING("d2-server", driver.loc_);
+        return AgentParser::make_STRING("d2", driver.loc_);
     }
 }
 
