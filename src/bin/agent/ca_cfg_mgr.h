@@ -11,6 +11,7 @@
 #include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
+#include <map>
 #include <string>
 
 namespace isc {
@@ -33,21 +34,6 @@ public:
     /// @brief Default constructor
     CtrlAgentCfgContext();
 
-    /// @brief Specifies type of the server being controlled.
-    enum ServerType {
-        TYPE_DHCP4 = 0, ///< kea-dhcp4
-        TYPE_DHCP6 = 1, ///< kea-dhcp6
-        TYPE_D2 = 2     ///< kea-dhcp-ddns
-    };
-
-    /// @brief Used check that specified ServerType is within valid range.
-    static const uint32_t MAX_TYPE_SUPPORTED = TYPE_D2;
-
-    /// @brief Converts service specified as a string to ServerType.
-    ///
-    /// @param service Service value as a string: 'dhcp4', 'dhcp6', 'd2'.
-    static ServerType toServerType(const std::string& service);
-
     /// @brief Creates a clone of this context object.
     ///
     /// Note this method does not do deep copy the information about control sockets.
@@ -65,9 +51,10 @@ public:
     /// server type). This information is expected to be compatible with
     /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
     ///
-    /// @param type type of the server being controlled
+    /// @param service server being controlled
     /// @return pointer to the Element that holds control-socket map (or NULL)
-    const isc::data::ConstElementPtr getControlSocketInfo(ServerType type) const;
+    isc::data::ConstElementPtr
+    getControlSocketInfo(const std::string& service) const;
 
     /// @brief Sets information about the control socket
     ///
@@ -76,9 +63,12 @@ public:
     /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
     ///
     /// @param control_socket Element that holds control-socket map
-    /// @param type type of the server being controlled
+    /// @param service server being controlled
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
-                              ServerType type);
+                              const std::string& service);
+
+    /// @brief Returns socket configuration summary in a textual format.
+    std::string getControlSocketInfoSummary() const;
 
     /// @brief Sets http-host parameter
     ///
@@ -149,7 +139,7 @@ private:
     CtrlAgentCfgContext& operator=(const CtrlAgentCfgContext& rhs);
 
     /// Socket information will be stored here (for all supported servers)
-    isc::data::ConstElementPtr ctrl_sockets_[MAX_TYPE_SUPPORTED + 1];
+    std::map<std::string, isc::data::ConstElementPtr> ctrl_sockets_;
 
     /// Hostname the CA should listen on.
     std::string http_host_;
