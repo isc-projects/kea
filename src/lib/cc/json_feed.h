@@ -202,7 +202,7 @@ private:
     /// the NEED_MORE_DATA_EVT is set as next event to signal the need for
     /// calling @ref JSONFeed::postBuffer.
     ///
-    /// @throw HttpRequestParserError If current event is already set to
+    /// @throw JSONFeedError If current event is already set to
     /// NEED_MORE_DATA_EVT or MORE_DATA_PROVIDED_EVT. In the former case, it
     /// indicates that the caller failed to provide new data using
     /// @ref JSONFeed::postBuffer. The latter case is highly unlikely
