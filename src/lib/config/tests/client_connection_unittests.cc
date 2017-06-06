@@ -26,7 +26,7 @@ const std::string TEST_SOCKET = "test-socket";
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
-// Test fixture class for @ref ClientConnection.
+/// Test fixture class for @ref ClientConnection.
 class ClientConnectionTest : public ::testing::Test {
 public:
 
