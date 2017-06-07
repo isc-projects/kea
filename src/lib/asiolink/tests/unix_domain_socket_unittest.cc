@@ -171,41 +171,36 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     ASSERT_GT(sent_size, 0);
 
     // Receive response from the socket.
-    std::array<char, 1024> read_buf;
+    std::array<char, 2> read_buf;
     size_t bytes_read = 0;
-    bool receive_handler_invoked = false;
-    ASSERT_NO_THROW(socket.asyncReceive(&read_buf[0], read_buf.size(),
-        [this, &receive_handler_invoked, &bytes_read]
-            (const boost::system::error_code& ec, size_t length) mutable {
-        // Indicate that the handler has been called to interrupt the
-        // loop below.
-        receive_handler_invoked = true;
+    std::string response;
+    std::string expected_response = "received foo";
+    // Run IO service until we get the full response from the server.
+    while ((bytes_read < expected_response.size()) && !test_socket_->isStopped()) {
+        ASSERT_NO_THROW(socket.asyncReceive(&read_buf[0], read_buf.size(),
+            [this, &read_buf, &response, &bytes_read]
+                (const boost::system::error_code& ec, size_t length) {
+            // If we have been successful receiving the data, record the number of
+            // bytes received.
+            if (!ec) {
+                bytes_read += length;
+                response.append(&read_buf[0], length);
 
-        // If we have been successful receiving the data, record the number of
-        // bytes received.
-        if (!ec) {
-            bytes_read = length;
+            } else if (ec.value() != boost::asio::error::operation_aborted) {
+                ADD_FAILURE() << "error occurred while asynchronously receiving"
+                    " data via unix domain socket: " << ec.message();
+            }
 
-        } else if (ec.value() != boost::asio::error::operation_aborted) {
-            ADD_FAILURE() << "error occurred while asynchronously receiving"
-                " data via unix domain socket: " << ec.message();
-        }
+        }));
 
-    }));
-    // Run IO service until we get some response from the server.
-    while (!receive_handler_invoked && !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 
     // Make sure we have received something.
     ASSERT_GT(bytes_read, 0);
 
-    std::string response(&read_buf[0], bytes_read);
-
-    // What we have received should be a substring of the sent data prepended
-    // with 'received'. For such short chunks of data it is usually 'received foo'
-    // that we receive but there is no guarantee.
-    EXPECT_EQ(0, std::string("received foo").find(response));
+    // Check that the entire response has been received and is correct.
+    EXPECT_EQ(expected_response, response);
 }
 
 // This test verifies that UnixDomainSocketError exception is thrown
@@ -226,6 +221,16 @@ TEST_F(UnixDomainSocketTest, clientErrors) {
 // connect, write or receive when the server socket is not available.
 TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     UnixDomainSocket socket(io_service_);
+
+    // Asynchronous operations signal errors through boost::system::error_code
+    // object passed to the handler function. This object casts to boolean.
+    // In case of success the object casts to false. In case of an error it
+    // casts to true. The actual error codes can be retrieved by comparing the
+    // ec objects to predefined error objects. We don't check for the actual
+    // errors here, because it is not certain that the same error codes would
+    // be returned on various operating systems.
+
+    // In the following tests we use C++11 lambdas as callbacks.
 
     // Connect
     bool connect_handler_invoked = false;

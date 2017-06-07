@@ -52,6 +52,14 @@ public:
     /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
+    ///
+    /// The KEA_SOCKET_TEST_DIR is typically used to overcome the problem of
+    /// a system limit on the unix socket file path (usually 102 or 103 characters).
+    /// When Kea build is located in the nested directories with absolute path
+    /// exceeding this limit, the test system should be configured to set
+    /// the KEA_SOCKET_TEST_DIR environmental variable to point to an alternative
+    /// location, e.g. /tmp, with an absolute path length being within the
+    /// allowed range.
     static std::string unixSocketFilePath() {
         std::ostringstream s;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");

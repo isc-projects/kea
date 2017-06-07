@@ -139,7 +139,7 @@ public:
     /// occurred during the transaction.
     /// @param timeout Connection timeout in milliseconds.
     void start(const SocketPath& socket_path, const ControlCommand& command,
-               Handler handler, const Timeout& timeout = Timeout(10000));
+               Handler handler, const Timeout& timeout = Timeout(5000));
 
 private:
 

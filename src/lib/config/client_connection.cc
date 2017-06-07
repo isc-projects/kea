@@ -53,7 +53,8 @@ public:
     ///
     /// @param buffer Pointer to the buffer holding input data.
     /// @param length Length of the data in the input buffer.
-    /// @param handler User supplied callback.
+    /// @param handler User supplied callback invoked after the chunk of data
+    /// has been sent.
     void doSend(const void* buffer, const size_t length,
                 ClientConnection::Handler handler);
 
