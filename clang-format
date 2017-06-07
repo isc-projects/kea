@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# Usage:
+#   ./clang-format <filename>[, <filename>, ...]
+#
+
+while [ $# -gt 0 ]; do
+  echo "$(clang-format --style=file $1)" > $1
+  shift
+done
