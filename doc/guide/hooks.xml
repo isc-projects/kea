@@ -790,8 +790,9 @@ Requirements </ulink> document.</para>
 {
     "command": "reservation-add",
     "arguments": {
-        <userinput>"reservation": {
+        <userinput>"reservation":
             {
+                "subnet-id":1,
                 "client-id": "01:0a:0b:0c:0d:0e:0f",
                 "ip-address": "192.0.2.205",
                 "next-server": "192.0.2.1",
@@ -804,8 +805,7 @@ Requirements </ulink> document.</para>
                     }
                 ],
                 "client-classes": [ "special_snowflake", "office" ]
-            }
-        }</userinput>
+            }</userinput>
     }
 }</screen>
     
@@ -814,8 +814,9 @@ Here is an example of complex IPv6 reservation:
 {
     "command": "reservation-add",
     "arguments": {
-        <userinput>"reservation": {
+        <userinput>"reservation":
             {
+                "subnet-id":1,
                 "duid": "01:02:03:04:05:06:07:08:09:0A",
                 "ip-addresses": [ "2001:db8:1:cafe::1" ],
                 "prefixes": [ "2001:db8:2:abcd::/64" ],
@@ -831,8 +832,7 @@ Here is an example of complex IPv6 reservation:
                         "data": "3000:1::234"
                     }
                 ]
-            }
-        }</userinput>
+            }</userinput>
     }
 }</screen>
         </para>          
@@ -972,7 +972,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           </para>
           <para>
             <command>reservation-del</command> returns result 0 when the host
-            deletion was successul or 1 if it was not. A descriptive text is
+            deletion was successful or 1 if it was not. A descriptive text is
             provided in case of error. Example results look as follows:
 <screen>
 {
