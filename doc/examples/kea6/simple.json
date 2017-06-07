@@ -44,7 +44,8 @@
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
-// logged to stdout.
+// logged to stdout. Alternatively, you can specify stderr here, a filename
+// or 'syslog', which will store output messages via syslog.
 "Logging": {
     "loggers": [
         {
