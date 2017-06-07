@@ -13,6 +13,9 @@
 /// add an entry in std_option_defs.h, add a stdOptionDefs6 unit test
 /// in tests/libdhcp++_unittest.cc and update dhcp6-std-options-list in
 /// the dhcp6-srv.xml source file of the user guide.
+//
+namespace isc {
+namespace dhcp {
 
 /* DHCPv6 Option codes: */
 
@@ -288,5 +291,8 @@ extern const int dhcpv6_type_name_max;
 
 /* DHCPv4-query message flags (see RFC7341) */
 #define DHCPV4_QUERY_FLAGS_UNICAST (1 << 23)
+
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif /* DHCP6_H */
