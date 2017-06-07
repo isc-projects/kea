@@ -145,9 +145,17 @@ private:
     bool running_;
 
     /// @brief Mutex used by the server.
+    ///
+    /// Mutex is used in situations when server's IO service is being run in a
+    /// thread to synchronize this thread with a main thread using
+    /// @ref signalRunning and @ref waitForRunning.
     isc::util::thread::Mutex mutex_;
 
     /// @brief Conditional variable used by the server.
+    ///
+    /// Conditional variable is used in situations when server's IO service is
+    /// being run in a thread to synchronize this thread with a main thread
+    /// using @ref signalRunning and @ref waitForRunning.
     isc::util::thread::CondVar condvar_;
 };
 

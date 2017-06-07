@@ -156,6 +156,8 @@ public:
 
     /// @brief Returns processed data as a structure of @ref isc::data::Element
     /// objects.
+    ///
+    /// @throw JSONFeedError if the received JSON is not well formed.
     data::ElementPtr toElement() const;
 
     /// @brief Receives additional data read from a data stream.
