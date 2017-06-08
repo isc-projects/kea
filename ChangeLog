@@ -2,7 +2,7 @@
 	Corrected logic in prefix delegation that was causing multiple
 	entries to be written to the lease file when renewing or rebinding
 	a prefix.
-	(Trac #5104, git xxx)
+	(Trac #5104, git b9ab6ebe7a491c062bc8b0b42afc53f4d6cee011)
 
 1259.	[func]		marcin
 	Implemented timeout for the control commands forwarded between
@@ -15,7 +15,7 @@
 1258.	[bug]		fdupont
 	Fixed wrong python package path when kea-shell was configured
 	without a prefix.
-	(Trac #5214, git xxx)
+	(Trac #5214, git 44908c5fa56bfa7e1113078f43c458687a97388a)
 
 Kea 1.2.0 released on April 28, 2017
 
