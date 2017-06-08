@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -367,7 +367,7 @@ bool
 Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
-    if (!inRange(addr)) {
+    if ((type != Lease::TYPE_PD) && !inRange(addr)) {
         return (false);
     }
 
