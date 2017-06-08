@@ -170,7 +170,8 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     // some data have been sent.
     ASSERT_GT(sent_size, 0);
 
-    // Receive response from the socket.
+    // Receive response from the socket. Very small receive buffer ensures that
+    // we will read the response in chunks.
     std::array<char, 2> read_buf;
     size_t bytes_read = 0;
     std::string response;

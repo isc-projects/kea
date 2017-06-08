@@ -50,7 +50,7 @@ public:
     /// necessarily indicate a problem and the subsequent attempts to read
     /// and write to the socket will succeed. Therefore, the handler simply
     /// overrides this error code with success status. The user supplied
-    /// handler don't need to deal with the EINPROGRESS error codes.
+    /// handler doesn't need to deal with the EINPROGRESS error codes.
     ///
     /// @param remote_handler User supplied callback.
     /// @param ec Error code returned as a result of connection.

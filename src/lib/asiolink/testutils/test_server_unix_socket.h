@@ -72,6 +72,8 @@ public:
 
     /// @brief Generates response of a given length.
     ///
+    /// Note: The response may be a few bytes larger than requested.
+    ///
     /// @param response_size Desired response size.
     void generateCustomResponse(const uint64_t response_size);
 
