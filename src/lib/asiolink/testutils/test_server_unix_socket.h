@@ -10,9 +10,12 @@
 #include <config.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <util/threads/thread.h>
+#include <util/threads/sync.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <list>
+#include <stdint.h>
 #include <string>
 
 namespace isc {
@@ -38,6 +41,10 @@ class ConnectionPool;
 /// the number of responses sent by the server is greater than
 /// expected. The number of responses sent so far can be retrieved
 /// using @ref TestServerUnixSocket::getResponseNum.
+///
+/// This class uses @c shared_from_this() to pass its instance to the
+/// @c boost::bind function, thus the caller must store shared pointer
+/// to this object.
 class TestServerUnixSocket {
 public:
 
@@ -45,11 +52,9 @@ public:
     ///
     /// @param io_service IO service.
     /// @param socket_file_path Socket file path.
-    /// @param test_timeout Test timeout in milliseconds.
     /// @param custom_response Custom response to be sent to the client.
     TestServerUnixSocket(IOService& io_service,
                          const std::string& socket_file_path,
-                         const long test_timeout,
                          const std::string& custom_response = "");
 
     /// @brief Destructor.
@@ -57,8 +62,26 @@ public:
     /// Closes active connections.
     ~TestServerUnixSocket();
 
+    /// @brief Starts timer for detecting test timeout.
+    ///
+    /// @param test_timeout Test timeout in milliseconds.
+    void startTimer(const long test_timeout);
+
+    /// @brief Cancels all asynchronous operations.
+    void stopServer();
+
+    /// @brief Generates response of a given length.
+    ///
+    /// Note: The response may be a few bytes larger than requested.
+    ///
+    /// @param response_size Desired response size.
+    void generateCustomResponse(const uint64_t response_size);
+
     /// @brief Creates and binds server socket.
-    void bindServerSocket();
+    ///
+    /// @param use_thread Boolean value indicating if the IO service
+    /// is running in thread.
+    void bindServerSocket(const bool use_thread = false);
 
     /// @brief Server acceptor handler.
     ///
@@ -73,10 +96,31 @@ public:
     /// @brief Return number of responses sent so far to the clients.
     size_t getResponseNum() const;
 
+    /// @brief Indicates if the server has been stopped.
+    bool isStopped() {
+        return (stopped_);
+    }
+
+    /// @brief Waits for the server signal that it is running.
+    ///
+    /// When the caller starts the service he indicates whether
+    /// IO service will be running in thread or not. If threads
+    /// are used the caller has to wait for the IO service to
+    /// actually run. In such case this function should be invoked
+    /// which waits for a posted callback to be executed. When this
+    /// happens it means that IO service is running and the main
+    /// thread can move forward.
+    void waitForRunning();
+
 private:
 
     /// @brief Asynchronously accept new connections.
     void accept();
+
+    /// @brief Handler invoked to signal that server is running.
+    ///
+    /// This is used only when thread is used to run IO service.
+    void signalRunning();
 
     /// @brief IO service used by the tests.
     IOService& io_service_;
@@ -94,6 +138,27 @@ private:
 
     /// @brief Pool of connections.
     boost::shared_ptr<ConnectionPool> connection_pool_;
+
+    /// @brief Indicates if IO service has been stopped as a result of
+    /// a timeout.
+    bool stopped_;
+
+    /// @brief Indicates if the server in a thread is running.
+    bool running_;
+
+    /// @brief Mutex used by the server.
+    ///
+    /// Mutex is used in situations when server's IO service is being run in a
+    /// thread to synchronize this thread with a main thread using
+    /// @ref signalRunning and @ref waitForRunning.
+    isc::util::thread::Mutex mutex_;
+
+    /// @brief Conditional variable used by the server.
+    ///
+    /// Conditional variable is used in situations when server's IO service is
+    /// being run in a thread to synchronize this thread with a main thread
+    /// using @ref signalRunning and @ref waitForRunning.
+    isc::util::thread::CondVar condvar_;
 };
 
 /// @brief Pointer to the @ref TestServerUnixSocket.

@@ -11,7 +11,6 @@
 #include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <array>
 
 namespace isc {
 namespace agent {
@@ -108,9 +107,6 @@ private:
     /// The instance should be created using @ref CtrlAgentCommandMgr::instance,
     /// thus the constructor is private.
     CtrlAgentCommandMgr();
-
-    /// @brief Buffer into which responses to forwarded commands are stored.
-    std::array<char, 65535> receive_buf_;
 
 };
 

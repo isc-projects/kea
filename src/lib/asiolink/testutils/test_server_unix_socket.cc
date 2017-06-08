@@ -7,9 +7,11 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <set>
+#include <sstream>
 
 using namespace boost::asio::local;
 
@@ -29,7 +31,7 @@ typedef std::function<void()> SentResponseCallback;
 /// @brief Connection to the server over unix domain socket.
 ///
 /// It reads the data over the socket, sends responses and closes a socket.
-class Connection {
+class Connection : public boost::enable_shared_from_this<Connection> {
 public:
 
     /// @brief Constructor.
@@ -43,11 +45,22 @@ public:
     /// server sends a response.
     Connection(const UnixSocketPtr& unix_socket,
                const std::string custom_response,
-               const SentResponseCallback& sent_response_callback)
+               SentResponseCallback sent_response_callback)
         : socket_(unix_socket), custom_response_(custom_response),
           sent_response_callback_(sent_response_callback) {
+    }
+
+    /// @brief Starts asynchronous read from the socket.
+    void start() {
        socket_->async_read_some(boost::asio::buffer(&raw_buf_[0], raw_buf_.size()),
-           boost::bind(&Connection::readHandler, this, _1, _2));
+           boost::bind(&Connection::readHandler, shared_from_this(),
+                       boost::asio::placeholders::error,
+                       boost::asio::placeholders::bytes_transferred));
+    }
+
+    /// @brief Closes the socket.
+    void stop() {
+        socket_->close();
     }
 
     /// @brief Handler invoked when data have been received over the socket.
@@ -79,13 +92,10 @@ public:
                 boost::asio::buffer(response.c_str(), response.size()));
         }
 
+        start();
+
         // Invoke callback function to notify that the response has been sent.
         sent_response_callback_();
-    }
-
-    /// @brief Closes the socket.
-    void stop() {
-        socket_->close();
     }
 
 private:
@@ -153,6 +163,7 @@ public:
         ConnectionPtr conn(new Connection(next_socket_, custom_response, [this] {
             ++response_num_;
         }));
+        conn->start();
 
         connections_.insert(conn);
         next_socket_.reset();
@@ -200,28 +211,59 @@ private:
 
 TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
                                            const std::string& socket_file_path,
-                                           const long test_timeout,
                                            const std::string& custom_response)
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
       server_acceptor_(io_service_.get_io_service()),
       test_timer_(io_service_),
       custom_response_(custom_response),
-      connection_pool_(new ConnectionPool(io_service)) {
+      connection_pool_(new ConnectionPool(io_service)),
+      stopped_(false),
+      running_(false) {
+}
+
+TestServerUnixSocket::~TestServerUnixSocket() {
+    server_acceptor_.close();
+}
+
+void
+TestServerUnixSocket::generateCustomResponse(const uint64_t response_size) {
+    std::ostringstream s;
+    s << "{";
+    while (s.tellp() < response_size) {
+        s << "\"param\": \"value\",";
+    }
+    s << "}";
+    custom_response_ = s.str();
+}
+
+void
+TestServerUnixSocket::startTimer(const long test_timeout) {
     test_timer_.setup(boost::bind(&TestServerUnixSocket::timeoutHandler, this),
                       test_timeout, IntervalTimer::ONE_SHOT);
 }
 
-TestServerUnixSocket::~TestServerUnixSocket() {
+void
+TestServerUnixSocket::stopServer() {
+    test_timer_.cancel();
+    server_acceptor_.cancel();
     connection_pool_->stopAll();
 }
 
 void
-TestServerUnixSocket::bindServerSocket() {
+TestServerUnixSocket::bindServerSocket(const bool use_thread) {
     server_acceptor_.open();
     server_acceptor_.bind(server_endpoint_);
     server_acceptor_.listen();
     accept();
+
+    // When threads are in use, we need to post a handler which will be invoked
+    // when the thread has already started and the IO service is running. The
+    // main thread can move forward when it receives this signal from the handler.
+    if (use_thread) {
+        io_service_.post(boost::bind(&TestServerUnixSocket::signalRunning,
+                                     this));
+    }
 }
 
 void
@@ -237,20 +279,38 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
 void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
-        boost::bind(&TestServerUnixSocket::acceptHandler, this, _1));
+        boost::bind(&TestServerUnixSocket::acceptHandler, this,
+                    boost::asio::placeholders::error));
+}
+
+void
+TestServerUnixSocket::signalRunning() {
+    {
+        isc::util::thread::Mutex::Locker lock(mutex_);
+        running_ = true;
+    }
+    condvar_.signal();
+}
+
+void
+TestServerUnixSocket::waitForRunning() {
+    isc::util::thread::Mutex::Locker lock(mutex_);
+    while (!running_) {
+        condvar_.wait(mutex_);
+    }
 }
 
 void
 TestServerUnixSocket::timeoutHandler() {
     ADD_FAILURE() << "Timeout occurred while running the test!";
     io_service_.stop();
+    stopped_ = true;
 }
 
 size_t
 TestServerUnixSocket::getResponseNum() const {
     return (connection_pool_->getResponseNum());
 }
-
 
 } // end of namespace isc::asiolink::test
 } // end of namespace isc::asiolink
