@@ -36,7 +36,9 @@ public:
     UnixDomainSocketTest() :
         io_service_(),
         test_socket_(new test::TestServerUnixSocket(io_service_,
-                                                    unixSocketFilePath())) {
+                                                    unixSocketFilePath())),
+        response_(),
+        read_buf_() {
         test_socket_->startTimer(TEST_TIMEOUT);
         removeUnixSocketFile();
     }
@@ -71,11 +73,51 @@ public:
         static_cast<void>(remove(unixSocketFilePath().c_str()));
     }
 
+    /// @brief Performs asynchronous receive on unix domain socket.
+    ///
+    /// This function performs partial read from the unix domain socket.
+    /// It uses @c read_buf_ or small size to ensure that the buffer fills
+    /// in before all that have been read. The partial responses are
+    /// appended to the @c response_ class member.
+    ///
+    /// If the response received so far is shorter than the expected
+    /// response, another partial read is scheduled.
+    ///
+    /// @param socket Reference to the unix domain socket.
+    /// @param expected_response Expected response.
+    void doReceive(UnixDomainSocket& socket,
+                   const std::string& expected_response) {
+        socket.asyncReceive(&read_buf_[0], read_buf_.size(),
+        [this, &socket, expected_response]
+            (const boost::system::error_code& ec, size_t length) {
+            if (!ec) {
+                // Append partial response received and see if the
+                // size of the response received so far is still
+                // smaller than expected. If it is, schedule another
+                // partial read.
+                response_.append(&read_buf_[0], length);
+                if (expected_response.size() > response_.size()) {
+                    doReceive(socket, expected_response);
+                }
+
+            } else if (ec.value() != boost::asio::error::operation_aborted) {
+                ADD_FAILURE() << "error occurred while asynchronously receiving"
+                    " data via unix domain socket: " << ec.message();
+            }
+        });
+    }
+
     /// @brief IO service used by the tests.
     IOService io_service_;
 
     /// @brief Server side unix socket used in these tests.
     test::TestServerUnixSocketPtr test_socket_;
+
+    /// @brief String containing a response received with @c doSend.
+    std::string response_;
+
+    /// @brief Read buffer used by @c doSend.
+    std::array<char, 2> read_buf_;
 };
 
 // This test verifies that the client can send data over the unix
@@ -170,38 +212,17 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     // some data have been sent.
     ASSERT_GT(sent_size, 0);
 
-    // Receive response from the socket. Very small receive buffer ensures that
-    // we will read the response in chunks.
-    std::array<char, 2> read_buf;
-    size_t bytes_read = 0;
-    std::string response;
     std::string expected_response = "received foo";
+    doReceive(socket, expected_response);
+
     // Run IO service until we get the full response from the server.
-    while ((bytes_read < expected_response.size()) && !test_socket_->isStopped()) {
-        ASSERT_NO_THROW(socket.asyncReceive(&read_buf[0], read_buf.size(),
-            [this, &read_buf, &response, &bytes_read]
-                (const boost::system::error_code& ec, size_t length) {
-            // If we have been successful receiving the data, record the number of
-            // bytes received.
-            if (!ec) {
-                bytes_read += length;
-                response.append(&read_buf[0], length);
-
-            } else if (ec.value() != boost::asio::error::operation_aborted) {
-                ADD_FAILURE() << "error occurred while asynchronously receiving"
-                    " data via unix domain socket: " << ec.message();
-            }
-
-        }));
-
+    while ((response_.size() < expected_response.size()) &&
+           !test_socket_->isStopped()) {
         io_service_.run_one();
     }
 
-    // Make sure we have received something.
-    ASSERT_GT(bytes_read, 0);
-
     // Check that the entire response has been received and is correct.
-    EXPECT_EQ(expected_response, response);
+    EXPECT_EQ(expected_response, response_);
 }
 
 // This test verifies that UnixDomainSocketError exception is thrown
