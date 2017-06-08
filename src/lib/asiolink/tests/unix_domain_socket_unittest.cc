@@ -113,10 +113,10 @@ public:
     /// @brief Server side unix socket used in these tests.
     test::TestServerUnixSocketPtr test_socket_;
 
-    /// @brief String containing a response received with @c doSend.
+    /// @brief String containing a response received with @c doReceive.
     std::string response_;
 
-    /// @brief Read buffer used by @c doSend.
+    /// @brief Read buffer used by @c doReceive.
     std::array<char, 2> read_buf_;
 };
 
