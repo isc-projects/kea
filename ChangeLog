@@ -1,3 +1,11 @@
+1259.	[func]		marcin
+	Implemented timeout for the control commands forwarded between
+	the Control Agent and Kea servers. The enhanced forwarding
+	mechanism uses asynchronous calls over the unix domain sockets.
+	It also detects the JSON structure boundaries when receiving it
+	over the stream sockets.
+	(Trac #5189, git e48d9399c215406f2dab1601d22d6c932b4af271)
+
 1258.	[bug]		fdupont
 	Fixed wrong python package path when kea-shell was configured
 	without a prefix.
