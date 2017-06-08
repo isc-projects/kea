@@ -1,3 +1,9 @@
+1260.	[bug]		fdupont
+	Corrected logic in prefix delegation that was causing multiple
+	entries to be written to the lease file when renewing or rebinding
+	a prefix.
+	(Trac #5104, git xxx)
+
 1259.	[func]		marcin
 	Implemented timeout for the control commands forwarded between
 	the Control Agent and Kea servers. The enhanced forwarding
