@@ -14,6 +14,8 @@
 #include <asiolink/unix_domain_socket.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <cc/json_feed.h>
+#include <config/client_connection.h>
 #include <boost/pointer_cast.hpp>
 #include <iterator>
 #include <string>
@@ -24,6 +26,14 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
+
+namespace {
+
+/// @brief Client side connection timeout.
+/// @todo Make it configurable.
+const long CONNECTION_TIMEOUT = 5000;
+
+}
 
 namespace isc {
 namespace agent {
@@ -186,34 +196,40 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
     std::string socket_name = socket_info->get("socket-name")->stringValue();
 
     // Forward command and receive reply.
-    IOService io_service;
-    UnixDomainSocket unix_socket(io_service);
-    size_t receive_len;
-    try {
-        unix_socket.connect(socket_name);
-        std::string wire_command = command->toWire();
-        unix_socket.write(&wire_command[0], wire_command.size());
-        receive_len = unix_socket.receive(&receive_buf_[0], receive_buf_.size());
+    IOServicePtr io_service(new IOService());;
+    ClientConnection conn(*io_service);
+    boost::system::error_code received_ec;
+    ConstJSONFeedPtr received_feed;
+    conn.start(ClientConnection::SocketPath(socket_name),
+               ClientConnection::ControlCommand(command->toWire()),
+               [&io_service, &received_ec, &received_feed]
+               (const boost::system::error_code& ec, ConstJSONFeedPtr feed) {
+                   // Capture error code and parsed data.
+                   received_ec = ec;
+                   received_feed = feed;
+                   // Got the IO service so stop IO service. This causes to
+                   // stop IO service when all handlers have been invoked.
+                   io_service->stopWork();
+               }, ClientConnection::Timeout(CONNECTION_TIMEOUT));
+    io_service->run();
 
-    } catch (const std::exception& ex) {
+    if (received_ec) {
         isc_throw(CommandForwardingError, "unable to forward command to the "
-                  << service << " service: " << ex.what() << ". The server "
-                  "is likely to be offline");
+                  << service << " service: " << received_ec.message()
+                  << ". The server is likely to be offline");
     }
 
-    // This is really not possible right now, but when we migrate to the
-    // solution using timeouts it is possible that the response is not
-    // received.
-    if (receive_len == 0) {
-        isc_throw(CommandForwardingError, "internal server error: no answer"
-                  " received from the server to the forwarded message");
+    // This shouldn't happen because the fact that there was no time out indicates
+    // that the whole response has been read and it should be stored within the
+    // feed. But, let's check to prevent assertions.
+    if (!received_feed) {
+        isc_throw(CommandForwardingError, "internal server error: empty response"
+                  " received from the unix domain socket");
     }
-
-    std::string reply(&receive_buf_[0], receive_len);
 
     ConstElementPtr answer;
     try {
-        answer = Element::fromJSON(reply);
+        answer = received_feed->toElement();
 
         LOG_INFO(agent_logger, CTRL_AGENT_COMMAND_FORWARDED)
             .arg(cmd_name).arg(service);
