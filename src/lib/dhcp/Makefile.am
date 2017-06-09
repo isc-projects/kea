@@ -99,6 +99,7 @@ libkea_dhcp___include_HEADERS = \
     option6_ia.h \
     option6_iaaddr.h \
     option6_iaprefix.h \
+    option6_pdexclude.h \
     option6_status_code.h \
     option.h \
     option_custom.h \
