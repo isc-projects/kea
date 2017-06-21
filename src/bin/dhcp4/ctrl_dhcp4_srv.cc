@@ -594,6 +594,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     server_ = this; // remember this instance for later use in handlers
 
     TimerMgr::instance()->setIOService(getIOService());
+    CommandMgr::instance().setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv4 server.
     // Please keep the list in alphabetic order.
