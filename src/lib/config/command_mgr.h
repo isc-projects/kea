@@ -7,14 +7,18 @@
 #ifndef COMMAND_MGR_H
 #define COMMAND_MGR_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/hooked_command_mgr.h>
 #include <config/command_socket.h>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <list>
 
 namespace isc {
 namespace config {
+
+class CommandMgrImpl;
 
 /// @brief Commands Manager implementation for the Kea servers.
 ///
@@ -29,6 +33,11 @@ public:
     /// @return the only existing instance of the manager
     static CommandMgr& instance();
 
+    /// @brief Sets IO service to be used by the command manager.
+    ///
+    /// @param io_service Pointer to the IO service.
+    void setIOService(const asiolink::IOServicePtr& io_service);
+
     /// @brief Opens control socket with parameters specified in socket_info
     ///
     /// Currently supported types are:
@@ -41,7 +50,7 @@ public:
     ///
     /// @param socket_info describes control socket parameters
     /// @return object representing a socket
-    CommandSocketPtr
+    void
     openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
@@ -73,9 +82,7 @@ public:
     /// @brief Returns control socket descriptor
     ///
     /// This method should be used only in tests.
-    int getControlSocketFD() const {
-        return (socket_->getFD());
-    }
+    int getControlSocketFD();
 
 private:
 
@@ -83,6 +90,8 @@ private:
     ///
     /// Registers internal 'list-commands' command.
     CommandMgr();
+
+    boost::shared_ptr<CommandMgrImpl> impl_;
 
     /// @brief Control socket structure
     ///

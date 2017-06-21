@@ -4,6 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service.h>
+#include <asiolink/unix_domain_socket.h>
+#include <asiolink/unix_domain_socket_acceptor.h>
+#include <asiolink/unix_domain_socket_endpoint.h>
 #include <config/command_mgr.h>
 #include <config/command_socket_factory.h>
 #include <cc/data.h>
@@ -11,41 +16,249 @@
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <array>
 #include <unistd.h>
 
+using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
+
+namespace {
+
+class ConnectionPool;
+
+class Connection : public boost::enable_shared_from_this<Connection> {
+public:
+
+    Connection(const boost::shared_ptr<UnixDomainSocket>& socket,
+               ConnectionPool& connection_pool)
+        : socket_(socket), connection_pool_(connection_pool),
+          response_in_progress_(false) {
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(),
+                                                          0);
+
+    }
+
+    void start() {
+        socket_->asyncReceive(&buf_[0], sizeof(buf_),
+                              boost::bind(&Connection::receiveHandler,
+                                          shared_from_this(), _1, _2));
+
+
+    }
+
+    void stop() {
+        if (!response_in_progress_) {
+            socket_->close();
+        }
+    }
+
+    void receiveHandler(const boost::system::error_code& ec,
+                        size_t bytes_transferred);
+
+private:
+
+    boost::shared_ptr<UnixDomainSocket> socket_;
+
+    std::array<char, 65535> buf_;
+
+    ConnectionPool& connection_pool_;
+
+    bool response_in_progress_;
+
+};
+
+
+typedef boost::shared_ptr<Connection> ConnectionPtr;
+
+class ConnectionPool {
+public:
+
+    void start(const ConnectionPtr& connection) {
+        connection->start();
+        connections_.insert(connection);
+    }
+
+    void stop(const ConnectionPtr& connection) {
+        connection->stop();
+        connections_.erase(connection);
+    }
+
+    void stopAll() {
+        for (auto conn = connections_.begin(); conn != connections_.end();
+             ++conn) {
+            (*conn)->stop();
+        }
+        connections_.clear();
+    }
+
+private:
+
+    std::set<ConnectionPtr> connections_;
+
+};
+
+
+void
+Connection::receiveHandler(const boost::system::error_code& ec,
+                           size_t bytes_transferred) {
+    if (ec) {
+        return;
+    }
+
+    ConstElementPtr cmd, rsp;
+
+    try {
+
+        response_in_progress_ = true;
+
+        // Try to interpret it as JSON.
+        std::string sbuf(&buf_[0], bytes_transferred);
+        cmd = Element::fromJSON(sbuf, true);
+
+        // If successful, then process it as a command.
+        rsp = CommandMgr::instance().processCommand(cmd);
+    } catch (const Exception& ex) {
+        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
+        rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
+    }
+
+    if (!rsp) {
+        response_in_progress_ = false;
+        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
+        return;
+    }
+
+    // Let's convert JSON response to text. Note that at this stage
+    // the rsp pointer is always set.
+    std::string txt = rsp->str();
+    size_t len = txt.length();
+    if (len > 65535) {
+        // Hmm, our response is too large. Let's send the first
+        // 64KB and hope for the best.
+        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+
+        len = 65535;
+    }
+
+    // Send the data back over socket.
+    socket_->write(txt.c_str(), len);
+
+    response_in_progress_ = false;
+
+
+    isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+
+    connection_pool_.stop(shared_from_this());
+}
+
+}
 
 namespace isc {
 namespace config {
 
-CommandMgr::CommandMgr()
-    : HookedCommandMgr() {
-}
+class CommandMgrImpl {
+public:
 
-CommandSocketPtr
-CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    if (socket_) {
-        isc_throw(SocketError, "There is already a control socket open");
+    CommandMgrImpl()
+        : io_service_(), acceptor_(), socket_(), socket_name_(),
+          connection_pool_() {
     }
 
-    socket_ = CommandSocketFactory::create(socket_info);
+    void openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
-    return (socket_);
+    void doAccept();
+
+    IOServicePtr io_service_;
+
+    boost::shared_ptr<UnixDomainSocketAcceptor> acceptor_;
+
+    boost::shared_ptr<UnixDomainSocket> socket_;
+
+    std::string socket_name_;
+
+    ConnectionPool connection_pool_;
+};
+
+void
+CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+    socket_name_.clear();
+    
+    ConstElementPtr type = socket_info->get("socket-type");
+    if (!type) {
+        isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
+    }
+
+    if (type->stringValue() != "unix") {
+        isc_throw(BadSocketInfo, "Invalid 'socket-type' parameter value "
+                  << type->stringValue());
+    }
+
+    // UNIX socket is requested. It takes one parameter: socket-name that
+    // specifies UNIX path of the socket.
+    ConstElementPtr name = socket_info->get("socket-name");
+    if (!name) {
+        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+    }
+
+    if (name->getType() != Element::string) {
+        isc_throw(BadSocketInfo, "'socket-name' parameter expected to be a string");
+    }
+
+    socket_name_ = name->stringValue();
+
+    acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
+    UnixDomainSocketEndpoint endpoint(socket_name_);
+    acceptor_->open(endpoint);
+    acceptor_->bind(endpoint);
+    acceptor_->listen();
+
+    doAccept();
+
+    // Install this socket in Interface Manager.
+    isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+
+}
+
+void
+CommandMgrImpl::doAccept() {
+    socket_.reset(new UnixDomainSocket(*io_service_));
+    acceptor_->asyncAccept(*socket_,
+    [this](const boost::system::error_code& ec) {
+        if (!ec) {
+            ConnectionPtr connection(new Connection(socket_, connection_pool_));
+            connection_pool_.start(connection);
+            doAccept();
+        }
+    });
+}
+
+CommandMgr::CommandMgr()
+    : HookedCommandMgr(), impl_(new CommandMgrImpl()) {
+}
+
+void
+CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+    impl_->openCommandSocket(socket_info);
 }
 
 void CommandMgr::closeCommandSocket() {
-    // First, let's close the socket for incoming new connections.
-    if (socket_) {
-        socket_->close();
-        socket_.reset();
+    impl_->connection_pool_.stopAll();
+
+    if (impl_->acceptor_) {
+        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
+        impl_->acceptor_->close();
+        static_cast<void>(::remove(impl_->socket_name_.c_str()));
     }
 
-    // Now let's close all existing connections that we may have.
+/*    // Now let's close all existing connections that we may have.
     for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
          conn != connections_.end(); ++conn) {
         (*conn)->close();
     }
-    connections_.clear();
+    connections_.clear(); */
 }
 
 
@@ -70,10 +283,22 @@ bool CommandMgr::closeConnection(int fd) {
     return (false);
 }
 
+int
+CommandMgr::getControlSocketFD() {
+    return (impl_->acceptor_ ? impl_->acceptor_->getNative() : -1);
+}
+
+
 CommandMgr&
 CommandMgr::instance() {
     static CommandMgr cmd_mgr;
     return (cmd_mgr);
+}
+
+void
+CommandMgr::setIOService(const IOServicePtr& io_service) {
+    closeCommandSocket();
+    impl_->io_service_ = io_service;
 }
 
 void
