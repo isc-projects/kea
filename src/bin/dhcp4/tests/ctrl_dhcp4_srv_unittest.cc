@@ -21,8 +21,6 @@
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 
-#include <util/threads/thread.h>
-
 #include "marker_file.h"
 #include "test_libraries.h"
 
@@ -87,15 +85,14 @@ public:
         StatsMgr::instance().removeAll();
 
         CommandMgr::instance().closeCommandSocket();
-        if (getIOService()) {
-            getIOService()->stopWork();
-            getIOService()->poll();
-        }
 
         server_.reset();
     };
 
     /// @brief Returns pointer to the server's IO service.
+    ///
+    /// @return Pointer to the server's IO service or null pointer if the server
+    /// hasn't been created.
     IOServicePtr getIOService() {
         return (server_ ? server_->getIOService() : IOServicePtr());
     }
@@ -134,7 +131,6 @@ public:
         std::string config_txt = header + socket_path_  + footer;
 
         server_.reset(new NakedControlledDhcpv4Srv());
-        CommandMgr::instance().setIOService(getIOService());
 
         ConstElementPtr config;
         ASSERT_NO_THROW(config = parseDHCP4(config_txt));
@@ -309,7 +305,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
 
     ASSERT_NO_THROW(
         server_.reset(new NakedControlledDhcpv4Srv());
-        CommandMgr::instance().setIOService(getIOService());
     );
 
     // Use empty parameters list
@@ -394,7 +389,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     // Created server should register several additional commands.
     ASSERT_NO_THROW(
         server_.reset(new NakedControlledDhcpv4Srv());
-        CommandMgr::instance().setIOService(getIOService());
     );
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
@@ -696,7 +690,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
               response);
 
     /// Check that the config was indeed applied.
-    /*    const Subnet4Collection* subnets =
+    const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1, subnets->size());
 
@@ -757,7 +751,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     EXPECT_EQ(2, subnets->size());
 
     // Clean up after the test.
-    CfgMgr::instance().clear(); */
+    CfgMgr::instance().clear();
 }
 
 // Tests that the server properly responds to shtudown command sent

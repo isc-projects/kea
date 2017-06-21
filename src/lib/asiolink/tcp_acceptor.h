@@ -11,6 +11,7 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
+#include <asiolink/io_acceptor.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_socket.h>
 #include <asiolink/tcp_endpoint.h>
@@ -28,23 +29,14 @@ namespace asiolink {
 ///
 /// @tparam C Acceptor callback type.
 template<typename C>
-class TCPAcceptor : public IOSocket {
+class TCPAcceptor : public IOAcceptor<boost::asio::ip::tcp, C> {
 public:
 
     /// @brief Constructor.
     ///
     /// @param io_service IO service.
     explicit TCPAcceptor(IOService& io_service)
-        : IOSocket(),
-          acceptor_(new boost::asio::ip::tcp::acceptor(io_service.get_io_service())) {
-    }
-
-    /// @brief Destructor.
-    virtual ~TCPAcceptor() { }
-
-    /// @brief Returns file descriptor of the underlying socket.
-    virtual int getNative() const final {
-        return (acceptor_->native());
+        : IOAcceptor<boost::asio::ip::tcp, C>(io_service) {
     }
 
     /// @brief Returns protocol of the socket.
@@ -52,45 +44,6 @@ public:
     /// @return IPPROTO_TCP.
     virtual int getProtocol() const final {
         return (IPPROTO_TCP);
-    }
-
-    /// @brief Opens acceptor socket given the endpoint.
-    ///
-    /// @param endpoint Reference to the endpoint object which specifies the
-    /// address and port on which the acceptor service will run.
-    void open(const TCPEndpoint& endpoint) {
-        acceptor_->open(endpoint.getASIOEndpoint().protocol());
-    }
-
-    /// @brief Sets socket option.
-    ///
-    /// Typically, this method is used to set SO_REUSEADDR option on the socket:
-    /// @code
-    /// IOService io_service;
-    /// TCPAcceptor<Callback> acceptor(io_service);
-    /// acceptor.setOption(TCPAcceptor::ReuseAddress(true))
-    /// @endcode
-    ///
-    /// @param socket_option Reference to the object encapsulating an option to
-    /// be set for the socket.
-    /// @tparam SettableSocketOption Type of the object encapsulating socket option
-    /// being set.
-    template<typename SettableSocketOption>
-    void setOption(const SettableSocketOption& socket_option) {
-        acceptor_->set_option(socket_option);
-    }
-
-    /// @brief Binds socket to an endpoint.
-    ///
-    /// @param endpoint Reference to an endpoint to which the socket is to
-    /// be bound.
-    void bind(const TCPEndpoint& endpoint) {
-        acceptor_->bind(endpoint.getASIOEndpoint());
-    }
-
-    /// @brief Starts listening for the new connections.
-    void listen() {
-        acceptor_->listen();
     }
 
     /// @brief Asynchronously accept new connection.
@@ -105,26 +58,8 @@ public:
     /// @tparam SocketCallback Type of the callback for the @ref TCPSocket.
     template<typename SocketCallback>
     void asyncAccept(const TCPSocket<SocketCallback>& socket, C& callback) {
-        acceptor_->async_accept(socket.getASIOSocket(), callback);
+        IOAcceptor<boost::asio::ip::tcp, C>::asyncAcceptInternal(socket, callback);
     }
-
-    /// @brief Checks if the acceptor is open.
-    ///
-    /// @return true if acceptor is open.
-    bool isOpen() const {
-        return (acceptor_->is_open());
-    }
-
-    /// @brief Closes the acceptor.
-    void close() const {
-        acceptor_->close();
-    }
-
-private:
-
-    /// @brief Underlying ASIO acceptor implementation.
-    boost::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-
 };
 
 

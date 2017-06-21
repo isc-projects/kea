@@ -18,19 +18,25 @@
 namespace isc {
 namespace asiolink {
 
-class UnixDomainSocketAcceptor
-    : public IOAcceptor<boost::asio::local::stream_protocol,
-                        std::function<void(const boost::system::error_code&)> > {
+/// @brief Implements acceptor service for @ref UnixDomainSocket.
+class UnixDomainSocketAcceptor : public IOAcceptor<boost::asio::local::stream_protocol,
+                                 std::function<void(const boost::system::error_code&)> > {
 public:
 
     /// @brief Callback type used in call to @ref UnixDomainSocketAcceptor::asyncAccept.
     typedef std::function<void(const boost::system::error_code&)> AcceptHandler;
 
+    /// @brief Constructor.
+    ///
+    /// @param io_service Reference to the IO service.
     explicit UnixDomainSocketAcceptor(IOService& io_service)
         : IOAcceptor<boost::asio::local::stream_protocol,
                      std::function<void(const boost::system::error_code&)> >(io_service) {
     }
 
+    /// @brief Returns the transport protocol of the socket.
+    ///
+    /// @return AF_LOCAL.
     virtual int getProtocol() const final {
         return (AF_LOCAL);
     }
