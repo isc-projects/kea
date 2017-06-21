@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
@@ -102,7 +103,10 @@ public:
     MemfileLeaseMgrTest() :
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
+        io_service_(new IOService()),
         timer_mgr_(TimerMgr::instance()) {
+
+        timer_mgr_->setIOService(io_service_);
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -130,7 +134,6 @@ public:
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrTest() {
         // Stop TimerMgr worker thread if it is running.
-        timer_mgr_->stopThread();
         // Make sure there are no timers registered.
         timer_mgr_->unregisterTimers();
         LeaseMgrFactory::destroy();
@@ -207,12 +210,13 @@ public:
     ///
     /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
-        // Measure test time and exit if timeout hit.
-        Stopwatch stopwatch;
-        while (stopwatch.getTotalMilliseconds() < ms) {
-            // Block for one 1 millisecond.
-            IfaceMgr::instance().receive6(0, 1000);
-        }
+        IntervalTimer timer(*io_service_);
+        timer.setup([this]() {
+                io_service_->stop();
+        }, ms, IntervalTimer::ONE_SHOT);
+
+        io_service_->run();
+        io_service_->get_io_service().reset();
     }
 
     /// @brief Waits for the specified process to finish.
@@ -344,6 +348,9 @@ public:
     /// @brief Object providing access to v6 lease IO.
     LeaseFileIO io6_;
 
+    /// @brief Pointer to the IO service used by the tests.
+    IOServicePtr io_service_;
+
     /// @brief Pointer to the instance of the @c TimerMgr.
     TimerMgrPtr timer_mgr_;
 };
@@ -453,14 +460,8 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    // Start worker thread to execute LFC periodically.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
     // Run the test for at most 2.9 seconds.
     setTestTime(2900);
-
-    // Stop worker thread.
-    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // Within 2.9 we should record two LFC executions.
     EXPECT_EQ(2, lease_mgr->getLFCCount());
@@ -480,16 +481,8 @@ TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
     boost::scoped_ptr<LFCMemfileLeaseMgr>
         lease_mgr(new LFCMemfileLeaseMgr(pmap));
 
-    // Start worker thread to execute LFC periodically.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
     // Run the test for at most 1.9 seconds.
     setTestTime(1900);
-
-    // Stop worker thread to make sure it is not running when lease
-    // manager is destroyed. The lease manager will be unable to
-    // unregster timer when the thread is active.
-    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // There should be no LFC execution recorded.
     EXPECT_EQ(0, lease_mgr->getLFCCount());
