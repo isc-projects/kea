@@ -615,7 +615,11 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     }
     server_ = this; // remember this instance for use in callback
 
+    // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv6 server.
     // Please keep the list in alphabetic order.
