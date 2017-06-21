@@ -154,8 +154,7 @@ TEST_F(IntervalTimerTest, invalidArgumentToIntervalTimer) {
     // expect throw if call back function is empty
     EXPECT_THROW(itimer.setup(IntervalTimer::Callback(), 1),
                  isc::InvalidParameter);
-    // expect throw if interval is not greater than 0
-    EXPECT_THROW(itimer.setup(TimerCallBack(this), 0), isc::BadValue);
+    // expect throw if interval is negative.
     EXPECT_THROW(itimer.setup(TimerCallBack(this), -1), isc::BadValue);
 }
 

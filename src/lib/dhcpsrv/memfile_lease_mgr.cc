@@ -127,12 +127,6 @@ LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback)
 
 LFCSetup::~LFCSetup() {
     try {
-        // If we're here it means that either the process is terminating
-        // or we're reconfiguring the server. In both cases the thread has
-        // probably been stopped already, but we make sure by calling
-        // stopThread explicitly here.
-        timer_mgr_->stopThread();
-
         // Remove the timer. This will throw an exception if the timer does not
         // exist.  There are several possible reasons for this:
         // a) It hasn't been registered (although if the LFC Setup instance

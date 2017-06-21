@@ -177,7 +177,8 @@ namespace dhcp {
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : port_(port), serverid_(), shutdown_(true), alloc_engine_()
+    : io_service_(new IOService()), port_(port), serverid_(), shutdown_(true),
+      alloc_engine_()
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -374,6 +375,7 @@ bool Dhcpv6Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
@@ -395,7 +397,10 @@ void Dhcpv6Srv::run_one() {
     Pkt6Ptr rsp;
 
     try {
-        uint32_t timeout = 1000;
+        // Set select() timeout to 1s. This value should not be modified
+        // because it is important that the select() returns control
+        // frequently so as the IOService can be polled for ready handlers.
+        uint32_t timeout = 1;
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
         query = receivePacket(timeout);
 

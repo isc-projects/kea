@@ -74,17 +74,15 @@ public:
 
     /// @brief Runs timers for specified time.
     ///
-    /// Internally, this method calls @c IfaceMgr::receive6 to run the
-    /// callbacks for the installed timers.
-    ///
+    /// @param io_service Pointer to the IO service to be ran.
     /// @param timeout_ms Amount of time after which the method returns.
-    void runTimersWithTimeout(const long timeout_ms) {
-        isc::util::Stopwatch stopwatch;
-        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
-            // Block for up to one millisecond waiting for the timers'
-            // callbacks to be executed.
-            IfaceMgr::instancePtr()->receive6(0, 1000);
-        }
+    void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms) {
+        IntervalTimer timer(*io_service);
+        timer.setup([this, &io_service]() {
+            io_service->stop();
+        }, timeout_ms, IntervalTimer::ONE_SHOT);
+        io_service->run();
+        io_service->get_io_service().reset();
     }
 
     static const char* TEST_FILE;
@@ -521,7 +519,7 @@ TEST_F(JSONFileBackendTest, timers) {
 
     // Poll the timers for a while to make sure that each of them is executed
     // at least once.
-    ASSERT_NO_THROW(runTimersWithTimeout(5000));
+    ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 5000));
 
     // Verify that the leases in the database have been processed as expected.
 
