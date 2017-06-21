@@ -10,7 +10,6 @@
 #include <asiolink/unix_domain_socket_acceptor.h>
 #include <asiolink/unix_domain_socket_endpoint.h>
 #include <config/command_mgr.h>
-#include <config/command_socket_factory.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/iface_mgr.h>
@@ -51,6 +50,10 @@ public:
 
     void stop() {
         if (!response_in_progress_) {
+            LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_CLOSED)
+                .arg(socket_->getNative());
+
+            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
             socket_->close();
         }
     }
@@ -105,10 +108,26 @@ void
 Connection::receiveHandler(const boost::system::error_code& ec,
                            size_t bytes_transferred) {
     if (ec) {
+
+        if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL)
+                .arg(ec.value()).arg(socket_->getNative());
+        }
+
+        /// @todo: Should we close the connection, similar to what is already
+        /// being done for bytes_transferred == 0.
+        return;
+
+    } else if (bytes_transferred == 0) {
+        connection_pool_.stop(shared_from_this());
         return;
     }
 
     ConstElementPtr cmd, rsp;
+
+    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ)
+        .arg(bytes_transferred).arg(socket_->getNative());
+
 
     try {
 
@@ -120,6 +139,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
         // If successful, then process it as a command.
         rsp = CommandMgr::instance().processCommand(cmd);
+
     } catch (const Exception& ex) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
         rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
@@ -143,15 +163,22 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         len = 65535;
     }
 
-    // Send the data back over socket.
-    socket_->write(txt.c_str(), len);
+    try {
+        // Send the data back over socket.
+        socket_->write(txt.c_str(), len);
+
+    } catch (const std::exception& ex) {
+        // Response transmission failed. Since the response failed, it doesn't
+        // make sense to send any status codes. Let's log it and be done with
+        // it.
+        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+                  .arg(len).arg(socket_->getNative()).arg(ex.what());
+    }
 
     response_in_progress_ = false;
 
-
-    isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
-
     connection_pool_.stop(shared_from_this());
+
 }
 
 }
@@ -185,7 +212,11 @@ public:
 void
 CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
     socket_name_.clear();
-    
+
+    if(!socket_info) {
+        isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
+    }
+
     ConstElementPtr type = socket_info->get("socket-type");
     if (!type) {
         isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
@@ -209,27 +240,37 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     socket_name_ = name->stringValue();
 
-    acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
-    UnixDomainSocketEndpoint endpoint(socket_name_);
-    acceptor_->open(endpoint);
-    acceptor_->bind(endpoint);
-    acceptor_->listen();
+    try {
+        // Start asynchronous acceptor service.
+        acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
+        UnixDomainSocketEndpoint endpoint(socket_name_);
+        acceptor_->open(endpoint);
+        acceptor_->bind(endpoint);
+        acceptor_->listen();
 
-    doAccept();
+        // Install this socket in Interface Manager.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
 
-    // Install this socket in Interface Manager.
-    isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+        doAccept();
 
+    } catch (const std::exception& ex) {
+        isc_throw(SocketError, ex.what());
+    }
 }
 
 void
 CommandMgrImpl::doAccept() {
+    // Create a socket into which the acceptor will accept new connection.
     socket_.reset(new UnixDomainSocket(*io_service_));
-    acceptor_->asyncAccept(*socket_,
-    [this](const boost::system::error_code& ec) {
+    acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
         if (!ec) {
+            // New connection is arriving. Start asynchronous transmission.
             ConnectionPtr connection(new Connection(socket_, connection_pool_));
             connection_pool_.start(connection);
+        }
+
+        // Unless we're stopping the service, start accepting connections again.
+        if (ec.value() != boost::asio::error::operation_aborted) {
             doAccept();
         }
     });
@@ -245,42 +286,18 @@ CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
 }
 
 void CommandMgr::closeCommandSocket() {
-    impl_->connection_pool_.stopAll();
-
-    if (impl_->acceptor_) {
+    // Close acceptor if the acceptor is open.
+    if (impl_->acceptor_ && impl_->acceptor_->isOpen()) {
         isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
         impl_->acceptor_->close();
         static_cast<void>(::remove(impl_->socket_name_.c_str()));
     }
 
-/*    // Now let's close all existing connections that we may have.
-    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
-         conn != connections_.end(); ++conn) {
-        (*conn)->close();
-    }
-    connections_.clear(); */
-}
-
-
-void CommandMgr::addConnection(const CommandSocketPtr& conn) {
-    connections_.push_back(conn);
-}
-
-bool CommandMgr::closeConnection(int fd) {
-
-    // Let's iterate over all currently registered connections.
-    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
-         conn != connections_.end(); ++conn) {
-
-        // If found, close it.
-        if ((*conn)->getFD() == fd) {
-            (*conn)->close();
-            connections_.erase(conn);
-            return (true);
-        }
-    }
-
-    return (false);
+    // Stop all connections which can be closed. The only connection that won't
+    // be closed is the one over which we have received a request to reconfigure
+    // the server. This connection will be held until the CommandMgr responds to
+    // such request.
+    impl_->connection_pool_.stopAll();
 }
 
 int
@@ -297,106 +314,7 @@ CommandMgr::instance() {
 
 void
 CommandMgr::setIOService(const IOServicePtr& io_service) {
-    closeCommandSocket();
     impl_->io_service_ = io_service;
-}
-
-void
-CommandMgr::commandReader(int sockfd) {
-
-    /// @todo: We do not handle commands that are larger than 64K.
-
-    // We should not expect commands bigger than 64K.
-    char buf[65536];
-    memset(buf, 0, sizeof(buf));
-    ConstElementPtr cmd, rsp;
-
-    // Read incoming data.
-    int rval = read(sockfd, buf, sizeof(buf));
-    if (rval < 0) {
-        // Read failed
-        LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL).arg(rval).arg(sockfd);
-
-        /// @todo: Should we close the connection, similar to what is already
-        /// being done for rval == 0?
-        return;
-    } else if (rval == 0) {
-
-        // Remove it from the active connections list.
-        instance().closeConnection(sockfd);
-
-        return;
-    }
-
-    // Duplicate the connection's socket in the event, the command causes the
-    // channel to close (like a reconfig).  This permits us to always have
-    // a socket on which to respond. If for some reason  we can't fall back
-    // to the connection socket.
-    int rsp_fd = dup(sockfd);
-    if (rsp_fd < 0 ) {
-        // Highly unlikely
-        const char* errmsg = strerror(errno);
-        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_DUP_WARN)
-                  .arg(errmsg);
-        rsp_fd = sockfd;
-    }
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ).arg(rval).arg(sockfd);
-
-    // Ok, we received something. Let's see if we can make any sense of it.
-    try {
-
-        // Try to interpret it as JSON.
-        std::string sbuf(buf, static_cast<size_t>(rval));
-        cmd = Element::fromJSON(sbuf, true);
-
-        // If successful, then process it as a command.
-        rsp = CommandMgr::instance().processCommand(cmd);
-    } catch (const Exception& ex) {
-        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
-        rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
-    }
-
-    if (!rsp) {
-        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
-        // Only close the duped socket if it's different (should be)
-        if (rsp_fd != sockfd) {
-            close(rsp_fd);
-        }
-
-        return;
-    }
-
-    // Let's convert JSON response to text. Note that at this stage
-    // the rsp pointer is always set.
-    std::string txt = rsp->str();
-    size_t len = txt.length();
-    if (len > 65535) {
-        // Hmm, our response is too large. Let's send the first
-        // 64KB and hope for the best.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
-
-        len = 65535;
-    }
-
-    // Send the data back over socket.
-    rval = write(rsp_fd, txt.c_str(), len);
-    int saverr = errno;
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE).arg(len).arg(sockfd);
-
-    if (rval < 0) {
-        // Response transmission failed. Since the response failed, it doesn't
-        // make sense to send any status codes. Let's log it and be done with
-        // it.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
-                  .arg(len).arg(sockfd).arg(strerror(saverr));
-    }
-
-    // Only close the duped socket if it's different (should be)
-    if (rsp_fd != sockfd) {
-        close(rsp_fd);
-    }
 }
 
 }; // end of isc::config

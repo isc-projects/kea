@@ -17,13 +17,21 @@
 namespace isc {
 namespace asiolink {
 
+/// @brief Base class for acceptor services in Kea.
+///
+/// This is a wrapper class for ASIO acceptor service. Classes implementing
+/// services for specific protocol types should derive from this class.
+///
+/// @tparam ProtocolType ASIO protocol type, e.g. stream_protocol
+/// @tparam CallbackType Callback function type which should have the following
+/// signature: @c void(const boost::system::error_code&).
 template<typename ProtocolType, typename CallbackType>
 class IOAcceptor : public IOSocket {
 public:
 
     /// @brief Constructor.
     ///
-    /// @param io_service IO service.
+    /// @param io_service Reference to the IO service.
     explicit IOAcceptor(IOService& io_service)
         : IOSocket(),
           acceptor_(new typename ProtocolType::acceptor(io_service.get_io_service())) {
@@ -39,8 +47,10 @@ public:
 
     /// @brief Opens acceptor socket given the endpoint.
     ///
-    /// @param endpoint Reference to the endpoint object which specifies the
-    /// address and port on which the acceptor service will run.
+    /// @param endpoint Reference to the endpoint object defining local
+    /// acceptor endpoint.
+    ///
+    /// @tparam EndpointType Endpoint type.
     template<typename EndpointType>
     void open(const EndpointType& endpoint) {
         acceptor_->open(endpoint.getASIOEndpoint().protocol());
@@ -48,8 +58,10 @@ public:
 
     /// @brief Binds socket to an endpoint.
     ///
-    /// @param endpoint Reference to an endpoint to which the socket is to
-    /// be bound.
+    /// @param endpoint Reference to the endpoint object defining local
+    /// acceptor endpoint.
+    ///
+    /// @tparam EndpointType Endpoint type.
     template<typename EndpointType>
     void bind(const EndpointType& endpoint) {
         acceptor_->bind(endpoint.getASIOEndpoint());
@@ -66,15 +78,9 @@ public:
         acceptor_->set_option(socket_option);
     }
 
-    /// @brief Starts listening for the new connections.
+    /// @brief Starts listening new connections.
     void listen() {
         acceptor_->listen();
-    }
-
-    template<template<typename> class SocketType, typename SocketCallback>
-    void asyncAccept(const SocketType<SocketCallback>& socket,
-                     const CallbackType& callback) {
-        acceptor_->async_accept(socket.getASIOSocket(), callback);
     }
 
     /// @brief Checks if the acceptor is open.
@@ -94,15 +100,17 @@ protected:
     /// @brief Asynchronously accept new connection.
     ///
     /// This method accepts new connection into the specified socket. When the
-    /// new connection arrives or an error occurs the specified callback function
-    /// is invoked.
+    /// new connection arrives or an error occurs the specified callback
+    /// function is invoked.
     ///
     /// @param socket Socket into which connection should be accepted.
     /// @param callback Callback function to be invoked when the new connection
     /// arrives.
-    /// @tparam SocketType
+    /// @tparam SocketType Socket type, e.g. @ref UnixDomainSocket. It must
+    /// implement @c getASIOSocket method.
     template<typename SocketType>
-    void asyncAcceptInternal(const SocketType& socket, const CallbackType& callback) {
+    void asyncAcceptInternal(const SocketType& socket,
+                             const CallbackType& callback) {
         acceptor_->async_accept(socket.getASIOSocket(), callback);
     }
 

@@ -16,13 +16,20 @@
 namespace isc {
 namespace asiolink {
 
+/// @brief Endpoint for @ref UnixDomainSocket.
+///
+/// This is a simple class encapsulating ASIO unix domain socket.
 class UnixDomainSocketEndpoint {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// @param endpoint_path Path to the socket descriptor.
     explicit UnixDomainSocketEndpoint(const std::string& endpoint_path)
         : endpoint_(endpoint_path) {
     }
 
+    /// @brief Returns underlying ASIO endpoint.
     const boost::asio::local::stream_protocol::endpoint&
     getASIOEndpoint() const {
         return (endpoint_);
@@ -30,11 +37,12 @@ public:
 
 private:
 
+    /// @brief Underlying ASIO endpoint.
     boost::asio::local::stream_protocol::endpoint endpoint_;
 
 };
 
-}
-}
+} // end of namespace isc::asiolink
+} // end of namespace isc
 
 #endif // UNIX_DOMAIN_SOCKET_ENDPOINT_H

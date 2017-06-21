@@ -10,13 +10,27 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/hooked_command_mgr.h>
-#include <config/command_socket.h>
+#include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <list>
 
 namespace isc {
 namespace config {
+
+/// @brief An exception indicating that specified socket parameters are invalid
+class BadSocketInfo : public Exception {
+public:
+    BadSocketInfo(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief An exception indicating a problem with socket operation
+class SocketError : public Exception {
+public:
+    SocketError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 class CommandMgrImpl;
 
@@ -56,29 +70,6 @@ public:
     /// @brief Shuts down any open control sockets
     void closeCommandSocket();
 
-    /// @brief Reads data from a socket, parses as JSON command and processes it
-    ///
-    /// This method is used to handle traffic on connected socket. This callback
-    /// is installed by the @c isc::config::UnixCommandSocket::receiveHandler
-    /// (located in the src/lib/config/command_socket_factory.cc)
-    /// once the incoming connection is accepted. If end-of-file is detected, this
-    /// method will close the socket and will uninstall itself from
-    /// @ref isc::dhcp::IfaceMgr.
-    ///
-    /// @param sockfd socket descriptor of a connected socket
-    static void commandReader(int sockfd);
-
-    /// @brief Adds an information about opened connection socket
-    ///
-    /// @param conn Connection socket to be stored
-    void addConnection(const CommandSocketPtr& conn);
-
-    /// @brief Closes connection with a specific socket descriptor
-    ///
-    /// @param fd socket descriptor
-    /// @return true if closed successfully, false if not found
-    bool closeConnection(int fd);
-
     /// @brief Returns control socket descriptor
     ///
     /// This method should be used only in tests.
@@ -87,23 +78,10 @@ public:
 private:
 
     /// @brief Private constructor
-    ///
-    /// Registers internal 'list-commands' command.
     CommandMgr();
 
+    /// @brief Pointer to the implementation of the @ref CommandMgr.
     boost::shared_ptr<CommandMgrImpl> impl_;
-
-    /// @brief Control socket structure
-    ///
-    /// This is the socket that accepts incoming connections. There can be at
-    /// most one (if command channel is configured).
-    CommandSocketPtr socket_;
-
-    /// @brief Sockets for open connections
-    ///
-    /// These are the sockets that are dedicated to handle a specific connection.
-    /// Their number is equal to number of current control connections.
-    std::list<CommandSocketPtr> connections_;
 };
 
 }; // end of isc::config namespace

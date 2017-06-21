@@ -593,7 +593,10 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     }
     server_ = this; // remember this instance for later use in handlers
 
+    // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv4 server.
