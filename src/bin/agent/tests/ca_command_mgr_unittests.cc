@@ -154,17 +154,16 @@ public:
 
     /// @brief Adds configuration of the control socket.
     ///
-    /// @param server_type Server type for which socket configuration is to
-    /// be added.
+    /// @param service Service for which socket configuration is to be added.
     void
-    configureControlSocket(const CtrlAgentCfgContext::ServerType& server_type) {
+    configureControlSocket(const std::string& service) {
         CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
         ASSERT_TRUE(ctx);
 
         ElementPtr control_socket = Element::createMap();
         control_socket->set("socket-name",
                             Element::create(unixSocketFilePath()));
-        ctx->setControlSocketInfo(control_socket, server_type);
+        ctx->setControlSocketInfo(control_socket, service);
     }
 
     /// @brief Create and bind server side socket.
@@ -216,7 +215,7 @@ public:
     /// server socket after which the IO service should be stopped.
     /// @param expected_responses Number of responses after which the test finishes.
     /// @param server_response Stub response to be sent by the server.
-    void testForward(const CtrlAgentCfgContext::ServerType& server_type,
+    void testForward(const std::string& configured_service,
                      const std::string& service,
                      const int expected_result0,
                      const int expected_result1 = -1,
@@ -224,7 +223,7 @@ public:
                      const size_t expected_responses = 1,
                      const std::string& server_response = "{ \"result\": 0 }") {
         // Configure client side socket.
-        configureControlSocket(server_type);
+        configureControlSocket(configured_service);
         // Create server side socket.
         bindServerSocket(server_response, true);
 
@@ -283,37 +282,33 @@ TEST_F(CtrlAgentCommandMgrTest, listCommands) {
 
 /// Check that control command is successfully forwarded to the DHCPv4 server.
 TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv4Server) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP4, "dhcp4",
-                isc::config::CONTROL_RESULT_SUCCESS);
+    testForward("dhcp4", "dhcp4", isc::config::CONTROL_RESULT_SUCCESS);
 }
 
 /// Check that control command is successfully forwarded to the DHCPv6 server.
 TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv6Server) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
-                isc::config::CONTROL_RESULT_SUCCESS);
+    testForward("dhcp6", "dhcp6", isc::config::CONTROL_RESULT_SUCCESS);
 }
 
 /// Check that the same command is forwarded to multiple servers.
 TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
-    configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP6);
+    configureControlSocket("dhcp6");
 
-    testForward(CtrlAgentCfgContext::TYPE_DHCP4, "dhcp4,dhcp6",
-                isc::config::CONTROL_RESULT_SUCCESS,
-                isc::config::CONTROL_RESULT_SUCCESS,
-                -1, 2);
+    testForward("dhcp4", "dhcp4,dhcp6", isc::config::CONTROL_RESULT_SUCCESS,
+                isc::config::CONTROL_RESULT_SUCCESS, -1, 2);
 }
 
 /// Check that the command may forwarded to the second server even if
 /// forwarding to a first server fails.
 TEST_F(CtrlAgentCommandMgrTest, failForwardToServer) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp4,dhcp6",
+    testForward("dhcp6", "dhcp4,dhcp6",
                 isc::config::CONTROL_RESULT_ERROR,
                 isc::config::CONTROL_RESULT_SUCCESS);
 }
 
 /// Check that control command is not forwarded if the service is not specified.
 TEST_F(CtrlAgentCommandMgrTest, noService) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "",
+    testForward("dhcp6", "",
                 isc::config::CONTROL_RESULT_COMMAND_UNSUPPORTED,
                 -1, -1, 0);
 }
@@ -321,7 +316,7 @@ TEST_F(CtrlAgentCommandMgrTest, noService) {
 /// Check that error is returned to the client when the server to which the
 /// command was forwarded sent an invalid message.
 TEST_F(CtrlAgentCommandMgrTest, invalidAnswer) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
+    testForward("dhcp6", "dhcp6",
                 isc::config::CONTROL_RESULT_ERROR, -1, -1, 1,
                 "{ \"result\": }");
 }
@@ -351,7 +346,7 @@ TEST_F(CtrlAgentCommandMgrTest, noClientSocket) {
 /// Check that error is returned to the client if the remote server to
 /// which the control command is to be forwarded is not available.
 TEST_F(CtrlAgentCommandMgrTest, noServerSocket) {
-    configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP6);
+    configureControlSocket("dhcp6");
 
     ConstElementPtr command = createCommand("foo", "dhcp6");
     ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
@@ -364,7 +359,7 @@ TEST_F(CtrlAgentCommandMgrTest, noServerSocket) {
 // value is specified.
 TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // Configure client side socket.
-    configureControlSocket(CtrlAgentCfgContext::TYPE_DHCP4);
+    configureControlSocket("dhcp4");
     // Create server side socket.
     bindServerSocket("{ \"result\" : 3 }", true);
 

@@ -171,21 +171,10 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                   " Control Agent configuration information");
     }
 
-    // Convert the service to the server type values. Make sure the client
-    // provided right value.
-    CtrlAgentCfgContext::ServerType server_type;
-    try {
-        server_type = CtrlAgentCfgContext::toServerType(service);
-
-    } catch (const std::exception& ex) {
-        // Invalid value in service list. Can't proceed.
-        isc_throw(CommandForwardingError, ex.what());
-    }
-
     // Now that we know what service it should be forwarded to, we should
     // find a matching forwarding socket. If this socket is not configured,
     // we have to communicate it to the client.
-    ConstElementPtr socket_info = ctx->getControlSocketInfo(server_type);
+    ConstElementPtr socket_info = ctx->getControlSocketInfo(service);
     if (!socket_info) {
         isc_throw(CommandForwardingError, "forwarding socket is not configured"
                   " for the server type " << service);

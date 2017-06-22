@@ -29,11 +29,11 @@ const char* valid_agent_config =
     "  \"http-host\": \"127.0.0.1\","
     "  \"http-port\": 8081,"
     "  \"control-sockets\": {"
-    "    \"dhcp4-server\": {"
+    "    \"dhcp4\": {"
     "      \"socket-type\": \"unix\","
     "      \"socket-name\": \"/first/dhcp4/socket\""
     "    },"
-    "    \"dhcp6-server\": {"
+    "    \"dhcp6\": {"
     "      \"socket-type\": \"unix\","
     "      \"socket-name\": \"/first/dhcp6/socket\""
     "    }"
@@ -79,14 +79,14 @@ public:
     /// @brief Tests that socket info structure contains 'unix' socket-type
     /// value and the expected socket-name.
     ///
-    /// @param type Server type.
+    /// @param service Service type.
     /// @param exp_socket_name Expected socket name.
-    void testUnixSocketInfo(const CtrlAgentCfgContext::ServerType& type,
+    void testUnixSocketInfo(const std::string& service,
                             const std::string& exp_socket_name) {
         CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
         ASSERT_TRUE(ctx);
 
-        ConstElementPtr sock_info = ctx->getControlSocketInfo(type);
+        ConstElementPtr sock_info = ctx->getControlSocketInfo(service);
         ASSERT_TRUE(sock_info);
         ASSERT_TRUE(sock_info->contains("socket-type"));
         EXPECT_EQ("unix", sock_info->get("socket-type")->stringValue());
@@ -276,11 +276,11 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
         "  \"http-host\": \"127.0.0.1\","
         "  \"http-port\": 8080,"
         "  \"control-sockets\": {"
-        "    \"dhcp4-server\": {"
+        "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp4/socket\""
         "    },"
-        "    \"dhcp6-server\": {"
+        "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp6/socket\""
         "    }"
@@ -304,8 +304,8 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     EXPECT_EQ(8080, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated too.
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/second/dhcp4/socket");
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/second/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
@@ -330,11 +330,11 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
         "  \"http-host\": \"1.1.1.1\","
         "  \"http-port\": 1,"
         "  \"control-sockets\": {"
-        "    \"dhcp4-server\": {"
+        "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp4/socket\""
         "    },"
-        "    \"dhcp6-server\": {"
+        "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp6/socket\""
         "    }"
@@ -359,8 +359,8 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
     EXPECT_EQ(8081, ctx->getHttpPort());
 
     // Same for forwarding.
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/first/dhcp4/socket");
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/first/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
@@ -384,11 +384,11 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         "  \"http-host\": \"127.0.0.1\","
         "  \"http-port\": 8081,"
         "  \"control-sockets\": {"
-        "    \"dhcp4-server\": {"
+        "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp4/socket\""
         "    },"
-        "    \"dhcp6-server\": {"
+        "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
         "      \"socket-name\": \"/second/dhcp6/socket\""
         "    }"
@@ -412,8 +412,8 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     EXPECT_EQ(8081, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated.
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4, "/second/dhcp4/socket");
-    testUnixSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6, "/second/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
