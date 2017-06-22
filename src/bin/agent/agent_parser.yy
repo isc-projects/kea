@@ -53,9 +53,9 @@ using namespace std;
   HTTP_PORT "http-port"
 
   CONTROL_SOCKETS "control-sockets"
-  DHCP4_SERVER "dhcp4-server"
-  DHCP6_SERVER "dhcp6-server"
-  D2_SERVER "d2-server"
+  DHCP4_SERVER "dhcp4"
+  DHCP6_SERVER "dhcp6"
+  D2_SERVER "d2"
   SOCKET_NAME "socket-name"
   SOCKET_TYPE "socket-type"
   UNIX "unix"
@@ -362,10 +362,10 @@ control_socket: dhcp4_server_socket
               | unknown_map_entry
               ;
 
-// That's an entry for dhcp4-server socket.
+// That's an entry for dhcp4 socket.
 dhcp4_server_socket: DHCP4_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("dhcp4-server", m);
+    ctx.stack_.back()->set("dhcp4", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
@@ -373,10 +373,10 @@ dhcp4_server_socket: DHCP4_SERVER {
     ctx.leave();
 };
 
-// That's an entry for dhcp6-server socket.
+// That's an entry for dhcp6 socket.
 dhcp6_server_socket: DHCP6_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("dhcp6-server", m);
+    ctx.stack_.back()->set("dhcp6", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
@@ -384,10 +384,10 @@ dhcp6_server_socket: DHCP6_SERVER {
     ctx.leave();
 };
 
-// That's an entry for d2-server socket.
+// That's an entry for d2 socket.
 d2_server_socket: D2_SERVER {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("d2-server", m);
+    ctx.stack_.back()->set("d2", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {

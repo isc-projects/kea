@@ -19,14 +19,14 @@
 	"control-sockets":
 	{
 	    // This is how the Agent can communicate with the DHCPv4 server.
-	    "dhcp4-server":
+	    "dhcp4":
 	    {
 		"socket-type": "unix",
 		"socket-name": "/path/to/the/unix/socket-v4"
 	    },
 
 	    // Location of the DHCPv6 command channel socket.
-	    "dhcp6-server":
+	    "dhcp6":
 	    {
 		"socket-type": "unix",
 		"socket-name": "/path/to/the/unix/socket-v6"
@@ -35,7 +35,7 @@
 	    // Currently DHCP-DDNS (nicknamed D2) does not support
 	    // command channel yet, but we hope this will change in the
 	    // future.
-	    "d2-server":
+	    "d2":
 	    {
 		"socket-type": "unix",
 		"socket-name": "/path/to/the/unix/socket-d2"

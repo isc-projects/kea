@@ -24,30 +24,9 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
-    : DCfgContextBase(),http_host_(orig.http_host_), http_port_(orig.http_port_),
+    : DCfgContextBase(), ctrl_sockets_(orig.ctrl_sockets_),
+      http_host_(orig.http_host_), http_port_(orig.http_port_),
       hooks_config_(orig.hooks_config_) {
-
-    // We're copying pointers here only. The underlying data will be shared by
-    // old and new context. That's how shared pointers work and I see no reason
-    // why it would be different in this particular here.
-    ctrl_sockets_[TYPE_D2] = orig.ctrl_sockets_[TYPE_D2];
-    ctrl_sockets_[TYPE_DHCP4] = orig.ctrl_sockets_[TYPE_DHCP4];
-    ctrl_sockets_[TYPE_DHCP6] = orig.ctrl_sockets_[TYPE_DHCP6];
-}
-
-CtrlAgentCfgContext::ServerType
-CtrlAgentCfgContext::toServerType(const std::string& service) {
-    if (service == "dhcp4") {
-        return (CtrlAgentCfgContext::TYPE_DHCP4);
-
-    } else if (service == "dhcp6") {
-        return (CtrlAgentCfgContext::TYPE_DHCP6);
-
-    } else if (service == "d2") {
-        return (CtrlAgentCfgContext::TYPE_D2);
-    }
-
-    isc_throw(isc::BadValue, "invalid service value " << service);
 }
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
@@ -68,25 +47,7 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
       << ctx->getHttpPort() << ", control sockets: ";
 
     // Then print the control-sockets
-    bool socks = false;
-    if (ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_D2)) {
-        s << "d2 ";
-        socks = true;
-    }
-    if (ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP4)) {
-        s << "dhcp4 ";
-        socks = true;
-    }
-    if (ctx->getControlSocketInfo(CtrlAgentCfgContext::TYPE_DHCP6)) {
-        s << "dhcp6 ";
-        socks = true;
-    }
-    if (!socks) {
-        // That's uncommon, but correct scenario. CA can respond to some
-        // commands on its own. Further down the road we will possibly get the
-        // capability to tell CA to start other servers.
-        s << "none";
-    }
+    s << ctx->getControlSocketInfoSummary();
 
     // Finally, print the hook libraries names
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
@@ -156,21 +117,33 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
     return (answer);
 }
 
-const data::ConstElementPtr
-CtrlAgentCfgContext::getControlSocketInfo(ServerType type) const {
-    if (type > MAX_TYPE_SUPPORTED) {
-        isc_throw(BadValue, "Invalid server type");
-    }
-    return (ctrl_sockets_[static_cast<uint8_t>(type)]);
+data::ConstElementPtr
+CtrlAgentCfgContext::getControlSocketInfo(const std::string& service) const {
+    auto si = ctrl_sockets_.find(service);
+    return ((si != ctrl_sockets_.end()) ? si->second : ConstElementPtr());
 }
 
 void
 CtrlAgentCfgContext::setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
-                                          ServerType type) {
-    if (type > MAX_TYPE_SUPPORTED) {
-        isc_throw(BadValue, "Invalid server type");
+                                          const std::string& service) {
+    ctrl_sockets_[service] = control_socket;
+}
+
+std::string
+CtrlAgentCfgContext::getControlSocketInfoSummary() const {
+    std::ostringstream s;
+    for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.end(); ++si) {
+        if (s.tellp() != 0) {
+            s << " ";
+        }
+        s << si->first;
     }
-    ctrl_sockets_[static_cast<uint8_t>(type)] = control_socket;
+
+    if (s.tellp() == 0) {
+        s << "none";
+    }
+
+    return (s.str());
 }
 
 ElementPtr
@@ -184,17 +157,8 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
-    // Set dhcp4-server
-    if (ctrl_sockets_[TYPE_DHCP4]) {
-        control_sockets->set("dhcp4-server", ctrl_sockets_[TYPE_DHCP4]);
-    }
-    // Set dhcp6-server
-    if (ctrl_sockets_[TYPE_DHCP6]) {
-        control_sockets->set("dhcp6-server", ctrl_sockets_[TYPE_DHCP6]);
-    }
-    // Set d2-server
-    if (ctrl_sockets_[TYPE_D2]) {
-        control_sockets->set("d2-server", ctrl_sockets_[TYPE_D2]);
+    for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.cend(); ++si) {
+        control_sockets->set(si->first, si->second);
     }
     ca->set("control-sockets", control_sockets);
     // Set Control-agent

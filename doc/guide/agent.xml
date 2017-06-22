@@ -65,11 +65,11 @@
         "http-port": 8080,
 
         "control-sockets": {
-            "dhcp4-server": {
+            "dhcp4": {
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             },
-            "dhcp6-server": {
+            "dhcp6": {
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             }
@@ -128,8 +128,8 @@
 
     <para>
       The CA uses unix domain sockets to forward control commands and receive
-      responses from other Kea services. The <command>dhcp4-server</command>,
-      <command>dhcp6-server</command> and <command>d2-server</command> maps
+      responses from other Kea services. The <command>dhcp4</command>,
+      <command>dhcp6</command> and <command>d2</command> maps
       specify the files to which unix domain sockets are bound. In case
       of the configuration above, the CA will connect to the DHCPv4 server
       via <filename>/path/to/the/unix/socket-v4</filename> to forward the
@@ -140,6 +140,21 @@
       <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
       configuration is specified for the DHCPv4 and DHCPv6 services.
     </para>
+
+    <warning>
+      <simpara>
+        We have renamed "dhcp4-server", "dhcp6-server" and "d2-server"
+        to "dhcp4", "dhcp6" and "d2" respectively after release of Kea 1.2.
+        If you are migrating from Kea 1.2 you need to tweak your CA config
+        to use this new naming convention. We have made this incompatible
+        change to facilitate future use cases where it will be possible to
+        specify additional values of the "service" parameter to point to
+        the particular instances of the Kea servers, e.g. "dhcp4/3"
+        pointing to the 3rd instance of the DHCPv4 server in the
+        multi-processed configuration. This is not yet supported but the
+        current renaming lays the ground for it.
+      </simpara>
+    </warning>
 
     <para>
       Hooks libraries can be attached to the Control Agent just like to

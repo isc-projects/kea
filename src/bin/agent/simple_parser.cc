@@ -58,17 +58,17 @@ size_t AgentSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) {
     // Now set the defaults for control-sockets, if any.
     ConstElementPtr sockets = global->get("control-sockets");
     if (sockets) {
-        ElementPtr d2 = boost::const_pointer_cast<Element>(sockets->get("d2-server"));
+        ElementPtr d2 = boost::const_pointer_cast<Element>(sockets->get("d2"));
         if (d2) {
             cnt += SimpleParser::setDefaults(d2, SOCKET_DEFAULTS);
         }
 
-        ElementPtr d4 = boost::const_pointer_cast<Element>(sockets->get("dhcp4-server"));
+        ElementPtr d4 = boost::const_pointer_cast<Element>(sockets->get("dhcp4"));
         if (d4) {
             cnt += SimpleParser::setDefaults(d4, SOCKET_DEFAULTS);
         }
 
-        ElementPtr d6 = boost::const_pointer_cast<Element>(sockets->get("dhcp6-server"));
+        ElementPtr d6 = boost::const_pointer_cast<Element>(sockets->get("dhcp6"));
         if (d6) {
             cnt += SimpleParser::setDefaults(d6, SOCKET_DEFAULTS);
         }
@@ -89,20 +89,9 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are second.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        ConstElementPtr d2_socket = ctrl_sockets->get("d2-server");
-        ConstElementPtr d4_socket = ctrl_sockets->get("dhcp4-server");
-        ConstElementPtr d6_socket = ctrl_sockets->get("dhcp6-server");
-
-        if (d2_socket) {
-            ctx->setControlSocketInfo(d2_socket, CtrlAgentCfgContext::TYPE_D2);
-        }
-
-        if (d4_socket) {
-            ctx->setControlSocketInfo(d4_socket, CtrlAgentCfgContext::TYPE_DHCP4);
-        }
-
-        if (d6_socket) {
-            ctx->setControlSocketInfo(d6_socket, CtrlAgentCfgContext::TYPE_DHCP6);
+        auto sockets_map = ctrl_sockets->mapValue();
+        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
+            ctx->setControlSocketInfo(cs->second, cs->first);
         }
     }
 
