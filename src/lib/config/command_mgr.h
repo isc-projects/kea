@@ -49,6 +49,8 @@ public:
 
     /// @brief Sets IO service to be used by the command manager.
     ///
+    /// The server should use this method to provide the Command Manager with the
+    /// common IO service used by the server.
     /// @param io_service Pointer to the IO service.
     void setIOService(const asiolink::IOServicePtr& io_service);
 
@@ -57,13 +59,10 @@ public:
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)
     ///
-    /// This method will close previously open command socket (if exists).
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
     ///
-    /// @throw CommandSocketError if socket creation fails.
-    /// @throw SocketError if command socket is already open.
-    ///
-    /// @param socket_info describes control socket parameters
-    /// @return object representing a socket
+    /// @param socket_info Configuration information for the control socket.
     void
     openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
