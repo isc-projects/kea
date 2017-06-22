@@ -1088,4 +1088,51 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
     ::remove("test8.json");
 }
 
+// Verify that server returns an error if more than one connection is established.
+TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
+    createUnixChannelServer();
+
+    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
+    ASSERT_TRUE(client1);
+
+    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
+    ASSERT_TRUE(client1);
+
+    // Client 1 connects.
+    ASSERT_TRUE(client1->connectToServer(socket_path_));
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    // Client 2 connects.
+    ASSERT_TRUE(client2->connectToServer(socket_path_));
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    // Send the command while another client is connected.
+    ASSERT_TRUE(client2->sendCommand("{ \"command\": \"list-commands\" }"));
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    // The server should not allow for concurrent connections and should send
+    // out an error message.
+    std::string response;
+    ASSERT_TRUE(client2->getResponse(response));
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"exceeded maximum number of concurrent"
+              " connections\" }", response);
+
+    // Now disconnect the first server and retry.
+    client1->disconnectFromServer();
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    ASSERT_TRUE(client2->connectToServer(socket_path_));
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    ASSERT_TRUE(client2->sendCommand("{ \"command\": \"list-commands\" }"));
+    ASSERT_NO_THROW(getIOService()->poll());
+
+    // The server should now respond ok.
+    ASSERT_TRUE(client2->getResponse(response));
+    EXPECT_TRUE(response.find("\"result\": 0") != std::string::npos);
+
+    client2->disconnectFromServer();
+}
+
+
 } // End of anonymous namespace

@@ -97,6 +97,10 @@ public:
         connections_.clear();
     }
 
+    size_t getConnectionsNum() const {
+        return (connections_.size());
+    }
+
 private:
 
     std::set<ConnectionPtr> connections_;
@@ -109,7 +113,14 @@ Connection::receiveHandler(const boost::system::error_code& ec,
                            size_t bytes_transferred) {
     if (ec) {
 
-        if (ec.value() != boost::asio::error::operation_aborted) {
+        if (ec.value() == boost::asio::error::eof) {
+            // Foreign host has closed the connection. We should remove it from the
+            // connection pool.
+            LOG_INFO(command_logger, COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST)
+                .arg(socket_->getNative());
+            connection_pool_.stop(shared_from_this());
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
             LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL)
                 .arg(ec.value()).arg(socket_->getNative());
         }
@@ -137,8 +148,13 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         std::string sbuf(&buf_[0], bytes_transferred);
         cmd = Element::fromJSON(sbuf, true);
 
-        // If successful, then process it as a command.
-        rsp = CommandMgr::instance().processCommand(cmd);
+        if (connection_pool_.getConnectionsNum() > 1) {
+            rsp = createAnswer(CONTROL_RESULT_ERROR, "exceeded maximum number of concurrent"
+                               " connections");
+        } else {
+            // If successful, then process it as a command.
+            rsp = CommandMgr::instance().processCommand(cmd);
+        }
 
     } catch (const Exception& ex) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
