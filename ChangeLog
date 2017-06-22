@@ -1,3 +1,9 @@
+1262.	[func]*		marcin
+	Renamed "dhcp4-server", "dhcp6-server" and "d2-server" parameters
+	of the Control Agent configuration to "dhcp4", "dhcp6" and "d2"
+	respectively.
+	(Trac #5190, git fc67885022115df76425c6901959cedee63a93b9)
+
 1261.	[bug]		marcin
 	Eliminated valgrind errors in libkea-http.
 	(Trac #5261, git 34addef4a654665c6022f0269d51970c72431ac2)
