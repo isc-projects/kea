@@ -1088,7 +1088,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
     ::remove("test8.json");
 }
 
-// Verify that server returns an error if more than one connection is established.
+/// Verify that concurrent connections over the control channel can be
+///  established.
+/// @todo Future Kea 1.3 tickets will modify the behavior of the CommandMgr
+/// such that the server will be able to send response in multiple chunks.
+/// This test will need to be extended. For now, the receive and write
+/// operations are atomic and there is no conflict between concurrent
+/// connections.
 TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     createUnixChannelServer();
 
@@ -1110,28 +1116,15 @@ TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     ASSERT_TRUE(client2->sendCommand("{ \"command\": \"list-commands\" }"));
     ASSERT_NO_THROW(getIOService()->poll());
 
-    // The server should not allow for concurrent connections and should send
-    // out an error message.
     std::string response;
-    ASSERT_TRUE(client2->getResponse(response));
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"exceeded maximum number of concurrent"
-              " connections\" }", response);
-
-    // Now disconnect the first server and retry.
-    client1->disconnectFromServer();
-    ASSERT_NO_THROW(getIOService()->poll());
-
-    ASSERT_TRUE(client2->connectToServer(socket_path_));
-    ASSERT_NO_THROW(getIOService()->poll());
-
-    ASSERT_TRUE(client2->sendCommand("{ \"command\": \"list-commands\" }"));
-    ASSERT_NO_THROW(getIOService()->poll());
-
-    // The server should now respond ok.
+    // The server should respond ok.
     ASSERT_TRUE(client2->getResponse(response));
     EXPECT_TRUE(response.find("\"result\": 0") != std::string::npos);
 
+    // Disconnect the servers.
+    client1->disconnectFromServer();
     client2->disconnectFromServer();
+    ASSERT_NO_THROW(getIOService()->poll());
 }
 
 
