@@ -328,7 +328,7 @@ TEST_F(CtrlAgentCommandMgrTest, invalidAnswer) {
 /// timeout value. It is hardcoded to 5 sec, which is too long for the
 /// unit test to run.
 TEST_F(CtrlAgentCommandMgrTest, DISABLED_connectionTimeout) {
-    testForward(CtrlAgentCfgContext::TYPE_DHCP6, "dhcp6",
+    testForward("dhcp6", "dhcp6",
                 isc::config::CONTROL_RESULT_ERROR, -1, -1, 1,
                 "{ \"result\": 0");
 }
