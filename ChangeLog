@@ -1,3 +1,7 @@
+1261.	[bug]		marcin
+	Eliminated valgrind errors in libkea-http.
+	(Trac #5261, git 34addef4a654665c6022f0269d51970c72431ac2)
+
 1260.	[bug]		fdupont
 	Corrected logic in prefix delegation that was causing multiple
 	entries to be written to the lease file when renewing or rebinding
