@@ -484,7 +484,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:21:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<wire>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -630,7 +630,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
               "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter "
-              "is missing for a subnet being configured (<string>:21:17)\" }",
+              "is missing for a subnet being configured (<wire>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -737,7 +737,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
 
     sendUnixCommand("utter nonsense", response);
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"error: unexpected character u in <string>:1:2\" }",
+              "\"text\": \"invalid first character u : "
+              "current state: [ 12 RECEIVE_START_ST ] next event: [ 1 START_EVT ]\" }",
               response);
 }
 

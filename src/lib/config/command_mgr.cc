@@ -12,6 +12,7 @@
 #include <config/command_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <cc/json_feed.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>
@@ -42,24 +43,13 @@ public:
     /// a transmission over the control socket is received.
     Connection(const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool)
-        : socket_(socket), connection_pool_(connection_pool),
-          response_in_progress_(false) {
+        : socket_(socket), buf_(), response_(), connection_pool_(connection_pool),
+          feed_(), response_in_progress_(false) {
         // Callback value of 0 is used to indicate that callback function is
         // not installed.
         isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
-    }
-
-    /// @brief Start asynchronous read over the unix domain socket.
-    ///
-    /// This method doesn't block. Once the transmission is received over the
-    /// socket, the @c Connection::receiveHandler callback is invoked to
-    /// process received data.
-    void start() {
-        socket_->asyncReceive(&buf_[0], sizeof(buf_),
-                              boost::bind(&Connection::receiveHandler,
-                                          shared_from_this(), _1, _2));
-
-
+        // Initialize state model for receiving and preparsing commands.
+        feed_.initModel();
     }
 
     /// @brief Close current connection.
@@ -78,6 +68,29 @@ public:
         }
     }
 
+    /// @brief Start asynchronous read over the unix domain socket.
+    ///
+    /// This method doesn't block. Once the transmission is received over the
+    /// socket, the @c Connection::receiveHandler callback is invoked to
+    /// process received data.
+    void doReceive() {
+        socket_->asyncReceive(&buf_[0], sizeof(buf_),
+                              boost::bind(&Connection::receiveHandler,
+                                          shared_from_this(), _1, _2));
+
+
+    }
+
+    /// @brief Starts asynchronous send over the unix domain socket.
+    ///
+    /// This method doesn't block. Once the send operation is completed, the
+    /// @c Connection::sendHandler cllback is invoked.
+    void doSend() {
+        size_t chunk_size = response_.size() < 8192 ? response_.size() : 8192;
+        socket_->asyncSend(&response_[0], chunk_size,
+           boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+    }
+
     /// @brief Handler invoked when the data is received over the control
     /// socket.
     ///
@@ -86,6 +99,13 @@ public:
     void receiveHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred);
 
+
+    /// @brief Handler invoked when the data is sent over the control socket.
+    ///
+    /// @param ec Error code.
+    /// @param bytes_transferred Number of bytes sent.
+    void sendHandler(const boost::system::error_code& ec,
+                     size_t bytes_trasferred);
 private:
 
     /// @brief Pointer to the socket used for transmission.
@@ -94,8 +114,15 @@ private:
     /// @brief Buffer used for received data.
     std::array<char, 65535> buf_;
 
+    /// @brief Response created by the server.
+    std::string response_;
+
     /// @brief Reference to the pool of connections.
     ConnectionPool& connection_pool_;
+
+    /// @brief State model used to receive data over the connection and detect
+    /// when the command ends.
+    JSONFeed feed_;
 
     /// @brief Boolean flag indicating if the request to stop connection is a
     /// result of server reconfiguration.
@@ -114,7 +141,7 @@ public:
     ///
     /// @param connection Pointer to the new connection object.
     void start(const ConnectionPtr& connection) {
-        connection->start();
+        connection->doReceive();
         connections_.insert(connection);
     }
 
@@ -180,17 +207,25 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
     try {
 
-        // Try to interpret it as JSON.
-        std::string sbuf(&buf_[0], bytes_transferred);
-        cmd = Element::fromJSON(sbuf, true);
+        feed_.postBuffer(&buf_[0], bytes_transferred);
+        feed_.poll();
+        if (feed_.needData()) {
+            doReceive();
+            return;
+        }
 
-        response_in_progress_ = true;
+        if (feed_.feedOk()) {
+            cmd = feed_.toElement();
+            response_in_progress_ = true;
 
-        // If successful, then process it as a command.
-        rsp = CommandMgr::instance().processCommand(cmd);
+            // If successful, then process it as a command.
+            rsp = CommandMgr::instance().processCommand(cmd);
 
-        response_in_progress_ = false;
+            response_in_progress_ = false;
 
+        } else {
+            isc_throw(BadValue, feed_.getErrorMessage());
+        }
 
     } catch (const Exception& ex) {
         LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
@@ -203,30 +238,52 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         rsp = createAnswer(CONTROL_RESULT_ERROR,
                            "internal server error: no response generated");
 
+    } else {
+
+        // Let's convert JSON response to text. Note that at this stage
+        // the rsp pointer is always set.
+        response_ = rsp->str();
+
+        doSend();
+        return;
+
+/*        size_t len = response_.length();
+        if (len > 65535) {
+            // Hmm, our response is too large. Let's send the first
+            // 64KB and hope for the best.
+            LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+
+            len = 65535;
+        }
+
+        try {
+            // Send the data back over socket.
+            socket_->write(response_.c_str(), len);
+
+        } catch (const std::exception& ex) {
+            // Response transmission failed. Since the response failed, it doesn't
+            // make sense to send any status codes. Let's log it and be done with
+            // it.
+            LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+                .arg(len).arg(socket_->getNative()).arg(ex.what());
+        } */
     }
 
-    // Let's convert JSON response to text. Note that at this stage
-    // the rsp pointer is always set.
-    std::string txt = rsp->str();
-    size_t len = txt.length();
-    if (len > 65535) {
-        // Hmm, our response is too large. Let's send the first
-        // 64KB and hope for the best.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+    connection_pool_.stop(shared_from_this());
+}
 
-        len = 65535;
-    }
-
-    try {
-        // Send the data back over socket.
-        socket_->write(txt.c_str(), len);
-
-    } catch (const std::exception& ex) {
-        // Response transmission failed. Since the response failed, it doesn't
-        // make sense to send any status codes. Let's log it and be done with
-        // it.
+void
+Connection::sendHandler(const boost::system::error_code& ec,
+                        size_t bytes_transferred) {
+    if (ec && ec.value() != boost::asio::error::operation_aborted) {
         LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
-            .arg(len).arg(socket_->getNative()).arg(ex.what());
+            .arg(socket_->getNative()).arg(ec.message());
+
+    } else {
+        response_.erase(0, bytes_transferred);
+        if (!response_.empty()) {
+            doSend();
+            return;
     }
 
     connection_pool_.stop(shared_from_this());

@@ -95,7 +95,6 @@ bool UnixControlClient::getResponse(std::string& response) {
         return (false);
     }
     case 0:
-        ADD_FAILURE() << "No response data sent";
         return (false);
 
     default:
