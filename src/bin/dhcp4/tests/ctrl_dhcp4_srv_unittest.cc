@@ -30,6 +30,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -85,6 +86,7 @@ public:
         StatsMgr::instance().removeAll();
 
         CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().deregisterAll();
 
         server_.reset();
     };
@@ -296,6 +298,18 @@ public:
             ADD_FAILURE() << "Invalid expected status: " << exp_status;
         }
     }
+
+    /// @brief Command handler which generates long response
+   static  ConstElementPtr longResponseHandler(const std::string&,
+                                               const ConstElementPtr&) {
+        ElementPtr arguments = Element::createList();
+        std::string arg = "responseresponseresponseresponseresponseresponse"
+            "response";
+        for (unsigned i = 0; i < 8000; ++i) {
+            arguments->add(Element::create(arg));
+        }
+        return (createAnswer(0, arguments));
+    }
 };
 
 TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
@@ -431,7 +445,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelNegative) {
 
     sendUnixCommand("utter nonsense", response);
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"error: unexpected character u in <string>:1:2\" }",
+              "\"text\": \"invalid first character u : "
+              "current state: [ 12 RECEIVE_START_ST ] next event: [ 1 START_EVT ]\" }",
               response);
 }
 
@@ -710,7 +725,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
               "\"text\": \"subnet configuration failed: mandatory 'subnet' "
-              "parameter is missing for a subnet being configured (<string>:20:17)\" }",
+              "parameter is missing for a subnet being configured (<wire>:19:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -909,7 +924,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
               "\"text\": \"subnet configuration failed: mandatory 'subnet' "
-              "parameter is missing for a subnet being configured (<string>:20:17)\" }",
+              "parameter is missing for a subnet being configured (<wire>:19:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -950,7 +965,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     // Clean up after the test.
     CfgMgr::instance().clear();
 }
-                    
+
 // Tests if config-write can be called without any parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigNoFilename) {
     createUnixChannelServer();
@@ -1107,5 +1122,94 @@ TEST_F(CtrlChannelDhcpv4SrvTest, concurrentConnections) {
     client2->disconnectFromServer();
     ASSERT_NO_THROW(getIOService()->poll());
 }
+
+TEST_F(CtrlChannelDhcpv4SrvTest, longCommand) {
+    createUnixChannelServer();
+
+    boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+    ASSERT_TRUE(client);
+
+    ASSERT_TRUE(client->connectToServer(socket_path_));
+    getIOService()->run_one();
+    getIOService()->poll();
+
+    size_t bytes_transferred = 0;
+    const size_t payload_size = 1024 * 1000;
+    bool first_payload = true;
+    while (bytes_transferred < payload_size) {
+        if (bytes_transferred == 0) {
+            std::string preamble = "{ \"command\": \"foo\", \"arguments\": [ ";
+            ASSERT_TRUE(client->sendCommand(preamble));
+            bytes_transferred += preamble.size();
+
+        } else {
+            std::ostringstream payload;
+            if (!first_payload) {
+                payload << ", ";
+            }
+            first_payload = false;
+            payload << "\"blablablablablablablablablablablablablablablabla\"";
+
+            if (bytes_transferred + payload.tellp() > payload_size) {
+                payload << "] }";
+            }
+            ASSERT_TRUE(client->sendCommand(payload.str()));
+
+            bytes_transferred += payload.tellp();
+        }
+
+        getIOService()->run_one();
+        getIOService()->poll();
+    }
+
+    std::string response;
+    ASSERT_TRUE(client->getResponse(response));
+
+    EXPECT_EQ("{ \"result\": 2, \"text\": \"'foo' command not supported.\" }",
+              response);
+
+    client->disconnectFromServer();
+}
+
+TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
+    ASSERT_NO_THROW(
+        CommandMgr::instance().registerCommand("foo",
+             boost::bind(&CtrlChannelDhcpv4SrvTest::longResponseHandler, _1, _2));
+    );
+
+    createUnixChannelServer();
+
+    std::string reference_response = longResponseHandler("foo", ConstElementPtr())->str();
+    std::ostringstream response;
+    std::thread th([this, &response, reference_response]() {
+
+        size_t long_response_size = reference_response.size();
+
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        std::string command = "{ \"command\": \"foo\", \"arguments\": { }  }";
+        ASSERT_TRUE(client->sendCommand(command));
+
+        while (response.tellp() < long_response_size) {
+            std::string partial;
+            client->getResponse(partial);
+            response << partial;
+        }
+
+        client->disconnectFromServer();
+
+        getIOService()->stop();
+    });
+
+    getIOService()->run();
+
+    th.join();
+
+    EXPECT_EQ(reference_response, response.str());
+}
+
 
 } // End of anonymous namespace
