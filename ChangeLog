@@ -1,3 +1,9 @@
+1263.	[doc]		marcin
+	Added example configurations of the nginx and Apache2 HTTPS
+	servers running as reverse proxy for Kea RESTful API.
+	(Trac #5302, git 48113aba218603afac4d457075458d4988e4082b)
+	(Trac #5303, git b3113da16eb5c6fa323068f0a57dfa30f42893d2)
+
 1262.	[func]*		marcin
 	Renamed "dhcp4-server", "dhcp6-server" and "d2-server" parameters
 	of the Control Agent configuration to "dhcp4", "dhcp6" and "d2"
