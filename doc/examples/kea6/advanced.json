@@ -18,9 +18,9 @@
   "interfaces-config": {
     "interfaces": [ "ethX" ],
 
-	// This makes interfaces to be re-detected at each (re-)configuration.
-	// By default it is true.
-	"re-detect": true
+        // This makes interfaces to be re-detected at each (re-)configuration.
+        // By default it is true.
+        "re-detect": true
   },
 
   // We need to specify the the database used to store leases. As of
