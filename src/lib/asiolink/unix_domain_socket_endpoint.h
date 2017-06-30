@@ -18,7 +18,9 @@ namespace asiolink {
 
 /// @brief Endpoint for @ref UnixDomainSocket.
 ///
-/// This is a simple class encapsulating ASIO unix domain socket.
+/// This is a simple class encapsulating ASIO unix domain socket endpoint.
+/// It is used to represent endpoints taking part in communication via
+/// unix domain sockets.
 class UnixDomainSocketEndpoint {
 public:
 

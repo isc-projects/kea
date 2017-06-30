@@ -24,7 +24,7 @@ class TimerMgr;
 /// @brief Type definition of the shared pointer to @c TimerMgr.
 typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 
-/// @brief Manages a pool of asynchronous interval timers for Kea server.
+/// @brief Manages a pool of asynchronous interval timers.
 ///
 /// This class holds a pool of asynchronous interval timers.
 ///

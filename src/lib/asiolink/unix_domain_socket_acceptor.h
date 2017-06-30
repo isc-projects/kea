@@ -19,6 +19,9 @@ namespace isc {
 namespace asiolink {
 
 /// @brief Implements acceptor service for @ref UnixDomainSocket.
+///
+/// This class is used to accept new incoming connections over unix domain
+/// sockets.
 class UnixDomainSocketAcceptor : public IOAcceptor<boost::asio::local::stream_protocol,
                                  std::function<void(const boost::system::error_code&)> > {
 public:

@@ -160,6 +160,9 @@ TimerMgrImpl::TimerMgrImpl() :
 
 void
 TimerMgrImpl::setIOService(const IOServicePtr& io_service) {
+    if (!io_service) {
+        isc_throw(BadValue, "IO service object must not be null for TimerMgr");
+    }
     io_service_ = io_service;
 }
 

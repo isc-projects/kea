@@ -200,32 +200,33 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     // No response generated. Connection will be closed.
     if (!rsp) {
         LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
+        rsp = createAnswer(CONTROL_RESULT_ERROR,
+                           "internal server error: no response generated");
 
-    } else {
+    }
 
-        // Let's convert JSON response to text. Note that at this stage
-        // the rsp pointer is always set.
-        std::string txt = rsp->str();
-        size_t len = txt.length();
-        if (len > 65535) {
-            // Hmm, our response is too large. Let's send the first
-            // 64KB and hope for the best.
-            LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
+    // Let's convert JSON response to text. Note that at this stage
+    // the rsp pointer is always set.
+    std::string txt = rsp->str();
+    size_t len = txt.length();
+    if (len > 65535) {
+        // Hmm, our response is too large. Let's send the first
+        // 64KB and hope for the best.
+        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
 
-            len = 65535;
-        }
+        len = 65535;
+    }
 
-        try {
-            // Send the data back over socket.
-            socket_->write(txt.c_str(), len);
+    try {
+        // Send the data back over socket.
+        socket_->write(txt.c_str(), len);
 
-        } catch (const std::exception& ex) {
-            // Response transmission failed. Since the response failed, it doesn't
-            // make sense to send any status codes. Let's log it and be done with
-            // it.
-            LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
-                .arg(len).arg(socket_->getNative()).arg(ex.what());
-        }
+    } catch (const std::exception& ex) {
+        // Response transmission failed. Since the response failed, it doesn't
+        // make sense to send any status codes. Let's log it and be done with
+        // it.
+        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+            .arg(len).arg(socket_->getNative()).arg(ex.what());
     }
 
     connection_pool_.stop(shared_from_this());
