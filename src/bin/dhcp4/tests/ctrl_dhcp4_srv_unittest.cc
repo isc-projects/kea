@@ -130,7 +130,7 @@ public:
         // make the actual configuration text.
         std::string config_txt = header + socket_path_  + footer;
 
-        server_.reset(new NakedControlledDhcpv4Srv());
+        ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
 
         ConstElementPtr config;
         ASSERT_NO_THROW(config = parseDHCP4(config_txt));
@@ -190,11 +190,14 @@ public:
         client.reset(new UnixControlClient());
         ASSERT_TRUE(client);
 
-        // Connect.
+        // Connect to the server. This is expected to trigger server's acceptor
+        // handler when IOService::poll() is run.
         ASSERT_TRUE(client->connectToServer(socket_path_));
         ASSERT_NO_THROW(getIOService()->poll());
 
-        // Send the command.
+        // Send the command. This will trigger server's handler which receives
+        // data over the unix domain socket. The server will start sending
+        // response to the client.
         ASSERT_TRUE(client->sendCommand(command));
         ASSERT_NO_THROW(getIOService()->poll());
 
@@ -683,7 +686,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
               response);
 
-    /// Check that the config was indeed applied.
+    // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1, subnets->size());
@@ -1080,7 +1083,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, concurrentConnections) {
     ASSERT_TRUE(client1);
 
     boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
-    ASSERT_TRUE(client1);
+    ASSERT_TRUE(client2);
 
     // Client 1 connects.
     ASSERT_TRUE(client1->connectToServer(socket_path_));

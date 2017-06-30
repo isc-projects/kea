@@ -367,4 +367,11 @@ TEST_F(TimerMgrTest, callbackWithException) {
     doWait(500);
 }
 
+// This test verifies that IO service specified for the TimerMgr
+// must not be null.
+TEST_F(TimerMgrTest, setIOService) {
+    EXPECT_THROW(timer_mgr_->setIOService(IOServicePtr()),
+                 BadValue);
+}
+
 } // end of anonymous namespace

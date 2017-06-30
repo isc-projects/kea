@@ -200,11 +200,14 @@ public:
         client.reset(new UnixControlClient());
         ASSERT_TRUE(client);
 
-        // Connect.
+        // Connect to the server. This is expected to trigger server's acceptor
+        // handler when IOService::poll() is run.
         ASSERT_TRUE(client->connectToServer(socket_path_));
         ASSERT_NO_THROW(getIOService()->poll());
 
-        // Send the command.
+        // Send the command. This will trigger server's handler which receives
+        // data over the unix domain socket. The server will start sending
+        // response to the client.
         ASSERT_TRUE(client->sendCommand(command));
         ASSERT_NO_THROW(getIOService()->poll());
 
@@ -1102,7 +1105,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     ASSERT_TRUE(client1);
 
     boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
-    ASSERT_TRUE(client1);
+    ASSERT_TRUE(client2);
 
     // Client 1 connects.
     ASSERT_TRUE(client1->connectToServer(socket_path_));

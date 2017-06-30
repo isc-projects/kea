@@ -22,6 +22,11 @@ namespace asiolink {
 /// This is a wrapper class for ASIO acceptor service. Classes implementing
 /// services for specific protocol types should derive from this class.
 ///
+/// Acceptor is an IO object which accepts incoming connections into a socket
+/// object. This socket is then used for data transmission from the client
+/// to server and back. The acceptor is continued to be used to accept new
+/// connections while the accepted connection is active.
+///
 /// @tparam ProtocolType ASIO protocol type, e.g. stream_protocol
 /// @tparam CallbackType Callback function type which should have the following
 /// signature: @c void(const boost::system::error_code&).
