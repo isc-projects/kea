@@ -1,3 +1,9 @@
+1264.	[func]		marcin
+	Kea's command manager has been re-implemented to use ASIO.
+	Simultaneous connections over the control channel are now
+	possible.
+	(Trac #5317, git 4139a2f41bb3736615bdfa278746962a16384d0d)
+
 1263.	[doc]		marcin
 	Added example configurations of the nginx and Apache2 HTTPS
 	servers running as reverse proxy for Kea RESTful API.
