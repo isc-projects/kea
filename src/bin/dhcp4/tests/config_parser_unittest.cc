@@ -2739,6 +2739,157 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
 }
 
+// This test verifies that it is possible to specify options on
+// pool levels.
+TEST_F(Dhcp4ParserTest, optionDataSinglePool) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { "
+        "        \"pool\": \"192.0.2.1 - 192.0.2.100\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"dhcp-message\","
+        "            \"data\": \"ABCDEF0105\","
+        "            \"csv-format\": false"
+        "        },"
+        "        {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"01\","
+        "          \"csv-format\": false"
+        "        } ]"
+        "    } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
+        selectSubnet(IOAddress("192.0.2.24"), classify_);
+    ASSERT_TRUE(subnet);
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.24"), false);
+    ASSERT_TRUE(pool);
+    Pool4Ptr pool4 = boost::dynamic_pointer_cast<Pool4>(pool);
+    ASSERT_TRUE(pool4);
+
+    OptionContainerPtr options = pool4->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(2, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(56);
+    // Expect a single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t foo_expected[] = {
+	0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+
+    range = idx.equal_range(23);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+TEST_F(Dhcp4ParserTest, optionDataMultiplePools) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { "
+        "        \"pool\": \"192.0.2.1 - 192.0.2.100\","
+        "        \"option-data\": [ {"
+        "            \"name\": \"dhcp-message\","
+        "            \"data\": \"ABCDEF0105\","
+        "            \"csv-format\": false"
+        "        } ]"
+        "    },"
+        "    {"
+        "        \"pool\": \"192.0.2.200 - 192.0.2.250\","
+        "        \"option-data\": [ {"
+        "          \"name\": \"default-ip-ttl\","
+        "          \"data\": \"01\","
+        "          \"csv-format\": false"
+        "        } ]"
+        "    } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
+        selectSubnet(IOAddress("192.0.2.24"), classify_);
+    ASSERT_TRUE(subnet);
+
+    PoolPtr pool1 = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.24"), false);
+    ASSERT_TRUE(pool1);
+    Pool4Ptr pool41 = boost::dynamic_pointer_cast<Pool4>(pool1);
+    ASSERT_TRUE(pool41);
+
+    OptionContainerPtr options1 = pool41->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(1, options1->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx1 = options1->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range1 =
+        idx1.equal_range(56);
+    // Expect a single option with the code equal to 100.
+    ASSERT_EQ(1, std::distance(range1.first, range1.second));
+    const uint8_t foo_expected[] = {
+	0xAB, 0xCD, 0xEF, 0x01, 0x05
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range1.first, 56, foo_expected, sizeof(foo_expected));
+
+    // Test another pool in the same way.
+    PoolPtr pool2 = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.240"), false);
+    ASSERT_TRUE(pool2);
+    Pool4Ptr pool42 = boost::dynamic_pointer_cast<Pool4>(pool2);
+    ASSERT_TRUE(pool42);
+
+    OptionContainerPtr options2 = pool42->getCfgOption()->getAll("dhcp4");
+    ASSERT_EQ(1, options2->size());
+
+    const OptionContainerTypeIndex& idx2 = options2->get<1>();
+    std::pair<OptionContainerTypeIndex::const_iterator,
+	      OptionContainerTypeIndex::const_iterator> range2 =
+	idx2.equal_range(23);
+    ASSERT_EQ(1, std::distance(range2.first, range2.second));
+    const uint8_t foo2_expected[] = {
+        0x01
+    };
+    testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
+}
 
 
 // Verify that empty option name is rejected in the configuration.

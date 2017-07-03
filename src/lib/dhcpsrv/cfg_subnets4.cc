@@ -335,7 +335,9 @@ CfgSubnets4::toElement() const {
             if (!isNull(context)) {
                 pool_map->set("user-context", context);
             }
-            // Set pool options (not yet supported)
+            // Set pool options
+            ConstCfgOptionPtr opts = (*pool)->getCfgOption();
+            pool_map->set("option-data", opts->toElement());
             // Push on the pool list
             pool_list->add(pool_map);
         }
