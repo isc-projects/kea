@@ -128,7 +128,7 @@ public:
     /// @param test_level The nesting level
     /// @param test_code The code of the option to extract
     /// @param result_addr The expected result of the address as a string
-    void verifyRelay6Option(const uint8_t test_level,
+    void verifyRelay6Option(const int8_t test_level,
                             const uint16_t test_code,
                             const TokenOption::RepresentationType& test_rep,
                             const std::string& result_string) {
@@ -159,7 +159,7 @@ public:
     /// @param test_level The nesting level
     /// @param test_field The type of the field to extract
     /// @param result_addr The expected result of the address as a string
-    void verifyRelay6Eval(const uint8_t test_level,
+    void verifyRelay6Eval(const int8_t test_level,
                           const TokenRelay6Field::FieldType test_field,
                           const int result_len,
                           const uint8_t result_addr[]) {
@@ -1135,6 +1135,21 @@ TEST_F(TokenTest, relay6Option) {
     // Level 2, no encapsulation so no options
     verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 
+    // Level -1, the same than level 1
+    verifyRelay6Option(-1, 100, TokenOption::TEXTUAL, "hundred.one");
+    verifyRelay6Option(-1, 101, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(-1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+
+    // Level -2, the same than level 0
+    verifyRelay6Option(-2, 100, TokenOption::TEXTUAL, "hundred.zero");
+    verifyRelay6Option(-2, 100, TokenOption::EXISTS, "true");
+    verifyRelay6Option(-2, 101, TokenOption::TEXTUAL, "hundredone.zero");
+    verifyRelay6Option(-2, 102, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(-2, 102, TokenOption::EXISTS, "false");
+
+    // Level -3, no encapsulation so no options
+    verifyRelay6Option(-3, 100, TokenOption::TEXTUAL, "");
+
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
@@ -1147,6 +1162,18 @@ TEST_F(TokenTest, relay6Option) {
     addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
     addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
     addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
 
     addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
 
@@ -1465,6 +1492,17 @@ TEST_F(TokenTest, relay6Field) {
     // Level 2 has no encapsulation so the address should be zero length
     verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
 
+    // Level -1 is the same than level 1
+    verifyRelay6Eval(-1, TokenRelay6Field::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(-1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+
+    // Level -2 is the same than level 0
+    verifyRelay6Eval(-2, TokenRelay6Field::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(-2, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+
+    // Level -3 has no encapsulation so the address should be zero length
+    verifyRelay6Eval(-3, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+
     // Lets check that the layout of the address returned by the
     // token matches that of the TokenIpAddress
     TokenPtr trelay;
@@ -1496,8 +1534,19 @@ TEST_F(TokenTest, relay6Field) {
               "with value 0x00010000000000000000000000000001");
     addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
               "with value 0x00010000000000000000000000000002");
-    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
-              "with value 0x");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr "
+              "nest 2 with value 0x");
+
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest -1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest -1 "
+              "with value 0x00010000000000000000000000000002");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest -2 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest -2 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr "
+              "nest -3 with value 0x");
 
     addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
               "with value 0x00010000000000000000000000000001");

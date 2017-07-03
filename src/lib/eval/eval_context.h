@@ -133,15 +133,24 @@ public:
     static uint8_t convertUint8(const std::string& number,
                                 const isc::eval::location& loc);
 
+    /// @brief Attempts to convert string to signed 8bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static int8_t convertInt8(const std::string& number,
+                              const isc::eval::location& loc);
+
     /// @brief Nest level conversion
     ///
     /// @param nest_level a string representing the integer nesting level
     /// @param loc the location of the token
     /// @return the nesting level
     /// @throw calls the syntax error function if the value is not in
-    ///        the range 0..31
-    uint8_t convertNestLevelNumber(const std::string& nest_level,
-                                   const isc::eval::location& loc);
+    ///        the range -32..31
+    int8_t convertNestLevelNumber(const std::string& nest_level,
+                                  const isc::eval::location& loc);
 
     /// @brief Converts integer to string representation
     ///
