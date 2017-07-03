@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <asiolink/unix_domain_socket.h>
 #include <asiolink/unix_domain_socket_acceptor.h>
@@ -30,6 +31,11 @@ namespace {
 /// @brief Maximum size of the data chunk sent/received over the socket.
 const size_t BUF_SIZE = 8192;
 
+/// @brief Specifies connection timeout in milliseconds.
+///
+/// @todo Make it configurable.
+const unsigned CONNECTION_TIMEOUT = 5000;
+
 class ConnectionPool;
 
 /// @brief Represents a single connection over control socket.
@@ -49,10 +55,12 @@ public:
     /// for data transmission.
     /// @param connection_pool Reference to the connection pool to which this
     /// connection belongs.
-    Connection(const boost::shared_ptr<UnixDomainSocket>& socket,
+    Connection(const IOServicePtr& io_service,
+               const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool)
-        : socket_(socket), buf_(), response_(), connection_pool_(connection_pool),
-          feed_(), response_in_progress_(false) {
+        : socket_(socket), timeout_timer_(*io_service), buf_(), response_(),
+          connection_pool_(connection_pool), feed_(),
+          response_in_progress_(false) {
 
         LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
@@ -62,6 +70,17 @@ public:
         isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
         // Initialize state model for receiving and preparsing commands.
         feed_.initModel();
+
+        // Start timer for detecting timeouts.
+        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
+                             CONNECTION_TIMEOUT, IntervalTimer::ONE_SHOT);
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Cancels timeout timer if one is scheduled.
+    ~Connection() {
+        timeout_timer_.cancel();
     }
 
     /// @brief Close current connection.
@@ -77,6 +96,7 @@ public:
 
             isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
             socket_->close();
+            timeout_timer_.cancel();
         }
     }
 
@@ -118,10 +138,17 @@ public:
     /// @param bytes_transferred Number of bytes sent.
     void sendHandler(const boost::system::error_code& ec,
                      size_t bytes_trasferred);
+
+    /// @brief Handler invoked when timeout has occurred.
+    void timeoutHandler();
+
 private:
 
     /// @brief Pointer to the socket used for transmission.
     boost::shared_ptr<UnixDomainSocket> socket_;
+
+    /// @brief Interval timer used to detect connection timeouts.
+    IntervalTimer timeout_timer_;
 
     /// @brief Buffer used for received data.
     std::array<char, BUF_SIZE> buf_;
@@ -299,6 +326,15 @@ Connection::sendHandler(const boost::system::error_code& ec,
     connection_pool_.stop(shared_from_this());
 }
 
+void
+Connection::timeoutHandler() {
+    ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, "Connection over"
+                                       " control channel timed out");
+    response_ = rsp->str();
+    doSend();
+}
+
+
 }
 
 namespace isc {
@@ -400,7 +436,8 @@ CommandMgrImpl::doAccept() {
     acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
         if (!ec) {
             // New connection is arriving. Start asynchronous transmission.
-            ConnectionPtr connection(new Connection(socket_, connection_pool_));
+            ConnectionPtr connection(new Connection(io_service_, socket_,
+                                                    connection_pool_));
             connection_pool_.start(connection);
 
         } else if (ec.value() != boost::asio::error::operation_aborted) {
