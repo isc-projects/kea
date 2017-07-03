@@ -151,7 +151,7 @@ public:
     /// @param expected_code expected option code
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay6Option(const TokenPtr& token,
-                                uint8_t expected_level,
+                                int8_t expected_level,
                                 uint16_t expected_code,
                                 TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
@@ -174,7 +174,7 @@ public:
     /// @param exp_repr expected representation to be parsed
     /// @param exp_tokens expected number of tokens
     void testRelay6Option(const std::string& expr,
-                         uint8_t exp_level,
+                         int8_t exp_level,
                          uint16_t exp_code,
                          TokenOption::RepresentationType exp_repr,
                          int exp_tokens) {
@@ -345,7 +345,7 @@ public:
     /// @param expected_code expected option code
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay6Field(const TokenPtr& token,
-                               uint8_t expected_level,
+                               int8_t expected_level,
                                TokenRelay6Field::FieldType expected_type) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenRelay6Field> opt =
@@ -365,7 +365,7 @@ public:
     /// @param exp_type expected field type to be parsed
     /// @param exp_tokens expected number of tokens
     void testRelay6Field(const std::string& expr,
-                         uint8_t exp_level,
+                         int8_t exp_level,
                          TokenRelay6Field::FieldType exp_type,
                          int exp_tokens) {
         EvalContext eval(Option::V6);
@@ -934,7 +934,15 @@ TEST_F(EvalContextTest, relay6OptionHex) {
                      2, 85, TokenOption::HEXADECIMAL, 3);
 }
 
-// Test the nest level of a relay6 option should be in [0..32[
+// Test the parsing of a relay6 option in reverse order
+TEST_F(EvalContextTest, relay6OptionReverse) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[-1].option[123].text == 'foo'",
+                     -1, 123, TokenOption::TEXTUAL, 3);
+}
+
+// Test the nest level of a relay6 option should be in [-32..32[
 TEST_F(EvalContextTest, relay6OptionLimits) {
     EvalContext eval(Option::V6);
 
@@ -946,11 +954,14 @@ TEST_F(EvalContextTest, relay6OptionLimits) {
 
     checkError("relay6[32].option[123].text == 'foo'",
                "<string>:1.8-9: Nest level has invalid value in 32. "
-               "Allowed range: 0..31");
+               "Allowed range: -32..31");
 
-    // next level must be a positive number
-    checkError("relay6[-1].option[123].text == 'foo'",
-               "<string>:1.8-9: Invalid value in -1. Allowed range: 0..255");
+    // min nest level is minus hop count limit
+    testRelay6Option("relay6[-32].option[123].text == 'foo'",
+                     -32, 123, TokenOption::TEXTUAL, 3);
+
+    checkError("relay6[-33].option[123].text == 'foo'",
+               "<string>:1.8-10: Nest level has invalid value in -33. Allowed range: -32..31");
 }
 
 // Verify that relay6[13].option is not usable in v4
@@ -1041,7 +1052,7 @@ TEST_F(EvalContextTest, relay6FieldPeerAddr) {
                     1, TokenRelay6Field::PEERADDR, 3);
 }
 
-// Verify that relay6[13].<field> is not usable in v4
+// Verify that relay6[0].<field> is not usable in v4
 TEST_F(EvalContextTest, relay6FieldError) {
     universe_ = Option::V4;
 

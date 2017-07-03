@@ -96,7 +96,7 @@ using namespace isc::eval;
 %type <uint32_t> integer_expr
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
-%type <uint8_t> nest_level
+%type <int8_t> nest_level
 %type <TokenPkt::MetadataType> pkt_metadata
 %type <TokenPkt4::FieldType> pkt4_field
 %type <TokenPkt6::FieldType> pkt6_field
