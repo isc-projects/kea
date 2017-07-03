@@ -27,6 +27,9 @@ using namespace isc::data;
 
 namespace {
 
+/// @brief Maximum size of the data chunk sent/received over the socket.
+const size_t BUF_SIZE = 8192;
+
 class ConnectionPool;
 
 /// @brief Represents a single connection over control socket.
@@ -41,10 +44,19 @@ public:
     /// This constructor registers a socket of this connection in the Interface
     /// Manager to cause the blocking call to @c select() to return as soon as
     /// a transmission over the control socket is received.
+    ///
+    /// @param socket Pointer to the object representing a socket which is used
+    /// for data transmission.
+    /// @param connection_pool Reference to the connection pool to which this
+    /// connection belongs.
     Connection(const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool)
         : socket_(socket), buf_(), response_(), connection_pool_(connection_pool),
           feed_(), response_in_progress_(false) {
+
+        LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED)
+            .arg(socket_->getNative());
+
         // Callback value of 0 is used to indicate that callback function is
         // not installed.
         isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
@@ -86,7 +98,7 @@ public:
     /// This method doesn't block. Once the send operation is completed, the
     /// @c Connection::sendHandler cllback is invoked.
     void doSend() {
-        size_t chunk_size = response_.size() < 8192 ? response_.size() : 8192;
+        size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
            boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
     }
@@ -112,7 +124,7 @@ private:
     boost::shared_ptr<UnixDomainSocket> socket_;
 
     /// @brief Buffer used for received data.
-    std::array<char, 65535> buf_;
+    std::array<char, BUF_SIZE> buf_;
 
     /// @brief Response created by the server.
     std::string response_;
@@ -149,8 +161,13 @@ public:
     ///
     /// @param connection Pointer to the new connection object.
     void stop(const ConnectionPtr& connection) {
-        connection->stop();
-        connections_.erase(connection);
+        try {
+            connection->stop();
+            connections_.erase(connection);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_CLOSE_FAIL)
+                .arg(ex.what());
+        }
     }
 
     /// @brief Stops all connections which are allowed to stop.
@@ -160,10 +177,6 @@ public:
             (*conn)->stop();
         }
         connections_.clear();
-    }
-
-    size_t getConnectionsNum() const {
-        return (connections_.size());
     }
 
 private:
@@ -183,15 +196,13 @@ Connection::receiveHandler(const boost::system::error_code& ec,
             // connection pool.
             LOG_INFO(command_logger, COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST)
                 .arg(socket_->getNative());
-            connection_pool_.stop(shared_from_this());
 
         } else if (ec.value() != boost::asio::error::operation_aborted) {
             LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL)
                 .arg(ec.value()).arg(socket_->getNative());
         }
 
-        /// @todo: Should we close the connection, similar to what is already
-        /// being done for bytes_transferred == 0.
+        connection_pool_.stop(shared_from_this());
         return;
 
     } else if (bytes_transferred == 0) {
@@ -203,19 +214,22 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ)
         .arg(bytes_transferred).arg(socket_->getNative());
 
-    ConstElementPtr cmd, rsp;
+    ConstElementPtr rsp;
 
     try {
-
+        // Received some data over the socket. Append them to the JSON feed
+        // to see if we have reached the end of command.
         feed_.postBuffer(&buf_[0], bytes_transferred);
         feed_.poll();
+        // If we haven't yet received the full command, continue receiving.
         if (feed_.needData()) {
             doReceive();
             return;
         }
 
+        // Received entire command. Parse the command into JSON.
         if (feed_.feedOk()) {
-            cmd = feed_.toElement();
+            ConstElementPtr cmd = feed_.toElement();
             response_in_progress_ = true;
 
             // If successful, then process it as a command.
@@ -224,6 +238,9 @@ Connection::receiveHandler(const boost::system::error_code& ec,
             response_in_progress_ = false;
 
         } else {
+            // Failed to parse command as JSON or process the received command.
+            // This exception will be caught below and the error response will
+            // be sent.
             isc_throw(BadValue, feed_.getErrorMessage());
         }
 
@@ -246,46 +263,39 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
         doSend();
         return;
-
-/*        size_t len = response_.length();
-        if (len > 65535) {
-            // Hmm, our response is too large. Let's send the first
-            // 64KB and hope for the best.
-            LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
-
-            len = 65535;
-        }
-
-        try {
-            // Send the data back over socket.
-            socket_->write(response_.c_str(), len);
-
-        } catch (const std::exception& ex) {
-            // Response transmission failed. Since the response failed, it doesn't
-            // make sense to send any status codes. Let's log it and be done with
-            // it.
-            LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
-                .arg(len).arg(socket_->getNative()).arg(ex.what());
-        } */
     }
 
+    // Close the connection if we have sent the entire response.
     connection_pool_.stop(shared_from_this());
 }
 
 void
 Connection::sendHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred) {
-    if (ec && ec.value() != boost::asio::error::operation_aborted) {
-        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
-            .arg(socket_->getNative()).arg(ec.message());
+    if (ec) {
+        // If an error occurred, log this error and stop the connection.
+        if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+                .arg(socket_->getNative()).arg(ec.message());
+        }
 
     } else {
+
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE)
+            .arg(bytes_transferred).arg(socket_->getNative());
+
+        // No error. We are in a process of sending a response. Need to
+        // remove the chunk that we have managed to sent with the previous
+        // attempt.
         response_.erase(0, bytes_transferred);
+        // Check if there is any data left to be sent and sent it.
         if (!response_.empty()) {
             doSend();
             return;
+        }
     }
 
+    // All data sent or an error has occurred. Close the connection.
     connection_pool_.stop(shared_from_this());
 }
 
@@ -392,6 +402,10 @@ CommandMgrImpl::doAccept() {
             // New connection is arriving. Start asynchronous transmission.
             ConnectionPtr connection(new Connection(socket_, connection_pool_));
             connection_pool_.start(connection);
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_ACCEPT_FAIL)
+                .arg(acceptor_->getNative()).arg(ec.message());
         }
 
         // Unless we're stopping the service, start accepting connections again.
