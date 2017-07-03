@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
@@ -326,8 +327,8 @@ public:
     }
 
     /// @brief Command handler which generates long response
-   static  ConstElementPtr longResponseHandler(const std::string&,
-                                               const ConstElementPtr&) {
+   static ConstElementPtr longResponseHandler(const std::string&,
+                                              const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
         std::string arg = "responseresponseresponseresponseresponseresponse"
             "response";
@@ -1300,6 +1301,55 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
     // Make sure we have received correct response.
     EXPECT_EQ(reference_response, response.str());
 }
+
+// This test verifies that the server signals timeout if the transmission
+// takes too long.
+TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeout) {
+    createUnixChannelServer();
+
+    // Server's response will be assigned to this variable.
+    std::string response;
+
+    // It is useful to create a thread and run the server and the client
+    // at the same time and independently.
+    std::thread th([this, &response]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Create the client and connect it to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Send partial command. The server will be waiting for the remaining
+        // part to be sent and will eventually signal a timeout.
+        std::string command = "{ \"command\": \"foo\" ";
+        ASSERT_TRUE(client->sendCommand(command));
+
+        // Let's wait up to 10s for the server's response. The response
+        // should arrive sooner assuming that the timeout mechanism for
+        // the server is working properly.
+        const unsigned int timeout = 10;
+        ASSERT_TRUE(client->getResponse(response, 10));
+
+        // Explicitly close the client's connection.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until stopped.
+    getIOService()->run();
+
+    // Wait for the thread to return.
+    th.join();
+
+    // Check that the server has signalled a timeout.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel"
+              " timed out\" }", response);
+}
+
 
 
 } // End of anonymous namespace
