@@ -327,8 +327,8 @@ public:
     }
 
     /// @brief Command handler which generates long response
-   static ConstElementPtr longResponseHandler(const std::string&,
-                                              const ConstElementPtr&) {
+    static ConstElementPtr longResponseHandler(const std::string&,
+                                               const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
         std::string arg = "responseresponseresponseresponseresponseresponse"
             "response";
