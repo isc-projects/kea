@@ -7,6 +7,7 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
@@ -53,6 +54,10 @@ public:
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
 class Dhcpv6Srv : public Daemon {
+private:
+
+    /// @brief Pointer to IO service used by the server.
+    asiolink::IOServicePtr io_service_;
 
 public:
     /// @brief defines if certain option may, must or must not appear
@@ -77,6 +82,11 @@ public:
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
+
+    /// @brief Returns pointer to the IO service used by the server.
+    asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
 
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
