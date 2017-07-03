@@ -64,21 +64,14 @@ This is an informational message that the socket created for handling
 client's connection is closed. This usually means that the client disconnected,
 but may also mean a timeout.
 
-% COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection on socket %2
+% COMMAND_SOCKET_CONNECTION_CLOSE_FAIL Failed to close command connection: %1
+This error message is issued when an error occurred when closing a
+command connection and/or removing it from the connections pool. The
+detailed error is provided as an argument.
+
+% COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection
 This is an informational message that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
-
-% COMMAND_SOCKET_DUP_WARN Failed to duplicate socket for response: %1
-This debug message indicates that the commandReader was unable to duplicate
-the connection socket prior to executing the command. This is most likely a
-system resource issue.  The command should still be processed and the response
-sent, unless the command caused the command channel to be closed (e.g. a
-reconfiguration command).
-
-% COMMAND_SOCKET_FAIL_NONBLOCK Failed to set non-blocking mode for socket %1 created for incoming connection on socket %2: %3
-This error message indicates that the server failed to set non-blocking mode
-on just created socket. That socket was created for accepting specific
-incoming connection. Additional information may be provided as third parameter.
 
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
 This debug message indicates that specified number of bytes was received
@@ -87,16 +80,6 @@ over command socket identified by specified file descriptor.
 % COMMAND_SOCKET_READ_FAIL Encountered error %1 while reading from command socket %2
 This error message indicates that an error was encountered while
 reading from command socket.
-
-% COMMAND_SOCKET_UNIX_CLOSE Command socket closed: UNIX, fd=%1, path=%2
-This informational message indicates that the daemon closed a command
-processing socket. This was a UNIX socket. It was opened with the file
-descriptor and path specified.
-
-% COMMAND_SOCKET_UNIX_OPEN Command socket opened: UNIX, fd=%1, path=%2
-This informational message indicates that the daemon opened a command
-processing socket. This is a UNIX socket. It was opened with the file
-descriptor and path specified.
 
 % COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
 This debug message indicates that the specified number of bytes was sent
