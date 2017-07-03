@@ -7,14 +7,32 @@
 #ifndef COMMAND_MGR_H
 #define COMMAND_MGR_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/hooked_command_mgr.h>
-#include <config/command_socket.h>
+#include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
-#include <list>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace config {
+
+/// @brief An exception indicating that specified socket parameters are invalid
+class BadSocketInfo : public Exception {
+public:
+    BadSocketInfo(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief An exception indicating a problem with socket operation
+class SocketError : public Exception {
+public:
+    SocketError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+
+class CommandMgrImpl;
 
 /// @brief Commands Manager implementation for the Kea servers.
 ///
@@ -29,72 +47,40 @@ public:
     /// @return the only existing instance of the manager
     static CommandMgr& instance();
 
+    /// @brief Sets IO service to be used by the command manager.
+    ///
+    /// The server should use this method to provide the Command Manager with the
+    /// common IO service used by the server.
+    /// @param io_service Pointer to the IO service.
+    void setIOService(const asiolink::IOServicePtr& io_service);
+
     /// @brief Opens control socket with parameters specified in socket_info
     ///
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)
     ///
-    /// This method will close previously open command socket (if exists).
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
     ///
-    /// @throw CommandSocketError if socket creation fails.
-    /// @throw SocketError if command socket is already open.
-    ///
-    /// @param socket_info describes control socket parameters
-    /// @return object representing a socket
-    CommandSocketPtr
+    /// @param socket_info Configuration information for the control socket.
+    void
     openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
     void closeCommandSocket();
 
-    /// @brief Reads data from a socket, parses as JSON command and processes it
-    ///
-    /// This method is used to handle traffic on connected socket. This callback
-    /// is installed by the @c isc::config::UnixCommandSocket::receiveHandler
-    /// (located in the src/lib/config/command_socket_factory.cc)
-    /// once the incoming connection is accepted. If end-of-file is detected, this
-    /// method will close the socket and will uninstall itself from
-    /// @ref isc::dhcp::IfaceMgr.
-    ///
-    /// @param sockfd socket descriptor of a connected socket
-    static void commandReader(int sockfd);
-
-    /// @brief Adds an information about opened connection socket
-    ///
-    /// @param conn Connection socket to be stored
-    void addConnection(const CommandSocketPtr& conn);
-
-    /// @brief Closes connection with a specific socket descriptor
-    ///
-    /// @param fd socket descriptor
-    /// @return true if closed successfully, false if not found
-    bool closeConnection(int fd);
-
     /// @brief Returns control socket descriptor
     ///
     /// This method should be used only in tests.
-    int getControlSocketFD() const {
-        return (socket_->getFD());
-    }
+    int getControlSocketFD();
 
 private:
 
     /// @brief Private constructor
-    ///
-    /// Registers internal 'list-commands' command.
     CommandMgr();
 
-    /// @brief Control socket structure
-    ///
-    /// This is the socket that accepts incoming connections. There can be at
-    /// most one (if command channel is configured).
-    CommandSocketPtr socket_;
-
-    /// @brief Sockets for open connections
-    ///
-    /// These are the sockets that are dedicated to handle a specific connection.
-    /// Their number is equal to number of current control connections.
-    std::list<CommandSocketPtr> connections_;
+    /// @brief Pointer to the implementation of the @ref CommandMgr.
+    boost::shared_ptr<CommandMgrImpl> impl_;
 };
 
 }; // end of isc::config namespace

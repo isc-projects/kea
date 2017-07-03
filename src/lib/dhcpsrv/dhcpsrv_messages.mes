@@ -878,44 +878,11 @@ An example of such operation is a periodic cleanup of
 expired leases. The name of the timer is included in the
 message.
 
-% DHCPSRV_TIMERMGR_SOCKET_CLEAR_FAILED clearing watch socket for timer %1 failed: %2
-An error message indicating that the specified timer elapsed,
-the operation associated with the timer was executed but the
-server was unable to signal this to the worker thread responsible
-for dispatching timers. The thread will continue but it will
-not be able to dispatch any operations for this timer. The
-server reconfiguration or restart may solve the problem
-but the situation may repeat.
-
-% DHCPSRV_TIMERMGR_SOCKET_MARK_FAILED marking watch socket for timer %1 failed: %2
-An error message indicating that the specified timer elapsed,
-but the server was unable to flag that the handler function
-should be executed for this timer. The callback will not
-be executed this time and most likely the subsequent attempts
-will not be successful too. This error is highly unlikely.
-The name of the timer and the reason for failure is included
-in the message.
-
-% DHCPSRV_TIMERMGR_START_THREAD starting thread for timers
-A debug message issued when the Timer Manager is starting a
-worker thread to run started timers. The worker thread is
-typically started right after all timers have been registered
-and runs until timers need to be reconfigured, e.g. their
-interval is changed, new timers are registered or existing
-timers are unregistered.
-
 % DHCPSRV_TIMERMGR_START_TIMER starting timer: %1
 A debug message issued when the registered interval timer is
 being started. If this operation is successful the timer will
 periodically execute the operation associated with it. The
 name of the started timer is included in the message.
-
-% DHCPSRV_TIMERMGR_STOP_THREAD stopping thread for timers
-A debug message issued when the Timer Manager is stopping
-the worker thread which executes interval timers. When the
-thread is stopped no timers will be executed. The thread is
-typically stopped at the server reconfiguration or when the
-server shuts down.
 
 % DHCPSRV_TIMERMGR_STOP_TIMER stopping timer: %1
 A debug message issued when the registered interval timer is

@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <asiolink/io_service.h>
 #include <config/base_command_mgr.h>
 #include <config/command_mgr.h>
 #include <config/hooked_command_mgr.h>
@@ -16,6 +17,7 @@
 #include <string>
 #include <vector>
 
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
@@ -26,7 +28,11 @@ class CommandMgrTest : public ::testing::Test {
 public:
 
     /// Default constructor
-    CommandMgrTest() {
+    CommandMgrTest()
+        : io_service_(new IOService()) {
+
+        CommandMgr::instance().setIOService(io_service_);
+
         handler_name = "";
         handler_params = ElementPtr();
         handler_called = false;
@@ -44,6 +50,20 @@ public:
         resetCalloutIndicators();
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(
                 "control_command_receive");
+    }
+
+    /// @brief Returns socket path (using either hardcoded path or env variable)
+    /// @return path to the unix socket
+    std::string getSocketPath() {
+
+        std::string socket_path;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            socket_path = std::string(env) + "/test-socket";
+        } else {
+            socket_path = std::string(TEST_DATA_BUILDDIR) + "/test-socket";
+        }
+        return (socket_path);
     }
 
     /// @brief Resets indicators related to callout invocation.
@@ -161,6 +181,9 @@ public:
         std::sort(callout_argument_names.begin(), callout_argument_names.end());
         return (0);
     }
+
+    /// @brief IO service used by these tests.
+    IOServicePtr io_service_;
 
     /// @brief Name of the command (used in my_handler)
     static std::string handler_name;
@@ -489,4 +512,44 @@ TEST_F(CommandMgrTest, modifyCommandArgsInHook) {
     EXPECT_EQ("command", callout_argument_names[0]);
     EXPECT_EQ("response", callout_argument_names[1]);
 
+}
+
+// This test verifies that a Unix socket can be opened properly and that input
+// parameters (socket-type and socket-name) are verified.
+TEST_F(CommandMgrTest, unixCreate) {
+    // Null pointer is obviously a bad idea.
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(ConstElementPtr()),
+                 isc::config::BadSocketInfo);
+
+    // So is passing no parameters.
+    ElementPtr socket_info = Element::createMap();
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
+                 isc::config::BadSocketInfo);
+
+    // We don't support ipx sockets
+    socket_info->set("socket-type", Element::create("ipx"));
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
+                 isc::config::BadSocketInfo);
+
+    socket_info->set("socket-type", Element::create("unix"));
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
+                 isc::config::BadSocketInfo);
+
+    socket_info->set("socket-name", Element::create(getSocketPath()));
+    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
+
+    // It should be possible to close the socket.
+    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
+}
+
+// This test checks that when unix path is too long, the socket cannot be opened.
+TEST_F(CommandMgrTest, unixCreateTooLong) {
+    ElementPtr socket_info = Element::fromJSON("{ \"socket-type\": \"unix\","
+        "\"socket-name\": \"/tmp/toolongtoolongtoolongtoolongtoolongtoolong"
+        "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong"
+        "\" }");
+
+    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
+                 SocketError);
 }

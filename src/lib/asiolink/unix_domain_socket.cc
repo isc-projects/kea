@@ -317,5 +317,10 @@ UnixDomainSocket::close() {
     impl_->close();
 }
 
+boost::asio::local::stream_protocol::socket&
+UnixDomainSocket::getASIOSocket() const {
+    return (impl_->socket_);
+}
+
 } // end of namespace asiolink
 } // end of namespace isc

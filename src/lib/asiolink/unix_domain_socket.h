@@ -107,6 +107,11 @@ public:
     /// @brief Closes the socket.
     void close();
 
+    /// @brief Returns reference to the underlying ASIO socket.
+    ///
+    /// @return Reference to underlying ASIO socket.
+    virtual boost::asio::local::stream_protocol::socket& getASIOSocket() const;
+
 private:
 
     /// @brief Pointer to the implementation of this class.

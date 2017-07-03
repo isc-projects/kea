@@ -495,17 +495,6 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (no_srv);
     }
 
-    // We're going to modify the timers configuration. This is not allowed
-    // when the thread is running.
-    try {
-        TimerMgr::instance()->stopThread();
-    } catch (const std::exception& ex) {
-        std::ostringstream err;
-        err << "Unable to stop worker thread running timers: "
-            << ex.what() << ".";
-        return (isc::config::createAnswer(1, err.str()));
-    }
-
     ConstElementPtr answer = configureDhcp6Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets
@@ -594,18 +583,6 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
-    // Start worker thread if there are any timers installed.
-    if (TimerMgr::instance()->timersCount() > 0) {
-        try {
-            TimerMgr::instance()->startThread();
-        } catch (const std::exception& ex) {
-            std::ostringstream err;
-            err << "Unable to start worker thread running timers: "
-                << ex.what() << ".";
-            return (isc::config::createAnswer(1, err.str()));
-        }
-    }
-
     // Finally, we can commit runtime option definitions in libdhcp++. This is
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
@@ -637,6 +614,12 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
                   "There is another Dhcpv6Srv instance already.");
     }
     server_ = this; // remember this instance for use in callback
+
+    // TimerMgr uses IO service to run asynchronous timers.
+    TimerMgr::instance()->setIOService(getIOService());
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(getIOService());
 
     // These are the commands always supported by the DHCPv6 server.
     // Please keep the list in alphabetic order.
@@ -699,9 +682,6 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     try {
         cleanup();
 
-        // Stop worker thread running timers, if it is running. Then
-        // unregister any timers.
-        timer_mgr_->stopThread();
         timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
