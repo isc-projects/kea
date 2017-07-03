@@ -120,6 +120,58 @@ TEST(Pool4Test, toText) {
     EXPECT_EQ("type=V4, 192.0.2.128-192.0.2.143", pool2.toText());
 }
 
+// This test checks that it is possible to specify pool specific options.
+TEST(Pool4Test, addOptions) {
+    // Create a pool to add options to it.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp4"));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp4 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    }
+
+    // Get options from the pool and check if all 10 are there.
+    OptionContainerPtr options = pool->getCfgOption()->getAll("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // Validate codes of options added to dhcp4 option space.
+    uint16_t expected_code = 100;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    options = pool->getCfgOption()->getAll("isc");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = pool->getCfgOption()->getAll("abcd");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
 TEST(Pool6Test, constructor_first_last) {
 
     // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
@@ -329,7 +381,7 @@ TEST(Pool6Test, unique_id) {
 }
 
 // Simple check if toText returns reasonable values
-TEST(Pool6Test,toText) {
+TEST(Pool6Test, toText) {
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                 IOAddress("2001:db8::2"));
     EXPECT_EQ("type=IA_NA, 2001:db8::1-2001:db8::2, delegated_len=128",

@@ -32,9 +32,11 @@
 // clients connected to this subnet. The first two options are
 // identified by the name. The third option is identified by the
 // option code.
+// There is an address pool defined within this subnet. Pool
+// specific value for option domain-name-servers is defined
+// for the pool.
   "subnet4": [
     {
-       "pools": [ { "pool":  "192.0.2.10 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
        "interface": "ethX",
        "option-data": [
@@ -124,9 +126,17 @@
             "name": "default-ip-ttl",
             "data": "0xf0"
          }
-       ]
-    } 
-  ]
+       ],
+       "pools": [ {
+         "pool":  "192.0.2.10 - 192.0.2.200",
+         "option-data": [
+            {
+                "name": "domain-name-servers",
+                "data": "192.0.2.3, 192.0.2.4"
+            }
+         ]
+       } ]
+    } ]
 },
 
 // The following configures logging. It assumes that messages with at

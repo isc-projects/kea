@@ -749,12 +749,6 @@ PoolParser::parse(PoolStoragePtr pools,
     ConstElementPtr option_data = pool_structure->get("option-data");
     if (option_data) {
         try {
-            // Currently we don't support specifying options for the DHCPv4 server.
-            if (address_family == AF_INET) {
-                isc_throw(DhcpConfigError, "option-data is not supported for DHCPv4"
-                          " address pools");
-            }
-
             CfgOptionPtr cfg = pool->getCfgOption();
             OptionDataListParser option_parser(address_family);
             option_parser.parse(cfg, option_data);

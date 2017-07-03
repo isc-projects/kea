@@ -1058,6 +1058,57 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
+        In some cases it is useful to associate some options with an
+        address pool from which a client is assigned a lease. Pool
+        specific option values override subnet specific and global
+        option values. If the client is assigned multiple leases from
+        different pools, the server will assign options from all pools
+        from which the leases have been obtained. However, if the
+        particular option is specified in multiple pools from which
+        the client obtains the leases, only one instance of this
+        option will be handed out to the client. The server's
+        administrator must not try to prioritize assignment of pool
+        specific options by trying to order pools declarations in the
+        server configuration. Future Kea releases may change the order
+        in which options are assigned from the pools without any
+        notice.
+      </para>
+
+     <para>
+       The following configuration snippet demonstrates how to specify the
+       DNS servers option, which will be assigned to a client only if the
+       client obtains an address from the given pool:
+<screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    "pool": "192.0.2.1 - 192.0.2.200",
+                    <userinput>"option-data": [
+                        {
+                            "name": "domain-name-servers",
+                            "code": 6,
+                            "space": "dhcp4",
+                            "csv-format": true,
+                            "data": "192.0.2.3"
+                         },
+                         ...
+                    ]</userinput>,
+                    ...
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
+
+      <para>
         The currently supported standard DHCPv4 options are
         listed in <xref linkend="dhcp4-std-options-list"/>.
         The "Name" and "Code"
