@@ -72,6 +72,11 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "interface-id",     Element::string,  "" },
 };
 
+/// @brief This table defines default values for interfaces for DHCPv6.
+const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
+    { "re-detect", Element::boolean, "true" }
+};
+
 /// @brief List of parameters that can be inherited from the global to subnet6 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp6) and
@@ -117,6 +122,13 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     ConstElementPtr subnets = global->get("subnet6");
     if (subnets) {
         cnt += setListDefaults(subnets, SUBNET6_DEFAULTS);
+    }
+
+    // Set the defaults for interfaces config
+    ConstElementPtr ifaces_cfg = global->get("interfaces-config");
+    if (ifaces_cfg) {
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(ifaces_cfg);
+        cnt += setDefaults(mutable_cfg, IFACE6_DEFAULTS);
     }
 
     return (cnt);
