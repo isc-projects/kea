@@ -135,7 +135,7 @@ TEST(Pool4Test, addOptions) {
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp4 option space.
     for (uint16_t code = 105; code < 112; ++code) {
-        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
         ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
     }
 
