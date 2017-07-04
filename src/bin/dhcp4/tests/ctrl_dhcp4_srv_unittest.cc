@@ -84,6 +84,9 @@ public:
     using Dhcpv4Srv::receivePacket;
 };
 
+/// @brief Default control connection timeout.
+const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
+
 /// @brief Fixture class intended for testin control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
@@ -114,6 +117,7 @@ public:
 
         CommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
+        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
 
         server_.reset();
     };
@@ -1307,6 +1311,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
 TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeout) {
     createUnixChannelServer();
 
+    // Set connection timeout to 2s to prevent long waiting time for the
+    // timeout during this test.
+    const unsigned short timeout = 2;
+    CommandMgr::instance().setConnectionTimeout(timeout);
+
     // Server's response will be assigned to this variable.
     std::string response;
 
@@ -1329,11 +1338,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeout) {
         std::string command = "{ \"command\": \"foo\" ";
         ASSERT_TRUE(client->sendCommand(command));
 
-        // Let's wait up to 10s for the server's response. The response
+        // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 10;
-        ASSERT_TRUE(client->getResponse(response, 10));
+        const unsigned int timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

@@ -81,6 +81,9 @@ public:
     using Dhcpv6Srv::receivePacket;
 };
 
+/// @brief Default control connection timeout.
+const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
+
 class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
     CtrlDhcpv6SrvTest()
@@ -91,6 +94,8 @@ public:
     virtual ~CtrlDhcpv6SrvTest() {
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
+        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+
         reset();
     };
 
@@ -1326,6 +1331,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
 TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeout) {
     createUnixChannelServer();
 
+    // Set connection timeout to 2s to prevent long waiting time for the
+    // timeout during this test.
+    const unsigned short timeout = 2;
+    CommandMgr::instance().setConnectionTimeout(timeout);
+
     // Server's response will be assigned to this variable.
     std::string response;
 
@@ -1348,11 +1358,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeout) {
         std::string command = "{ \"command\": \"foo\" ";
         ASSERT_TRUE(client->sendCommand(command));
 
-        // Let's wait up to 10s for the server's response. The response
+        // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 10;
-        ASSERT_TRUE(client->getResponse(response, 10));
+        const unsigned int timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

@@ -31,10 +31,8 @@ namespace {
 /// @brief Maximum size of the data chunk sent/received over the socket.
 const size_t BUF_SIZE = 8192;
 
-/// @brief Specifies connection timeout in milliseconds.
-///
-/// @todo Make it configurable.
-const unsigned CONNECTION_TIMEOUT = 5000;
+/// @brief Default connection timeout in seconds.
+const unsigned short DEFAULT_CONNECTION_TIMEOUT = 10;
 
 class ConnectionPool;
 
@@ -56,11 +54,13 @@ public:
     /// for data transmission.
     /// @param connection_pool Reference to the connection pool to which this
     /// connection belongs.
+    /// @param timeout Connection timeout.
     Connection(const IOServicePtr& io_service,
                const boost::shared_ptr<UnixDomainSocket>& socket,
-               ConnectionPool& connection_pool)
-        : socket_(socket), timeout_timer_(*io_service), buf_(), response_(),
-          connection_pool_(connection_pool), feed_(),
+               ConnectionPool& connection_pool,
+               const unsigned short timeout)
+        : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
+          buf_(), response_(), connection_pool_(connection_pool), feed_(),
           response_in_progress_(false) {
 
         LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED)
@@ -74,7 +74,7 @@ public:
 
         // Start timer for detecting timeouts.
         timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
-                             CONNECTION_TIMEOUT, IntervalTimer::ONE_SHOT);
+                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
@@ -159,6 +159,9 @@ private:
 
     /// @brief Interval timer used to detect connection timeouts.
     IntervalTimer timeout_timer_;
+
+    /// @brief Connection timeout.
+    unsigned short timeout_;
 
     /// @brief Buffer used for received data.
     std::array<char, BUF_SIZE> buf_;
@@ -375,7 +378,7 @@ public:
     /// @brief Constructor.
     CommandMgrImpl()
         : io_service_(), acceptor_(), socket_(), socket_name_(),
-          connection_pool_() {
+          connection_pool_(), timeout_(DEFAULT_CONNECTION_TIMEOUT) {
     }
 
     /// @brief Opens acceptor service allowing the control clients to connect.
@@ -405,6 +408,9 @@ public:
 
     /// @brief Pool of connections.
     ConnectionPool connection_pool_;
+
+    /// @brief Connection timeout
+    unsigned short timeout_;
 };
 
 void
@@ -465,7 +471,8 @@ CommandMgrImpl::doAccept() {
         if (!ec) {
             // New connection is arriving. Start asynchronous transmission.
             ConnectionPtr connection(new Connection(io_service_, socket_,
-                                                    connection_pool_));
+                                                    connection_pool_,
+                                                    timeout_));
             connection_pool_.start(connection);
 
         } else if (ec.value() != boost::asio::error::operation_aborted) {
@@ -520,6 +527,12 @@ void
 CommandMgr::setIOService(const IOServicePtr& io_service) {
     impl_->io_service_ = io_service;
 }
+
+void
+CommandMgr::setConnectionTimeout(const unsigned short timeout) {
+    impl_->timeout_ = timeout;
+}
+
 
 }; // end of isc::config
 }; // end of isc
