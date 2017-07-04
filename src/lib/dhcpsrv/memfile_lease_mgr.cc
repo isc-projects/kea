@@ -638,14 +638,14 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
     Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
-        lease != idx.end(); ++lease) {
+    const Lease4StorageHWAddressSubnetIdIndex& idx =
+        storage4_.get<HWAddressSubnetIdIndexTag>();
+    std::pair<Lease4StorageHWAddressSubnetIdIndex::const_iterator,
+              Lease4StorageHWAddressSubnetIdIndex::const_iterator> l
+        = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
 
-        // Every Lease4 has a hardware address, so we can compare it
-        if ( (*(*lease)->hwaddr_) == hwaddr) {
-            collection.push_back((*lease));
-        }
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
 
     return (collection);
@@ -677,15 +677,14 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
     Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
-        lease != idx.end(); ++ lease) {
+    const Lease4StorageClientIdSubnetIdIndex& idx =
+        storage4_.get<ClientIdSubnetIdIndexTag>();
+    std::pair<Lease4StorageClientIdSubnetIdIndex::const_iterator,
+              Lease4StorageClientIdSubnetIdIndex::const_iterator> l
+        = idx.equal_range(boost::make_tuple(client_id.getClientId()));
 
-        // client-id is not mandatory in DHCPv4. There can be a lease that does
-        // not have a client-id. Dereferencing null pointer would be a bad thing
-        if((*lease)->client_id_ && *(*lease)->client_id_ == client_id) {
-            collection.push_back((*lease));
-        }
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
 
     return (collection);
