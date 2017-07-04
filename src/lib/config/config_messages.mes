@@ -73,6 +73,15 @@ detailed error is provided as an argument.
 This is an informational message that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
 
+% COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL Encountered error %1 while trying to gracefully shutdown socket
+This message indicates an error while trying to gracefully shutdown command
+connection. The type of the error is included in the message.
+
+% COMMAND_SOCKET_CONNECTION_TIMEOUT Timeout occurred for connection over socket %1
+This is an informational message that indicates that the timeout has
+occurred for one of the command channel connections. The response
+sent by the server indicates a timeout and is then closed.
+
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
 This debug message indicates that specified number of bytes was received
 over command socket identified by specified file descriptor.
