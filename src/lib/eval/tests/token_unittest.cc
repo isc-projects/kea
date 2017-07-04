@@ -1135,12 +1135,12 @@ TEST_F(TokenTest, relay6Option) {
     // Level 2, no encapsulation so no options
     verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 
-    // Level -1, the same than level 1
+    // Level -1, the same as level 1
     verifyRelay6Option(-1, 100, TokenOption::TEXTUAL, "hundred.one");
     verifyRelay6Option(-1, 101, TokenOption::TEXTUAL, "");
     verifyRelay6Option(-1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
 
-    // Level -2, the same than level 0
+    // Level -2, the same as level 0
     verifyRelay6Option(-2, 100, TokenOption::TEXTUAL, "hundred.zero");
     verifyRelay6Option(-2, 100, TokenOption::EXISTS, "true");
     verifyRelay6Option(-2, 101, TokenOption::TEXTUAL, "hundredone.zero");
@@ -1492,11 +1492,11 @@ TEST_F(TokenTest, relay6Field) {
     // Level 2 has no encapsulation so the address should be zero length
     verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
 
-    // Level -1 is the same than level 1
+    // Level -1 is the same as level 1
     verifyRelay6Eval(-1, TokenRelay6Field::LINKADDR, 16, linkaddr);
     verifyRelay6Eval(-1, TokenRelay6Field::PEERADDR, 16, peeraddr);
 
-    // Level -2 is the same than level 0
+    // Level -2 is the same as level 0
     verifyRelay6Eval(-2, TokenRelay6Field::LINKADDR, 16, zeroaddr);
     verifyRelay6Eval(-2, TokenRelay6Field::PEERADDR, 16, zeroaddr);
 
