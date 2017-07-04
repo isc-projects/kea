@@ -51,6 +51,7 @@ public:
     /// Manager to cause the blocking call to @c select() to return as soon as
     /// a transmission over the control socket is received.
     ///
+    /// @param io_service IOService object used to handle the asio operations
     /// @param socket Pointer to the object representing a socket which is used
     /// for data transmission.
     /// @param connection_pool Reference to the connection pool to which this
@@ -121,8 +122,11 @@ public:
 
     /// @brief Starts asynchronous send over the unix domain socket.
     ///
-    /// This method doesn't block. Once the send operation is completed, the
-    /// @c Connection::sendHandler cllback is invoked.
+    /// This method doesn't block. Once the send operation (that covers the whole
+    /// data if it's small or first BUF_SIZE bytes if its large) is completed, the
+    /// @c Connection::sendHandler callback is invoked. That handler will either
+    /// close the connection gracefully if all data has been sent, or will
+    /// call @ref doSend() again to send the next chunk of data.
     void doSend() {
         size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
@@ -323,14 +327,15 @@ Connection::sendHandler(const boost::system::error_code& ec,
         }
 
     } else {
-
-        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE)
-            .arg(bytes_transferred).arg(socket_->getNative());
-
         // No error. We are in a process of sending a response. Need to
         // remove the chunk that we have managed to sent with the previous
         // attempt.
         response_.erase(0, bytes_transferred);
+
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE)
+            .arg(bytes_transferred).arg(response_.size())
+            .arg(socket_->getNative());
+
         // Check if there is any data left to be sent and sent it.
         if (!response_.empty()) {
             doSend();
