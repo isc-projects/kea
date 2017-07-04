@@ -488,9 +488,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                 if (check_only) {
                     // No re-detection in check only mode
                     ifaces_cfg->set("re-detect", Element::create(false));
-                } else if (!ifaces_cfg->contains("re-detect")) {
-                    // Else the default is to re-detect
-                    ifaces_cfg->set("re-detect", Element::create(true));
                 }
                 IfacesConfigParser parser(AF_INET);
                 CfgIfacePtr cfg_iface = srv_cfg->getCfgIface();
