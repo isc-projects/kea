@@ -90,7 +90,7 @@ over command socket identified by specified file descriptor.
 This error message indicates that an error was encountered while
 reading from command socket.
 
-% COMMAND_SOCKET_WRITE Sent response of %1 bytes over command socket %2
+% COMMAND_SOCKET_WRITE Sent response of %1 bytes (%2 bytes left to send) over command socket %3
 This debug message indicates that the specified number of bytes was sent
 over command socket identifier by the specified file descriptor.
 
