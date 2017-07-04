@@ -100,6 +100,12 @@ public:
         }
     }
 
+    /// @brief Gracefully terminates current connection.
+    ///
+    /// This method should be called prior to closing the socket to initiate
+    /// graceful shutdown.
+    void terminate();
+
     /// @brief Start asynchronous read over the unix domain socket.
     ///
     /// This method doesn't block. Once the transmission is received over the
@@ -213,6 +219,16 @@ private:
 
 };
 
+void
+Connection::terminate() {
+    try {
+        socket_->shutdown();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL)
+            .arg(ex.what());
+    }
+}
 
 void
 Connection::receiveHandler(const boost::system::error_code& ec,
@@ -320,6 +336,10 @@ Connection::sendHandler(const boost::system::error_code& ec,
             doSend();
             return;
         }
+
+        // Gracefully shutdown the connection and close the socket if
+        // we have sent the whole response.
+        terminate();
     }
 
     // All data sent or an error has occurred. Close the connection.
@@ -328,6 +348,9 @@ Connection::sendHandler(const boost::system::error_code& ec,
 
 void
 Connection::timeoutHandler() {
+    LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_TIMEOUT)
+        .arg(socket_->getNative());
+
     ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, "Connection over"
                                        " control channel timed out");
     response_ = rsp->str();

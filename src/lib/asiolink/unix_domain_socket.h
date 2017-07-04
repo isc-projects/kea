@@ -104,7 +104,14 @@ public:
     /// error is signalled.
     void asyncReceive(void* data, const size_t length, const Handler& handler);
 
+    /// @brief Disables read and write operations on the socket.
+    ///
+    /// @throw UnixDomainSocketError if an error occurs during shutdown.
+    void shutdown();
+
     /// @brief Closes the socket.
+    ///
+    /// @throw UnixDomainSocketError if an error occurs during closure.
     void close();
 
     /// @brief Returns reference to the underlying ASIO socket.
