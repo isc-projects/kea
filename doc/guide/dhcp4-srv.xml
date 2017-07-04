@@ -1082,9 +1082,6 @@ temporarily override a list of interface names and listen on all interfaces.
                     <userinput>"option-data": [
                         {
                             "name": "domain-name-servers",
-                            "code": 6,
-                            "space": "dhcp4",
-                            "csv-format": true,
                             "data": "192.0.2.3"
                          },
                          ...
