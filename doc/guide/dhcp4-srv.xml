@@ -1061,17 +1061,11 @@ temporarily override a list of interface names and listen on all interfaces.
         In some cases it is useful to associate some options with an
         address pool from which a client is assigned a lease. Pool
         specific option values override subnet specific and global
-        option values. If the client is assigned multiple leases from
-        different pools, the server will assign options from all pools
-        from which the leases have been obtained. However, if the
-        particular option is specified in multiple pools from which
-        the client obtains the leases, only one instance of this
-        option will be handed out to the client. The server's
-        administrator must not try to prioritize assignment of pool
-        specific options by trying to order pools declarations in the
-        server configuration. Future Kea releases may change the order
-        in which options are assigned from the pools without any
-        notice.
+        option values. The server's administrator must not try to
+        prioritize assignment of pool specific options by trying to
+        order pools declarations in the server configuration. Future
+        Kea releases may change the order in which options are
+        assigned from the pools without any notice.
       </para>
 
      <para>
