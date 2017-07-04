@@ -2809,6 +2809,8 @@ TEST_F(Dhcp4ParserTest, optionDataSinglePool) {
     testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
 }
 
+// This test verifies that it's possible to define different options in
+// different pools and those options are not confused.
 TEST_F(Dhcp4ParserTest, optionDataMultiplePools) {
     ConstElementPtr x;
     string config = "{ " + genIfaceConfig() + ","

@@ -127,15 +127,27 @@
             "data": "0xf0"
          }
        ],
-       "pools": [ {
-         "pool":  "192.0.2.10 - 192.0.2.200",
-         "option-data": [
-            {
-                "name": "domain-name-servers",
-                "data": "192.0.2.3, 192.0.2.4"
-            }
-         ]
-       } ]
+
+        // Now we define pools. There are two pools here.
+        "pools": [ {
+            // This is the first pool. Nothing spectacular here, just a range
+            // of addresses.
+           "pool": "192.0.2.10 - 192.0.2.100"
+
+        }, {
+            // This second pool is more interesting. Anyone who gets an
+            // address from this pool will also get this specific option
+            // value if asks for DNS servers configuration. This value,
+            // being more specific, overrides any values that were specified
+            // on either global or subnet scope.
+            "pool":  "192.0.2.101 - 192.0.2.200",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "data": "192.0.2.3, 192.0.2.4"
+                }
+            ]
+        } ]
     } ]
 },
 
