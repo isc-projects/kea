@@ -80,8 +80,9 @@ PktFilterInet6::openSocket(const Iface& iface,
     // in6addr_any (binding to port). Binding to port is required on some
     // operating systems, e.g. NetBSD and OpenBSD so as the socket can
     // join the socket to multicast group.
-    // RedHat defines SO_REUSEPORT but the kernel does not support it
-    // and returns ENOPROTOOPT so ignore this error.
+    // RedHat 6.4 defines SO_REUSEPORT but the kernel does not support it
+    // and returns ENOPROTOOPT so ignore this error. Other versions may be
+    // affected, too.
     if ((setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
                     (char *)&flag, sizeof(flag)) < 0) &&
         (errno != ENOPROTOOPT)) {
