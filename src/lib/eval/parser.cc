@@ -273,6 +273,10 @@ namespace isc { namespace eval {
         value.move< TokenRelay6Field::FieldType > (that.value);
         break;
 
+      case 60: // nest_level
+        value.move< int8_t > (that.value);
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -288,10 +292,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.move< uint32_t > (that.value);
-        break;
-
-      case 60: // nest_level
-        value.move< uint8_t > (that.value);
         break;
 
       default:
@@ -329,6 +329,10 @@ namespace isc { namespace eval {
         value.copy< TokenRelay6Field::FieldType > (that.value);
         break;
 
+      case 60: // nest_level
+        value.copy< int8_t > (that.value);
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -344,10 +348,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.copy< uint32_t > (that.value);
-        break;
-
-      case 60: // nest_level
-        value.copy< uint8_t > (that.value);
         break;
 
       default:
@@ -445,7 +445,7 @@ namespace isc { namespace eval {
       case 60: // nest_level
 
 #line 108 "parser.yy" // lalr1.cc:636
-        { yyoutput << yysym.value.template as< uint8_t > (); }
+        { yyoutput << yysym.value.template as< int8_t > (); }
 #line 450 "parser.cc" // lalr1.cc:636
         break;
 
@@ -701,6 +701,10 @@ namespace isc { namespace eval {
         yylhs.value.build< TokenRelay6Field::FieldType > ();
         break;
 
+      case 60: // nest_level
+        yylhs.value.build< int8_t > ();
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -716,10 +720,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         yylhs.value.build< uint32_t > ();
-        break;
-
-      case 60: // nest_level
-        yylhs.value.build< uint8_t > ();
         break;
 
       default:
@@ -814,7 +814,7 @@ namespace isc { namespace eval {
                     switch (ctx.getUniverse()) {
                     case Option::V6:
                     {
-                        TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as< uint8_t > (), yystack_[3].value.as< uint16_t > (), TokenOption::EXISTS));
+                        TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as< int8_t > (), yystack_[3].value.as< uint16_t > (), TokenOption::EXISTS));
                         ctx.expression.push_back(opt);
                         break;
                     }
@@ -932,7 +932,7 @@ namespace isc { namespace eval {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
-                         TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as< uint8_t > (), yystack_[3].value.as< uint16_t > (), yystack_[0].value.as< TokenOption::RepresentationType > ()));
+                         TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as< int8_t > (), yystack_[3].value.as< uint16_t > (), yystack_[0].value.as< TokenOption::RepresentationType > ()));
                          ctx.expression.push_back(opt);
                          break;
                      }
@@ -995,7 +995,7 @@ namespace isc { namespace eval {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
                      {
-                         TokenPtr relay6field(new TokenRelay6Field(yystack_[3].value.as< uint8_t > (), yystack_[0].value.as< TokenRelay6Field::FieldType > ()));
+                         TokenPtr relay6field(new TokenRelay6Field(yystack_[3].value.as< int8_t > (), yystack_[0].value.as< TokenRelay6Field::FieldType > ()));
                          ctx.expression.push_back(relay6field);
                          break;
                      }
@@ -1151,7 +1151,7 @@ namespace isc { namespace eval {
   case 39:
 #line 418 "parser.yy" // lalr1.cc:859
     {
-                     yylhs.value.as< uint8_t > () = ctx.convertNestLevelNumber(yystack_[0].value.as< std::string > (), yystack_[0].location);
+                     yylhs.value.as< int8_t > () = ctx.convertNestLevelNumber(yystack_[0].value.as< std::string > (), yystack_[0].location);
                  }
 #line 1157 "parser.cc" // lalr1.cc:859
     break;
