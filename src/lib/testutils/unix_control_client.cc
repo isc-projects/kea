@@ -110,11 +110,6 @@ bool UnixControlClient::getResponse(std::string& response,
         return (false);
     }
 
-    if (bytes_rcvd >= sizeof(buf)) {
-        ADD_FAILURE() << "Response size too large: " << bytes_rcvd;
-        return (false);
-    }
-
     // Convert the response to a string
     response = std::string(buf, bytes_rcvd);
     return (true);
