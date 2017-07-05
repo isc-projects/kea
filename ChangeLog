@@ -1,6 +1,6 @@
 1266.	[func]		fdupont
 	It is now possible to define options in DHCPv4 pools.
-	(Trac #5288, git xxx)
+	(Trac #5288, git aa2839caab8d885e5bceca6f506162debd239b3f)
 
 1265.	[func]		fdupont
 	Extended classification relay6[nest] syntax to allows counting
