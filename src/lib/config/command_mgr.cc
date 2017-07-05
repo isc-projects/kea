@@ -136,6 +136,13 @@ public:
     /// @brief Handler invoked when the data is received over the control
     /// socket.
     ///
+    /// It collects received data into the @c isc::config::JSONFeed object and
+    /// schedules additional asynchronous read of data if this object signals
+    /// that command is incomplete. When the entire command is received, the
+    /// handler processes this command and asynchronously responds to the
+    /// controlling client.
+    //
+    ///
     /// @param ec Error code.
     /// @param bytes_transferred Number of bytes received.
     void receiveHandler(const boost::system::error_code& ec,
@@ -144,12 +151,19 @@ public:
 
     /// @brief Handler invoked when the data is sent over the control socket.
     ///
+    /// If there are still data to be sent another asynchronous send is
+    /// scheduled. When the entire command is sent, the connection is shutdown
+    /// and closed.
+    ///
     /// @param ec Error code.
     /// @param bytes_transferred Number of bytes sent.
     void sendHandler(const boost::system::error_code& ec,
                      size_t bytes_trasferred);
 
     /// @brief Handler invoked when timeout has occurred.
+    ///
+    /// Asynchrnously Sends a response to the client indicating that the
+    /// timeout has occurred.
     void timeoutHandler();
 
 private:
@@ -358,6 +372,15 @@ void
 Connection::timeoutHandler() {
     LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_TIMEOUT)
         .arg(socket_->getNative());
+
+    try {
+        socket_->cancel();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_CANCEL_FAIL)
+            .arg(socket_->getNative())
+            .arg(ex.what());
+    }
 
     ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, "Connection over"
                                        " control channel timed out");

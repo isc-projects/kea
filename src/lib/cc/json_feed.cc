@@ -141,7 +141,7 @@ JSONFeed::defineStates() {
 
 void
 JSONFeed::feedFailure(const std::string& error_msg) {
-    error_message_ = error_msg + " : " + getContextStr();
+    error_message_ = error_msg;
     transition(FEED_FAILED_ST, FEED_FAILED_EVT);
 }
 

@@ -148,6 +148,9 @@ public:
     /// @brief Disables read and write operations on the socket.
     void shutdown();
 
+    /// @brief Cancels asynchronous operations on the socket.
+    void cancel();
+
     /// @brief Closes the socket.
     void close();
 
@@ -257,6 +260,15 @@ UnixDomainSocketImpl::shutdown() {
 }
 
 void
+UnixDomainSocketImpl::cancel() {
+    boost::system::error_code ec;
+    static_cast<void>(socket_.cancel(ec));
+    if (ec) {
+        isc_throw(UnixDomainSocketError, ec.message());
+    }
+}
+
+void
 UnixDomainSocketImpl::close() {
     boost::system::error_code ec;
     static_cast<void>(socket_.close(ec));
@@ -331,6 +343,11 @@ UnixDomainSocket::asyncReceive(void* data, const size_t length,
 void
 UnixDomainSocket::shutdown() {
     impl_->shutdown();
+}
+
+void
+UnixDomainSocket::cancel() {
+    impl_->cancel();
 }
 
 void
