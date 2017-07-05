@@ -60,6 +60,20 @@
     it on its own.
     </para>
 
+    <para>Control connections over both HTTP and unix domain sockets are
+    guarded with timeouts. The default timeout value is set to 10s
+    and is not configurable. The timeout configuration will be
+    implemented in the future.
+    </para>
+
+    <note>
+      <simpara>Kea 1.2.0 release and earlier had a limitation of 64kB
+      on the maximum size of a command and a response sent over the unix
+      domain socket. This limitation has been removed in Kea 1.3.0
+      release.
+      </simpara>
+    </note>
+
     <section id="ctrl-channel-syntax">
     <title>Data Syntax</title>
     <para>Communication over the control channel is conducted using JSON

@@ -26,10 +26,15 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <iomanip>
+#include <sstream>
+
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <cstdlib>
+
+#include <thread>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -43,7 +48,31 @@ using namespace isc::test;
 
 namespace {
 
+/// @brief Simple RAII class which stops IO service upon destruction
+/// of the object.
+class IOServiceWork {
+public:
 
+    /// @brief Constructor.
+    ///
+    /// @param io_service Pointer to the IO service to be stopped.
+    IOServiceWork(const IOServicePtr& io_service)
+        : io_service_(io_service) {
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Stops IO service.
+    ~IOServiceWork() {
+        io_service_->stop();
+    }
+
+private:
+
+    /// @brief Pointer to the IO service to be stopped upon destruction.
+    IOServicePtr io_service_;
+
+};
 
 class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
     // "Naked" DHCPv6 server, exposes internal fields
@@ -56,6 +85,9 @@ public:
     using Dhcpv6Srv::receivePacket;
 };
 
+/// @brief Default control connection timeout.
+const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
+
 class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
     CtrlDhcpv6SrvTest()
@@ -66,6 +98,9 @@ public:
     virtual ~CtrlDhcpv6SrvTest() {
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
+        CommandMgr::instance().deregisterAll();
+        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+
         reset();
     };
 
@@ -307,6 +342,54 @@ public:
             ADD_FAILURE() << "Invalid expected status: " << exp_status;
         }
     }
+
+    /// @brief Handler for long command.
+    ///
+    /// It checks whether the received command is equal to the one specified
+    /// as an argument.
+    ///
+    /// @param expected_command String representing an expected command.
+    /// @param command_name Command name received by the handler.
+    /// @param arguments Command arguments received by the handler.
+    ///
+    /// @returns Success answer.
+    static ConstElementPtr
+    longCommandHandler(const std::string& expected_command,
+                       const std::string& command_name,
+                       const ConstElementPtr& arguments) {
+        // The handler is called with a command name and the structure holding
+        // command arguments. We have to rebuild the command from those
+        // two arguments so as it can be compared against expected_command.
+        ElementPtr entire_command = Element::createMap();
+        entire_command->set("command", Element::create(command_name));
+        entire_command->set("arguments", (arguments));
+
+        // The rebuilt command will have a different order of parameters so
+        // let's parse expected_command back to JSON to guarantee that
+        // both structures are built using the same order.
+        EXPECT_EQ(Element::fromJSON(expected_command)->str(),
+                  entire_command->str());
+        return (createAnswer(0, "long command received ok"));
+    }
+
+    /// @brief Command handler which generates long response
+    ///
+    /// This handler generates a large response (over 400kB). It includes
+    /// a list of randomly generated strings to make sure that the test
+    /// can catch out of order delivery.
+    static ConstElementPtr longResponseHandler(const std::string&,
+                                               const ConstElementPtr&) {
+        // By seeding the generator with the constant value we will always
+        // get the same sequence of generated strings.
+        std::srand(1);
+        ElementPtr arguments = Element::createList();
+        for (unsigned i = 0; i < 40000; ++i) {
+            std::ostringstream s;
+            s << std::setw(10) << std::rand();
+            arguments->add(Element::create(s.str()));
+        }
+        return (createAnswer(0, arguments));
+    }
 };
 
 
@@ -485,7 +568,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<string>:21:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<wire>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -631,7 +714,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
               "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter "
-              "is missing for a subnet being configured (<string>:21:17)\" }",
+              "is missing for a subnet being configured (<wire>:20:17)\" }",
               response);
 
     // Check that the config was not lost
@@ -738,7 +821,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
 
     sendUnixCommand("utter nonsense", response);
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"error: unexpected character u in <string>:1:2\" }",
+              "\"text\": \"invalid first character u\" }",
               response);
 }
 
@@ -1129,6 +1212,213 @@ TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     client1->disconnectFromServer();
     client2->disconnectFromServer();
     ASSERT_NO_THROW(getIOService()->poll());
+}
+
+// This test verifies that the server can receive and process a large command.
+TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
+
+    std::ostringstream command;
+
+    // This is the desired size of the command sent to the server (1MB). The
+    // actual size sent will be slightly greater than that.
+    const size_t command_size = 1024 * 1000;
+
+    while (command.tellp() < command_size) {
+
+        // We're sending command 'foo' with arguments being a list of
+        // strings. If this is the first transmission, send command name
+        // and open the arguments list. Also insert the first argument
+        // so as all subsequent arguments can be prefixed with a comma.
+        if (command.tellp() == 0) {
+            command << "{ \"command\": \"foo\", \"arguments\": [ \"begin\"";
+
+        } else {
+            // Generate a random number and insert it into the stream as
+            // 10 digits long string.
+            std::ostringstream arg;
+            arg << setw(10) << std::rand();
+            // Append the argument in the command.
+            command << ", \"" << arg.str() << "\"\n";
+
+            // If we have hit the limit of the command size, close braces to
+            // get appropriate JSON.
+            if (command.tellp() > command_size) {
+                command << "] }";
+            }
+        }
+    }
+
+    ASSERT_NO_THROW(
+        CommandMgr::instance().registerCommand("foo",
+             boost::bind(&CtrlChannelDhcpv6SrvTest::longCommandHandler,
+                         command.str(), _1, _2));
+    );
+
+    createUnixChannelServer();
+
+    std::string response;
+    std::thread th([this, &response, &command]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Create client which we will use to send command to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+
+        // Connect to the server. This will trigger acceptor handler on the
+        // server side and create a new connection.
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Initially the remaining_string holds the entire command and we
+        // will be erasing the portions that we have sent.
+        std::string remaining_data = command.str();
+        while (!remaining_data.empty()) {
+            // Send the command in chunks of 1024 bytes.
+            const size_t l = remaining_data.size() < 1024 ? remaining_data.size() : 1024;
+            ASSERT_TRUE(client->sendCommand(remaining_data.substr(0, l)));
+            remaining_data.erase(0, l);
+        }
+
+        // Set timeout to 5 seconds to allow the time for the server to send
+        // a response.
+        const unsigned int timeout = 5;
+        ASSERT_TRUE(client->getResponse(response, timeout));
+
+        // We're done. Close the connection to the server.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until the command has been processed and response
+    // received.
+    getIOService()->run();
+
+    // Wait for the thread to complete.
+    th.join();
+
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"long command received ok\" }",
+              response);
+}
+
+// This test verifies that the server can send long response to the client.
+TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
+    // We need to generate large response. The simplest way is to create
+    // a command and a handler which will generate some static response
+    // of a desired size.
+    ASSERT_NO_THROW(
+        CommandMgr::instance().registerCommand("foo",
+             boost::bind(&CtrlChannelDhcpv6SrvTest::longResponseHandler, _1, _2));
+    );
+
+    createUnixChannelServer();
+
+    // The UnixControlClient doesn't have any means to check that the entire
+    // response has been received. What we want to do is to generate a
+    // reference response using our command handler and then compare
+    // what we have received over the unix domain socket with this reference
+    // response to figure out when to stop receiving.
+    std::string reference_response = longResponseHandler("foo", ConstElementPtr())->str();
+
+    // In this stream we're going to collect out partial responses.
+    std::ostringstream response;
+
+    // The client is synchronous so it is useful to run it in a thread.
+    std::thread th([this, &response, reference_response]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Remember the response size so as we know when we should stop
+        // receiving.
+        const size_t long_response_size = reference_response.size();
+
+        // Create the client and connect it to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Send the stub command.
+        std::string command = "{ \"command\": \"foo\", \"arguments\": { }  }";
+        ASSERT_TRUE(client->sendCommand(command));
+
+        // Keep receiving response data until we have received the full answer.
+        while (response.tellp() < long_response_size) {
+            std::string partial;
+            const unsigned int timeout = 5;
+            ASSERT_TRUE(client->getResponse(partial, 5));
+            response << partial;
+        }
+
+        // We have received the entire response, so close the connection and
+        // stop the IO service.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until the entire response has been received.
+    getIOService()->run();
+
+    // Wait for the thread to complete.
+    th.join();
+
+    // Make sure we have received correct response.
+    EXPECT_EQ(reference_response, response.str());
+}
+
+// This test verifies that the server signals timeout if the transmission
+// takes too long.
+TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeout) {
+    createUnixChannelServer();
+
+    // Set connection timeout to 2s to prevent long waiting time for the
+    // timeout during this test.
+    const unsigned short timeout = 2;
+    CommandMgr::instance().setConnectionTimeout(timeout);
+
+    // Server's response will be assigned to this variable.
+    std::string response;
+
+    // It is useful to create a thread and run the server and the client
+    // at the same time and independently.
+    std::thread th([this, &response]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Create the client and connect it to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Send partial command. The server will be waiting for the remaining
+        // part to be sent and will eventually signal a timeout.
+        std::string command = "{ \"command\": \"foo\" ";
+        ASSERT_TRUE(client->sendCommand(command));
+
+        // Let's wait up to 15s for the server's response. The response
+        // should arrive sooner assuming that the timeout mechanism for
+        // the server is working properly.
+        const unsigned int timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout));
+
+        // Explicitly close the client's connection.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until stopped.
+    getIOService()->run();
+
+    // Wait for the thread to return.
+    th.join();
+
+    // Check that the server has signalled a timeout.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel"
+              " timed out\" }", response);
 }
 
 
