@@ -2393,6 +2393,32 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+/// The purpose of this test is to verify that various integer types
+/// are supported.
+TEST_F(Dhcp6ParserTest, optionIntegerTypes) {
+    // Configuration string. The third of the record fields
+    // is invalid. It is "sting" instead of "string".
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100,"
+        "      \"type\": \"record\","
+        "      \"record-types\": \"uint8,uint16,uint32,int8,int16,int32\","
+        "      \"space\": \"isc\""
+        "  } ]"
+        "}";
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+
+    // Use the configuration string to create new option definition.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting parsing error (error code 1).
+    checkResult(status, 0);
+}
+
+
 /// The goal of this test is to verify that the invalid encapsulated
 /// option space name is not accepted.
 TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
