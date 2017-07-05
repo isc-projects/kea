@@ -134,7 +134,7 @@
             // of addresses.
            "pool": "192.0.2.10 - 192.0.2.100"
 
-        }, {
+          }, {
             // This second pool is more interesting. Anyone who gets an
             // address from this pool will also get this specific option
             // value if asks for DNS servers configuration. This value,
@@ -146,7 +146,7 @@
                     "name": "domain-name-servers",
                     "data": "192.0.2.3, 192.0.2.4"
                 }
-            ]
+          ]
         } ]
     } ]
 },
