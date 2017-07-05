@@ -6151,6 +6151,6 @@ TEST_P(Dhcp6GetConfigTest, run) {
 
 /// Define the parametrized test loop
 INSTANTIATE_TEST_CASE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
-                        ::testing::Range(0UL, max_config_counter));
+                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
 
 };
