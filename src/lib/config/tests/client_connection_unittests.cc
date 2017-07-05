@@ -147,7 +147,7 @@ TEST_F(ClientConnectionTest, timeout) {
     conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
               ClientConnection::ControlCommand(command),
     [this, &handler_invoked](const boost::system::error_code& ec,
-                             const ConstJSONFeedPtr& feed) {
+                             const ConstJSONFeedPtr& /*feed*/) {
         // Indicate that the callback has been invoked to break the loop
         // below.
         handler_invoked = true;
@@ -173,7 +173,7 @@ TEST_F(ClientConnectionTest, connectionError) {
     conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
                ClientConnection::ControlCommand(command),
     [this, &handler_invoked](const boost::system::error_code& ec,
-           const ConstJSONFeedPtr& feed) {
+                             const ConstJSONFeedPtr& /*feed*/) {
         handler_invoked = true;
         ASSERT_TRUE(ec);
     });

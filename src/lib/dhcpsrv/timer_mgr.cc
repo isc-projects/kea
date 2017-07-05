@@ -209,8 +209,6 @@ TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
     // Cancel any pending asynchronous operation and stop the timer.
     cancel(timer_name);
 
-    const TimerInfoPtr& timer_info = timer_info_it->second;
-
     // Remove the timer.
     registered_timers_.erase(timer_info_it);
 }
