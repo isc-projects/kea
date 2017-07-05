@@ -130,7 +130,7 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 }
 
 void
-TimerMgrTest::doWait(const long timeout, const bool call_receive) {
+TimerMgrTest::doWait(const long timeout, const bool /*call_receive*/) {
     IntervalTimer timer(*io_service_);
     timer.setup([this]() {
         io_service_->stop();

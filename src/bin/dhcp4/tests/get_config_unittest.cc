@@ -3905,7 +3905,8 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"hooks-libraries\": [ ],\n"
 "        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"lease-database\": {\n"
 "            \"type\": \"memfile\"\n"
@@ -3987,7 +3988,8 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"hooks-libraries\": [ ],\n"
 "        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"lease-database\": {\n"
 "            \"type\": \"memfile\"\n"
@@ -6157,7 +6159,6 @@ public:
 TEST_P(Dhcp4GetConfigTest, run) {
     // configurations have not been extracted yet
     if (max_config_counter == 0) {
-        std::cout << "#### max_config_counter=0, aborting" << std::endl;
         return;
     }
 
@@ -6221,6 +6222,6 @@ TEST_P(Dhcp4GetConfigTest, run) {
 
 /// Define the parametrized test loop
 INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
-                        ::testing::Range(0UL, max_config_counter));
+                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
 
 };
