@@ -1,3 +1,8 @@
+1267.	[bug]		fdupont
+	Unit-tests for libdhcp now ignore ENOPROTOPT when setting
+	SO_REUSEPORT to improve compatibility with older RedHat versions.
+	(Trac #5243, git xxx)
+
 1266.	[func]		fdupont
 	It is now possible to define options in DHCPv4 pools.
 	(Trac #5288, git aa2839caab8d885e5bceca6f506162debd239b3f)
