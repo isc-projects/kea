@@ -1,3 +1,10 @@
+1269.	[func]		marcin
+	Command manager can now handle large responses to control
+	commands. Prior to this change the size of the response
+	was limited to 64k. The server now also signals timeout
+	after 10s if the connection lasts too long.
+	(Trac #5318, git 8531a65521ea42f01f3bed444b054e92f7bd1a46)
+
 1268.	[func]		fdupont
 	Kea now re-detects network interfaces every time configuration is
 	changed. 're-detect' parameter added to restore old behavior, if
