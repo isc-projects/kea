@@ -58,7 +58,15 @@
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0",
+        "interface": "eth0",
+
+        // This directive tells Kea that reservations may be made both in-pool
+        // and out-of-pool. For improved performance, you may move all reservations
+        // out of the dynamic pool and change reservation-mode to "out-of-pool".
+        // Kea will then be able to skip querying for host reservations when
+        // assigning leases from dynamic pool.
+        "reservation-mode": "all",
+
         "reservations": [
 
 # This is a reservation for a specific hardware/MAC address. It's a very
