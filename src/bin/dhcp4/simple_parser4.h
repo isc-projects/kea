@@ -41,6 +41,7 @@ public:
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL4_DEFAULTS;
     static const isc::data::SimpleDefaults SUBNET4_DEFAULTS;
+    static const isc::data::SimpleDefaults IFACE4_DEFAULTS;
     static const isc::data::ParamsList INHERIT_GLOBAL_TO_SUBNET4;
 };
 

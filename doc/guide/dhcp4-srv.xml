@@ -719,6 +719,23 @@ temporarily override a list of interface names and listen on all interfaces.
     supported on the particular OS, the server will issue a warning and
     fall back to use IP/UDP sockets.</para>
   </note>
+
+  <para>Interfaces are re-detected at each reconfiguration. This behavior
+  can be disabled by setting <command>re-detect</command> value to
+  <userinput>false</userinput>, for instance:
+
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ],
+        "re-detect": <userinput>false</userinput>
+    },
+    ...
+}
+  </screen>
+  Note interfaces are not re-detected during <command>config-test</command>.
+  </para>
+
 </section>
 
 <section id="dhcpinform-unicast-issues">

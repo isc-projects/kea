@@ -1,3 +1,9 @@
+1268.	[func]		fdupont
+	Kea now re-detects network interfaces every time configuration is
+	changed. 're-detect' parameter added to restore old behavior, if
+        needed.
+	(Trac #3389, git xxx)
+
 1267.	[bug]		fdupont
 	Unit-tests for libdhcp now ignore ENOPROTOPT when setting
 	SO_REUSEPORT to improve compatibility with older RedHat versions.

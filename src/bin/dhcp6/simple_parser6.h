@@ -42,6 +42,7 @@ public:
     static const isc::data::SimpleDefaults OPTION6_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL6_DEFAULTS;
     static const isc::data::SimpleDefaults SUBNET6_DEFAULTS;
+    static const isc::data::SimpleDefaults IFACE6_DEFAULTS;
     static const isc::data::ParamsList INHERIT_GLOBAL_TO_SUBNET6;
 };
 

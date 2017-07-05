@@ -702,6 +702,9 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
 
+    // Disable the re-detect flag
+    disableIfacesReDetect(json);
+
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
     ASSERT_TRUE(status);

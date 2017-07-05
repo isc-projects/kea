@@ -75,6 +75,11 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "4o6-subnet",       Element::string,  "" },
 };
 
+/// @brief This table defines default values for interfaces for DHCPv4.
+const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
+    { "re-detect", Element::boolean, "true" }
+};
+
 /// @brief List of parameters that can be inherited from the global to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
@@ -118,6 +123,13 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
     ConstElementPtr subnets = global->get("subnet4");
     if (subnets) {
         cnt += setListDefaults(subnets, SUBNET4_DEFAULTS);
+    }
+
+    // Set the defaults for interfaces config
+    ConstElementPtr ifaces_cfg = global->get("interfaces-config");
+    if (ifaces_cfg) {
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(ifaces_cfg);
+        cnt += setDefaults(mutable_cfg, IFACE4_DEFAULTS);
     }
 
     return (cnt);
