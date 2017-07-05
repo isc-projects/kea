@@ -54,7 +54,7 @@ public:
     /// for data transmission.
     /// @param connection_pool Reference to the connection pool to which this
     /// connection belongs.
-    /// @param timeout Connection timeout.
+    /// @param timeout Connection timeout (in seconds).
     Connection(const IOServicePtr& io_service,
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
@@ -151,7 +151,7 @@ public:
 
     /// @brief Handler invoked when the data is sent over the control socket.
     ///
-    /// If there are still data to be sent another asynchronous send is
+    /// If there are still data to be sent, another asynchronous send is
     /// scheduled. When the entire command is sent, the connection is shutdown
     /// and closed.
     ///
@@ -162,7 +162,7 @@ public:
 
     /// @brief Handler invoked when timeout has occurred.
     ///
-    /// Asynchrnously Sends a response to the client indicating that the
+    /// Asynchronously sends a response to the client indicating that the
     /// timeout has occurred.
     void timeoutHandler();
 
@@ -174,7 +174,7 @@ private:
     /// @brief Interval timer used to detect connection timeouts.
     IntervalTimer timeout_timer_;
 
-    /// @brief Connection timeout.
+    /// @brief Connection timeout (in seconds)
     unsigned short timeout_;
 
     /// @brief Buffer used for received data.

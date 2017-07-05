@@ -69,7 +69,7 @@
     <note>
       <simpara>Kea 1.2.0 release and earlier had a limitation of 64kB
       on the maximum size of a command and a response sent over the unix
-      domain socket. This limitation has been removed after Kea 1.2.0
+      domain socket. This limitation has been removed in Kea 1.3.0
       release.
       </simpara>
     </note>
