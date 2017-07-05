@@ -318,22 +318,22 @@ namespace isc { namespace eval {
       // relay6_field
       char dummy5[sizeof(TokenRelay6Field::FieldType)];
 
+      // nest_level
+      char dummy6[sizeof(int8_t)];
+
       // "constant string"
       // "integer"
       // "constant hexstring"
       // "option name"
       // "ip address"
-      char dummy6[sizeof(std::string)];
+      char dummy7[sizeof(std::string)];
 
       // option_code
-      char dummy7[sizeof(uint16_t)];
+      char dummy8[sizeof(uint16_t)];
 
       // integer_expr
       // enterprise_id
-      char dummy8[sizeof(uint32_t)];
-
-      // nest_level
-      char dummy9[sizeof(uint8_t)];
+      char dummy9[sizeof(uint32_t)];
 };
 
     /// Symbol semantic values.
@@ -453,13 +453,13 @@ namespace isc { namespace eval {
 
   basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType v, const location_type& l);
 
+  basic_symbol (typename Base::kind_type t, const int8_t v, const location_type& l);
+
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const uint16_t v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const uint8_t v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -1040,6 +1040,10 @@ namespace isc { namespace eval {
         value.copy< TokenRelay6Field::FieldType > (other.value);
         break;
 
+      case 60: // nest_level
+        value.copy< int8_t > (other.value);
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -1055,10 +1059,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.copy< uint32_t > (other.value);
-        break;
-
-      case 60: // nest_level
-        value.copy< uint8_t > (other.value);
         break;
 
       default:
@@ -1098,6 +1098,10 @@ namespace isc { namespace eval {
         value.copy< TokenRelay6Field::FieldType > (v);
         break;
 
+      case 60: // nest_level
+        value.copy< int8_t > (v);
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -1113,10 +1117,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.copy< uint32_t > (v);
-        break;
-
-      case 60: // nest_level
-        value.copy< uint8_t > (v);
         break;
 
       default:
@@ -1170,6 +1170,13 @@ namespace isc { namespace eval {
   {}
 
   template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int8_t v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
     : Base (t)
     , value (v)
@@ -1185,13 +1192,6 @@ namespace isc { namespace eval {
 
   template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint8_t v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1243,6 +1243,10 @@ namespace isc { namespace eval {
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
+      case 60: // nest_level
+        value.template destroy< int8_t > ();
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -1258,10 +1262,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.template destroy< uint32_t > ();
-        break;
-
-      case 60: // nest_level
-        value.template destroy< uint8_t > ();
         break;
 
       default:
@@ -1307,6 +1307,10 @@ namespace isc { namespace eval {
         value.move< TokenRelay6Field::FieldType > (s.value);
         break;
 
+      case 60: // nest_level
+        value.move< int8_t > (s.value);
+        break;
+
       case 47: // "constant string"
       case 48: // "integer"
       case 49: // "constant hexstring"
@@ -1322,10 +1326,6 @@ namespace isc { namespace eval {
       case 57: // integer_expr
       case 62: // enterprise_id
         value.move< uint32_t > (s.value);
-        break;
-
-      case 60: // nest_level
-        value.move< uint8_t > (s.value);
         break;
 
       default:
