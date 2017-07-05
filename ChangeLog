@@ -1,3 +1,7 @@
+1266.	[func]		fdupont
+	It is now possible to define options in DHCPv4 pools.
+	(Trac #5288, git xxx)
+
 1265.	[func]		fdupont
 	Extended classification relay6[nest] syntax to allows counting
 	relays from the DHCPv6 client side by using negative number,
