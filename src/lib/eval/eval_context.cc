@@ -96,15 +96,15 @@ EvalContext::convertOptionName(const std::string& option_name,
     return (option_def->getCode());
 }
 
-uint8_t
+int8_t
 EvalContext::convertNestLevelNumber(const std::string& nest_level,
                                     const isc::eval::location& loc)
 {
-    uint8_t n = convertUint8(nest_level, loc);
+    int8_t n = convertInt8(nest_level, loc);
     if (option_universe_ == Option::V6) {
-        if (n >= HOP_COUNT_LIMIT) {
+        if ((n < - HOP_COUNT_LIMIT) || (n >= HOP_COUNT_LIMIT)) {
             error(loc, "Nest level has invalid value in "
-                      + nest_level + ". Allowed range: 0..31");
+                      + nest_level + ". Allowed range: -32..31");
         }
     } else {
         error(loc, "Nest level invalid for DHCPv4 packets");
@@ -123,7 +123,26 @@ EvalContext::convertUint8(const std::string& number,
     } catch (const boost::bad_lexical_cast &) {
         error(loc, "Invalid integer value in " + number);
     }
-    if (n < 0 || n >= std::numeric_limits<uint8_t>::max()) {
+    if (n < 0 || n > std::numeric_limits<uint8_t>::max()) {
+        error(loc, "Invalid value in "
+              + number + ". Allowed range: 0..255");
+    }
+
+    return (static_cast<uint8_t>(n));
+}
+
+int8_t
+EvalContext::convertInt8(const std::string& number,
+                         const isc::eval::location& loc)
+{
+    int n = 0;
+    try {
+        n  = boost::lexical_cast<int>(number);
+    } catch (const boost::bad_lexical_cast &) {
+        error(loc, "Invalid integer value in " + number);
+    }
+    if (n < std::numeric_limits<int8_t>::min() ||
+        n > std::numeric_limits<int8_t>::max()) {
         error(loc, "Invalid value in "
               + number + ". Allowed range: 0..255");
     }
