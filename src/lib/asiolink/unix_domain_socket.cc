@@ -145,6 +145,12 @@ public:
                         const boost::system::error_code& ec,
                         size_t length);
 
+    /// @brief Disables read and write operations on the socket.
+    void shutdown();
+
+    /// @brief Cancels asynchronous operations on the socket.
+    void cancel();
+
     /// @brief Closes the socket.
     void close();
 
@@ -245,8 +251,30 @@ UnixDomainSocketImpl::receiveHandler(const UnixDomainSocket::Handler& remote_han
 }
 
 void
+UnixDomainSocketImpl::shutdown() {
+    boost::system::error_code ec;
+    static_cast<void>(socket_.shutdown(stream_protocol::socket::shutdown_both, ec));
+    if (ec) {
+        isc_throw(UnixDomainSocketError, ec.message());
+    }
+}
+
+void
+UnixDomainSocketImpl::cancel() {
+    boost::system::error_code ec;
+    static_cast<void>(socket_.cancel(ec));
+    if (ec) {
+        isc_throw(UnixDomainSocketError, ec.message());
+    }
+}
+
+void
 UnixDomainSocketImpl::close() {
-    static_cast<void>(socket_.close());
+    boost::system::error_code ec;
+    static_cast<void>(socket_.close(ec));
+    if (ec) {
+        isc_throw(UnixDomainSocketError, ec.message());
+    }
 }
 
 UnixDomainSocket::UnixDomainSocket(IOService& io_service)
@@ -310,6 +338,16 @@ void
 UnixDomainSocket::asyncReceive(void* data, const size_t length,
                                const Handler& handler) {
     impl_->asyncReceive(data, length, handler);
+}
+
+void
+UnixDomainSocket::shutdown() {
+    impl_->shutdown();
+}
+
+void
+UnixDomainSocket::cancel() {
+    impl_->cancel();
 }
 
 void
