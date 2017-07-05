@@ -109,6 +109,11 @@ public:
     /// @throw UnixDomainSocketError if an error occurs during shutdown.
     void shutdown();
 
+    /// @brief Cancels scheduled asynchronous operations on the socket.
+    ///
+    /// @throw UnixDomainSocketError if an error occurs during cancel operation.
+    void cancel();
+
     /// @brief Closes the socket.
     ///
     /// @throw UnixDomainSocketError if an error occurs during closure.
