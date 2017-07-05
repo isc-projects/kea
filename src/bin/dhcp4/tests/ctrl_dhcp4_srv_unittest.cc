@@ -50,7 +50,9 @@ namespace {
 class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) { }
+    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) {
+        CfgMgr::instance().setFamily(AF_INET);
+    }
 
     /// Expose internal methods for the sake of testing
     using Dhcpv4Srv::receivePacket;

@@ -20,7 +20,7 @@ namespace dhcp {
 
 void
 IfacesConfigParser::parseInterfacesList(const CfgIfacePtr& cfg_iface,
-                                           ConstElementPtr ifaces_list) {
+                                        ConstElementPtr ifaces_list) {
     BOOST_FOREACH(ConstElementPtr iface, ifaces_list->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
@@ -41,10 +41,21 @@ void
 IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                           const isc::data::ConstElementPtr& ifaces_config) {
 
-    // Get the pointer to the interface configuration.
+    // Check for re-detect before calling parseInterfacesList() 
+    bool re_detect = getBoolean(ifaces_config, "re-detect");
+    cfg->setReDetect(re_detect);
+    if (re_detect) {
+        IfaceMgr::instance().clearIfaces();
+        IfaceMgr::instance().detectIfaces();
+    }
+
     bool socket_type_specified = false;
     BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
         try {
+            if (element.first == "re-detect") {
+                continue;
+            }
+
             if (element.first == "interfaces") {
                 parseInterfacesList(cfg, element.second);
                 continue;

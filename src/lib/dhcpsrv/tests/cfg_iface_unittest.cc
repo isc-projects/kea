@@ -371,7 +371,8 @@ TEST_F(CfgIfaceTest, unparse) {
     
     // Check unparse
     std::string expected =
-        "{ \"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ] }";
+        "{ \"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
+        "\"re-detect\": false }";
     runToElementTest<CfgIface>(expected, cfg4);
 
     // Now check IPv6
@@ -381,7 +382,8 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
 
     expected =
-        "{ \"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ] }";
+        "{ \"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
+        "\"re-detect\": false }";
     runToElementTest<CfgIface>(expected, cfg6);
 }
 
@@ -402,7 +404,8 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     // Check unparse
     std::string expected = "{\n"
         " \"interfaces\": [ ],\n"
-        " \"dhcp-socket-type\": \"udp\" }";
+        " \"dhcp-socket-type\": \"udp\",\n"
+        " \"re-detect\": false }";
     runToElementTest<CfgIface>(expected, cfg);
 
     // Select raw sockets.

@@ -700,9 +700,15 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "interfaces-config") {
+                ElementPtr ifaces_cfg =
+                    boost::const_pointer_cast<Element>(config_pair.second);
+                if (check_only) {
+                    // No re-detection in check only mode
+                    ifaces_cfg->set("re-detect", Element::create(false));
+                }
                 IfacesConfigParser parser(AF_INET6);
                 CfgIfacePtr cfg_iface = srv_config->getCfgIface();
-                parser.parse(cfg_iface, config_pair.second);
+                parser.parse(cfg_iface, ifaces_cfg);
                 continue;
             }
 

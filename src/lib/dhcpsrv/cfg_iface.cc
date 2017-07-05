@@ -22,7 +22,7 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_RAW) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false) {
 }
 
 void
@@ -424,6 +424,9 @@ CfgIface::toElement() const {
     if (socket_type_ != SOCKET_RAW) {
         result->set("dhcp-socket-type", Element::create(std::string("udp")));
     }
+
+    // Set re-detect
+    result->set("re-detect", Element::create(re_detect_));
 
     return (result);
 }

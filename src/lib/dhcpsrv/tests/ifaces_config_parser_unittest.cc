@@ -53,7 +53,8 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     IfaceMgrTestConfig test_config(true);
 
     // Configuration with one interface.
-    std::string config = "{ ""\"interfaces\": [ \"eth0\" ] }";
+    std::string config =
+        "{ \"interfaces\": [ \"eth0\" ], \"re-detect\": false }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -81,7 +82,7 @@ TEST_F(IfacesConfigParserTest, interfaces) {
 
     // Try similar configuration but this time add a wildcard interface
     // to see if sockets will open on all interfaces.
-    config = "{ \"interfaces\": [ \"eth0\", \"*\" ] }";
+    config = "{ \"interfaces\": [ \"eth0\", \"*\" ], \"re-detect\": false }";
     config_element = Element::fromJSON(config);
 
     cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
@@ -106,7 +107,8 @@ TEST_F(IfacesConfigParserTest, socketTypeRaw) {
 
     // Configuration with a raw socket selected.
     std::string config = "{ ""\"interfaces\": [ ],"
-        " \"dhcp-socket-type\": \"raw\" }";
+        " \"dhcp-socket-type\": \"raw\","
+        " \"re-detect\": false }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -132,7 +134,8 @@ TEST_F(IfacesConfigParserTest, socketTypeDatagram) {
 
     // Configuration with a datagram socket selected.
     std::string config = "{ \"interfaces\": [ ],"
-        " \"dhcp-socket-type\": \"udp\" }";
+        " \"dhcp-socket-type\": \"udp\","
+        " \"re-detect\": false }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -160,14 +163,16 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
     IfacesConfigParser parser4(AF_INET);
     CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
     std::string config = "{ \"interfaces\": [ ],"
-        "\"dhcp-socket-type\": \"default\" }";
+        "\"dhcp-socket-type\": \"default\","
+        " \"re-detect\": false }";
     ElementPtr config_element = Element::fromJSON(config);
     ASSERT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
 
     // For DHCPv6 we don't accept any socket type.
     IfacesConfigParser parser6(AF_INET6);
     config = "{ \"interfaces\": [ ],"
-        " \"dhcp-socket-type\": \"udp\" }";
+        " \"dhcp-socket-type\": \"udp\","
+        " \"re-detect\": false }";
     config_element = Element::fromJSON(config);
     ASSERT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
 }
