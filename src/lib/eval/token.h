@@ -338,7 +338,8 @@ protected:
 /// exist or the option is not found an empty string ("") is returned
 /// (or "false" when the representation is EXISTS).
 ///
-/// The nesting level can go from 0 (closest to the server) to 31
+/// The nesting level can go from 0 (closest to the server) to 31,
+/// or from -1 (closest to the client) to -32
 class TokenRelay6Option : public TokenOption {
 public:
     /// @brief Constructor that takes a nesting level and an option
@@ -347,7 +348,7 @@ public:
     /// @param nest_level the nesting for which relay to examine.
     /// @param option_code code of the option.
     /// @param rep_type Token representation type.
-    TokenRelay6Option(const uint8_t nest_level, const uint16_t option_code,
+    TokenRelay6Option(const int8_t nest_level, const uint16_t option_code,
                       const RepresentationType& rep_type)
         :TokenOption(option_code, rep_type), nest_level_(nest_level) {}
 
@@ -358,7 +359,7 @@ public:
     ///
     /// @return nest-level of the relay block this token expects to use
     /// for extraction.
-    uint8_t getNest() const {
+    int8_t getNest() const {
         return (nest_level_);
     }
 
@@ -368,7 +369,7 @@ protected:
     /// @return option instance if available
     virtual OptionPtr getOption(Pkt& pkt);
 
-    uint8_t nest_level_; ///< nesting level of the relay block to use
+    int8_t nest_level_; ///< nesting level of the relay block to use
 };
 
 /// @brief Token that represents meta data of a DHCP packet.
@@ -534,7 +535,8 @@ private:
 /// is always returned as a 16 byte IPv6 address.  As the relay may not have
 /// set the field it may be 0s.
 ///
-/// The nesting level can go from 0 (closest to the server) to 31.
+/// The nesting level can go from 0 (closest to the server) to 31,
+/// or from -1 (closest to the client) to -32
 class TokenRelay6Field : public Token {
 public:
 
@@ -549,7 +551,7 @@ public:
     ///
     /// @param nest_level the nesting level for which relay to examine.
     /// @param type which field to extract.
-    TokenRelay6Field(const uint8_t nest_level, const FieldType type)
+    TokenRelay6Field(const int8_t nest_level, const FieldType type)
       : nest_level_(nest_level), type_(type) {}
 
     /// @brief Extracts the specified field from the requested relay
@@ -568,7 +570,7 @@ public:
     ///
     /// @return nest-level of the relay block this token expects to use
     /// for extraction.
-    uint8_t getNest() const {
+    int8_t getNest() const {
         return (nest_level_);
     }
 
@@ -584,7 +586,7 @@ public:
 
 protected:
     /// @brief Specifies field of the DHCPv6 relay option to get
-    uint8_t nest_level_; ///< nesting level of the relay block to use
+    int8_t nest_level_; ///< nesting level of the relay block to use
     FieldType type_; ///< field to get
 };
 
