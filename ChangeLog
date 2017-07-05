@@ -1,3 +1,10 @@
+1265.	[func]		fdupont
+	Extended classification relay6[nest] syntax to allows counting
+	relays from the DHCPv6 client side by using negative number,
+	e.g. relay6[-1] represents the first relay (closest to the
+	client).
+	(Trac #5287, git 7d0f7a8372dcf256fea8ac13330f0e3e7ed2e8ef)
+
 1264.	[func]		marcin
 	Kea's command manager has been re-implemented to use ASIO.
 	Simultaneous connections over the control channel are now
