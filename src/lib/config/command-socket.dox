@@ -163,9 +163,9 @@ or HTTPS connection):
 The @ref isc::config::CommandMgr is implemented using boost ASIO and uses
 asynchronous calls to accept new connections and receive commands from the
 controlling clients. ASIO uses IO service object to run asynchronous calls.
-Thus, before the server can use the @ref isc::dhcp::CommandMgr it must
+Thus, before the server can use the @ref isc::config::CommandMgr it must
 provide it with a common instance of the @ref isc::asiolink::IOService
-object using @ref isc::dhcp::CommandMgr::setIOService. The server's
+object using @ref isc::config::CommandMgr::setIOService. The server's
 main loop must contain calls to @ref isc::asiolink::IOService::run or
 @ref isc::asiolink::IOService::poll or their variants to invoke Command
 Manager's handlers as required for processing control requests.

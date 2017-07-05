@@ -54,6 +54,11 @@ public:
     /// @param io_service Pointer to the IO service.
     void setIOService(const asiolink::IOServicePtr& io_service);
 
+    /// @brief Override default connection timeout.
+    ///
+    /// @param timeout New connection timeout in seconds.
+    void setConnectionTimeout(const unsigned short timeout);
+
     /// @brief Opens control socket with parameters specified in socket_info
     ///
     /// Currently supported types are:
