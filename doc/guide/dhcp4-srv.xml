@@ -1277,6 +1277,9 @@ It is merely echoed by the server
             <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
             <row><entry>uint16</entry><entry>16 bit unsigned integer with allowed values 0 to 65535</entry></row>
             <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
+            <row><entry>int8</entry><entry>8 bit signed integer with allowed values -128 to 127</entry></row>
+            <row><entry>int16</entry><entry>16 bit signed integer with allowed values -32768 to 32767</entry></row>
+            <row><entry>int32</entry><entry>32 bit signed integer with allowed values -2147483648 to 2147483647</entry></row>
           </tbody>
           </tgroup>
        </table>
