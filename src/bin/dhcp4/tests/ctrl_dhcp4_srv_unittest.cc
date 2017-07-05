@@ -59,7 +59,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Pointer to the IO service to be stopped.
-    IOServiceWork(const IOServicePtr& io_service)
+    explicit IOServiceWork(const IOServicePtr& io_service)
         : io_service_(io_service) {
     }
 
