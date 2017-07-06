@@ -43,6 +43,13 @@
     {
       "subnet": "2001:db8:1::/48",
 
+      // This directive tells Kea that reservations may be made both in-pool
+      // and out-of-pool. For improved performance, you may move all reservations
+      // out of the dynamic pool and change reservation-mode to "out-of-pool".
+      // Kea will then be able to skip querying for host reservations when
+      // assigning leases from dynamic pool.
+      "reservation-mode": "all",
+
       "pools": [ { "pool": "2001:db8:1::/120" } ],
 
       "pd-pools": [
@@ -53,8 +60,6 @@
           }
       ],
       "interface": "ethX",
-
-      "reservation-mode": "out-of-pool",
 
 // Host reservations. Define several reservations, note that
 // they are all within the range of the pool of the dynamically

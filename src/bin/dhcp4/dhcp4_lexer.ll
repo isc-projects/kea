@@ -577,6 +577,42 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"disabled\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_DISABLED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("disabled", driver.loc_);
+    }
+}
+
+\"off\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_DISABLED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("off", driver.loc_);
+    }
+}
+
+\"out-of-pool\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_OUT_OF_POOL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("out-of-pool", driver.loc_);
+    }
+}
+
+\"all\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_ALL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("all", driver.loc_);
+    }
+}
+
 \"code\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
