@@ -1,3 +1,10 @@
+1270.	[bug]		tmark
+	Added a distribution rule to src/bin/d2/Makefile.am so
+	d2_parser.yy will now be included in the distribution source
+	tree. Also added entries for missing headers to asiolink/
+	Makefile.am.
+	(Trac #5325, git 199003d7aa9f8d4a7f8daa73f8259e951bc03217)
+
 1269.	[func]		marcin
 	Command manager can now handle large responses to control
 	commands. Prior to this change the size of the response
