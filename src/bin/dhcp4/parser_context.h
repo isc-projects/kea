@@ -216,6 +216,9 @@ public:
         /// Used while parsing Dhcp4/Subnet4 structures.
         SUBNET4,
 
+        /// Used while parsing Dhcp4/Subnet4/reservation-mode.
+        RESERVATION_MODE,
+
         /// Used while parsing Dhcp4/option-def structures.
         OPTION_DEF,
 
