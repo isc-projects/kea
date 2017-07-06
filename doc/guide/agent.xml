@@ -191,7 +191,8 @@
       connection to the Control Agent using (not secured) HTTP. Typically,
       the reverse proxy and the Control Agent are running on the same machine,
       but it is possible to configure them to run on separate machines as
-      well.
+      well. In this case, security depends on the protection of the
+      communications between the reverse proxy and the Control Agent.
     </para>
 
     <para>Apart from providing the encryption layer for the control channel,
