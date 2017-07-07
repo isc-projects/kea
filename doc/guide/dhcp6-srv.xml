@@ -1010,7 +1010,7 @@ temporarily override a list of interface names and listen on all interfaces.
         be skipped, unless you want to specify the option value as
         hexstring. Therefore the above example can be simplified to:
         <screen>
-"Dhcp4": {
+"Dhcp6": {
     "option-data": [
         {
            <userinput>"name": "dns-servers",
@@ -1018,10 +1018,24 @@ temporarily override a list of interface names and listen on all interfaces.
         },
         ...
     ]
-} </screen>
-
+}
+        </screen>
+        Defined options are added to response when the client requests them
+        at a few exceptions which are always added. To enforce the addition
+        of a particular option set the persistent flag to true as in:
+        <screen>
+"Dhcp6": {
+    "option-data": [
+        {
+           <userinput>"name": "dns-servers",
+           "data": "2001:db8::cafe, 2001:db8::babe",
+           "persistent": true</userinput>
+        },
+        ...
+    ]
+}
+        </screen>
       </para>
-
 
     <para>
       It is possible to override options on a per-subnet basis.  If

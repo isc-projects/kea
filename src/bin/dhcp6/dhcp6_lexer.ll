@@ -699,6 +699,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"persistent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_PERSISTENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("persistent", driver.loc_);
+    }
+}
+
 \"pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
