@@ -2820,7 +2820,7 @@ TEST_F(Dhcp4ParserTest, optionDataSinglePool) {
     // Expect a single option with the code equal to 100.
     ASSERT_EQ(1, std::distance(range.first, range.second));
     const uint8_t foo_expected[] = {
-	0xAB, 0xCD, 0xEF, 0x01, 0x05
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
     };
     // Check if option is valid in terms of code and carried data.
     testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
@@ -2893,7 +2893,7 @@ TEST_F(Dhcp4ParserTest, optionDataMultiplePools) {
     // Expect a single option with the code equal to 100.
     ASSERT_EQ(1, std::distance(range1.first, range1.second));
     const uint8_t foo_expected[] = {
-	0xAB, 0xCD, 0xEF, 0x01, 0x05
+        0xAB, 0xCD, 0xEF, 0x01, 0x05
     };
     // Check if option is valid in terms of code and carried data.
     testOption(*range1.first, 56, foo_expected, sizeof(foo_expected));
@@ -2909,8 +2909,8 @@ TEST_F(Dhcp4ParserTest, optionDataMultiplePools) {
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
     std::pair<OptionContainerTypeIndex::const_iterator,
-	      OptionContainerTypeIndex::const_iterator> range2 =
-	idx2.equal_range(23);
+              OptionContainerTypeIndex::const_iterator> range2 =
+        idx2.equal_range(23);
     ASSERT_EQ(1, std::distance(range2.first, range2.second));
     const uint8_t foo2_expected[] = {
         0x01
