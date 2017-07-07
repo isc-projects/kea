@@ -1666,6 +1666,78 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
 }
 
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the persistent options are actually assigned.
+TEST_F(Dhcpv6SrvTest, vendorPersistentOptions) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"normal_erouter_v6.cm\","
+        "          \"persistent\": true"
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+    sol->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv_.processSolicit(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // Check if there is vendor option response
+    OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis33 = vendor_resp->getOption(33);
+    ASSERT_TRUE(docsis33);
+
+    OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
+    ASSERT_TRUE(config_file);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
+
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {

@@ -449,9 +449,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
     // Look for the codes 100-109.
     for (uint16_t code = 100; code < 110; ++ code) {
         // For each code we should get two instances of options->
-        std::pair<OptionContainerTypeIndex::const_iterator,
-                  OptionContainerTypeIndex::const_iterator> range =
-            idx.equal_range(code);
+        OptionContainerTypeRange range = idx.equal_range(code);
         // Distance between iterators indicates how many options
         // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
@@ -465,9 +463,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
 
     // Let's try to find some non-exiting option.
     const uint16_t non_existing_code = 150;
-    std::pair<OptionContainerTypeIndex::const_iterator,
-              OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(non_existing_code);
+    OptionContainerTypeRange range = idx.equal_range(non_existing_code);
     // Empty set is expected.
     EXPECT_EQ(0, distance(range.first, range.second));
 }
@@ -501,17 +497,13 @@ TEST(Subnet6Test, addPersistentOption) {
     OptionContainerPersistIndex& idx = options->get<2>();
 
     // Get all persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_persistent =
-        idx.equal_range(true);
-    // 3 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_persistent = idx.equal_range(true);
+    // 7 out of 10 options have been flagged persistent.
     ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
 
     // Get all non-persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_non_persistent =
-        idx.equal_range(false);
-    // 7 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_non_persistent = idx.equal_range(false);
+    // 3 out of 10 options have been flagged not persistent.
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 }
 
