@@ -638,6 +638,9 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
     Lease4Collection collection;
+
+    // Using composite index by 'hw address' and 'subnet id'. It is
+    // ok to use it for searching by the 'hw address' only.
     const Lease4StorageHWAddressSubnetIdIndex& idx =
         storage4_.get<HWAddressSubnetIdIndexTag>();
     std::pair<Lease4StorageHWAddressSubnetIdIndex::const_iterator,
@@ -677,6 +680,8 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
     Lease4Collection collection;
+    // Using composite index by 'client id' and 'subnet id'. It is ok
+    // to use it to search by 'client id' only.
     const Lease4StorageClientIdSubnetIdIndex& idx =
         storage4_.get<ClientIdSubnetIdIndexTag>();
     std::pair<Lease4StorageClientIdSubnetIdIndex::const_iterator,
