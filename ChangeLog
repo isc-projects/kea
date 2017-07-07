@@ -1,3 +1,8 @@
+1271.	[doc]		marcin
+	Documented how to setup secure connection to the Kea
+	control	channel.
+	(Trac #5304, git a920453bbcf9ffa7200eeddca6323faeff498f16)
+
 1270.	[bug]		tmark
 	Added a distribution rule to src/bin/d2/Makefile.am so
 	d2_parser.yy will now be included in the distribution source
