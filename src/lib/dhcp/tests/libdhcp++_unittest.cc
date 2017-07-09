@@ -1297,27 +1297,14 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom),
                                     "dhcp-agent-options-space");
 
-    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
-                                    typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME,
-                                    begin, begin + 4,
-                                    typeid(OptionInt<uint32_t>));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, begin, end,
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_TREE_NAME, begin, end,
+                                    typeid(OptionString));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_SYSTEM, begin, end,
-                                    typeid(OptionIntArray<uint16_t>));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_NDI, begin, begin + 3,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_CONTEXT, begin, end,
+                                    typeid(OptionString));
 
     // Prepare buffer holding an array of FQDNs.
     const char fqdn_data[] = {
@@ -1331,6 +1318,63 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     };
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(fqdn_data, fqdn_data + sizeof(fqdn_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BCMCS_DOMAIN_NAME_LIST,
+                                    fqdn_buf.begin(),
+                                    fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BCMCS_IPV4_ADDR, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME,
+                                    begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_AUTO_CONFIG, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NAME_SERVICE_SEARCH, begin, begin + 4,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SYSTEM, begin, end,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NDI, begin, begin + 3,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_USER_AUTH, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_GEOCONF_CIVIC, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PCODE, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TCODE, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_ADDR, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_TAG, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_URL, begin, end,
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
                                     fqdn_buf.end(), typeid(OptionCustom));
@@ -1354,6 +1398,40 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
                                     vivsio_buf.end(), typeid(OptionVendor));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PANA_AGENT, begin, end,
+                                    typeid(Option4AddrLst));
+
+    // Prepare buffer holding one FQDN.
+    const char fqdn1_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn1_buf(fqdn1_data,
+                                   fqdn1_data + sizeof(fqdn1_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_LOST, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CAPWAP_AC_V4, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SIP_UA_CONF_SERVICE_DOMAINS,
+                                    fqdn_buf.begin(),
+                                    fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_PORTPARAMS, begin, begin + 4,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_CAPTIVE_PORTAL, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_ACCESS_DOMAIN, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
 }
 
 // Test that definitions of standard options have been initialized

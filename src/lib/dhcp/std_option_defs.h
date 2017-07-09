@@ -60,6 +60,11 @@ RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 // A client identifer: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
+// RFC7618 DHCPv4 Port Parameter option.
+//
+// PSID offset, PSID-len and PSID
+RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT16_TYPE);
+
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
@@ -177,6 +182,11 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
+    { "nds-servers", DHO_NDS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "nds-tree-name", DHO_NDS_TREE_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "nds-context", DHO_NDS_CONTEXT, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "bcms-controller-names", DHO_BCMCS_DOMAIN_NAME_LIST, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "bcms-controller-address", DHO_BCMCS_IPV4_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     // Unfortunatelly the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
@@ -190,6 +200,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "client-system", DHO_SYSTEM, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "client-ndi", DHO_NDI, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NDI_RECORDS), "" },
     { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
+    { "uap-servers", DHO_USER_AUTH, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "geoconf-civic", DHO_GEOCONF_CIVIC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "pcode", DHO_PCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "tcode", DHO_TCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "netinfo-server-address", DHO_NETINFO_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "netinfo-server-tag", DHO_NETINFO_TAG, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "default-url", DHO_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "auto-config", DHO_AUTO_CONFIG, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "name-service-search", DHO_NAME_SERVICE_SEARCH, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
@@ -208,7 +227,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     /// ok to specify multiple instances of the "vivso-suboptions" which will be
     /// combined in a single option by the server before responding to a client.
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
-      false, NO_RECORD_DEF, "" }
+      false, NO_RECORD_DEF, "" },
+    { "pana-agent", DHO_PANA_AGENT, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-lost", DHO_V4_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "capwap-ac-v4", DHO_CAPWAP_AC_V4, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "sip-ua-cs-domains", DHO_SIP_UA_CONF_SERVICE_DOMAINS, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-portparams", DHO_V4_PORTPARAMS, OPT_RECORD_TYPE, false,
+      RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
+    { "v4-captive-portal", DHO_V4_CAPTIVE_PORTAL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaining options.
 };
