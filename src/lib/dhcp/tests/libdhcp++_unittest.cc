@@ -1447,6 +1447,16 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     OptionBufferConstIter begin = buf.begin();
     OptionBufferConstIter end = buf.end();
 
+    // Prepare buffer holding one FQDN.
+    const char data1[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data1.
+    std::vector<uint8_t> fqdn1_buf(data1, data1 + sizeof(data1));
+
     // Prepare buffer holding an array of FQDNs.
     const char data[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -1519,6 +1529,12 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, begin, end,
                                     typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_AUTH, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_UNICAST, begin, begin + 16,
+                                    typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, begin, end,
                                     typeid(Option6StatusCode));
@@ -1637,6 +1653,24 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_LOST,
+                                    fqdn1_buf.begin(), fqdn1_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CAPWAP_AC_V6, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_ID, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_ACCESS_DOMAIN,
+                                    fqdn1_buf.begin(), fqdn1_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_UA_CS_LIST,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_URL, begin, end,
                                     typeid(OptionString));
 
@@ -1650,6 +1684,13 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_NII, begin, begin + 3,
                                     typeid(OptionCustom));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_AFTR_NAME, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
                                     typeid(OptionCustom),
                                     "rsoo-opts");
@@ -1657,14 +1698,28 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_PD_EXCLUDE, begin, end,
                                     typeid(Option6PDExclude));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
-                                    fqdn_buf.begin(), fqdn_buf.end(),
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_LINKLAYER_ADDR, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LINK_ADDRESS, begin, begin + 16,
                                     typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SOL_MAX_RT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_INF_MAX_RT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_MSG, begin, end,
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_O_DHCPV6_SERVER, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_CAPTIVE_PORTAL, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_PUBLIC_KEY, begin, end,
@@ -1678,8 +1733,6 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
                                     typeid(Option));
-
-
 }
 
 // This test checks if the DHCPv6 option definition can be searched by
