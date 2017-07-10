@@ -1285,6 +1285,13 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_SERVICE_SCOPE, begin, end,
+                                    typeid(Option4SlpServiceScope));
+
+    // Check also with empty scope list
+    LibDhcpTest::testStdOptionDefs4(DHO_SERVICE_SCOPE, begin, begin + 1,
+                                    typeid(Option4SlpServiceScope));
+
     LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, begin + 3,
                                     typeid(Option4ClientFqdn));
 

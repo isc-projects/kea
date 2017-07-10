@@ -145,7 +145,7 @@ enum DHCPOptionType {
     DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77,
 //  DHO_DIRECTORY_AGENT              = 78,
-//  DHO_SERVICE_SCOPE                = 79,
+    DHO_SERVICE_SCOPE                = 79,
 //  DHO_RAPID_COMMIT                 = 80,
     DHO_FQDN                         = 81,
     DHO_DHCP_AGENT_OPTIONS           = 82,

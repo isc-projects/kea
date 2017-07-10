@@ -37,6 +37,11 @@ namespace {
 #define NO_RECORD_DEF 0, 0
 #endif
 
+// SLP Service Scope option.
+//
+// The scope list is optional.
+RECORD_DECL(SERVICE_SCOPE_RECORDS, OPT_BOOLEAN_TYPE, OPT_STRING_TYPE);
+
 // fqdn option record fields.
 //
 // Note that the flags field indicates the type of domain
@@ -179,6 +184,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "streettalk-server", DHO_STREETTALK_SERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "streettalk-directory-assistance-server", DHO_STDASERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "slp-service-scope", DHO_SERVICE_SCOPE, OPT_RECORD_TYPE, false,
+      RECORD_DEF(SERVICE_SCOPE_RECORDS), "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
