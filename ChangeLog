@@ -1,3 +1,9 @@
+1272.	[bug]		marcin
+	Fixed inefficient leases indexing in the memfile lease
+	manager causing increased CPU utilization during lease
+	searches.
+	(Trac #5328, git 23b490414f5575b252c8c42fbe93ad2c57d47953)
+
 1271.	[doc]		marcin
 	Documented how to setup secure connection to the Kea
 	control	channel.
