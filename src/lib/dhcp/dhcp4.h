@@ -208,7 +208,9 @@ enum DHCPOptionType {
 //  DHO_V4_PCP_SERVER                = 158,
     DHO_V4_PORTPARAMS                = 159,
     DHO_V4_CAPTIVE_PORTAL            = 160,
-    // 160-211 are removed/unassigned
+    // 161-209 are removed/unassigned
+//  DHO_PATH_PREFIX                  = 210,
+//  DHO_REBOOT_TIME                  = 211,    
 //  DHO_6RD                          = 212,
     DHO_V4_ACCESS_DOMAIN             = 213,
     // 214-219 are removed/unassigned
@@ -238,6 +240,9 @@ enum DHCPMessageType {
     DHCPLEASEACTIVE     =  13,
     DHCPBULKLEASEQUERY  =  14,
     DHCPLEASEQUERYDONE  =  15
+// DHCPACTIVELEASEQUERY =  16,
+// DHCPLEASEQUERYSTATUS =  17,
+// DHCPTLS              =  18
 };
 
 static const uint16_t DHCP4_CLIENT_PORT = 68;
@@ -261,6 +266,12 @@ static const uint16_t RAI_OPTION_VSI = 9; // RFC4243
 static const uint16_t RAI_OPTION_RELAY_FLAGS = 10; // RFC5010
 static const uint16_t RAI_OPTION_SERVER_ID_OVERRIDE = 11; // RFC5107
 static const uint16_t RAI_OPTION_RELAY_ID = 12; //RFC6925
+static const uint16_t RAI_OPTION_ACCESS_TECHNO_TYPE = 13; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_NETWORK_NAME = 14; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_POINT_NAME = 15; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_POINT_BSSID = 16; // RFC7839
+static const uint16_t RAI_OPTION_OPERATOR_ID = 17; // RFC7839
+static const uint16_t RAI_OPTION_OPERATOR_REALM = 18; // RFC7839
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT = 151; //RFC6607
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152; //RFC6607
 
