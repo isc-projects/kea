@@ -442,6 +442,14 @@ OptionDefinition::haveStatusCodeFormat() const {
 }
 
 bool
+OptionDefinition::haveServiceScopeFormat() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_BOOLEAN_TYPE) &&
+            (record_fields_[1] == OPT_STRING_TYPE));
+}
+
+bool
 OptionDefinition::haveOpaqueDataTuplesFormat() const {
     return (haveType(OPT_TUPLE_TYPE) && getArrayType());
 }
@@ -856,7 +864,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option6PDExclude(begin, end)));
         }
     } else {
-        if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
+        if ((getCode() == DHO_SERVICE_SCOPE) && haveServiceScopeFormat()) {
+            return (OptionPtr(new Option4SlpServiceScope(begin, end)));
+        } else if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
         } else if (haveCompressedFqdnListFormat()) {
             return (factoryFqdnList(Option::V4, begin, end));
