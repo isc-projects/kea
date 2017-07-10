@@ -93,17 +93,6 @@
 }</screen>
     </para>
 
-    <warning>
-      <simpara>
-        In the Kea 1.2 release the Control Agent configuration can't be
-        specified within the same configuration file as DHCPv4, DHCPv6 and D2
-        configuration. The default configuration file for the CA is installed
-        in the <filename>etc/kea/kea-ca.conf</filename>. In the Kea 1.2 final
-        release the CA configuration will be merged into the default
-        <filename>etc/kea/kea.conf.</filename>
-      </simpara>
-    </warning>
-
     <para>
       The <command>http-host</command> and <command>http-port</command>
       specify an IP address and port to which HTTP service will be bound.
@@ -284,16 +273,8 @@ http {
     <title>Control Agent Limitations</title>
     <para>
       Control Agent is a new component, first released in Kea 1.2. In
-      this release it comes with two notable limitations:
+      this release it comes with one notable limitation:
       <itemizedlist>
-        <listitem>
-          <simpara>
-            CA configuration must be specified in a separate configuration file
-            from the configurations of other components. The default confirguation
-            file for CA is located in <filename>etc/kea/kea-ca.conf</filename>.
-          </simpara>
-        </listitem>
-
         <listitem>
           <simpara>
             keactrl hasn't been updated to manage the Control Agent (start, stop
@@ -311,7 +292,7 @@ http {
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
 <screen>
-$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ca.conf
+$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea.conf
 </screen>
     </para>
   </section>
