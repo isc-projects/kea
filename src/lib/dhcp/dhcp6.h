@@ -106,6 +106,14 @@ enum DHCPv6OptionType {
 // D6O_V6_PCP_SERVER                       = 86, /* RFC7291 */
    D6O_DHCPV4_MSG                          = 87, /* RFC7341 */
    D6O_DHCPV4_O_DHCPV6_SERVER              = 88, /* RFC7341 */
+// D6O_S46_RULE                            = 89, /* RFC7598 */
+// D6O_S46_BR                              = 90, /* RFC7598 */
+// D6O_S46_DMR                             = 91, /* RFC7598 */
+// D6O_S46_V4V6BIND                        = 92, /* RFC7598 */
+// D6O_S46_PORTPARAMS                      = 93, /* RFC7598 */
+// D6O_S46_CONT_MAPE                       = 94, /* RFC7598 */
+// D6O_S46_CONT_MAPT                       = 95, /* RFC7598 */
+// D6O_S46_CONT_LW                         = 96, /* RFC7598 */
 // D6O_4RD                                 = 97, /* RFC7600 */
 // D6O_4RD_MAP_RULE                        = 98, /* RFC7600 */
 // D6O_4RD_NON_MAP_RULE                    = 99, /* RFC7600 */
@@ -113,7 +121,38 @@ enum DHCPv6OptionType {
 // D6O_LQ_START_TIME                      = 101, /* RFC7653 */
 // D6O_LQ_END_TIME                        = 102, /* RFC7653 */
    D6O_V6_CAPTIVE_PORTAL                  = 103, /* RFC7710 */
-   // 104-142 unassigned
+// D6O_MPL_PARAMETERS                     = 104, /* RFC7774 */
+// D6O_ANI_ATT                            = 105, /* RFC7839 */
+// D6O_ANI_NETWORK_NAME                   = 106, /* RFC7839 */
+// D6O_ANI_AP_NAME                        = 107, /* RFC7839 */
+// D6O_ANI_AP_BSSID                       = 108, /* RFC7839 */
+// D6O_ANI_OPERATOR_ID                    = 109, /* RFC7839 */
+// D6O_ANI_OPERATOR_REALM                 = 110, /* RFC7839 */
+// D6O_S46_PRIORITY                       = 111, /* RFC8026 */
+   // 112 unassigned
+// D6O_V6_PREFIX64                        = 113, /* RFC8115 */
+// D6O_F_BINDING_STATUS                   = 114, /* RFC8156 */
+// D6O_F_CONNECT_FLAGS                    = 115, /* RFC8156 */
+// D6O_F_DNS_REMOVAL_INFO                 = 116, /* RFC8156 */
+// D6O_F_DNS_HOST_NAME                    = 117, /* RFC8156 */
+// D6O_F_DNS_ZONE_NAME                    = 118, /* RFC8156 */
+// D6O_F_DNS_FLAGS                        = 119, /* RFC8156 */
+// D6O_F_EXPIRATION_TIME                  = 120, /* RFC8156 */
+// D6O_F_MAX_UNACKED_BNDUPD               = 121, /* RFC8156 */
+// D6O_F_MCLT                             = 122, /* RFC8156 */
+// D6O_F_PARTNER_LIFETIME                 = 123, /* RFC8156 */
+// D6O_F_PARTNER_LIFETIME_SENT            = 124, /* RFC8156 */
+// D6O_F_PARTNER_DOWN_TIME                = 125, /* RFC8156 */
+// D6O_F_PARTNER_RAW_CLT_TIME             = 126, /* RFC8156 */
+// D6O_F_PROTOCOL_VERSION                 = 127, /* RFC8156 */
+// D6O_F_KEEPALIVE_TIME                   = 128, /* RFC8156 */
+// D6O_F_RECONFIGURE_DATA                 = 129, /* RFC8156 */
+// D6O_F_RELATIONSHIP_NAME                = 130, /* RFC8156 */
+// D6O_F_SERVER_FLAGS                     = 131, /* RFC8156 */
+// D6O_F_SERVER_STATE                     = 132, /* RFC8156 */
+// D6O_F_START_TIME_OF_STATE              = 133, /* RFC8156 */
+// D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
+   // 135-142 unassigned
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
 
 // The following are EXPERIMENTAL and may change when IANA assigns official
@@ -130,23 +169,31 @@ enum DHCPv6OptionType {
  * Status Codes, from RFC 3315 section 24.4, and RFC 3633, 5007, 5460.
  */
 enum DHCPv6StatusCode {
-   STATUS_Success                   = 0,
-   STATUS_UnspecFail                = 1,
-   STATUS_NoAddrsAvail              = 2,
-   STATUS_NoBinding                 = 3,
-   STATUS_NotOnLink                 = 4,
-   STATUS_UseMulticast              = 5,
-   STATUS_NoPrefixAvail             = 6,
-   STATUS_UnknownQueryType          = 7,
-   STATUS_MalformedQuery            = 8,
-   STATUS_NotConfigured             = 9,
-   STATUS_NotAllowed                = 10,
-// STATUS_QueryTerminated           = 11,
-/* draft-ietf-dhc-dhcpv6-active-leasequery-04 */
-// STATUS_DataMissing               = 12,
-// STATUS_CatchUpComplete           = 13,
-// STATUS_NotSupported              = 14,
-// STATUS_TLSConnectionRefused      = 15,
+   STATUS_Success                    = 0,
+   STATUS_UnspecFail                 = 1,
+   STATUS_NoAddrsAvail               = 2,
+   STATUS_NoBinding                  = 3,
+   STATUS_NotOnLink                  = 4,
+   STATUS_UseMulticast               = 5,
+   STATUS_NoPrefixAvail              = 6,
+   STATUS_UnknownQueryType           = 7,
+   STATUS_MalformedQuery             = 8,
+   STATUS_NotConfigured              = 9,
+   STATUS_NotAllowed                 = 10,
+// STATUS_QueryTerminated            = 11,
+/* RFC7653 */
+// STATUS_DataMissing                = 12,
+// STATUS_CatchUpComplete            = 13,
+// STATUS_NotSupported               = 14,
+// STATUS_TLSConnectionRefused       = 15,
+/* RFC8156 */
+// STATUS_AddressInUse               = 16,
+// STATUS_ConfigurationConflict      = 17,
+// STATUS_MissingBindingInformation  = 18,
+// STATUS_OutdatedBindingInformation = 19,
+// STATUS_ServerShuttingDown         = 20,
+// STATUS_DNSUpdateNotSupported      = 21,
+// STATUS_ExcessiveTimeSkew          = 22,
 
 // The following are EXPERIMENTAL and may change when IANA assigns official
 // values.
@@ -189,7 +236,20 @@ enum DHCPv6MessageType {
    DHCPV6_DHCPV4_RESPONSE      = 21
    /* RFC 7653 */
 // DHCPV6_ACTIVELEASEQUERY     = 22,
-// DHCPV6_STARTTLS             = 23
+// DHCPV6_STARTTLS             = 23,
+   /* RFC 8156 */
+// DHCPV6_BNDUPD               = 24,
+// DHCPV6_BNDREPLY             = 25,
+// DHCPV6_POOLREQ              = 26,
+// DHCPV6_POOLRESP             = 27,
+// DHCPV6_UPDREQ               = 28,
+// DHCPV6_UPDREQALL            = 29,
+// DHCPV6_UPDDONE              = 30,
+// DHCPV6_CONNECT              = 31,
+// DHCPV6_CONNECTREPLY         = 32,
+// DHCPV6_DISCONNECT           = 33,
+// DHCPV6_STATE                = 34,
+// DHCPV6_CONTACT              = 35
 };
 
 extern const char *dhcpv6_type_names[];
