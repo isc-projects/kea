@@ -1377,6 +1377,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"Control-agent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG:
+        return isc::dhcp::Dhcp6Parser::make_CONTROL_AGENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("Control-agent", driver.loc_);
+    }
+}
+
+
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
