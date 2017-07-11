@@ -745,11 +745,11 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       <section>
         <title>Server Terminates when Database Connection is Lost</title>
         <para>
-          If Kea is configured to use external database it opens a connection
+          If Kea is configured to use an external database it opens a connection
           to the database and requires that this connection is not interrupted.
           When the database connection breaks, e.g. as a result of SQL server
           restart, DHCP servers will terminate indicating a fatal error. In such
-          case, the system administrator is required to start the database and
+          a case, the system administrator is required to start the database and
           then "manually" start Kea to resume the service.
         </para>
 
