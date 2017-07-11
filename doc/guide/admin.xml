@@ -723,20 +723,55 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
     <section>
       <title>Limitations Related to the use of SQL Databases</title>
 
-      <para>
-        The lease expiration time is stored in the SQL database for each lease
-        as a timestamp value. Kea developers observed that MySQL database doesn't
-        accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
-        from the beginning of the epoch. At the same time, some versions of PostgreSQL
-        do accept greater values but the value is altered when it is read back.
-        For this reason the lease database backends put the restriction for the
-        maximum timestamp to be stored in the database, which is equal to the
-        maximum signed 32-bit number. This effectively means that the current
-        Kea version can't store the leases which expiration time is later than
-        2147483647 seconds since the beginning of the epoch (around year 2038).
-        This will be fixed when the database support for longer timestamps
-        is available.
-      </para>
+
+      <section>
+        <title>Year 2038 issue</title>
+        <para>
+          The lease expiration time is stored in the SQL database for each lease
+          as a timestamp value. Kea developers observed that MySQL database doesn't
+          accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
+          from the beginning of the epoch. At the same time, some versions of PostgreSQL
+          do accept greater values but the value is altered when it is read back.
+          For this reason the lease database backends put the restriction for the
+          maximum timestamp to be stored in the database, which is equal to the
+          maximum signed 32-bit number. This effectively means that the current
+          Kea version can't store the leases which expiration time is later than
+          2147483647 seconds since the beginning of the epoch (around year 2038).
+          This will be fixed when the database support for longer timestamps
+          is available.
+        </para>
+      </section>
+
+      <section>
+        <title>Server Terminates when Database Connection is Lost</title>
+        <para>
+          If Kea is configured to use an external database it opens a connection
+          to the database and requires that this connection is not interrupted.
+          When the database connection breaks, e.g. as a result of SQL server
+          restart, DHCP servers will terminate indicating a fatal error. In such
+          a case, the system administrator is required to start the database and
+          then "manually" start Kea to resume the service.
+        </para>
+
+        <para>
+          Although the engineering team is planning to implement some form of
+          reconnect mechanism in the future, this will mostly be applicable in
+          cases when the database service is restarted and the connection
+          down time is relatively short. The DHCP server can't provide its
+          service as long as the database is down, because it can't store
+          leases being assigned to the clients. The server will have to
+          reject any DHCP messages as long as the connection is down and
+          terminate if the reconnection attempt fails multiple times.
+        </para>
+
+        <para>
+          Because the database connection is critical for the operation of the
+          DHCP service, the current behavior is to terminate when that
+          connection is unavailable to indicate that server is in inconsistent
+          state and can't serve clients.
+        </para>
+      </section>
+
     </section>
 
   </section> <!-- End of Database sections -->
