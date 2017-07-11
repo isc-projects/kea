@@ -1,3 +1,8 @@
+1273.	[doc]		marcin
+	Documented in the User's Guide that the server terminates
+	when database connection is lost.
+	(Trac #5320, git 5c8b277e8041b53b27a87b32d162ab41ef8b43d7)
+
 1272.	[bug]		marcin
 	Fixed inefficient leases indexing in the memfile lease
 	manager causing increased CPU utilization during lease
