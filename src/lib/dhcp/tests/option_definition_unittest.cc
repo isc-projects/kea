@@ -325,11 +325,19 @@ TEST_F(OptionDefinitionTest, validate) {
                                "record");
     opt_def16.addRecordField("uint8");
     opt_def16.addRecordField("string");
+    EXPECT_NO_THROW(opt_def16.validate());
+
+    // ... at least if it is not an array.
+    OptionDefinition opt_def17("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               "record", true);
+    opt_def17.addRecordField("uint8");
+    opt_def17.addRecordField("string");
+    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
 
     // Check invalid encapsulated option space name.
-    OptionDefinition opt_def17("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+    OptionDefinition opt_def18("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
                                "uint32", "invalid%space%name");
-    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
+    EXPECT_THROW(opt_def18.validate(), MalformedOptionDefinition);
 }
 
 

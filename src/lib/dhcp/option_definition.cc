@@ -258,6 +258,12 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         for (size_t i = 0; i < records.size(); ++i) {
             writeToBuffer(u, util::str::trim(values[i]), records[i], buf);
         }
+        if (array_type_ && (values.size() > records.size())) {
+            for (size_t i = records.size(); i < values.size(); ++i) {
+                writeToBuffer(u, util::str::trim(values[i]),
+                              records.back(), buf);
+            }
+        }
     }
     return (optionFactory(u, type, buf.begin(), buf.end()));
 }
@@ -292,22 +298,6 @@ OptionDefinition::validate() const {
         // Option definition must be of a known type.
         err_str << "option type " << type_ << " not supported.";
 
-    } else if (array_type_) {
-        if (type_ == OPT_STRING_TYPE) {
-            // Array of strings is not allowed because there is no way
-            // to determine the size of a particular string and thus there
-            // it no way to tell when other data fields begin.
-            err_str << "array of strings is not a valid option definition.";
-        } else if (type_ == OPT_BINARY_TYPE) {
-            err_str << "array of binary values is not"
-                    << " a valid option definition.";
-
-        } else if (type_ == OPT_EMPTY_TYPE) {
-            err_str << "array of empty value is not"
-                    << " a valid option definition.";
-
-        }
-
     } else if (type_ == OPT_RECORD_TYPE) {
         // At least two data fields should be added to the record. Otherwise
         // non-record option definition could be used.
@@ -335,6 +325,7 @@ OptionDefinition::validate() const {
                     it < fields.end() - 1) {
                     err_str << "binary data field can't be laid before data"
                             << " fields of other types.";
+                    break;
                 }
                 /// Empty type is not allowed within a record.
                 if (*it == OPT_EMPTY_TYPE) {
@@ -343,8 +334,35 @@ OptionDefinition::validate() const {
                     break;
                 }
             }
+            // If the array flag is set the last field is an array.
+            if (err_str.str().empty() && array_type_) {
+                const OptionDataType& last_type = fields.back();
+                if (last_type == OPT_STRING_TYPE) {
+                    err_str << "array of strings is not"
+                            << "a valid option definition.";
+                } else if (last_type == OPT_BINARY_TYPE) {
+                    err_str << "array of binary values is not"
+                            << " a valid option definition.";
+                }
+                // Empty type was already checked.
+            }
         }
 
+    } else if (array_type_) {
+        if (type_ == OPT_STRING_TYPE) {
+            // Array of strings is not allowed because there is no way
+            // to determine the size of a particular string and thus there
+            // it no way to tell when other data fields begin.
+            err_str << "array of strings is not a valid option definition.";
+        } else if (type_ == OPT_BINARY_TYPE) {
+            err_str << "array of binary values is not"
+                    << " a valid option definition.";
+
+        } else if (type_ == OPT_EMPTY_TYPE) {
+            err_str << "array of empty value is not"
+                    << " a valid option definition.";
+
+        }
     }
 
     // Non-empty error string means that we have hit the error. We throw
@@ -357,6 +375,7 @@ OptionDefinition::validate() const {
 bool
 OptionDefinition::haveIAx6Format(OptionDataType first_type) const {
    return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
            record_fields_.size() == 3 &&
            record_fields_[0] == first_type &&
            record_fields_[1] == OPT_UINT32_TYPE &&
@@ -382,6 +401,7 @@ OptionDefinition::haveIAAddr6Format() const {
 bool
 OptionDefinition::haveIAPrefix6Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             record_fields_.size() == 4 &&
             record_fields_[0] == OPT_UINT32_TYPE &&
             record_fields_[1] == OPT_UINT32_TYPE &&
@@ -392,6 +412,7 @@ OptionDefinition::haveIAPrefix6Format() const {
 bool
 OptionDefinition::haveFqdn4Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             record_fields_.size() == 4 &&
             record_fields_[0] == OPT_UINT8_TYPE &&
             record_fields_[1] == OPT_UINT8_TYPE &&
@@ -402,6 +423,7 @@ OptionDefinition::haveFqdn4Format() const {
 bool
 OptionDefinition::haveClientFqdnFormat() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             (record_fields_.size() == 2) &&
             (record_fields_[0] == OPT_UINT8_TYPE) &&
             (record_fields_[1] == OPT_FQDN_TYPE));
