@@ -202,7 +202,7 @@ to process ${proc_name}, PID ${_pid}.\n"
 #   and be set to yes, e.g. ${dhcp4} should be equal to yes if server name
 #   is dhcp4
 run_conditional() {
-    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns
+    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent
     local command="${2}"      # Command to execute
     local check_file_cfg=${3} # Check if server enabled in the configuration file
 
@@ -301,7 +301,7 @@ do
             # Validate that the specified server names are correct.
             for s in ${servers}
             do
-                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns"
+                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent"
                 if [ ${_inlist} -eq 0 ]; then
                     log_error "invalid server name: ${s}"
                     exit 1
@@ -343,11 +343,19 @@ if [ -z ${dhcp_ddns} ]; then
     exit 1
 fi
 
+# Get location of the Control Agent binary.
+if [ -z ${ctrl_agent_srv} ]; then
+    log_error "ctrl_agent_srv parameter not specified"
+    exit 1
+fi
+
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
 dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
 dhcp6=$( printf "%s" ${dhcp6} | tr [:upper:] [:lower:] )
 dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr [:upper:] [:lower:] )
+ctrl_agent=$( printf "%s" ${ctrl_agent} | tr [:upper:] [:lower:] )
+
 
 case ${command} in
     # Start the servers.
@@ -365,6 +373,7 @@ case ${command} in
         run_conditional "dhcp4" "start_server ${dhcp4_srv} \"${args}\"" 1
         run_conditional "dhcp6" "start_server ${dhcp6_srv} \"${args}\"" 1
         run_conditional "dhcp_ddns" "start_server ${dhcp_ddns_srv} \"${args}\"" 1
+        run_conditional "ctrl_agent" "start_server ${ctrl_agent_srv} \"${args}\"" 1
 
         exit 0 ;;
 
@@ -376,6 +385,7 @@ case ${command} in
         run_conditional "dhcp4" "stop_server ${dhcp4_srv}" 0
         run_conditional "dhcp6" "stop_server ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "stop_server ${dhcp_ddns_srv}" 0
+        run_conditional "ctrl_agent" "stop_server ${ctrl_agent_srv}" 0
 
         exit 0 ;;
 
@@ -387,6 +397,7 @@ case ${command} in
         run_conditional "dhcp4" "reload_server ${dhcp4_srv}" 0
         run_conditional "dhcp6" "reload_server ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "reload_server ${dhcp_ddns_srv}" 0
+        run_conditional "ctrl_agent" "reload_server ${ctrl_agent_srv}" 0
 
         exit 0 ;;
 
@@ -411,6 +422,13 @@ case ${command} in
             d2_status="active"
         fi
         printf "DHCP DDNS: %s\n" ${d2_status}
+
+        agent_status="inactive"
+        check_running $(basename ${ctrl_agent_srv})
+        if [ ${_running} -eq 1 ]; then
+            agent_status="active"
+        fi
+        printf "Control Agent: %s\n" ${agent_status}
         printf "Kea configuration file: %s\n" ${kea_config_file}
         printf "keactrl configuration file: %s\n" ${keactrl_conf}
 
