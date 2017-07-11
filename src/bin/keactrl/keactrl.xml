@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,9 +58,10 @@
     <para>
       keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
-      <command>kea-dhcp6</command> and <command>kea-dhcp-ddns</command>). It
-      also provides the means for checking the current status of the servers
-      and determining the configuration files in use.
+      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
+      <command>kea-ctrl-agent</command>). It also provides the means for
+      checking the current status of the servers and determining the
+      configuration files in use.
     </para>
   </refsect1>
 
@@ -162,6 +163,13 @@
               <term>dhcp_ddns</term>
               <listitem>
                 <para>DHCP DDNS server (<command>kea-dhcp-ddns</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>ctrl_agent</term>
+              <listitem>
+                <para>Control Agent (<command>kea-ctrl-agent</command>).</para>
               </listitem>
             </varlistentry>
 
