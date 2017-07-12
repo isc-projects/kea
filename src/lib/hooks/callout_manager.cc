@@ -104,6 +104,29 @@ CalloutManager::calloutsPresent(int hook_index) const {
     return (!hook_vector_[hook_index].empty());
 }
 
+bool
+CalloutManager::commandHandlersPresent(const std::string& command_name) const {
+    try {
+        // Check if the hook point for the specified command exists.
+        // We don't want this to throw because this is not an error condition.
+        // We may simply not support this command in any of the attached
+        // hooks libraries. That's fine.
+        int index = ServerHooks::getServerHooks().getIndex(
+                        ServerHooks::commandToHookName(command_name));
+        // The hook point may exist but there are no callouts/command handlers.
+        // This is possible if there was a hook library supporting this command
+        // attached, but it was later unloaded. The hook points are not deregistered
+        // in this case. Only callouts are deregistered.
+        return (calloutsPresent(index));
+
+    } catch (...) {
+        // Hook point not created, so we don't support this command in
+        // any of the hooks libraries.
+        return (false);
+    }
+}
+
+
 // Call all the callouts for a given hook.
 
 void
@@ -191,6 +214,20 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
     }
 }
 
+void
+CalloutManager::callCommandHandlers(const std::string& command_name,
+                                    CalloutHandle& callout_handle) {
+    // Get the index of the hook point for the specified command.
+    // This may throw an exception if the hook point doesn't exist.
+    // The caller should check if the hook point exists by calling
+    // commandHandlersPresent.
+    int index = ServerHooks::getServerHooks().getIndex(
+                    ServerHooks::commandToHookName(command_name));
+    // Call the handlers for this command.
+    callCallouts(index, callout_handle);
+}
+
+
 // Deregister a callout registered by the current library on a particular hook.
 
 bool
@@ -270,6 +307,30 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     }
 
     return (removed);
+}
+
+void
+CalloutManager::registerCommandHook(const std::string& command_name) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    int hook_index = -1;
+    try {
+        hook_index = hooks.getIndex(ServerHooks::commandToHookName(command_name));
+
+    } catch (...) {
+        // Ignore an error whereby the hook doesn't exist for this command.
+        // In this case we're going to register a new hook.
+    }
+
+    if (hook_index < 0) {
+        // Hook for this command doesn't exist. Let's create one.
+        hooks.registerHook(ServerHooks::commandToHookName(command_name));
+        // Callout Manager's vector of hooks have to be resized to hold the
+        // information about callouts for this new hook point. This should
+        // add new element at the end of the hook_vector_. The index of this
+        // element will match the index of the hook point in the ServerHooks
+        // because ServerHooks allocates indexes incrementally.
+        hook_vector_.resize(server_hooks_.getCount());
+    }
 }
 
 } // namespace util

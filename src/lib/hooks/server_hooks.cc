@@ -8,6 +8,7 @@
 #include <hooks/hooks_log.h>
 #include <hooks/server_hooks.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -164,6 +165,16 @@ ServerHooks::getServerHooksPtr() {
     static ServerHooksPtr hooks(new ServerHooks());
     return (hooks);
 }
+
+std::string
+ServerHooks::commandToHookName(const std::string& command_name) {
+    // Prefix the command name with a dollar sign.
+    std::string hook_name = std::string("$") + command_name;
+    // Replace all hyphens with underscores.
+    std::replace(hook_name.begin(), hook_name.end(), '-', '_');
+    return (hook_name);
+}
+
 
 
 } // namespace util
