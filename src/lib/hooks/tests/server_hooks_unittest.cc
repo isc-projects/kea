@@ -195,4 +195,11 @@ TEST(ServerHooksTest, HookCount) {
     EXPECT_EQ(6, hooks.getCount());
 }
 
+// Check that the hook name is correctly generated for a control command name.
+
+TEST(ServerHooksTest, CommandToHookName) {
+    EXPECT_EQ("$x_y_z", ServerHooks::commandToHookName("x-y-z"));
+    EXPECT_EQ("$foo_bar_foo", ServerHooks::commandToHookName("foo-bar_foo"));
+}
+
 } // Anonymous namespace
