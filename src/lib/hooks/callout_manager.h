@@ -205,6 +205,9 @@ public:
     /// @brief Checks if control command handlers are present for the
     /// specified command.
     ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
     /// @return true if there is a hook point associated with the specified
     /// command and callouts/command handlers are installed for this hook
     /// point, false otherwise.
