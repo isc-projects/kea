@@ -114,10 +114,6 @@ public:
 /// @ref LibraryHandle::registerCommandHandler can install callouts on this
 /// hook point.
 ///
-/// The @ref CalloutManager::registerCommandHandler is called from the
-/// @ref LibraryHandle object when the hook library installs control command
-/// handlers in its @c load() function.
-///
 /// Note that the callout functions do not access the CalloutManager: instead,
 /// they use a LibraryHandle object.  This contains an internal pointer to
 /// the CalloutManager, but provides a restricted interface.  In that way,
