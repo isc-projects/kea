@@ -93,6 +93,17 @@ public:
                                                   r1, d2, r2, d3, r3);
     }
 
+    /// @brief Call command handlers test.
+    ///
+    /// A wrapper around the method of the same name in the HooksCommonTestClass
+    /// object, this passes this class's CalloutManager to that method.
+    ///
+    /// @param r1..r2, d1..d2 Values and intermediate values expected.
+    void executeCallCommandHandlers(int d1, int r1, int d2, int r2) {
+        HooksCommonTestClass::executeCallCommandHandlers(callout_manager_,
+                                                         d1, r1, d2, r2);
+    }
+
     /// Callout manager used for the test.
     boost::shared_ptr<CalloutManager> callout_manager_;
 };
@@ -271,6 +282,8 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -281,6 +294,8 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-two"));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -289,6 +304,11 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     //
     // r3 = (5 * d1 + d2) * d3
     executeCallCallouts(5, 5, 25, 7, 32, 10, 320);
+
+    // Execute command handlers for 'command-one' and 'command-two'.
+    //
+    // r2 = d1 * d2 * 10;
+    executeCallCommandHandlers(5, 5, 7, 350);
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -414,7 +434,7 @@ TEST_F(LibraryManagerTest, LibUnload) {
 
     // Load the only library, specifying the index of 0 as it's the only
     // library.  This should load all callouts.
-    PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY),
+    PublicLibraryManager lib_manager(std::string(LOAD_CALLOUT_LIBRARY),
                                0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
@@ -425,18 +445,24 @@ TEST_F(LibraryManagerTest, LibUnload) {
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Load the single standard callout and check it is registered correctly.
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Call the load function to load the other callouts.
     EXPECT_TRUE(lib_manager.runLoad());
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Unload the library and check that the callouts have been removed from
     // the CalloutManager.
@@ -444,6 +470,8 @@ TEST_F(LibraryManagerTest, LibUnload) {
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 }
 
 // Now come the loadLibrary() tests that make use of all the methods tested
