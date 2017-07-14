@@ -45,6 +45,9 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     bool re_detect = getBoolean(ifaces_config, "re-detect");
     cfg->setReDetect(re_detect);
     if (re_detect) {
+        // Interface clear will drop opened socket information
+        // so close them if the caller did not.
+        IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().detectIfaces();
     }
