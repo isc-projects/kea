@@ -159,6 +159,11 @@ TEST(ParserTest, keywordDhcp4) {
      testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
 }
 
+TEST(ParserTest, keywordControlAgent) {
+    string txt = "{ \"Control-agent\": { } }";
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
+}
+
 TEST(ParserTest, Logging) {
     string txt = "{ \"Logging\": { \n"
                  "    \"loggers\": [ \n"

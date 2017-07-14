@@ -5,16 +5,16 @@ SUBDIRS = . tests
 # If the default location needs to be changed it may be achieved by
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
-CONFIGFILES = keactrl.conf kea.conf kea-ca.conf
+CONFIGFILES = keactrl.conf kea.conf
 
 man_MANS = keactrl.8
 DISTCLEANFILES = keactrl keactrl.conf $(man_MANS)
-CLEANFILES = kea.conf kea-ca.conf
-EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.pre kea-ca.conf.pre $(man_MANS) keactrl.xml
+CLEANFILES = kea.conf
+EXTRA_DIST = keactrl.in keactrl.conf.in kea.conf.pre $(man_MANS) keactrl.xml
 
-# kea.conf and kea-ca.conf are not really sources used for building other targets, but we need
-# these files to be generated before make install is called.
-BUILT_SOURCES = kea.conf kea-ca.conf
+# kea.conf is not really a source used for building other targets, but we need
+# this file to be generated before make install is called.
+BUILT_SOURCES = kea.conf
 
 if GENERATE_DOCS
 
@@ -31,10 +31,6 @@ endif
 
 kea.conf: kea.conf.pre
 	$(top_builddir)/tools/path_replacer.sh $(top_srcdir)/src/bin/keactrl/kea.conf.pre $@
-
-kea-ca.conf: kea-ca.conf.pre
-	$(top_builddir)/tools/path_replacer.sh $(top_srcdir)/src/bin/keactrl/kea-ca.conf.pre $@
-
 
 if INSTALL_CONFIGURATIONS
 
