@@ -64,12 +64,12 @@ HooksManager::commandHandlersPresent(const std::string& command_name) {
 void
 HooksManager::callCalloutsInternal(int index, CalloutHandle& handle) {
     conditionallyInitialize();
-    return (callout_manager_->callCallouts(index, handle));
+    callout_manager_->callCallouts(index, handle);
 }
 
 void
 HooksManager::callCallouts(int index, CalloutHandle& handle) {
-    return (getHooksManager().callCalloutsInternal(index, handle));
+    getHooksManager().callCalloutsInternal(index, handle);
 }
 
 void
