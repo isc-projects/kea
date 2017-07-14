@@ -8,6 +8,7 @@
 #include <hooks/hooks_log.h>
 #include <hooks/server_hooks.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -137,6 +138,13 @@ ServerHooks::getIndex(const string& name) const {
     return (i->second);
 }
 
+int
+ServerHooks::findIndex(const std::string& name) const {
+    // Get iterator to matching element.
+    auto i = hooks_.find(name);
+    return ((i == hooks_.end()) ? -1 : i->second);
+}
+
 // Return vector of hook names.  The names are not sorted - it is up to the
 // caller to perform sorting if required.
 
@@ -164,6 +172,16 @@ ServerHooks::getServerHooksPtr() {
     static ServerHooksPtr hooks(new ServerHooks());
     return (hooks);
 }
+
+std::string
+ServerHooks::commandToHookName(const std::string& command_name) {
+    // Prefix the command name with a dollar sign.
+    std::string hook_name = std::string("$") + command_name;
+    // Replace all hyphens with underscores.
+    std::replace(hook_name.begin(), hook_name.end(), '-', '_');
+    return (hook_name);
+}
+
 
 
 } // namespace util

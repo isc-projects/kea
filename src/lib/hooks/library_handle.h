@@ -40,6 +40,22 @@ extern "C" {
 /// called, the CalloutManager uses that information to set the "current
 /// library": the registration functions only operator on data whose
 /// associated library is equal to the "current library".)
+///
+/// As of Kea 1.3.0 release, the @ref LibraryHandle can be used by the hook
+/// libraries to install control command handlers and dynamically register
+/// hook points with which the handlers are associated. For example, if the
+/// hook library supports control-command 'foo-bar' it should register its
+/// handler similarly to this:
+/// @code
+/// int load(LibraryHandle& libhandle) {
+///     libhandle.registerCommandHandler("foo-bar", foo_bar_handler);
+///     return (0);
+/// }
+/// @endcode
+///
+/// which will result in automatic creation of the hook point for the command
+/// (if one doesn't exist) and associating the callout 'foo_bar_handler' with
+/// this hook point as a handler for the command.
 
 class LibraryHandle {
 public:
@@ -78,6 +94,17 @@ public:
     /// @throw Unexpected The hook name is valid but an internal data structure
     ///        is of the wrong size.
     void registerCallout(const std::string& name, CalloutPtr callout);
+
+    /// @brief Register control command handler
+    ///
+    /// Registers control command handler by creating a hook point for this
+    /// command (if it doesn't exist) and associating the callout as a command
+    /// handler. It is possible to register multiple command handlers for the
+    /// same control command because command handlers are implemented as callouts.
+    ///
+    /// @param command_name Command name for which handler should be installed.
+    /// @param callout Pointer to the command handler implemented as a callout.
+    void registerCommandHandler(const std::string& command_name, CalloutPtr callout);
 
     /// @brief De-Register a callout on a hook
     ///
