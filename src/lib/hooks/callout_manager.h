@@ -105,6 +105,18 @@ public:
 /// between hook points dedicated to commands handling and other (fixed)
 /// hook points.
 ///
+/// Prefixing hook names for command handlers with a dollar sign precludes
+/// auto registration of command handlers, i.e. hooks framework is unable
+/// to match hook points with names of functions implementing command
+/// handlers, because the dollar sign is not legal in C++ function names.
+/// This is intended because we want hook libraries to explicitly register
+/// commands handlers for supported commands and not rely on Kea to register
+/// hook points for them. Should we find use cases for auto registration of
+/// command handlers, we may modify the
+/// @ref ServerHooks::commandToHookName to use an encoding of hook
+/// point names for command handlers that would only contain characters
+/// allowed in function names.
+///
 /// The @ref CalloutManager::registerCommandHook has been added to allow for
 /// dynamically creating hook points for which command handlers are registered.
 /// This method is called from the @ref LibraryHandle::registerCommandHandler

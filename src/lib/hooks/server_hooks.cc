@@ -138,6 +138,13 @@ ServerHooks::getIndex(const string& name) const {
     return (i->second);
 }
 
+int
+ServerHooks::findIndex(const std::string& name) const {
+    // Get iterator to matching element.
+    auto i = hooks_.find(name);
+    return ((i == hooks_.end()) ? -1 : i->second);
+}
+
 // Return vector of hook names.  The names are not sorted - it is up to the
 // caller to perform sorting if required.
 
