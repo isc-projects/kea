@@ -40,7 +40,7 @@ AC_LANG([C++])
 
 DISTCHECK_BOOST_CONFIGURE_FLAG=
 
-# No library by default (and as goal)
+# We'll attempt to Use Boost system library by default
 BOOST_LIBS=
 BOOST_LIB_DIR=
 boost_lib_path=
@@ -156,6 +156,15 @@ AC_ARG_WITH([boost-lib-dir],
     [specify directory where to find Boost libraries]),
     [BOOST_LIB_DIR="$withval"
      DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boot-lib-dir=$withval"])
+
+AC_ARG_ENABLE([boost-headers-only],
+    [AS_HELP_STRING([--enable-boost-headers-only],
+        [Build with boost headers only rather than link
+         with boost_system library. This is NOT recommended
+         as it may result in non-optimized code on some
+         platforms or introduce runtime errors on others.])],
+    [enable_boost_header="yes"; BOOST_LIBS=""],
+    [BOOST_LIBS="${BOOST_LIBS} -lboost_system"])
 
 # BOOST_ERROR_CODE_HEADER_ONLY in versions below Boost 1.56.0 can fail
 # to find the error_code.cpp file.
