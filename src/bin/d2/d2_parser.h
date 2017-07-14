@@ -351,48 +351,49 @@ namespace isc { namespace d2 {
         TOKEN_NULL_TYPE = 264,
         TOKEN_DHCP6 = 265,
         TOKEN_DHCP4 = 266,
-        TOKEN_DHCPDDNS = 267,
-        TOKEN_IP_ADDRESS = 268,
-        TOKEN_PORT = 269,
-        TOKEN_DNS_SERVER_TIMEOUT = 270,
-        TOKEN_NCR_PROTOCOL = 271,
-        TOKEN_UDP = 272,
-        TOKEN_TCP = 273,
-        TOKEN_NCR_FORMAT = 274,
-        TOKEN_JSON = 275,
-        TOKEN_FORWARD_DDNS = 276,
-        TOKEN_REVERSE_DDNS = 277,
-        TOKEN_DDNS_DOMAINS = 278,
-        TOKEN_KEY_NAME = 279,
-        TOKEN_DNS_SERVERS = 280,
-        TOKEN_HOSTNAME = 281,
-        TOKEN_TSIG_KEYS = 282,
-        TOKEN_ALGORITHM = 283,
-        TOKEN_DIGEST_BITS = 284,
-        TOKEN_SECRET = 285,
-        TOKEN_LOGGING = 286,
-        TOKEN_LOGGERS = 287,
-        TOKEN_NAME = 288,
-        TOKEN_OUTPUT_OPTIONS = 289,
-        TOKEN_OUTPUT = 290,
-        TOKEN_DEBUGLEVEL = 291,
-        TOKEN_SEVERITY = 292,
-        TOKEN_FLUSH = 293,
-        TOKEN_MAXSIZE = 294,
-        TOKEN_MAXVER = 295,
-        TOKEN_TOPLEVEL_JSON = 296,
-        TOKEN_TOPLEVEL_DHCPDDNS = 297,
-        TOKEN_SUB_DHCPDDNS = 298,
-        TOKEN_SUB_TSIG_KEY = 299,
-        TOKEN_SUB_TSIG_KEYS = 300,
-        TOKEN_SUB_DDNS_DOMAIN = 301,
-        TOKEN_SUB_DDNS_DOMAINS = 302,
-        TOKEN_SUB_DNS_SERVER = 303,
-        TOKEN_SUB_DNS_SERVERS = 304,
-        TOKEN_STRING = 305,
-        TOKEN_INTEGER = 306,
-        TOKEN_FLOAT = 307,
-        TOKEN_BOOLEAN = 308
+        TOKEN_CONTROL_AGENT = 267,
+        TOKEN_DHCPDDNS = 268,
+        TOKEN_IP_ADDRESS = 269,
+        TOKEN_PORT = 270,
+        TOKEN_DNS_SERVER_TIMEOUT = 271,
+        TOKEN_NCR_PROTOCOL = 272,
+        TOKEN_UDP = 273,
+        TOKEN_TCP = 274,
+        TOKEN_NCR_FORMAT = 275,
+        TOKEN_JSON = 276,
+        TOKEN_FORWARD_DDNS = 277,
+        TOKEN_REVERSE_DDNS = 278,
+        TOKEN_DDNS_DOMAINS = 279,
+        TOKEN_KEY_NAME = 280,
+        TOKEN_DNS_SERVERS = 281,
+        TOKEN_HOSTNAME = 282,
+        TOKEN_TSIG_KEYS = 283,
+        TOKEN_ALGORITHM = 284,
+        TOKEN_DIGEST_BITS = 285,
+        TOKEN_SECRET = 286,
+        TOKEN_LOGGING = 287,
+        TOKEN_LOGGERS = 288,
+        TOKEN_NAME = 289,
+        TOKEN_OUTPUT_OPTIONS = 290,
+        TOKEN_OUTPUT = 291,
+        TOKEN_DEBUGLEVEL = 292,
+        TOKEN_SEVERITY = 293,
+        TOKEN_FLUSH = 294,
+        TOKEN_MAXSIZE = 295,
+        TOKEN_MAXVER = 296,
+        TOKEN_TOPLEVEL_JSON = 297,
+        TOKEN_TOPLEVEL_DHCPDDNS = 298,
+        TOKEN_SUB_DHCPDDNS = 299,
+        TOKEN_SUB_TSIG_KEY = 300,
+        TOKEN_SUB_TSIG_KEYS = 301,
+        TOKEN_SUB_DDNS_DOMAIN = 302,
+        TOKEN_SUB_DDNS_DOMAINS = 303,
+        TOKEN_SUB_DNS_SERVER = 304,
+        TOKEN_SUB_DNS_SERVERS = 305,
+        TOKEN_STRING = 306,
+        TOKEN_INTEGER = 307,
+        TOKEN_FLOAT = 308,
+        TOKEN_BOOLEAN = 309
       };
     };
 
@@ -546,6 +547,10 @@ namespace isc { namespace d2 {
     static inline
     symbol_type
     make_DHCP4 (const location_type& l);
+
+    static inline
+    symbol_type
+    make_CONTROL_AGENT (const location_type& l);
 
     static inline
     symbol_type
@@ -920,12 +925,12 @@ namespace isc { namespace d2 {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 247,     ///< Last index in yytable_.
-      yynnts_ = 131,  ///< Number of nonterminal symbols.
+      yylast_ = 252,     ///< Last index in yytable_.
+      yynnts_ = 133,  ///< Number of nonterminal symbols.
       yyfinal_ = 20, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 54  ///< Number of tokens.
+      yyntokens_ = 55  ///< Number of tokens.
     };
 
 
@@ -972,9 +977,9 @@ namespace isc { namespace d2 {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51,    52,    53
+      45,    46,    47,    48,    49,    50,    51,    52,    53,    54
     };
-    const unsigned int user_token_number_max_ = 308;
+    const unsigned int user_token_number_max_ = 309;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1007,24 +1012,24 @@ namespace isc { namespace d2 {
   {
       switch (other.type_get ())
     {
-      case 65: // value
-      case 92: // ncr_protocol_value
+      case 66: // value
+      case 93: // ncr_protocol_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 53: // "boolean"
+      case 54: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 52: // "floating point"
+      case 53: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 51: // "integer"
+      case 52: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 50: // "constant string"
+      case 51: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1045,24 +1050,24 @@ namespace isc { namespace d2 {
     (void) v;
       switch (this->type_get ())
     {
-      case 65: // value
-      case 92: // ncr_protocol_value
+      case 66: // value
+      case 93: // ncr_protocol_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 53: // "boolean"
+      case 54: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 52: // "floating point"
+      case 53: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 51: // "integer"
+      case 52: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 50: // "constant string"
+      case 51: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1142,24 +1147,24 @@ namespace isc { namespace d2 {
     // Type destructor.
     switch (yytype)
     {
-      case 65: // value
-      case 92: // ncr_protocol_value
+      case 66: // value
+      case 93: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 53: // "boolean"
+      case 54: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 52: // "floating point"
+      case 53: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 51: // "integer"
+      case 52: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 50: // "constant string"
+      case 51: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1186,24 +1191,24 @@ namespace isc { namespace d2 {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 65: // value
-      case 92: // ncr_protocol_value
+      case 66: // value
+      case 93: // ncr_protocol_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 53: // "boolean"
+      case 54: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 52: // "floating point"
+      case 53: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 51: // "integer"
+      case 52: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 50: // "constant string"
+      case 51: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1267,7 +1272,7 @@ namespace isc { namespace d2 {
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308
+     305,   306,   307,   308,   309
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1330,6 +1335,12 @@ namespace isc { namespace d2 {
   D2Parser::make_DHCP4 (const location_type& l)
   {
     return symbol_type (token::TOKEN_DHCP4, l);
+  }
+
+  D2Parser::symbol_type
+  D2Parser::make_CONTROL_AGENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_AGENT, l);
   }
 
   D2Parser::symbol_type
@@ -1587,7 +1598,7 @@ namespace isc { namespace d2 {
 
 #line 14 "d2_parser.yy" // lalr1.cc:377
 } } // isc::d2
-#line 1591 "d2_parser.h" // lalr1.cc:377
+#line 1602 "d2_parser.h" // lalr1.cc:377
 
 
 
