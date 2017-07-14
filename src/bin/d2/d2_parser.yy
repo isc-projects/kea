@@ -51,6 +51,7 @@ using namespace std;
 
   DHCP6 "Dhcp6"
   DHCP4 "Dhcp4"
+  CONTROL_AGENT "Control-agent"
 
   DHCPDDNS "DhcpDdns"
   IP_ADDRESS "ip-address"
@@ -204,8 +205,8 @@ unknown_map_entry: STRING COLON {
 };
 
 
-// This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
-// objects.
+// This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
+// DhcpDdns or Logging objects.
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -227,6 +228,7 @@ global_object: dhcp6_json_object
              | logging_object
              | dhcp4_json_object
              | dhcpddns_object
+             | control_agent_json_object
              | unknown_map_entry
              ;
 
@@ -610,6 +612,13 @@ dhcp4_json_object: DHCP4 {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
     ctx.stack_.back()->set("Dhcp4", $4);
+    ctx.leave();
+};
+
+control_agent_json_object: CONTROL_AGENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("Control-agent", $4);
     ctx.leave();
 };
 

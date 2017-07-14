@@ -467,6 +467,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"Control-agent\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONFIG:
+        return isc::d2::D2Parser::make_CONTROL_AGENT(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("Control-agent", driver.loc_);
+    }
+}
+
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

@@ -1246,6 +1246,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"Control-agent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONFIG:
+        return isc::dhcp::Dhcp4Parser::make_CONTROL_AGENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("Control-agent", driver.loc_);
+    }
+}
+
 \"4o6-interface\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
