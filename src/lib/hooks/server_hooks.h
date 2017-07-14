@@ -113,6 +113,17 @@ public:
     /// @throw NoSuchHook if the hook name is unknown to the caller.
     int getIndex(const std::string& name) const;
 
+    /// @brief Find hook index
+    ///
+    /// Provides exception safe method of retrieving an index of the
+    /// specified hook.
+    ///
+    /// @param name Name of the hook
+    ///
+    /// @return Index of the hook if the hook point exists, or -1 if the
+    /// hook point doesn't exist.
+    int findIndex(const std::string& name) const;
+
     /// @brief Return number of hooks
     ///
     /// Returns the total number of hooks registered.

@@ -54,8 +54,8 @@ extern "C" {
 /// @endcode
 ///
 /// which will result in automatic creation of the hook point for the command
-/// and associating the callout 'foo_bar_handler' with this hook point as
-/// a handler for the command.
+/// (if one doesn't exist) and associating the callout 'foo_bar_handler' with
+/// this hook point as a handler for the command.
 
 class LibraryHandle {
 public:
@@ -98,9 +98,9 @@ public:
     /// @brief Register control command handler
     ///
     /// Registers control command handler by creating a hook point for this
-    /// command and associating the callout as a command handler. It is possible
-    /// to register multiple command handlers for the same control command because
-    /// command handlers are implemented as callouts.
+    /// command (if it doesn't exist) and associating the callout as a command
+    /// handler. It is possible to register multiple command handlers for the
+    /// same control command because command handlers are implemented as callouts.
     ///
     /// @param command_name Command name for which handler should be installed.
     /// @param callout Pointer to the command handler implemented as a callout.
