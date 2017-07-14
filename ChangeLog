@@ -1,3 +1,7 @@
+1274.	[func]		marcin
+	It is now possible to manage Control Agent with keactrl.
+	(Trac #5108, git 53ba9f8197a25abd2c52ee3f5e95bc4e4be0241f)
+
 1273.	[doc]		marcin
 	Documented in the User's Guide that the server terminates
 	when database connection is lost.
