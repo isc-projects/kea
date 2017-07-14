@@ -48,18 +48,43 @@ HooksManager::calloutsPresent(int index) {
     return (getHooksManager().calloutsPresentInternal(index));
 }
 
+bool
+HooksManager::commandHandlersPresentInternal(const std::string& command_name) {
+    conditionallyInitialize();
+    return (callout_manager_->commandHandlersPresent(command_name));
+}
+
+bool
+HooksManager::commandHandlersPresent(const std::string& command_name) {
+    return (getHooksManager().commandHandlersPresentInternal(command_name));
+}
+
 // Call the callouts
 
 void
 HooksManager::callCalloutsInternal(int index, CalloutHandle& handle) {
     conditionallyInitialize();
-    return (callout_manager_->callCallouts(index, handle));
+    callout_manager_->callCallouts(index, handle);
 }
 
 void
 HooksManager::callCallouts(int index, CalloutHandle& handle) {
-    return (getHooksManager().callCalloutsInternal(index, handle));
+    getHooksManager().callCalloutsInternal(index, handle);
 }
+
+void
+HooksManager::callCommandHandlersInternal(const std::string& command_name,
+                                          CalloutHandle& handle) {
+    conditionallyInitialize();
+    callout_manager_->callCommandHandlers(command_name, handle);
+}
+
+void
+HooksManager::callCommandHandlers(const std::string& command_name,
+                                  CalloutHandle& handle) {
+    getHooksManager().callCommandHandlersInternal(command_name, handle);
+}
+
 
 // Load the libraries.  This will delete the previously-loaded libraries
 // (if present) and load new ones.

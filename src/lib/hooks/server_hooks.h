@@ -113,6 +113,17 @@ public:
     /// @throw NoSuchHook if the hook name is unknown to the caller.
     int getIndex(const std::string& name) const;
 
+    /// @brief Find hook index
+    ///
+    /// Provides exception safe method of retrieving an index of the
+    /// specified hook.
+    ///
+    /// @param name Name of the hook
+    ///
+    /// @return Index of the hook if the hook point exists, or -1 if the
+    /// hook point doesn't exist.
+    int findIndex(const std::string& name) const;
+
     /// @brief Return number of hooks
     ///
     /// Returns the total number of hooks registered.
@@ -140,6 +151,23 @@ public:
     ///
     /// @return Pointer to the global ServerHooks object.
     static ServerHooksPtr getServerHooksPtr();
+
+    /// @brief Generates hook point name for the given control command name.
+    ///
+    /// This function is called to generate the name of the hook point
+    /// when the hook point is used to install command handlers for the
+    /// given control command.
+    ///
+    /// The name of the hook point is generated as follows:
+    /// - command name is prefixed with a dollar sign,
+    /// - all hyphens are replaced with underscores.
+    ///
+    /// For example, if the command_name is 'foo-bar', the resulting hook
+    /// point name will be '$foo_bar'.
+    ///
+    /// @param command_name Command name for which the hook point name is
+    ///        to be generated.
+    static std::string commandToHookName(const std::string& command_name);
 
 private:
     /// @brief Constructor

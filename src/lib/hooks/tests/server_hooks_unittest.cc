@@ -28,7 +28,9 @@ TEST(ServerHooksTest, RegisterHooks) {
     // There should be two hooks already registered, with indexes 0 and 1.
     EXPECT_EQ(2, hooks.getCount());
     EXPECT_EQ(0, hooks.getIndex("context_create"));
+    EXPECT_EQ(0, hooks.findIndex("context_create"));
     EXPECT_EQ(1, hooks.getIndex("context_destroy"));
+    EXPECT_EQ(1, hooks.findIndex("context_destroy"));
 
     // Check that the constants are as expected. (The intermediate variables
     // are used because of problems with g++ 4.6.1/Ubuntu 11.10 when resolving
@@ -177,6 +179,7 @@ TEST(ServerHooksTest, UnknownHookName) {
     hooks.reset();
 
     EXPECT_THROW(static_cast<void>(hooks.getIndex("unknown")), NoSuchHook);
+    EXPECT_EQ(-1, hooks.findIndex("unknown"));
 }
 
 // Check that the count of hooks is correct.
@@ -193,6 +196,14 @@ TEST(ServerHooksTest, HookCount) {
 
     // Should be two more hooks that the number we have registered.
     EXPECT_EQ(6, hooks.getCount());
+}
+
+// Check that the hook name is correctly generated for a control command name.
+
+TEST(ServerHooksTest, CommandToHookName) {
+    EXPECT_EQ("$x_y_z", ServerHooks::commandToHookName("x-y-z"));
+    EXPECT_EQ("$foo_bar_foo", ServerHooks::commandToHookName("foo-bar_foo"));
+    EXPECT_EQ("$", ServerHooks::commandToHookName(""));
 }
 
 } // Anonymous namespace

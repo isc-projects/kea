@@ -90,6 +90,17 @@ public:
     /// @throw NoSuchHook Given index does not correspond to a valid hook.
     static bool calloutsPresent(int index);
 
+    /// @brief Checks if control command handlers are present for the
+    /// specified command.
+    ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
+    /// @return true if there is a hook point associated with the specified
+    /// command and callouts/command handlers are installed for this hook
+    /// point, false otherwise.
+    static bool commandHandlersPresent(const std::string& command_name);
+
     /// @brief Calls the callouts for a given hook
     ///
     /// Iterates through the library handles and calls the callouts associated
@@ -102,6 +113,22 @@ public:
     /// @param handle Reference to the CalloutHandle object for the current
     ///        object being processed.
     static void callCallouts(int index, CalloutHandle& handle);
+
+    /// @brief Calls the callouts/command handlers for a given command name.
+    ///
+    /// Iterates through the library handles and calls the command handlers
+    /// associated with the given command. It expects that the hook point
+    /// for this command exists (with a name being a command_name prefixed
+    /// with a dollar sign and with hyphens replaced with underscores).
+    ///
+    /// @param command_name Command name for which handlers should be called.
+    /// @param handle Reference to the CalloutHandle object for the current
+    /// object being processed.
+    ///
+    /// @throw NoSuchHook if the hook point for the specified command does
+    ///        not exist.
+    static void callCommandHandlers(const std::string& command_name,
+                                    CalloutHandle& handle);
 
     /// @brief Return pre-callouts library handle
     ///
@@ -253,12 +280,34 @@ private:
     /// @throw NoSuchHook Given index does not correspond to a valid hook.
     bool calloutsPresentInternal(int index);
 
+    /// @brief Checks if control command handlers are present for the
+    /// specified command.
+    ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
+    /// @return true if there is a hook point associated with the specified
+    /// command and callouts/command handlers are installed for this hook
+    /// point, false otherwise.
+    bool commandHandlersPresentInternal(const std::string& command_name);
+
     /// @brief Calls the callouts for a given hook
     ///
     /// @param index Index of the hook to call.
     /// @param handle Reference to the CalloutHandle object for the current
     ///        object being processed.
     void callCalloutsInternal(int index, CalloutHandle& handle);
+
+    /// @brief Calls the callouts/command handlers for a given command name.
+    ///
+    /// @param command_name Command name for which handlers should be called.
+    /// @param handle Reference to the CalloutHandle object for the current
+    /// object being processed.
+    ///
+    /// @throw NoSuchHook if the hook point for the specified command does
+    ///        not exist.
+    void callCommandHandlersInternal(const std::string& command_name,
+                                     CalloutHandle& handle);
 
     /// @brief Return callout handle
     ///

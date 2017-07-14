@@ -867,6 +867,56 @@ TEST_F(CalloutManagerTest, LibraryHandlePrePostUserLibrary) {
     EXPECT_EQ(154, callout_value_);
 }
 
+// Test that control command handlers can be installed as callouts.
+
+TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
+    CalloutHandle handle(getCalloutManager());
+
+    // Simulate creation of the two hook libraries. Fist library implements two
+    // handlers for the control command 'command-one'. Second library implements
+    // two control command handlers: one for the 'command-one', another one for
+    // 'command-two'. Each of the handlers for the 'command-one' must be called
+    // and they must be called in the appropriate order. Command handler for
+    // 'command-two' should also be called.
+
+    getCalloutManager()->setLibraryIndex(0);
+    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+                                                                   callout_one);
+    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+                                                                   callout_four);
+    getCalloutManager()->setLibraryIndex(1);
+    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+                                                                   callout_two);
+    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-two",
+                                                                   callout_three);
+
+    // Command handlers are installed for commands: 'command-one' and 'command-two'.
+    EXPECT_TRUE(getCalloutManager()->commandHandlersPresent("command-one"));
+    EXPECT_TRUE(getCalloutManager()->commandHandlersPresent("command-two"));
+    // There should be no handlers installed for 'command-three' and 'command-four'.
+    EXPECT_FALSE(getCalloutManager()->commandHandlersPresent("command-three"));
+    EXPECT_FALSE(getCalloutManager()->commandHandlersPresent("command-four"));
+
+    // Call handlers for 'command-one'. There should be three handlers called in
+    // the following order: 1, 4, 2.
+    callout_value_ = 0;
+    ASSERT_NO_THROW(getCalloutManager()->callCommandHandlers("command-one", handle));
+    EXPECT_EQ(142, callout_value_);
+
+    // There should be one handler invoked for the 'command-two'. This handler has
+    // index of 3.
+    callout_value_ = 0;
+    ASSERT_NO_THROW(getCalloutManager()->callCommandHandlers("command-two", handle));
+    EXPECT_EQ(3, callout_value_);
+
+    // An attempt to call handlers for the commands for which no hook points
+    // were created should result in exception.
+    EXPECT_THROW(getCalloutManager()->callCommandHandlers("command-three", handle),
+                 NoSuchHook);
+    EXPECT_THROW(getCalloutManager()->callCommandHandlers("command-four", handle),
+                 NoSuchHook);
+}
+
 // The setting of the hook index is checked in the handles_unittest
 // set of tests, as access restrictions mean it is not easily tested
 // on its own.
