@@ -1346,7 +1346,7 @@ if test $enable_gtest != "no"; then
     	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
-	    
+
 # Check for CreateUnifiedDiff from gtest >= 1.8.0
 if test $enable_gtest != "no"; then
    AC_MSG_CHECKING([for CreateUnifiedDiff in $GTEST_INCLUDES/gtest.h])
@@ -1370,7 +1370,7 @@ if test $enable_gtest != "no"; then
 	 [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
 	[AC_MSG_RESULT(no)])
     CPPFLAGS=$CPPFLAGS_SAVED
-fi    
+fi
 
 #
 # ASIO: we extensively use it as the C++ event management module.
@@ -1811,6 +1811,18 @@ Boost:
   BOOST_INCLUDES:  ${BOOST_INCLUDES}
   BOOST_LIBS:      ${BOOST_LIBS}
 
+END
+if test x"$BOOST_LIBS" = "x"; then
+   cat >> config.report << END
+    WARNING: You will be building with boost headers only rather
+    than linking with boost_system library. This is NOT recommended as
+    it may result in non-optimized code on some platforms and
+    introduce runtime errors on others.
+
+END
+fi
+
+cat >> config.report << END
 ${CRYPTO_NAME}:
   CRYPTO_VERSION:  ${CRYPTO_VERSION}
   CRYPTO_CFLAGS:   ${CRYPTO_CFLAGS}
