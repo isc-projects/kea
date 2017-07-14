@@ -1,3 +1,8 @@
+1275.	[func]		marcin
+	LibraryHandle obbject can now be used to register handlers
+	for the control commands in a hook library.
+	(Trac #5329, git 966cc24ae5593ebb08d6f02a11dab23463ebad7e)
+
 1274.	[func]		marcin
 	It is now possible to manage Control Agent with keactrl.
 	(Trac #5108, git 53ba9f8197a25abd2c52ee3f5e95bc4e4be0241f)
