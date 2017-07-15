@@ -1655,6 +1655,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/agent/tests/ca_process_tests.sh
                  src/bin/agent/tests/test_data_files_config.h
                  src/bin/agent/tests/test_libraries.h
+		 src/bin/client/Makefile
+		 src/bin/client/tests/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh

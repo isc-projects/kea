@@ -1,0 +1,99 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page client DHCPv4 and DHCPv6 client
+
+Kea now includes an exprimental DHCP protocols client. This client is able
+to act as DHCPv4 client, as DHCPv6 client or both.
+
+@section clientRequirements Client Requirements
+
+There are many DHCP client implementations available, both open source and proprietary.
+It doesn't make sense to implement yet another client that is very similar to existing
+ones. In other words, the market is already saturated and we need to find a
+competitive advantage to gain any significant adoption.
+
+At the same time, we need to find a way to retire ISC DHCP project completely. It
+is not going to happen if we don't have a replacement for dhclient.
+
+Given the reasoning above, the following requirements has been defined:
+
+-# a single process supporting DHCPv4 and DHCPv6. One of the major architectural
+   failures of dhclient is the inability to gracefully co-exist on a dual-stack
+   host. Yes, it can be used to handle both v4 and v6, but the interaction between
+   them is not well defined. In particular, it's not possible to specify whether
+   v4 or v6 parameters are equal, one takes preference over another or one overrides
+   the other. There are two additional aspects that are currently unsolved. The
+   first one is DHCID records update in the DNS. In principle it is possible for
+   dhclient instance running as v4 client and another running as v6 client to
+   cooperate and not overwrite the record, but in practice the solution does not
+   work well and there are complaints. The second scenario that is not fully
+   addressed is DHCPv4-over-DHCPv6 client. Existing implementation in dhclient
+   is available, but it does not follow the spirit of the RFC. The problem is
+   that the logic behind starting 4o6 client (essentially v4 client sending messages
+   over DHCPv6) is dependant on the options received over plain DHCPv6 exchange.
+   This kind of inter-family logic is beyond the capabilities of dhclient.
+
+-# DHCPv6 is more important than DHCPv4. This document is being written in 2017.
+   Assuming a prototype is ready by end of the year and its productization takes
+   another year (note that client will most likely have little funding and our
+   priority is definitely the server, so client will mature slowly), we can 
+   speculate that wider adoption would happen sometime in 2019. At that timeframe
+   it is likely that most new deployments will be either dual-stack or IPv6-only.
+
+-# Size does matter. DHCP client is just a step in the device booting and network
+   operations. While it makes sense to expect admins to install certain dependencies,
+   the client should be as small as possible. Also, there's a whole market of
+   embedded devices that expect the client to be very small. This is particularly
+   competitive market, with odhcp client being mere 20KB (written in plain C,
+   little configuration capabilities, v6 only). Therefore, the small size of
+   the client code is a priority.
+
+-# Hooks. There are essentially two approaches to how client consumes the
+information received. One is a client implementing the changes (e.g. configuring
+addresses on its own, updating /etc/resolv.conf etc.) while the alternative
+approach assumes that an external script is called and user can write the
+script on its own. dhclient implements the latter, while dibbler-client implements
+both. Neither approach is better, they're simply better suited for different
+situations. There are users who expect the client to just work out of the box
+and don't want to be bothered with any scripts. On the other hand, there are
+users (typically power users), who want to do certain custom operations. Those
+favour the scripting approach. The scripting approach is particularly important
+when handling prefix delegation (typically prefix received on uplink interface
+is then split into subprefixes that are somehow used on downlink interfaces. 
+The split logic may become quite convoluted in certain cases). Therefore
+it seems reasonable to have the ability to use both approaches or just one
+that was selected.
+
+-# Dynamic environment. Another case where existing clients struggle are dynamic
+scenarios. In particular, cases when interfaces appear and disappear. This
+may mean PPP interfaces (that could be established and later torn down),
+wifi links going out of range or virtual interfaces in VM environments.
+Therefore the Kea client must support the following scenarios:
+ - configure an interface that is present at startup
+ - accept configuration for an interface that is not present at startup
+ - accept configuration for an interface that is present, but not up
+ - accept wildcard configuration for interfaces that may appear
+ - handle an event of an interface being handled disappearing
+ - handle an event of a not available interface to be configured to be
+   appearing
+
+-# OpenStack requirements. Tomek was contacted by Jean-Philippe Evrard from
+  Rackspace, asking for dibbler release. In the discussion it became apparent
+  that OpenStack uses Dibbler to configure DHCPv6 services, in particular
+  prefix delegation. They built a framework around it to control when
+  the client is started and how it handles the prefix. Some time ago
+  they submitted a patch to be able to run multiple instances of the client
+  on the same box. The exact use case is not clear, but it seems they
+  are using Linux Containers to deploy multiple OpenStack images on the
+  same bare metal. Therefore:
+
+  - The client must be able to run more than one instance.
+  - The client must read and write everything to the directory it is being
+    run from.
+
+
