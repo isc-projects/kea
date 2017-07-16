@@ -32,10 +32,11 @@ $(man_MANS):
 
 endif
 
-noinst_LTLIBRARIES = libclnt.la
+noinst_LTLIBRARIES = libclient.la
 
 libclnt_la_SOURCES  =
 libclnt_la_SOURCES += main.cc
+libclnt_la_SOURCES += client_interface.h client_interface.cc
 
 sbin_PROGRAMS = kea-client
 
