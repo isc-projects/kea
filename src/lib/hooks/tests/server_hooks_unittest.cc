@@ -198,12 +198,23 @@ TEST(ServerHooksTest, HookCount) {
     EXPECT_EQ(6, hooks.getCount());
 }
 
-// Check that the hook name is correctly generated for a control command name.
+// Check that the hook name is correctly generated for a control command name
+// and vice versa.
 
 TEST(ServerHooksTest, CommandToHookName) {
     EXPECT_EQ("$x_y_z", ServerHooks::commandToHookName("x-y-z"));
     EXPECT_EQ("$foo_bar_foo", ServerHooks::commandToHookName("foo-bar_foo"));
     EXPECT_EQ("$", ServerHooks::commandToHookName(""));
+}
+
+TEST(ServerHooksTest, HookToCommandName) {
+    // Underscores replaced by hyphens.
+    EXPECT_EQ("x-y-z", ServerHooks::hookToCommandName("$x_y_z"));
+    EXPECT_EQ("foo-bar-foo", ServerHooks::hookToCommandName("$foo_bar-foo"));
+    // Single dollar is converted to empty string.
+    EXPECT_TRUE(ServerHooks::hookToCommandName("$").empty());
+    // If no dollar, it is not a hook name. Return empty string.
+    EXPECT_TRUE(ServerHooks::hookToCommandName("abc").empty());
 }
 
 } // Anonymous namespace

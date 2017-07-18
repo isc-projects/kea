@@ -97,18 +97,12 @@ CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
 
     ElementPtr answer_list = Element::createList();
 
-    // Before the command is forwarded it should be processed by the hooks libraries.
+    // Before the command is forwarded we check if there are any hooks libraries
+    // which would process the command.
     if (HookedCommandMgr::delegateCommandToHookLibrary(cmd_name, params, original_cmd,
                                                        answer_list)) {
-        // If the hooks libraries set the 'skip' flag, they indicate that the
-        // commands have been processed. The answer_list should contain the list
-        // of answers with each answer pertaining to one service.
-        if (callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
-                LOG_DEBUG(agent_logger, isc::log::DBGLVL_COMMAND,
-                          CTRL_AGENT_COMMAND_PROCESS_SKIP)
-                    .arg(cmd_name);
-            return (answer_list);
-        }
+        // The command has been processed by hooks library. Return the result.
+        return (answer_list);
     }
 
     // We don't know whether the hooks libraries modified the value of the

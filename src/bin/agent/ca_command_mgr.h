@@ -30,8 +30,6 @@ public:
 /// it is also intended to forward commands to the respective Kea servers
 /// when the command is not supported directly by the Control Agent.
 ///
-/// @todo This Command Manager doesn't yet support forwarding commands.
-///
 /// The @ref CtrlAgentCommandMgr is implemented as a singleton. The commands
 /// are registered using @c CtrlAgentCommandMgr::instance().registerCommand().
 /// The @ref CtrlAgentResponseCreator uses the sole instance of the Command

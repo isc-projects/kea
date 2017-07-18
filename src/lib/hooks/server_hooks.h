@@ -167,7 +167,19 @@ public:
     ///
     /// @param command_name Command name for which the hook point name is
     ///        to be generated.
+    ///
+    /// @return Hook point name.
     static std::string commandToHookName(const std::string& command_name);
+
+    /// @brief Returns command name for a specified hook name.
+    ///
+    /// This function removes leading dollar sign and replaces underscores
+    /// with hyphens.
+    ///
+    /// @param hook_name Hook name for which command name should be returned.
+    ///
+    /// @return Command name.
+    static std::string hookToCommandName(const std::string& hook_name);
 
 private:
     /// @brief Constructor
