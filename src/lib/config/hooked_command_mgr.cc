@@ -84,10 +84,8 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
 
     }
 
-    // If we're here it means that the callouts weren't called or the 'skip'
-    // status wasn't returned. The latter is the case when the 'list-commands'
-    // is being processed. Anyhow, we need to handle the command using local
-    // Command Mananger.
+    // If we're here it means that the callouts weren't called. We need
+    // to handle the command using local Command Mananger.
     ConstElementPtr response = BaseCommandMgr::handleCommand(cmd_name,
                                                              params,
                                                              original_cmd);
