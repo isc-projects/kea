@@ -182,7 +182,17 @@ ServerHooks::commandToHookName(const std::string& command_name) {
     return (hook_name);
 }
 
+std::string
+ServerHooks::hookToCommandName(const std::string& hook_name) {
+    if (!hook_name.empty() && hook_name.front() == '$') {
+        std::string command_name = hook_name.substr(1);
+        std::replace(command_name.begin(), command_name.end(), '_', '-');
+        return (command_name);
+    }
+    return ("");
+}
 
 
-} // namespace util
+
+} // namespace hooks
 } // namespace isc

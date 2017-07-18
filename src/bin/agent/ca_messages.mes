@@ -19,11 +19,6 @@ This debug message is issued when the Control Agent failed forwarding a
 received command to one of the Kea servers. The second argument provides
 the details of the error.
 
-% CTRL_AGENT_COMMAND_PROCESS_SKIP command %1 already processed by hooks libraries, skipping
-This debug message is issued when the Control Agent skips processing
-received command because it has determined that the hooks libraries
-already processed the command.
-
 % CTRL_AGENT_CONFIG_CHECK_FAIL Control Agent configuration check failed: %1
 This error message indicates that the CA had failed configuration
 check. Details are provided. Additional details may be available
