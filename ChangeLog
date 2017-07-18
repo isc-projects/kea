@@ -1,7 +1,12 @@
+1277.	[func]*		marcin
+	Added support to Command Manager to process commands using
+	callouts implemented within hooks libraries.
+	(Trac #5330, git 8041d177ed5587101ecb47a09820a7e67e42a066)
+
 1276.	[build]		tmark
 	The configure script now configures the build to require the Boost
 	system library (boost_system) by default.  The library must be
-	installed and you may need to specify "--with-boost-lib-dir=<path>". 
+	installed and you may need to specify "--with-boost-lib-dir=<path>".
 	Prior to this the default was to attempt to build Boost with headers
 	only.  Building with headers only may still be done, though it is
 	strongly discouraged, by specifying "--enable-boost-headers-only".
