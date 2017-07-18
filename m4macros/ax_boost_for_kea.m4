@@ -155,7 +155,7 @@ AC_ARG_WITH([boost-lib-dir],
   AC_HELP_STRING([--with-boost-lib-dir=PATH],
     [specify directory where to find Boost libraries]),
     [BOOST_LIB_DIR="$withval"
-     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boot-lib-dir=$withval"])
+     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-lib-dir=$withval"])
 
 AC_ARG_ENABLE([boost-headers-only],
     [AS_HELP_STRING([--enable-boost-headers-only],
