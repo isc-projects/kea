@@ -1,3 +1,12 @@
+1276.	[build]		tmark
+	The configure script now configures the build to require the Boost
+	system library (boost_system) by default.  The library must be
+	installed and you may need to specify "--with-boost-lib-dir=<path>". 
+	Prior to this the default was to attempt to build Boost with headers
+	only.  Building with headers only may still be done, though it is
+	strongly discouraged, by specifying "--enable-boost-headers-only".
+	(Trac #5215, git b6f1ee0d1210e35631369fc697c76cc3cf2c4130)
+
 1275.	[func]		marcin
 	LibraryHandle obbject can now be used to register handlers
 	for the control commands in a hook library.
