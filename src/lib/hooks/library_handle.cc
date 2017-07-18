@@ -36,7 +36,7 @@ LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
 }
 
 void
-LibraryHandle::registerCommandHandler(const std::string& command_name,
+LibraryHandle::registerCommandCallout(const std::string& command_name,
                                       CalloutPtr callout) {
     // Register hook point for this command, if one doesn't exist.
     callout_manager_->registerCommandHook(command_name);
