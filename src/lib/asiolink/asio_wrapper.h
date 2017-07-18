@@ -6,11 +6,19 @@
 #ifndef ASIO_WRAPPER_H
 #define ASIO_WRAPPER_H 1
 
-// !!! IMPORTANT !!!!
+// !!! IMPORTANT THIS IS A HACK FOR BOOST HEADERS ONLY BUILDING !!!!
+//
+// As of #5215 (Kea 1.3) The default build configuration is to link with
+// Boost's system library (boost_system) rather than build with Boost's
+// headers only. Linking with the boost_system elminiates the issue as
+// detailed below. This file exists solely for the purpose of allowing
+// people to attempt to build headers only.  ISC DOES NOT RECOMMEND
+// building Kea with Boost headers only.
+//
 // This file must be included anywhere one would normally have included
 // boost/asio.hpp.  Until the issue described below is resolved in some
-// other fashion  asio.hpp should not be included other than through
-// this file.
+// other fashion, (or we abandon support for headers only building)
+// asio.hpp MUST NOT be included other than through this file.
 //
 // The optimizer as of gcc 5.2.0, may not reliably ensure a single value
 // returned by boost::system::system_category() within a translation unit
