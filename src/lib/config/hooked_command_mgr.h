@@ -33,7 +33,7 @@ namespace config {
 /// command on its own.
 ///
 /// The @ref isc::hooks::CalloutHandle::CalloutNextStep flag setting by the
-/// command handlers have influence on the operation of the
+/// command handlers does NOT have any influence on the operation of the
 /// @ref HookedCommandMgr, i.e. it will always skip processing command on
 /// its own if the command handlers are present for the given command, even
 /// if the handlers return an error code.
