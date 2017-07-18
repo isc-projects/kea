@@ -48,7 +48,7 @@ extern "C" {
 /// handler similarly to this:
 /// @code
 /// int load(LibraryHandle& libhandle) {
-///     libhandle.registerCommandHandler("foo-bar", foo_bar_handler);
+///     libhandle.registerCommandCallout("foo-bar", foo_bar_handler);
 ///     return (0);
 /// }
 /// @endcode
@@ -104,7 +104,7 @@ public:
     ///
     /// @param command_name Command name for which handler should be installed.
     /// @param callout Pointer to the command handler implemented as a callout.
-    void registerCommandHandler(const std::string& command_name, CalloutPtr callout);
+    void registerCommandCallout(const std::string& command_name, CalloutPtr callout);
 
     /// @brief De-Register a callout on a hook
     ///

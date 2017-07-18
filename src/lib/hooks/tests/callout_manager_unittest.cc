@@ -880,14 +880,14 @@ TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
     // 'command-two' should also be called.
 
     getCalloutManager()->setLibraryIndex(0);
-    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+    getCalloutManager()->getLibraryHandle().registerCommandCallout("command-one",
                                                                    callout_one);
-    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+    getCalloutManager()->getLibraryHandle().registerCommandCallout("command-one",
                                                                    callout_four);
     getCalloutManager()->setLibraryIndex(1);
-    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-one",
+    getCalloutManager()->getLibraryHandle().registerCommandCallout("command-one",
                                                                    callout_two);
-    getCalloutManager()->getLibraryHandle().registerCommandHandler("command-two",
+    getCalloutManager()->getLibraryHandle().registerCommandCallout("command-two",
                                                                    callout_three);
 
     // Command handlers are installed for commands: 'command-one' and 'command-two'.

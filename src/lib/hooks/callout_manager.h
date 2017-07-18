@@ -119,11 +119,11 @@ public:
 ///
 /// The @ref CalloutManager::registerCommandHook has been added to allow for
 /// dynamically creating hook points for which command handlers are registered.
-/// This method is called from the @ref LibraryHandle::registerCommandHandler
+/// This method is called from the @ref LibraryHandle::registerCommandCallout
 /// as a result of registering the command handlers by the hook library in
 /// its @c load() function. If the hook point for the given command already
 /// exists, this function doesn't do anything. The
-/// @ref LibraryHandle::registerCommandHandler can install callouts on this
+/// @ref LibraryHandle::registerCommandCallout can install callouts on this
 /// hook point.
 ///
 /// Note that the callout functions do not access the CalloutManager: instead,

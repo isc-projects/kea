@@ -316,7 +316,7 @@ TEST_F(CommandMgrTest, processCommand) {
 TEST_F(CommandMgrTest, delegateProcessCommand) {
     // Register callout so as we can check that it is called before
     // processing the command by the manager.
-    HooksManager::preCalloutsLibraryHandle().registerCommandHandler(
+    HooksManager::preCalloutsLibraryHandle().registerCommandCallout(
         "my-command", control_command_receive_handle_callout);
 
     // Install local handler
@@ -357,7 +357,7 @@ TEST_F(CommandMgrTest, delegateProcessCommand) {
 TEST_F(CommandMgrTest, delegateListCommands) {
     // Register callout so as we can check that it is called before
     // processing the command by the manager.
-    HooksManager::preCalloutsLibraryHandle().registerCommandHandler(
+    HooksManager::preCalloutsLibraryHandle().registerCommandCallout(
         "my-command", control_command_receive_handle_callout);
 
     // Create my-command-bis which is unique for the local Command Manager,

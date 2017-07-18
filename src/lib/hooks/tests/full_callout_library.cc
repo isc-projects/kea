@@ -151,8 +151,8 @@ load(LibraryHandle& handle) {
     handle.registerCallout("hookpt_three", hook_nonstandard_three);
 
     // Register command_handler_one as control command handler.
-    handle.registerCommandHandler("command-one", command_handler_one);
-    handle.registerCommandHandler("command-two", command_handler_two);
+    handle.registerCommandCallout("command-one", command_handler_one);
+    handle.registerCommandCallout("command-two", command_handler_two);
 
     return (0);
 }
