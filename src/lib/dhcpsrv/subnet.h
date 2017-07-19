@@ -8,6 +8,7 @@
 #define SUBNET_H
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
@@ -280,7 +281,7 @@ public:
     /// returned it is valid.
     ///
     /// @return const reference to the relay information
-    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() {
+    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() const {
         return (relay_);
     }
 
@@ -428,6 +429,11 @@ protected:
     /// @return true if pool overlaps with an existing pool of a specified
     /// type.
     bool poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const;
+
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const = 0;
 
     /// @brief subnet-id
     ///
@@ -577,6 +583,19 @@ public:
         return (dhcp4o6_);
     }
 
+    /// @brief Returns const DHCP4o6 configuration parameters.
+    ///
+    /// This structure is always available. If the 4o6 is not enabled, its
+    /// enabled_ field will be set to false.
+    const Cfg4o6& get4o6() const {
+        return (dhcp4o6_);
+    }
+
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -675,6 +694,11 @@ public:
     bool getRapidCommit() const {
         return (rapid_commit_);
     }
+
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const;
 
 private:
 
