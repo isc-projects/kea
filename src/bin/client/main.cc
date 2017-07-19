@@ -5,7 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <client/clnt_controller.h>
+#include <client/executor.h>
+#include <client/clnt_config.h>
 #include <exceptions/exceptions.h>
 
 #include <iostream>
@@ -25,8 +26,12 @@ int main(int argc, char* argv[]) {
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
+
+        //ClntConfig cfg;
+        //std::cout << cfg.toElement()->str() << std::endl;
+
         // Instantiate/fetch the client application controller singleton.
-        DControllerBasePtr& controller = ClntController::instance();
+        DControllerBasePtr& controller = Executor::instance();
 
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);

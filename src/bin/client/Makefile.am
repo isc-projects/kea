@@ -9,7 +9,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = 
+CLEANFILES =
 man_MANS = kea-client.8
 
 DISTCLEANFILES = $(man_MANS)
@@ -37,8 +37,14 @@ noinst_LTLIBRARIES = libclient.la
 libclnt_la_SOURCES  =
 libclnt_la_SOURCES += main.cc
 libclnt_la_SOURCES += client_interface.h client_interface.cc
+libclnt_la_SOURCES += executor.cc executor.h
+libclnt_la_SOURCES += clnt_process.cc clnt_process.h
+libclnt_la_SOURCES += clnt_cfg_mgr.cc clnt_cfg_mgr.h
+libclnt_la_SOURCES += clnt_config.cc clnt_config.h
 
 sbin_PROGRAMS = kea-client
+
+kea_client_SOURCES = main.cc
 
 kea_client_LDADD  = libclnt.la
 
@@ -46,6 +52,7 @@ kea_client_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_client_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_client_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_client_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_client_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_client_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_client_LDADD += $(BOOST_LIBS)
 
@@ -70,7 +77,6 @@ kea_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 
 kea_clntdir = $(pkgdatadir)
-kea_clnt_DATA = dhcp6.spec
 
 if GENERATE_PARSER
 
