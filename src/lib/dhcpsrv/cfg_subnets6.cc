@@ -33,6 +33,20 @@ CfgSubnets6::add(const Subnet6Ptr& subnet) {
     subnets_.push_back(subnet);
 }
 
+ConstSubnet6Ptr
+CfgSubnets6::getBySubnetId(const SubnetID& subnet_id) const {
+    const auto& index = subnets_.get<SubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet6Ptr());
+}
+
+ConstSubnet6Ptr
+CfgSubnets6::getByPrefix(const std::string& subnet_text) const {
+    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto subnet_it = index.find(subnet_text);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet6Ptr());
+}
+
 Subnet6Ptr
 CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
     Subnet6Ptr subnet;
