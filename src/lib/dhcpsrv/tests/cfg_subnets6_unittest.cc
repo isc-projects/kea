@@ -32,6 +32,57 @@ generateInterfaceId(const std::string& text) {
     return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, buffer));
 }
 
+// This test verifies that specific subnet can be retrieved by specifying
+// subnet identifier or subnet prefix.
+TEST(CfgSubnets6Test, getSpecificSubnet) {
+    CfgSubnets6 cfg;
+
+    // Create 3 subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4,
+                                   SubnetID(5)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4,
+                                   SubnetID(8)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4,
+                                   SubnetID(10)));
+
+    // Store the subnets in a vector to make it possible to loop over
+    // all configured subnets.
+    std::vector<Subnet6Ptr> subnets;
+    subnets.push_back(subnet1);
+    subnets.push_back(subnet2);
+    subnets.push_back(subnet3);
+
+    // Add all subnets to the configuration.
+    for (auto subnet = subnets.cbegin(); subnet != subnets.cend(); ++subnet) {
+        ASSERT_NO_THROW(cfg.add(*subnet)) << "failed to add subnet with id: "
+            << (*subnet)->getID();
+    }
+
+    // Iterate over all subnets and make sure they can be retrieved by
+    // subnet identifier.
+    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
+        ConstSubnet6Ptr subnet_returned = cfg.getBySubnetId((*subnet)->getID());
+        ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
+            << (*subnet)->getID();
+        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
+        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+    }
+
+    // Repeat the previous test, but this time retrieve subnets by their
+    // prefixes.
+    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
+        ConstSubnet6Ptr subnet_returned = cfg.getByPrefix((*subnet)->toText());
+        ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
+            << (*subnet)->getID();
+        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
+        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+    }
+
+    // Make sure that null pointers are returned for non-existing subnets.
+    EXPECT_FALSE(cfg.getBySubnetId(SubnetID(123)));
+    EXPECT_FALSE(cfg.getByPrefix("3000::/16"));
+}
+
 // This test checks that the subnet can be selected using a relay agent's
 // link address.
 TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {

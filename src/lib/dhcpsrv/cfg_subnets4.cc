@@ -34,6 +34,20 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
     subnets_.push_back(subnet);
 }
 
+ConstSubnet4Ptr
+CfgSubnets4::getBySubnetId(const SubnetID& subnet_id) const {
+    const auto& index = subnets_.get<SubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
+}
+
+ConstSubnet4Ptr
+CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
+    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto subnet_it = index.find(subnet_text);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
+}
+
 Subnet4Ptr
 CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 
