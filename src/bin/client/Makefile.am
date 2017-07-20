@@ -9,11 +9,10 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES =
+CLEANFILES = *.gcno *.gcda client_messages.h client_messages.cc s-messages
+
 man_MANS = kea-client.8
-
 DISTCLEANFILES = $(man_MANS)
-
 EXTRA_DIST = $(man_MANS) kea-client.xml
 EXTRA_DIST += client.dox
 EXTRA_DIST += clnt_lexer.ll clnt_parser.yy
@@ -32,6 +31,18 @@ $(man_MANS):
 
 endif
 
+# Build the message code from the messages files
+
+client_messages.h client_messages.cc: s-messages
+
+s-messages: client_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/client/client_messages.mes
+	touch $@
+
+BUILT_SOURCES = client_messages.h client_messages.cc
+
+# Convenience archive.
+
 noinst_LTLIBRARIES = libclient.la
 
 libclient_la_SOURCES  =
@@ -41,6 +52,12 @@ libclient_la_SOURCES += executor.cc executor.h
 libclient_la_SOURCES += clnt_process.cc clnt_process.h
 libclient_la_SOURCES += clnt_cfg_mgr.cc clnt_cfg_mgr.h
 libclient_la_SOURCES += clnt_config.cc clnt_config.h
+libclient_la_SOURCES += client_log.cc client_log.h
+
+nodist_libclient_la_SOURCES = clients_messages.h client_messages.cc
+
+EXTRA_DIST += client_messages.mes
+
 
 sbin_PROGRAMS = kea-client
 

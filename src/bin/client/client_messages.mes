@@ -1,0 +1,14 @@
+# Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::client
+
+% CLIENT6_UNEXPECTED_EVENT state %1 entered with unexpected event %2
+Every state in the DHCPv6 client's state machine expects to be entered due to
+one of a limited set of events.  This error message is output because the
+processing associated with the state did not expect it to be entered with the
+given event.  The reason that this occurred will depend on the event and the
+state being entered.  It is most likely a programming error.

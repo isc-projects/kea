@@ -11,6 +11,7 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
+#include <client/client_log.h>
 
 #include <string>
 
@@ -68,8 +69,8 @@ public:
 /// Client Interface will wait for completion in the state that triggered the
 /// operation, transitioning to the new state when the operation completes.
 
-class Client6Interface : public isc::util::StateModel,
-                        public isc::dhcp::Iface {
+class Client6Interface : public isc::dhcp::Iface,
+                         public isc::util::StateModel {
 public:
 
     /// @brief State list
@@ -89,7 +90,7 @@ public:
         ST_DUPLICATE_TIMEOUT,
         ST_CONFIGURED,
         ST_START_RENEW,
-        ST_RESENT_RENEW,
+        ST_RESEND_RENEW,
         ST_RENEW_COMPLETE,
         ST_REBINDING,
         ST_PROCESS_REBINDING,
@@ -105,7 +106,7 @@ public:
         EVT_SEND_SOLICIT,
         EVT_ADVERTISE_RECEIVED,
         EVT_SOLICIT_TIMEOUT,
-        EVT_SEND_REQUEST
+        EVT_SEND_REQUEST,
         EVT_REQUEST_TIMEOUT,
         EVT_REPLY_RECEIVED,
         EVT_DUPLICATE_CHECK,
@@ -177,23 +178,37 @@ public:
     /// BEGIN is the state the model transitions into when the method
     /// startTransaction is called,  It is the entry point into the state
     /// machine.  It performs all the initialization then unconditionally
-    /// transitions to the SEND_SOLICIT state.
+    /// transitions to the SERVER_DISCOVERY state.
     void beginHandler();
+
+    /// @brief State handler for SERVER_DISCOVERY
+    ///
+    /// The second part of the initialization, this state initializes the
+    /// list of available servers before transitioning to the SEND_SOLICIT
+    /// state.
+    void serverDiscoveryHandler();
 
     /// @brief State handler for SEND_SOLICIT
     ///
     /// SEND_SOLICIT is the state that initiates the discovery of servers.
     /// It initializes the list of servers, then broadcasts the SOLICIT message.
     /// It then kicks off an asynchronous read, as well as a read timer.
-    void serverDiscoveryHandler();
+    void sendSolicitHandler();
 
     /// @brief State handler for ADVERTISE_RECEIVED
     ///
     /// The client enters this state when an ADVERTISE is received from the
     /// server.  If the SOLICIT has not timed out, it will - unless the
     /// server is one with the maximum preference value - loop round and
-    /// wait for more responses until teh solicit timer times out.
+    /// wait for more responses until the solicit timer times out.
     void advertiseReceivedHandler();
+
+    /// @brief State handler for SOLICIT_TIMEOUT
+    ///
+    /// This state is entered when the timer associated with the SOLICIT
+    /// message has timed out.  Providing that some servers advertised
+    /// themselves, the client moves from this state into SEND_REQUEST.
+    void solicitTimeoutHandler();
 
     /// @brief State handler for SEND_REQUEST
     ///
@@ -206,14 +221,14 @@ public:
     /// Called when the timer associated with waiting for a REPLY from the
     /// server has timed out, this either sends another request (to the same
     /// or a different server) or goes back to looking for servers.
-    void requestTimeoutHandler()l
+    void requestTimeoutHandler();
 
     /// @brief State handler for REPLY_RECEIVED
     ///
     /// When the server responds with a REPLY message, the client enters this
     /// state.  Depending on the response, it will either look for duplicate
     /// addresses or try to contact another server.
-    void replyReceivedTimer();
+    void replyReceivedHandler();
 
     /// @brief State handler for DUPLICATE_CHECK
     ///
@@ -266,7 +281,7 @@ public:
     /// Entered when a rebinding response has been received, in this state
     /// the client decides whether to acept the response of take some other
     /// action.
-    void processRebdingingHandler();
+    void processRebindingHandler();
 
     /// @brief State handler for REBINDING_TIMEOUT
     ///
@@ -294,8 +309,22 @@ public:
     }
 
 private:
+    /// @brief Log State Error
+    ///
+    /// This is a convenience function to log an error due to the current
+    /// state not expecting to be entered with the current (next) event.
+    /// Although it breaks the Kea idea that each LOG_XXX should be with a
+    /// unique error code, the combination of error code and state (the
+    /// first parameter) is unique.
+    void logUnexpectedEvent();
+
     /// @brief The IOService which should be used to for IO processing.
     asiolink::IOServicePtr io_service_;
+
+    // Flags to indicate that timers are running.  The names are fairly
+    // self-explanatory.
+    bool solicit_timer_running_;
+    
 };
 
 /// @brief Defines a pointer to a Client6Interface
