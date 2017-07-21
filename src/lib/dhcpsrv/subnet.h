@@ -790,7 +790,7 @@ using SubnetCollection = boost::multi_index_container<
         >,
         // Third index allows for searching using an output from toText function.
         boost::multi_index::ordered_unique<
-            boost::multi_index::tag<SubnetTextIndexTag>,
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >
     >
