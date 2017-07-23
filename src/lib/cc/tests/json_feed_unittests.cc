@@ -96,7 +96,7 @@ public:
     /// @brief Test that the @ref JSONFeed signals an error when the input
     /// string holds invalid data.
     ///
-    /// @param input_json A string holding an input JSON structire.
+    /// @param input_json A string holding an input JSON structure.
     void testInvalidRead(const std::string& input_json) {
         JSONFeed feed;
         ASSERT_NO_THROW(feed.initModel());
