@@ -573,7 +573,7 @@ void configureCommandChannel() {
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
-    // close the exisitng socket and open a new socket as appropriate.
+    // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the clien will not
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
