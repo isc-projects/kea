@@ -565,7 +565,7 @@ public:
     /// @param len - expected lease length in the NCR
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
-    /// equal to CLTT plus lease lenght.
+    /// equal to CLTT plus lease length.
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
