@@ -2572,7 +2572,7 @@ Kea 0.9 released on August 29, 2014
 	(Trac #3524, git 822a39ba33870f70787a1f666aed772e06d04d79)
 
 824.	[bug]		marcin
-	Kea deamons report configuration summary when the configuration is
+	Kea daemons report configuration summary when the configuration is
 	applied successfully.
 	(Trac #3477, git f39d208024f720f72c931016cfa50a54e80f8c61)
 

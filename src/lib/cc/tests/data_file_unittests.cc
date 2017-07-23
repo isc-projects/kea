@@ -16,7 +16,7 @@ using namespace isc::data;
 
 namespace {
 
-/// @brief Test class for testing Deamon class
+/// @brief Test class for testing Daemon class
 class DataFileTest : public ::testing::Test {
 public:
 
