@@ -281,7 +281,7 @@ Pkt6::pack() {
 void
 Pkt6::packUDP() {
     try {
-        // Make sure that the buffer is empty before we start writting to it.
+        // Make sure that the buffer is empty before we start writing to it.
         buffer_out_.clear();
 
         // is this a relayed packet?
