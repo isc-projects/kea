@@ -188,7 +188,7 @@ public:
     ///  { "<module-name>": {<module-config>}
     ///
     ///   # Logging element is optional
-    ///   ,"Logging": {<logger connfig}
+    ///   ,"Logging": {<logger config}
     ///  }
     ///
     ///  where:
