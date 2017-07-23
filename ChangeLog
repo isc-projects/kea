@@ -1165,7 +1165,7 @@ Kea 1.0.0 released on December 29, 2015
 
 1071.	[func]		tmark
 	Assigned unique log message IDs to log messages issued from
-	MySQL hosts storage operations, eliminating resuse of
+	MySQL hosts storage operations, eliminating reuse of
 	lease database message IDs.
 	(Trac #4216, git f0e37cd6d45537971a730c68187011dce41217cc)
 
