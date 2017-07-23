@@ -1637,7 +1637,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
 
-    // Subsring requires three values on the stack, try
+    // Substring requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
