@@ -159,7 +159,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       <para>
         Before starting <command>kea-dhcp-ddns</command> module for the
         first time, a configuration file needs to be created. The following default
-        configuration is a template that can be customised to your requirements.
+        configuration is a template that can be customized to your requirements.
 <screen>
 <userinput>"DhcpDdns": {
     "ip-address": "127.0.0.1",
