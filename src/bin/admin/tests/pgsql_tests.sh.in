@@ -200,7 +200,7 @@ pgsql_upgrade_2_0_to_3_0() {
 }
 
 pgsql_upgrade_3_0_to_3_1() {
-    # Verify upgraded schemd reports version 3.1.
+    # Verify upgraded schema reports version 3.1.
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "3.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 }
