@@ -724,7 +724,7 @@ the debug severity) should use different debug levels for the
 messages of different importance or having different performance
 requirements to generate the log message. For example, generation of
 a log message, which prints full details of a packet, usually requires
-more CPU bandwith than the generation of the message which only prints
+more CPU bandwidth than the generation of the message which only prints
 the packet type and length. Thus, the former should be logged at
 lower debug level (see @ref logSeverity for details of using
 various debug levels using "dbglevel" parameter).
