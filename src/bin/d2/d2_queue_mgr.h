@@ -194,7 +194,7 @@ public:
     ///
     /// This method is invoked by the listener as part of its receive
     /// completion callback and is how the inbound NameChangeRequests are
-    /// passed up to the D2QueueMgr for queueing.
+    /// passed up to the D2QueueMgr for queuing.
     /// If the given result indicates a successful receive completion and
     /// there is room left in the queue, the given request is queued.
     ///

@@ -3669,7 +3669,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 653.	[func]		tmark
 	Added initial implementation of D2QueueMgr to
 	b10-dhcp-ddns.  This class manages the receipt and
-	queueing of requests received by b10-dhcp-ddns from
+	queuing of requests received by b10-dhcp-ddns from
 	its clients (e.g. DHCP servers)
 	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
 
