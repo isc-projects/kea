@@ -116,7 +116,7 @@ start: START_JSON      { ctx.ctx_ = ctx.NO_KEYWORDS; } json
 // expected by full grammar, we can tell the parser to start from content of
 // the Control-agent. This is very useful for unit-testing, so we don't need
 // to repeat the outer map and "Control-agent" map. We can simply provide
-// the concents of that map.
+// the contents of that map.
 sub_agent: LCURLY_BRACKET {
     // Parse the Control-agent map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
