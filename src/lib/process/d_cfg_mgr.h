@@ -383,7 +383,7 @@ public:
 protected:
     /// @brief Adds default values to the given config
     ///
-    /// Provides derviations a means to add defaults to a configuration
+    /// Provides derivations a means to add defaults to a configuration
     /// Element map prior to parsing it.
     ///
     /// @param mutable_config - configuration to which defaults should be added
