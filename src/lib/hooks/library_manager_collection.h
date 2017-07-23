@@ -139,7 +139,7 @@ public:
     ///
     /// @param libraries List of libraries to validate
     ///
-    /// @return Vector of libraries that faled to validate, or an empty vector
+    /// @return Vector of libraries that failed to validate, or an empty vector
     ///         if all validated.
     static std::vector<std::string>
     validateLibraries(const std::vector<std::string>& libraries);
