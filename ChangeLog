@@ -13,7 +13,7 @@
 	(Trac #5215, git b6f1ee0d1210e35631369fc697c76cc3cf2c4130)
 
 1275.	[func]		marcin
-	LibraryHandle obbject can now be used to register handlers
+	LibraryHandle object can now be used to register handlers
 	for the control commands in a hook library.
 	(Trac #5329, git 966cc24ae5593ebb08d6f02a11dab23463ebad7e)
 
