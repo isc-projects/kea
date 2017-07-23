@@ -380,7 +380,7 @@ shutdown_test() {
 }
 
 # This test verifies that DHCPv4 can be configured to run lease file cleanup
-# periodially.
+# periodically.
 lfc_timer_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv4_srv.lfc_timer_test"
