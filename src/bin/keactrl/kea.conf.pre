@@ -712,7 +712,7 @@
         //      }
     ]
 
-    // Client-clesses can be defined here. See "client-classes" in Dhcp4 for
+    // Client-classes can be defined here. See "client-classes" in Dhcp4 for
     // an example.
 
     // Hook libraries can be defined here. See "hooks-libraries" example in

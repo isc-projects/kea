@@ -67,7 +67,7 @@ TEST_F(HttpResponseTest, responseOK) {
 
     // Create a string holding expected response. Note that the Date
     // is a fixed value returned by the customized TestHttpResponse
-    // classs.
+    // class.
     std::ostringstream response_string;
     response_string <<
         "HTTP/1.0 200 OK\r\n"
