@@ -10,7 +10,7 @@
 //
 // As of #5215 (Kea 1.3) The default build configuration is to link with
 // Boost's system library (boost_system) rather than build with Boost's
-// headers only. Linking with the boost_system elminiates the issue as
+// headers only. Linking with the boost_system eliminates the issue as
 // detailed below. This file exists solely for the purpose of allowing
 // people to attempt to build headers only.  ISC DOES NOT RECOMMEND
 // building Kea with Boost headers only.
