@@ -113,7 +113,7 @@ public:
                                  const ClientIdPtr& client_id,
                                  const uint32_t transid);
 
-    /// @brief Returns text representation of the given packet identifers.
+    /// @brief Returns text representation of the given packet identifiers.
     ///
     /// This variant of the method does not include transaction id.
     ///

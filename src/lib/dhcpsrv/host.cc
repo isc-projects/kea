@@ -268,7 +268,7 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
     // Set identifier type.
     identifier_type_ = getIdentifierType(name);
 
-    // Idetifier value can either be specified as string of hexadecimal
+    // Identifier value can either be specified as string of hexadecimal
     // digits or a string in quotes. The latter is copied to a vector excluding
     // quote characters.
 

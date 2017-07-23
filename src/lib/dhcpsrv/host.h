@@ -242,7 +242,7 @@ public:
     /// - "yy:yy:yy:yy:yy:yy"
     /// - "yyyyyyyyyy",
     /// - "0xyyyyyyyyyy",
-    /// - "'some identfier'".
+    /// - "'some identifier'".
     /// where y is a hexadecimal digit.
     ///
     /// Note that it is possible to use textual representation, e.g. 'some identifier',

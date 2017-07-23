@@ -57,7 +57,7 @@ RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 //
 // Three 1 byte fields to describe a network interface: type, major and minor
 RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
-// A client identifer: a 1 byte type field followed by opaque data depending on the type
+// A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
