@@ -205,7 +205,7 @@ public:
     /// than the JSON parsing providing by Element::fromJSONFile() is called.
     ///
     /// Once parsed, the method looks for the Element "Logging" and, if present
-    /// uses it to configure loging.
+    /// uses it to configure logging.
     ///
     /// It then extracts the set of configuration elements for the
     /// module-name that matches the controller's app_name_ and passes that
