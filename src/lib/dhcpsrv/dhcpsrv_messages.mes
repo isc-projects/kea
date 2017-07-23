@@ -844,14 +844,14 @@ includes the client identification information. The second argument
 indicates whether the DNS entry is to be added or removed. The third
 argument carries the details of the NameChangeRequest.
 
-% DHCPSRV_QUEUE_NCR_FAILED %1: queueing %2 name change request failed for lease %3: %4
+% DHCPSRV_QUEUE_NCR_FAILED %1: queuing %2 name change request failed for lease %3: %4
 This error message is logged when sending a name change request
 to DHCP DDNS failed. The first argument includes the client identification
 information. The second argument indicates whether the DNS entry is to be
 added or removed. The third argument specifies the leased address. The
 last argument provides the reason for failure.
 
-% DHCPSRV_QUEUE_NCR_SKIP %1: skip queueing name change request for lease: %2
+% DHCPSRV_QUEUE_NCR_SKIP %1: skip queuing name change request for lease: %2
 This debug message is issued when the server decides to not queue the name
 change request because the lease doesn't include the FQDN, the forward and
 reverse update is disabled for this lease or the DNS updates are disabled
