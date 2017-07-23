@@ -168,7 +168,7 @@ JSONFeed::getNextFromBuffer() {
     unsigned int ev = getNextEvent();
     char c = '\0';
     // The caller should always provide additional data when the
-    // NEED_MORE_DATA_EVT occurrs. If the next event is still
+    // NEED_MORE_DATA_EVT occurs. If the next event is still
     // NEED_MORE_DATA_EVT it indicates that the caller hasn't provided
     // the data.
     if (ev == NEED_MORE_DATA_EVT) {
