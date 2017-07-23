@@ -224,7 +224,7 @@ where <command>/path/to/the/kea/socket</command> is the path specified in the
 configuration file. Text passed to <command>socat</command>
 will be sent to Kea and the responses received from Kea printed to standard output.</para>
 
-    <para>It is also easy to open UNIX socket programatically. An example of
+    <para>It is also easy to open UNIX socket programmatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 
