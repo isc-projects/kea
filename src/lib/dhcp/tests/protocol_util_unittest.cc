@@ -344,7 +344,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     // to the value that we expect to be read from a header since the value
     // read from a header will be IPv4.
     IOAddress src_addr("::1");
-    // Read src address as an array of bytes because it is easely convertible
+    // Read src address as an array of bytes because it is easily convertible
     // to IOAddress object.
     uint8_t src_addr_data[4];
     ASSERT_NO_THROW(
