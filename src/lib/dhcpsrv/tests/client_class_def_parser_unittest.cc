@@ -533,7 +533,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("three", cclass->getName());
 
-    // For good measure, make sure we can't find a non-existant class.
+    // For good measure, make sure we can't find a non-existent class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
 }
