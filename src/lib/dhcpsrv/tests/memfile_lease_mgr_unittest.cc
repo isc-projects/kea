@@ -146,7 +146,7 @@ public:
     /// @brief Remove files being products of Lease File Cleanup.
     ///
     /// @param base_name Path to the lease file name. This file is removed
-    /// and all files which names are crated from this name (having specific
+    /// and all files which names are created from this name (having specific
     /// suffixes used by Lease File Cleanup mechanism).
     void removeFiles(const std::string& base_name) const {
         // Generate suffixes and append them to the base name. The

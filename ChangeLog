@@ -2802,7 +2802,7 @@ Kea 0.9beta1 released on August 13, 2014
 	as a result of receiving hints from the clients. Previously the
 	whole prefix (including bits beyond the prefix length) was used to
 	search existing leases in the lease database. If not found, the
-	new lease was crated for the prefix sent by the client. If another
+	new lease was created for the prefix sent by the client. If another
 	client sent the same prefix but with different non-significant bits
 	the prefix was allocated. This led to prefix collisions. Currently,
 	server ignores bits beyond the prefix length when searching for
