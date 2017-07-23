@@ -67,7 +67,7 @@ public:
 };
 
 /// @brief IfaceMgr exception thrown thrown when error occurred during
-/// sedning data through socket.
+/// sending data through socket.
 class SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
