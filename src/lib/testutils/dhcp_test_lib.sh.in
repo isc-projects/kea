@@ -88,7 +88,7 @@ assert_string_contains() {
     fi
 }
 
-# Begins a test by prining its name.
+# Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
     if [ -z ${TEST_NAME} ]; then
