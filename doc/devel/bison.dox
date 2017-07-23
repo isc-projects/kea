@@ -244,7 +244,7 @@ In principle, it is valid to define just the grammar without any corresponding C
 will go through the whole input text, match the rules and will either say the input adhered to the
 rules (parsing successful) or not (parsing failed). This may be a useful step when developing new
 parser, but it has no practical value. To perform specific actions, bison allows the injection of
-C++ code at almost any poing. For example we could augment the parsing of renew_timer with some
+C++ code at almost any point. For example we could augment the parsing of renew_timer with some
 extra code:
 
 @code
