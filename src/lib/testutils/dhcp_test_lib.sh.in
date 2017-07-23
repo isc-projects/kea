@@ -344,7 +344,7 @@ start_kea() {
 }
 
 # Waits with timeout for Kea to start.
-# This function repeatedly checs if the Kea log file has been created
+# This function repeatedly checks if the Kea log file has been created
 # and is non-empty. If it is, the function assumes that Kea has started.
 # It doesn't check the contents of the log file though.
 # If the log file doesn't exist the function sleeps for a second and
