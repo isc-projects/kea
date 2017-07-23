@@ -95,7 +95,7 @@ public:
     /// Returns the name of a hook given the index.  This is most likely to be
     /// used in log messages.
     ///
-    /// @param index Index of the hoold
+    /// @param index Index of the hook
     ///
     /// @return Name of the hook.
     ///
