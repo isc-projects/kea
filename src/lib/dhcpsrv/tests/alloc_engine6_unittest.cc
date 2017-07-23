@@ -1900,7 +1900,7 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     // counts when we declines
     // declined-addresses will -1, as the artificial creation of declined lease
     // doens't increment it from zero.  reclaimed-declined-addresses will be 1
-    // becuase the leases are implicitly reclaimed before they can be assigned.
+    // because the leases are implicitly reclaimed before they can be assigned.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));

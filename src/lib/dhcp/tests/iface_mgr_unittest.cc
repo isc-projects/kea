@@ -2792,7 +2792,7 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
 
 // Test checks if the unicast sockets can be opened.
 // This test is now disabled, because there is no reliable way to test it. We
-// can't even use loopback, beacuse openSockets() skips loopback interface
+// can't even use loopback, because openSockets() skips loopback interface
 // (as it should be, because DHCP server is not supposed to listen on loopback).
 TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
     /// @todo Need to implement a test that is able to check whether we can open
