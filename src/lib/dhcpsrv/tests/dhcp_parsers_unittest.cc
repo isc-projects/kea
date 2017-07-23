@@ -1585,7 +1585,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has not changed between the two parse operations. However,
-    // the paramters (or the files they could point to) could have
+    // the parameters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
     const HooksConfig& cfg2 =
         CfgMgr::instance().getStagingCfg()->getHooksConfig();
