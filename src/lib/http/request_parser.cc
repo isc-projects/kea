@@ -51,7 +51,7 @@ HttpRequestParser::HttpRequestParser(HttpRequest& request)
 
 void
 HttpRequestParser::initModel() {
-    // Intialize dictionaries of events and states.
+    // Initialize dictionaries of events and states.
     initDictionaries();
 
     // Set the current state to starting state and enter the run loop.
