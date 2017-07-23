@@ -157,7 +157,7 @@ TEST_F(JSONFeedTest, unexpectedCharacter) {
     testInvalidRead(json);
 }
 
-// This test verfies that an error is signalled when a JSON structure
+// This test verifies that an error is signalled when a JSON structure
 // lacks an opening brace character.
 TEST_F(JSONFeedTest, noOpeningBrace) {
     std::string json = "\"x\": \"y\" }";
