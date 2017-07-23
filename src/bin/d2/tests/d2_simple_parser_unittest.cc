@@ -197,7 +197,7 @@ public:
             // Add any defaults
             setDefaults(elem);
 
-            // Now pares the element tree into object(s).
+            // Now parse the element tree into object(s).
             parseElement(elem);
         } catch (const std::exception& ex) {
             std::string caught_error = ex.what();
