@@ -811,7 +811,7 @@ public:
             if (evenLeaseIndex(i)) {
                 // Hostname with two consecutive dots is invalid and may result
                 // in exception if the reclamation routine doesn't protect
-                // aginst such exceptions.
+                // against such exceptions.
                 std::ostringstream hostname_s;
                 hostname_s << "invalid-host" << i << "..example.com";
                 leases_[i]->hostname_ = hostname_s.str();
