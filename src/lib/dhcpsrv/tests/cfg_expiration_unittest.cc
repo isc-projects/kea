@@ -270,7 +270,7 @@ public:
     /// @brief Structure holding values of parameters with which the
     /// @c reclaimExpiredLeases was called.
     ///
-    /// These values are overriden on subsequent calls to this method.
+    /// These values are overridden on subsequent calls to this method.
     RecordedParams reclaim_params_;
 
     /// @brief Value of the parameter with which the @c deleteReclaimedLeases
