@@ -599,7 +599,7 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     label << "duid=[" << (duid ? duid->toText() : "no info")
           << "]";
 
-    // HW address is typically not carried in the DHCPv6 mmessages
+    // HW address is typically not carried in the DHCPv6 messages
     // and can be extracted using various, but not fully reliable,
     // techniques. If it is not present, don't print anything.
     if (hwaddr) {
