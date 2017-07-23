@@ -291,7 +291,7 @@ TEST_F(OptionDefinitionTest, validate) {
     OptionDefinition opt_def9("option-clientid", D6O_CLIENTID, "string");
     EXPECT_NO_THROW(opt_def9.validate());
 
-    // Using hyphen or undescore at the beginning or at the end
+    // Using hyphen or underscore at the beginning or at the end
     // of the option name is not allowed.
     OptionDefinition opt_def10("-option-clientid", D6O_CLIENTID, "string");
     EXPECT_THROW(opt_def10.validate(), MalformedOptionDefinition);
