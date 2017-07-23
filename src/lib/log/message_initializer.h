@@ -137,7 +137,7 @@ private:
 
     /// \brief Holds the pointer to the global dictionary.
     ///
-    /// One or more instances of \c MessageInitalizer are created statically,
+    /// One or more instances of \c MessageInitializer are created statically,
     /// the \c MessageDictionary being created by the first one to run. As the
     /// \c MessageDictionary is also accessed by the \c MessageInitializer
     /// destructor, a smart pointer to it is kept.  This avoids the possibility

@@ -103,7 +103,7 @@ START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
 
-# This line concludes database initalization to version 1.0.
+# This line concludes database initialization to version 1.0.
 
 # This line starts database upgrade to version 2.0.
 ALTER TABLE lease6
