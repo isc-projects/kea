@@ -520,7 +520,7 @@ public:
     /// and parse them.
     /// @param config is the configuration string to parse
     ///
-    /// @return retuns 0 if the configuration parsed successfully,
+    /// @return returns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
     int parseConfiguration(const std::string& config, bool v6 = false) {
         int rcode_ = 1;

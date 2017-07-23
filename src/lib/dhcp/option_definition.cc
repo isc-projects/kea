@@ -829,7 +829,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (factoryIA6(getCode(), begin, end));
 
         } else if (getCode() == D6O_IAADDR && haveIAAddr6Format()) {
-            // Rerurn Option6IAAddr option instance for the IAADDR
+            // Return Option6IAAddr option instance for the IAADDR
             // option only for the same reasons as described in
             // for IA_NA and IA_PD above.
             return (factoryIAAddr6(getCode(), begin, end));

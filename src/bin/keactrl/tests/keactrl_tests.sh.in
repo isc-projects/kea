@@ -392,7 +392,7 @@ dhcp_ddns=no\nctrl_agent=no\nkea_verbose=no\n${keactrl_fixed_config}"
     printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
     ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
@@ -568,7 +568,7 @@ dhcp_ddns=no\nctrl_agent=no\nkea_verbose=no\n${keactrl_fixed_config}"
     printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
     ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
@@ -731,7 +731,7 @@ dhcp_ddns=no\nctrl_agent=yes\nkea_verbose=yes\n${keactrl_fixed_config}"
     printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
     ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
 
     # Wait up to 20s for the DHCPv4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
@@ -783,7 +783,7 @@ dhcp_ddns=yes\nctrl_agent=yes\nkea_verbose=no\n${keactrl_fixed_config}"
     printf "Starting Kea: ${keactrl} start -c ${KEACTRL_CFG_FILE}\n"
     ${keactrl} start -c ${KEACTRL_CFG_FILE}
     ret=${?}
-    assert_eq 0 ${ret} "Expected keactrl to retrun 0, returned value was ${ret}"
+    assert_eq 0 ${ret} "Expected keactrl to return 0, returned value was ${ret}"
 
     # Wait up to 20s for the DHCPv6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
