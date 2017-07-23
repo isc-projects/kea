@@ -101,7 +101,7 @@
              "data": "mydomain.example.com, example.com"
          },
             // String options that have a comma in their values need to have
-            // it escaped (i.e. each comma is predeced by two backslashes).
+            // it escaped (i.e. each comma is preceded by two backslashes).
             // That's because commas are reserved for separating fields in
             // compound options. At the same time, we need to be conformant
             // with JSON spec, that does not allow "\,". Therefore the
