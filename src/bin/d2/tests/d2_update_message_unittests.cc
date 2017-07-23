@@ -456,7 +456,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
 
     // The simplest way to convert the name from wire format to a string
     // is to use dns::Name class. It should be ok to rely on the Name class
-    // to decode the name, because it is unit tested elswhere.
+    // to decode the name, because it is unit tested elsewhere.
     std::string zone_name = readNameFromWire(buf, 13);
     EXPECT_EQ("example.com.", zone_name);
 
