@@ -599,7 +599,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
     // Check that the stats declined stats were modified correctly.  Note, because
     // added the lease directly, assigned-leases never bumped to one, so when we
-    // reclaime it gets decremented to -1, then on assignment back to 0.
+    // reclaim it gets decremented to -1, then on assignment back to 0.
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1, subnet_->getID()));
