@@ -372,7 +372,7 @@ It is meant mostly as signalling protocol. Sending millions of
 messages or messages of several tens of megabytes is probably a bad
 idea. While there's no architectural limitation with regards of the
 number of transferred messages and the maximum size of message is 4GB,
-the code is not optimised and it would probably be very slow.
+the code is not optimized and it would probably be very slow.
 
 We currently expect the system not to be at heavy load. Therefore, we
 expect the system to keep up with users sending messages. The
