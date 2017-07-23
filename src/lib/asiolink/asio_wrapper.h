@@ -38,7 +38,7 @@
 //
 // which involve implicit conversion of enumerates to error_code instances
 // to not evaluate correctly.  During the implicit conversion the error_code
-// instances may be assigned differeing values error_code:m_cat. This
+// instances may be assigned differing values error_code:m_cat. This
 // causes two instances of error_code which should have been equal to
 // to not be equal.
 //
