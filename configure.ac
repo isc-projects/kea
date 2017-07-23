@@ -114,7 +114,7 @@ AC_LANG([C++])
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
-# USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
+# USE_CLANGPP is no longer used, keep it by symmetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Check for C++11 features support
