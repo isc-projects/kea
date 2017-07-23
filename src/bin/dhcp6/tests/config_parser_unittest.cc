@@ -2935,7 +2935,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(100, desc.option_->getType());
 
-    // This opton should comprise two sub-options.
+    // This option should comprise two sub-options.
     // Onf of them is 'foo' with code 110.
     OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);
