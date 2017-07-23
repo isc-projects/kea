@@ -53,7 +53,7 @@ public:
         return (write_leases_);
     }
 
-    /// @brief Gets the number of errors when writting leases
+    /// @brief Gets the number of errors when writing leases
     uint32_t getWriteErrs() const {
         return (write_errs_);
     }
