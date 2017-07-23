@@ -593,7 +593,7 @@ protected:
     /// desired information such as library dependencies to the extended
     /// version text returned when DControllerBase::getVersion(true) is
     /// invoked.
-    /// @return a string containing additonal version info
+    /// @return a string containing additional version info
     virtual std::string getVersionAddendum() { return (""); }
 
 private:
