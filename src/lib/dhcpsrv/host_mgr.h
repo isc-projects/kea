@@ -237,7 +237,7 @@ public:
 
     /// @brief Returns a host from specific subnet and reserved address.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     ///
     /// @return Const @c host object that has a reservation for specified address.

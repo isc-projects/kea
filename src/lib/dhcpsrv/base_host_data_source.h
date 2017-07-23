@@ -251,7 +251,7 @@ public:
     ///
     /// This method supports both v4 and v6.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     /// @return true if deletion was successful, false if the host was not there.
     /// @throw various exceptions in case of errors

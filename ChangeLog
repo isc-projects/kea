@@ -1114,7 +1114,7 @@ Kea 1.0.0 released on December 29, 2015
 
 1079.	[bug]		jpopelka
 	Fixed compilation issue in MySQL host data source: the
-	dhcp_identifer_length is now unsigned long. This addresses
+	dhcp_identifier_length is now unsigned long. This addresses
 	a compilation problem on Fedora.
 	(Github #17, git 8548d1b589df98cc956b4d80d2cb8819ef576717)
 
