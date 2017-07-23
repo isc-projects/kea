@@ -636,7 +636,7 @@ modify the server's behavior by taking responsibility for processing
 the DHCP message at certain stages and instructing the server to skip
 the default processing for that stage. Thus, hooks libraries play an
 important role in the DHCP server operation and, depending on their
-purpose, they may have high complexity, which increases likehood of the
+purpose, they may have high complexity, which increases likelihood of the
 defects in the libraries.
 
 All hooks libraries should use Kea logging system to facilitate diagnostics
