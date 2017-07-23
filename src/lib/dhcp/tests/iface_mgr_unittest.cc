@@ -2124,7 +2124,7 @@ TEST_F(IfaceMgrTest, iface_methods) {
         OutOfRange
     );
 
-    // MAC length should stay not set as excep
+    // MAC length should stay not set as exception was thrown.
     EXPECT_EQ(0, iface.getMacLen());
 
     // Setting maximum length MAC should be ok.
