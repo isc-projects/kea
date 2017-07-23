@@ -930,7 +930,7 @@ EOF
     #CRYPTO_LDFLAGS="-ldl"
     CRYPTO_LDFLAGS=""
     CRYPTO_RPATH=""
-    dnl Check avaibility of SHA-2
+    dnl Check availability of SHA-2
     AC_MSG_CHECKING([support of SHA-2])
     LIBS_SAVED=${LIBS}
     LIBS="$LIBS $CRYPTO_LIBS"
