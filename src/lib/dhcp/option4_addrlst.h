@@ -150,7 +150,7 @@ public:
     /// Passed address must be IPv4 address. Otherwise BadValue exception
     /// will be thrown.
     ///
-    /// @param addr an address thait is going to be added to existing list
+    /// @param addr an address that is going to be added to existing list
     void addAddress(const isc::asiolink::IOAddress& addr);
 
 protected:
