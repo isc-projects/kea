@@ -649,7 +649,7 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Attempts to get a MAC/hardware address using configred sources
+    /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
     /// using MAC sources configured in 'mac-sources' configuration parameter.
