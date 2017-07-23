@@ -234,7 +234,7 @@ public:
 
     /// @brief Adds IA option to the message.
     ///
-    /// Addded option holds an address.
+    /// Added option holds an address.
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
