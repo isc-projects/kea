@@ -1229,7 +1229,7 @@ TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
     ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
                  DbOpenError);
 
-    // Remove the pid file, and retry. The bakckend should be created.
+    // Remove the pid file, and retry. The backend should be created.
     pid_file.deleteFile();
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
@@ -1479,7 +1479,7 @@ TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
                  DbOpenError);
 
-    // Remove the pid file, and retry. The bakckend should be created.
+    // Remove the pid file, and retry. The backend should be created.
     pid_file.deleteFile();
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
