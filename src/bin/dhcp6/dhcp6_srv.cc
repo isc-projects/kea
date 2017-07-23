@@ -1899,7 +1899,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
 
-    // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
+    // For all the leases we have now, add the IAPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
 
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
