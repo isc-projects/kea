@@ -881,7 +881,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
 }
 
 // Check that the configuration with two subnets having the same id is rejected.
-TEST_F(Dhcp4ParserTest, multipleSubnetsOverlapingIDs) {
+TEST_F(Dhcp4ParserTest, multipleSubnetsOverlappingIDs) {
     ConstElementPtr x;
     // Four subnets, two of them having the same id.
     string config = "{ " + genIfaceConfig() + "," +
