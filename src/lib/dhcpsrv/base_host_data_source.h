@@ -64,7 +64,7 @@ public:
     /// in the future. Also, this list will grow over time. It is likely
     /// that we'll implement other identifiers in the future, e.g. remote-id.
     ///
-    /// Those value correspond direclty to dhcp_identifier_type in hosts
+    /// Those value correspond directly to dhcp_identifier_type in hosts
     /// table in MySQL schema.
     enum IdType {
         ID_HWADDR = 0, ///< Hardware address
