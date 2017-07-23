@@ -175,7 +175,7 @@ public:
     const std::string& expectedColumnName(int col) {
         if (col < 0 || col >= NUM_BASIC_COLS) {
             isc_throw(BadValue,
-                      "definedColunName: invalid column value" << col);
+                      "definedColumnName: invalid column value" << col);
         }
 
         return (expectedColNames_[col]);
@@ -302,7 +302,7 @@ public:
 #define FETCH_ROWS(a,b) (fetchRows(a,b,__LINE__))
 #define WIPE_ROWS(a) (RUN_SQL(a, "DELETE FROM BASICS", PGRES_COMMAND_OK))
 
-/// @brief Verifies that PgResultSet row and colum meta-data is correct
+/// @brief Verifies that PgResultSet row and column meta-data is correct
 TEST_F(PgSqlBasicsTest, rowColumnBasics) {
     // We fetch the table contents, which at this point should be no rows.
     PgSqlResultPtr r;
