@@ -770,7 +770,7 @@ public:
 
         Pkt4Ptr ack = createAckPkt4(1);
 
-        // Create DHCPREQUST from DHCPACK.
+        // Create DHCPREQUEST from DHCPACK.
         Pkt4Ptr request;
         ASSERT_NO_THROW(request = tc.createRequestFromAck(ack));
 
