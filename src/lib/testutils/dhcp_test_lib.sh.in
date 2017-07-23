@@ -318,7 +318,7 @@ cleanup() {
 }
 
 # Exists the test in the clean way.
-# It performes the cleanup and prints whether the test has passed or failed.
+# It performs the cleanup and prints whether the test has passed or failed.
 # If a test fails, the Kea log is dumped.
 clean_exit() {
     exit_code=${1}  # Exit code to be returned by the exit function.
