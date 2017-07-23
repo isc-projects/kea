@@ -276,7 +276,7 @@ get_reconfigs() {
 # It shuts down running Kea processes and removes temporary files.
 # The location of the log file and the configuration files should be set
 # in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
-# recpectively, prior to calling this function.
+# respectively, prior to calling this function.
 cleanup() {
 
     # If there is no KEA_PROCS set, just return
