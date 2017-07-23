@@ -91,7 +91,7 @@ specific prefix/prefix length. The arguments specify prefix, prefix
 length and host details respectively.
 
 % HOSTS_CFG_GET_ONE_PREFIX_NULL host not found using prefix %1/%2
-This debug messsage is issued when no host was found for a specified
+This debug message is issued when no host was found for a specified
 prefix and prefix length.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4 get one host with reservation for subnet id %1 and IPv4 address %2
