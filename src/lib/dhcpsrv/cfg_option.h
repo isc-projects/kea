@@ -317,7 +317,7 @@ public:
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
-    /// name in the format of "vendor-X" where X is 32-bit unsiged integer.
+    /// name in the format of "vendor-X" where X is 32-bit unsigned integer.
     /// See @c getAll(uint32_t) for vendor options.
     ///
     /// @param option_space Name of the option space.
