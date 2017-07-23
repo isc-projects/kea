@@ -132,7 +132,7 @@ public:
         fqdn_rev_ = fqdn_rev;
     }
 
-    /// @brief Wrapper around call to AllocEngine6::findRervation
+    /// @brief Wrapper around call to AllocEngine6::findReservation
     ///
     /// If a reservation is found by the engine, the function sets
     /// ctx.hostname_ accordingly.
