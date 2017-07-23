@@ -155,7 +155,7 @@ configuration"
 # ${LOG_FILE}.
 set_logger() {
     if [ -z ${LOG_FILE} ]; then
-        test_lib_error "set_logger requies LOG_FILE variable be set"
+        test_lib_error "set_logger requires LOG_FILE variable be set"
         clean_exit 1
     fi
     printf "Kea log will be stored in %s.\n" ${LOG_FILE}
