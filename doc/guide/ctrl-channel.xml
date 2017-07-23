@@ -129,7 +129,7 @@
       administrative operations in the CA rather than forwarding it to
       the DHCPv4 server is the ability to perform these operations without
       disrupting the DHCPv4 service (DHCPv4 server doesn't have to stop
-      processing DHCP messages to apply changes to the database). Nevetheless,
+      processing DHCP messages to apply changes to the database). Nevertheless,
       these situations are rather rare and, in most cases, when the
       <command>service</command> parameter contains a name of the service
       the commands are simply forwarded by the CA. The forwarded command
