@@ -10,7 +10,7 @@
       <title>Introduction</title>
       <para>
       Although Kea offers a lot of flexibility, there may be cases where
-      its behavior needs customisation.  To accommodate this possibility,
+      its behavior needs customization.  To accommodate this possibility,
       Kea includes the idea of "Hooks".  This feature lets Kea load one
       or more dynamically-linked libraries (known as "hooks libraries")
       and, at various points in its processing ("hook points"), call
