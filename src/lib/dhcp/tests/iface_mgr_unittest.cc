@@ -2493,7 +2493,7 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
 
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, MiltipleExternalSockets4) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets4) {
 
     callback_ok = false;
     callback2_ok = false;
@@ -2662,7 +2662,7 @@ TEST_F(IfaceMgrTest, SingleExternalSocket6) {
 
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive6() method.
-TEST_F(IfaceMgrTest, MiltipleExternalSockets6) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets6) {
 
     callback_ok = false;
     callback2_ok = false;
