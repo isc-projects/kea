@@ -145,7 +145,7 @@ public:
     /// \return type of lease being requested by perfdhcp.
     LeaseType getLeaseType() const { return (lease_type_); }
 
-    /// \brief Returns echange rate.
+    /// \brief Returns exchange rate.
     ///
     /// \return exchange rate per second.
     int getRate() const { return rate_; }
