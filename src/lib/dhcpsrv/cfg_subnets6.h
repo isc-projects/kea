@@ -74,7 +74,7 @@ public:
     ///
     /// @todo This method requires performance improvement! It currently
     /// iterates over all existing subnets (possibly a couple of times)
-    /// to find the one which fulfils the search criteria. The subnet storage
+    /// to find the one which fulfills the search criteria. The subnet storage
     /// is implemented as a simple STL vector which precludes fast searches
     /// using specific keys. Hence, full scan is required. To improve the
     /// search performance a different container type is required, e.g.
@@ -107,7 +107,7 @@ public:
     ///
     /// @todo This method requires performance improvement! It currently
     /// iterates over all existing subnets (possibly a couple of times)
-    /// to find the one which fulfils the search criteria. The subnet storage
+    /// to find the one which fulfills the search criteria. The subnet storage
     /// is implemented as a simple STL vector which precludes fast searches
     /// using specific keys. Hence, full scan is required. To improve the
     /// search performance a different container type is required, e.g.
@@ -156,7 +156,7 @@ private:
     /// name, the subnet is returned.
     ///
     /// @todo This method requires performance improvement! It currently
-    /// iterates over all existing subnets to find the one which fulfils
+    /// iterates over all existing subnets to find the one which fulfills
     /// the search criteria. The subnet storage is implemented as a
     /// simple STL vector which precludes fast searches using specific
     /// keys. Hence, full scan is required. To improve the search
@@ -180,7 +180,7 @@ private:
     /// subnet is returned.
     ///
     /// @todo This method requires performance improvement! It currently
-    /// iterates over all existing subnets to find the one which fulfils
+    /// iterates over all existing subnets to find the one which fulfills
     /// the search criteria. The subnet storage is implemented as a
     /// simple STL vector which precludes fast searches using specific
     /// keys. Hence, full scan is required. To improve the search
