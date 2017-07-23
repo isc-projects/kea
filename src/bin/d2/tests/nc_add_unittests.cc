@@ -479,7 +479,7 @@ TEST_F(NameAddTransactionTest, selectingFwdServerHandler) {
                   name_add->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))
@@ -1213,7 +1213,7 @@ TEST_F(NameAddTransactionTest, selectingRevServerHandler) {
                   name_add->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))
