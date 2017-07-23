@@ -442,7 +442,7 @@ Pkt6::unpackRelayMsg() {
     // we use offset + bufsize, because we want to avoid creating unnecessary
     // copies. There may be up to 32 relays. While using InputBuffer would
     // be probably a bit cleaner, copying data up to 32 times is unacceptable
-    // price here. Hence a single buffer with offets and lengths.
+    // price here. Hence a single buffer with offsets and lengths.
     size_t bufsize = data_.size();
     size_t offset = 0;
 
