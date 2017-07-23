@@ -1149,7 +1149,7 @@ TEST_F(TestControlTest, GenerateDuid) {
     ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) != macs.end());
 }
 
-TEST_F(TestControlTest, MisMatchVerionServer) {
+TEST_F(TestControlTest, MisMatchVersionServer) {
     NakedTestControl tc;
 
     // make sure we catch -6 paired with v4 address
