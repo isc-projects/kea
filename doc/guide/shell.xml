@@ -53,7 +53,7 @@ kea-shell [--host hostname] [--port number] [--timeout seconds] [--service servi
 
       <listitem>
         <simpara>
-          <command>--service <replaceable>serive-name</replaceable></command> specifies the
+          <command>--service <replaceable>service-name</replaceable></command> specifies the
           target of a command. If not given, CA will be used as target.  May be used more
           than once to specify multiple targets.
         </simpara>
