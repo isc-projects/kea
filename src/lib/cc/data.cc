@@ -1284,7 +1284,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
             out << std::string(indent + step, ' ');
             // add keyword:
             out << "\"" << it->first << "\": ";
-            // recusive call
+            // recursive call
             prettyPrint(it->second, out, indent + step, step);
         }
 
