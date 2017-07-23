@@ -134,7 +134,7 @@ int main(int argc, const char* argv[]) {
 
 @section ctrlSocketImpl Control Channel Implementation
 
-Control Channel is implemented in @ref isc::config::CommandMgr. It is a signleton
+Control Channel is implemented in @ref isc::config::CommandMgr. It is a singleton
 class that allows registration of callbacks that handle specific commands.
 It internally supports a single command: @c list-commands that returns a list
 of supported commands. This component is expected to be shared among all daemons.

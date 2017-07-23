@@ -85,7 +85,7 @@ std::string decommentJSONfile(const std::string& input_file) {
             if (begin_pos != string::npos) {
                 in_comment = true;
                 if (end_pos != string::npos) {
-                    // sigle line comment. Let's get rid of the content in between
+                    // single line comment. Let's get rid of the content in between
                     line = line.replace(begin_pos, end_pos + 2, end_pos + 2 - begin_pos, ' ');
                     in_comment = false;
                 } else {
