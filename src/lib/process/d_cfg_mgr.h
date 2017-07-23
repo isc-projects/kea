@@ -446,7 +446,7 @@ protected:
     /// Implementations that do not employ this method may provide dummy
     /// implementation.
     ///
-    /// @param config the Element tree structure that decribes the configuration.
+    /// @param config the Element tree structure that describes the configuration.
     /// @param check_only false for normal configuration, true when verifying only
     ///
     /// @return an Element that contains the results of configuration composed
