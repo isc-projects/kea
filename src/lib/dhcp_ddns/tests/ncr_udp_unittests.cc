@@ -719,7 +719,7 @@ TEST_F (NameChangeUDPTest, roundTripTest) {
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
-// sendRequestt() is called.
+// sendRequest() is called.
 TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
