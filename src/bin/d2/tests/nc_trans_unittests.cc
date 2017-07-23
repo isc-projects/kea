@@ -65,7 +65,7 @@ public:
     }
 
     /// @brief DNSClient callback
-    /// Overrides the callback in NameChangeTranscation to allow testing
+    /// Overrides the callback in NameChangeTransaction to allow testing
     /// sendUpdate without incorporating execution of the state model
     /// into the test.
     /// It sets the DNS status update and posts IO_COMPLETED_EVT as does
