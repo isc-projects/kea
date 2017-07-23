@@ -615,7 +615,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
     // Let's set empty container in case a user hasn't specified any configuration
-    // for option definitions. This is equivalent to commiting empty container.
+    // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
     // This is a way to convert ConstElementPtr to ElementPtr.
