@@ -146,7 +146,7 @@ private:
     ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer to be parsed.
-    /// \param options oprions collection with their offsets
+    /// \param options options collection with their offsets
     /// in input buffer specified.
     ///
     /// \throw isc::Unexpected if options unpack failed.

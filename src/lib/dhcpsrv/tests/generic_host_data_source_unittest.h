@@ -148,7 +148,7 @@ public:
     void compareOptions(const ConstCfgOptionPtr& cfg1,
                         const ConstCfgOptionPtr& cfg2) const;
 
-    /// @brief Creates an opton descriptor holding an empty option.
+    /// @brief Creates an option descriptor holding an empty option.
     ///
     /// @param universe V4 or V6.
     /// @param option_type Option type.

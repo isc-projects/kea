@@ -1149,7 +1149,7 @@ TEST_F(OptionCustomTest, tupleDataArray6) {
     );
 }
 
-// The purpose of this test is to verify that the opton definition comprising
+// The purpose of this test is to verify that the option definition comprising
 // a record of fixed-size fields can be used to create an option with a
 // suboption.
 TEST_F(OptionCustomTest, recordDataWithSuboption) {
@@ -1440,7 +1440,7 @@ TEST_F(OptionCustomTest, setIpv4AddressData) {
     EXPECT_EQ("192.168.0.1", address.toText());
 }
 
-// The purpose of this test is to verify that an opton comprising
+// The purpose of this test is to verify that an option comprising
 // single IPv6 address can be created and that this address can
 // be overriden by a new value.
 TEST_F(OptionCustomTest, setIpv6AddressData) {

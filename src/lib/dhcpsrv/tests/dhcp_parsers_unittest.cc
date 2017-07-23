@@ -1338,7 +1338,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 }
 
 // This test verifies an option data without suboptions is supported
-TEST_F(ParseConfigTest, optionDataNoSubOpion) {
+TEST_F(ParseConfigTest, optionDataNoSubOption) {
     // Configuration string.
     const std::string config =
         "{ \"option-data\": [ {"
