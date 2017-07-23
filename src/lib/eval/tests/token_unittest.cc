@@ -1862,7 +1862,7 @@ TEST_F(TokenTest, substringReturnEmpty) {
 // We put the result on the stack first then the substring values
 // then evaluate the substring which should leave the original
 // result on the bottom with the substring result on next.
-// Evaulating the equals should produce true for the first
+// Evaluating the equals should produce true for the first
 // and false for the second.
 // throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.
