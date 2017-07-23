@@ -120,7 +120,7 @@ public:
         pkt6_->addRelayInfo(relay1);
     }
 
-    /// @brief Verify that the relay6 option evaluatiosn work properly
+    /// @brief Verify that the relay6 option evaluations work properly
     ///
     /// Given the nesting level and option code extract the option
     /// and compare it to the expected string.

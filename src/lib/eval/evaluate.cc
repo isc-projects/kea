@@ -30,7 +30,7 @@ evaluateString(const Expression& expr, Pkt& pkt) {
     }
     if (values.size() != 1) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected exactly "
-                  "1 value at the end of evaluatuion, got " << values.size());
+                  "1 value at the end of evaluation, got " << values.size());
     }
     return (values.top());
 }
