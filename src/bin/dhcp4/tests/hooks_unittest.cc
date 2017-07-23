@@ -1904,7 +1904,7 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
 // The callout libraries write their library index number to a marker
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.
-TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibaries) {
+TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
 
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
 
