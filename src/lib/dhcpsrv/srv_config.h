@@ -393,7 +393,7 @@ public:
     /// the default copy constructors can't be used. Implementing this
     /// requires quite a lot of time so this is left as is for now.
     /// The lack of ability to copy the entire configuration makes
-    /// revert function of the @c CfgMgr unsuable.
+    /// revert function of the @c CfgMgr unusable.
     ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
