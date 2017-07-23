@@ -624,7 +624,7 @@ public:
             // the case if randomization algorithm generates the same
             // values but this would be an error in randomization algorithm.
             total_dist += mismatch_dist;
-            // Mismatch may have occurred on the MAC address'es octet position
+            // Mismatch may have occurred on the MAC address's octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
             // unique will inform if tested DUID is unique.
