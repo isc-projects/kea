@@ -450,13 +450,13 @@ protected:
     /// @brief a prefix length of the subnet
     uint8_t prefix_len_;
 
-    /// @brief a tripet (min/default/max) holding allowed renew timer values
+    /// @brief a triplet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;
 
-    /// @brief a tripet (min/default/max) holding allowed rebind timer values
+    /// @brief a triplet (min/default/max) holding allowed rebind timer values
     Triplet<uint32_t> t2_;
 
-    /// @brief a tripet (min/default/max) holding allowed valid lifetime values
+    /// @brief a triplet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
 
     /// @brief last allocated address
