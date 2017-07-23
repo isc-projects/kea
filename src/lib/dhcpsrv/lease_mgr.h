@@ -51,7 +51,7 @@
 /// However, there is another approach that can be reliably used to provide
 /// failover, even without the actual failover protocol implemented. As the
 /// first backend will use MySQL, we will be able to use Multi-Master capability
-/// offered by MySQL and use two separatate Kea instances connecting to the
+/// offered by MySQL and use two separate Kea instances connecting to the
 /// same database.
 ///
 /// Nevertheless, we hope to have failover protocol eventually implemented in
