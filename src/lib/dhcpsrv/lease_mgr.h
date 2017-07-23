@@ -495,7 +495,7 @@ public:
     /// a lease state, and the number of leases of that type, in that state
     /// and is ordered by subnet id.  The method iterates over the
     /// result set rows, setting the appropriate statistic per subnet and
-    /// adding to the approporate global statistic.
+    /// adding to the appropriate global statistic.
     void recountLeaseStats4();
 
     /// @brief Virtual method which creates and runs the IPv4 lease stats query
@@ -526,7 +526,7 @@ public:
     /// a subnet id, a lease type, a lease state, and the number of leases
     /// of that type, in that state and is ordered by subnet id. The method
     /// iterates over the result set rows, setting the appropriate statistic
-    /// per subnet and adding to the approporate global statistic.
+    /// per subnet and adding to the appropriate global statistic.
     void recountLeaseStats6();
 
     /// @brief Virtual method which creates and runs the IPv6 lease stats query
