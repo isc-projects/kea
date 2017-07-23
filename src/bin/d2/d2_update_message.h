@@ -277,7 +277,7 @@ public:
     /// This function decodes the DNS Update message stored in the buffer
     /// specified by the function argument.  If given a TSIG context, then
     /// the function will first attempt to use that context to verify the
-    /// message signature.  If verification fails a TSIGVefiryError exception
+    /// message signature.  If verification fails a TSIGVerifyError exception
     /// will be thrown. The function then parses message header and extracts
     /// the section counters: ZOCOUNT, PRCOUNT, UPCOUNT and ADCOUNT. Using
     /// these counters, function identifies message sections, which follow
