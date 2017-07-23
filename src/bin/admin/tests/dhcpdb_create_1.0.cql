@@ -38,7 +38,7 @@
 -- is initialized to 1.0, then upgraded to 2.0 etc. This may be somewhat
 -- sub-optimal, but it ensues consistency with upgrade scripts. (It is much
 -- easier to maintain init and upgrade scripts if they look the same).
--- Since initialization is done only once, it's perfromance is not an issue.
+-- Since initialization is done only once, it's performance is not an issue.
 
 -- This line starts database initialization to 1.0.
 
