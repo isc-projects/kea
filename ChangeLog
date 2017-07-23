@@ -585,7 +585,7 @@ Kea 1.1.0 released on September 30, 2016
 	(Trac #5009, git d3109bb27786867fdc99954ba55367f0ad129e7a)
 
 1174.	[bug]		tmark
-	Modifed kea-dhcp6 to avoid requesting DNS updates when
+	Modified kea-dhcp6 to avoid requesting DNS updates when
 	existing leases are renewed without changes to the FQDN.
 	(Trac #5007, git 05ea3a5eb75c06cf9814c63a1a54261bf58a954b)
 
