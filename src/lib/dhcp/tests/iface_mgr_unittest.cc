@@ -729,7 +729,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
-    // uncertainity should be low enough to expect that measured
+    // uncertainty should be low enough to expect that measured
     // value is in the range <1.4s; 1.7s>.
     EXPECT_GE(duration.total_microseconds(),
               1400000 - TIMEOUT_TOLERANCE);
@@ -781,7 +781,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
-    // uncertainity should be low enough to expect that measured
+    // uncertainty should be low enough to expect that measured
     // value is in the range <2.3s; 2.6s>.
     EXPECT_GE(duration.total_microseconds(),
               2300000 - TIMEOUT_TOLERANCE);
