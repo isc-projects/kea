@@ -200,7 +200,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -317,7 +317,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 2 ${_GET_LOG_MESSAGES} \
         "Expected get_log_messages for DCT_STANDALONE return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -400,7 +400,7 @@ dhcp_ddns=no\nctrl_agent=no\nkea_verbose=no\n${keactrl_fixed_config}"
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -488,7 +488,7 @@ dhcp_ddns=no\nctrl_agent=no\nkea_verbose=no\n${keactrl_fixed_config}"
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -576,7 +576,7 @@ dhcp_ddns=no\nctrl_agent=no\nkea_verbose=no\n${keactrl_fixed_config}"
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -739,7 +739,7 @@ dhcp_ddns=no\nctrl_agent=yes\nkea_verbose=yes\n${keactrl_fixed_config}"
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
@@ -926,7 +926,7 @@ Expected wait_for_message return %d, returned %d."
     assert_eq 0 ${_GET_LOG_MESSAGES} \
     "Expected get_log_messages return %d, returned %d."
 
-    # Server may shut down imediatelly after configuration has competed.
+    # Server may shut down imediatelly after configuration has completed.
     # Give it some time to shutdown.
     sleep 3
 
