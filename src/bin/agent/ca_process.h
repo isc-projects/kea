@@ -89,7 +89,7 @@ public:
     /// is quite possible scenario when the user is setting up the listener to
     /// use a restricted port range or non-existing IP address. In this case,
     /// the configuration parser will not signal the problem because IP address
-    /// and/or port are syntactically correcect.
+    /// and/or port are syntactically correct.
     ///
     /// This method deals with this problem by opening a new listener aside of
     /// the currently running listener (if the new listener settings are
