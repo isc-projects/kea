@@ -639,7 +639,7 @@ important role in the DHCP server operation and, depending on their
 purpose, they may have high complexity, which increases likehood of the
 defects in the libraries.
 
-All hooks libraries should use Kea logging system to faciliate diagnostics
+All hooks libraries should use Kea logging system to facilitate diagnostics
 of the defects in the libraries and issues with the DHCP server's operation.
 Even if the issue doesn't originate in the hooks library itself, the use
 of the library may uncover issues in the Kea code that only
