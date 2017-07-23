@@ -22,7 +22,7 @@ public:
 
     /// @brief writes specified text to a file
     ///
-    /// That is an auxilliary function used in fileRead() tests.
+    /// That is an auxiliary function used in fileRead() tests.
     ///
     /// @param content text to be written to disk
     void writeFile(const std::string& content) {
