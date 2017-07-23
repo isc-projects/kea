@@ -272,7 +272,7 @@ public:
     /// \return true if server-iD to be taken from first package.
     bool isUseFirst() const { return use_first_; }
 
-    /// \brief Check if generated DHCPv6 messages shuold appear as relayed.
+    /// \brief Check if generated DHCPv6 messages should appear as relayed.
     ///
     /// \return true if generated traffic should appear as relayed.
     bool isUseRelayedV6() const { return (v6_relay_encapsulation_level_ > 0); }

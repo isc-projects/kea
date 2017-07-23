@@ -436,7 +436,7 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     // code as CtrlAgentController is not initialized the same way it is
     // in production code. In particular, the way CtrlAgentController
     // is initialized in tests does not call registerCommands().
-    // This is a crude workaround for this problem. Proper solution shoul
+    // This is a crude workaround for this problem. Proper solution should
     // be developed sooner rather than later.
     const DControllerBasePtr& base = getController();
     const CtrlAgentControllerPtr& ctrl =
@@ -466,7 +466,7 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
     // code as CtrlAgentController is not initialized the same way it is
     // in production code. In particular, the way CtrlAgentController
     // is initialized in tests does not call registerCommands().
-    // This is a crude workaround for this problem. Proper solution shoul
+    // This is a crude workaround for this problem. Proper solution should
     // be developed sooner rather than later.
     const DControllerBasePtr& base = getController();
     const CtrlAgentControllerPtr& ctrl
