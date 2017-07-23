@@ -313,7 +313,7 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
         timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
     }
 
-    // If the interval for the timer flusing expired-reclaimed leases
+    // If the interval for the timer flushing expired-reclaimed leases
     // is set we will schedule the timer.
     if (!flush_timer_disabled) {
         // The interval is specified in milliseconds if we're in the test mode.
