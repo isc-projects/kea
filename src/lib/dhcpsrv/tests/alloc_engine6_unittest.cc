@@ -1955,7 +1955,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
 
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
-    // Check that he got the orginal lease back.
+    // Check that he got the original lease back.
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
 
