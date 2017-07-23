@@ -1933,7 +1933,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     IOAddress local_addr = query->getLocalAddr();
 
     // In many cases the query is sent to a broadcast address. This address
-    // apears as a local address in the query message. We can't simply copy
+    // appears as a local address in the query message. We can't simply copy
     // this address to a response message and use it as a source address.
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just
