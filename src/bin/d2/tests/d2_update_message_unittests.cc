@@ -112,7 +112,7 @@ TEST_F(D2UpdateMessageTest, setZone) {
     EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
 
     // Now, let's check that the existing Zone object can be
-    // overriden with a new one.
+    // overridden with a new one.
     msg.setZone(Name("foo.example.com"), RRClass::NONE());
     zone = msg.getZone();
     EXPECT_TRUE(zone);

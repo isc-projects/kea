@@ -36,7 +36,7 @@ public:
     /// The method copies the input buffer and options contents
     /// to the output buffer. The input buffer must contain whole
     /// initial packet data. Parts of this data will be
-    /// overriden by options data specified in an options
+    /// overridden by options data specified in an options
     /// collection. Such options must have their offsets within
     /// a packet specified (see \ref LocalizedOption to find out
     /// how to specify options offset).

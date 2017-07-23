@@ -296,7 +296,7 @@ TEST_F(OptionIntTest, setValueUint8) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(111, opt->getValue());
 }
 
@@ -310,7 +310,7 @@ TEST_F(OptionIntTest, setValueInt8) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-111, opt->getValue());
 }
 
@@ -325,7 +325,7 @@ TEST_F(OptionIntTest, setValueUint16) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(0x0102, opt->getValue());
 }
 
@@ -339,7 +339,7 @@ TEST_F(OptionIntTest, setValueInt16) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-20100, opt->getValue());
 }
 
@@ -353,7 +353,7 @@ TEST_F(OptionIntTest, setValueUint32) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(0x01020304, opt->getValue());
 }
 
@@ -367,7 +367,7 @@ TEST_F(OptionIntTest, setValueInt32) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-125000, opt->getValue());
 }
 
