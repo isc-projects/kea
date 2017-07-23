@@ -288,7 +288,7 @@ on any socket. This poses a problem with running asynchronous calls
 via @c IOService in the main server loop because the @c select()
 blocks for a specified amount of time while asynchronous calls
 are not triggered. In the future we should migrate from the synchronous
-@c select() calls into asynchonous calls using ASIO. Currently,
+@c select() calls into asynchronous calls using ASIO. Currently,
 we mitigate the problem by lowering the @c select() timeout to 1s,
 and polling @c IOService for "ready" timers (handlers) after
 @c select() returns. This may cause delays of "ready" handlers

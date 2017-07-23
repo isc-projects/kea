@@ -114,7 +114,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
 
 void
 NameChangeUDPListener::doReceive() {
-    // Call the socket's asychronous receiving, passing ourself in as callback.
+    // Call the socket's asynchronous receiving, passing ourself in as callback.
     RawBufferPtr recv_buffer = recv_callback_->getBuffer();
     socket_->asyncReceive(recv_buffer.get(), recv_callback_->getBufferSize(),
                           0, recv_callback_->getDataSource().get(),
@@ -294,7 +294,7 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
     send_callback_->putData(static_cast<const uint8_t*>(ncr_buffer.getData()),
                             ncr_buffer.getLength());
 
-    // Call the socket's asychronous send, passing our callback
+    // Call the socket's asynchronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),
                        send_callback_->getDataSource().get(), *send_callback_);
 
