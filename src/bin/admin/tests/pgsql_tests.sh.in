@@ -196,7 +196,7 @@ pgsql_upgrade_2_0_to_3_0() {
     output=`pgsql_execute "select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
-    assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
+    assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 }
 
 pgsql_upgrade_3_0_to_3_1() {

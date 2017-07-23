@@ -382,7 +382,7 @@ Pkt6::unpackUDP() {
     case DHCPV6_INFORMATION_REQUEST:
     case DHCPV6_DHCPV4_QUERY:
     case DHCPV6_DHCPV4_RESPONSE:
-    default: // assume that uknown messages are not using relay format
+    default: // assume that unknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
         }
