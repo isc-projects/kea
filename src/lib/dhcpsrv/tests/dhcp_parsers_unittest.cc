@@ -192,7 +192,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     Uint32StoragePtr storage(new Uint32Storage());
     Uint32Parser parser(name, storage);
 
-    // Verify that parser with rejects a non-interger element.
+    // Verify that parser with rejects a non-integer element.
     ElementPtr wrong_element = Element::create("I am a string");
     EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
 
