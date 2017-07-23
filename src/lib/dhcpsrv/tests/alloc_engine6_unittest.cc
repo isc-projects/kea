@@ -1899,7 +1899,7 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     // assigned-nas should NOT get incremented. Currently we do not adjust assigned
     // counts when we declines
     // declined-addresses will -1, as the artificial creation of declined lease
-    // doens't increment it from zero.  reclaimed-declined-addresses will be 1
+    // doesn't increment it from zero.  reclaimed-declined-addresses will be 1
     // because the leases are implicitly reclaimed before they can be assigned.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
