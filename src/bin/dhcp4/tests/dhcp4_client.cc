@@ -335,7 +335,7 @@ Dhcp4Client::doDecline() {
     // Include client identifier.
     appendClientId();
 
-    // Incluer server identifier.
+    // Include server identifier.
     appendServerId();
 
     // Remove configuration.
