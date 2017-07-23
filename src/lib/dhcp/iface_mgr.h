@@ -150,7 +150,7 @@ struct SocketInfo {
 /// may require use of fixed-size buffers. The size of such a buffer is
 /// returned by the OS kernel when the socket is opened. Hence, it is
 /// convenient to allocate the buffer when the socket is being opened and
-/// utilze it throughout the lifetime of the socket.
+/// utilize it throughout the lifetime of the socket.
 ///
 /// In order to avoid potentially expensive copies of the @c Iface objects
 /// holding pre-allocated buffers and multiple containers, this class is
