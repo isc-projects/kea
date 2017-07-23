@@ -252,7 +252,7 @@ public:
     /// \return true if seed was provided.
     bool isSeeded() const { return seeded_; }
 
-    /// \brief Returns radom seed.
+    /// \brief Returns random seed.
     ///
     /// \return random seed.
     uint32_t getSeed() const { return seed_; }
