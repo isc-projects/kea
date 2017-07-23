@@ -19,7 +19,7 @@ def send_to_control_agent(params):
     url = "http://" + params.http_host + ":"
     url += str(params.http_port) + str(params.path)
 
-    # Now preprare the request (URL, headers and body)
+    # Now prepare the request (URL, headers and body)
     req = urllib.request.Request(url=url,
                                  data=str.encode(params.content),
                                  headers=params.headers)
