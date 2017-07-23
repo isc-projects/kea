@@ -269,10 +269,10 @@ TEST_F(TimerMgrTest, cancel) {
 
     doWait(500);
 
-    // Cancelling non-existing timer should fail.
+    // Canceling non-existing timer should fail.
     EXPECT_THROW(timer_mgr_->cancel("timer2"), BadValue);
 
-    // Cancelling the good one should pass, even when the worker
+    // Canceling the good one should pass, even when the worker
     // thread is running.
     ASSERT_NO_THROW(timer_mgr_->cancel("timer1"));
 
