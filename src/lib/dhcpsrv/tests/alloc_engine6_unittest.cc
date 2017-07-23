@@ -504,7 +504,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Initialize FQDN data for the lease.
     initFqdn("myhost.example.com", true, true);
 
-    // Verify the none of relelvant stats are zero.
+    // Verify the none of relevant stats are zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
@@ -547,7 +547,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
 
-    // Verify the none of relelvant stats were altered.
+    // Verify the none of relevant stats were altered.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
