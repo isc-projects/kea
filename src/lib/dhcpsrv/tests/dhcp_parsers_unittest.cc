@@ -451,7 +451,7 @@ public:
         // Set global defaults first.
         cnt = SimpleParser::setDefaults(global, global_defaults);
 
-        // Now set option defintion defaults for each specified option definition
+        // Now set option definition defaults for each specified option definition
         ConstElementPtr option_defs = global->get("option-def");
         if (option_defs) {
             BOOST_FOREACH(ElementPtr single_def, option_defs->listValue()) {
