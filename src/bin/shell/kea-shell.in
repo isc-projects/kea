@@ -56,7 +56,7 @@ def shell_body():
                                      'connect to Kea Control Agent.')
     parser.add_argument('--host', type=str, default='127.0.0.1',
                         help='hostname of the CA to connect to '
-                        '(defaul:; 127.0.0.1)')
+                        '(default:; 127.0.0.1)')
     parser.add_argument('--port', type=int, default=8000,
                         help='TCP port of the CA to connect to '
                         '(default: 8000)')

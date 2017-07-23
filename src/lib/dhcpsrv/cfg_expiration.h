@@ -99,7 +99,7 @@ public:
     /// @brief Maximum value for max-reclaim-leases.
     static const uint32_t LIMIT_MAX_RECLAIM_LEASES;
 
-    /// @brief Defalt value for max-reclaim-time.
+    /// @brief Default value for max-reclaim-time.
     static const uint16_t LIMIT_MAX_RECLAIM_TIME;
 
     /// @brief Maximum value for unwarned-reclaim-cycles.
