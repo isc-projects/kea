@@ -1459,7 +1459,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
 // Test verifies that the server properly generates a FQDN when the client
 // FQDN name is blank, whether or not DDNS updates are enabled.  It also
 // verifies that the lease is only in the database following a DHCPREQUEST and
-// that the lesae contains the generated FQDN.
+// that the lease contains the generated FQDN.
 TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     isc::asiolink::IOAddress expected_address("10.0.0.10");
