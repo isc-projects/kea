@@ -4151,7 +4151,7 @@ bind10-1.1.0beta1 released on April 4, 2013
 	(Trac #2710, git 16e8be506f32de668699e6954f5de60ca9d14ddf)
 
 588.	[bug]*		jreed
-	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
+	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCEEDED
 	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
 	(git be41be890f1349ae4c870a887f7acd99ba1eaac5)
 
