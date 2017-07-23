@@ -158,7 +158,7 @@ public:
     /// @param ec Error code.
     /// @param bytes_transferred Number of bytes sent.
     void sendHandler(const boost::system::error_code& ec,
-                     size_t bytes_trasferred);
+                     size_t bytes_transferred);
 
     /// @brief Handler invoked when timeout has occurred.
     ///
