@@ -71,7 +71,7 @@ public:
 
     /// @brief Prepares the initial D2UpdateMessage
     ///
-    /// This method overrides the NameChangeTransactio implementation to
+    /// This method overrides the NameChangeTransaction implementation to
     /// provide the ability to simulate an exception throw in the build
     /// request logic.
     /// If the one-shot flag, simulate_build_request_exception_ is true,
