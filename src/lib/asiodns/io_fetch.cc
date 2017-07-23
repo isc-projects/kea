@@ -234,7 +234,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         return;
 
     // On Debian it has been often observed that boost::asio async
-    // operations result in EINPROGRESS. This doesn't neccessarily
+    // operations result in EINPROGRESS. This doesn't necessarily
     // indicate an issue. Thus, we continue as if no error occurred.
     } else if (ec && (ec.value() != boost::asio::error::in_progress)) {
         logIOFailure(ec);

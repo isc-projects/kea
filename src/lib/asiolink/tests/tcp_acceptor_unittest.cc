@@ -97,7 +97,7 @@ public:
             // error code, but simply wait for the connection to get
             // established before the handler is invoked. It turns out, however,
             // that on some OSes the connect handler may receive this error code
-            // which doesn't neccessarily indicate a problem. Making an attempt
+            // which doesn't necessarily indicate a problem. Making an attempt
             // to write and read from this socket will typically succeed. So,
             // we ignore this error.
             if (ec.value() != boost::asio::error::in_progress) {
