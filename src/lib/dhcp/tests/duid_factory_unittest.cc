@@ -356,7 +356,7 @@ TEST_F(DUIDFactoryTest, createLLTExplicitLinkLayerAddress) {
 
 // This test verifies that the factory function creates DUID-LLT from
 // all values explicitly specified.
-TEST_F(DUIDFactoryTest, createLLTAllExplcitParameters) {
+TEST_F(DUIDFactoryTest, createLLTAllExplicitParameters) {
     ASSERT_NO_THROW(factory().createLLT(HTYPE_FDDI, 0xFAFAFAFA,
                                         toVector("24242424242424242424")));
     testLLT("0008", "FAFAFAFA", true, "24242424242424242424");
