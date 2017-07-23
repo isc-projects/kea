@@ -48,7 +48,7 @@ only transport supported is via UDP Sockets.
 
 The UDP implementation is provided by isc::dhcp_ddns::NameChangeUDPSender
 and isc::dhcp_ddns::NameChangeUDPListener.  The implementation is strictly
-unidirectional: there is no explicit acknowledgement of receipt of a
+unidirectional: there is no explicit acknowledgment of receipt of a
 request so, as it is UDP, no guarantee of delivery.
 
 */
