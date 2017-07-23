@@ -374,7 +374,7 @@ public:
         // is_null only if it should be true. This gives up minor performance
         // benefit while being safe approach. For improved readability, the
         // code that explicitly sets is_null is there, but is commented out.
-        // This also takes care of seeeting bind_[X].is_null to MLM_FALSE.
+        // This also takes care of setting bind_[X].is_null to MLM_FALSE.
         memset(&bind_[0], 0, sizeof(MYSQL_BIND) * bind_.size());
 
         // host_id : INT UNSIGNED NOT NULL
