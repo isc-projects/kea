@@ -180,7 +180,7 @@ private:
 
     /// @brief handler for processing 'write-config' command
     ///
-    /// This handle processes write-config comamnd, which writes the
+    /// This handle processes write-config command, which writes the
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during
