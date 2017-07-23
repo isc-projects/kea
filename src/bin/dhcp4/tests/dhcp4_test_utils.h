@@ -418,7 +418,7 @@ public:
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
 
-    /// @brief Pretents a packet of specified type was received.
+    /// @brief Pretends a packet of specified type was received.
     ///
     /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,
     /// then creates a message of specified type and sends it to the
