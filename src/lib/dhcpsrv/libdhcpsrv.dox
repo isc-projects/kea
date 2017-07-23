@@ -82,7 +82,7 @@ one that occurred before it etc.
 All configuration classes are derived from the abstract base class
 \ref isc::data::CfgToElement and define the toElement virtual method
 which returns a \ref isc::data::ConstElementPtr which must be
-parsed into the same object, i.e. fullfil this property:
+parsed into the same object, i.e. fulfill this property:
 @code
 for all valid C: parse(parse(C)->toElement()) == parse(C)
 @endcode
