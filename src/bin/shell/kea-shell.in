@@ -37,7 +37,7 @@ else:
     raise SystemExit("Unknown python version:" + str(sys.version_info[0]))
 
 def timeout_handler(signum, frame):
-    """Connection timeoout handler"""
+    """Connection timeout handler"""
     del signum, frame
     print("Connection timeout")
     sys.exit(1)
