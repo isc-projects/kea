@@ -186,7 +186,7 @@ protected:
     ///
     /// @param config Pointer to a configuration specified for the agent.
     /// @param check_only Boolean flag indicating if this method should
-    /// only verify correctness of the provided conifiguration.
+    /// only verify correctness of the provided configuration.
     /// @return Pointer to a result of configuration parsing.
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);

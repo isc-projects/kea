@@ -1242,7 +1242,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
 
 // This test verifies that the option data configuration with a minimal
 // set of parameters works as expected when option definition is
-// created in the configruation file.
+// created in the configuration file.
 TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     // Configuration string.
     std::string config =
