@@ -311,7 +311,7 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     ASSERT_TRUE(lease2);
     checkLease4(lease2);
 
-    // Lease already existsed, so old_lease should be set.
+    // Lease already existed, so old_lease should be set.
     EXPECT_TRUE(ctx.old_lease_);
 
     // Should NOT have bumped assigned-addresses
