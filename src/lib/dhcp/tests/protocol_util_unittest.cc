@@ -55,7 +55,7 @@ TEST(ProtocolUtilTest, checksum) {
     // Let's set it to 2 and see whether it is included in the
     // calculation.
     chksum = ~calcChecksum(hdr, hdr_size, 2);
-    // The checkum value should change.
+    // The checksum value should change.
     EXPECT_EQ(0xb1e4, chksum);
 }
 
