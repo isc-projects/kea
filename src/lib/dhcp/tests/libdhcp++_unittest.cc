@@ -329,7 +329,7 @@ TEST_F(LibDhcpTest, optionFactory) {
     OptionBuffer buf;
     // Factory functions for specific options must be registered before
     // they can be used to create options instances. Otherwise exception
-    // is rised.
+    // is raised.
     EXPECT_THROW(LibDHCP::optionFactory(Option::V4, DHO_SUBNET_MASK, buf),
                  isc::BadValue);
 
