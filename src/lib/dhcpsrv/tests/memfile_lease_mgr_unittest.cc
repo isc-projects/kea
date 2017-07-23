@@ -416,7 +416,7 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
 }
 
-// Check if the persitLeases correctly checks that leases should not be written
+// Check if the persistLeases correctly checks that leases should not be written
 // to disk when disabled through configuration.
 TEST_F(MemfileLeaseMgrTest, persistLeases) {
     // Initialize IO objects, so as the test csv files get removed after the
