@@ -87,7 +87,7 @@ public:
         /// @brief default constructor
         RelayInfo();
 
-        /// @brief Returns prinable representation of the relay information.
+        /// @brief Returns printable representation of the relay information.
         /// @return text representation of the structure (used in debug logging)
         std::string toText() const;
 
