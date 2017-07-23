@@ -513,7 +513,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     ASSERT_TRUE(hdsptr_);
 
     // The database is initially opened in "read-write" mode. We can
-    // insert some data to the databse.
+    // insert some data to the database.
     HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     ASSERT_TRUE(host);
     ASSERT_NO_THROW(hdsptr_->add(host));
