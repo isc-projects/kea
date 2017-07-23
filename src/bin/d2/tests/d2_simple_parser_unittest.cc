@@ -42,7 +42,7 @@ void checkIntegerValue(const ConstElementPtr& element,
 /// @brief Checks if specified element matches the given boolean default
 ///
 /// @param element defaulted element to check
-/// @param deflt SimpleDefault which supplied the default valaue
+/// @param deflt SimpleDefault which supplied the default value
 void checkBooleanValue(const ConstElementPtr& element,
                        const SimpleDefault& deflt)  {
     ASSERT_TRUE(element);
@@ -61,7 +61,7 @@ void checkBooleanValue(const ConstElementPtr& element,
 /// @brief Checks if specified element matches the given string default
 ///
 /// @param element defaulted element to check
-/// @param deflt SimpleDefault which supplied the default valaue
+/// @param deflt SimpleDefault which supplied the default value
 void checkStringValue(const ConstElementPtr& element,
                       const SimpleDefault& deflt)  {
     ASSERT_TRUE(element);
