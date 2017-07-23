@@ -405,7 +405,7 @@ protected:
     ///
     /// For each scalar element in the set:
     /// - Invoke parseElement
-    /// - If it returns true go to the next element othewise:
+    /// - If it returns true go to the next element otherwise:
     ///     - create a parser for the element
     ///     - invoke the parser's build method
     ///     - invoke the parser's commit method
