@@ -1180,7 +1180,7 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     // Initialize Test Controller.
     NakedTestControl tc;
     uint8_t randomized = 0;
-    // Generate MAC adddress and sanity check its size.
+    // Generate MAC address and sanity check its size.
     std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
     ASSERT_EQ(6, mac.size());
     // Make sure that the generated MAC address belongs to the MAC addresses
