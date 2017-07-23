@@ -47,7 +47,7 @@ In an authoritative server, the DNSLookup implementation would examine
 the query, look up the answer, then call "resume".  (See the diagram
 in doc/auth_process.jpg.)
 
-In a recursive server, the DNSLookup impelemtation would initiate a
+In a recursive server, the DNSLookup implementation would initiate a
 DNSQuery, which in turn would be responsible for calling the server's
 "resume" method.  (See the diagram in doc/recursive_process.jpg.)
 
