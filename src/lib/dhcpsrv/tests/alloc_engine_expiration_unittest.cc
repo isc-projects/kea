@@ -654,7 +654,7 @@ public:
     /// of reclaimed leases.
     void testReclaimExpiredLeasesLimit() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-            // Mark all leaes as expired. The higher the index the less
+            // Mark all leases as expired. The higher the index the less
             // expired the lease.
             expire(i, 1000 - i);
         }
@@ -1349,7 +1349,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids and lease types for some leases.
@@ -2001,7 +2001,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids of some leases.

@@ -485,7 +485,7 @@ TEST_F(LFCControllerTest, launch4) {
     // Run the cleanup
     launch(lfc_controller, argc, argv);
 
-    // Compare the results, we expect a header and no leaes.
+    // Compare the results, we expect a header and no leases.
     // We also verify none of the temp or pid files remain.
     test_str = v4_hdr_;
     EXPECT_EQ(readFile(xstr_), test_str);
