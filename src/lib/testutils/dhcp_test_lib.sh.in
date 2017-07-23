@@ -291,7 +291,7 @@ cleanup() {
         get_pid ${proc_name}
         # Shut down running Kea process.
         if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-            printf "Shutting down Kea proccess having pid %d.\n" ${_GET_PID}
+            printf "Shutting down Kea process having pid %d.\n" ${_GET_PID}
             kill -9 ${_GET_PID}
         fi
     done
