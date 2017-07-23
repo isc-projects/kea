@@ -210,7 +210,7 @@
 
     <para>Kea development team is actively working on providing client applications
     which can be used to control the servers. These applications are, however, in the
-    early stages of development and as of Kea 1.2.0 release have certain limitatins.
+    early stages of development and as of Kea 1.2.0 release have certain limitations.
     The easiest way to start playing with the control API is to use common Unix/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
