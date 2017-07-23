@@ -367,7 +367,7 @@ public:
         return (host);
     }
 
-    /// @brief Add a host reservation to the curent configuration
+    /// @brief Add a host reservation to the current configuration
     ///
     /// Adds the given host reservation to the current configuration by
     /// casting it to non-const.  We do it this way rather than adding it to
