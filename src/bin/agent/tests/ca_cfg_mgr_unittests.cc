@@ -181,13 +181,13 @@ const char* AGENT_CONFIGS[] = {
     "{ }",
 
     // Configuration 1: http parameters only (no control sockets, not hooks)
-    "{  \"http-host\": \"betelguese\",\n"
+    "{  \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001\n"
     "}",
 
     // Configuration 2: http and 1 socket
     "{\n"
-    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
@@ -198,7 +198,7 @@ const char* AGENT_CONFIGS[] = {
 
     // Configuration 3: http and all 3 sockets
     "{\n"
-    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
@@ -217,7 +217,7 @@ const char* AGENT_CONFIGS[] = {
     // CA is able to load hook libraries that augment its operation.
     // The primary functionality is the ability to add new commands.
     "{\n"
-    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
@@ -236,7 +236,7 @@ const char* AGENT_CONFIGS[] = {
 
     // Configuration 5: http and 1 socket (d2 only)
     "{\n"
-    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"d2\": {\n"
@@ -247,7 +247,7 @@ const char* AGENT_CONFIGS[] = {
 
     // Configuration 6: http and 1 socket (dhcp6 only)
     "{\n"
-    "    \"http-host\": \"betelguese\",\n"
+    "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp6\": {\n"
@@ -303,7 +303,7 @@ TEST_F(AgentParserTest, configParseHttpOnly) {
 
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     ASSERT_TRUE(ctx);
-    EXPECT_EQ("betelguese", ctx->getHttpHost());
+    EXPECT_EQ("betelgeuse", ctx->getHttpHost());
     EXPECT_EQ(8001, ctx->getHttpPort());
 }
 
