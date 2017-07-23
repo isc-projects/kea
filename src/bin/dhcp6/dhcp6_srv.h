@@ -689,7 +689,7 @@ protected:
     /// @param [out] ctx reference to context object to be initialized.
     void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.

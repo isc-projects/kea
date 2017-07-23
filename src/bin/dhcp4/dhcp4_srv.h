@@ -582,7 +582,7 @@ protected:
     /// server's response.
     void processClientName(Dhcpv4Exchange& ex);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.
