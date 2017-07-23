@@ -693,7 +693,7 @@ private:
     uint16_t code_;
     /// Option data type.
     OptionDataType type_;
-    /// Indicates wheter option is a single value or array.
+    /// Indicates whether option is a single value or array.
     bool array_type_;
     /// Name of the space being encapsulated by this option.
     std::string encapsulated_space_;
