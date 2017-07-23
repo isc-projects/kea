@@ -1423,7 +1423,7 @@ AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
    bison and flex are required [default=no]])],
    enable_generate_parser=$enableval, enable_generate_parser=no)
 
-# Check if flex is avaible. Flex is not needed for building Kea sources,
+# Check if flex is available. Flex is not needed for building Kea sources,
 # unless you want to regenerate grammars
 AC_PROG_LEX
 
