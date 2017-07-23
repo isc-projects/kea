@@ -281,7 +281,7 @@ public:
     }
 
     /// @brief Checks if the specified interface has a socket bound to a
-    /// specified adddress.
+    /// specified address.
     ///
     /// @param iface_name A name of the interface.
     /// @param addr An address to be checked for binding.

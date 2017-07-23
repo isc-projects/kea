@@ -96,7 +96,7 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
         }
 
     } else if (htype_out == 0) {
-        // If link layer type unspecified and link layer adddress
+        // If link layer type unspecified and link layer address
         // is specified, use current type or HTYPE_ETHER.
         htype_out = ((htype_current != 0) ? htype_current :
                      static_cast<uint16_t>(HTYPE_ETHER));
@@ -221,7 +221,7 @@ DUIDFactory::createLL(const uint16_t htype,
         }
 
     } else if (htype_out == 0) {
-        // If link layer type unspecified and link layer adddress
+        // If link layer type unspecified and link layer address
         // is specified, use current type or HTYPE_ETHER.
         htype_out = ((htype_current != 0) ? htype_current :
             static_cast<uint16_t>(HTYPE_ETHER));

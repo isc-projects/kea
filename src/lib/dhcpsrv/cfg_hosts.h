@@ -509,7 +509,7 @@ private:
     /// @c Host object.
     template<typename ReturnType, typename Storage>
     ReturnType getHostInternal6(const SubnetID& subnet_id,
-                                const asiolink::IOAddress& adddress) const;
+                                const asiolink::IOAddress& address) const;
 
     template<typename ReturnType>
     ReturnType getHostInternal6(const asiolink::IOAddress& prefix,
