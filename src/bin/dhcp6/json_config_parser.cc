@@ -567,7 +567,7 @@ void configureCommandChannel() {
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
-    // data elements are't equal.
+    // data elements aren't equal.
     bool sock_changed = (sock_cfg && current_sock_cfg &&
                          !sock_cfg->equals(*current_sock_cfg));
 
