@@ -1674,7 +1674,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
@@ -1725,7 +1725,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
