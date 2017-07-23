@@ -100,7 +100,7 @@ public:
 
     /// @brief Sets or clears verbose mode
     ///
-    /// Verbose mode (-v in command-line) triggers loggers to log everythin
+    /// Verbose mode (-v in command-line) triggers loggers to log everything
     /// (sets severity to DEBUG and debuglevel to 99). Values specified in the
     /// config file are ignored.
     ///
