@@ -150,7 +150,7 @@ CfgMgr::revert(const size_t index) {
     commit();
 }
 
-ConstSrvConfigPtr
+SrvConfigPtr
 CfgMgr::getCurrentCfg() {
     ensureCurrentAllocated();
     return (configuration_);
