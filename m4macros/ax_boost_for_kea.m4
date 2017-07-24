@@ -196,13 +196,26 @@ if test "x${BOOST_LIBS}" != "x"; then
    LIBS_SAVED="$LIBS"
    LIBS="$BOOST_LIBS $LIBS"
 
+   if test $enable_static_link = yes; then
+       LIBS="-static $LIBS"
+   fi
+
+   # Wrap the compilation in libtool as we do in our Makefiles
+   # when linking.  That way if we're static linking we should
+   # get the same result our Makefiles would.  We don't provide
+   # a path to our libtool as it may not exist yet.
+   CXX_SAVED="$CXX"
+   CXX="libtool --tag=CXX --mode=link $CXX"
+
    AC_LINK_IFELSE(
      [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
                       [boost::system::error_code ec;])],
      [AC_MSG_RESULT([checking for Boost system library... yes])],
      [AC_MSG_RESULT([checking for Boost system library... no])
-      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed])])
+      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed;
+                    Check config.log for details, you may be missing other libraries.])])
 
+    CXX="$CXX_SAVED"
     LIBS="$LIBS_SAVED"
 fi
 
