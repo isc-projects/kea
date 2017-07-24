@@ -213,7 +213,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     /// @todo maybe clear should never throw, log only
     ASSERT_THROW(watch->clearReady(), WatchSocketError);
 
-    // Verify the select_fd does not evalute to ready.
+    // Verify the select_fd does not evaluate to ready.
     EXPECT_NE(1, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns INVALID.

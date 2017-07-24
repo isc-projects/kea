@@ -20,7 +20,7 @@
 // a single int.
 //
 // A reentrant function contains a CORO_REENTER (coroutine)  { ... }
-// block.  Whenever an asychrnonous operation is initiated within the
+// block.  Whenever an asynchronous operation is initiated within the
 // routine, the function is provided as the handler object.  (The simplest
 // way to do this is to have the reentrant function be the operator()
 // member for the coroutine object itself.)   For example:

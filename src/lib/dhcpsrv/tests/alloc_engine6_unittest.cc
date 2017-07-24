@@ -504,7 +504,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Initialize FQDN data for the lease.
     initFqdn("myhost.example.com", true, true);
 
-    // Verify the none of relelvant stats are zero.
+    // Verify the none of relevant stats are zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
@@ -547,7 +547,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
 
-    // Verify the none of relelvant stats were altered.
+    // Verify the none of relevant stats were altered.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
@@ -1899,8 +1899,8 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     // assigned-nas should NOT get incremented. Currently we do not adjust assigned
     // counts when we declines
     // declined-addresses will -1, as the artificial creation of declined lease
-    // doens't increment it from zero.  reclaimed-declined-addresses will be 1
-    // becuase the leases are implicitly reclaimed before they can be assigned.
+    // doesn't increment it from zero.  reclaimed-declined-addresses will be 1
+    // because the leases are implicitly reclaimed before they can be assigned.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("declined-addresses", -1));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
@@ -1955,7 +1955,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
 
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
 
-    // Check that he got the orginal lease back.
+    // Check that he got the original lease back.
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
 
@@ -1971,7 +1971,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     EXPECT_EQ(lease->state_, Lease::STATE_DEFAULT);
 
     // Verify assigned-nas got bumped.  Reclaimed stats should still
-    // be zero as we artifically marked it reclaimed.
+    // be zero as we artificially marked it reclaimed.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));

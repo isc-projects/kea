@@ -38,7 +38,7 @@ protected:
 
     /// @brief Parses a single entry for host reservation.
     ///
-    /// This method is called by @ref parse and it can be overriden in the
+    /// This method is called by @ref parse and it can be overridden in the
     /// derived classes to provide class specific parsing logic.
     ///
     /// @param subnet_id Identifier of the subnet that the host is
@@ -158,7 +158,7 @@ protected:
 
     /// @brief Parses a list of host identifiers.
     ///
-    /// This method is called by @ref parse and it can be overriden in the
+    /// This method is called by @ref parse and it can be overridden in the
     /// derived classes to provide class specific parsing logic.
     ///
     /// @param ids_list Data element pointing to an ordered list of host

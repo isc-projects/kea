@@ -183,7 +183,7 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 1 $count "lease6DumpHeader is missing hwaddr columns"
 
     # Added hwaddr columns to lease6DumpData
-    output=`pgsql_execute "select hwaddr,hwttype,hwaddr_source from lease6DumpData();"`
+    output=`pgsql_execute "select hwaddr,hwtype,hwaddr_source from lease6DumpData();"`
     assert_eq 0 $ERRCODE "function lease6DumpData() broken or missing. (expected status code %d, returned %d)"
 
     # Added order by clause to lease6DumpData
@@ -196,11 +196,11 @@ pgsql_upgrade_2_0_to_3_0() {
     output=`pgsql_execute "select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
-    assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
+    assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 }
 
 pgsql_upgrade_3_0_to_3_1() {
-    # Verify upgraded schemd reports version 3.1.
+    # Verify upgraded schema reports version 3.1.
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "3.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 }

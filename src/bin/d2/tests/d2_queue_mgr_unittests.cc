@@ -158,7 +158,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
         // Verify that peek did not alter the queue size.
         EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
 
-        // Verify the dequeueing from non-empty queue works
+        // Verify the dequeuing from non-empty queue works
         EXPECT_NO_THROW(queue_mgr->dequeue());
 
         // Verify queue size decrements following dequeue.

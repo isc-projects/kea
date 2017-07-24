@@ -234,7 +234,7 @@ public:
 
     /// @brief Adds IA option to the message.
     ///
-    /// Addded option holds an address.
+    /// Added option holds an address.
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
@@ -554,7 +554,7 @@ public:
     ///
     /// @param type An expected type of the NameChangeRequest (Add or Remove).
     /// @param reverse An expected setting of the reverse update flag.
-    /// @param forward An expected setting of the forward udpate flag.
+    /// @param forward An expected setting of the forward update flag.
     /// @param addr A string representation of the IPv6 address held in the
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.
@@ -791,7 +791,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 // Checks that NameChangeRequests to add entries are not
 // created when ddns updates are disabled.
 TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
-    // Disable DDNS udpates.
+    // Disable DDNS updates.
     disableD2();
 
     // Create Reply message with Client Id and Server id.

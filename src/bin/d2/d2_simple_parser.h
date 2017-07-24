@@ -66,7 +66,7 @@ public:
     /// found, then an empty map entry is added for it, thus defaulting the
     /// manager to "disabled".
     ///
-    /// @param global element tree containgin the DDNS domain manager element
+    /// @param global element tree containing the DDNS domain manager element
     /// to which defaults should be
     /// added
     /// @param mgr_name name of the manager element within the element tree

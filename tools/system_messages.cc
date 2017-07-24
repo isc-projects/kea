@@ -172,7 +172,7 @@ const std::string SECTION_TRAILER =
   </section>";
 
 /// @brief File trailer
-/// The trailier is copied to the output verbatim after the last section.
+/// The trailer is copied to the output verbatim after the last section.
 const std::string FILE_TRAILER =
 "  </chapter>\n\
 </book>";

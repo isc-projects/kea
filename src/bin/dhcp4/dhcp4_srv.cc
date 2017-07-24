@@ -769,7 +769,7 @@ Dhcpv4Srv::run_one() {
     } catch (const SignalInterruptOnSelect) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
-        // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+        // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
@@ -1933,7 +1933,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     IOAddress local_addr = query->getLocalAddr();
 
     // In many cases the query is sent to a broadcast address. This address
-    // apears as a local address in the query message. We can't simply copy
+    // appears as a local address in the query message. We can't simply copy
     // this address to a response message and use it as a source address.
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just

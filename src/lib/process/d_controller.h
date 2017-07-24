@@ -188,7 +188,7 @@ public:
     ///  { "<module-name>": {<module-config>}
     ///
     ///   # Logging element is optional
-    ///   ,"Logging": {<logger connfig}
+    ///   ,"Logging": {<logger config}
     ///  }
     ///
     ///  where:
@@ -205,7 +205,7 @@ public:
     /// than the JSON parsing providing by Element::fromJSONFile() is called.
     ///
     /// Once parsed, the method looks for the Element "Logging" and, if present
-    /// uses it to configure loging.
+    /// uses it to configure logging.
     ///
     /// It then extracts the set of configuration elements for the
     /// module-name that matches the controller's app_name_ and passes that
@@ -270,7 +270,7 @@ public:
 
     /// @brief handler for config-write command
     ///
-    /// This handle processes write-config comamnd, which writes the
+    /// This handle processes write-config command, which writes the
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during
@@ -593,7 +593,7 @@ protected:
     /// desired information such as library dependencies to the extended
     /// version text returned when DControllerBase::getVersion(true) is
     /// invoked.
-    /// @return a string containing additonal version info
+    /// @return a string containing additional version info
     virtual std::string getVersionAddendum() { return (""); }
 
 private:

@@ -234,7 +234,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         return;
 
     // On Debian it has been often observed that boost::asio async
-    // operations result in EINPROGRESS. This doesn't neccessarily
+    // operations result in EINPROGRESS. This doesn't necessarily
     // indicate an issue. Thus, we continue as if no error occurred.
     } else if (ec && (ec.value() != boost::asio::error::in_progress)) {
         logIOFailure(ec);
@@ -297,7 +297,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             // So... we need to loop until we have at least two bytes, then store
             // the expected amount of data.  Then we need to loop until we have
             // received all the data before copying it back to the user's buffer.
-            // And we want to minimise the amount of copying...
+            // And we want to minimize the amount of copying...
     
             data_->origin = ASIODNS_READ_DATA;
             data_->cumulative = 0;          // No data yet received

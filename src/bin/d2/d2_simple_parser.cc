@@ -41,7 +41,7 @@ const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
     { "ncr-format",         Element::string, "JSON" }
 };
 
-/// Supplies defaults for ddns-domoains list elements (i.e. DdnsDomains)
+/// Supplies defaults for ddns-domains list elements (i.e. DdnsDomains)
 const SimpleDefaults D2SimpleParser::TSIG_KEY_DEFAULTS = {
     { "digest-bits", Element::integer, "0" }
 };
@@ -55,7 +55,7 @@ const SimpleDefaults D2SimpleParser::TSIG_KEY_DEFAULTS = {
 const SimpleDefaults D2SimpleParser::DDNS_DOMAIN_MGR_DEFAULTS = {
 };
 
-/// Supplies defaults for ddns-domoains list elements (i.e. DdnsDomains)
+/// Supplies defaults for ddns-domains list elements (i.e. DdnsDomains)
 const SimpleDefaults D2SimpleParser::DDNS_DOMAIN_DEFAULTS = {
     { "key-name", Element::string, "" }
 };

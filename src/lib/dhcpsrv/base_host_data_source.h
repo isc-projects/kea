@@ -64,7 +64,7 @@ public:
     /// in the future. Also, this list will grow over time. It is likely
     /// that we'll implement other identifiers in the future, e.g. remote-id.
     ///
-    /// Those value correspond direclty to dhcp_identifier_type in hosts
+    /// Those value correspond directly to dhcp_identifier_type in hosts
     /// table in MySQL schema.
     enum IdType {
         ID_HWADDR = 0, ///< Hardware address
@@ -251,7 +251,7 @@ public:
     ///
     /// This method supports both v4 and v6.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     /// @return true if deletion was successful, false if the host was not there.
     /// @throw various exceptions in case of errors

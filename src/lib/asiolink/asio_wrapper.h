@@ -10,7 +10,7 @@
 //
 // As of #5215 (Kea 1.3) The default build configuration is to link with
 // Boost's system library (boost_system) rather than build with Boost's
-// headers only. Linking with the boost_system elminiates the issue as
+// headers only. Linking with the boost_system eliminates the issue as
 // detailed below. This file exists solely for the purpose of allowing
 // people to attempt to build headers only.  ISC DOES NOT RECOMMEND
 // building Kea with Boost headers only.
@@ -38,7 +38,7 @@
 //
 // which involve implicit conversion of enumerates to error_code instances
 // to not evaluate correctly.  During the implicit conversion the error_code
-// instances may be assigned differeing values error_code:m_cat. This
+// instances may be assigned differing values error_code:m_cat. This
 // causes two instances of error_code which should have been equal to
 // to not be equal.
 //

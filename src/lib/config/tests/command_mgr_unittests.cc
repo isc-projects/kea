@@ -247,7 +247,7 @@ TEST_F(CommandMgrTest, listCommands) {
     EXPECT_THROW(CommandMgr::instance().deregisterCommand("make-a-coffee"),
                  InvalidCommandName);
 
-    // You can't unistall list-commands as it's the internal handler.
+    // You can't uninstall list-commands as it's the internal handler.
     // It always must be there.
     EXPECT_THROW(CommandMgr::instance().deregisterCommand("list-commands"),
                  InvalidCommandName);

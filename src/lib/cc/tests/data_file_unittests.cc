@@ -16,13 +16,13 @@ using namespace isc::data;
 
 namespace {
 
-/// @brief Test class for testing Deamon class
+/// @brief Test class for testing Daemon class
 class DataFileTest : public ::testing::Test {
 public:
 
     /// @brief writes specified text to a file
     ///
-    /// That is an auxilliary function used in fileRead() tests.
+    /// That is an auxiliary function used in fileRead() tests.
     ///
     /// @param content text to be written to disk
     void writeFile(const std::string& content) {

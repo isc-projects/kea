@@ -109,7 +109,7 @@ protected:
     ///
     /// This method provides a means to open a fallback socket and bind it
     /// to a given IPv4 address and UDP port. This function may be used by the
-    /// derived classes to create a fallback socket. It can be overriden
+    /// derived classes to create a fallback socket. It can be overridden
     /// in the derived classes if it happens to be insufficient on some
     /// environments.
     ///

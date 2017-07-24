@@ -231,7 +231,7 @@ public:
     /// adding duplicated hosts to the collection, assuming that processed
     /// rows are primarily ordered by host id column.
     ///
-    /// This method must be overriden in the derived classes to also
+    /// This method must be overridden in the derived classes to also
     /// retrieve IPv6 reservations and DHCP options associated with a host.
     ///
     /// @param [out] hosts Collection of hosts to which a new host created

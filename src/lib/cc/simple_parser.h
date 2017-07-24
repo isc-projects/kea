@@ -154,7 +154,7 @@ protected:
 
     /// @brief Returns an integer value with range checking from a scope
     ///
-    /// This template should be instantied in parsers when useful
+    /// This template should be instantiated in parsers when useful
     ///
     /// @tparam int_type the integer type e.g. uint32_t
     /// @param scope specified parameter will be extracted from this scope
@@ -178,7 +178,7 @@ protected:
 
     /// @brief Returns a converted value from a scope
     ///
-    /// This template should be instantied in parsers when useful
+    /// This template should be instantiated in parsers when useful
     ///
     /// @tparam target_type the type of the result
     /// @tparam convert the conversion function std::string -> target_type

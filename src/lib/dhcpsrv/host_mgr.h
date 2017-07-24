@@ -237,7 +237,7 @@ public:
 
     /// @brief Returns a host from specific subnet and reserved address.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     ///
     /// @return Const @c host object that has a reservation for specified address.
@@ -273,7 +273,7 @@ public:
     ///
     /// Note: This should be used only for testing. Do not use
     /// in production. Normal control flow assumes that
-    /// HostMgr::create(...) is called and it instnatiates
+    /// HostMgr::create(...) is called and it instantiates
     /// appropriate host data source. However, some tests
     /// (e.g. host_cmds) implement their own very simple
     /// data source. It's not production ready by any means,

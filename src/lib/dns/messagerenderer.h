@@ -124,7 +124,7 @@ private:
     ///
     /// It was decided that there's no need to have this in every subclass,
     /// at least not now, and this reduces code size and gives compiler a
-    /// better chance to optimise.
+    /// better chance to optimize.
     isc::util::OutputBuffer* buffer_;
 public:
     ///

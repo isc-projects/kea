@@ -567,13 +567,13 @@ void configureCommandChannel() {
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
-    // data elements are't equal.
+    // data elements aren't equal.
     bool sock_changed = (sock_cfg && current_sock_cfg &&
                          !sock_cfg->equals(*current_sock_cfg));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
-    // close the exisitng socket and open a new socket as appropriate.
+    // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the clien will not
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
@@ -615,7 +615,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
     // Let's set empty container in case a user hasn't specified any configuration
-    // for option definitions. This is equivalent to commiting empty container.
+    // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
     // This is a way to convert ConstElementPtr to ElementPtr.

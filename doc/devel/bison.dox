@@ -78,7 +78,7 @@ convey the intent; a more detailed description is available in subsequent sectio
    @endcode
    The lexer would generate the following sequence of tokens: LCURLY_BRACKET, DHCP6, COLON,
    LCURLY_BRACKET, RENEW_TIMER, COLON, INTEGER (a token with a value of 100), RCURLY_BRACKET,
-   RCURLY_BRACKET, END.  The bison grammar recognises that the sequence forms a valid sentence and
+   RCURLY_BRACKET, END.  The bison grammar recognizes that the sequence forms a valid sentence and
    that there are no errors and act upon it. (Whereas if the left and right braces in the above
    example were exchanged, the bison module would identify the sequence as syntactically incorrect.)
 
@@ -244,7 +244,7 @@ In principle, it is valid to define just the grammar without any corresponding C
 will go through the whole input text, match the rules and will either say the input adhered to the
 rules (parsing successful) or not (parsing failed). This may be a useful step when developing new
 parser, but it has no practical value. To perform specific actions, bison allows the injection of
-C++ code at almost any poing. For example we could augment the parsing of renew_timer with some
+C++ code at almost any point. For example we could augment the parsing of renew_timer with some
 extra code:
 
 @code

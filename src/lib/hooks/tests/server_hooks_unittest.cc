@@ -80,7 +80,7 @@ TEST(ServerHooksTest, NewDuplicateHooks) {
     int index = hooks.getIndex("context_create");
 
     // Ensure we can duplicate one of the existing names.
-    // Instead of throwing, we just check that a resonable
+    // Instead of throwing, we just check that a reasonable
     // index has been returned.
     EXPECT_EQ(index, hooks.registerHook("context_create"));
 

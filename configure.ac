@@ -114,7 +114,7 @@ AC_LANG([C++])
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
-# USE_CLANGPP is no longer used, keep it by summetry with USE_GXX?
+# USE_CLANGPP is no longer used, keep it by symmetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Check for C++11 features support
@@ -930,7 +930,7 @@ EOF
     #CRYPTO_LDFLAGS="-ldl"
     CRYPTO_LDFLAGS=""
     CRYPTO_RPATH=""
-    dnl Check avaibility of SHA-2
+    dnl Check availability of SHA-2
     AC_MSG_CHECKING([support of SHA-2])
     LIBS_SAVED=${LIBS}
     LIBS="$LIBS $CRYPTO_LIBS"
@@ -1423,7 +1423,7 @@ AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
    bison and flex are required [default=no]])],
    enable_generate_parser=$enableval, enable_generate_parser=no)
 
-# Check if flex is avaible. Flex is not needed for building Kea sources,
+# Check if flex is available. Flex is not needed for building Kea sources,
 # unless you want to regenerate grammars
 AC_PROG_LEX
 

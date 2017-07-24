@@ -99,7 +99,7 @@ public:
     /// @brief Maximum value for max-reclaim-leases.
     static const uint32_t LIMIT_MAX_RECLAIM_LEASES;
 
-    /// @brief Defalt value for max-reclaim-time.
+    /// @brief Default value for max-reclaim-time.
     static const uint16_t LIMIT_MAX_RECLAIM_TIME;
 
     /// @brief Maximum value for unwarned-reclaim-cycles.
@@ -313,7 +313,7 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
         timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
     }
 
-    // If the interval for the timer flusing expired-reclaimed leases
+    // If the interval for the timer flushing expired-reclaimed leases
     // is set we will schedule the timer.
     if (!flush_timer_disabled) {
         // The interval is specified in milliseconds if we're in the test mode.

@@ -281,7 +281,7 @@ public:
     }
 
     /// @brief Checks if the specified interface has a socket bound to a
-    /// specified adddress.
+    /// specified address.
     ///
     /// @param iface_name A name of the interface.
     /// @param addr An address to be checked for binding.
@@ -729,7 +729,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
-    // uncertainity should be low enough to expect that measured
+    // uncertainty should be low enough to expect that measured
     // value is in the range <1.4s; 1.7s>.
     EXPECT_GE(duration.total_microseconds(),
               1400000 - TIMEOUT_TOLERANCE);
@@ -781,7 +781,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     time_duration duration = stop_time - start_time;
     // We stop the clock when the call completes so it does not
     // precisely reflect the receive timeout. However the
-    // uncertainity should be low enough to expect that measured
+    // uncertainty should be low enough to expect that measured
     // value is in the range <2.3s; 2.6s>.
     EXPECT_GE(duration.total_microseconds(),
               2300000 - TIMEOUT_TOLERANCE);
@@ -2124,7 +2124,7 @@ TEST_F(IfaceMgrTest, iface_methods) {
         OutOfRange
     );
 
-    // MAC length should stay not set as excep
+    // MAC length should stay not set as exception was thrown.
     EXPECT_EQ(0, iface.getMacLen());
 
     // Setting maximum length MAC should be ok.
@@ -2493,7 +2493,7 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
 
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, MiltipleExternalSockets4) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets4) {
 
     callback_ok = false;
     callback2_ok = false;
@@ -2662,7 +2662,7 @@ TEST_F(IfaceMgrTest, SingleExternalSocket6) {
 
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive6() method.
-TEST_F(IfaceMgrTest, MiltipleExternalSockets6) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets6) {
 
     callback_ok = false;
     callback2_ok = false;
@@ -2792,7 +2792,7 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
 
 // Test checks if the unicast sockets can be opened.
 // This test is now disabled, because there is no reliable way to test it. We
-// can't even use loopback, beacuse openSockets() skips loopback interface
+// can't even use loopback, because openSockets() skips loopback interface
 // (as it should be, because DHCP server is not supposed to listen on loopback).
 TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
     /// @todo Need to implement a test that is able to check whether we can open

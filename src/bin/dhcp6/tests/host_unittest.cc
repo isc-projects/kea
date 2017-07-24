@@ -495,7 +495,7 @@ public:
     /// @brief Verifies that host specific options override subnet specific
     /// options.
     ///
-    /// Overriden options are requested with Option Request option.
+    /// Overridden options are requested with Option Request option.
     ///
     /// @param msg_type DHCPv6 message type to be sent to the server. If the
     /// message type is Renew or Rebind, the 4-way exchange is made prior to

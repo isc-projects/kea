@@ -27,7 +27,7 @@ using namespace isc;
 
 namespace {
 
-/// @brief Test fixture for excerising D2ClientMgr send management
+/// @brief Test fixture for exercising D2ClientMgr send management
 /// services.  It inherits from D2ClientMgr to allow overriding various
 /// methods and accessing otherwise restricted member.  In particular it
 /// overrides the NameChangeSender completion completion callback, allowing

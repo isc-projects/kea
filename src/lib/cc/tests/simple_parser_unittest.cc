@@ -209,7 +209,7 @@ TEST_F(SimpleParserTest, getAndConvert) {
     EXPECT_NO_THROW(val = parser.getAsBool(a_bool, "foo"));
     EXPECT_FALSE(val);
 
-    // getAndConvert checks convertion
+    // getAndConvert checks conversion
     ElementPtr bad_bool = Element::fromJSON("{ \"foo\": \"bar\" }");
     EXPECT_THROW(parser.getAsBool(bad_bool, "bar"), DhcpConfigError);
 }

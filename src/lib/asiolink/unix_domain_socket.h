@@ -58,7 +58,7 @@ public:
 
     /// @brief Asynchronously connects the socket to the specified endpoint.
     ///
-    /// Always returns immediatelly.
+    /// Always returns immediately.
     ///
     /// @param path Path to the unix socket to which we should connect.
     /// @param handler Callback to be invoked when connection is established or
@@ -76,7 +76,7 @@ public:
 
     /// @brief Asynchronously sends data over the socket.
     ///
-    /// Always returns immediatelly.
+    /// Always returns immediately.
     ///
     /// @param data Pointer to data to be sent.
     /// @param length Number of bytes to be sent.
@@ -96,7 +96,7 @@ public:
 
     /// @brief Asynchronously receives data over the socket.
     ///
-    /// Always returns immediatelly.
+    /// Always returns immediately.
     /// @param [out] data Pointer to a location into which the read data should
     /// be stored.
     /// @param length Length of the buffer.

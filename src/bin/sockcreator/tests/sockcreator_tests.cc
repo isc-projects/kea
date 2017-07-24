@@ -32,7 +32,7 @@ using namespace isc::util::io;
 // Essentially we need to check all four combinations of TCP/UDP and IPv4/IPv6.
 // The different address families (IPv4/IPv6) require different structures to
 // hold the address information, and so some common code is in the form of
-// templates (or overloads), parameterised on the structure type.
+// templates (or overloads), parameterized on the structure type.
 //
 // The protocol is determined by an integer (SOCK_STREAM or SOCK_DGRAM) so
 // cannot be templated in the same way.  Relevant check functions are
@@ -57,7 +57,7 @@ setAddressFamilyFields(sockaddr_in6* address) {
 // Socket has been opened, perform a check on it.  The sole argument is the
 // socket descriptor.  The TCP check is the same regardless of the address
 // family.  The UDP check requires that the socket address be obtained so
-// is parameterised on the type of structure required to hold the address.
+// is parameterized on the type of structure required to hold the address.
 
 void
 tcpCheck(const int socknum) {
@@ -144,7 +144,7 @@ closeIgnore(int) {
 
 // Generic version of the socket test.  It creates the socket and checks that
 // it is a valid descriptor.  The family-specific check functions are called
-// to check that the socket is valid.  The function is parameterised according
+// to check that the socket is valid.  The function is parameterized according
 // to the structure used to hold the address.
 //
 // Arguments:

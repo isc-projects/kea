@@ -82,7 +82,7 @@ D2UpdateMgr::checkFinishedTransactions() {
     while (it != transaction_list_.end()) {
         NameChangeTransactionPtr trans = (*it).second;
         if (trans->isModelDone()) {
-            // @todo  Addtional actions based on NCR status could be
+            // @todo  Additional actions based on NCR status could be
             // performed here.
             transaction_list_.erase(it++);
         } else {

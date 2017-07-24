@@ -382,7 +382,7 @@ returned %d."
 }
 
 # This test verifies that DHCPv6 can be configured to run lease file cleanup
-# periodially.
+# periodically.
 lfc_timer_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv6_srv.lfc_timer_test"

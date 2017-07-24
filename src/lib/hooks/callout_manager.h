@@ -227,7 +227,7 @@ public:
 
     /// @brief Calls the callouts for a given hook
     ///
-    /// Iterates through the libray handles and calls the callouts associated
+    /// Iterates through the library handles and calls the callouts associated
     /// with the given hook index.
     ///
     /// @note This method invalidates the current library index set with

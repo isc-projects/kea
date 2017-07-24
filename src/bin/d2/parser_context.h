@@ -57,7 +57,7 @@ public:
         ///< Used for parsing content of a TSIG key.
         PARSER_TSIG_KEY,
 
-        ///< Used for pasing a list of TSIG Keys.
+        ///< Used for parsing a list of TSIG Keys.
         PARSER_TSIG_KEYS,
 
         ///< Used for parsing content of a DDNS Domain.
@@ -69,7 +69,7 @@ public:
         ///< Used for parsing content of a DNS Server.
         PARSER_DNS_SERVER,
 
-        ///< Used for pasing a list of DNS servers.
+        ///< Used for parsing a list of DNS servers.
         PARSER_DNS_SERVERS
     } ParserType;
 

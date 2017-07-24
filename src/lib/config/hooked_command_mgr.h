@@ -23,7 +23,7 @@ namespace config {
 /// The command handlers are registered by a hook library by calling
 /// @ref isc::hooks::LibraryHandle::registerCommandCallout. This call
 /// creates a hook point for this command (if one doesn't exist) and then
-/// registeres the specified handler(s). When the @ref HookedCommandMgr
+/// registers the specified handler(s). When the @ref HookedCommandMgr
 /// receives a command for processing it calls the
 /// @ref isc::hooks::HooksManager::commandHandlersPresent to check if there
 /// are handlers present for this command. If so, the @ref HookedCommandMgr

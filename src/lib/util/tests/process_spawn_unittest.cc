@@ -92,7 +92,7 @@ bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
 
 // This test verifies that if the thread calling spawn has SIGCHLD
 // already block ProcessSpawnError is thrown (@todo the second error
-// case: fork() failling)
+// case: fork() failing)
 TEST(ProcessSpawn, sigchldBlocked) {
     std::vector<std::string> args;
     ProcessSpawn process(getApp(), args);
@@ -239,7 +239,7 @@ TEST(ProcessSpawn, errnoInvariance) {
 
     EXPECT_EQ(64, process.getExitStatus(pid));
 
-    // errno value should be set to be preserved, despite the SIGCHILD
+    // errno value should be set to be preserved, despite the SIGCHLD
     // handler (ProcessSpawnImpl::waitForProcess) calling waitpid(), which
     // will likely set errno to ECHILD. See trac4000.
     EXPECT_EQ(123, errno);

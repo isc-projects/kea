@@ -137,7 +137,7 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
 struct bpf_insn loopback_ip_udp_filter [] = {
     // Make sure this is an IP packet. The pseudo header comprises a 4-byte
     // long value identifying the address family, which should be set to
-    // AF_INET. The default value used here (0xFFFFFFFF) must be overriden
+    // AF_INET. The default value used here (0xFFFFFFFF) must be overridden
     // with htonl(AF_INET) from within the openSocket function.
     // #0
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),

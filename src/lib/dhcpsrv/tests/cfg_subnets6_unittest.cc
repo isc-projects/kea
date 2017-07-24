@@ -244,7 +244,7 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
 
 // Test that client classes are considered when the subnet is selected by the
 // interface name.
-TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClaassify) {
+TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClassify) {
     CfgSubnets6 cfg;
 
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));

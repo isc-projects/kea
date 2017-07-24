@@ -57,7 +57,7 @@ RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 //
 // Three 1 byte fields to describe a network interface: type, major and minor
 RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
-// A client identifer: a 1 byte type field followed by opaque data depending on the type
+// A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
@@ -177,7 +177,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
-    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
+    // Unfortunately the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
     // dedicated option class to handle it so we simply return
@@ -280,7 +280,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "relay-msg", D6O_RELAY_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
-    // Unfortunatelly the AUTH option contains a 64-bit data field
+    // Unfortunately the AUTH option contains a 64-bit data field
     // called 'replay-detection' that can't be added as a record
     // field to a custom option. Also, there is no dedicated
     // option class to handle it so we simply return binary

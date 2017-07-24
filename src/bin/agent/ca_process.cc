@@ -125,7 +125,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             ctx = boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
 
         if (!ctx) {
-            isc_throw(Unexpected, "Interal logic error: bad context type");
+            isc_throw(Unexpected, "Internal logic error: bad context type");
         }
 
         /// @todo: If the parameter is a hostname, we need to resolve it.

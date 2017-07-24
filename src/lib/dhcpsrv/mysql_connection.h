@@ -381,7 +381,7 @@ public:
             switch(mysql_errno(mysql_)) {
                 // These are the ones we consider fatal. Remember this method is
                 // used to check errors of API calls made subsequent to successfully
-                // connecting.  Errors occuring while attempting to connect are
+                // connecting.  Errors occurring while attempting to connect are
                 // checked in the connection code. An alternative would be to call
                 // mysql_ping() - assuming autoreconnect is off. If that fails
                 // then we know connection is toast.
