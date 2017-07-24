@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string.h>
 #include <sys/select.h>
+#include <unistd.h>
 
 namespace isc {
 namespace util {
