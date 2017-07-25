@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
-#include <dhcp4/simple_parser4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
@@ -22,6 +21,7 @@
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>

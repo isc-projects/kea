@@ -67,8 +67,6 @@ libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
 libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-libdhcp6_la_SOURCES += simple_parser6.cc simple_parser6.h
-
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
