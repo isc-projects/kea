@@ -26,6 +26,9 @@ namespace dhcp {
 void
 DUIDConfigParser::parse(const CfgDUIDPtr& cfg,
                         isc::data::ConstElementPtr duid_configuration) {
+    if (!cfg) {
+        isc_throw(DhcpConfigError, "Must provide valid pointer to cfg when parsing duid");
+    }
 
     std::string param;
     try {

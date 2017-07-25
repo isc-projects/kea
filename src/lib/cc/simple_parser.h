@@ -204,6 +204,7 @@ protected:
         }
     }
 
+public:
     /// @brief Returns a value converted to uint32_t
     ///
     /// Instantiation of getIntType() to uint32_t
