@@ -281,7 +281,7 @@ protected:
     /// @brief Adds default values to the given config
     ///
     /// Adds the D2 default values to the configuration Element map. This
-    /// method is invoked by @c DCfgMgrBase::paserConfig().
+    /// method is invoked by @c DCfgMgrBase::parseConfig().
     ///
     /// @param mutable_config - configuration to which defaults should be added
     virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);

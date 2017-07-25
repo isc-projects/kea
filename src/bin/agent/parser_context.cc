@@ -130,7 +130,7 @@ ParserContext::contextName()
     case SOCKET_TYPE:
         return ("socket-type");
     case HOOKS_LIBRARIES:
-        return ("hooks-librairies");
+        return ("hooks-libraries");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

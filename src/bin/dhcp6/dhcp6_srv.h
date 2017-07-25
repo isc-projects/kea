@@ -649,7 +649,7 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Attempts to get a MAC/hardware address using configred sources
+    /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
     /// using MAC sources configured in 'mac-sources' configuration parameter.
@@ -689,7 +689,7 @@ protected:
     /// @param [out] ctx reference to context object to be initialized.
     void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.

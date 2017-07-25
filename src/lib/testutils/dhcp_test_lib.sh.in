@@ -88,7 +88,7 @@ assert_string_contains() {
     fi
 }
 
-# Begins a test by prining its name.
+# Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
     if [ -z ${TEST_NAME} ]; then
@@ -155,7 +155,7 @@ configuration"
 # ${LOG_FILE}.
 set_logger() {
     if [ -z ${LOG_FILE} ]; then
-        test_lib_error "set_logger requies LOG_FILE variable be set"
+        test_lib_error "set_logger requires LOG_FILE variable be set"
         clean_exit 1
     fi
     printf "Kea log will be stored in %s.\n" ${LOG_FILE}
@@ -163,7 +163,7 @@ set_logger() {
 }
 
 # PID file path is by default <kea-install-dir>/var/kea, but can be
-# overriden by the environmental variable.
+# overridden by the environmental variable.
 PID_FILE_PATH=@localstatedir@/@PACKAGE@/
 if [ ! -z ${KEA_PIDFILE_DIR} ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
@@ -276,7 +276,7 @@ get_reconfigs() {
 # It shuts down running Kea processes and removes temporary files.
 # The location of the log file and the configuration files should be set
 # in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
-# recpectively, prior to calling this function.
+# respectively, prior to calling this function.
 cleanup() {
 
     # If there is no KEA_PROCS set, just return
@@ -291,7 +291,7 @@ cleanup() {
         get_pid ${proc_name}
         # Shut down running Kea process.
         if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-            printf "Shutting down Kea proccess having pid %d.\n" ${_GET_PID}
+            printf "Shutting down Kea process having pid %d.\n" ${_GET_PID}
             kill -9 ${_GET_PID}
         fi
     done
@@ -318,7 +318,7 @@ cleanup() {
 }
 
 # Exists the test in the clean way.
-# It performes the cleanup and prints whether the test has passed or failed.
+# It performs the cleanup and prints whether the test has passed or failed.
 # If a test fails, the Kea log is dumped.
 clean_exit() {
     exit_code=${1}  # Exit code to be returned by the exit function.
@@ -344,7 +344,7 @@ start_kea() {
 }
 
 # Waits with timeout for Kea to start.
-# This function repeatedly checs if the Kea log file has been created
+# This function repeatedly checks if the Kea log file has been created
 # and is non-empty. If it is, the function assumes that Kea has started.
 # It doesn't check the contents of the log file though.
 # If the log file doesn't exist the function sleeps for a second and

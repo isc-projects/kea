@@ -99,7 +99,7 @@ public:
     /// @name Accessor methods mainly used for testing purposes
     //@{
 
-    /// @brief Gets the protocol version of the leaes files
+    /// @brief Gets the protocol version of the leases files
     ///
     /// @return Returns the value of the DHCP protocol version.
     /// This can be 4 or 6 while in use and 0 before parsing

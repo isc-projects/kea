@@ -131,7 +131,7 @@ TEST_F(HttpRequestParserTest, postHttpRequestWithJson) {
     EXPECT_EQ("shutdown", json_element->stringValue());
 }
 
-// This test verifies that extranous data in the request will not cause
+// This test verifies that extraneous data in the request will not cause
 // an error if "Content-Length" value refers to the length of the valid
 // part of the request.
 TEST_F(HttpRequestParserTest, extraneousDataInRequest) {

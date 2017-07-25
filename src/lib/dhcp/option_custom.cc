@@ -262,7 +262,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                     // remaining part of the buffer for it. Note that variable
                     // size data can be laid at the end of the option only and
                     // that the validate() function in OptionDefinition object
-                    // should have checked wheter it is a case for this option.
+                    // should have checked whether it is a case for this option.
                     data_size = std::distance(data, data_buf.end());
                 } else if (*field == OPT_IPV6_PREFIX_TYPE) {
                     // The size of the IPV6 prefix type is determined as

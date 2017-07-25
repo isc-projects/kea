@@ -86,7 +86,7 @@ protected:
 
     /// @brief Convenience method for parsing a configuration
     ///
-    /// Attempt to parse a given client class defintion.
+    /// Attempt to parse a given client class definition.
     ///
     /// @param config - JSON string containing the client class configuration
     /// to parse.
@@ -127,7 +127,7 @@ protected:
     /// @brief Convenience method for parsing a list of client class
     /// definitions.
     ///
-    /// Attempt to parse a given list of client class defintions into a
+    /// Attempt to parse a given list of client class definitions into a
     /// ClientClassDictionary.
     ///
     /// @param config - JSON string containing the list of definitions to parse.
@@ -533,7 +533,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("three", cclass->getName());
 
-    // For good measure, make sure we can't find a non-existant class.
+    // For good measure, make sure we can't find a non-existent class.
     ASSERT_NO_THROW(cclass = dictionary->findClass("bogus"));
     EXPECT_FALSE(cclass);
 }

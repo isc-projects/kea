@@ -48,7 +48,7 @@ This debug message indicates that the first value is popped from
 the value stack, negated and then pushed onto the value stack.
 The string is displayed in text.
 
-# For use with TokenOption based classes.  These include TokenOpton,
+# For use with TokenOption based classes.  These include TokenOption,
 # TokenRelay4Option and TokenRelay6Option.
 
 % EVAL_DEBUG_OPTION Pushing option %1 with value %2

@@ -246,7 +246,7 @@ TEST(CfgOptionDefTest, addNegative) {
     EXPECT_THROW(cfg.add(def, "isc"), DuplicateOptionDefinition);
 }
 
-// This test verifies that the funtion that unparses configuration
+// This test verifies that the function that unparses configuration
 // works as expected.
 TEST(CfgOptionDefTest, unparse) {
     CfgOptionDef cfg;

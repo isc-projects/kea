@@ -513,7 +513,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     ASSERT_TRUE(hdsptr_);
 
     // The database is initially opened in "read-write" mode. We can
-    // insert some data to the databse.
+    // insert some data to the database.
     HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     ASSERT_TRUE(host);
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1188,7 +1188,7 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted) {
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY));
     // Insert host and the options into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // getAll4(address)
@@ -1261,7 +1261,7 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:
@@ -1323,7 +1323,7 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
     // Fetch the host via:
@@ -1389,7 +1389,7 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
     // Fetch the host from the source.
@@ -1418,7 +1418,7 @@ GenericHostDataSourceTest::testMessageFields4() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:

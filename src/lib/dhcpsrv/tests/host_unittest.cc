@@ -408,7 +408,7 @@ TEST_F(HostTest, createFromIdentifierString) {
         const std::string identifier_name = Host::getIdentifierName(type);
 
         // Construct unique identifier for a host. This is a string
-        // consisting of a word "idenetifier", hyphen and the name of
+        // consisting of a word "identifier", hyphen and the name of
         // the identifier, e.g. "identifier-hw-address".
         std::ostringstream identifier_without_quotes;
         identifier_without_quotes << "identifier-" << identifier_name;

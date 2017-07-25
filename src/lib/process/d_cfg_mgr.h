@@ -383,7 +383,7 @@ public:
 protected:
     /// @brief Adds default values to the given config
     ///
-    /// Provides derviations a means to add defaults to a configuration
+    /// Provides derivations a means to add defaults to a configuration
     /// Element map prior to parsing it.
     ///
     /// @param mutable_config - configuration to which defaults should be added
@@ -405,7 +405,7 @@ protected:
     ///
     /// For each scalar element in the set:
     /// - Invoke parseElement
-    /// - If it returns true go to the next element othewise:
+    /// - If it returns true go to the next element otherwise:
     ///     - create a parser for the element
     ///     - invoke the parser's build method
     ///     - invoke the parser's commit method
@@ -446,7 +446,7 @@ protected:
     /// Implementations that do not employ this method may provide dummy
     /// implementation.
     ///
-    /// @param config the Element tree structure that decribes the configuration.
+    /// @param config the Element tree structure that describes the configuration.
     /// @param check_only false for normal configuration, true when verifying only
     ///
     /// @return an Element that contains the results of configuration composed

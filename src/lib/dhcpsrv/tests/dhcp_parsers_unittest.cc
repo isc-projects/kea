@@ -192,7 +192,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     Uint32StoragePtr storage(new Uint32Storage());
     Uint32Parser parser(name, storage);
 
-    // Verify that parser with rejects a non-interger element.
+    // Verify that parser with rejects a non-integer element.
     ElementPtr wrong_element = Element::create("I am a string");
     EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
 
@@ -451,7 +451,7 @@ public:
         // Set global defaults first.
         cnt = SimpleParser::setDefaults(global, global_defaults);
 
-        // Now set option defintion defaults for each specified option definition
+        // Now set option definition defaults for each specified option definition
         ConstElementPtr option_defs = global->get("option-def");
         if (option_defs) {
             BOOST_FOREACH(ElementPtr single_def, option_defs->listValue()) {
@@ -520,7 +520,7 @@ public:
     /// and parse them.
     /// @param config is the configuration string to parse
     ///
-    /// @return retuns 0 if the configuration parsed successfully,
+    /// @return returns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
     int parseConfiguration(const std::string& config, bool v6 = false) {
         int rcode_ = 1;
@@ -1242,7 +1242,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
 
 // This test verifies that the option data configuration with a minimal
 // set of parameters works as expected when option definition is
-// created in the configruation file.
+// created in the configuration file.
 TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     // Configuration string.
     std::string config =
@@ -1338,7 +1338,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 }
 
 // This test verifies an option data without suboptions is supported
-TEST_F(ParseConfigTest, optionDataNoSubOpion) {
+TEST_F(ParseConfigTest, optionDataNoSubOption) {
     // Configuration string.
     const std::string config =
         "{ \"option-data\": [ {"
@@ -1585,7 +1585,7 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has not changed between the two parse operations. However,
-    // the paramters (or the files they could point to) could have
+    // the parameters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
     const HooksConfig& cfg2 =
         CfgMgr::instance().getStagingCfg()->getHooksConfig();

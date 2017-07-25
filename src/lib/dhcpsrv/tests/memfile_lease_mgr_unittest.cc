@@ -146,7 +146,7 @@ public:
     /// @brief Remove files being products of Lease File Cleanup.
     ///
     /// @param base_name Path to the lease file name. This file is removed
-    /// and all files which names are crated from this name (having specific
+    /// and all files which names are created from this name (having specific
     /// suffixes used by Lease File Cleanup mechanism).
     void removeFiles(const std::string& base_name) const {
         // Generate suffixes and append them to the base name. The
@@ -416,7 +416,7 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
 }
 
-// Check if the persitLeases correctly checks that leases should not be written
+// Check if the persistLeases correctly checks that leases should not be written
 // to disk when disabled through configuration.
 TEST_F(MemfileLeaseMgrTest, persistLeases) {
     // Initialize IO objects, so as the test csv files get removed after the
@@ -1229,7 +1229,7 @@ TEST_F(MemfileLeaseMgrTest, load4LFCInProgress) {
     ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
                  DbOpenError);
 
-    // Remove the pid file, and retry. The bakckend should be created.
+    // Remove the pid file, and retry. The backend should be created.
     pid_file.deleteFile();
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }
@@ -1479,7 +1479,7 @@ TEST_F(MemfileLeaseMgrTest, load6LFCInProgress) {
     ASSERT_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)),
                  DbOpenError);
 
-    // Remove the pid file, and retry. The bakckend should be created.
+    // Remove the pid file, and retry. The backend should be created.
     pid_file.deleteFile();
     ASSERT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 }

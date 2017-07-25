@@ -103,7 +103,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
             for (auto h = hooks.cbegin(); h != hooks.end(); ++h) {
                 // Try to convert hook name to command name. If non-empty
                 // string is returned it means that the hook point may have
-                // command hanlers associated with it. Otherwise, it means that
+                // command handlers associated with it. Otherwise, it means that
                 // existing hook points are not for command handlers but for
                 // regular callouts.
                 std::string command_name = ServerHooks::hookToCommandName(*h);

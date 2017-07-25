@@ -350,7 +350,7 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     // This populate the context scalar stores with all of the parameters.
     DCfgMgrBase::buildParams(params_config);
 
-    // Fetch the parameters in the config, performing any logcial
+    // Fetch the parameters in the config, performing any logical
     // validation required.
     asiolink::IOAddress ip_address(0);
     uint32_t port = 0;

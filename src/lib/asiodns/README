@@ -5,7 +5,7 @@ These DNS server and client routines are written using the "stackless
 coroutine" pattern invented by Chris Kohlhoff and described at
 http://blog.think-async.com/2010/03/potted-guide-to-stackless-coroutines.html.
 This is intended to simplify development a bit, since it allows the
-routines to be written in a straightfowrard step-step-step fashion rather
+routines to be written in a straightforward step-step-step fashion rather
 than as a complex chain of separate handler functions.
 
 Coroutine objects (i.e., UDPServer, TCPServer and IOFetch) are objects
@@ -47,7 +47,7 @@ In an authoritative server, the DNSLookup implementation would examine
 the query, look up the answer, then call "resume".  (See the diagram
 in doc/auth_process.jpg.)
 
-In a recursive server, the DNSLookup impelemtation would initiate a
+In a recursive server, the DNSLookup implementation would initiate a
 DNSQuery, which in turn would be responsible for calling the server's
 "resume" method.  (See the diagram in doc/recursive_process.jpg.)
 

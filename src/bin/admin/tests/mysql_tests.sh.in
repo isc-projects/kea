@@ -276,7 +276,7 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
-    assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
+    assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 
     # table: stored procedures for lease data dumps were modified (upgrade 4.0 -> 4.1)
     # verify  lease4DumpData has order by lease address

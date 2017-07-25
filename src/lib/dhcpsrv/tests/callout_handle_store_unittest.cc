@@ -94,7 +94,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_EQ(1, pktptr_2.use_count());
 }
 
-// The followings is a trival test to check that if the template function
+// The followings is a trivial test to check that if the template function
 // is referred to in a separate compilation unit, only one copy of the static
 // objects stored in it are returned.  (For a change, we'll use a Pkt6 as the
 // packet object.)

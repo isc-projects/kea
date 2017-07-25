@@ -59,7 +59,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Stops the worker thread if it is running and unregisteres any
+    /// Stops the worker thread if it is running and unregisters any
     /// registered timers.
     ~TimerMgr();
 

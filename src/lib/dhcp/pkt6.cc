@@ -281,7 +281,7 @@ Pkt6::pack() {
 void
 Pkt6::packUDP() {
     try {
-        // Make sure that the buffer is empty before we start writting to it.
+        // Make sure that the buffer is empty before we start writing to it.
         buffer_out_.clear();
 
         // is this a relayed packet?
@@ -382,7 +382,7 @@ Pkt6::unpackUDP() {
     case DHCPV6_INFORMATION_REQUEST:
     case DHCPV6_DHCPV4_QUERY:
     case DHCPV6_DHCPV4_RESPONSE:
-    default: // assume that uknown messages are not using relay format
+    default: // assume that unknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
         }
@@ -442,7 +442,7 @@ Pkt6::unpackRelayMsg() {
     // we use offset + bufsize, because we want to avoid creating unnecessary
     // copies. There may be up to 32 relays. While using InputBuffer would
     // be probably a bit cleaner, copying data up to 32 times is unacceptable
-    // price here. Hence a single buffer with offets and lengths.
+    // price here. Hence a single buffer with offsets and lengths.
     size_t bufsize = data_.size();
     size_t offset = 0;
 
@@ -599,7 +599,7 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     label << "duid=[" << (duid ? duid->toText() : "no info")
           << "]";
 
-    // HW address is typically not carried in the DHCPv6 mmessages
+    // HW address is typically not carried in the DHCPv6 messages
     // and can be extracted using various, but not fully reliable,
     // techniques. If it is not present, don't print anything.
     if (hwaddr) {

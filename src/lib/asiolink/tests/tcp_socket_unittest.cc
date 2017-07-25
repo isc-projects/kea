@@ -358,8 +358,8 @@ TEST(TCPSocket, sequenceTest) {
     EXPECT_EQ(TCPCallback::OPEN, client_cb.called());
 
     // On some operating system the async_connect may return EINPROGRESS.
-    // This doesn't neccessarily indicate an error. In most cases trying
-    // to asynchrouonsly write and read from the socket would work just
+    // This doesn't necessarily indicate an error. In most cases trying
+    // to asynchronously write and read from the socket would work just
     // fine.
     if ((client_cb.getCode()) != 0 && (client_cb.getCode() != EINPROGRESS)) {
         ADD_FAILURE() << "expected error code of 0 or " << EINPROGRESS

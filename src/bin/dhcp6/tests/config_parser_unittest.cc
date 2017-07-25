@@ -967,7 +967,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 }
 
 // CHeck that the configuration with two subnets having the same id is rejected.
-TEST_F(Dhcp6ParserTest, multipleSubnetsOverlapingIDs) {
+TEST_F(Dhcp6ParserTest, multipleSubnetsOverlappingIDs) {
     ConstElementPtr x;
     // Four subnets, two of them have the same id.
     string config = "{ " + genIfaceConfig() + ","
@@ -2935,7 +2935,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     EXPECT_TRUE(desc.option_);
     EXPECT_EQ(100, desc.option_->getType());
 
-    // This opton should comprise two sub-options.
+    // This option should comprise two sub-options.
     // Onf of them is 'foo' with code 110.
     OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);

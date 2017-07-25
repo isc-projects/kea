@@ -48,7 +48,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// The default confguration:
+    /// The default configuration:
     /// - no identifiers selected for host reservations searches.
     CfgHostOperations();
 

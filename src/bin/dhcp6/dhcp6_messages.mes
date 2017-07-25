@@ -258,7 +258,7 @@ DHCP server failed.
 % DHCP6_FLEX_ID flexible identifier generated for incoming packet: %1
 This debug message is printed when host reservation type is set to flexible identifier
 and the expression specified in its configuration generated (was evaluated to)
-an indetifier for incoming packet. This debug message is mainly intended as a
+an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
 % DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1

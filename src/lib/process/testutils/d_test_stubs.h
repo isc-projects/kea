@@ -277,7 +277,7 @@ protected:
 
 public:
 
-    /// @brief Provides addtional extended version text
+    /// @brief Provides additional extended version text
     ///
     /// Overrides the base class implementation so we can
     /// verify the getting the extended version text

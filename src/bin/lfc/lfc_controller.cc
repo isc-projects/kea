@@ -236,7 +236,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
         case '?':
             // Unknown argument
-            // note this will catch all the prevous ... name missing
+            // note this will catch all the previous ... name missing
             isc_throw(InvalidUsage, "Unknown argument");
 
         case ':':

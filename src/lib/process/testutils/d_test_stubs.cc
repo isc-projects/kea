@@ -60,7 +60,7 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 
     setShutdownFlag(true);
     stopIOService();
-    return (isc::config::createAnswer(0, "Shutdown inititiated."));
+    return (isc::config::createAnswer(0, "Shutdown initiated."));
 }
 
 isc::data::ConstElementPtr

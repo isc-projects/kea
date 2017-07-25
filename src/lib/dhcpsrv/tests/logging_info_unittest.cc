@@ -16,7 +16,7 @@ using namespace isc::test;
 namespace {
 
 // Checks if two destinations can be compared for equality.
-TEST(LoggingDestintaion, equals) {
+TEST(LoggingDestination, equals) {
     LoggingDestination dest1;
     LoggingDestination dest2;
 

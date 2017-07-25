@@ -1578,7 +1578,7 @@ class DORAMySQLTest : public DORATest {
 public:
     /// @brief Constructor.
     ///
-    /// Recreats MySQL schema for a test.
+    /// Recreates MySQL schema for a test.
     DORAMySQLTest() : DORATest() {
         destroyMySQLSchema();
         createMySQLSchema();
