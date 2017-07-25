@@ -110,7 +110,7 @@ using namespace std;
 %%
 
 // The whole grammar starts with a map, because the config file
-// constists of Dhcp, Logger and DhcpDdns entries in one big { }.
+// consists of Dhcp, Logger and DhcpDdns entries in one big { }.
 // We made the same for subparsers at the exception of the JSON value.
 %start start;
 

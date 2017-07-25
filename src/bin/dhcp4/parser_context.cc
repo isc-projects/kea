@@ -138,7 +138,7 @@ Parser4Context::contextName()
     case HOST_RESERVATION_IDENTIFIERS:
         return ("host-reservation-identifiers");
     case HOOKS_LIBRARIES:
-        return ("hooks-librairies");
+        return ("hooks-libraries");
     case SUBNET4:
         return ("subnet4");
     case RESERVATION_MODE:

@@ -120,7 +120,7 @@ public:
         pkt6_->addRelayInfo(relay1);
     }
 
-    /// @brief Verify that the relay6 option evaluatiosn work properly
+    /// @brief Verify that the relay6 option evaluations work properly
     ///
     /// Given the nesting level and option code extract the option
     /// and compare it to the expected string.
@@ -1637,7 +1637,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
 
-    // Subsring requires three values on the stack, try
+    // Substring requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
@@ -1862,7 +1862,7 @@ TEST_F(TokenTest, substringReturnEmpty) {
 // We put the result on the stack first then the substring values
 // then evaluate the substring which should leave the original
 // result on the bottom with the substring result on next.
-// Evaulating the equals should produce true for the first
+// Evaluating the equals should produce true for the first
 // and false for the second.
 // throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.

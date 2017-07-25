@@ -58,7 +58,7 @@ CLEANFILES = kea-guide.pdf kea-messages.pdf
 DBLATEX_FLAGS = --xslt-opts=--path --xslt-opts=$(abs_top_builddir)/doc \
 	-P doc.collab.show=0 -P latex.output.revhistory=0 \
 	-P term.breakline=1 -P filename.as.url=0 \
-	-P imagedata.default.scale="maxwidth=50px,maxheigth=35px"
+	-P imagedata.default.scale="maxwidth=50px,maxheight=35px"
 
 pdf: kea-guide.pdf kea-messages.pdf
 

@@ -1149,7 +1149,7 @@ TEST_F(OptionCustomTest, tupleDataArray6) {
     );
 }
 
-// The purpose of this test is to verify that the opton definition comprising
+// The purpose of this test is to verify that the option definition comprising
 // a record of fixed-size fields can be used to create an option with a
 // suboption.
 TEST_F(OptionCustomTest, recordDataWithSuboption) {
@@ -1357,7 +1357,7 @@ TEST_F(OptionCustomTest, setBinaryData) {
     }
     // Try to override the default binary buffer.
     ASSERT_NO_THROW(option->writeBinary(buf_in));
-    // And check that it has been actually overriden.
+    // And check that it has been actually overridden.
     ASSERT_NO_THROW(buf = option->readBinary());
     ASSERT_EQ(buf_in.size(), buf.size());
     EXPECT_TRUE(std::equal(buf_in.begin(), buf_in.end(), buf.begin()));
@@ -1365,7 +1365,7 @@ TEST_F(OptionCustomTest, setBinaryData) {
 
 // The purpose of this test is to verify that an option comprising
 // single boolean data field can be created and that its default
-// value can be overriden by a new value.
+// value can be overridden by a new value.
 TEST_F(OptionCustomTest, setBooleanData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
 
@@ -1382,13 +1382,13 @@ TEST_F(OptionCustomTest, setBooleanData) {
     EXPECT_FALSE(value);
     // Check that we can override the default value.
     ASSERT_NO_THROW(option->writeBoolean(true));
-    // Finally, check that it has been actually overriden.
+    // Finally, check that it has been actually overridden.
     ASSERT_NO_THROW(value = option->readBoolean());
     EXPECT_TRUE(value);
 }
 
 /// The purpose of this test is to verify that the data field value
-/// can be overriden by a new value.
+/// can be overridden by a new value.
 TEST_F(OptionCustomTest, setUint32Data) {
     // Create a definition of an option that holds single
     // uint32 value.
@@ -1418,7 +1418,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
 
 // The purpose of this test is to verify that an option comprising
 // single IPv4 address can be created and that this address can
-// be overriden by a new value.
+// be overridden by a new value.
 TEST_F(OptionCustomTest, setIpv4AddressData) {
     OptionDefinition opt_def("OPTION_FOO", 232, "ipv4-address");
 
@@ -1440,9 +1440,9 @@ TEST_F(OptionCustomTest, setIpv4AddressData) {
     EXPECT_EQ("192.168.0.1", address.toText());
 }
 
-// The purpose of this test is to verify that an opton comprising
+// The purpose of this test is to verify that an option comprising
 // single IPv6 address can be created and that this address can
-// be overriden by a new value.
+// be overridden by a new value.
 TEST_F(OptionCustomTest, setIpv6AddressData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
 
@@ -1465,7 +1465,7 @@ TEST_F(OptionCustomTest, setIpv6AddressData) {
 }
 
 // The purpose of this test is to verify that an option comprising
-// a prefix can be created and that the prefix can be overriden by
+// a prefix can be created and that the prefix can be overridden by
 // a new value.
 TEST_F(OptionCustomTest, setPrefixData) {
     OptionDefinition opt_def("option-foo", 1000, "ipv6-prefix");
@@ -1494,7 +1494,7 @@ TEST_F(OptionCustomTest, setPrefixData) {
 }
 
 // The purpose of this test is to verify that an option comprising
-// a single PSID can be created and that the PSID can be overriden
+// a single PSID can be created and that the PSID can be overridden
 // by a new value.
 TEST_F(OptionCustomTest, setPsidData) {
     OptionDefinition opt_def("option-foo", 1000, "psid");
@@ -1551,7 +1551,7 @@ TEST_F(OptionCustomTest, setStringData) {
 
 /// The purpose of this test is to verify that an option comprising
 /// a default FQDN value can be created and that this value can be
-/// overriden after the option has been created.
+/// overridden after the option has been created.
 TEST_F(OptionCustomTest, setFqdnData) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
 
@@ -1568,7 +1568,7 @@ TEST_F(OptionCustomTest, setFqdnData) {
     EXPECT_EQ(".", fqdn);
     // Try override the default FQDN value.
     ASSERT_NO_THROW(option->writeFqdn("example.com"));
-    // Check that the value has been actually overriden.
+    // Check that the value has been actually overridden.
     ASSERT_NO_THROW(fqdn = option->readFqdn());
     EXPECT_EQ("example.com.", fqdn);
 }

@@ -100,7 +100,7 @@ public:
 
     /// @brief Sets or clears verbose mode
     ///
-    /// Verbose mode (-v in command-line) triggers loggers to log everythin
+    /// Verbose mode (-v in command-line) triggers loggers to log everything
     /// (sets severity to DEBUG and debuglevel to 99). Values specified in the
     /// config file are ignored.
     ///
@@ -149,7 +149,7 @@ public:
     /// @param config_file name of the file to write the configuration to
     /// @param cfg configuration to write (optional)
     /// @return number of files written
-    /// @throw Unexpected if CfgMgr can't retrieve configuation or file cannot
+    /// @throw Unexpected if CfgMgr can't retrieve configuration or file cannot
     ///                   be written
     virtual size_t
     writeConfigFile(const std::string& config_file,

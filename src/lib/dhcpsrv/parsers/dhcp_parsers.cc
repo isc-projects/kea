@@ -417,7 +417,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     OptionDescriptor desc(false);
 
     if (!def) {
-        // @todo We have a limited set of option definitions initalized at
+        // @todo We have a limited set of option definitions initialized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is

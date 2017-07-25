@@ -65,7 +65,7 @@ public:
     }
 
     /// @brief DNSClient callback
-    /// Overrides the callback in NameChangeTranscation to allow testing
+    /// Overrides the callback in NameChangeTransaction to allow testing
     /// sendUpdate without incorporating execution of the state model
     /// into the test.
     /// It sets the DNS status update and posts IO_COMPLETED_EVT as does
@@ -836,7 +836,7 @@ TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
     ASSERT_NO_THROW(name_change->startTransaction());
 
-    // Vefity that the model is running but waiting, and that the forward
+    // Verify that the model is running but waiting, and that the forward
     // change has not been completed.
     EXPECT_TRUE(name_change->isModelRunning());
     EXPECT_TRUE(name_change->isModelWaiting());

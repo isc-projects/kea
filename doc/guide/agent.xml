@@ -188,7 +188,7 @@
     a reverse proxy server is also often used for authentication of the
     controlling clients. In this case, the client must present a valid
     certificate when it connects via reverse proxy. The proxy server
-    authenticates the client by checking if the presented certifcate is
+    authenticates the client by checking if the presented certificate is
     signed by the certificate authority used by the server.</para>
 
     <para>To illustrate this, we provide a sample configuration for the

@@ -35,7 +35,7 @@ TEST(OptionSpaceTest, constructor) {
 }
 
 // The purpose of this test is to verify that the vendor-space flag
-// can be overriden.
+// can be overridden.
 TEST(OptionSpaceTest, setVendorSpace) {
     OptionSpace space("isc", true);
     EXPECT_EQ("isc", space.getName());

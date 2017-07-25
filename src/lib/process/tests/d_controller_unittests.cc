@@ -226,7 +226,7 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
 
 /// @brief Tests launch with an operational error during application execution.
 /// This test creates an interval timer to generate a runtime exception during
-/// the process event loop. It launches wih a valid, stand-alone command line
+/// the process event loop. It launches with a valid, stand-alone command line
 /// and no simulated errors.  Launch should throw ProcessRunError.
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // Use an asiolink IntervalTimer and callback to generate the

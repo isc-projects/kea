@@ -199,7 +199,7 @@ public:
 
     /// @brief Checks if the request has been successfully finalized.
     ///
-    /// The request is gets finalized on successfull call to
+    /// The request is gets finalized on successful call to
     /// @ref HttpRequest::finalize.
     ///
     /// @return true if the request has been finalized, false otherwise.

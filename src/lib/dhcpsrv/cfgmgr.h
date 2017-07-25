@@ -123,7 +123,7 @@ public:
     /// @name Methods managing the collection of configurations.
     ///
     /// The following methods manage the process of preparing a configuration
-    /// without affecting a currently used configuration and then commiting
+    /// without affecting a currently used configuration and then committing
     /// the configuration to replace current configuration atomically.
     /// They also allow for keeping a history of previous configurations so
     /// as the @c CfgMgr can revert to the historical configuration when

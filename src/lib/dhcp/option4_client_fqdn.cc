@@ -104,7 +104,7 @@ public:
     void parseCanonicalDomainName(OptionBufferConstIter first,
                                   OptionBufferConstIter last);
 
-    /// @brief Parse domain-name emcoded in the deprecated ASCII format.
+    /// @brief Parse domain-name encoded in the deprecated ASCII format.
     ///
     /// @param first An iterator pointing to the beginning of the option data
     /// where domain-name is stored.

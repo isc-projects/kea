@@ -134,7 +134,7 @@ NameChangeTransaction::responseString() const {
             stream << "OTHER";
             break;
         default:
-            stream << "UNKOWN("
+            stream << "UNKNOWN("
                    << static_cast<int>(getDnsUpdateStatus()) << ")";
             break;
 

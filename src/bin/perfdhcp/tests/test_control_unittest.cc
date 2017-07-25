@@ -624,7 +624,7 @@ public:
             // the case if randomization algorithm generates the same
             // values but this would be an error in randomization algorithm.
             total_dist += mismatch_dist;
-            // Mismatch may have occurred on the MAC address'es octet position
+            // Mismatch may have occurred on the MAC address's octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
             // unique will inform if tested DUID is unique.
@@ -770,7 +770,7 @@ public:
 
         Pkt4Ptr ack = createAckPkt4(1);
 
-        // Create DHCPREQUST from DHCPACK.
+        // Create DHCPREQUEST from DHCPACK.
         Pkt4Ptr request;
         ASSERT_NO_THROW(request = tc.createRequestFromAck(ack));
 
@@ -1149,7 +1149,7 @@ TEST_F(TestControlTest, GenerateDuid) {
     ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) != macs.end());
 }
 
-TEST_F(TestControlTest, MisMatchVerionServer) {
+TEST_F(TestControlTest, MisMatchVersionServer) {
     NakedTestControl tc;
 
     // make sure we catch -6 paired with v4 address
@@ -1180,7 +1180,7 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     // Initialize Test Controller.
     NakedTestControl tc;
     uint8_t randomized = 0;
-    // Generate MAC adddress and sanity check its size.
+    // Generate MAC address and sanity check its size.
     std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
     ASSERT_EQ(6, mac.size());
     // Make sure that the generated MAC address belongs to the MAC addresses

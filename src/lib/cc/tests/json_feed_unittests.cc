@@ -96,7 +96,7 @@ public:
     /// @brief Test that the @ref JSONFeed signals an error when the input
     /// string holds invalid data.
     ///
-    /// @param input_json A string holding an input JSON structire.
+    /// @param input_json A string holding an input JSON structure.
     void testInvalidRead(const std::string& input_json) {
         JSONFeed feed;
         ASSERT_NO_THROW(feed.initModel());
@@ -157,7 +157,7 @@ TEST_F(JSONFeedTest, unexpectedCharacter) {
     testInvalidRead(json);
 }
 
-// This test verfies that an error is signalled when a JSON structure
+// This test verifies that an error is signalled when a JSON structure
 // lacks an opening brace character.
 TEST_F(JSONFeedTest, noOpeningBrace) {
     std::string json = "\"x\": \"y\" }";

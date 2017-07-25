@@ -331,7 +331,7 @@ private:
     /// for which the sockets should be opened.
     ExplicitAddressMap address_map_;
 
-    /// @brief A booolean value which indicates that the wildcard interface name
+    /// @brief A boolean value which indicates that the wildcard interface name
     /// has been specified (*).
     bool wildcard_used_;
 

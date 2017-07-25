@@ -444,7 +444,7 @@ MySQLHostMgrTest::TearDown() {
 }
 
 // This test verifies that reservations for a particular client can
-// be retrieved from the confguration file and a database simultaneously.
+// be retrieved from the configuration file and a database simultaneously.
 TEST_F(MySQLHostMgrTest, getAll) {
     testGetAll(*getCfgHosts(), HostMgr::instance());
 }
@@ -521,7 +521,7 @@ PostgreSQLHostMgrTest::TearDown() {
 }
 
 // This test verifies that reservations for a particular client can
-// be retrieved from the confguration file and a database simultaneously.
+// be retrieved from the configuration file and a database simultaneously.
 TEST_F(PostgreSQLHostMgrTest, getAll) {
     testGetAll(*getCfgHosts(), HostMgr::instance());
 }

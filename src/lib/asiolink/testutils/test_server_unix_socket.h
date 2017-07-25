@@ -32,7 +32,7 @@ class ConnectionPool;
 /// message (prefixed with the word "received").
 ///
 /// It is also possible to specify a custom response from the server
-/// instead of eachoing back the request.
+/// instead of echoing back the request.
 ///
 /// It is possible to make multiple connections to the server side
 /// socket simultaneously.

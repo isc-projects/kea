@@ -118,7 +118,7 @@ public:
     /// dhcp_ddns::D2Dhcid::createDigest() with the appropriate arguments. This
     /// method uses encryption tools to produce the value which cannot be
     /// easily duplicated by hand.  It is more or less necessary to generate
-    /// these values programatically and place them here. Should the
+    /// these values programmatically and place them here. Should the
     /// underlying implementation of createDigest() change these test values
     /// will likely need to be updated as well.
     /// @param expires A timestamp when the lease associated with the

@@ -148,7 +148,7 @@ public:
     void compareOptions(const ConstCfgOptionPtr& cfg1,
                         const ConstCfgOptionPtr& cfg2) const;
 
-    /// @brief Creates an opton descriptor holding an empty option.
+    /// @brief Creates an option descriptor holding an empty option.
     ///
     /// @param universe V4 or V6.
     /// @param option_type Option type.
@@ -351,7 +351,7 @@ public:
     /// - DHCPv6 boot file url option,
     /// - DHCPv6 information refresh time option,
     /// - DHCPv6 vendor option with vendor id 2495,
-    /// - DHCPv6 option 1024, with a sigle IPv6 address,
+    /// - DHCPv6 option 1024, with a single IPv6 address,
     /// - DHCPv6 empty option 1, within isc2 option space,
     /// - DHCPv6 option 2, within isc2 option space with 3 IPv6 addresses,
     ///

@@ -51,7 +51,7 @@
 /// However, there is another approach that can be reliably used to provide
 /// failover, even without the actual failover protocol implemented. As the
 /// first backend will use MySQL, we will be able to use Multi-Master capability
-/// offered by MySQL and use two separatate Kea instances connecting to the
+/// offered by MySQL and use two separate Kea instances connecting to the
 /// same database.
 ///
 /// Nevertheless, we hope to have failover protocol eventually implemented in
@@ -495,7 +495,7 @@ public:
     /// a lease state, and the number of leases of that type, in that state
     /// and is ordered by subnet id.  The method iterates over the
     /// result set rows, setting the appropriate statistic per subnet and
-    /// adding to the approporate global statistic.
+    /// adding to the appropriate global statistic.
     void recountLeaseStats4();
 
     /// @brief Virtual method which creates and runs the IPv4 lease stats query
@@ -526,7 +526,7 @@ public:
     /// a subnet id, a lease type, a lease state, and the number of leases
     /// of that type, in that state and is ordered by subnet id. The method
     /// iterates over the result set rows, setting the appropriate statistic
-    /// per subnet and adding to the approporate global statistic.
+    /// per subnet and adding to the appropriate global statistic.
     void recountLeaseStats6();
 
     /// @brief Virtual method which creates and runs the IPv6 lease stats query

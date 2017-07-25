@@ -525,7 +525,7 @@ TEST_F(DNSClientTest, sendReceive) {
 
 // Verify that the DNSClient reports an error when the response is received from
 // a DNS and this response is corrupted.
-TEST_F(DNSClientTest, sendReceiveCurrupted) {
+TEST_F(DNSClientTest, sendReceiveCorrupted) {
     // true means that server's response is corrupted.
     runSendReceiveTest(true, false);
 }

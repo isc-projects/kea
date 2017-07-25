@@ -37,7 +37,7 @@ else:
     raise SystemExit("Unknown python version:" + str(sys.version_info[0]))
 
 def timeout_handler(signum, frame):
-    """Connection timeoout handler"""
+    """Connection timeout handler"""
     del signum, frame
     print("Connection timeout")
     sys.exit(1)
@@ -56,7 +56,7 @@ def shell_body():
                                      'connect to Kea Control Agent.')
     parser.add_argument('--host', type=str, default='127.0.0.1',
                         help='hostname of the CA to connect to '
-                        '(defaul:; 127.0.0.1)')
+                        '(default:; 127.0.0.1)')
     parser.add_argument('--port', type=int, default=8000,
                         help='TCP port of the CA to connect to '
                         '(default: 8000)')
@@ -64,7 +64,7 @@ def shell_body():
                         help='Timeout (in seconds) when attempting to '
                         'connect to CA (default: 10)')
     parser.add_argument('--service', nargs="?", action="append",
-                        help='target spcified service. If not specidied,'
+                        help='target spcified service. If not specified,'
                         'control agent will receive command.')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',

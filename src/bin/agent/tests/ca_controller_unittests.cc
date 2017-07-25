@@ -270,7 +270,7 @@ TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
 
 // Tests that the sockets settings are updated upon successful reconfiguration.
 TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
-    // This configuration should be used to override the initial conifguration.
+    // This configuration should be used to override the initial configuration.
     const char* second_config =
         "{"
         "  \"http-host\": \"127.0.0.1\","
@@ -378,7 +378,7 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
 // listener configuration remains the same. The server should continue using the
 // listener instance it has been using prior to the reconfiguration.
 TEST_F(CtrlAgentControllerTest, noListenerChange) {
-    // This configuration should be used to override the initial conifguration.
+    // This configuration should be used to override the initial configuration.
     const char* second_config =
         "{"
         "  \"http-host\": \"127.0.0.1\","
@@ -436,7 +436,7 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     // code as CtrlAgentController is not initialized the same way it is
     // in production code. In particular, the way CtrlAgentController
     // is initialized in tests does not call registerCommands().
-    // This is a crude workaround for this problem. Proper solution shoul
+    // This is a crude workaround for this problem. Proper solution should
     // be developed sooner rather than later.
     const DControllerBasePtr& base = getController();
     const CtrlAgentControllerPtr& ctrl =
@@ -466,7 +466,7 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
     // code as CtrlAgentController is not initialized the same way it is
     // in production code. In particular, the way CtrlAgentController
     // is initialized in tests does not call registerCommands().
-    // This is a crude workaround for this problem. Proper solution shoul
+    // This is a crude workaround for this problem. Proper solution should
     // be developed sooner rather than later.
     const DControllerBasePtr& base = getController();
     const CtrlAgentControllerPtr& ctrl

@@ -34,7 +34,7 @@ public:
     /// @param socket_path Path to the socket description that the server
     /// is bound to.
     /// @param command Control command to be sent to the server.
-    /// @param handler Pointer to the user suppiled callback function which
+    /// @param handler Pointer to the user supplied callback function which
     /// should be invoked when transaction completes or when an error has
     /// occurred during the transaction.
     /// @param timeout Connection timeout in milliseconds.
@@ -124,7 +124,7 @@ ClientConnectionImpl::start(const ClientConnection::SocketPath& socket_path,
     // Pass self to lambda to make sure that the instance of this class
     // lives as long as the lambda is held for async connect.
     auto self(shared_from_this());
-    // Start asynchronous connect. This will return immediatelly.
+    // Start asynchronous connect. This will return immediately.
     socket_.asyncConnect(socket_path.socket_path_,
     [this, self, command, handler](const boost::system::error_code& ec) {
         // We failed to connect so we can't proceed. Simply clean up
@@ -149,7 +149,7 @@ ClientConnectionImpl::doSend(const void* buffer, const size_t length,
     // lives as long as the lambda is held for async send.
     auto self(shared_from_this());
     // Start asynchronous transmission of the command. This will return
-    // immediatelly.
+    // immediately.
     socket_.asyncSend(buffer, length,
         [this, self, buffer, length, handler]
         (const boost::system::error_code& ec, size_t bytes_transferred) {

@@ -214,7 +214,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     // Check if all expected parameters are reported.  The order needs to be
     // alphabetical to match the order returned by
-    // CallbackHandle::getAgrumentNames()
+    // CallbackHandle::getArgumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease6");
@@ -513,7 +513,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Check if all expected parameters are reported.  The order needs to be
     // alphabetical to match the order returned by
-    // CallbackHandle::getAgrumentNames()
+    // CallbackHandle::getArgumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease4");

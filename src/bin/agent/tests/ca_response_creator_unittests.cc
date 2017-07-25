@@ -111,7 +111,7 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
-    /// @brief Instance of the response crator.
+    /// @brief Instance of the response creator.
     CtrlAgentResponseCreator response_creator_;
 
     /// @brief Instance of the "empty" request.

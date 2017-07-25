@@ -1218,7 +1218,7 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError(":1", "<string>:1.1: Invalid character: :");
     checkError("=", "<string>:1.1: Invalid character: =");
-    checkError("subtring", "<string>:1.1: Invalid character: s");
+    checkError("substring", "<string>:1.1: Invalid character: s");
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
     checkError("relay[12].hex == 'foo'", "<string>:1.1: Invalid character: r");

@@ -129,7 +129,7 @@
       administrative operations in the CA rather than forwarding it to
       the DHCPv4 server is the ability to perform these operations without
       disrupting the DHCPv4 service (DHCPv4 server doesn't have to stop
-      processing DHCP messages to apply changes to the database). Nevetheless,
+      processing DHCP messages to apply changes to the database). Nevertheless,
       these situations are rather rare and, in most cases, when the
       <command>service</command> parameter contains a name of the service
       the commands are simply forwarded by the CA. The forwarded command
@@ -210,7 +210,7 @@
 
     <para>Kea development team is actively working on providing client applications
     which can be used to control the servers. These applications are, however, in the
-    early stages of development and as of Kea 1.2.0 release have certain limitatins.
+    early stages of development and as of Kea 1.2.0 release have certain limitations.
     The easiest way to start playing with the control API is to use common Unix/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
@@ -224,7 +224,7 @@ where <command>/path/to/the/kea/socket</command> is the path specified in the
 configuration file. Text passed to <command>socat</command>
 will be sent to Kea and the responses received from Kea printed to standard output.</para>
 
-    <para>It is also easy to open UNIX socket programatically. An example of
+    <para>It is also easy to open UNIX socket programmatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 

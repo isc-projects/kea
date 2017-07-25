@@ -19,7 +19,7 @@ class CtrlAgentResponseCreator;
 /// @brief Pointer to the @ref CtrlAgentResponseCreator.
 typedef boost::shared_ptr<CtrlAgentResponseCreator> CtrlAgentResponseCreatorPtr;
 
-/// @brief Concrete implementation of the HTTP response crator used
+/// @brief Concrete implementation of the HTTP response creator used
 /// by the Control Agent.
 ///
 /// See the documentation of the @ref isc::http::HttpResponseCreator for

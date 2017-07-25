@@ -71,7 +71,7 @@ public:
 
     /// @brief Prepares the initial D2UpdateMessage
     ///
-    /// This method overrides the NameChangeTransactio implementation to
+    /// This method overrides the NameChangeTransaction implementation to
     /// provide the ability to simulate an exception throw in the build
     /// request logic.
     /// If the one-shot flag, simulate_build_request_exception_ is true,
@@ -481,7 +481,7 @@ TEST_F(NameRemoveTransactionTest, selectingFwdServerHandler) {
                   name_remove->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
                                                    SERVER_IO_ERROR_EVT))
@@ -1203,7 +1203,7 @@ TEST_F(NameRemoveTransactionTest, selectingRevServerHandler) {
                   name_remove->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))

@@ -132,7 +132,7 @@ public:
         fqdn_rev_ = fqdn_rev;
     }
 
-    /// @brief Wrapper around call to AllocEngine6::findRervation
+    /// @brief Wrapper around call to AllocEngine6::findReservation
     ///
     /// If a reservation is found by the engine, the function sets
     /// ctx.hostname_ accordingly.
@@ -367,7 +367,7 @@ public:
         return (host);
     }
 
-    /// @brief Add a host reservation to the curent configuration
+    /// @brief Add a host reservation to the current configuration
     ///
     /// Adds the given host reservation to the current configuration by
     /// casting it to non-const.  We do it this way rather than adding it to

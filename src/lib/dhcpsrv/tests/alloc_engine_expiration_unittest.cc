@@ -132,7 +132,7 @@ std::string callout_argument_name("lease4");
 /// to mark leases with even indexes as expired and then test whether
 /// leases with even indexes have been successfully reclaimed.
 ///
-/// The "lease algorithm" verifies if the given lease fulfils the
+/// The "lease algorithm" verifies if the given lease fulfills the
 /// specific conditions after reclamation. These are the examples of
 /// the lease algorithms:
 /// - leaseExists - lease still exists in the database,
@@ -144,7 +144,7 @@ std::string callout_argument_name("lease4");
 /// - dnsUpdateNotGeneratedForLease - DNS updates not generated for lease
 ///
 /// The combination of index algorithm and lease algorithm allows for
-/// verifying that the whole sets of leases in the lease database fulfil
+/// verifying that the whole sets of leases in the lease database fulfill
 /// certain conditions. For example, it is possible to verify that
 /// after lease reclamation leases with even indexes have state set to
 /// "expired-reclaimed".
@@ -359,7 +359,7 @@ public:
             LeasePtrType lease = getLease(i);
             // index_algorithm(i) checks if the lease should be checked.
             // If so, check if the lease_algorithm indicates that the
-            // lease fulfils a given condition, e.g. is present in the
+            // lease fulfills a given condition, e.g. is present in the
             // database. If not, return false.
             if (index_algorithm(i) && !lease_algorithm(lease)) {
                 return (false);
@@ -654,7 +654,7 @@ public:
     /// of reclaimed leases.
     void testReclaimExpiredLeasesLimit() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-            // Mark all leaes as expired. The higher the index the less
+            // Mark all leases as expired. The higher the index the less
             // expired the lease.
             expire(i, 1000 - i);
         }
@@ -811,7 +811,7 @@ public:
             if (evenLeaseIndex(i)) {
                 // Hostname with two consecutive dots is invalid and may result
                 // in exception if the reclamation routine doesn't protect
-                // aginst such exceptions.
+                // against such exceptions.
                 std::ostringstream hostname_s;
                 hostname_s << "invalid-host" << i << "..example.com";
                 leases_[i]->hostname_ = hostname_s.str();
@@ -1349,7 +1349,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids and lease types for some leases.
@@ -2001,7 +2001,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids of some leases.

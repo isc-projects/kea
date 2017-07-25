@@ -1054,7 +1054,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 TEST_F(Pkt6Test, toText) {
 
     // This packet contains doubly relayed solicit. The inner-most
-    // relay-forward contains inteface-id and remote-id. We will
+    // relay-forward contains interface-id and remote-id. We will
     // check that these are printed correctly.
     Pkt6Ptr msg(capture2());
     EXPECT_NO_THROW(msg->unpack());
@@ -1689,7 +1689,7 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
     // Create a packet.
     Pkt6 pkt(DHCPV6_SOLICIT, 0x2312);
 
-    // Add empty client idenitifier option.
+    // Add empty client identifier option.
     pkt.addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID)));
     EXPECT_EQ("duid=[no info], tid=0x2312", pkt.getLabel());
 }

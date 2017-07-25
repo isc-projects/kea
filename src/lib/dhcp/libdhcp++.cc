@@ -631,7 +631,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                                      isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
 
-    // Get the list of stdandard option definitions.
+    // Get the list of standard option definitions.
     const OptionDefContainerPtr& option_defs = LibDHCP::getVendorOption4Defs(vendor_id);
     // Get the search index #1. It allows to search for option definitions
     // using option code.

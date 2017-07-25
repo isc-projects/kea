@@ -712,7 +712,7 @@
         //      }
     ]
 
-    // Client-clesses can be defined here. See "client-classes" in Dhcp4 for
+    // Client-classes can be defined here. See "client-classes" in Dhcp4 for
     // an example.
 
     // Hook libraries can be defined here. See "hooks-libraries" example in
@@ -734,7 +734,7 @@
   "reverse-ddns" : {}
 },
 
-// This is a basic configuraton for the Kea Control Agent.
+// This is a basic configuration for the Kea Control Agent.
 // RESTful interface to be available at http://127.0.0.1:8080/
 "Control-agent": {
     "http-host": "127.0.0.1",
