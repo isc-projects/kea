@@ -1,3 +1,7 @@
+1279.	[build]		waltsteverson
+	Compilation fixes for Alpine Linux
+	(Github #50, git 824afa63354e045a5e4f6437246c329d359e04dd)
+
 1278.	[doc]		jsoref
 	Many spelling corrections.
 	(Github #52, git 1dcaef6f8e7901d628c8638fc2f8145ac0279586)
