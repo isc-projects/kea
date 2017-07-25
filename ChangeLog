@@ -1,3 +1,7 @@
+1278.	[doc]		jsoref
+	Many spelling corrections.
+	(Github #52, git 1dcaef6f8e7901d628c8638fc2f8145ac0279586)
+
 1277.	[func]*		marcin
 	Added support to Command Manager to process commands using
 	callouts implemented within hooks libraries.
