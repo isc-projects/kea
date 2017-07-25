@@ -43,6 +43,7 @@ EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
 EXTRA_DIST += parsers/ifaces_config_parser.cc
 EXTRA_DIST += parsers/ifaces_config_parser.h
+EXTRA_DIST += parsers/option_data_parser.h
 
 # Devel guide diagrams
 EXTRA_DIST += images/pgsql_host_data_source.svg
@@ -171,6 +172,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.h
 
 nodist_libkea_dhcpsrv_la_SOURCES = alloc_engine__messages.h
 nodist_libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.cc

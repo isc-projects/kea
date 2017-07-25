@@ -44,10 +44,18 @@ there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
 
+% DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified IPv4 subnet.
+
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such
 subnet exists.
+
+% DHCPSRV_CFGMGR_NEW_SUBNET6 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
 
 % DHCPSRV_CFGMGR_NO_SUBNET6 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
@@ -63,6 +71,11 @@ because it is the only subnet defined.
 This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
+
+% DHCPSRV_CFGMGR_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on an attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv6, but it is not prohibited.
 
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the

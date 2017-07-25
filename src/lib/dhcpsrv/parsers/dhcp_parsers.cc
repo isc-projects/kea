@@ -10,7 +10,11 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
+#include <dhcpsrv/parsers/host_reservations_list_parser.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -761,6 +765,28 @@ PoolParser::parse(PoolStoragePtr pools,
     }
 }
 
+//****************************** Pool4Parser *************************
+
+PoolPtr
+Pool4Parser::poolMaker (IOAddress &addr, uint32_t len, int32_t) {
+    return (PoolPtr(new Pool4(addr, len)));
+}
+
+PoolPtr
+Pool4Parser::poolMaker (IOAddress &min, IOAddress &max, int32_t) {
+    return (PoolPtr(new Pool4(min, max)));
+}
+
+//****************************** Pool4ListParser *************************
+
+void
+Pools4ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
+    BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
+        Pool4Parser parser;
+        parser.parse(pools, pool, AF_INET);
+    }
+}
+
 //****************************** SubnetConfigParser *************************
 
 SubnetConfigParser::SubnetConfigParser(uint16_t family)
@@ -904,6 +930,441 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet_->getCfgOption());
 }
+
+//****************************** Subnet4ConfigParser *************************
+
+Subnet4ConfigParser::Subnet4ConfigParser()
+    :SubnetConfigParser(AF_INET) {
+}
+
+Subnet4Ptr
+Subnet4ConfigParser::parse(ConstElementPtr subnet) {
+    /// Parse Pools first.
+    ConstElementPtr pools = subnet->get("pools");
+    if (pools) {
+        Pools4ListParser parser;
+        parser.parse(pools_, pools);
+    }
+
+    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+
+    if (!generic) {
+        isc_throw(DhcpConfigError,
+                  "Failed to create an IPv4 subnet (" <<
+                  subnet->getPosition() << ")");
+    }
+
+    Subnet4Ptr sn4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
+    if (!sn4ptr) {
+        // If we hit this, it is a programming error.
+        isc_throw(Unexpected,
+                  "Invalid Subnet4 cast in Subnet4ConfigParser::parse");
+    }
+
+    // Set relay information if it was parsed
+    if (relay_info_) {
+        sn4ptr->setRelayInfo(*relay_info_);
+    }
+
+    // Parse Host Reservations for this subnet if any.
+    ConstElementPtr reservations = subnet->get("reservations");
+    if (reservations) {
+        HostCollection hosts;
+        HostReservationsListParser<HostReservationParser4> parser;
+        parser.parse(subnet_->getID(), reservations, hosts);
+        for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+        }
+    }
+
+    return (sn4ptr);
+}
+
+void
+Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
+                                asiolink::IOAddress addr, uint8_t len) {
+    // The renew-timer and rebind-timer are optional. If not set, the
+    // option 58 and 59 will not be sent to a client. In this case the
+    // client will use default values based on the valid-lifetime.
+    Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
+    Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+
+    // The valid-lifetime is mandatory. It may be specified for a
+    // particular subnet. If not, the global value should be present.
+    // If there is no global value, exception is thrown.
+    Triplet<uint32_t> valid = getInteger(params, "valid-lifetime");
+
+    // Subnet ID is optional. If it is not supplied the value of 0 is used,
+    // which means autogenerate. The value was inserted earlier by calling
+    // SimpleParser4::setAllDefaults.
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+
+    stringstream s;
+    s << addr << "/" << static_cast<int>(len) << " with params: ";
+    // t1 and t2 are optional may be not specified.
+    if (!t1.unspecified()) {
+        s << "t1=" << t1 << ", ";
+    }
+    if (!t2.unspecified()) {
+        s << "t2=" << t2 << ", ";
+    }
+    s <<"valid-lifetime=" << valid;
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(s.str());
+
+    Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
+    subnet_ = subnet4;
+
+    // Set the match-client-id value for the subnet. It is always present.
+    // If not explicitly specified, the default value was filled in when
+    // SimpleParser4::setAllDefaults was called.
+    bool match_client_id = getBoolean(params, "match-client-id");
+    subnet4->setMatchClientId(match_client_id);
+
+    // Set next-server. The default value is 0.0.0.0. Nevertheless, the
+    // user could have messed that up by specifying incorrect value.
+    // To avoid using 0.0.0.0, user can specify "".
+    string next_server;
+    try {
+        next_server = getString(params, "next-server");
+        if (!next_server.empty()) {
+            subnet4->setSiaddr(IOAddress(next_server));
+        }
+    } catch (...) {
+        ConstElementPtr next = params->get("next-server");
+        string pos;
+        if (next) {
+            pos = next->getPosition().str();
+        } else {
+            pos = params->getPosition().str();
+        }
+        isc_throw(DhcpConfigError, "invalid parameter next-server : "
+                  << next_server << "(" << pos << ")");
+    }
+
+    // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
+    // it will have the default value of "".
+    string iface4o6 = getString(params, "4o6-interface");
+    if (!iface4o6.empty()) {
+        subnet4->get4o6().setIface4o6(iface4o6);
+        subnet4->get4o6().enabled(true);
+    }
+
+    // 4o6 specific parameter: 4o6-subnet. If not explicitly specified, it
+    // will have the default value of "".
+    string subnet4o6 = getString(params, "4o6-subnet");
+    if (!subnet4o6.empty()) {
+        size_t slash = subnet4o6.find("/");
+        if (slash == std::string::npos) {
+            isc_throw(DhcpConfigError, "Missing / in the 4o6-subnet parameter:"
+                      << subnet4o6 << ", expected format: prefix6/length");
+        }
+        string prefix = subnet4o6.substr(0, slash);
+        string lenstr = subnet4o6.substr(slash + 1);
+
+        uint8_t len = 128;
+        try {
+            len = boost::lexical_cast<unsigned int>(lenstr.c_str());
+        } catch (const boost::bad_lexical_cast &) {
+            isc_throw(DhcpConfigError, "Invalid prefix length specified in "
+                      "4o6-subnet parameter: " << subnet4o6 << ", expected 0..128 value");
+        }
+        subnet4->get4o6().setSubnet4o6(IOAddress(prefix), len);
+        subnet4->get4o6().enabled(true);
+    }
+
+    // Try 4o6 specific parameter: 4o6-interface-id
+    std::string ifaceid = getString(params, "4o6-interface-id");
+    if (!ifaceid.empty()) {
+        OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+        OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+        subnet4->get4o6().setInterfaceId(opt);
+        subnet4->get4o6().enabled(true);
+    }
+
+    /// client-class processing is now generic and handled in the common
+    /// code (see isc::data::SubnetConfigParser::createSubnet)
+}
+
+//**************************** Subnets4ListConfigParser **********************
+
+size_t
+Subnets4ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet4ConfigParser parser;
+        Subnet4Ptr subnet = parser.parse(subnet_json);
+        if (subnet) {
+
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                cfg->getCfgSubnets4()->add(subnet);
+                cnt++;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
+        }
+    }
+    return (cnt);
+}
+
+//**************************** Pool6Parser *********************************
+
+PoolPtr
+Pool6Parser::poolMaker (IOAddress &addr, uint32_t len, int32_t ptype)
+{
+    return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
+                              (ptype), addr, len)));
+}
+
+PoolPtr
+Pool6Parser::poolMaker (IOAddress &min, IOAddress &max, int32_t ptype)
+{
+    return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
+                              (ptype), min, max)));
+}
+
+
+//**************************** Pool6ListParser ***************************
+
+void
+Pools6ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
+    BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
+        Pool6Parser parser;
+        parser.parse(pools, pool, AF_INET6);
+    }
+}
+
+//**************************** PdPoolParser ******************************
+
+PdPoolParser::PdPoolParser() : options_(new CfgOption()) {
+}
+
+void
+PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
+    std::string addr_str = getString(pd_pool_, "prefix");
+
+    uint8_t prefix_len = getUint8(pd_pool_, "prefix-len");
+
+    uint8_t delegated_len = getUint8(pd_pool_, "delegated-len");
+
+    std::string excluded_prefix_str = "::";
+    if (pd_pool_->contains("excluded-prefix")) {
+        excluded_prefix_str = getString(pd_pool_, "excluded-prefix");
+    }
+
+    uint8_t excluded_prefix_len = 0;
+    if (pd_pool_->contains("excluded-prefix-len")) {
+        excluded_prefix_len = getUint8(pd_pool_, "excluded-prefix-len");
+    }
+
+    ConstElementPtr option_data = pd_pool_->get("option-data");
+    if (option_data) {
+        OptionDataListParser opts_parser(AF_INET6);
+        opts_parser.parse(options_, option_data);
+    }
+                    
+    ConstElementPtr user_context = pd_pool_->get("user-context");
+    if (user_context) {
+        user_context_ = user_context;
+    }
+
+    // Check the pool parameters. It will throw an exception if any
+    // of the required parameters are invalid.
+    try {
+        // Attempt to construct the local pool.
+        pool_.reset(new Pool6(IOAddress(addr_str),
+                              prefix_len,
+                              delegated_len,
+                              IOAddress(excluded_prefix_str),
+                              excluded_prefix_len));
+        // Merge options specified for a pool into pool configuration.
+        options_->copyTo(*pool_->getCfgOption());
+    } catch (const std::exception& ex) {
+        // Some parameters don't exist or are invalid. Since we are not
+        // aware whether they don't exist or are invalid, let's append
+        // the position of the pool map element.
+        isc_throw(isc::dhcp::DhcpConfigError, ex.what()
+                  << " (" << pd_pool_->getPosition() << ")");
+    }
+
+    if (user_context_) {
+        pool_->setUserContext(user_context_);
+    }
+
+    // Add the local pool to the external storage ptr.
+    pools->push_back(pool_);
+}
+
+//**************************** PdPoolsListParser ************************
+
+void
+PdPoolsListParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_list) {
+    // Loop through the list of pd pools.
+    BOOST_FOREACH(ConstElementPtr pd_pool, pd_pool_list->listValue()) {
+        PdPoolParser parser;
+        parser.parse(pools, pd_pool);
+    }
+}
+
+//**************************** Subnet6ConfigParser ***********************
+
+Subnet6ConfigParser::Subnet6ConfigParser()
+    :SubnetConfigParser(AF_INET6) {
+}
+
+Subnet6Ptr
+Subnet6ConfigParser::parse(ConstElementPtr subnet) {
+    /// Parse all pools first.
+    ConstElementPtr pools = subnet->get("pools");
+    if (pools) {
+        Pools6ListParser parser;
+        parser.parse(pools_, pools);
+    }
+    ConstElementPtr pd_pools = subnet->get("pd-pools");
+    if (pd_pools) {
+        PdPoolsListParser parser;
+        parser.parse(pools_, pd_pools);
+    }
+
+    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+
+    if (!generic) {
+        isc_throw(DhcpConfigError,
+                  "Failed to create an IPv6 subnet (" <<
+                  subnet->getPosition() << ")");
+    }
+
+    Subnet6Ptr sn6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
+    if (!sn6ptr) {
+        // If we hit this, it is a programming error.
+        isc_throw(Unexpected,
+                  "Invalid Subnet6 cast in Subnet6ConfigParser::parse");
+    }
+
+    // Set relay information if it was provided
+    if (relay_info_) {
+        sn6ptr->setRelayInfo(*relay_info_);
+    }
+
+
+    // Parse Host Reservations for this subnet if any.
+    ConstElementPtr reservations = subnet->get("reservations");
+    if (reservations) {
+        HostCollection hosts;
+        HostReservationsListParser<HostReservationParser6> parser;
+        parser.parse(subnet_->getID(), reservations, hosts);
+        for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+        }
+    }
+
+    return (sn6ptr);
+}
+
+void
+Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
+                                              asiolink::IOAddress& addr) {
+    LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_OPTION_DUPLICATE)
+        .arg(code).arg(addr.toText());
+}
+
+void
+Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
+                                asiolink::IOAddress addr, uint8_t len) {
+    // Get all 'time' parameters using inheritance.
+    // If the subnet-specific value is defined then use it, else
+    // use the global value. The global value must always be
+    // present. If it is not, it is an internal error and exception
+    // is thrown.
+    Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
+    Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+    Triplet<uint32_t> pref = getInteger(params, "preferred-lifetime");
+    Triplet<uint32_t> valid = getInteger(params, "valid-lifetime");
+
+    // Subnet ID is optional. If it is not supplied the value of 0 is used,
+    // which means autogenerate. The value was inserted earlier by calling
+    // SimpleParser6::setAllDefaults.
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+
+    // We want to log whether rapid-commit is enabled, so we get this
+    // before the actual subnet creation.
+    bool rapid_commit = getBoolean(params, "rapid-commit");
+
+    std::ostringstream output;
+    output << addr << "/" << static_cast<int>(len)
+           << " with params t1=" << t1 << ", t2="
+           << t2 << ", preferred-lifetime=" << pref
+           << ", valid-lifetime=" << valid
+           << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
+
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(output.str());
+
+    // Create a new subnet.
+    Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
+                                       subnet_id);
+    subnet_.reset(subnet6);
+
+    // Enable or disable Rapid Commit option support for the subnet.
+    subnet6->setRapidCommit(rapid_commit);
+
+    // Get interface-id option content. For now we support string
+    // representation only
+    std::string ifaceid = getString(params, "interface-id");
+    std::string iface = getString(params, "interface");
+
+    // Specifying both interface for locally reachable subnets and
+    // interface id for relays is mutually exclusive. Need to test for
+    // this condition.
+    if (!ifaceid.empty() && !iface.empty()) {
+        isc_throw(isc::dhcp::DhcpConfigError,
+                  "parser error: interface (defined for locally reachable "
+                  "subnets) and interface-id (defined for subnets reachable"
+                  " via relays) cannot be defined at the same time for "
+                  "subnet " << addr << "/" << (int)len << "("
+                  << params->getPosition() << ")");
+    }
+
+    // Configure interface-id for remote interfaces, if defined
+    if (!ifaceid.empty()) {
+        OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
+        OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+        subnet6->setInterfaceId(opt);
+    }
+
+    /// client-class processing is now generic and handled in the common
+    /// code (see isc::data::SubnetConfigParser::createSubnet)
+}
+
+//**************************** Subnet6ListConfigParser ********************
+
+size_t
+Subnets6ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet6ConfigParser parser;
+        Subnet6Ptr subnet = parser.parse(subnet_json);
+
+        // Adding a subnet to the Configuration Manager may fail if the
+        // subnet id is invalid (duplicate). Thus, we catch exceptions
+        // here to append a position in the configuration string.
+        try {
+            cfg->getCfgSubnets6()->add(subnet);
+            cnt++;
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << subnet_json->getPosition() << ")");
+        }
+    }
+    return (cnt);
+}
+
 
 //**************************** D2ClientConfigParser **********************
 
