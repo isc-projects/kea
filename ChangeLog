@@ -1,3 +1,7 @@
+1280.	[build]		waltsteverson
+	Missing header for PD-exclude DHCPv6 option is now installed.
+	(Github #51, git 36a8e1b8f687a6398af8a10f241e8d19e9de33d8)
+
 1279.	[build]		waltsteverson
 	Compilation fixes for Alpine Linux
 	(Github #50, git 824afa63354e045a5e4f6437246c329d359e04dd)

@@ -145,7 +145,8 @@ We have received the following contributions:
    2017-07: Many spelling corrections.
 
  - Walt Steverson (waltsteverson)
-   2017-07: Compilation fixed for Alpine Linux.
+   2017-07: Compilation fixed for Alpine Linux
+   2017-07: option6_pdexclude.h now installed properly
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
