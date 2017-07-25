@@ -440,7 +440,19 @@ if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    KEA_CXXFLAGS="$KEA_CXXFLAGS -fPIC"
 fi
 
+# Look for glib static libs if they're trying to do static builds
+if test $enable_static = yes; then
+   CXX_SAVED=$CXX
+   CXX="$CXX -static"
 
+   AC_LINK_IFELSE(
+     [AC_LANG_PROGRAM([#include <math.h>],[sqrt(-1.0);])],
+     [AC_MSG_RESULT([checking for static glib libraries... yes])],
+     [AC_MSG_RESULT([checking for static glib libraries... no])
+/bin/bash: :1: command not found
+
+   CXX=$CXX_SAVED
+fi
 
 AC_SUBST(KEA_CXXFLAGS)
 
