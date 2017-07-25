@@ -9,6 +9,7 @@
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <eval/eval_context.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
