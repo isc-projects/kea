@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <gtest/gtest.h>
-#include <dhcp4/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <cc/data.h>
 
