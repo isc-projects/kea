@@ -449,7 +449,7 @@ if test $enable_static = yes; then
      [AC_LANG_PROGRAM([#include <math.h>],[sqrt(-1.0);])],
      [AC_MSG_RESULT([checking for static glib libraries... yes])],
      [AC_MSG_RESULT([checking for static glib libraries... no])
-/bin/bash: :1: command not found
+      AC_MSG_ERROR([Static building will not work. You appear to be missing glib static libraries. Check config.log for details.])])
 
    CXX=$CXX_SAVED
 fi
