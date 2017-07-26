@@ -180,9 +180,16 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
     }
 
     if (!def) {
-        // Check if this is an option specified by a user.
-        def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef()
-            ->get(option_space, search_key);
+        // Check if this is an option specified by a user. We used to
+        // check that in the staging configuration, but when the configuration
+        // changes are caused by a command the staging configuration doesn't
+        // exist. What is always available is the container holding runtime
+        // option definitions in LibDHCP. It holds option definitions from
+        // the staging configuration in case of the full reconfiguration or
+        // the definitions from the current configuration in case there is
+        // no staging configuration (after configuration commit). In other
+        // words, runtime options are always the ones that we need here.
+        def = LibDHCP::getRuntimeOptionDef(option_space, search_key);
     }
 
     return (def);
