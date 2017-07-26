@@ -235,14 +235,6 @@ public:
 
 private:
 
-    /// @brief Checks that the IPv4 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    ///
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet4& subnet) const;
-
     /// @brief A container for IPv4 subnets.
     Subnet4Collection subnets_;
 

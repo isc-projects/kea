@@ -241,14 +241,6 @@ private:
     selectSubnet(const OptionPtr& interface_id,
                  const ClientClasses& client_classes) const;
 
-    /// @brief Checks that the IPv6 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    ///
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet6& subnet) const;
-
     /// @brief A container for IPv6 subnets.
     Subnet6Collection subnets_;
 
