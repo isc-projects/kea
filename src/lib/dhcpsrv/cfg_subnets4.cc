@@ -23,12 +23,17 @@ namespace dhcp {
 
 void
 CfgSubnets4::add(const Subnet4Ptr& subnet) {
-    /// @todo: Check that this new subnet does not cross boundaries of any
-    /// other already defined subnet.
-    if (isDuplicate(*subnet)) {
+    if (getBySubnetId(subnet->getID())) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
                   << subnet->getID() << "' is already in use");
+
+    } else if (getByPrefix(subnet->toText())) {
+        /// @todo: Check that this new subnet does not cross boundaries of any
+        /// other already defined subnet.
+        isc_throw(isc::dhcp::DuplicateSubnetID, "subnet with the prefix of '"
+                  << subnet->toText() << "' already exists");
     }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
               .arg(subnet->toText());
     subnets_.push_back(subnet);
@@ -244,17 +249,6 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
 
     // Failed to find a subnet.
     return (Subnet4Ptr());
-}
-
-bool
-CfgSubnets4::isDuplicate(const Subnet4& subnet) const {
-    for (Subnet4Collection::const_iterator subnet_it = subnets_.begin();
-         subnet_it != subnets_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
 }
 
 void

@@ -22,12 +22,17 @@ namespace dhcp {
 
 void
 CfgSubnets6::add(const Subnet6Ptr& subnet) {
-    /// @todo: Check that this new subnet does not cross boundaries of any
-    /// other already defined subnet.
-    if (isDuplicate(*subnet)) {
+    if (getBySubnetId(subnet->getID())) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv6 subnet '"
                   << subnet->getID() << "' is already in use");
+
+    } else if (getByPrefix(subnet->toText())) {
+        /// @todo: Check that this new subnet does not cross boundaries of any
+        /// other already defined subnet.
+        isc_throw(isc::dhcp::DuplicateSubnetID, "subnet with the prefix of '"
+                  << subnet->toText() << "' already exists");
     }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
     subnets_.push_back(subnet);
