@@ -241,6 +241,21 @@
               capabilities related to host reservations will be added in the
               future.</entry>
             </row>
+            <row>
+              <entry>Subnet Commands</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.3.0</entry>
+              <entry>In deployments in which subnets' configuration needs to
+              be frequently updated, it is a hard requirement that such updates are
+              performed without a need for a full DHCP server reconfiguration
+              or restart. This hooks library allows for incremental changes
+              to the subnets' configuration such as: adding a subnet, removing
+              a subnet. It also allows for listing all available subnets and
+              fetching detailed information about a selected subnet. The
+              commands exposed by this library do not affect other subnets
+              or configuration parameters currently used by the server.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
           </table>
@@ -1112,7 +1127,6 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
     }
 }
 </screen>
-
         </para>
 
         <para><command>lease6-add</command> command requires four
@@ -1480,17 +1494,444 @@ as follows:
       </section>
     </section>
 
-    </section> <section id="user-context"> <title>User contexts</title>
-    <para>Hook libraries can have their own configuration parameters. That is
-    convenient if the parameter applies to the whole library. However, sometimes
-    it is very useful if certain configuration entities are extended with
-    additional configuration data. This is where the concept of user contexts
-    comes in. A sysadmin can define an arbitrary set of data and attach it to
-    Kea structures, as long as the data is specified as JSON map.  In
-    particular, it is possible to define fields that are integers, strings,
-    boolean, lists and maps. It is possible to define nested structures of
-    arbitrary complexity. Kea does not use that data on its own, simply stores
-    and makes it available for the hook libraries.  </para> <para> As of Kea
-    1.2, the only structures that allow user contexts are address and prefix
-    pools, but it is expected to extend other structures with the user context
-    capability.  </para> </section> </chapter> <!-- hooks-libraries -->
+      <section id="subnet-cmds">
+        <title>subnet_cmds: Subnet Commands</title>
+        <para>
+          This section describes a hook application that offers a number of new
+          commands used to query and manipulate subnet configurations in Kea.
+          This application is very useful in deployments with a large number of
+          subnets being managed by the DHCP servers and when the subnets are
+          frequently updated. The commands offer lightweight approach for
+          manipulating subnets without a need to fully reconfigure the server
+          and without affecting existing servers' configurations.
+        </para>
+
+        <para>Currently this library is only available to ISC customers with a
+        support contract.</para>
+
+        <para>The following commands are currently supported:
+        <itemizedlist mark='bullet'>
+          <listitem>
+            <simpara><command>subnet4-list/subnet6-list</command>: lists all configured subnets
+            </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>subnet4-get/subnet6-get</command>: retrieves detailed information about a selected subnet
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>subnet4-add/subnet6-add</command>: adds new subnet into server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>subnet4-del/subnet6-del</command>: removes a subnet from the server's configuration
+          </simpara>
+          </listitem>
+        </itemizedlist>
+        </para>
+
+        <section>
+          <title>subnet4-list command</title>
+          <para>
+            This command is used to list all currently configured subnets. The
+            subnets are returned in a brief form, i.e. a subnet identifier
+            and subnet prefix is included for each subnet. In order to retrieve
+            the detailed information about the subnet the
+            <command>subnet4-get</command> should be used.
+          </para>
+          <para>
+            This command has the simple structure:
+<screen>
+{
+    "command": "subnet4-list"
+}
+</screen>
+          </para>
+          <para>
+            The list of subnets returned as a result of this command is returned
+            in the following format:
+<screen>
+{
+    "result": 0,
+    "text": "2 IPv4 subnets found",
+    "arguments": {
+    "subnet-ids": [
+        {
+            "subnet-id": 10,
+            "subnet": "10.0.0.0/8"
+        },
+        {
+            "subnet-id": 100,
+            "subnet": "192.0.2.0/24"
+        }
+    ]
+}
+</screen>
+          </para>
+          <para>
+            If no IPv4 subnets are found, an error code is returned along with
+            the error description.
+          </para>
+        </section>
+
+        <section>
+          <title>subnet6-list command</title>
+          <para>
+            This command is used to list all currently configured subnets. The
+            subnets are returned in a brief form, i.e. a subnet identifier
+            and subnet prefix is included for each subnet. In order to retrieve
+            the detailed information about the subnet the
+            <command>subnet6-get</command> should be used.
+          </para>
+          <para>
+            This command has the simple structure:
+<screen>
+{
+    "command": "subnet6-list"
+}
+</screen>
+          </para>
+          <para>
+            The list of subnets returned as a result of this command is returned
+            in the following format:
+<screen>
+{
+    "result": 0,
+    "text": "2 IPv6 subnets found",
+    "arguments": {
+    "subnet-ids": [
+        {
+            "subnet-id": 11,
+            "subnet": "2001:db8:1::/64"
+        },
+        {
+            "subnet-id": 233,
+            "subnet": "3000::/16"
+        }
+    ]
+}
+</screen>
+          </para>
+          <para>
+            If no IPv6 subnets are found, an error code is returned along with
+            the error description.
+          </para>
+        </section>
+      </section>
+
+      <section>
+        <title>subnet4-get command</title>
+        <para>This command is used to retrieve detailed information about the
+        specified subnet. This command usually follows the
+        <command>subnet4-list</command>, which is used to discover available
+        subnets with their respective subnet identifiers and prefixes. Any of
+        those parameters can be then used in <command>subnet4-get</command>
+        to fetch subnet information:
+<screen>
+{
+    "command": "subnet4-get",
+    "arguments": {
+        "subnet-id": 10
+    }
+}</screen>
+
+or
+
+<screen>
+{
+    "command": "subnet4-get",
+    "arguments": {
+        "subnet": "10.0.0.0/8"
+    }
+}
+</screen>
+        </para>
+
+        <para>
+          If the subnet exists the response will be similar to this:
+<screen>
+{
+    "result": 0,
+    "text": "Info about IPv4 subnet 10.0.0.0/8 (subnet-id 10) returned",
+    "arguments": {
+        "subnet4": [
+            {
+                "subnet": "10.0.0.0/8",
+                "id": 1,
+                "option-data": [
+                    ....
+                ]
+                ...
+            }
+        ]
+    }
+}
+
+</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>subnet6-get command</title>
+        <para>This command is used to retrieve detailed information about the
+        specified subnet. This command usually follows the
+        <command>subnet6-list</command>, which is used to discover available
+        subnets with their respective subnet identifiers and prefixes. Any of
+        those parameters can be then used in <command>subnet6-get</command>
+        to fetch subnet information:
+<screen>
+{
+    "command": "subnet6-get",
+    "arguments": {
+        "subnet-id": 11
+    }
+}
+</screen>
+
+or
+
+<screen>
+{
+    "command": "subnet6-get",
+    "arguments": {
+        "subnet": "2001:db8:1::/64"
+    }
+}</screen>
+
+If the subnet exists the response will be similar to this:
+<screen>
+{
+    "result": 0,
+    "text": "Info about IPv6 subnet 2001:db8:1::/64 (subnet-id 11) returned",
+    "arguments": {
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/64",
+                "id": 1,
+                "option-data": [
+                    ...
+                ]
+                ....
+            }
+        ]
+    }
+}
+</screen> 
+        </para>
+      </section>
+
+      <section>
+        <title>subnet4-add</title>
+        <para>
+          This command is used to create and add new subnet to the existing
+          server configuration. This operation has no impact on other
+          subnets. The subnet identifier must be specified and must be
+          unique among all subnets. If the identifier or a subnet prefix is
+          not unique an error is reported and the subnet is not added.
+        </para>
+        <para>
+          The subnet information within this command has the same structure
+          as the subnet information in the server configuration file with the
+          exception that static host reservations must not be specified
+          within <command>subnet4-add</command>. The commands described in
+          <xref linkend="host-cmds"/> should be used to add, remove and
+          modify static reservations.
+<screen>
+{
+    "command": "subnet4-add",
+    "arguments": {
+        "subnet4": [ {
+            "id": 123,
+            "subnet": "10.20.30.0/24",
+            ...
+        } ]
+    }
+}
+</screen>
+        </para>
+
+        <para>
+          The response to this command has the following structure:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet added",
+    "arguments": {
+        "subnet4": [
+            {
+                "id": 123,
+                "subnet": "10.20.30.0/24"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>subnet6-add</title>
+        <para>
+          This command is used to create and add new subnet to the existing
+          server configuration. This operation has no impact on other
+          subnets. The subnet identifier must be specified and must be
+          unique among all subnets. If the identifier or a subnet prefix is
+          not unique an error is reported and the subnet is not added.
+        </para>
+        <para>
+          The subnet information within this command has the same structure
+          as the subnet information in the server configuration file with the
+          exception that static host reservations must not be specified
+          within <command>subnet6-add</command>. The commands described in
+          <xref linkend="host-cmds"/> should be used to add, remove and
+          modify static reservations.
+<screen>
+{
+    "command": "subnet6-add",
+    "arguments": {
+        "subnet6": [ {
+            "id": 234,
+            "subnet": "2001:db8:1::/64",
+            ...
+        } ]
+    }
+}
+</screen>
+        </para>
+
+        <para>
+          The response to this command has the following structure:
+<screen>
+{
+    "result": 0,
+    "text": "IPv6 subnet added",
+    "arguments": {
+        "subnet6": [
+            {
+                "id": 234,
+                "subnet": "2001:db8:1::/64"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>subnet4-del command</title>
+        <para>
+          This command is used to remove a subnet from the server's configuration.
+          This command has no effect on other configured subnets but removing
+          a subnet has certain implications which the server's administrator
+          should be aware of.
+        </para>
+        <para>
+          In most cases the server has assigned some leases to the clients
+          belonging to the subnet. The server may also be configured with
+          static host reservations which are associated with this subnet.
+          The current implementation of the <command>subnet4-del</command>
+          removes neither the leases nor host reservations associated with
+          a subnet. This is the safest approach because the server doesn't
+          loose track of leases assigned to the clients from this subnet.
+          However, removal of the subnet may still cause configuration
+          errors and conflicts. For example: after removal of the subnet,
+          the server administrator may add a new subnet with the ID used
+          previously for the removed subnet. This means that the existing
+          leases and static reservations will be in conflict with this
+          new subnet. Thus, we recommend that this command is used with extreme
+          caution.
+        </para>
+
+        <para>The command has the following structure:
+<screen>
+{
+    "command": "subnet4-del",
+    "arguments": {
+        "subnet-id": 123
+    }
+}
+</screen>
+        </para>
+        <para>
+          The example successful response may look like this:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet 192.0.2.0/24 (subnet-id 123) deleted"
+}
+</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>subnet6-del command</title>
+        <para>
+          This command is used to remove a subnet from the server's configuration.
+          This command has no effect on other configured subnets but removing
+          a subnet has certain implications which the server's administrator
+          should be aware of.
+        </para>
+        <para>
+          In most cases the server has assigned some leases to the clients
+          belonging to the subnet. The server may also be configured with
+          static host reservations which are associated with this subnet.
+          The current implementation of the <command>subnet6-del</command>
+          removes neither the leases nor host reservations associated with
+          a subnet. This is the safest approach because the server doesn't
+          loose track of leases assigned to the clients from this subnet.
+          However, removal of the subnet may still cause configuration
+          errors and conflicts. For example: after removal of the subnet,
+          the server administrator may add a new subnet with the ID used
+          previously for the removed subnet. This means that the existing
+          leases and static reservations will be in conflict with this
+          new subnet. Thus, we recommend that this command is used with extreme
+          caution.
+        </para>
+
+        <para>The command has the following structure:
+<screen>
+{
+    "command": "subnet6-del",
+    "arguments": {
+        "subnet-id": 234
+    }
+}
+</screen>
+        </para>
+        <para>
+          The example successful response may look like this:
+<screen>
+{
+    "result": 0,
+    "text": "IPv6 subnet 2001:db8:1::/64 (subnet-id 234) deleted"
+}
+</screen>
+        </para>
+      </section>
+
+    </section>
+
+    <section id="user-context">
+      <title>User contexts</title>
+      <para>Hook libraries can have their own configuration parameters. That is
+      convenient if the parameter applies to the whole library. However,
+      sometimes it is very useful if certain configuration entities are extended
+      with additional configuration data. This is where the concept of user
+      contexts comes in. A sysadmin can define an arbitrary set of data and
+      attach it to Kea structures, as long as the data is specified as JSON map.
+      In particular, it is possible to define fields that are integers, strings,
+      boolean, lists and maps. It is possible to define nested structures of
+      arbitrary complexity. Kea does not use that data on its own, simply stores
+      and makes it available for the hook libraries.
+      </para>
+      <para>
+        As of Kea 1.2, the only structures that allow user contexts are address
+        and prefix pools, but it is expected to extend other structures with the
+        user context capability.
+      </para>
+    </section>
+   </chapter> <!-- hooks-libraries -->
