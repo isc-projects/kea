@@ -38,6 +38,20 @@ CfgSubnets6::add(const Subnet6Ptr& subnet) {
     subnets_.push_back(subnet);
 }
 
+void
+CfgSubnets6::del(const ConstSubnet6Ptr& subnet) {
+    auto& index = subnets_.get<SubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet->getID());
+    if (subnet_it == index.end()) {
+        isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()
+                  << "' found");
+    }
+    index.erase(subnet_it);
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET6)
+        .arg(subnet->toText());
+}
+
 ConstSubnet6Ptr
 CfgSubnets6::getBySubnetId(const SubnetID& subnet_id) const {
     const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
