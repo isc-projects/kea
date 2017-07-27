@@ -44,6 +44,13 @@ there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
 
+% DHCPSRV_CFGMGR_DEL_SUBNET4 IPv4 subnet %1 removed
+This debug message is issued when a subnet is successfully removed from the
+server configuration. The argument identifies the subnet removed.
+
+% DHCPSRV_CFGMGR_DEL_SUBNET6 IPv6 subnet %1 removed
+This debug message is issued when a subnet is successfully removed from the
+
 % DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.

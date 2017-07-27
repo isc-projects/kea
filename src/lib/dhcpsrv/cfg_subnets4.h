@@ -39,6 +39,13 @@ public:
     /// duplicates id of an existing subnet.
     void add(const Subnet4Ptr& subnet);
 
+    /// @brief Removes subnet from the configuration.
+    ///
+    /// @param subnet Pointer to the subnet to be removed.
+    ///
+    /// @throw isc::BadValue if such subnet doesn't exist.
+    void del(const ConstSubnet4Ptr& subnet);
+
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///
     /// This is used in a hook (subnet4_select), where the hook is able
