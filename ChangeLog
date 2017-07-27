@@ -1,3 +1,9 @@
+1281.	[build]		tmark
+	Configure script now correctly recognizes static boost_system library as 
+	well as checks for the presence of static glibc static libraries when
+	--enable-satic-link is specified.
+	(Trac #5337, git 42548148cbeaaa285519e121f493d52607f1e8a0)
+
 1280.	[build]		waltsteverson
 	Missing header for PD-exclude DHCPv6 option is now installed.
 	(Github #51, git 36a8e1b8f687a6398af8a10f241e8d19e9de33d8)
