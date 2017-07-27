@@ -441,7 +441,7 @@ if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
 fi
 
 # Look for glib static libs if they're trying to do static builds
-if test $enable_static != "no"; then
+if test $enable_static_link != "no"; then
    CXX_SAVED=$CXX
    CXX="$CXX -static"
 
@@ -449,7 +449,7 @@ if test $enable_static != "no"; then
      [AC_LANG_PROGRAM([#include <math.h>],[(void)sqrt(-1.0);])],
      [AC_MSG_RESULT([checking for static glib libraries... yes])],
      [AC_MSG_RESULT([checking for static glib libraries... no])
-      AC_MSG_ERROR([Building with --enable-static does not work. You appear to be missing glib static libraries. Check config.log for details.])])
+      AC_MSG_ERROR([Building with --enable-static-link does not work. You appear to be missing glib static libraries. Check config.log for details.])])
 
    CXX=$CXX_SAVED
 fi
