@@ -2078,7 +2078,7 @@ namespace isc { namespace dhcp {
 #line 1158 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr persist(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("persistent", persist);
+    ctx.stack_.back()->set("always-send", persist);
 }
 #line 2084 "dhcp4_parser.cc" // lalr1.cc:859
     break;
@@ -3969,7 +3969,7 @@ namespace isc { namespace dhcp {
   "\"renew-timer\"", "\"rebind-timer\"", "\"decline-probation-period\"",
   "\"subnet4\"", "\"4o6-interface\"", "\"4o6-interface-id\"",
   "\"4o6-subnet\"", "\"option-def\"", "\"option-data\"", "\"name\"",
-  "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"", "\"persistent\"",
+  "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"", "\"always-send\"",
   "\"record-types\"", "\"encapsulate\"", "\"array\"", "\"pools\"",
   "\"pool\"", "\"user-context\"", "\"subnet\"", "\"interface\"",
   "\"interface-id\"", "\"id\"", "\"rapid-commit\"", "\"reservation-mode\"",
@@ -4041,7 +4041,7 @@ namespace isc { namespace dhcp {
   "option_data_params", "not_empty_option_data_params",
   "option_data_param", "option_data_name", "option_data_data", "$@59",
   "option_data_code", "option_data_space", "option_data_csv_format",
-  "option_data_persistent", "pools_list", "$@60", "pools_list_content",
+  "option_data_always_send", "pools_list", "$@60", "pools_list_content",
   "not_empty_pools_list", "pool_list_entry", "$@61", "sub_pool4", "$@62",
   "pool_params", "pool_param", "pool_entry", "$@63", "user_context",
   "$@64", "reservations", "$@65", "reservations_list",

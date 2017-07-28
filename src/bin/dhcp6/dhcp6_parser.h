@@ -40,7 +40,7 @@
 #ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 # define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp6_parser.yy" // lalr1.cc:392
+#line 17 "dhcp6_parser.yy" // lalr1.cc:377
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp6_parser.h" // lalr1.cc:392
+#line 56 "dhcp6_parser.h" // lalr1.cc:377
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER6_DEBUG */
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:392
+#line 14 "dhcp6_parser.yy" // lalr1.cc:377
 namespace isc { namespace dhcp {
-#line 141 "dhcp6_parser.h" // lalr1.cc:392
+#line 141 "dhcp6_parser.h" // lalr1.cc:377
 
 
 
@@ -388,7 +388,7 @@ namespace isc { namespace dhcp {
         TOKEN_CODE = 296,
         TOKEN_SPACE = 297,
         TOKEN_CSV_FORMAT = 298,
-        TOKEN_PERSISTENT = 299,
+        TOKEN_ALWAYS_SEND = 299,
         TOKEN_RECORD_TYPES = 300,
         TOKEN_ENCAPSULATE = 301,
         TOKEN_ARRAY = 302,
@@ -780,7 +780,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_PERSISTENT (const location_type& l);
+    make_ALWAYS_SEND (const location_type& l);
 
     static inline
     symbol_type
@@ -2060,9 +2060,9 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_PERSISTENT (const location_type& l)
+  Dhcp6Parser::make_ALWAYS_SEND (const location_type& l)
   {
-    return symbol_type (token::TOKEN_PERSISTENT, l);
+    return symbol_type (token::TOKEN_ALWAYS_SEND, l);
   }
 
   Dhcp6Parser::symbol_type
@@ -2708,9 +2708,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:392
+#line 14 "dhcp6_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2714 "dhcp6_parser.h" // lalr1.cc:392
+#line 2714 "dhcp6_parser.h" // lalr1.cc:377
 
 
 

@@ -2023,7 +2023,7 @@ namespace isc { namespace dhcp {
 #line 1146 "dhcp6_parser.yy" // lalr1.cc:859
     {
     ElementPtr persist(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("persistent", persist);
+    ctx.stack_.back()->set("always-send", persist);
 }
 #line 2029 "dhcp6_parser.cc" // lalr1.cc:859
     break;
@@ -4093,7 +4093,7 @@ namespace isc { namespace dhcp {
   "\"keyspace\"", "\"preferred-lifetime\"", "\"valid-lifetime\"",
   "\"renew-timer\"", "\"rebind-timer\"", "\"decline-probation-period\"",
   "\"subnet6\"", "\"option-def\"", "\"option-data\"", "\"name\"",
-  "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"", "\"persistent\"",
+  "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"", "\"always-send\"",
   "\"record-types\"", "\"encapsulate\"", "\"array\"", "\"pools\"",
   "\"pool\"", "\"pd-pools\"", "\"prefix\"", "\"prefix-len\"",
   "\"excluded-prefix\"", "\"excluded-prefix-len\"", "\"delegated-len\"",
@@ -4170,7 +4170,7 @@ namespace isc { namespace dhcp {
   "option_data_params", "not_empty_option_data_params",
   "option_data_param", "option_data_name", "option_data_data", "$@58",
   "option_data_code", "option_data_space", "option_data_csv_format",
-  "option_data_persistent", "pools_list", "$@59", "pools_list_content",
+  "option_data_always_send", "pools_list", "$@59", "pools_list_content",
   "not_empty_pools_list", "pool_list_entry", "$@60", "sub_pool6", "$@61",
   "pool_params", "pool_param", "pool_entry", "$@62", "user_context",
   "$@63", "pd_pools_list", "$@64", "pd_pools_list_content",
