@@ -51,7 +51,7 @@ public:
             test_subnets4_.push_back(subnet);
         }
         // Create IPv6 subnets.
-        IOAddress prefix("2001:db8:1::0");
+        IOAddress prefix("2001:db8:1::");
         for (int i = 0; i < TEST_SUBNETS_NUM; ++i) {
             // This is a base prefix. All other prefixes will be created by
             // modifying this one.
