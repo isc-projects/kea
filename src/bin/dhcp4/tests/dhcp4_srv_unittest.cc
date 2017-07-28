@@ -1471,7 +1471,7 @@ TEST_F(Dhcpv4SrvTest, vendorPersistentOptions) {
         "          \"code\": 2,"
         "          \"data\": \"192.0.2.1, 192.0.2.2\","
         "          \"csv-format\": true,"
-        "          \"persistent\": true"
+        "          \"always-send\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
@@ -2058,13 +2058,13 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
         "\"option-data\": ["
         "    {    \"name\": \"ip-forwarding\", "
         "         \"data\": \"false\", "
-        "         \"persistent\": true } ], "
+        "         \"always-send\": true } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\","
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
         "             \"data\": \"true\", "
-        "             \"persistent\": false } ], "
+        "             \"always-send\": false } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
     ConstElementPtr json;

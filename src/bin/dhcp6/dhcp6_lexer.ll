@@ -699,12 +699,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"persistent\" {
+\"always-send\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
-        return isc::dhcp::Dhcp6Parser::make_PERSISTENT(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_ALWAYS_SEND(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("persistent", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("always-send", driver.loc_);
     }
 }
 

@@ -46,7 +46,7 @@ const SimpleDefaults SimpleParser6::OPTION6_DEF_DEFAULTS = {
 const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
     { "csv-format",   Element::boolean, "true"},
-    { "persistent",   Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"}
 };
 
 /// @brief This table defines default global values for DHCPv6

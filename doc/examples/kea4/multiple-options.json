@@ -127,12 +127,12 @@
             "data": "0xf0"
          },
             // At a few exceptions options are added to response only when
-            // the client requests them. The persistent flag should be used
+            // the client requests them. The always-send flag should be used
             // to enforce a particular option.
          {
             "name": "vendor-class-identifier",
             "data": "isc",
-            "persistent": true
+            "always-send": true
          }
        ],
 
