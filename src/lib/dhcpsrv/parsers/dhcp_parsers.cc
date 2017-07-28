@@ -307,7 +307,7 @@ OptionalValue<bool>
 OptionDataParser::extractPersistent(ConstElementPtr parent) const {
     bool persist = false;
     try {
-        persist = getBoolean(parent, "persistent");
+        persist = getBoolean(parent, "always-send");
 
     } catch (...) {
         return (OptionalValue<bool>(persist));

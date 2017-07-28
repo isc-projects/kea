@@ -225,7 +225,7 @@ CfgOption::toElement() const {
                 map->set("data", Element::create(repr));
             }
             // Set the persistency flag
-            map->set("persistent", Element::create(opt->persistent_));
+            map->set("always-send", Element::create(opt->persistent_));
             // Push on the list
             result->add(map);
         }
@@ -268,7 +268,7 @@ CfgOption::toElement() const {
                 map->set("data", Element::create(repr));
             }
             // Set the persistency flag
-            map->set("persistent", Element::create(opt->persistent_));
+            map->set("always-send", Element::create(opt->persistent_));
             // Push on the list
             result->add(map);
         }

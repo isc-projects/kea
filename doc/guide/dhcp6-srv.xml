@@ -1022,14 +1022,14 @@ temporarily override a list of interface names and listen on all interfaces.
         </screen>
         Defined options are added to response when the client requests them
         at a few exceptions which are always added. To enforce the addition
-        of a particular option set the persistent flag to true as in:
+        of a particular option set the always-send flag to true as in:
         <screen>
 "Dhcp6": {
     "option-data": [
         {
            <userinput>"name": "dns-servers",
            "data": "2001:db8::cafe, 2001:db8::babe",
-           "persistent": true</userinput>
+           "always-send": true</userinput>
         },
         ...
     ]

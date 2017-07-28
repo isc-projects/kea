@@ -994,14 +994,14 @@ temporarily override a list of interface names and listen on all interfaces.
         </screen>
         Defined options are added to response when the client requests them
         at a few exceptions which are always added. To enforce the addition
-        of a particular option set the persistent flag to true as in:
+        of a particular option set the always-send flag to true as in:
         <screen>
 "Dhcp4": {
     "option-data": [
         {
            <userinput>"name": "domain-name-servers",
            "data": "192.0.2.1, 192.0.2.2",
-           "persistent": true</userinput>
+           "always-send": true</userinput>
         },
         ...
     ]

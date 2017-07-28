@@ -462,7 +462,7 @@ private:
     /// @return Option space name.
     std::string extractSpace(data::ConstElementPtr parent) const;
 
-    /// @brief Retrieves persistent parameter as an optional value.
+    /// @brief Retrieves persistent/always-send parameter as an optional value.
     ///
     /// @return Value of the persistent parameter, possibly unspecified.
     util::OptionalValue<bool> extractPersistent(data::ConstElementPtr parent) const;

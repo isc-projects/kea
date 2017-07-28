@@ -545,7 +545,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
         "\"option-data\": ["
         "    {    \"name\": \"ipv6-forwarding\", "
         "         \"data\": \"false\", "
-        "         \"persistent\": true } ], "
+        "         \"always-send\": true } ], "
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
@@ -553,7 +553,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"false\", "
-        "             \"persistent\": false } ] } ] }";
+        "             \"always-send\": false } ] } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create a packet with enough to select the subnet and go through

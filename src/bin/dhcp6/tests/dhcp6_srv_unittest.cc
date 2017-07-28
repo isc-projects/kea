@@ -1688,7 +1688,7 @@ TEST_F(Dhcpv6SrvTest, vendorPersistentOptions) {
         "          \"name\": \"config-file\","
         "          \"space\": \"vendor-4491\","
         "          \"data\": \"normal_erouter_v6.cm\","
-        "          \"persistent\": true"
+        "          \"always-send\": true"
         "        }],"
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
