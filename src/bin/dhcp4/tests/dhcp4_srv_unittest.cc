@@ -2170,6 +2170,87 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
     EXPECT_TRUE(srv_.selectSubnet(dis));
 }
 
+// Checks effect of persistency (aka always-true) flag on the PRL
+TEST_F(Dhcpv4SrvTest, prlPersistency) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"option-data\": ["
+        "    {    \"name\": \"default-ip-ttl\", "
+        "         \"data\": \"FF\", "
+        "          \"csv-format\": false }, "
+        "    {    \"name\": \"ip-forwarding\", "
+        "         \"data\": \"false\", "
+        "         \"always-send\": true } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option for another option
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_ARP_CACHE_TIMEOUT);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Process the query
+    Pkt4Ptr response = srv.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // But no default-ip-ttl
+    ASSERT_FALSE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // Nor an arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+
+    // Reset PRL adding default-ip-ttl
+    query->delOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    prl->addValue(DHO_DEFAULT_IP_TTL);
+    query->addOption(prl);
+
+    // Process query
+    response = srv.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // and now a default-ip-ttl
+    ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // and still no arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+}
+
 // Checks if relay IP address specified in the relay-info structure in
 // subnet4 is being used properly.
 TEST_F(Dhcpv4SrvTest, relayOverride) {

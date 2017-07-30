@@ -1502,6 +1502,81 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
 }
 
+// Checks effect of persistency (aka always-true) flag on the ORO
+TEST_F(Dhcpv6SrvTest, prlPersistency) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\" } ], "
+        "\"option-data\": ["
+        "    {    \"name\": \"dns-servers\", "
+        "         \"data\": \"2001:db8:1234:FFFF::1\" }, "
+        "    {    \"name\": \"subscriber-id\", "
+        "         \"data\": \"1234\", "
+        "         \"always-send\": true } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Create and add an ORO for another option
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(D6O_SNTP_SERVERS);
+    sol->addOption(oro);
+
+    // Process the solicit
+    Pkt6Ptr response = srv.processSolicit(sol);
+
+    // Processing should add a subscriber-id option
+    ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
+    // But no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding dns-servers
+    sol->delOption(D6O_ORO);
+    oro->addValue(D6O_NAME_SERVERS);
+    sol->addOption(oro);
+
+    // Process solicit
+    response = srv.processSolicit(sol);
+
+    // Processing should add a subscriber-id option
+    ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
+    // and now a dns-servers
+    ASSERT_TRUE(response->getOption(D6O_NAME_SERVERS));
+    // and still no sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+}
+
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
 // @todo Uncomment this test as part of #3180 work.
 // Kea code currently fails to handle docsis traffic.
