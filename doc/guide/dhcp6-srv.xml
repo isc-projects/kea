@@ -1035,6 +1035,38 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
         </screen>
+        The effect is the same than adding the option code in the
+        Option Request Option (or its equivalent for vendor options) so in:
+        <screen>
+"Dhcp6": {
+    "option-data": [
+        {
+           <userinput>"name": "dns-servers",
+           "data": "2001:db8::cafe, 2001:db8::babe",
+           "always-send": true</userinput>
+        },
+        ...
+    ],
+    "subnet6": [
+        {
+           "subnet": "2001:db8:1::/64",
+           "option-data": [
+               {
+                   <userinput>"name": "dns-servers",
+                   "data": "2001:db8:1::cafe, 2001:db8:1::babe"</userinput>
+               },
+               ...
+           ],
+           ...
+        },
+        ...
+    ],
+    ...
+}
+        </screen>
+        The DNS Servers option is always added to responses
+        (the always-send is "sticky") but the value is the subnet one
+        when the client is localized in the subnet.
       </para>
 
     <para>
