@@ -204,6 +204,7 @@ protected:
         }
     }
 
+public:
     /// @brief Returns a value converted to uint32_t
     ///
     /// Instantiation of getIntType() to uint32_t
@@ -212,7 +213,8 @@ protected:
     /// @param name name of the parameter
     /// @return an uint32_t value
     /// @throw isc::dhcp::DhcpConfigError when it is not an uint32_t
-    uint32_t getUint32(isc::data::ConstElementPtr scope, const std::string& name) {
+    uint32_t getUint32(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
         return (getIntType<uint32_t>(scope, name));
     }
 
@@ -224,7 +226,8 @@ protected:
     /// @param name name of the parameter
     /// @return an uint16_t value
     /// @throw isc::dhcp::DhcpConfigError when it is not an uint16_t
-    uint16_t getUint16(isc::data::ConstElementPtr scope, const std::string& name) {
+    uint16_t getUint16(isc::data::ConstElementPtr scope,
+                       const std::string& name) {
         return (getIntType<uint16_t>(scope, name));
     }
 

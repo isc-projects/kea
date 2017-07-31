@@ -103,15 +103,13 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
         if (next_server.getFamily() != AF_INET) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_txt
-                      << "', must be IPv4 address ("
+                      << next_server_txt << "', must be IPv4 address ("
                       << getPosition("next-server", class_def_cfg) << ")");
         }
 
         if (next_server.isV4Bcast()) {
             isc_throw(DhcpConfigError, "Invalid next-server value: '"
-                      << next_server_txt
-                      << "', must not be a broadcast ("
+                      << next_server_txt << "', must not be a broadcast ("
                       << getPosition("next-server", class_def_cfg) << ")");
         }
     }
@@ -148,7 +146,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         class_dictionary->addClass(name, match_expr, test, options,
                                    next_server, sname, filename);
     } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, ex.what()
+        isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");
     }
 }

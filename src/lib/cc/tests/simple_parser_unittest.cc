@@ -58,10 +58,6 @@ public:
 
 class SimpleParserClassTest : public SimpleParser {
 public:
-
-    /// Make getUint8 public
-    using SimpleParser::getUint8;
-
     /// @brief Instantiation of getAndConvert
     ///
     /// @param scope specified parameter will be extracted from this scope
