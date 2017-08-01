@@ -326,7 +326,7 @@ public:
     virtual void remove(const std::string& name);
 
     /// Checks if there is data at the given key
-    /// @param name The key of the Element to remove
+    /// @param name The key of the Element checked for existence
     /// @return true if there is data at the key, false if not.
     virtual bool contains(const std::string& name) const;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,11 @@ const int CONTROL_RESULT_ERROR = 1;
 
 /// @brief Status code indicating that the specified command is not supported.
 const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
+
+/// @brief Status code indicating that the specified command was completed
+///        correctly, but failed to produce any results. For example, get
+///        completed the search, but couldn't find the object it was looking for.
+const int CONTROL_RESULT_EMPTY = 3;
 
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
