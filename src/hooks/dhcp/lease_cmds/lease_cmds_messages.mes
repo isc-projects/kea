@@ -18,11 +18,11 @@ the log message.
 This info message indicates that the Lease Commands hooks library has been
 removed successfully.
 
-% LEASE_CMDS_ADD4_FAILED Lease4-add command failed (parameters: %1, reason: %2)
+% LEASE_CMDS_ADD4_FAILED lease4-add command failed (parameters: %1, reason: %2)
 The lease4-add command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% LEASE_CMDS_ADD6_FAILED Lease4-add command failed (parameters: %1, reason: %2)
+% LEASE_CMDS_ADD6_FAILED Lease6-add command failed (parameters: %1, reason: %2)
 The lease6-add command has failed. Both the reason as well as the
 parameters passed are logged.
 
