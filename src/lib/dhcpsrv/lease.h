@@ -11,6 +11,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <cc/cfg_to_element.h>
 
 namespace isc {
 namespace dhcp {
@@ -25,7 +26,7 @@ typedef uint32_t SubnetID;
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease {
+struct Lease : public isc::data::CfgToElement {
 
     /// @brief Type of lease or pool
     typedef enum {
@@ -400,6 +401,9 @@ struct Lease4 : public Lease {
     /// @param probation_period valid lifetime will be set to this value
     void decline(uint32_t probation_period);
 
+    /// @brief Return the JSON representation of a lease
+    virtual isc::data::ElementPtr toElement() const;
+
     /// @todo: Add DHCPv4 failover related fields here
 };
 
@@ -532,6 +536,9 @@ struct Lease6 : public Lease {
     ///
     /// @return String form of the lease
     virtual std::string toText() const;
+
+    /// @brief Return the JSON representation of a lease
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief Pointer to a Lease6 structure.
