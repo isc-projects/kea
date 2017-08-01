@@ -1,5 +1,5 @@
-host_cmds_unittests
-host_cmds_unittests.log
-host_cmds_unittests.trs
+lease_cmds_unittests
+lease_cmds_unittests.log
+lease_cmds_unittests.trs
 test-suite.log
 *~
