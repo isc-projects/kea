@@ -7,6 +7,7 @@
 #include <cc/command_interpreter.h>
 #include <config/hooked_command_mgr.h>
 #include <config/config_log.h>
+#include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/server_hooks.h>
 #include <boost/pointer_cast.hpp>
@@ -19,7 +20,7 @@ namespace isc {
 namespace config {
 
 HookedCommandMgr::HookedCommandMgr()
-    : BaseCommandMgr(), callout_handle_(HooksManager::createCalloutHandle()) {
+    : BaseCommandMgr() {
 }
 
 bool
@@ -31,25 +32,25 @@ HookedCommandMgr::delegateCommandToHookLibrary(const std::string& cmd_name,
     ConstElementPtr hook_response;
     if (HooksManager::commandHandlersPresent(cmd_name)) {
 
-        callout_handle_ = HooksManager::createCalloutHandle();
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Set status to normal.
-        callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
         // Delete previously set arguments.
-        callout_handle_->deleteAllArguments();
+        callout_handle->deleteAllArguments();
 
         ConstElementPtr command = original_cmd ? original_cmd :
             createCommand(cmd_name, params);
 
         // And pass it to the hook library.
-        callout_handle_->setArgument("command", command);
-        callout_handle_->setArgument("response", hook_response);
+        callout_handle->setArgument("command", command);
+        callout_handle->setArgument("response", hook_response);
 
-        HooksManager::callCommandHandlers(cmd_name, *callout_handle_);
+        HooksManager::callCommandHandlers(cmd_name, *callout_handle);
 
         // The callouts should set the response.
-        callout_handle_->getArgument("response", hook_response);
+        callout_handle->getArgument("response", hook_response);
 
         answer = boost::const_pointer_cast<Element>(hook_response);
 
@@ -63,10 +64,6 @@ ConstElementPtr
 HookedCommandMgr::handleCommand(const std::string& cmd_name,
                                 const ConstElementPtr& params,
                                 const ConstElementPtr& original_cmd) {
-    if (!callout_handle_) {
-        isc_throw(Unexpected, "callout handle not configured for the Command "
-                  "Manager: this is a programming error");
-    }
 
     // The 'list-commands' is a special case. Hook libraries do not implement
     // this command. We determine what commands are supported by the hook
