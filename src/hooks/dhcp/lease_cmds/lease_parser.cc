@@ -58,6 +58,11 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                   << subnet_id << " currently configured.");
     }
 
+    if (!subnet->inRange(addr)) {
+        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+    }
+
     // Client-id is optional.
     ClientIdPtr client_id;
     if (lease_info->contains("client-id")) {
@@ -141,6 +146,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     DUID duid = DUID::fromText(duid_txt);
     DuidPtr duid_ptr = DuidPtr(new DUID(duid));
 
+    // Check if the subnet-id specified is sane.
     Subnet6Ptr subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
     if (!subnet) {
         isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
@@ -163,6 +169,12 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
             isc_throw(BadValue, "Incorrect lease type: " << txt << ", the only "
                       "supported values are: na, ta and pd");
         }
+    }
+
+    // Check if the address specified really belongs to the subnet.
+    if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
+        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
     }
 
     uint32_t iaid = getUint32(lease_info, "iaid");

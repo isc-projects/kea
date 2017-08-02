@@ -325,18 +325,13 @@ LeaseCmdsImpl::leaseAddHandler(const std::string& name,
             isc_throw(isc::BadValue, "no parameters specified for the command");
         }
 
-        ConstElementPtr lease_data = params->get("lease");
-        if (!lease_data) {
-            isc_throw(isc::BadValue, "'lease' parameters must be specified");
-        }
-
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
         Lease4Ptr lease4;
         Lease6Ptr lease6;
         if (v4) {
             Lease4Parser parser;
-            lease4 = parser.parse(config, lease_data);
+            lease4 = parser.parse(config, params);
 
             // checkLeaseIntegrity(config, lease4);
 
@@ -346,7 +341,7 @@ LeaseCmdsImpl::leaseAddHandler(const std::string& name,
             
         } else {
             Lease6Parser parser;
-            lease6 = parser.parse(config, lease_data);
+            lease6 = parser.parse(config, params);
 
             // checkLeaseIntegrity(config, lease6);
 

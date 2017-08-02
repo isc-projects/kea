@@ -197,7 +197,7 @@ public:
             subnets->add(subnet6);
             cfg_mgr.commit();
         } else {
-            Subnet4Ptr subnet4(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 44));
+            Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 44));
             CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
             subnets->add(subnet4);
             cfg_mgr.commit();
@@ -352,6 +352,113 @@ TEST_F(LeaseCmdsTest, multipleLoads) {
 
 using namespace isc::dhcp;
 
+// Check that lease4-add with bad params will fail.
+TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Everything missing. What sort of crap is that?
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just ip is not enough (subnet-id and hwaddr missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "            \"ip-address\": \"192.0.2.123\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id and ip is not enough (hwaddr missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "            \"subnet-id\": 44,\n"
+        "            \"ip-address\": \"192.0.2.202\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id and hw-address is not enough (ip missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "            \"subnet-id\": 44,\n"
+        "            \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verify that lease4-add can be rejected if parameters specified, but
+// have incorrect values.
+TEST_F(LeaseCmdsTest, Lease4AddSanityChecks) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // All params are there, but there's no subnet-id 123 configured.
+    // (initLeaseMgr initialized subnet-id 44 for v4 and subnet-id 66 for v6.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid subnet-id: No IPv4 subnet with subnet-id=123 currently configured.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This time the IP address does not belong to the subnet.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"10.0.0.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "The address 10.0.0.1 does not belong to subnet 192.0.2.0/24, subnet-id=44";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Get lost with this v6 nonsense. We don't use any of that bleeding edge
+    // nonsense in this museum. v4 only.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Non-IPv4 address specified: 2001:db8::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Check that a simple, well formed lease4 can be added.
 TEST_F(LeaseCmdsTest, Lease4Add) {
 
@@ -366,11 +473,9 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
         "{\n"
         "    \"command\": \"lease4-add\",\n"
         "    \"arguments\": {"
-        "        \"lease\": {"
-        "            \"subnet-id\": 44,\n"
-        "            \"ip-address\": \"192.0.2.202\",\n"
-        "            \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
-        "        }\n"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
     string exp_rsp = "Lease added.";
@@ -410,17 +515,15 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
         "{\n"
         "    \"command\": \"lease4-add\",\n"
         "    \"arguments\": {"
-        "        \"lease\": {"
-        "            \"subnet-id\": 44,\n"
-        "            \"ip-address\": \"192.0.2.202\",\n"
-        "            \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "            \"client-id\": \"01:02:03:04:05:06:07:08\",\n"
-        "            \"valid-lft\": 1000,\n"
-        "            \"expire\": 12345678,\n"
-        "            \"fqdn-fwd\": true,\n"
-        "            \"fqdn-rev\": true,\n"
-        "            \"hostname\": \"urania.example.org\""
-        "        }\n"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"client-id\": \"01:02:03:04:05:06:07:08\",\n"
+        "        \"valid-lft\": 1000,\n"
+        "        \"expire\": 12345678,\n"
+        "        \"fqdn-fwd\": true,\n"
+        "        \"fqdn-rev\": true,\n"
+        "        \"hostname\": \"urania.example.org\""
         "    }\n"
         "}";
     string exp_rsp = "Lease added.";
@@ -440,6 +543,140 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ("urania.example.org", l->hostname_);
 }
 
+// Check that lease6-add will bad parameters will fail.
+TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Everything missing. What sort of nonsense is that?
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just ip is not enough (subnet-id and duid missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8::3\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id and ip is not enough (duid missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::3\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'duid' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id and duid is not enough (ip, iaid missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Just subnet-id, duid and iaid is not enough (ip missing).
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Close, but no cigars. Still missing iaid.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"ip-address\": \"2001:db8::3\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "missing parameter 'iaid' (<string>:3:19)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verify that lease6-add can be rejected if parameters specified, but
+// have incorrect values.
+TEST_F(LeaseCmdsTest, Lease6AddSanityChecks) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Invalid subnet-id. Only 66 is configured.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 123,\n"
+        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid subnet-id: No IPv6 subnet with subnet-id=123 currently configured.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This time the IP address does not belong to the subnet.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"3000::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8::/48, subnet-id=66";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Let's warp back in time. Who needs this v6 nonsense anyway?
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Non-IPv6 address specified: 192.0.2.1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Check that a simple, well formed lease6 can be added.
 TEST_F(LeaseCmdsTest, Lease6Add) {
 
@@ -454,12 +691,10 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
         "{\n"
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
-        "        \"lease\": {"
-        "            \"subnet-id\": 66,\n"
-        "            \"ip-address\": \"2001:db8::3\",\n"
-        "            \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "            \"iaid\": 1234\n"
-        "        }\n"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
         "    }\n"
         "}";
     string exp_rsp = "Lease added.";
@@ -483,19 +718,17 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
         "{\n"
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
-        "        \"lease\": {"
-        "            \"subnet-id\": 66,\n"
-        "            \"ip-address\": \"2001:db8::3\",\n"
-        "            \"duid\": \"01:02:03:04:05:06:07:08\",\n"
-        "            \"iaid\": 1234,\n"
-        "            \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "            \"preferred-lft\": 500,\n"
-        "            \"valid-lft\": 1000,\n"
-        "            \"expire\": 12345678,\n"
-        "            \"fqdn-fwd\": true,\n"
-        "            \"fqdn-rev\": true,\n"
-        "            \"hostname\": \"urania.example.org\""
-        "        }\n"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"duid\": \"01:02:03:04:05:06:07:08\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"preferred-lft\": 500,\n"
+        "        \"valid-lft\": 1000,\n"
+        "        \"expire\": 12345678,\n"
+        "        \"fqdn-fwd\": true,\n"
+        "        \"fqdn-rev\": true,\n"
+        "        \"hostname\": \"urania.example.org\""
         "    }\n"
         "}";
     string exp_rsp = "Lease added.";
@@ -516,13 +749,13 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ("urania.example.org", l->hostname_);
 }
 
-// Checks that reservation-get can handle a situation when the query is
+// Checks that lease4-get can handle a situation when the query is
 // broken (no parameters at all).
-TEST_F(LeaseCmdsTest, ReservationGetNoParams) {
+TEST_F(LeaseCmdsTest, Lease4GetNoParams) {
     // Now send the command.
     string cmd =
         "{\n"
-        "    \"command\": \"reservation-get\",\n"
+        "    \"command\": \"lease4-get\",\n"
         "    \"arguments\": {"
         "    }\n"
         "}";
@@ -532,12 +765,12 @@ TEST_F(LeaseCmdsTest, ReservationGetNoParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Checks that reservation-get can handle a situation when the query is
+// Checks that lease4-get can handle a situation when the query is
 // broken (just subnet-id).
-TEST_F(LeaseCmdsTest, ReservationGetNoAddress) {
+TEST_F(LeaseCmdsTest, Lease4GetNoAddress) {
     string cmd =
         "{\n"
-        "    \"command\": \"reservation-get\",\n"
+        "    \"command\": \"lease4-get\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 1\n"
         "    }\n"
@@ -553,7 +786,7 @@ TEST_F(LeaseCmdsTest, ReservationGetNoAddress) {
 
 // Checks that reservation-get can handle a situation when the query is
 // broken (subnet-id, identifier-type) and identifier itself missing.
-TEST_F(LeaseCmdsTest, ReservationGetNoIdentifier) {
+TEST_F(LeaseCmdsTest, Lease4GetNoIdentifier) {
     string cmd =
         "{\n"
         "    \"command\": \"reservation-get\",\n"
