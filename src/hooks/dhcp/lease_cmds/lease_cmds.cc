@@ -44,8 +44,9 @@ public:
 /// As both call types (get and delete) need specify which reservation to
 /// act on, they have the same set of parameters. In particular, those
 /// two call types support the following sets of parameters:
-/// - subnet-id, address
-/// - subnet-id, identifier type, identifier value
+/// - address
+/// - subnet-id, identifier-type, identifier-value (v4)
+/// - subnet-id, lease-type, iaid, identifier-type, identifier-value (v6)
 ///
 /// This class stores those parameters and is used to pass them around.
 class Parameters {
@@ -114,7 +115,7 @@ private:
     /// - lease6-update
     /// - lease4-del-all
     /// - lease6-del-all
-    
+
     /// @throw Unexpected if CommandMgr is not available (should not happen)
     void registerCommands();
 
@@ -135,15 +136,15 @@ private:
     /// @throw Unexpected if CommandMgr is not available (should not happen)
     void deregisterCommands();
 
-    /// @brief reservation-add command handler
+    /// @brief lease4-add, lease6-add command handler
     ///
     /// This command attempts to add a lease.
     ///
     /// An example full command looks as follows. Note that the args
     /// parameter is expected to contain the "arguments" portion of it.
-    /// This function covers v4 lease only.
+    /// This function covers both v4 and v6 leases.
     ///
-    /// Example command
+    /// Example command for v4:
     /// {
     ///     "command": "lease4-add",
     ///     "parameters": {
@@ -151,7 +152,7 @@ private:
     ///         "hwaddr": "00:01:02:03:04:05",
     ///         "client-id": "this-is-a-client",
     ///         "valid-lft": 3600,
-    ///         "expire": 1499282530,
+    ///         "expire": 12345678,
     ///         "subnet-id": 1,
     ///         "fdqn-fwd": true,
     ///         "fqdn-rev": true,
@@ -159,6 +160,25 @@ private:
     ///         "state": 0
     ///     }
     /// }
+    /// Example command for v6:
+    /// {
+    ///     "command": "lease6-add",
+    ///     "arguments": {
+    ///         "subnet-id": 66,
+    ///         "ip-address": "2001:db8:abcd::",
+    ///         "type": "IA_PD",
+    ///         "prefix-len": 48,
+    ///         "duid": "01:02:03:04:05:06:07:08",
+    ///         "iaid": 1234,
+    ///         "preferred-lft": 500,
+    ///         "valid-lft": 1000,
+    ///         "expire": 12345678,
+    ///         "fqdn-fwd": true,
+    ///         "fqdn-rev": true,
+    ///         "hostname": "urania.example.org""
+    ///     }
+    /// }
+
     ///
     /// @param command should be 'reservation-add' (but it's ignored)
     /// @param args must contain host reservation definition.
@@ -230,12 +250,13 @@ private:
     static ConstElementPtr
     leaseDelHandler(const string& command, ConstElementPtr args);
 
+
     static ConstElementPtr
     leaseUpdateHandler(const string& command, ConstElementPtr args);
 
     static ConstElementPtr
     leaseWipeHandler(const string& command, ConstElementPtr args);
-    
+
     /// @brief Extracts parameters required for reservation-get and reservation-del
     ///
     /// See @ref Parameters class for detailed description of what is expected
@@ -245,18 +266,9 @@ private:
     /// @return parsed parameters
     /// @throw BadValue if input arguments don't make sense.
     static Parameters getParameters(const ConstElementPtr& args);
-
-    /// @brief Covenience pointer used to access database storage
-    static HostDataSourcePtr db_storage_;
-
-    /// @brief Protocol family (IPv4 or IPv6)
-    static uint16_t family_;
 };
 
 LeaseCmdsImpl::LeaseCmdsImpl() {
-    /// @todo: Remove family_
-    family_ = CfgMgr::instance().getFamily();
-
     registerCommands();
 }
 
@@ -265,7 +277,8 @@ LeaseCmdsImpl::~LeaseCmdsImpl() {
 }
 
 void LeaseCmdsImpl::registerCommands() {
-    /// @todo: Use registration mechanism once #5321 discussion is done
+    /// @todo: Use registration mechanism once #5314 is merged.
+    /// See #5321 discussion.
     CommandMgr::instance().registerCommand("lease4-add",
         boost::bind(&LeaseCmdsImpl::leaseAddHandler, _1, _2));
     CommandMgr::instance().registerCommand("lease6-add",
@@ -314,7 +327,7 @@ ConstElementPtr
 LeaseCmdsImpl::leaseAddHandler(const std::string& name,
                                ConstElementPtr params) {
     bool v4 = (name == "lease4-add");
-    
+
     string txt = "(missing parameters)";
     if (params) {
         txt = params->str();
@@ -338,7 +351,7 @@ LeaseCmdsImpl::leaseAddHandler(const std::string& name,
             if (lease4) {
                 LeaseMgrFactory::instance().addLease(lease4);
             }
-            
+
         } else {
             Lease6Parser parser;
             lease6 = parser.parse(config, params);
@@ -369,11 +382,39 @@ LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
         isc_throw(BadValue, "Parameters missing or are not a map.");
     }
 
-    // We support 2 sets of parameters for lease-get/lease-del:
-    // lease-get(subnet-id, address)
-    // lease-get(subnet-id, interifier-type, identifier)
+    // We support several sets of parameters for leaseX-get/lease-del:
+    // lease-get(type, address)
+    // lease-get(type, subnet-id, interifier-type, identifier)
 
-    ConstElementPtr tmp = params->get("subnet-id");
+    if (params->contains("type")) {
+        string t = params->get("type")->stringValue();
+        if (t == "IA_NA" || t == "0") {
+            x.lease_type = Lease::TYPE_NA;
+        } else if (t == "IA_TA" || t == "1") {
+            x.lease_type = Lease::TYPE_TA;
+        } else if (t == "IA_PD" || t == "2") {
+            x.lease_type = Lease::TYPE_PD;
+        } else if (t == "V4" || t == "3") {
+            x.lease_type = Lease::TYPE_V4;
+        } else {
+            isc_throw(BadValue, "Invalid lease type specified: "
+                      << t << ", only supported values are: IA_NA, IA_TA,"
+                      << " IA_PD and V4");
+        }
+    }
+
+    ConstElementPtr tmp = params->get("ip-address");
+    if (tmp) {
+        if (tmp->getType() != Element::string) {
+            isc_throw(BadValue, "'ip-address' is not a string.");
+        }
+
+        x.addr = IOAddress(tmp->stringValue());
+        x.query_type = Parameters::TYPE_ADDR;
+        return (x);
+    }
+
+    tmp = params->get("subnet-id");
     if (!tmp) {
         isc_throw(BadValue, "Mandatory 'subnet-id' parameter missing.");
     }
@@ -382,15 +423,8 @@ LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
     }
     x.subnet_id = tmp->intValue();
 
-    tmp = params->get("address");
-    if (tmp) {
-        if (tmp->getType() != Element::string) {
-            isc_throw(BadValue, "'address' is not a string.");
-        }
-
-        x.addr = IOAddress(tmp->stringValue());
-        x.query_type = Parameters::TYPE_ADDR;
-        return (x);
+    if (params->contains("iaid")) {
+        x.iaid = params->get("iaid")->intValue();
     }
 
     // No address specified. Ok, so it must be identifier based query.
@@ -421,6 +455,7 @@ LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
     case Parameters::TYPE_DUID: {
         DUID duid = DUID::fromText(ident->stringValue());
         x.duid = DuidPtr(new DUID(duid));
+        break;
     }
     case Parameters::TYPE_ADDR: {
         // We should never get here. The address clause should have been caught
@@ -466,6 +501,7 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
                 return (createAnswer(CONTROL_RESULT_ERROR,
                                      "Query by hw-address is not allowed in v6."));
             }
+            break;
         case Parameters::TYPE_DUID:
             if (!v4) {
                 if (!p.duid) {
@@ -479,6 +515,7 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
                 return (createAnswer(CONTROL_RESULT_ERROR,
                                      "Query by duid is not allowed in v4."));
             }
+            break;
         default: {
             stringstream tmp;
             tmp << "Unknown query type: " << static_cast<int>(p.query_type);
@@ -486,20 +523,18 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
         }
         }
     } catch (const std::exception& ex) {
-        stringstream tmp;
-        tmp << "Failure during leaseX-get: " << ex.what();
-        return (createAnswer(CONTROL_RESULT_ERROR, tmp.str()));
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
     }
 
     ElementPtr lease_json;
     if (v4 && lease4) {
         lease_json = lease4->toElement();
-        return (createAnswer(CONTROL_RESULT_SUCCESS, "DHCPv4 lease found.", lease_json));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv4 lease found.", lease_json));
     }
     if (!v4 && lease6) {
         lease_json = lease6->toElement();
-        return (createAnswer(CONTROL_RESULT_SUCCESS, "DHCPv6 lease found.", lease_json));
-        
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv6 lease found.", lease_json));
+
     }
 
     // If we got here, the lease has not been found.
@@ -507,52 +542,19 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
 }
 
 ConstElementPtr
-LeaseCmdsImpl::leaseDelHandler(const std::string& name,
-                               ConstElementPtr params) {
-    Parameters p;
-    bool deleted = false;
-#if 0    
-    try {
-        p = getParameters(params);
-
-        if (p.query_by_addr) {
-            // try to delete by address
-            deleted = LeaseMgrFactory::instance().del(p.subnet_id, p.addr);
-        } else {
-            // try to delete by identifier
-            if (family_ == AF_INET) {
-                deleted = LeaseMgrFactory::instance().del4(p.subnet_id, p.type,
-                                                           &p.ident[0], p.ident.size());
-            } else {
-                deleted = LeaseMgrFactory::instance().del6(p.subnet_id, p.type,
-                                                           &p.ident[0], p.ident.size());
-            }
-        }
-    } catch (const std::exception& ex) {
-        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
-    }
-#endif
-
-    if (deleted) {
-        return (createAnswer(CONTROL_RESULT_SUCCESS, "Lease deleted."));
-    } else {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Lease not deleted (not found)."));
-    }
-}
-
-ConstElementPtr
-LeaseCmdsImpl::leaseUpdateHandler(const string& command, ConstElementPtr args) {
+LeaseCmdsImpl::leaseDelHandler(const std::string& cmd, ConstElementPtr args) {
     return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
 }
 
 ConstElementPtr
-LeaseCmdsImpl::leaseWipeHandler(const string& command, ConstElementPtr args) {
+LeaseCmdsImpl::leaseUpdateHandler(const string& cmd, ConstElementPtr args) {
     return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
 }
 
-
-uint16_t LeaseCmdsImpl::family_ = AF_INET;
+ConstElementPtr
+LeaseCmdsImpl::leaseWipeHandler(const string& cmd, ConstElementPtr args) {
+    return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
+}
 
 LeaseCmds::LeaseCmds()
     :impl_(new LeaseCmdsImpl()) {

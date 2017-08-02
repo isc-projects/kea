@@ -901,7 +901,8 @@ TEST(Lease6Test, toText) {
 }
 
 // Verify that Lease6 structure can be converted to JSON properly.
-TEST(Lease6Test, toElement) {
+// This tests an address lease conversion.
+TEST(Lease6Test, toElementAddress) {
 
     HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
 
@@ -924,8 +925,8 @@ TEST(Lease6Test, toElement) {
     ASSERT_TRUE(l->contains("type"));
     EXPECT_EQ("IA_NA", l->get("type")->stringValue());
 
-    ASSERT_TRUE(l->contains("prefix-len"));
-    EXPECT_EQ(128, l->get("prefix-len")->intValue());
+    // This is an address lease, it does not have a prefix length.
+    ASSERT_FALSE(l->contains("prefix-len"));
 
     ASSERT_TRUE(l->contains("iaid"));
     EXPECT_EQ(123456, l->get("iaid")->intValue());
@@ -948,6 +949,73 @@ TEST(Lease6Test, toElement) {
 
     ASSERT_TRUE(l->contains("state"));
     EXPECT_EQ(static_cast<int>(Lease::STATE_DECLINED),
+              l->get("state")->intValue());
+
+    ASSERT_TRUE(l->contains("fqdn-fwd"));
+    EXPECT_FALSE(l->get("fqdn-fwd")->boolValue());
+
+    ASSERT_TRUE(l->contains("fqdn-rev"));
+    EXPECT_FALSE(l->get("fqdn-rev")->boolValue());
+
+    ASSERT_TRUE(l->contains("hostname"));
+    EXPECT_EQ("urania.example.org", l->get("hostname")->stringValue());
+
+    // Now let's try with a lease without hardware address.
+    lease.hwaddr_.reset();
+    l = lease.toElement();
+    EXPECT_FALSE(l->contains("hw-address"));
+}
+
+// Verify that Lease6 structure can be converted to JSON properly.
+// This tests an address lease conversion.
+TEST(Lease6Test, toElementPrefix) {
+
+    HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    Lease6 lease(Lease::TYPE_PD, IOAddress("2001:db8::"), duid, 123456,
+                 400, 800, 100, 200, 5678, hwaddr, 56);
+    lease.cltt_ = 12345678;
+    lease.state_ = Lease::STATE_DEFAULT;
+    lease.hostname_ = "urania.example.org";
+
+    ElementPtr l = lease.toElement();
+
+    ASSERT_TRUE(l);
+
+    ASSERT_TRUE(l->contains("ip-address"));
+    EXPECT_EQ("2001:db8::", l->get("ip-address")->stringValue());
+
+    ASSERT_TRUE(l->contains("type"));
+    EXPECT_EQ("IA_PD", l->get("type")->stringValue());
+
+    // This is a prefix lease, it must have a prefix length.
+    ASSERT_TRUE(l->contains("prefix-len"));
+    EXPECT_EQ(56, l->get("prefix-len")->intValue());
+
+    ASSERT_TRUE(l->contains("iaid"));
+    EXPECT_EQ(123456, l->get("iaid")->intValue());
+
+    ASSERT_TRUE(l->contains("preferred-lft"));
+    EXPECT_EQ(400, l->get("preferred-lft")->intValue());
+
+    ASSERT_TRUE(l->contains("valid-lft"));
+    EXPECT_EQ(800, l->get("valid-lft")->intValue());
+
+    ASSERT_TRUE(l->contains("duid"));
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f",
+              l->get("duid")->stringValue());
+
+    ASSERT_TRUE(l->contains("hw-address"));
+    EXPECT_EQ(hwaddr->toText(false), l->get("hw-address")->stringValue());
+
+    ASSERT_TRUE(l->contains("subnet-id"));
+    EXPECT_EQ(5678, l->get("subnet-id")->intValue());
+
+    ASSERT_TRUE(l->contains("state"));
+    EXPECT_EQ(static_cast<int>(Lease::STATE_DEFAULT),
               l->get("state")->intValue());
 
     ASSERT_TRUE(l->contains("fqdn-fwd"));
