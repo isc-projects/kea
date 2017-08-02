@@ -99,7 +99,33 @@ const char* CONFIGS[] = {
     "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
     "    \"subnet\": \"2001:db8:1::/48\" "
     " } ],"
-    "\"valid-lifetime\": 4000 }"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2:
+    // - a single subnet
+    // - two global options (one enforced with always-send)
+    "{"
+    "    \"interfaces-config\": { \"interfaces\": [ \"*\" ] }, "
+    "    \"preferred-lifetime\": 3000, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet6\": [ {"
+    "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "       \"subnet\": \"2001:db8:1::/48\""
+    "    } ], "
+    "    \"option-data\": ["
+    "    {"
+    "        \"name\": \"dns-servers\", "
+    "        \"data\": \"2001:db8:1234:FFFF::1\""
+    "    }, "
+    "    {"
+    "        \"name\": \"subscriber-id\", "
+    "         \"data\": \"1234\", "
+    "         \"always-send\": true"
+    "    }"
+    "    ]"
+    "}"
 };
 
 // This test verifies that incoming SOLICIT can be handled properly when
@@ -1506,35 +1532,7 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
 TEST_F(Dhcpv6SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
 
-    NakedDhcpv6Srv srv(0);
-
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ] }, "
-        "\"preferred-lifetime\": 3000, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
-        "\"subnet6\": [ "
-        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
-        "    \"subnet\": \"2001:db8:1::/48\" } ], "
-        "\"option-data\": ["
-        "    {    \"name\": \"dns-servers\", "
-        "         \"data\": \"2001:db8:1234:FFFF::1\" }, "
-        "    {    \"name\": \"subscriber-id\", "
-        "         \"data\": \"1234\", "
-        "         \"always-send\": true } ] }";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP6(config));
-    ConstElementPtr status;
-
-    // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
-
-    CfgMgr::instance().commit();
+    ASSERT_NO_THROW(configure(CONFIGS[2]));
 
     // Create a packet with enough to select the subnet and go through
     // the SOLICIT processing
@@ -1551,10 +1549,10 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     oro->addValue(D6O_SNTP_SERVERS);
     sol->addOption(oro);
 
-    // Process the solicit
-    Pkt6Ptr response = srv.processSolicit(sol);
+    // Let the server process it and generate a response.
+    Pkt6Ptr response = srv_.processSolicit(sol);
 
-    // Processing should add a subscriber-id option
+    // The server should a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
     // But no dns-servers
     ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
@@ -1566,8 +1564,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     oro->addValue(D6O_NAME_SERVERS);
     sol->addOption(oro);
 
-    // Process solicit
-    response = srv.processSolicit(sol);
+    // Let the server process it again. This time the name-servers
+    // option should be present.
+    response = srv_.processSolicit(sol);
 
     // Processing should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));

@@ -93,8 +93,33 @@ const char* CONFIGS[] = {
         "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
         " } ],"
-    "\"valid-lifetime\": 4000 }"
-};
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2:
+    // - 1 subnet, 2 global options (one forced with always-send)
+    "{"
+    "    \"interfaces-config\": {"
+    "    \"interfaces\": [ \"*\" ] }, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+    "        \"subnet\": \"192.0.2.0/24\""
+    "    } ], "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"default-ip-ttl\", "
+    "            \"data\": \"FF\", "
+    "            \"csv-format\": false"
+    "        }, "
+    "        {"
+    "            \"name\": \"ip-forwarding\", "
+    "            \"data\": \"false\", "
+    "            \"always-send\": true"
+    "        }"
+    "    ]"
+    "}" };
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -751,7 +776,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
     CfgMgr::instance().commit();
-    
+
     offer = srv.processDiscover(dis);
 
     // Check if we get response at all
@@ -2175,35 +2200,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
-        "\"subnet4\": [ "
-        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
-        "    \"subnet\": \"192.0.2.0/24\" } ], "
-        "\"option-data\": ["
-        "    {    \"name\": \"default-ip-ttl\", "
-        "         \"data\": \"FF\", "
-        "          \"csv-format\": false }, "
-        "    {    \"name\": \"ip-forwarding\", "
-        "         \"data\": \"false\", "
-        "         \"always-send\": true } ] }";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-    ConstElementPtr status;
-
-    // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
-
-    CfgMgr::instance().commit();
+    ASSERT_NO_THROW(configure(CONFIGS[2]));
 
     // Create a packet with enough to select the subnet and go through
     // the DISCOVER processing
@@ -2225,8 +2222,8 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     ASSERT_TRUE(hostname);
     query->addOption(hostname);
 
-    // Process the query
-    Pkt4Ptr response = srv.processDiscover(query);
+    // Let the server process it.
+    Pkt4Ptr response = srv_.processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
@@ -2240,8 +2237,8 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     prl->addValue(DHO_DEFAULT_IP_TTL);
     query->addOption(prl);
 
-    // Process query
-    response = srv.processDiscover(query);
+    // Let the server process it again.
+    response = srv_.processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));

@@ -1035,7 +1035,7 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
         </screen>
-        The effect is the same than adding the option code in the
+        The effect is the same as if the client added the option code in the
         Option Request Option (or its equivalent for vendor options) so in:
         <screen>
 "Dhcp6": {
