@@ -393,7 +393,9 @@ Lease6::toElement() const {
     ElementPtr map = Element::createMap();
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("type", Element::create(typeToText(type_)));
-    map->set("prefix-len", Element::create(prefixlen_));
+    if (type_ == Lease::TYPE_PD) {
+        map->set("prefix-len", Element::create(prefixlen_));
+    }
     map->set("iaid", Element::create(static_cast<long int>(iaid_)));
     map->set("duid", Element::create(duid_->toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
