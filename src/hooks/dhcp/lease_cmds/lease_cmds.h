@@ -24,7 +24,7 @@ class LeaseCmdsImpl;
 class LeaseCmds {
 public:
 
-    /// @brief Initializes additional host commands.
+    /// @brief Initializes additional host reservation commands.
     ///
     /// First, it ensures that either alternate host data source or CfgHosts
     /// (configuration storage) are available. Then it checks that CommandMgr
