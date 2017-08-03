@@ -1,3 +1,9 @@
+1282.	[bug]		fdupont
+	Now all interface service sockets are closed before interface
+	re-detection. Note if the re-configuration fails they remain
+	closed.
+	(Trac #5333, git xxx)
+
 1281.	[build]		tmark
 	Configure script now correctly recognizes static boost_system library as 
 	well as checks for the presence of static glibc static libraries when
