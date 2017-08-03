@@ -657,6 +657,7 @@ Subnet6::toElement() const {
         uint8_t len = pdpool->getLength();
         pool_map->set("delegated-len",
                       Element::create(static_cast<int>(len)));
+
         // Set excluded prefix
         const Option6PDExcludePtr& xopt =
             pdpool->getPrefixExcludeOption();
@@ -668,11 +669,8 @@ Subnet6::toElement() const {
             uint8_t xlen = xopt->getExcludedPrefixLength();
             pool_map->set("excluded-prefix-len",
                           Element::create(static_cast<int>(xlen)));
-        } else {
-            pool_map->set("excluded-prefix",
-                          Element::create(std::string("::")));
-            pool_map->set("excluded-prefix-len", Element::create(0));
         }
+
         // Set user-context
         ConstElementPtr context = pdpool->getContext();
         if (!isNull(context)) {
