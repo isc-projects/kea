@@ -545,8 +545,6 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix\": \"2001:db8:2::\",\n"
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
-        "            \"excluded-prefix\": \"::\",\n"
-        "            \"excluded-prefix-len\": 0,\n"
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
