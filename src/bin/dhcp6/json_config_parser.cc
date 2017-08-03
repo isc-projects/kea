@@ -23,7 +23,6 @@
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -57,11 +56,6 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 
 namespace {
-
-// Pointers to various parser objects.
-typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
-typedef boost::shared_ptr<StringParser> StringParserPtr;
-typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 
 /// @brief Parser for IPv6 pool definitions.
 ///
