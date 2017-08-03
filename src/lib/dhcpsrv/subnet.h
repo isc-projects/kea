@@ -438,7 +438,7 @@ protected:
     /// @brief Unparse a subnet object.
     ///
     /// @return A pointer to unparsed subnet configuration.
-    virtual data::ElementPtr toElement() const = 0;
+    virtual data::ElementPtr toElement() const;
 
     /// @brief subnet-id
     ///
