@@ -10,6 +10,7 @@
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -73,6 +74,46 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
     // info.
     capacity_ = addrsInRange(prefix, last_);
 }
+
+data::ElementPtr
+Pool::toElement() const {
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+
+    // Set user-context
+    ConstElementPtr context = getContext();
+    if (!isNull(context)) {
+        map->set("user-context", context);
+    }
+
+    // Set pool options
+    ConstCfgOptionPtr opts = getCfgOption();
+    map->set("option-data", opts->toElement());
+    return (map);
+}
+
+data::ElementPtr
+Pool4::toElement() const {
+    // Prepare the map
+    ElementPtr map = Pool::toElement();
+
+    // Set pool
+    const IOAddress& first = getFirstAddress();
+    const IOAddress& last = getLastAddress();
+    std::string range = first.toText() + "-" + last.toText();
+
+    // Try to output a prefix (vs a range)
+    int prefix_len = prefixLengthFromRange(first, last);
+    if (prefix_len >= 0) {
+        std::ostringstream oss;
+        oss << first.toText() << "/" << prefix_len;
+        range = oss.str();
+    }
+
+    map->set("pool", Element::create(range));
+    return (map);
+}
+
 
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
@@ -234,6 +275,72 @@ Pool6::init(const Lease::Type& type,
                                                       excluded_prefix_len));
     }
 }
+
+data::ElementPtr
+Pool6::toElement() const {
+    // Prepare the map
+    ElementPtr map = Pool::toElement();
+
+    switch (getType()) {
+        case Lease::TYPE_NA: {
+            const IOAddress& first = getFirstAddress();
+            const IOAddress& last = getLastAddress();
+            std::string range = first.toText() + "-" + last.toText();
+
+            // Try to output a prefix (vs a range)
+            int prefix_len = prefixLengthFromRange(first, last);
+            if (prefix_len >= 0) {
+                std::ostringstream oss;
+                oss << first.toText() << "/" << prefix_len;
+                range = oss.str();
+            }
+
+            map->set("pool", Element::create(range));
+            break;
+        }
+        case Lease::TYPE_PD: {
+            // Set prefix
+            const IOAddress& prefix = getFirstAddress();
+            map->set("prefix", Element::create(prefix.toText()));
+
+            // Set prefix-len (get it from min - max)
+            const IOAddress& last = getLastAddress();
+            int prefix_len = prefixLengthFromRange(prefix, last);
+            if (prefix_len < 0) {
+                // The pool is bad: give up
+                isc_throw(ToElementError, "invalid prefix range "
+                          << prefix.toText() << "-" << last.toText());
+            }
+
+            // Set delegated-len
+            uint8_t len = getLength();
+            map->set("delegated-len", Element::create(static_cast<int>(len)));
+
+            // Set excluded prefix
+            const Option6PDExcludePtr& xopt = getPrefixExcludeOption();
+            if (xopt) {
+                const IOAddress& xprefix = xopt->getExcludedPrefix(prefix, len);
+                map->set("excluded-prefix", Element::create(xprefix.toText()));
+
+                uint8_t xlen = xopt->getExcludedPrefixLength();
+                map->set("excluded-prefix-len",
+                         Element::create(static_cast<int>(xlen)));
+            } else {
+                map->set("excluded-prefix", Element::create(std::string("::")));
+                map->set("excluded-prefix-len", Element::create(0));
+            }
+
+            break;
+        }
+        default:
+            isc_throw(ToElementError, "Lease type: " << getType()
+                      << ", unsupported for Pool6");
+            break;
+    }
+
+    return (map);
+}
+
 
 std::string
 Pool6::toText() const {

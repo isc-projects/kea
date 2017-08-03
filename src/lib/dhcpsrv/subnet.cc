@@ -565,30 +565,8 @@ Subnet4::toElement() const {
     ElementPtr pool_list = Element::createList();
     for (PoolCollection::const_iterator pool = pools.cbegin();
          pool != pools.cend(); ++pool) {
-        // Prepare the map for a pool (@todo move this code to pool.cc)
-        ElementPtr pool_map = Element::createMap();
-        // Set pool
-        const IOAddress& first = (*pool)->getFirstAddress();
-        const IOAddress& last = (*pool)->getLastAddress();
-        std::string range = first.toText() + "-" + last.toText();
-        // Try to output a prefix (vs a range)
-        int prefix_len = prefixLengthFromRange(first, last);
-        if (prefix_len >= 0) {
-            std::ostringstream oss;
-            oss << first.toText() << "/" << prefix_len;
-            range = oss.str();
-        }
-        pool_map->set("pool", Element::create(range));
-        // Set user-context
-        ConstElementPtr context = (*pool)->getContext();
-        if (!isNull(context)) {
-            pool_map->set("user-context", context);
-        }
-        // Set pool options
-        ConstCfgOptionPtr opts = (*pool)->getCfgOption();
-        pool_map->set("option-data", opts->toElement());
-        // Push on the pool list
-        pool_list->add(pool_map);
+        // Add the elementized pool to the list
+        pool_list->add((*pool)->toElement());
     }
     map->set("pools", pool_list);
 
