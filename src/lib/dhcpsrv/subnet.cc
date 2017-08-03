@@ -474,22 +474,29 @@ void Subnet6::checkType(Lease::Type type) const {
 }
 
 data::ElementPtr
-Subnet4::toElement() const {
+Subnet::toElement() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+
     // Set subnet id
     SubnetID id = getID();
     map->set("id", Element::create(static_cast<long long>(id)));
+
     // Set relay info
     const Subnet::RelayInfo& relay_info = getRelayInfo();
     ElementPtr relay = Element::createMap();
     relay->set("ip-address", Element::create(relay_info.addr_.toText()));
     map->set("relay", relay);
+
     // Set subnet
     map->set("subnet", Element::create(toText()));
+
     // Set interface
     const std::string& iface = getIface();
-    map->set("interface", Element::create(iface));
+    if (!iface.empty()) {
+        map->set("interface", Element::create(iface));
+    }
+
     // Set renew-timer
     map->set("renew-timer",
              Element::create(static_cast<long long>
@@ -502,6 +509,57 @@ Subnet4::toElement() const {
     map->set("valid-lifetime",
              Element::create(static_cast<long long>
                                  (getValid().get())));
+
+    // Set reservation mode
+    Subnet::HRMode hrmode = getHostReservationMode();
+    std::string mode;
+    switch (hrmode) {
+    case Subnet::HR_DISABLED:
+        mode = "disabled";
+        break;
+    case Subnet::HR_OUT_OF_POOL:
+        mode = "out-of-pool";
+        break;
+    case Subnet::HR_ALL:
+        mode = "all";
+        break;
+    default:
+        isc_throw(ToElementError,
+                  "invalid host reservation mode: " << hrmode);
+    }
+    map->set("reservation-mode", Element::create(mode));
+
+    // Set client-class
+    const ClientClasses& cclasses = getClientClasses();
+    if (cclasses.size() > 1) {
+        isc_throw(ToElementError, "client-class has too many items: "
+                  << cclasses.size());
+    } else if (!cclasses.empty()) {
+        map->set("client-class", Element::create(*cclasses.cbegin()));
+    }
+
+    // Set options
+    ConstCfgOptionPtr opts = getCfgOption();
+    map->set("option-data", opts->toElement());
+
+    return (map);
+}
+
+data::ElementPtr
+Subnet4::toElement() const {
+    // Prepare the map
+    ElementPtr map = Subnet::toElement();
+
+    // Set match-client-id
+    map->set("match-client-id", Element::create(getMatchClientId()));
+
+    // Set DHCP4o6
+    const Cfg4o6& d4o6 = get4o6();
+    isc::data::merge(map, d4o6.toElement());
+
+    // Set next-server
+    map->set("next-server", Element::create(getSiaddr().toText()));
+
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
@@ -533,46 +591,6 @@ Subnet4::toElement() const {
         pool_list->add(pool_map);
     }
     map->set("pools", pool_list);
-    // Set host reservation-mode
-    Subnet::HRMode hrmode = getHostReservationMode();
-    std::string mode;
-    switch (hrmode) {
-    case Subnet::HR_DISABLED:
-        mode = "disabled";
-        break;
-    case Subnet::HR_OUT_OF_POOL:
-        mode = "out-of-pool";
-        break;
-    case Subnet::HR_ALL:
-        mode = "all";
-        break;
-    default:
-        isc_throw(ToElementError,
-                  "invalid host reservation mode: " << hrmode);
-    }
-    map->set("reservation-mode", Element::create(mode));
-    // Set match-client-id
-    map->set("match-client-id",
-             Element::create(getMatchClientId()));
-    // Set next-server
-    map->set("next-server",
-             Element::create(getSiaddr().toText()));
-    // Set DHCP4o6
-    const Cfg4o6& d4o6 = get4o6();
-    isc::data::merge(map, d4o6.toElement());
-    // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
-    }
-    // Set options
-    ConstCfgOptionPtr opts = getCfgOption();
-    map->set("option-data", opts->toElement());
-    // Not supported: interface-id
-    // Not supported: rapid-commit
 
     return (map);
 }
@@ -580,20 +598,8 @@ Subnet4::toElement() const {
 data::ElementPtr
 Subnet6::toElement() const {
     // Prepare the map
-    ElementPtr map = Element::createMap();
-    // Set subnet id
-    SubnetID id = getID();
-    map->set("id", Element::create(static_cast<long long>(id)));
-    // Set relay info
-    const Subnet::RelayInfo& relay_info = getRelayInfo();
-    ElementPtr relay = Element::createMap();
-    relay->set("ip-address", Element::create(relay_info.addr_.toText()));
-    map->set("relay", relay);
-    // Set subnet
-    map->set("subnet", Element::create(toText()));
-    // Set interface
-    const std::string& iface = getIface();
-    map->set("interface", Element::create(iface));
+    ElementPtr map = Subnet::toElement();
+
     // Set interface-id
     const OptionPtr& ifaceid = getInterfaceId();
     if (ifaceid) {
@@ -604,28 +610,16 @@ Subnet6::toElement() const {
             std::memcpy(&ifid[0], &bin[0], bin.size());
         }
         map->set("interface-id", Element::create(ifid));
-    } else {
-        map->set("interface-id", Element::create(std::string()));
-    }
-    // Set renew-timer
-    map->set("renew-timer",
-             Element::create(static_cast<long long>
-                             (getT1().get())));
-    // Set rebind-timer
-    map->set("rebind-timer",
-             Element::create(static_cast<long long>
-                             (getT2().get())));
+    } 
+
     // Set preferred-lifetime
     map->set("preferred-lifetime",
              Element::create(static_cast<long long>
                              (getPreferred().get())));
-    // Set valid-lifetime
-    map->set("valid-lifetime",
-             Element::create(static_cast<long long>
-                             (getValid().get())));
     // Set rapid-commit
     bool rapid_commit = getRapidCommit();
     map->set("rapid-commit", Element::create(rapid_commit));
+
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
@@ -713,35 +707,6 @@ Subnet6::toElement() const {
         pdpool_list->add(pool_map);
     }
     map->set("pd-pools", pdpool_list);
-    // Set host reservation-mode
-    Subnet::HRMode hrmode = getHostReservationMode();
-    std::string mode;
-    switch (hrmode) {
-    case Subnet::HR_DISABLED:
-        mode = "disabled";
-        break;
-    case Subnet::HR_OUT_OF_POOL:
-        mode = "out-of-pool";
-        break;
-    case Subnet::HR_ALL:
-        mode = "all";
-        break;
-    default:
-        isc_throw(ToElementError,
-                  "invalid host reservation mode: " << hrmode);
-    }
-    map->set("reservation-mode", Element::create(mode));
-    // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
-    }
-    // Set options
-    ConstCfgOptionPtr opts = getCfgOption();
-    map->set("option-data", opts->toElement());
 
     return (map);
 }
