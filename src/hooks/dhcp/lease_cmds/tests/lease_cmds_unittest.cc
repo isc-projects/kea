@@ -46,7 +46,7 @@ public:
         libraries_.push_back(make_pair(lib, params));
     }
 
-    /// @brief Load all specified libriaries.
+    /// @brief Load all specified libraries.
     ///
     /// The libraries are stored in libraries
     void loadLibs() {
@@ -745,7 +745,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
     exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8::/48, subnet-id=66";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // v4? You're a time traveller from early 80s or what?
+    // v4? You're a time traveler from early 80s or what?
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"

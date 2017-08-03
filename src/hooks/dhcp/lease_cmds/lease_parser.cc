@@ -83,7 +83,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     /// timestamp is specified explicitly, we will use that. Note there are no
     /// checks whether this is in the past. There may be valid cases when user
     /// wants to insert expired leases, e.g. when migrating from one DHCP server
-    /// to another and wants to migrate the database as is, without disarding
+    /// to another and wants to migrate the database as is, without discarding
     /// any leases.
     time_t cltt;
     if (lease_info->contains("expire")) {
@@ -210,7 +210,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     /// no checks whether this is in the past. There may be valid cases when
     /// user wants to insert expired leases, e.g. when migrating from one
     /// DHCP server to another and wants to migrate the database as is, without
-    /// disarding any leases.
+    /// discarding any leases.
     time_t cltt;
     if (lease_info->contains("expire")) {
         int64_t tmp = getUint32(lease_info, "expire");

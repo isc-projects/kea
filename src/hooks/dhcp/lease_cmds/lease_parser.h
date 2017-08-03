@@ -39,7 +39,7 @@ protected:
 ///     "cltt": 12345678,
 ///     "expire": 1499282530,
 ///     "subnet-id": 1,
-///     "fdqn-fwd": true,
+///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
 ///     "state": 0
@@ -74,7 +74,7 @@ public:
 ///     "valid-lft": 3600,
 ///     "expire": 1499282530,
 ///     "subnet-id": 1,
-///     "fdqn-fwd": true,
+///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
 ///     "state": 0
