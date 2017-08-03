@@ -370,7 +370,8 @@ LeaseCmdsImpl::leaseAddHandler(const std::string& name,
             .arg(ex.what());
         return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
     }
-    LOG_INFO(lease_cmds_logger, v4?LEASE_CMDS_ADD4 : LEASE_CMDS_ADD6).arg(txt);
+    LOG_INFO(lease_cmds_logger,
+             v4 ? LEASE_CMDS_ADD4 : LEASE_CMDS_ADD6).arg(txt);
     return (createAnswer(CONTROL_RESULT_SUCCESS, "Lease added."));
 }
 
