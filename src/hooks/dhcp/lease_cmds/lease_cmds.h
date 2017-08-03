@@ -18,13 +18,13 @@ class LeaseCmdsImpl;
 /// @brief A wrapper class that provides convenient initialization to the library.
 ///
 /// This is a wrapper class that simply registers extra commands when
-/// instantiated and deregisters them when the instance is destryed.
+/// instantiated and deregisters them when the instance is destroyed.
 ///
 /// For an actual implementation, see @ref LeaseCmdsImpl class in lease_cmds.cc file.
 class LeaseCmds {
 public:
 
-    /// @brief Initalizes additional host commands.
+    /// @brief Initializes additional host commands.
     ///
     /// First, it ensures that either alternate host data source or CfgHosts
     /// (configuration storage) are available. Then it checks that CommandMgr

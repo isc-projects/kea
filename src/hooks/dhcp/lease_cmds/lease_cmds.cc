@@ -87,14 +87,14 @@ public:
     }
 
     /// @brief specifies parameter types (true = query by address, false =
-    ///         query by indetifier-type,identifier)
+    ///         query by identifier-type,identifier)
     Type query_type;
 
     Lease::Type lease_type;
 
     uint32_t iaid;
 
-    /// @brief Default contstructor.
+    /// @brief Default constructor.
     Parameters()
         :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA), iaid(0) {
     }
@@ -119,7 +119,7 @@ private:
     /// @throw Unexpected if CommandMgr is not available (should not happen)
     void registerCommands();
 
-    /// @brief Dergisters commands:
+    /// @brief Deregisters commands:
     ///
     /// Deregisters:
     /// - lease4-add
@@ -154,7 +154,7 @@ private:
     ///         "valid-lft": 3600,
     ///         "expire": 12345678,
     ///         "subnet-id": 1,
-    ///         "fdqn-fwd": true,
+    ///         "fqdn-fwd": true,
     ///         "fqdn-rev": true,
     ///         "hostname": "myhost.example.org",
     ///         "state": 0
@@ -384,7 +384,7 @@ LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
 
     // We support several sets of parameters for leaseX-get/lease-del:
     // lease-get(type, address)
-    // lease-get(type, subnet-id, interifier-type, identifier)
+    // lease-get(type, subnet-id, identifier-type, identifier)
 
     if (params->contains("type")) {
         string t = params->get("type")->stringValue();

@@ -89,7 +89,7 @@ public:
 
     /// @brief Returns subnet with specified subnet-id value
     ///
-    /// Warning: this method uses full scan. Its use is not recommeded for
+    /// Warning: this method uses full scan. Its use is not recommended for
     /// packet processing.
     ///
     /// @return Subnet (or NULL)
