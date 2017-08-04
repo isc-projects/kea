@@ -2684,6 +2684,69 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
+void
+GenericLeaseMgrTest::testWipeLeases6() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease6Ptr> leases = createLeases6();
+    leases[0]->subnet_id_ = 1;
+    leases[1]->subnet_id_ = 1;
+    leases[2]->subnet_id_ = 1;
+    leases[3]->subnet_id_ = 22;
+    leases[4]->subnet_id_ = 333;
+    leases[5]->subnet_id_ = 333;
+    leases[6]->subnet_id_ = 333;
+    leases[7]->subnet_id_ = 333;
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Let's try something simple. There shouldn't be any leases in
+    // subnet 2. The keep deleting the leases, perhaps in a different
+    // order they were added.
+    EXPECT_EQ(0, lmptr_->wipeLeases6(2));
+    EXPECT_EQ(4, lmptr_->wipeLeases6(333));
+    EXPECT_EQ(3, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(1, lmptr_->wipeLeases6(22));
+
+    // All the leases should be gone now. Check that that repeated
+    // attempt to delete them will not result in any additional removals.
+    EXPECT_EQ(0, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(0, lmptr_->wipeLeases6(22));
+    EXPECT_EQ(0, lmptr_->wipeLeases6(333));
+}
+
+void
+GenericLeaseMgrTest::testWipeLeases4() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    leases[0]->subnet_id_ = 1;
+    leases[1]->subnet_id_ = 1;
+    leases[2]->subnet_id_ = 1;
+    leases[3]->subnet_id_ = 22;
+    leases[4]->subnet_id_ = 333;
+    leases[5]->subnet_id_ = 333;
+    leases[6]->subnet_id_ = 333;
+    leases[7]->subnet_id_ = 333;
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Let's try something simple. There shouldn't be any leases in
+    // subnet 2. The keep deleting the leases, perhaps in a different
+    // order they were added.
+    EXPECT_EQ(0, lmptr_->wipeLeases4(2));
+    EXPECT_EQ(4, lmptr_->wipeLeases4(333));
+    EXPECT_EQ(3, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(1, lmptr_->wipeLeases4(22));
+
+    // All the leases should be gone now. Check that that repeated
+    // attempt to delete them will not result in any additional removals.
+    EXPECT_EQ(0, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(0, lmptr_->wipeLeases4(22));
+    EXPECT_EQ(0, lmptr_->wipeLeases4(333));
+}
 
 }; // namespace test
 }; // namespace dhcp

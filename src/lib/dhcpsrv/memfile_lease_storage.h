@@ -42,6 +42,9 @@ struct ClientIdSubnetIdIndexTag { };
 /// @brief Tag for indexes by client id, HW address and subnet id.
 struct ClientIdHWAddressSubnetIdIndexTag { };
 
+/// @brief Tag for indexs by subnet-id.
+struct SubnetIdIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -103,6 +106,13 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<Lease, int64_t,
                                                   &Lease::getExpirationTime>
             >
+        >,
+
+        // Specification of the fourth index starts here.
+        // This index sorts leases by SubnetID.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetIdIndexTag>,
+            boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >
      >
 > Lease6Storage; // Specify the type name of this container.
@@ -210,7 +220,15 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<Lease, int64_t,
                                                   &Lease::getExpirationTime>
             >
+        >,
+
+        // Specification of the sixth index starts here.
+        // This index sorts leases by SubnetID.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetIdIndexTag>,
+            boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >
+
     >
 > Lease4Storage; // Specify the type name for this container.
 
@@ -229,6 +247,9 @@ typedef Lease6Storage::index<DuidIaidTypeIndexTag>::type Lease6StorageDuidIaidTy
 /// @brief DHCPv6 lease storage index by expiration time.
 typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
 
+/// @brief DHCPv6 lease storage index by Subnet-id.
+typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
+
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
 
@@ -246,6 +267,9 @@ Lease4StorageClientIdSubnetIdIndex;
 /// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
 typedef Lease4Storage::index<ClientIdHWAddressSubnetIdIndexTag>::type
 Lease4StorageClientIdHWAddressSubnetIdIndex;
+
+/// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
+typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
 
 //@}
 } // end of isc::dhcp namespace

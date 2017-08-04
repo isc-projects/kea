@@ -1,4 +1,4 @@
-// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+// Copyright (C) 2015 - 2017 Deutsche Telekom AG.
 //
 // Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //
@@ -378,6 +378,28 @@ public:
     ///
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t );
+
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
     /// @brief Return backend type
     ///

@@ -1894,4 +1894,16 @@ TEST_F(MemfileLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
+// Tests that leases from specific subnet can be removed.
+TEST_F(MemfileLeaseMgrTest, wipeLeases4) {
+    startBackend(V4);
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
+    startBackend(V6);
+    testWipeLeases6();
+}
+
 }; // end of anonymous namespace

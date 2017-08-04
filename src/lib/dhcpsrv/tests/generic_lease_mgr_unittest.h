@@ -374,6 +374,19 @@ public:
     /// after altering the lease states in various ways.
     void testRecountLeaseStats6();
 
+
+    /// @brief Check if wipeLeases4 works properly.
+    ///
+    /// This test creates a bunch of leases in several subnets and then
+    /// attempts to delete them, one subnet at a time.
+    void testWipeLeases4();
+
+    /// @brief Check if wipeLeases6 works properly.
+    ///
+    /// This test creates a bunch of leases in several subnets and then
+    /// attempts to delete them, one subnet at a time.
+    void testWipeLeases6();
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
 

@@ -412,4 +412,14 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
+// Tests that leases from specific subnet can be removed.
+TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
+    testWipeLeases6();
+}
+
 }; // namespace

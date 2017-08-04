@@ -643,4 +643,14 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
 }
 
+// Tests that leases from specific subnet can be removed.
+TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases4) {
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
+    testWipeLeases6();
+}
+
 }; // Of anonymous namespace

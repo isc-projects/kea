@@ -1323,5 +1323,62 @@ Memfile_LeaseMgr::startLeaseStatsQuery6() {
     return(query);
 }
 
+size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4)
+        .arg(subnet_id);
+
+    // Get the index by DUID, IAID, lease type.
+    const Lease4StorageSubnetIdIndex& idx = storage4_.get<SubnetIdIndexTag>();
+
+    // Try to get the lease using the DUID, IAID and lease type.
+    std::pair<Lease4StorageSubnetIdIndex::const_iterator,
+              Lease4StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    // Let's collect all leases.
+    Lease4Collection leases;
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        leases.push_back(*lease);
+    }
+
+    size_t num = leases.size();
+    for (auto l = leases.begin(); l != leases.end(); ++l) {
+        deleteLease((*l)->addr_);
+    }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
+        .arg(subnet_id).arg(num);
+
+    return (num);
+}
+
+size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6)
+        .arg(subnet_id);
+
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
+
+    // Try to get the lease using the DUID, IAID and lease type.
+    std::pair<Lease6StorageSubnetIdIndex::const_iterator,
+              Lease6StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    // Let's collect all leases.
+    Lease6Collection leases;
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        leases.push_back(*lease);
+    }
+
+    size_t num = leases.size();
+    for (auto l = leases.begin(); l != leases.end(); ++l) {
+        deleteLease((*l)->addr_);
+    }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
+        .arg(subnet_id).arg(num);
+
+    return (num);
+}
+
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

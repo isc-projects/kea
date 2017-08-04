@@ -1363,6 +1363,16 @@ PgSqlLeaseMgr::startLeaseStatsQuery6() {
     return(query);
 }
 
+size_t
+PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PgSQL backend");
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PgSQL backend");
+}
+
 string
 PgSqlLeaseMgr::getName() const {
     string name = "";

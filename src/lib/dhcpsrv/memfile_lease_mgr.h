@@ -332,6 +332,24 @@ public:
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+
 private:
 
     /// @brief Deletes all expired-reclaimed leases.

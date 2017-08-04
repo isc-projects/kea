@@ -487,4 +487,14 @@ TEST_F(MySqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
+// Tests that leases from specific subnet can be removed.
+TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
+    testWipeLeases6();
+}
+
 }; // Of anonymous namespace
