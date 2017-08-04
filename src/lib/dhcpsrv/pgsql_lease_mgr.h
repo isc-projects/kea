@@ -319,7 +319,7 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS4 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
@@ -329,9 +329,31 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS6 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
     /// @brief Return backend type
     ///

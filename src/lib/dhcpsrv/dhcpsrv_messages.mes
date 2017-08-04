@@ -545,6 +545,27 @@ lease from the memory file database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
+% DHCPSRV_MEMFILE_WIPE_LEASES4 removing all IPv4 leases from subnet %1
+This informational message is printed when removal of all leases from
+specified IPv4 subnet is commencing. This is a result of receiving administrative
+command.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED removing all IPv4 leases from subnet %1 finished, removed %2 leases
+This informational message is printed when removal of all leases from
+a specified IPv4 subnet has finished. The number of removed leases is
+printed.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES6 removing all IPv6 leases from subnet %1
+This informational message is printed when removal of all leases from
+specified IPv6 subnet is commencing. This is a result of receiving administrative
+command.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED removing all IPv6 leases from subnet %1 finished, removed %2 leases
+This informational message is printed when removal of all leases from
+a specified IPv6 subnet has finished. The number of removed leases is
+printed.
+
+
 % DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
 sockets, capable of receiving broadcast traffic, will be opened on some of the

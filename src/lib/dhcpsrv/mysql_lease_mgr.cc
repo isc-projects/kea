@@ -2100,7 +2100,15 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     return (deleted_leases);
 }
 
+size_t
+MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for MySQL backend");
+}
 
+size_t
+MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for MySQL backend");
+}
 
 // Miscellaneous database methods.
 
