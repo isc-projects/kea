@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::data;
+using namespace isc::asiolink;
 using isc::dhcp::DhcpConfigError;
 
 /// This table defines sample default values. Although these are DHCPv6
@@ -210,3 +211,27 @@ TEST_F(SimpleParserTest, getAndConvert) {
     EXPECT_THROW(parser.getAsBool(bad_bool, "bar"), DhcpConfigError);
 }
 
+// This test exercises the getIOAddress
+TEST_F(SimpleParserTest, getIOAddress) {
+
+    SimpleParserClassTest parser;
+
+    // getAddress checks it can be found
+    ElementPtr not_found = Element::fromJSON("{ \"bar\": 1 }");
+    EXPECT_THROW(parser.getAddress(not_found, "foo"), DhcpConfigError);
+
+    // getAddress checks if it is a string
+    ElementPtr not_addr = Element::fromJSON("{ \"foo\": 1234 }");
+    EXPECT_THROW(parser.getAddress(not_addr, "foo"), DhcpConfigError);
+
+    // checks if getAddress can return the expected value of v4 address
+    ElementPtr v4 = Element::fromJSON("{ \"foo\": \"192.0.2.1\" }");
+    IOAddress val("::");
+    EXPECT_NO_THROW(val = parser.getAddress(v4, "foo"));
+    EXPECT_EQ("192.0.2.1" , val.toText());
+
+    // checks if getAddress can return the expected value of v4 address
+    ElementPtr v6 = Element::fromJSON("{ \"foo\": \"2001:db8::1\" }");
+    EXPECT_NO_THROW(val = parser.getAddress(v6, "foo"));
+    EXPECT_EQ("2001:db8::1" , val.toText());
+}

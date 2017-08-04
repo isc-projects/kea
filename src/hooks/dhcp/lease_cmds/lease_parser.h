@@ -15,19 +15,6 @@
 namespace isc {
 namespace lease_cmds {
 
-/// @brief Base class for Lease4 and Lease6 parsers
-class LeaseParser : public isc::data::SimpleParser {
-protected:
-
-    /// @brief Returns an address from JSON structure
-    ///
-    /// @param scope a map the element will be searched at
-    /// @param name key name to be searched for
-    /// @return IOAddress representation
-    isc::asiolink::IOAddress getIOAddress(const isc::data::ConstElementPtr& scope,
-                                          const std::string& name);
-};
-
 /// @brief Parser for Lease4 structure
 ///
 /// It expects the data in the following format:
@@ -44,7 +31,7 @@ protected:
 ///     "hostname": "myhost.example.org",
 ///     "state": 0
 /// }
-class Lease4Parser : public LeaseParser {
+class Lease4Parser : public isc::data::SimpleParser {
 public:
 
     /// @brief Parses Element tree and tries to convert to Lease4
@@ -81,7 +68,7 @@ public:
 /// }
 
 /// It expects the input data to use the following format:
-class Lease6Parser : public LeaseParser {
+class Lease6Parser : public isc::data::SimpleParser {
 public:
     /// @brief Parses Element tree and tries to convert to Lease4
     ///
