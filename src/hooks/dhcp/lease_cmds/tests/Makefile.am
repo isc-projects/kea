@@ -1,16 +1,9 @@
 SUBDIRS = .
 
-# The 'parallel-tests' is the default only on recent automake versions.
-# However, since Kea 1.2.0 was released with files generated with automake version
-# that doesn't use it, we can't use parallel without rebuilding 1.2.0 tarballs.
-# We will flip this back to parallel-tests once 1.3.0 goes out with parallel
-# enabled.
-AUTOMAKE_OPTIONS = serial-tests
-
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/lease_cmds -I$(top_srcdir)/src/hooks/dhcp/lease_cmds
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DLIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/lease_cmds/.libs/libdhcp_lease_cmds.so\"
+AM_CPPFLAGS += -DLEASE_CMDS_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/lease_cmds/.libs/libdhcp_lease_cmds.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
