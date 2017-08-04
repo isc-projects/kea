@@ -423,11 +423,11 @@ public:
 // Simple test that checks the library really registers the commands.
 TEST_F(LeaseCmdsTest, commands) {
 
-    vector<string> cmds = { "lease4-add", "lease6-add",
-                            "lease4-get", "lease6-get",
-                            "lease4-del", "lease6-del",
+    vector<string> cmds = { "lease4-add",    "lease6-add",
+                            "lease4-get",    "lease6-get",
+                            "lease4-del",    "lease6-del",
                             "lease4-update", "lease6-update",
-                            "lease4-del-all", "lease6-del-all" };
+                            "lease4-wipe",   "lease6-wipe" };
     testCommands(cmds);
 }
 
@@ -1754,6 +1754,119 @@ TEST_F(LeaseCmdsTest, Lease6DelByDUID) {
 
     // Make sure the lease is really gone.
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+}
+
+// Checks that lease4-wipe detects missing parmameter properly.
+TEST_F(LeaseCmdsTest, Lease4WipeMissingParam) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-wipe can remove leases.
+TEST_F(LeaseCmdsTest, Lease4Wipe) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 1 IPv4 lease(s).";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease4WipeNoLeases) {
+
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(false, false);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 0 IPv4 lease(s).";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-wipe detects missing parmameter properly.
+TEST_F(LeaseCmdsTest, Lease6WipeMissingParam) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-wipe can remove leases.
+TEST_F(LeaseCmdsTest, Lease6Wipe) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create a lease)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 1 IPv6 lease(s).";
+
+    // The status expected is success. The lease should be deleted.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+}
+
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease6WipeNoLeases) {
+
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(true, false);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 0 IPv6 lease(s).";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 } // end of anonymous namespace

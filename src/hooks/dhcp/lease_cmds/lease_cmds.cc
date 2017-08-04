@@ -122,8 +122,8 @@ private:
     /// - lease6-del
     /// - lease4-update
     /// - lease6-update
-    /// - lease4-del-all
-    /// - lease6-del-all
+    /// - lease4-wipe
+    /// - lease6-wipe
 
     /// @throw Unexpected if CommandMgr is not available (should not happen)
     void registerCommands();
@@ -139,8 +139,8 @@ private:
     /// - lease6-del
     /// - lease4-update
     /// - lease6-update
-    /// - lease4-del-all
-    /// - lease6-del-all
+    /// - lease4-wipe
+    /// - lease6-wipe
     ///
     /// @throw Unexpected if CommandMgr is not available (should not happen)
     void deregisterCommands();
@@ -358,9 +358,9 @@ void LeaseCmdsImpl::registerCommands() {
     CommandMgr::instance().registerCommand("lease6-update",
     boost::bind(&LeaseCmdsImpl::lease6UpdateHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("lease4-del-all",
+    CommandMgr::instance().registerCommand("lease4-wipe",
     boost::bind(&LeaseCmdsImpl::lease4WipeHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-del-all",
+    CommandMgr::instance().registerCommand("lease6-wipe",
     boost::bind(&LeaseCmdsImpl::lease6WipeHandler, _1, _2));
 }
 
@@ -378,8 +378,8 @@ void LeaseCmdsImpl::deregisterCommands() {
     CommandMgr::instance().deregisterCommand("lease4-update");
     CommandMgr::instance().deregisterCommand("lease6-update");
 
-    CommandMgr::instance().deregisterCommand("lease4-del-all");
-    CommandMgr::instance().deregisterCommand("lease6-del-all");
+    CommandMgr::instance().deregisterCommand("lease4-wipe");
+    CommandMgr::instance().deregisterCommand("lease6-wipe");
 }
 
 ConstElementPtr
@@ -776,13 +776,49 @@ LeaseCmdsImpl::lease6UpdateHandler(const string& , ConstElementPtr params) {
 }
 
 ConstElementPtr
-LeaseCmdsImpl::lease4WipeHandler(const string& cmd, ConstElementPtr args) {
-    return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
+LeaseCmdsImpl::lease4WipeHandler(const string& /*cmd*/, ConstElementPtr params) {
+    try {
+
+        // We need the lease to be specified.
+        if (!params) {
+            isc_throw(isc::BadValue, "no parameters specified for lease4-wipe command");
+        }
+
+        SimpleParser parser;
+        SubnetID id = parser.getUint32(params, "subnet-id");
+
+        size_t num = LeaseMgrFactory::instance().wipeLeases4(id);
+
+        stringstream tmp;
+        tmp << "Deleted " << num << " IPv4 lease(s).";
+        return (createAnswer(num ? CONTROL_RESULT_SUCCESS : CONTROL_RESULT_EMPTY,
+                             tmp.str()));
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
 }
 
 ConstElementPtr
-LeaseCmdsImpl::lease6WipeHandler(const string& cmd, ConstElementPtr args) {
-    return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
+LeaseCmdsImpl::lease6WipeHandler(const string& /*cmd*/, ConstElementPtr params) {
+    try {
+
+        // We need the lease to be specified.
+        if (!params) {
+            isc_throw(isc::BadValue, "no parameters specified for lease6-wipe command");
+        }
+
+        SimpleParser parser;
+        SubnetID id = parser.getUint32(params, "subnet-id");
+
+        size_t num = LeaseMgrFactory::instance().wipeLeases6(id);
+
+        stringstream tmp;
+        tmp << "Deleted " << num << " IPv6 lease(s).";
+        return (createAnswer(num ? CONTROL_RESULT_SUCCESS : CONTROL_RESULT_EMPTY,
+                             tmp.str()));
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
 }
 
 LeaseCmds::LeaseCmds()
