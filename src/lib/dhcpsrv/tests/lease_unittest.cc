@@ -9,6 +9,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <testutils/test_to_element.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>
 #include <vector>
@@ -18,6 +19,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::test;
 
 namespace {
 
@@ -432,48 +434,38 @@ TEST_F(Lease4Test, toElement) {
     Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
                  456, current_time, 789, true, true, "urania.example.org");
 
-    ElementPtr l = lease.toElement();
+    std::string expected = "{"
+        "\"client-id\": \"17:34:e2:ff:09:92:54\","
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 0,"
+        "\"subnet-id\": 789,"
+        "\"valid-lft\": 3600 "
+        "}";
 
-    ASSERT_TRUE(l);
-
-    ASSERT_TRUE(l->contains("ip-address"));
-    EXPECT_EQ("192.0.2.3", l->get("ip-address")->stringValue());
-
-    ASSERT_TRUE(l->contains("valid-lft"));
-    EXPECT_EQ(3600, l->get("valid-lft")->intValue());
-
-    ASSERT_TRUE(l->contains("cltt"));
-    EXPECT_EQ(current_time, l->get("cltt")->intValue());
-
-    ASSERT_TRUE(l->contains("hw-address"));
-    EXPECT_EQ(hwaddr_->toText(false), l->get("hw-address")->stringValue());
-
-    ASSERT_TRUE(l->contains("client-id"));
-    EXPECT_EQ(clientid_->toText(), l->get("client-id")->stringValue());
-
-    ASSERT_TRUE(l->contains("subnet-id"));
-    EXPECT_EQ(789, l->get("subnet-id")->intValue());
-
-    ASSERT_TRUE(l->contains("state"));
-    EXPECT_EQ(static_cast<int>(Lease::STATE_DEFAULT), l->get("state")->intValue());
-
-    ASSERT_TRUE(l->contains("fqdn-fwd"));
-    EXPECT_TRUE(l->get("fqdn-fwd")->boolValue());
-
-    ASSERT_TRUE(l->contains("fqdn-rev"));
-    EXPECT_TRUE(l->get("fqdn-rev")->boolValue());
-
-    ASSERT_TRUE(l->contains("hostname"));
-    EXPECT_EQ("urania.example.org", l->get("hostname")->stringValue());
+    runToElementTest<Lease4>(expected, lease);
 
     // Now let's try with a lease without client-id.
     lease.client_id_.reset();
 
-    l = lease.toElement();
+    expected = "{"
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 0,"
+        "\"subnet-id\": 789,"
+        "\"valid-lft\": 3600 "
+        "}";
 
-    EXPECT_FALSE(l->contains("client-id"));
+    runToElementTest<Lease4>(expected, lease);
 }
-
 
 // Verify that decline() method properly clears up specific fields.
 TEST_F(Lease4Test, decline) {
@@ -915,55 +907,43 @@ TEST(Lease6Test, toElementAddress) {
     lease.state_ = Lease::STATE_DECLINED;
     lease.hostname_ = "urania.example.org";
 
-    ElementPtr l = lease.toElement();
-
-    ASSERT_TRUE(l);
-
-    ASSERT_TRUE(l->contains("ip-address"));
-    EXPECT_EQ("2001:db8::1", l->get("ip-address")->stringValue());
-
-    ASSERT_TRUE(l->contains("type"));
-    EXPECT_EQ("IA_NA", l->get("type")->stringValue());
-
-    // This is an address lease, it does not have a prefix length.
-    ASSERT_FALSE(l->contains("prefix-len"));
-
-    ASSERT_TRUE(l->contains("iaid"));
-    EXPECT_EQ(123456, l->get("iaid")->intValue());
-
-    ASSERT_TRUE(l->contains("preferred-lft"));
-    EXPECT_EQ(400, l->get("preferred-lft")->intValue());
-
-    ASSERT_TRUE(l->contains("valid-lft"));
-    EXPECT_EQ(800, l->get("valid-lft")->intValue());
-
-    ASSERT_TRUE(l->contains("duid"));
-    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f",
-              l->get("duid")->stringValue());
-
-    ASSERT_TRUE(l->contains("hw-address"));
-    EXPECT_EQ(hwaddr->toText(false), l->get("hw-address")->stringValue());
-
-    ASSERT_TRUE(l->contains("subnet-id"));
-    EXPECT_EQ(5678, l->get("subnet-id")->intValue());
-
-    ASSERT_TRUE(l->contains("state"));
-    EXPECT_EQ(static_cast<int>(Lease::STATE_DECLINED),
-              l->get("state")->intValue());
-
-    ASSERT_TRUE(l->contains("fqdn-fwd"));
-    EXPECT_FALSE(l->get("fqdn-fwd")->boolValue());
-
-    ASSERT_TRUE(l->contains("fqdn-rev"));
-    EXPECT_FALSE(l->get("fqdn-rev")->boolValue());
-
-    ASSERT_TRUE(l->contains("hostname"));
-    EXPECT_EQ("urania.example.org", l->get("hostname")->stringValue());
+    std::string expected = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"2001:db8::1\","
+        "\"preferred-lft\": 400,"
+        "\"state\": 1,"
+        "\"subnet-id\": 5678,"
+        "\"type\": \"IA_NA\","
+        "\"valid-lft\": 800"
+        "}";
+    
+    runToElementTest<Lease6>(expected, lease);
 
     // Now let's try with a lease without hardware address.
     lease.hwaddr_.reset();
-    l = lease.toElement();
-    EXPECT_FALSE(l->contains("hw-address"));
+
+    expected = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.example.org\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"2001:db8::1\","
+        "\"preferred-lft\": 400,"
+        "\"state\": 1,"
+        "\"subnet-id\": 5678,"
+        "\"type\": \"IA_NA\","
+        "\"valid-lft\": 800"
+        "}";
+    
+    runToElementTest<Lease6>(expected, lease);
 }
 
 // Verify that Lease6 structure can be converted to JSON properly.
