@@ -12,6 +12,7 @@ libkea_cc_la_SOURCES += json_feed.cc json_feed.h
 libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
 
 libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
+libkea_cc_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cc_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cc_la_LIBADD += $(BOOST_LIBS)
 

@@ -17,20 +17,8 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 
-// Can't use a constructor as a function
-namespace {
-IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
-};
-
 namespace isc {
 namespace lease_cmds {
-
-IOAddress
-LeaseParser::getIOAddress(const ConstElementPtr& scope,
-                           const std::string& name) {
-    return (getAndConvert<IOAddress,
-            buildIOAddress>(scope, name, "address"));
-}
 
 Lease4Ptr
 Lease4Parser::parse(ConstSrvConfigPtr& cfg,
@@ -40,7 +28,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // These are mandatory parameters.
-    IOAddress addr = getIOAddress(lease_info, "ip-address");
+    IOAddress addr = getAddress(lease_info, "ip-address");
     SubnetID subnet_id = getUint32(lease_info, "subnet-id");
 
     if (!addr.isV4()) {
@@ -134,7 +122,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // These are mandatory parameters.
-    IOAddress addr = getIOAddress(lease_info, "ip-address");
+    IOAddress addr = getAddress(lease_info, "ip-address");
     SubnetID subnet_id = getUint32(lease_info, "subnet-id");
 
     if (addr.isV4()) {

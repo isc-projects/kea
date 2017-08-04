@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <cc/simple_parser.h>
+#include <asiolink/io_address.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cc/data.h>
 #include <string>
 
 using namespace std;
+using namespace isc::asiolink;
 using isc::dhcp::DhcpConfigError;
 
 namespace isc {
@@ -65,6 +67,19 @@ SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& na
     }
 
     return (x->boolValue());
+}
+
+IOAddress
+SimpleParser::getAddress(const ConstElementPtr& scope,
+                         const std::string& name) {
+    std::string str = getString(scope, name);
+    try {
+        return (IOAddress(str));
+    } catch (const std::exception& e) {
+        isc_throw(DhcpConfigError, "Failed to convert '" << str
+                  << "' to address: " << e.what() << "("
+                  << getPosition(name, scope) << ")");
+    }
 }
 
 const data::Element::Position&

@@ -634,16 +634,6 @@ public:
 
 private:
 
-    /// @brief Returns a value converted to IOAddress
-    ///
-    /// Instantiation of getAndConvert() to IOAddress
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an IOAddress value
-    isc::asiolink::IOAddress
-    getIOAddress(isc::data::ConstElementPtr scope, const std::string& name);
-
     /// Protocol family (IPv4 or IPv6)
     Option::Universe family_;
 };
@@ -786,16 +776,6 @@ public:
     static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
 
 private:
-
-    /// @brief Returns a value converted to IOAddress
-    ///
-    /// Instantiation of getAndConvert() to IOAddress
-    ///
-    /// @param scope specified parameter will be extracted from this scope
-    /// @param name name of the parameter
-    /// @return an IOAddress value
-    isc::asiolink::IOAddress
-    getIOAddress(isc::data::ConstElementPtr scope, const std::string& name);
 
     /// @brief Returns a value converted to NameChangeProtocol
     ///
