@@ -226,8 +226,10 @@ public:
     ///
     /// Removes library (if any), destroys lease manager (if any).
     virtual ~LeaseCmdsTest() {
-        unloadLibs();
+        // destroys lease manager first because the other order triggers
+        // a clang/boost bug
         LeaseMgrFactory::destroy();
+        unloadLibs();
         lmptr_ = 0;
     }
 
