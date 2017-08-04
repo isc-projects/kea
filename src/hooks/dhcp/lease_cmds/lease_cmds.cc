@@ -62,16 +62,22 @@ public:
     /// @brief Specifies subnet-id (always used)
     SubnetID subnet_id;
 
-    /// @brief Specifies IPv4 or IPv6 address (used when query_by_addr is true)
+    /// @brief Specifies IPv4/v6 address (used when query_type is TYPE_ADDR)
     IOAddress addr;
 
-    /// @brief Specifies identifier type (usually FLEX_ID, used when
-    ///        query_by_addr is false)
+    /// @brief Specifies hardware address (used when query_type is TYPE_HWADDR)
     HWAddrPtr hwaddr;
 
-    /// @brief Specifies identifier value (used when query_by_addr is false)
+    /// @brief Specifies identifier value (used when query_type is TYPE_DUID)
     isc::dhcp::DuidPtr duid;
 
+    /// @brief Attempts to covert text to one of specified types
+    ///
+    /// Supported values are: "address", hw-address and duid.
+    ///
+    /// @param txt text to be converted
+    /// @return value converted to Parameters::Type
+    /// @throw BadValue if unsupported type is specified
     static Type txtToType(const std::string& txt) {
         if (txt == "address") {
             return (Parameters::TYPE_ADDR);
@@ -90,13 +96,16 @@ public:
     ///         query by identifier-type,identifier)
     Type query_type;
 
+    /// @brief Lease type (NA,TA or PD) used for v6 leases
     Lease::Type lease_type;
 
+    /// @brief IAID identifier used for v6 leases
     uint32_t iaid;
 
     /// @brief Default constructor.
     Parameters()
-        :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA), iaid(0) {
+        :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
+         iaid(0) {
     }
 };
 
@@ -180,21 +189,23 @@ private:
     /// }
 
     ///
-    /// @param command should be 'reservation-add' (but it's ignored)
+    /// @param command should be 'lease4-add' or 'lease6-add'
     /// @param args must contain host reservation definition.
     /// @return result of the operation
     static ConstElementPtr
     leaseAddHandler(const string& command, ConstElementPtr args);
 
-    /// @brief reservation-get command handler
+    /// @brief lease4-get, lease6-get command handler
     ///
-    /// This command attempts to retrieve a host that match selected criteria.
-    /// Two types of parameters are supported: (subnet-id, address) or
-    /// (subnet-id, identifier-type, identifier).
+    /// This command attempts to retrieve a lease that match selected criteria.
+    /// The following types of parameters are supported:
+    /// - (subnet-id, address) for both v4 and v6
+    /// - (subnet-id, identifier-type, identifier) for v4
+    /// - (subnet-id, type, iana, identifier-type, identifier) for v6
     ///
     /// Example command for query by (subnet-id, address):
     /// {
-    ///     "command": "reservation-get",
+    ///     "command": "lease4-get",
     ///     "arguments": {
     ///         "subnet-id": 1,
     ///         "ip-address": "192.0.2.202"
@@ -203,32 +214,43 @@ private:
     ///
     /// Example command for query by (subnet-id, identifier-type, identifier)
     /// {
-    ///     "command": "reservation-get",
+    ///     "command": "lease4-get",
     ///     "arguments": {
     ///         "subnet-id": 1,
     ///         "identifier-type": "hw-address",
     ///         "identifier": "00:01:02:03:04:05"
     ///     }
-    /// }";
-    /// @param command should be 'reservation-get' (but it's ignored)
+    /// }
+    ///
+    /// Example command for query by (subnet-id, type, iana, identifier-type,
+    ///                               identifier):
+    /// {
+    ///     "command": "lease6-get",
+    ///     "arguments": {
+    ///     "subnet-id": 66,
+    ///     "iaid": 42,
+    ///     "type": "IA_NA",
+    ///     "identifier-type": "duid",
+    ///     "identifier": "77:77:77:77:77:77:77:77"
+    ///     }
+    /// }
+    /// @param command "lease4-get" or "lease6-get"
     /// @param args must contain host reservation definition.
-    /// @return result of the operation (host will be included as parameters, if found)
+    /// @return result of the operation (includes lease details, if found)
     static ConstElementPtr
     leaseGetHandler(const string& command, ConstElementPtr args);
 
-    /// @brief reservation-del command handler
+    /// @brief lease4-del, lease6-del command handler
     ///
-    /// This command attempts to delete a host that match selected criteria.
-    /// Two types of parameters are supported: (subnet-id, address) or
-    /// (subnet-id, identifier-type, identifier).
+    /// This command attempts to delete a lease that match selected criteria.
+    /// The following types of parameters are supported:
+    /// - (subnet-id, address) for both v4 and v6
+    /// - (subnet-id, identifier-type, identifier) for v4
+    /// - (subnet-id, type, iana, identifier-type, identifier) for v6
     ///
-    /// Note: for this operation to work, hosts-database must be specified
-    /// in your configuration file (or from code point of view, alternate_source_
-    /// must be set in HostMgr).
-    ///
-    /// Example command for query by (subnet-id, address):
+    /// Example command for command by (subnet-id, address):
     /// {
-    ///     "command": "reservation-get",
+    ///     "command": "lease4-del",
     ///     "arguments": {
     ///         "subnet-id": 1,
     ///         "ip-address": "192.0.2.202"
@@ -237,23 +259,37 @@ private:
     ///
     /// Example command for query by (subnet-id, identifier-type, identifier)
     /// {
-    ///     "command": "reservation-get",
+    ///     "command": "lease4-del",
     ///     "arguments": {
     ///         "subnet-id": 1,
     ///         "identifier-type": "hw-address",
     ///         "identifier": "00:01:02:03:04:05"
     ///     }
-    /// }";
-    /// @param command should be 'reservation-add' (but it's ignored)
-    /// @param args must contain host reservation definition.
-    /// @return result of the operation (host will be included as parameters, if found)
+    /// }
+    ///
+    /// Example command for query by (subnet-id, type, iana, identifier-type,
+    ///                               identifier):
+    /// {
+    ///     "command": "lease6-del",
+    ///     "arguments": {
+    ///     "subnet-id": 66,
+    ///     "iaid": 42,
+    ///     "type": "IA_NA",
+    ///     "identifier-type": "duid",
+    ///     "identifier": "77:77:77:77:77:77:77:77"
+    ///     }
+    /// }
+    /// @param command 'lease4-del' or 'lease6-del'
+    /// @param args must contain lease parameters
+    /// @return result of the operation
     static ConstElementPtr
     leaseDelHandler(const string& command, ConstElementPtr args);
 
-
+    /// @brief Not implemented yet.
     static ConstElementPtr
     leaseUpdateHandler(const string& command, ConstElementPtr args);
 
+    /// @brief Not implemented yet.
     static ConstElementPtr
     leaseWipeHandler(const string& command, ConstElementPtr args);
 

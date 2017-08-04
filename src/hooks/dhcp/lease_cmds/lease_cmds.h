@@ -24,11 +24,9 @@ class LeaseCmdsImpl;
 class LeaseCmds {
 public:
 
-    /// @brief Initializes additional host reservation commands.
+    /// @brief Initializes additional lease commands.
     ///
-    /// First, it ensures that either alternate host data source or CfgHosts
-    /// (configuration storage) are available. Then it checks that CommandMgr
-    /// is available. Then finally, it registers the following commands:
+    /// It registers the following commands:
     /// - lease4-add
     /// - lease6-add
     /// - lease4-get
@@ -45,6 +43,7 @@ public:
 
     /// @brief Destructor
     ///
+    /// Unregisters commands:
     /// - lease4-add
     /// - lease6-add
     /// - lease4-get
@@ -55,7 +54,6 @@ public:
     /// - lease6-update
     /// - lease4-del-all
     /// - lease6-del-all
-    /// Unregisters commands:
     ~LeaseCmds();
 private:
 
