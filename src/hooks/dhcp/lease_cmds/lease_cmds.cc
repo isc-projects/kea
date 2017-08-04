@@ -240,15 +240,13 @@ private:
     static ConstElementPtr
     leaseGetHandler(const string& command, ConstElementPtr args);
 
-    /// @brief lease4-del, lease6-del command handler
+    /// @brief lease4-del command handler
     ///
-    /// This command attempts to delete a lease that match selected criteria.
-    /// The following types of parameters are supported:
-    /// - (subnet-id, address) for both v4 and v6
-    /// - (subnet-id, identifier-type, identifier) for v4
-    /// - (subnet-id, type, iana, identifier-type, identifier) for v6
+    /// This command attempts to delete an IPv4 lease that match selected
+    /// criteria. Two types of parameters are supported: (subnet-id, address) or
+    /// (subnet-id, identifier-type, identifier).
     ///
-    /// Example command for command by (subnet-id, address):
+    /// Example command for deletion by (subnet-id, address):
     /// {
     ///     "command": "lease4-del",
     ///     "arguments": {
@@ -257,7 +255,7 @@ private:
     ///     }
     /// }
     ///
-    /// Example command for query by (subnet-id, identifier-type, identifier)
+    /// Example command for deletion by (subnet-id, identifier-type, identifier)
     /// {
     ///     "command": "lease4-del",
     ///     "arguments": {
@@ -265,33 +263,58 @@ private:
     ///         "identifier-type": "hw-address",
     ///         "identifier": "00:01:02:03:04:05"
     ///     }
-    /// }
+    /// }";
+    /// @param command should be 'lease4-del' (but it's ignored)
+    /// @param args must contain host reservation definition.
+    /// @return result of the operation (host will be included as parameters, if found)
+    static ConstElementPtr
+    lease4DelHandler(const string& command, ConstElementPtr args);
+
+    /// @brief lease6-del command handler
     ///
-    /// Example command for query by (subnet-id, type, iana, identifier-type,
-    ///                               identifier):
+    /// This command attempts to delete a lease that match selected criteria.
+    /// Two types of parameters are supported: (subnet-id, address) or
+    /// (subnet-id, type, iaid, identifier-type, identifier).
+    ///
+    /// Example command for deletion by (subnet-id, address):
     /// {
     ///     "command": "lease6-del",
     ///     "arguments": {
-    ///     "subnet-id": 66,
-    ///     "iaid": 42,
-    ///     "type": "IA_NA",
-    ///     "identifier-type": "duid",
-    ///     "identifier": "77:77:77:77:77:77:77:77"
+    ///         "subnet-id": 1,
+    ///         "ip-address": "192.0.2.202"
     ///     }
     /// }
-    /// @param command 'lease4-del' or 'lease6-del'
-    /// @param args must contain lease parameters
-    /// @return result of the operation
+    ///
+    /// Example command for deletion by (subnet-id, type, iaid, identifier-type,
+    /// identifier):
+    /// {
+    ///     "command": "lease6-del",
+    ///     "arguments": {
+    ///         "subnet-id": 1,
+    ///         "type": "IA_NA",
+    ///         "iaid": 123456,
+    ///         "identifier-type": "hw-address",
+    ///         "identifier": "00:01:02:03:04:05"
+    ///     }
+    /// }";
+    /// @param command should be 'lease6-del' (but it's ignored)
+    /// @param args must contain host reservation definition.
+    /// @return result of the operation (host will be included as parameters, if found)
     static ConstElementPtr
-    leaseDelHandler(const string& command, ConstElementPtr args);
+    lease6DelHandler(const string& command, ConstElementPtr args);
+
+    static ConstElementPtr
+    lease4UpdateHandler(const string& command, ConstElementPtr args);
 
     /// @brief Not implemented yet.
     static ConstElementPtr
-    leaseUpdateHandler(const string& command, ConstElementPtr args);
+    lease6UpdateHandler(const string& command, ConstElementPtr args);
 
-    /// @brief Not implemented yet.
     static ConstElementPtr
-    leaseWipeHandler(const string& command, ConstElementPtr args);
+    lease4WipeHandler(const string& command, ConstElementPtr args);
+
+    static ConstElementPtr
+    lease6WipeHandler(const string& command, ConstElementPtr args);
 
     /// @brief Extracts parameters required for reservation-get and reservation-del
     ///
@@ -326,19 +349,19 @@ void LeaseCmdsImpl::registerCommands() {
         boost::bind(&LeaseCmdsImpl::leaseGetHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("lease4-del",
-    boost::bind(&LeaseCmdsImpl::leaseDelHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease4DelHandler, _1, _2));
     CommandMgr::instance().registerCommand("lease6-del",
-    boost::bind(&LeaseCmdsImpl::leaseDelHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease6DelHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("lease4-update",
-    boost::bind(&LeaseCmdsImpl::leaseUpdateHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease4UpdateHandler, _1, _2));
     CommandMgr::instance().registerCommand("lease6-update",
-    boost::bind(&LeaseCmdsImpl::leaseUpdateHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease6UpdateHandler, _1, _2));
 
     CommandMgr::instance().registerCommand("lease4-del-all",
-    boost::bind(&LeaseCmdsImpl::leaseWipeHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease4WipeHandler, _1, _2));
     CommandMgr::instance().registerCommand("lease6-del-all",
-    boost::bind(&LeaseCmdsImpl::leaseWipeHandler, _1, _2));
+    boost::bind(&LeaseCmdsImpl::lease6WipeHandler, _1, _2));
 }
 
 void LeaseCmdsImpl::deregisterCommands() {
@@ -579,17 +602,186 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
 }
 
 ConstElementPtr
-LeaseCmdsImpl::leaseDelHandler(const std::string& cmd, ConstElementPtr args) {
+LeaseCmdsImpl::lease4DelHandler(const std::string& , ConstElementPtr params) {
+    Parameters p;
+    Lease4Ptr lease4;
+    IOAddress addr(IOAddress::IPV4_ZERO_ADDRESS());
+    try {
+        p = getParameters(params);
+
+        switch (p.query_type) {
+        case Parameters::TYPE_ADDR: {
+
+            // If address was specified explicitly, let's use it as is.
+            addr = p.addr;
+            break;
+        }
+        case Parameters::TYPE_HWADDR:
+            if (!p.hwaddr) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "Program error: Query by hw-address "
+                                     "requires hwaddr to be specified"));
+            }
+
+            // Let's see if there's such a lease at all.
+            lease4 = LeaseMgrFactory::instance().getLease4(*p.hwaddr, p.subnet_id);
+            if (!lease4) {
+                return (createAnswer(CONTROL_RESULT_EMPTY, "IPv4 lease not found."));
+            }
+
+            // Found it, can use it as is.
+            addr = lease4->addr_;
+            break;
+
+        case Parameters::TYPE_DUID:
+            return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "Delete by duid is not allowed in v4."));
+            break;
+
+        default: {
+            stringstream tmp;
+            tmp << "Unknown query type: " << static_cast<int>(p.query_type);
+            return (createAnswer(CONTROL_RESULT_ERROR, tmp.str()));
+        }
+        }
+
+        if (LeaseMgrFactory::instance().deleteLease(addr)) {
+            return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv4 lease deleted."));
+        } else {
+            return (createAnswer(CONTROL_RESULT_EMPTY, "IPv4 lease not found."));
+        }
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+}
+
+ConstElementPtr
+LeaseCmdsImpl::lease6DelHandler(const std::string& , ConstElementPtr params) {
+    Parameters p;
+    Lease6Ptr lease6;
+    IOAddress addr(IOAddress::IPV6_ZERO_ADDRESS());
+    try {
+        p = getParameters(params);
+
+        switch (p.query_type) {
+        case Parameters::TYPE_ADDR: {
+
+            // If address was specified explicitly, let's use it as is.
+            addr = p.addr;
+            break;
+        }
+        case Parameters::TYPE_HWADDR:
+            return (createAnswer(CONTROL_RESULT_ERROR,
+                                 "Delete by hw-address is not allowed in v6."));
+
+        case Parameters::TYPE_DUID:
+            if (!p.duid) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "Program error: Query by duid "
+                                     "requires duid to be specified"));
+            }
+
+            // Let's see if there's such a lease at all.
+            lease6 = LeaseMgrFactory::instance().getLease6(p.lease_type, *p.duid,
+                                                           p.iaid, p.subnet_id);
+            if (!lease6) {
+                return (createAnswer(CONTROL_RESULT_EMPTY, "IPv6 lease not found."));
+            }
+
+            // Found it, can use it as is.
+            addr = lease6->addr_;
+            break;
+
+        default: {
+            stringstream tmp;
+            tmp << "Unknown query type: " << static_cast<int>(p.query_type);
+            return (createAnswer(CONTROL_RESULT_ERROR, tmp.str()));
+        }
+        }
+
+        if (LeaseMgrFactory::instance().deleteLease(addr)) {
+            return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv6 lease deleted."));
+        } else {
+            return (createAnswer(CONTROL_RESULT_EMPTY, "IPv6 lease not found."));
+        }
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+}
+
+ConstElementPtr
+LeaseCmdsImpl::lease4UpdateHandler(const string& , ConstElementPtr params) {
+    try {
+
+        // We need the lease to be specified.
+        if (!params) {
+            isc_throw(isc::BadValue, "no parameters specified for lease4-update command");
+        }
+
+        // Get the parameters specified by the user first.
+        ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+        Lease4Ptr lease4;
+        Lease4Parser parser;
+        // The parser does sanity checks (if the address is in scope, if
+        // subnet-id is valid, etc)
+        lease4 = parser.parse(config, params);
+
+        // Ok, now check if there is a lease to be updated.
+        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease4->addr_);
+        if (!existing) {
+            stringstream tmp;
+            tmp << "There is no lease for address " << lease4->addr_ << ", can't update.";
+            return (createAnswer(CONTROL_RESULT_EMPTY, tmp.str()));
+        }
+
+        LeaseMgrFactory::instance().updateLease4(lease4);
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv4 lease updated."));
+
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+}
+
+ConstElementPtr
+LeaseCmdsImpl::lease6UpdateHandler(const string& , ConstElementPtr params) {
+    try {
+        // We need the lease to be specified.
+        if (!params) {
+            isc_throw(isc::BadValue, "no parameters specified for lease6-update command");
+        }
+
+        // Get the parameters specified by the user first.
+        ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+        Lease6Ptr lease6;
+        Lease6Parser parser;
+        // The parser does sanity checks (if the address is in scope, if
+        // subnet-id is valid, etc)
+        lease6 = parser.parse(config, params);
+
+        // Ok, now check if there is a lease to be updated.
+        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(lease6->type_,
+                                                                   lease6->addr_);
+        if (!existing) {
+            stringstream tmp;
+            tmp << "There is no lease for address " << lease6->addr_ << ", can't update.";
+            return (createAnswer(CONTROL_RESULT_EMPTY, tmp.str()));
+        }
+
+        LeaseMgrFactory::instance().updateLease6(lease6);
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv6 lease updated."));
+
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+}
+
+ConstElementPtr
+LeaseCmdsImpl::lease4WipeHandler(const string& cmd, ConstElementPtr args) {
     return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
 }
 
 ConstElementPtr
-LeaseCmdsImpl::leaseUpdateHandler(const string& cmd, ConstElementPtr args) {
-    return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
-}
-
-ConstElementPtr
-LeaseCmdsImpl::leaseWipeHandler(const string& cmd, ConstElementPtr args) {
+LeaseCmdsImpl::lease6WipeHandler(const string& cmd, ConstElementPtr args) {
     return (createAnswer(CONTROL_RESULT_ERROR, "not implemented yet."));
 }
 
