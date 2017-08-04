@@ -217,7 +217,7 @@ public:
     /// Also ensured there is no lease manager leftovers from previous
     /// test.
     LeaseCmdsTest()
-        :LibLoadTest(LIB_SO) {
+        :LibLoadTest(LEASE_CMDS_LIB_SO) {
         LeaseMgrFactory::destroy();
         lmptr_ = 0;
     }
