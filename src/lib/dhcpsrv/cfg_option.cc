@@ -224,6 +224,8 @@ CfgOption::toElement() const {
                 std::string repr = util::encode::encodeHex(bin);
                 map->set("data", Element::create(repr));
             }
+            // Set the persistency flag
+            map->set("always-send", Element::create(opt->persistent_));
             // Push on the list
             result->add(map);
         }
@@ -265,6 +267,8 @@ CfgOption::toElement() const {
                 std::string repr = util::encode::encodeHex(bin);
                 map->set("data", Element::create(repr));
             }
+            // Set the persistency flag
+            map->set("always-send", Element::create(opt->persistent_));
             // Push on the list
             result->add(map);
         }

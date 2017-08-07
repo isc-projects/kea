@@ -1226,21 +1226,37 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     }
 
     Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr resp = ex.getResponse();
+    std::vector<uint8_t> requested_opts;
 
     // try to get the 'Parameter Request List' option which holds the
     // codes of requested options.
     OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
         OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-    // If there is no PRL option in the message from the client then
-    // there is nothing to do.
-    if (!option_prl) {
-        return;
+    // Get the codes of requested options.
+    if (option_prl) {
+        requested_opts = option_prl->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(DHCP4_OPTION_SPACE);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                requested_opts.push_back(code);
+            }
+        }
     }
 
-    Pkt4Ptr resp = ex.getResponse();
-
-    // Get the codes of requested options.
-    const std::vector<uint8_t>& requested_opts = option_prl->getValues();
     // For each requested option code get the instance of the option
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
@@ -1288,15 +1304,39 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     }
 
     uint32_t vendor_id = vendor_req->getVendorId();
+    std::vector<uint8_t> requested_opts;
 
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other
     /// vendors may have different policies.
     OptionUint8ArrayPtr oro =
         boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    // Get the list of options that client requested.
+    if (oro) {
+        requested_opts = oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                requested_opts.push_back(code);
+            }
+        }
+    }
 
-    // Option ORO not found. Don't do anything then.
-    if (!oro) {
+    // If there is nothing to add don't do anything then.
+    if (requested_opts.empty()) {
         return;
     }
 
@@ -1304,8 +1344,6 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
 
     // Get the list of options that client requested.
     bool added = false;
-    const std::vector<uint8_t>& requested_opts = oro->getValues();
-
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {

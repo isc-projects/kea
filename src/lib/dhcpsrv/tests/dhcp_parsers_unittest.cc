@@ -621,13 +621,15 @@ const SimpleDefaults ParseConfigTest::OPTION4_DEF_DEFAULTS = {
 /// This table defines default values for options in DHCPv6
 const SimpleDefaults ParseConfigTest::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
-    { "csv-format",   Element::boolean, "true"}
+    { "csv-format",   Element::boolean, "true"},
+    { "always-send",  Element::boolean,"false"}
 };
 
 /// This table defines default values for options in DHCPv4
 const SimpleDefaults ParseConfigTest::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"},
-    { "csv-format",   Element::boolean, "true"}
+    { "csv-format",   Element::boolean, "true"},
+    { "always-send",  Element::boolean, "false"}
 };
 
 /// This table defines default values for both DHCPv4 and DHCPv6
@@ -861,7 +863,8 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"space\": \"isc\","
         "    \"code\": 100,"
         "    \"data\": \"192.0.2.0\","
-        "    \"csv-format\": true"
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
         " } ]"
         "}";
 

@@ -449,9 +449,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
     // Look for the codes 100-109.
     for (uint16_t code = 100; code < 110; ++ code) {
         // For each code we should get two instances of options->
-        std::pair<OptionContainerTypeIndex::const_iterator,
-                  OptionContainerTypeIndex::const_iterator> range =
-            idx.equal_range(code);
+        OptionContainerTypeRange range = idx.equal_range(code);
         // Distance between iterators indicates how many options
         // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
@@ -465,9 +463,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
 
     // Let's try to find some non-exiting option.
     const uint16_t non_existing_code = 150;
-    std::pair<OptionContainerTypeIndex::const_iterator,
-              OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(non_existing_code);
+    OptionContainerTypeRange range = idx.equal_range(non_existing_code);
     // Empty set is expected.
     EXPECT_EQ(0, distance(range.first, range.second));
 }
@@ -501,17 +497,13 @@ TEST(Subnet6Test, addPersistentOption) {
     OptionContainerPersistIndex& idx = options->get<2>();
 
     // Get all persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_persistent =
-        idx.equal_range(true);
-    // 3 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_persistent = idx.equal_range(true);
+    // 7 out of 10 options have been flagged persistent.
     ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
 
     // Get all non-persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_non_persistent =
-        idx.equal_range(false);
-    // 7 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_non_persistent = idx.equal_range(false);
+    // 3 out of 10 options have been flagged not persistent.
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 }
 
@@ -612,7 +604,7 @@ TEST_F(CfgOptionTest, unparse) {
     OptionPtr opt3(new Option(Option::V6, D6O_STATUS_CODE, OptionBuffer(2, 0)));
     cfg.add(opt3, false, DHCP6_OPTION_SPACE);
     OptionPtr opt4(new Option(Option::V6, 100, OptionBuffer(4, 0x21)));
-    cfg.add(opt4, false, "vendor-1234");
+    cfg.add(opt4, true, "vendor-1234");
 
     // Unparse
     std::string expected = "[\n"
@@ -620,23 +612,27 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"code\": 100,\n"
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": false,\n"
-        "    \"data\": \"12121212\"\n"
+        "    \"data\": \"12121212\",\n"
+        "    \"always-send\": false\n"
         "},{\n"
         "    \"code\": 101,\n"
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": true,\n"
-        "    \"data\": \"12, 12, 12, 12\"\n"
+        "    \"data\": \"12, 12, 12, 12\",\n"
+        "    \"always-send\": false\n"
         "},{\n"
         "    \"code\": 13,\n"
         "    \"name\": \"status-code\",\n"
         "    \"space\": \"dhcp6\",\n"
         "    \"csv-format\": false,\n"
-        "    \"data\": \"0000\"\n"
+        "    \"data\": \"0000\",\n"
+        "    \"always-send\": false\n"
         "},{\n"
         "    \"code\": 100,\n"
         "    \"space\": \"vendor-1234\",\n"
         "    \"csv-format\": false,\n"
-        "    \"data\": \"21212121\"\n"
+        "    \"data\": \"21212121\",\n"
+        "    \"always-send\": true\n"
         "}]\n";
     isc::test::runToElementTest<CfgOption>(expected, cfg);
 }
