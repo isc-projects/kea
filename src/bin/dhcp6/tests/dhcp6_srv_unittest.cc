@@ -1552,7 +1552,7 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     // Let the server process it and generate a response.
     Pkt6Ptr response = srv_.processSolicit(sol);
 
-    // The server should a subscriber-id option
+    // The server should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
     // But no dns-servers
     ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
