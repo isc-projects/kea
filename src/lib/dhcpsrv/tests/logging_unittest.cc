@@ -5,12 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <config/module_spec.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/logging.h>
-#include <gtest/gtest.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <testutils/io_utils.h>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -24,7 +27,6 @@ namespace {
 /// each test.  Strictly speaking this only resets the testing root logger (which
 /// has the name "kea") but as the only other logger mentioned here ("wombat")
 /// is not used elsewhere, that is sufficient.
-
 class LoggingTest : public ::testing::Test {
     public:
         /// @brief Constructor
@@ -35,8 +37,27 @@ class LoggingTest : public ::testing::Test {
         /// Reset root logger back to defaults.
         ~LoggingTest() {
             isc::log::setDefaultLoggingOutput();
+            wipeFiles();
         }
+
+    /// @brief Generates a log file name suffixed with a rotation number
+    /// @param rotation number to the append to the end of the file
+    std::string logName(int rotation) {
+        std::ostringstream os;
+        os << LOG_FILE_NAME << "." << rotation;
+        return (os.str());
+    }
+
+    /// @brief Removes the base log file name and 1 rotation
+    void wipeFiles()  {
+        static_cast<void>(remove(LOG_FILE_NAME));
+        static_cast<void>(remove(logName(1).c_str()));
+    }
+
+    static const char* LOG_FILE_NAME;
 };
+
+const char* LoggingTest::LOG_FILE_NAME = "kea.test.log";
 
 // Tests that the spec file is valid.
 TEST_F(LoggingTest, basicSpec) {
@@ -243,6 +264,67 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[1].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[1].flush_);
 }
+
+// Verifies that log rotation occurs when configured.  We do not
+// worry about contents of the log files, only that rotation occurs.
+// Such details are tested in lib/log.  This test verifies that
+// we can correcty configure logging such that rotation occurs as
+// expected.
+TEST_F(LoggingTest, logRotate) {
+    int rotate_size = 2048;
+    std::ostringstream os;
+    os <<
+        "{ \"loggers\": ["
+        "    {"
+        "        \"name\": \"kea\","
+        "        \"output_options\": ["
+        "            {"
+        "                \"output\": \""
+        << LOG_FILE_NAME << "\","  <<
+        "                \"flush\": true,"
+        "                \"maxsize\":"
+        << rotate_size << "," <<
+        "                \"maxver\": 1"
+        "            }"
+        "        ],"
+        "        \"debuglevel\": 99,"
+        "        \"severity\": \"DEBUG\""
+        "    }"
+        "]}";
+
+
+    // Make sure there aren't any left over.
+    wipeFiles();
+
+    // Create our server config container.
+    SrvConfigPtr server_cfg(new SrvConfig());
+
+    // LogConfigParser expects a list of loggers, so parse
+    // the JSON text and extract the "loggers" element from it
+    ConstElementPtr config = Element::fromJSON(os.str());
+    config = config->get("loggers");
+
+    // Parse the config and then apply it.
+    LogConfigParser parser(server_cfg);
+    ASSERT_NO_THROW(parser.parseConfiguration(config));
+    ASSERT_NO_THROW(server_cfg->applyLoggingCfg());
+
+    // Make sure we have the initial log file.
+    ASSERT_TRUE(isc::test::fileExists(LOG_FILE_NAME));
+
+    // Now generate a log we know will be large enough to force a rotation.
+    // We borrow a one argument log message for the test.
+    std::string big_arg(rotate_size, 'x');
+    isc::log::Logger logger("kea");
+    LOG_INFO(logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(big_arg);
+
+    // Make sure we now have a rotation file.
+    EXPECT_TRUE(isc::test::fileExists(logName(1).c_str()));
+
+    // Clean up.
+    wipeFiles();
+}
+
 
 /// @todo Add tests for malformed logging configuration
 
