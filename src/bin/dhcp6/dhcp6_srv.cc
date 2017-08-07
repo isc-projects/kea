@@ -918,20 +918,39 @@ void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   const CfgOptionList& co_list) {
 
+    // Unlikely short cut
+    if (co_list.empty()) {
+        return;
+    }
+
+    std::vector<uint16_t> requested_opts;
+
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
     boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
         (question->getOption(D6O_ORO));
 
-    // If there is no ORO option, there is nothing more to do.
-    if (!option_oro) {
-        return;
-
-    }
-
     // Get the list of options that client requested.
-    const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+    if (option_oro) {
+        requested_opts = option_oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(DHCP6_OPTION_SPACE);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            requested_opts.push_back(desc->option_->getType());
+        }
+    }
 
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         // Iterate on the configured option list
@@ -969,24 +988,44 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         return;
     }
 
+    uint32_t vendor_id = vendor_req->getVendorId();
+    std::vector<uint16_t> requested_opts;
+
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
     /// may have different policies.
     boost::shared_ptr<OptionUint16Array> oro =
         boost::dynamic_pointer_cast<OptionUint16Array>(vendor_req->getOption(DOCSIS3_V6_ORO));
-
-    // Option ORO not found. Don't do anything then.
-    if (!oro) {
-        return;
+    if (oro) {
+        requested_opts = oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            requested_opts.push_back(desc->option_->getType());
+        }
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
+    // If there is nothing to add don't do anything then.
+    if (requested_opts.empty()) {
+        return;
+    }
 
     boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V6, vendor_id));
 
     // Get the list of options that client requested.
     bool added = false;
-    const std::vector<uint16_t>& requested_opts = oro->getValues();
+
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {

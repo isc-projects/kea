@@ -699,6 +699,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"always-send\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OPTION_DATA:
+        return isc::dhcp::Dhcp6Parser::make_ALWAYS_SEND(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("always-send", driver.loc_);
+    }
+}
+
 \"pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:

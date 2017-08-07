@@ -1,3 +1,9 @@
+1283.	[func]		fdupont
+	An 'always-send' parameter has been added to options
+	configuration.  It allows an option to be always sent, even if
+	a client didn't request it.
+	(Trac #5241, git xxx)
+
 1282.	[bug]		fdupont
 	Now all interface service sockets are closed before interface
 	re-detection. Note if the re-configuration fails they remain

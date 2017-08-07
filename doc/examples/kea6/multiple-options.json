@@ -111,6 +111,15 @@
             {
                 "name": "bootfile-param",
                 "data": "root=/dev/sda2, quiet, splash"
+            },
+
+            // At a few exceptions options are added to response only when
+            // the client requests them. The always-send flag should be used
+            // to enforce a particular option.
+            {
+                "name": "pana-agent",
+                "data": "2001:db8:2::123",
+                "always-send": true
             }
       ],
       "pools": [
