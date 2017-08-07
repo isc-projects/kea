@@ -1403,8 +1403,8 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-      When the <command>array</command> is set to <command>true</command>
-      with a <command>type</command> is set to "record", the last field
+      When <command>array</command> is set to <command>true</command>
+      and <command>type</command> is set to "record", the last field
       is an array, i.e., it can contain more than one value as in:
 <screen>
 "Dhcp6": {

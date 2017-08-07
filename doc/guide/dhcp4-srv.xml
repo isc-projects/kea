@@ -1356,7 +1356,7 @@ It is merely echoed by the server
             <row><entry>ipv6-address</entry><entry>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</entry></row>
             <row><entry>ipv6-prefix</entry><entry>IPv6 prefix and prefix length specified using CIDR notation, e.g. 2001:db8:1::/64. This data type is used to represent an 8-bit field conveying a prefix length and the variable length prefix value</entry></row>
             <row><entry>psid</entry><entry>PSID and PSID length separated by a slash, e.g. 3/4 specifies PSID=3 and PSID length=4. In the wire format it is represented by an 8-bit field carrying PSID length (in this case equal to 4) and the 16-bits long PSID value field (in this case equal to "0011000000000000b" using binary notation). Allowed values for a PSID length are 0 to 16. See <ulink url="http://tools.ietf.org/html/rfc7597">RFC 7597</ulink> for the details about the PSID wire representation</entry></row>
-            <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty"). The array flag applies to the last field.</entry></row>
+            <row><entry>record</entry><entry>Structured data that may be comprised of any types (except "record" and "empty"). The array flag applies to the last field only.</entry></row>
             <row><entry>string</entry><entry>Any text</entry></row>
             <row><entry>tuple</entry><entry>A length encoded as a 8 (16 for DHCPv6) bit unsigned integer followed by a string of this length</entry></row>
             <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
@@ -1484,8 +1484,8 @@ It is merely echoed by the server
       definition.
      </para>
      <para>
-       When the <command>array</command> is set to <command>true</command>
-       with a <command>type</command> is set to "record", the last field
+       When <command>array</command> is set to <command>true</command>
+       and <command>type</command> is set to "record", the last field
        is an array, i.e., it can contain more than one value as in:
 <screen>
 "Dhcp4": {
