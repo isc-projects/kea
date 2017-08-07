@@ -87,6 +87,14 @@ public:
     /// @return Pointer to the selected subnet or NULL if no subnet found.
     Subnet6Ptr selectSubnet(const SubnetSelector& selector) const;
 
+    /// @brief Returns subnet with specified subnet-id value
+    ///
+    /// Warning: this method uses full scan. Its use is not recommended for
+    /// packet processing.
+    ///
+    /// @return Subnet (or NULL)
+    Subnet6Ptr getSubnet(const SubnetID id) const;
+
     /// @brief Selects the subnet using a specified address.
     ///
     /// This method searches for the subnet using the specified address. If

@@ -166,6 +166,20 @@ CfgSubnets6::selectSubnet(const OptionPtr& interface_id,
     return (Subnet6Ptr());
 }
 
+Subnet6Ptr
+CfgSubnets6::getSubnet(const SubnetID id) const {
+
+    /// @todo: Once this code is migrated to multi-index container, use
+    /// an index rather than full scan.
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
+        if ((*subnet)->getID() == id) {
+            return (*subnet);
+        }
+    }
+    return (Subnet6Ptr());
+}
+
+
 bool
 CfgSubnets6::isDuplicate(const Subnet6& subnet) const {
     for (Subnet6Collection::const_iterator subnet_it = subnets_.begin();

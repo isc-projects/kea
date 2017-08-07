@@ -7,6 +7,7 @@
 #ifndef SIMPLE_PARSER_H
 #define SIMPLE_PARSER_H
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <vector>
@@ -114,8 +115,6 @@ class SimpleParser {
     static const data::Element::Position&
     getPosition(const std::string& name, const data::ConstElementPtr parent);
 
-protected:
-
     /// @brief Returns a string parameter from a scope
     ///
     /// Unconditionally returns a parameter.
@@ -151,6 +150,22 @@ protected:
     /// appropriate type
     static bool getBoolean(isc::data::ConstElementPtr scope,
                            const std::string& name);
+
+
+    /// @brief Returns a IOAddress parameter from a scope
+    ///
+    /// Unconditionally returns a parameter.
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return an IOAddress representing the value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type (or its conversion to IOAddress fails due to not
+    /// being a proper address).
+    static isc::asiolink::IOAddress
+    getAddress(const ConstElementPtr& scope, const std::string& name);
+
+protected:
 
     /// @brief Returns an integer value with range checking from a scope
     ///

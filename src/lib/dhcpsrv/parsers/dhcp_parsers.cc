@@ -615,23 +615,11 @@ RelayInfoParser::RelayInfoParser(const Option::Universe& family)
     : family_(family) {
 };
 
-// Can't use a constructor as a function
-namespace {
-IOAddress buildIOAddress(const std::string& str) { return (IOAddress(str)); }
-};
-
-IOAddress
-RelayInfoParser::getIOAddress(ConstElementPtr scope,
-                              const std::string& name) {
-    return (getAndConvert<IOAddress,
-            buildIOAddress>(scope, name, "address"));
-}
-
 void
 RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
                        ConstElementPtr relay_info) {
     // There is only one parameter which is mandatory
-    IOAddress ip = getIOAddress(relay_info, "ip-address");
+    IOAddress ip = getAddress(relay_info, "ip-address");
 
     // Check if the address family matches.
     if ((ip.isV4() && family_ != Option::V4) ||
@@ -919,13 +907,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
 //**************************** D2ClientConfigParser **********************
 
-IOAddress
-D2ClientConfigParser::getIOAddress(ConstElementPtr scope,
-                                   const std::string& name) {
-    return (getAndConvert<IOAddress,
-            buildIOAddress>(scope, name, "address"));
-}
-
 dhcp_ddns::NameChangeProtocol
 D2ClientConfigParser::getProtocol(ConstElementPtr scope,
                                   const std::string& name) {
@@ -957,7 +938,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     // Get all parameters that are needed to create the D2ClientConfig.
     bool enable_updates = getBoolean(client_config, "enable-updates");
 
-    IOAddress server_ip = getIOAddress(client_config, "server-ip");
+    IOAddress server_ip = getAddress(client_config, "server-ip");
 
     uint32_t server_port = getUint32(client_config, "server-port");
 

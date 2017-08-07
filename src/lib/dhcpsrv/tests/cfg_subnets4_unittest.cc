@@ -524,7 +524,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     subnet->addPool(pool1);
     subnet->addPool(pool2);
     cfg.add(subnet);
-    
+
     // Unparse
     std::string expected = "[\n"
         "{\n"
@@ -553,6 +553,26 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
+}
+
+// This test verifies that it is possible to retrieve a subnet using subnet-id.
+TEST(CfgSubnets4Test, getSubnet) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 100));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 200));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 300));
+
+    // Add one subnet and make sure it is returned.
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    EXPECT_EQ(subnet1, cfg.getSubnet(100));
+    EXPECT_EQ(subnet2, cfg.getSubnet(200));
+    EXPECT_EQ(subnet3, cfg.getSubnet(300));
+    EXPECT_EQ(Subnet4Ptr(), cfg.getSubnet(400)); // no such subnet
 }
 
 } // end of anonymous namespace

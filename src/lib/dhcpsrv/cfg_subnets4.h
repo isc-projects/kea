@@ -97,6 +97,14 @@ public:
     /// or they are insufficient to select a subnet.
     Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
+    /// @brief Returns subnet with specified subnet-id value
+    ///
+    /// Warning: this method uses full scan. Its use is not recommended for
+    /// packet processing.
+    ///
+    /// @return Subnet (or NULL)
+    Subnet4Ptr getSubnet(const SubnetID id) const;
+
     /// @brief Returns a pointer to a subnet if provided address is in its range.
     ///
     /// This method returns a pointer to the subnet if the address passed in

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -434,7 +434,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     subnet->addPool(pool1);
     subnet->addPool(pool2);
     cfg.add(subnet);
-    
+
     // Unparse
     std::string expected = "[\n"
         "{\n"
@@ -480,7 +480,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
     cfg.add(subnet);
-    
+
     // Unparse
     std::string expected = "[\n"
         "{\n"
@@ -516,6 +516,24 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "    \"option-data\": [ ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
+}
+
+// This test verifies that it is possible to retrieve a subnet using subnet-id.
+TEST(CfgSubnets6Test, getSubnet) {
+    CfgSubnets6 cfg;
+
+    // Let's configure 3 subnets
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 100));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4, 200));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4, 300));
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    EXPECT_EQ(subnet1, cfg.getSubnet(100));
+    EXPECT_EQ(subnet2, cfg.getSubnet(200));
+    EXPECT_EQ(subnet3, cfg.getSubnet(300));
+    EXPECT_EQ(Subnet6Ptr(), cfg.getSubnet(400)); // no such subnet
 }
 
 } // end of anonymous namespace
