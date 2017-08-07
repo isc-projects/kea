@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <iostream>
 
 using namespace isc::util;
+using namespace isc::data;
 using namespace std;
 
 namespace isc {
@@ -220,6 +221,30 @@ Lease4::operator=(const Lease4& other) {
     return (*this);
 }
 
+isc::data::ElementPtr
+Lease4::toElement() const {
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+    map->set("ip-address", Element::create(addr_.toText()));
+    map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+    map->set("hw-address", Element::create(hwaddr_->toText(false)));
+
+    if (client_id_) {
+        map->set("client-id", Element::create(client_id_->toText()));
+    }
+
+    map->set("cltt", Element::create(cltt_));
+    map->set("valid-lft", Element::create(static_cast<long int>(valid_lft_)));
+
+    map->set("fqdn-fwd", Element::create(fqdn_fwd_));
+    map->set("fqdn-rev", Element::create(fqdn_rev_));
+    map->set("hostname", Element::create(hostname_));
+
+    map->set("state", Element::create(static_cast<int>(state_)));
+
+    return (map);
+}
+
 Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id,
@@ -361,6 +386,37 @@ Lease6::operator==(const Lease6& other) const {
             fqdn_rev_ == other.fqdn_rev_ &&
             state_ == other.state_);
 }
+
+isc::data::ElementPtr
+Lease6::toElement() const {
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+    map->set("ip-address", Element::create(addr_.toText()));
+    map->set("type", Element::create(typeToText(type_)));
+    if (type_ == Lease::TYPE_PD) {
+        map->set("prefix-len", Element::create(prefixlen_));
+    }
+    map->set("iaid", Element::create(static_cast<long int>(iaid_)));
+    map->set("duid", Element::create(duid_->toText()));
+    map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+
+    map->set("cltt", Element::create(cltt_));
+    map->set("preferred-lft", Element::create(static_cast<long int>(preferred_lft_)));
+    map->set("valid-lft", Element::create(static_cast<long int>(valid_lft_)));
+
+    map->set("fqdn-fwd", Element::create(fqdn_fwd_));
+    map->set("fqdn-rev", Element::create(fqdn_rev_));
+    map->set("hostname", Element::create(hostname_));
+
+    if (hwaddr_) {
+        map->set("hw-address", Element::create(hwaddr_->toText(false)));
+    }
+
+    map->set("state", Element::create(static_cast<long int>(state_)));
+
+    return (map);
+}
+
 
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease) {

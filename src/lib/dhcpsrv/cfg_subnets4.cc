@@ -196,6 +196,19 @@ CfgSubnets4::selectSubnet(const std::string& iface,
 }
 
 Subnet4Ptr
+CfgSubnets4::getSubnet(const SubnetID id) const {
+
+    /// @todo: Once this code is migrated to multi-index container, use
+    /// an index rather than full scan.
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
+        if ((*subnet)->getID() == id) {
+            return (*subnet);
+        }
+    }
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
 CfgSubnets4::selectSubnet(const IOAddress& address,
                  const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
