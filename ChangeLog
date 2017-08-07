@@ -2,7 +2,7 @@
 	An 'always-send' parameter has been added to options
 	configuration.  It allows an option to be always sent, even if
 	a client didn't request it.
-	(Trac #5241, git xxx)
+	(Trac #5241, git cef2b630c720a442710efc0d1615b7c7bce01e54)
 
 1282.	[bug]		fdupont
 	Now all interface service sockets are closed before interface
