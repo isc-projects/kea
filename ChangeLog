@@ -1,3 +1,10 @@
+1284.	[func]		tomek
+	A new library, lease_cmds, has been implemented. Its intended
+	purpose is to support commands for lease management. Currently
+	supported commands are: lease4-add, lease6-add, lease4-get,
+	lease6-get. Additional commands and documentation are planned.
+	(Trac #5272, #5279, git 785c2e521b198a03d26bde4a804638bfc19ce91b)
+
 1283.	[func]		fdupont
 	An 'always-send' parameter has been added to options
 	configuration.  It allows an option to be always sent, even if
@@ -11,7 +18,7 @@
 	(Trac #5333, git xxx)
 
 1281.	[build]		tmark
-	Configure script now correctly recognizes static boost_system library as 
+	Configure script now correctly recognizes static boost_system library as
 	well as checks for the presence of static glibc static libraries when
 	--enable-satic-link is specified.
 	(Trac #5337, git 42548148cbeaaa285519e121f493d52607f1e8a0)
