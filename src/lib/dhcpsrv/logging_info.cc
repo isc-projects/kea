@@ -142,6 +142,8 @@ LoggingInfo::toSpec() const {
             // Not a recognized destination, assume a file.
             option.destination = OutputOption::DEST_FILE;
             option.filename = dest->output_;
+            option.maxsize = dest->maxsize_;
+            option.maxver = dest->maxver_;
         }
 
         // Copy the immediate flush flag

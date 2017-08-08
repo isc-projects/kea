@@ -36,7 +36,7 @@ class LoggingTest : public ::testing::Test {
         ///
         /// Reset root logger back to defaults.
         ~LoggingTest() {
-            isc::log::setDefaultLoggingOutput();
+            isc::log::initLogger();
             wipeFiles();
         }
 
@@ -44,20 +44,37 @@ class LoggingTest : public ::testing::Test {
     /// @param rotation number to the append to the end of the file
     std::string logName(int rotation) {
         std::ostringstream os;
-        os << LOG_FILE_NAME << "." << rotation;
+        os << TEST_LOG_NAME << "." << rotation;
         return (os.str());
     }
 
     /// @brief Removes the base log file name and 1 rotation
     void wipeFiles()  {
-        static_cast<void>(remove(LOG_FILE_NAME));
-        static_cast<void>(remove(logName(1).c_str()));
+        static_cast<void>(remove(TEST_LOG_NAME));
+        for (int i = 1; i < TEST_MAX_VERS + 1; ++i) {
+            static_cast<void>(remove(logName(i).c_str()));
+        }
+
+        // Remove the lock file
+        std::ostringstream os;
+        os << TEST_LOG_NAME << ".lock";
+        static_cast<void>(remove(os.str().c_str()));
     }
 
-    static const char* LOG_FILE_NAME;
+    /// @brief Name of the log file
+    static const char* TEST_LOG_NAME;
+
+    /// @brief Maximum log size
+    static const int TEST_MAX_SIZE;
+
+    /// @brief Maximum rotated log versions
+    static const int TEST_MAX_VERS;
+
 };
 
-const char* LoggingTest::LOG_FILE_NAME = "kea.test.log";
+const char* LoggingTest::TEST_LOG_NAME = "kea.test.log";
+const int LoggingTest::TEST_MAX_SIZE = 207800;  // Slightly larger than default
+const int LoggingTest::TEST_MAX_VERS = 2;       // More than the default of 1
 
 // Tests that the spec file is valid.
 TEST_F(LoggingTest, basicSpec) {
@@ -271,7 +288,8 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
 // we can correcty configure logging such that rotation occurs as
 // expected.
 TEST_F(LoggingTest, logRotate) {
-    int rotate_size = 2048;
+    wipeFiles();
+
     std::ostringstream os;
     os <<
         "{ \"loggers\": ["
@@ -280,21 +298,18 @@ TEST_F(LoggingTest, logRotate) {
         "        \"output_options\": ["
         "            {"
         "                \"output\": \""
-        << LOG_FILE_NAME << "\","  <<
+        << TEST_LOG_NAME << "\","  <<
         "                \"flush\": true,"
         "                \"maxsize\":"
-        << rotate_size << "," <<
-        "                \"maxver\": 1"
+        << TEST_MAX_SIZE << "," <<
+        "                \"maxver\":"
+        << TEST_MAX_VERS <<
         "            }"
         "        ],"
         "        \"debuglevel\": 99,"
         "        \"severity\": \"DEBUG\""
         "    }"
         "]}";
-
-
-    // Make sure there aren't any left over.
-    wipeFiles();
 
     // Create our server config container.
     SrvConfigPtr server_cfg(new SrvConfig());
@@ -309,22 +324,26 @@ TEST_F(LoggingTest, logRotate) {
     ASSERT_NO_THROW(parser.parseConfiguration(config));
     ASSERT_NO_THROW(server_cfg->applyLoggingCfg());
 
+    EXPECT_EQ(TEST_MAX_SIZE, server_cfg->getLoggingInfo()[0].destinations_[0].maxsize_);
+    EXPECT_EQ(TEST_MAX_VERS, server_cfg->getLoggingInfo()[0].destinations_[0].maxver_);
+
     // Make sure we have the initial log file.
-    ASSERT_TRUE(isc::test::fileExists(LOG_FILE_NAME));
+    ASSERT_TRUE(isc::test::fileExists(TEST_LOG_NAME));
 
     // Now generate a log we know will be large enough to force a rotation.
     // We borrow a one argument log message for the test.
-    std::string big_arg(rotate_size, 'x');
+    std::string big_arg(TEST_MAX_SIZE, 'x');
     isc::log::Logger logger("kea");
-    LOG_INFO(logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(big_arg);
 
-    // Make sure we now have a rotation file.
-    EXPECT_TRUE(isc::test::fileExists(logName(1).c_str()));
+    for (int i = 1; i < TEST_MAX_VERS + 1; i++) {
+        // Output the big log and make sure we get the expected rotation file.
+        LOG_INFO(logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(big_arg);
+        EXPECT_TRUE(isc::test::fileExists(logName(i).c_str()));
+    }
 
     // Clean up.
     wipeFiles();
 }
-
 
 /// @todo Add tests for malformed logging configuration
 
