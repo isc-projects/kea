@@ -11,6 +11,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <errno.h>
@@ -974,8 +975,7 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddr) {
         "{\n"
         "    \"command\": \"lease4-get\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\","
-        "        \"subnet-id\": 44"
+        "        \"ip-address\": \"192.0.2.1\""
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease found.";
@@ -1095,9 +1095,8 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr) {
     string cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::1\""
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001:db8::1\"\n"
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease found.";
@@ -1567,8 +1566,7 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
         "{\n"
         "    \"command\": \"lease4-del\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\","
-        "        \"subnet-id\": 44"
+        "        \"ip-address\": \"192.0.2.1\""
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease deleted.";
