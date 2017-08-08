@@ -91,6 +91,9 @@ TEST_F(LoggingInfoTest, defaults) {
     ASSERT_EQ(1, info_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
 
+    EXPECT_EQ(204800, info_verbose.destinations_[0].maxsize_);
+    EXPECT_EQ(1, info_verbose.destinations_[0].maxver_);
+
     expected = header + "DEBUG" + dbglvl + "99" + trailer;
     runToElementTest<LoggingInfo>(expected, info_verbose);
 }
