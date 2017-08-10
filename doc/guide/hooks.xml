@@ -245,11 +245,11 @@
               <entry>Subnet Commands</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.3.0</entry>
-              <entry>In deployments in which subnets' configuration needs to
-              be frequently updated, it is a hard requirement that such updates are
-              performed without a need for a full DHCP server reconfiguration
+              <entry>In deployments in which subnet configuration needs to
+              be frequently updated, it is a hard requirement that such updates be
+              performed without the need for a full DHCP server reconfiguration
               or restart. This hooks library allows for incremental changes
-              to the subnets' configuration such as: adding a subnet, removing
+              to the subnet configuration such as: adding a subnet, removing
               a subnet. It also allows for listing all available subnets and
               fetching detailed information about a selected subnet. The
               commands exposed by this library do not affect other subnets
@@ -1620,7 +1620,6 @@ as follows:
             the error description.
           </para>
         </section>
-      </section>
 
       <section>
         <title>subnet4-get command</title>
@@ -1719,7 +1718,7 @@ If the subnet exists the response will be similar to this:
         ]
     }
 }
-</screen> 
+</screen>
         </para>
       </section>
 
@@ -1914,6 +1913,7 @@ If the subnet exists the response will be similar to this:
       </section>
 
     </section>
+</section> <!-- end of subnet commands -->
 
     <section id="user-context">
       <title>User contexts</title>
