@@ -103,6 +103,12 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
         state = getUint8(lease_info, "state");
     }
 
+    // Check if the state value is sane.
+    if (state > Lease::STATE_EXPIRED_RECLAIMED) {
+        isc_throw(BadValue, "Invalid state value: " << state << ", supported "
+                  "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -227,6 +233,12 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     uint32_t state = 0;
     if (lease_info->contains("state")) {
         state = getUint8(lease_info, "state");
+    }
+
+    // Check if the state value is sane.
+    if (state > Lease::STATE_EXPIRED_RECLAIMED) {
+        isc_throw(BadValue, "Invalid state value: " << state << ", supported "
+                  "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
     // Let's fabricate some data and we're ready to go.

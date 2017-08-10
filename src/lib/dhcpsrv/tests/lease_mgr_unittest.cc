@@ -223,12 +223,14 @@ public:
                   " is not implemented");
     }
 
-    /// @brief Pretends to will all IPv4 leases from a subnet
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
     virtual size_t wipeLeases4(const SubnetID&) {
         isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
     }
 
-    /// @brief Pretends to will all IPv4 leases from a subnet
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
     virtual size_t wipeLeases6(const SubnetID&) {
         isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
     }

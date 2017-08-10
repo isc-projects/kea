@@ -543,6 +543,21 @@ TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
         "}";
     exp_rsp = "Non-IPv4 address specified: 2001:db8::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // currently defined states are 0,1 and 2. 123 is junk.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"state\": 123\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
+        "(declined) and 2 (expired-reclaimed)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a simple, well formed lease4 can be added.
@@ -761,6 +776,22 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "}";
     exp_rsp = "Non-IPv6 address specified: 192.0.2.1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid state: the only supported values are 0,1,2.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"state\": 123\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
+        "(declined) and 2 (expired-reclaimed)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a simple, well formed lease6 can be added.
@@ -944,6 +975,35 @@ TEST_F(LeaseCmdsTest, Lease4GetMissingParams) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+// Checks that lease4-get sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease4GetByAddrBadParam) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid family
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8::1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid IPv4 address specified: 2001:db8::1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This is way off
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"221B Baker St.\""
+        "    }\n"
+        "}";
+    exp_rsp = "Failed to convert string to address '221B Baker St.': Invalid argument";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Checks that lease4-get can handle a situation when the query is
 // valid, but the lease is not there.
 TEST_F(LeaseCmdsTest, Lease4GetByAddrNotFound) {
@@ -1110,6 +1170,35 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr) {
 
     // Now check that the lease was indeed returned.
     checkLease6(lease, "2001:db8::1", 0, 66, "77:77:77:77:77:77:77:77", false);
+}
+
+// Checks that lease6-get sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease6GetByAddrBadParam) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Invalid family
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This is way off
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"221B Baker St.\""
+        "    }\n"
+        "}";
+    exp_rsp = "Failed to convert string to address '221B Baker St.': Invalid argument";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease6-get(subnet-id, type, addr6) can handle a situation when
@@ -1280,6 +1369,31 @@ TEST_F(LeaseCmdsTest, Lease4UpdateBadParams) {
         "    }\n"
         "}";
     exp_rsp = "Non-IPv4 address specified: 2001:db8::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Check that lease4-update correctly handles case when there is
+// no lease to be updated.
+TEST_F(LeaseCmdsTest, Lease4UpdateNoLease) {
+
+    // Initialize lease manager (false = v4, false = don't add any lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 192.0.2.1 - no such lease";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -1458,6 +1572,33 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     EXPECT_EQ(7654321, l->iaid_);
 }
 
+
+// Check that lease6-update correctly handles case when there is
+// no lease to be updated.
+TEST_F(LeaseCmdsTest, Lease6UpdateNoLease) {
+
+    // Initialize lease manager (true = v6, false = don't add any lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8::1 - no such lease";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Checks that lease6-del can handle a situation when the query is
 // broken (some required parameters are missing).
 TEST_F(LeaseCmdsTest, Lease4DelMissingParams) {
@@ -1574,6 +1715,36 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddr) {
 
     // Make sure the lease is really gone.
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+
+// Checks that lease4-del sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease4DelByAddrBadParam) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid family
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8::1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid IPv4 address specified: 2001:db8::1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This is way off
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"221B Baker St.\""
+        "    }\n"
+        "}";
+    exp_rsp = "Failed to convert string to address '221B Baker St.': Invalid argument";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease4-del can handle a situation when the query is
@@ -1695,6 +1866,35 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
 
     // Make sure the lease is really gone.
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+}
+
+// Checks that lease6-del sanitizes its input.
+TEST_F(LeaseCmdsTest, Lease6DelByAddrBadParam) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Invalid family
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\""
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // This is way off
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-del\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"221B Baker St.\""
+        "    }\n"
+        "}";
+    exp_rsp = "Failed to convert string to address '221B Baker St.': Invalid argument";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease6-del(subnet-id, type, addr6) can handle a situation when

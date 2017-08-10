@@ -303,16 +303,88 @@ private:
     static ConstElementPtr
     lease6DelHandler(const string& command, ConstElementPtr args);
 
+    /// @brief lease4-update handler
+    ///
+    /// This command attempts to update existing IPv4 lease. The parameters
+    /// specified will replace existing lease. The only condition is that
+    /// the IP address must not change. If you want to change the IP address,
+    /// please use lease4-del and lease4-add instead.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease4-update",
+    ///     "arguments": {
+    ///         "subnet-id": 44,
+    ///         "ip-address": "192.0.2.1",
+    ///         "hw-address": "1a:1b:1c:1d:1e:1f",
+    ///         "hostname": "newhostname.example.org"
+    ///     }
+    /// };
+    ///
+    /// @param command - should be "lease4-update", but it is ignored
+    /// @param args arguments that describe the lease being updated.
     static ConstElementPtr
     lease4UpdateHandler(const string& command, ConstElementPtr args);
 
-    /// @brief Not implemented yet.
+    /// @brief lease6-update handler
+    ///
+    /// This command attempts to update existing IPv6 lease. The parameters
+    /// specified will replace existing lease. The only condition is that
+    /// the IP address must not change. If you want to change the IP address,
+    /// please use lease6-del and lease6-add instead.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease6-update",
+    ///     "arguments": {
+    ///         "subnet-id": 66,
+    ///         "ip-address": "2001:db8::1",
+    ///         "iaid": 7654321,
+    ///         "duid": "88:88:88:88:88:88:88:88",
+    ///         "hostname": "newhostname.example.org"
+    ///     }
+    /// }";
+    ///
+    /// @param command - should be "lease6-update" (but it is ignored)
+    /// @param args arguments that describe the lease being updated.
     static ConstElementPtr
     lease6UpdateHandler(const string& command, ConstElementPtr args);
 
+    /// @brief lease4-wipe handler
+    ///
+    /// This commands attempts to remove all IPv4 leases from a specific
+    /// subnet. Currently the leases are removed from the database,
+    /// without any processing (like calling hooks or doing DDNS
+    /// cleanups).
+    ///
+    /// Example command:
+    /// {\n"
+    ///     "command": "lease4-wipe",\n"
+    ///     "arguments": {"
+    ///         "subnet-id": 44
+    ///     }\n"
+    /// }";
+    /// @param command - should be "lease4-wipe" (but is ignored)
+    /// @param args arguments that describe the lease being updated.
     static ConstElementPtr
     lease4WipeHandler(const string& command, ConstElementPtr args);
 
+    /// @brief lease6-wipe handler
+    ///
+    /// This commands attempts to remove all IPv4 leases from a specific
+    /// subnet. Currently the leases are removed from the database,
+    /// without any processing (like calling hooks or doing DDNS
+    /// cleanups).
+    ///
+    /// Example command:
+    /// {\n"
+    ///     "command": "lease4-wipe",\n"
+    ///     "arguments": {"
+    ///         "subnet-id": 44
+    ///     }\n"
+    /// }";
+    /// @param command - should be "lease4-wipe" (but is ignored)
+    /// @param args arguments that describe the lease being updated.
     static ConstElementPtr
     lease6WipeHandler(const string& command, ConstElementPtr args);
 
@@ -321,10 +393,11 @@ private:
     /// See @ref Parameters class for detailed description of what is expected
     /// in the args structure.
     ///
-    /// @param args - arguments passed to command
+    /// @param v6 whether addresses allowed are v4 (false) or v6 (true)
+    /// @param args arguments passed to command
     /// @return parsed parameters
     /// @throw BadValue if input arguments don't make sense.
-    static Parameters getParameters(const ConstElementPtr& args);
+    static Parameters getParameters(bool v6, const ConstElementPtr& args);
 };
 
 LeaseCmdsImpl::LeaseCmdsImpl() {
@@ -435,7 +508,7 @@ LeaseCmdsImpl::leaseAddHandler(const std::string& name,
 }
 
 LeaseCmdsImpl::Parameters
-LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
+LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
     Parameters x;
 
     if (!params || params->getType() != Element::map) {
@@ -470,6 +543,14 @@ LeaseCmdsImpl::getParameters(const ConstElementPtr& params) {
         }
 
         x.addr = IOAddress(tmp->stringValue());
+
+        if ((v6 && !x.addr.isV6()) || (!v6 && !x.addr.isV4())) {
+            stringstream txt;
+            txt << "Invalid " << (v6 ? "IPv6" : "IPv4")
+                << " address specified: " << tmp->stringValue();
+            isc_throw(BadValue, txt.str());
+        }
+
         x.query_type = Parameters::TYPE_ADDR;
         return (x);
     }
@@ -537,7 +618,7 @@ LeaseCmdsImpl::leaseGetHandler(const std::string& name, ConstElementPtr params) 
     Lease6Ptr lease6;
     bool v4 = (name == "lease4-get");
     try {
-        p = getParameters(params);
+        p = getParameters(!v4, params);
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -607,7 +688,7 @@ LeaseCmdsImpl::lease4DelHandler(const std::string& , ConstElementPtr params) {
     Lease4Ptr lease4;
     IOAddress addr(IOAddress::IPV4_ZERO_ADDRESS());
     try {
-        p = getParameters(params);
+        p = getParameters(false, params);
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -661,7 +742,7 @@ LeaseCmdsImpl::lease6DelHandler(const std::string& , ConstElementPtr params) {
     Lease6Ptr lease6;
     IOAddress addr(IOAddress::IPV6_ZERO_ADDRESS());
     try {
-        p = getParameters(params);
+        p = getParameters(true, params);
 
         switch (p.query_type) {
         case Parameters::TYPE_ADDR: {
@@ -726,14 +807,6 @@ LeaseCmdsImpl::lease4UpdateHandler(const string& , ConstElementPtr params) {
         // subnet-id is valid, etc)
         lease4 = parser.parse(config, params);
 
-        // Ok, now check if there is a lease to be updated.
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease4->addr_);
-        if (!existing) {
-            stringstream tmp;
-            tmp << "There is no lease for address " << lease4->addr_ << ", can't update.";
-            return (createAnswer(CONTROL_RESULT_EMPTY, tmp.str()));
-        }
-
         LeaseMgrFactory::instance().updateLease4(lease4);
         return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv4 lease updated."));
 
@@ -758,15 +831,6 @@ LeaseCmdsImpl::lease6UpdateHandler(const string& , ConstElementPtr params) {
         // subnet-id is valid, etc)
         lease6 = parser.parse(config, params);
 
-        // Ok, now check if there is a lease to be updated.
-        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(lease6->type_,
-                                                                   lease6->addr_);
-        if (!existing) {
-            stringstream tmp;
-            tmp << "There is no lease for address " << lease6->addr_ << ", can't update.";
-            return (createAnswer(CONTROL_RESULT_EMPTY, tmp.str()));
-        }
-
         LeaseMgrFactory::instance().updateLease6(lease6);
         return (createAnswer(CONTROL_RESULT_SUCCESS, "IPv6 lease updated."));
 
@@ -779,11 +843,10 @@ ConstElementPtr
 LeaseCmdsImpl::lease4WipeHandler(const string& /*cmd*/, ConstElementPtr params) {
     try {
 
-        // We need the lease to be specified.
+        // The subnet-id is a mandatory parameter.
         if (!params) {
             isc_throw(isc::BadValue, "no parameters specified for lease4-wipe command");
         }
-
         SimpleParser parser;
         SubnetID id = parser.getUint32(params, "subnet-id");
 
@@ -802,11 +865,10 @@ ConstElementPtr
 LeaseCmdsImpl::lease6WipeHandler(const string& /*cmd*/, ConstElementPtr params) {
     try {
 
-        // We need the lease to be specified.
+        // The subnet-id is a mandatory parameter.
         if (!params) {
             isc_throw(isc::BadValue, "no parameters specified for lease6-wipe command");
         }
-
         SimpleParser parser;
         SubnetID id = parser.getUint32(params, "subnet-id");
 
