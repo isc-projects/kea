@@ -1,3 +1,8 @@
+1286.	[func]		marcin
+	Configured subnets are now indexed by subnet identifier and
+	prefix for faster subnet lookups in the configuration.
+	(Trac #5314, git 894aeb048b7281f947f87a5d6dc5112fac4a86fb)
+
 1285.	[func]		tomek
 	Several new commands implemented in lease_cmds library:
 	lease4-del, lease6-del, lease4-update, lease6-update,
