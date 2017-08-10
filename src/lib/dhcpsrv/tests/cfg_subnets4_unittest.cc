@@ -23,6 +23,57 @@ using namespace isc::test;
 
 namespace {
 
+// This test verifies that specific subnet can be retrieved by specifying
+// subnet identifier or subnet prefix.
+TEST(CfgSubnets4Test, getSpecificSubnet) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(5)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"),
+                                   26, 1, 2, 3, SubnetID(8)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"),
+                                   26, 1, 2, 3, SubnetID(10)));
+
+    // Store the subnets in a vector to make it possible to loop over
+    // all configured subnets.
+    std::vector<Subnet4Ptr> subnets;
+    subnets.push_back(subnet1);
+    subnets.push_back(subnet2);
+    subnets.push_back(subnet3);
+
+    // Add all subnets to the configuration.
+    for (auto subnet = subnets.cbegin(); subnet != subnets.cend(); ++subnet) {
+        ASSERT_NO_THROW(cfg.add(*subnet)) << "failed to add subnet with id: "
+            << (*subnet)->getID();
+    }
+
+    // Iterate over all subnets and make sure they can be retrieved by
+    // subnet identifier.
+    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
+        ConstSubnet4Ptr subnet_returned = cfg.getBySubnetId((*subnet)->getID());
+        ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
+            << (*subnet)->getID();
+        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
+        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+    }
+
+    // Repeat the previous test, but this time retrieve subnets by their
+    // prefixes.
+    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
+        ConstSubnet4Ptr subnet_returned = cfg.getByPrefix((*subnet)->toText());
+        ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
+            << (*subnet)->getID();
+        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
+        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+    }
+
+    // Make sure that null pointers are returned for non-existing subnets.
+    EXPECT_FALSE(cfg.getBySubnetId(SubnetID(123)));
+    EXPECT_FALSE(cfg.getByPrefix("10.20.30.0/29"));
+}
+
 // This test verifies that it is possible to retrieve a subnet using an
 // IP address.
 TEST(CfgSubnets4Test, selectSubnetByCiaddr) {
@@ -463,7 +514,6 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/26\",\n"
         "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
-        "    \"interface\": \"\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
         "    \"renew-timer\": 1,\n"
@@ -531,7 +581,6 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/24\",\n"
         "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
-        "    \"interface\": \"\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
         "    \"renew-timer\": 1,\n"

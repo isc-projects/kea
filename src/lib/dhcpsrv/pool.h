@@ -106,6 +106,11 @@ public:
         user_context_ = ctx;
     }
 
+    /// @brief Unparse a pool object.
+    ///
+    /// @return A pointer to unparsed pool configuration.
+    virtual data::ElementPtr toElement() const;
+
 protected:
 
     /// @brief protected constructor
@@ -182,6 +187,11 @@ public:
     /// @param prefix_len specifies length of the prefix of the pool
     Pool4(const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len);
+
+    /// @brief Unparse a Pool4 object.
+    ///
+    /// @return A pointer to unparsed Pool4 configuration.
+    virtual data::ElementPtr toElement() const;
 };
 
 /// @brief a pointer an IPv4 Pool
@@ -274,6 +284,11 @@ public:
     Option6PDExcludePtr getPrefixExcludeOption() const {
         return (pd_exclude_option_);
     }
+
+    /// @brief Unparse a Pool6 object.
+    ///
+    /// @return A pointer to unparsed Pool6 configuration.
+    virtual data::ElementPtr toElement() const;
 
     /// @brief returns textual representation of the pool
     ///

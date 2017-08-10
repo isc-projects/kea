@@ -9,7 +9,6 @@
 
 #include <cc/data.h>
 #include <config/base_command_mgr.h>
-#include <hooks/callout_handle.h>
 
 namespace isc {
 namespace config {
@@ -46,13 +45,6 @@ public:
     HookedCommandMgr();
 
 protected:
-
-    /// @brief Returns callout handle to the derived class.
-    ///
-    /// @return const pointer to the callout handle.
-    const isc::hooks::CalloutHandlePtr& getCalloutHandle() const {
-        return (callout_handle_);
-    }
 
     /// @brief Handles the command within the hooks libraries.
     ///
@@ -91,8 +83,6 @@ protected:
                   const isc::data::ConstElementPtr& params,
                   const isc::data::ConstElementPtr& original_cmd);
 
-    /// @brief Pointer to a callout handle used by this class.
-    isc::hooks::CalloutHandlePtr callout_handle_;
 };
 
 } // end of namespace isc::config
