@@ -14,6 +14,7 @@
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
@@ -471,6 +472,221 @@ void Subnet6::checkType(Lease::Type type) const {
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
 }
+
+data::ElementPtr
+Subnet::toElement() const {
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+
+    // Set subnet id
+    SubnetID id = getID();
+    map->set("id", Element::create(static_cast<long long>(id)));
+
+    // Set relay info
+    const Subnet::RelayInfo& relay_info = getRelayInfo();
+    ElementPtr relay = Element::createMap();
+    relay->set("ip-address", Element::create(relay_info.addr_.toText()));
+    map->set("relay", relay);
+
+    // Set subnet
+    map->set("subnet", Element::create(toText()));
+
+    // Set interface
+    const std::string& iface = getIface();
+    if (!iface.empty()) {
+        map->set("interface", Element::create(iface));
+    }
+
+    // Set renew-timer
+    map->set("renew-timer",
+             Element::create(static_cast<long long>
+                                 (getT1().get())));
+    // Set rebind-timer
+    map->set("rebind-timer",
+             Element::create(static_cast<long long>
+                                 (getT2().get())));
+    // Set valid-lifetime
+    map->set("valid-lifetime",
+             Element::create(static_cast<long long>
+                                 (getValid().get())));
+
+    // Set reservation mode
+    Subnet::HRMode hrmode = getHostReservationMode();
+    std::string mode;
+    switch (hrmode) {
+    case Subnet::HR_DISABLED:
+        mode = "disabled";
+        break;
+    case Subnet::HR_OUT_OF_POOL:
+        mode = "out-of-pool";
+        break;
+    case Subnet::HR_ALL:
+        mode = "all";
+        break;
+    default:
+        isc_throw(ToElementError,
+                  "invalid host reservation mode: " << hrmode);
+    }
+    map->set("reservation-mode", Element::create(mode));
+
+    // Set client-class
+    const ClientClasses& cclasses = getClientClasses();
+    if (cclasses.size() > 1) {
+        isc_throw(ToElementError, "client-class has too many items: "
+                  << cclasses.size());
+    } else if (!cclasses.empty()) {
+        map->set("client-class", Element::create(*cclasses.cbegin()));
+    }
+
+    // Set options
+    ConstCfgOptionPtr opts = getCfgOption();
+    map->set("option-data", opts->toElement());
+
+    return (map);
+}
+
+data::ElementPtr
+Subnet4::toElement() const {
+    // Prepare the map
+    ElementPtr map = Subnet::toElement();
+
+    // Set match-client-id
+    map->set("match-client-id", Element::create(getMatchClientId()));
+
+    // Set DHCP4o6
+    const Cfg4o6& d4o6 = get4o6();
+    isc::data::merge(map, d4o6.toElement());
+
+    // Set next-server
+    map->set("next-server", Element::create(getSiaddr().toText()));
+
+    // Set pools
+    const PoolCollection& pools = getPools(Lease::TYPE_V4);
+    ElementPtr pool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pools.cbegin();
+         pool != pools.cend(); ++pool) {
+        // Add the elementized pool to the list
+        pool_list->add((*pool)->toElement());
+    }
+    map->set("pools", pool_list);
+
+    return (map);
+}
+
+data::ElementPtr
+Subnet6::toElement() const {
+    // Prepare the map
+    ElementPtr map = Subnet::toElement();
+
+    // Set interface-id
+    const OptionPtr& ifaceid = getInterfaceId();
+    if (ifaceid) {
+        std::vector<uint8_t> bin = ifaceid->getData();
+        std::string ifid;
+        ifid.resize(bin.size());
+        if (!bin.empty()) {
+            std::memcpy(&ifid[0], &bin[0], bin.size());
+        }
+        map->set("interface-id", Element::create(ifid));
+    } 
+
+    // Set preferred-lifetime
+    map->set("preferred-lifetime",
+             Element::create(static_cast<long long>
+                             (getPreferred().get())));
+    // Set rapid-commit
+    bool rapid_commit = getRapidCommit();
+    map->set("rapid-commit", Element::create(rapid_commit));
+
+    // Set pools
+    const PoolCollection& pools = getPools(Lease::TYPE_NA);
+    ElementPtr pool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pools.cbegin();
+         pool != pools.cend(); ++pool) {
+        // Prepare the map for a pool (@todo move this code to pool.cc)
+        ElementPtr pool_map = Element::createMap();
+        // Set pool
+        const IOAddress& first = (*pool)->getFirstAddress();
+        const IOAddress& last = (*pool)->getLastAddress();
+        std::string range = first.toText() + "-" + last.toText();
+        // Try to output a prefix (vs a range)
+        int prefix_len = prefixLengthFromRange(first, last);
+        if (prefix_len >= 0) {
+            std::ostringstream oss;
+            oss << first.toText() << "/" << prefix_len;
+            range = oss.str();
+        }
+        pool_map->set("pool", Element::create(range));
+        // Set user-context
+        ConstElementPtr context = (*pool)->getContext();
+        if (!isNull(context)) {
+            pool_map->set("user-context", context);
+        }
+        // Set pool options
+        ConstCfgOptionPtr opts = (*pool)->getCfgOption();
+        pool_map->set("option-data", opts->toElement());
+        // Push on the pool list
+        pool_list->add(pool_map);
+    }
+    map->set("pools", pool_list);
+    // Set pd-pools
+    const PoolCollection& pdpools = getPools(Lease::TYPE_PD);
+    ElementPtr pdpool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pdpools.cbegin();
+         pool != pdpools.cend(); ++pool) {
+        // Get it as a Pool6 (@todo move this code to pool.cc)
+        const Pool6* pdpool = dynamic_cast<Pool6*>(pool->get());
+        if (!pdpool) {
+            isc_throw(ToElementError, "invalid pd-pool pointer");
+        }
+        // Prepare the map for a pd-pool
+        ElementPtr pool_map = Element::createMap();
+        // Set prefix
+        const IOAddress& prefix = pdpool->getFirstAddress();
+        pool_map->set("prefix", Element::create(prefix.toText()));
+        // Set prefix-len (get it from min - max)
+        const IOAddress& last = pdpool->getLastAddress();
+        int prefix_len = prefixLengthFromRange(prefix, last);
+        if (prefix_len < 0) {
+            // The pool is bad: give up
+            isc_throw(ToElementError, "invalid prefix range "
+                      << prefix.toText() << "-" << last.toText());
+        }
+        pool_map->set("prefix-len", Element::create(prefix_len));
+        // Set delegated-len
+        uint8_t len = pdpool->getLength();
+        pool_map->set("delegated-len",
+                      Element::create(static_cast<int>(len)));
+
+        // Set excluded prefix
+        const Option6PDExcludePtr& xopt =
+            pdpool->getPrefixExcludeOption();
+        if (xopt) {
+            const IOAddress& xprefix =
+                xopt->getExcludedPrefix(prefix, len);
+            pool_map->set("excluded-prefix",
+                          Element::create(xprefix.toText()));
+            uint8_t xlen = xopt->getExcludedPrefixLength();
+            pool_map->set("excluded-prefix-len",
+                          Element::create(static_cast<int>(xlen)));
+        }
+
+        // Set user-context
+        ConstElementPtr context = pdpool->getContext();
+        if (!isNull(context)) {
+            pool_map->set("user-context", context);
+        }
+        // Set pool options
+        ConstCfgOptionPtr opts = pdpool->getCfgOption();
+        pool_map->set("option-data", opts->toElement());
+        // Push on the pool list
+        pdpool_list->add(pool_map);
+    }
+    map->set("pd-pools", pdpool_list);
+
+    return (map);
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

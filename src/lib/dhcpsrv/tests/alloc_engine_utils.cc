@@ -529,6 +529,8 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 
 AllocEngine4Test::AllocEngine4Test() {
 
+    CfgMgr::instance().clear();
+
     // This lease mgr needs to exist to before configuration commits.
     factory_.create("type=memfile universe=4 persist=false");
 

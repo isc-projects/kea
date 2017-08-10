@@ -51,10 +51,10 @@ public:
             test_subnets4_.push_back(subnet);
         }
         // Create IPv6 subnets.
+        IOAddress prefix("2001:db8:1::");
         for (int i = 0; i < TEST_SUBNETS_NUM; ++i) {
             // This is a base prefix. All other prefixes will be created by
             // modifying this one.
-            IOAddress prefix("2001:db8:1::0");
             std::vector<uint8_t> prefix_bytes = prefix.toBytes();
             // Modify 5th byte of the prefix, so 2001:db8:1::0 becomes
             // 2001:db8:2::0 etc.
@@ -239,7 +239,6 @@ TEST_F(SrvConfigTest, summarySubnets) {
     addSubnet6(1);
     EXPECT_EQ("added IPv4 subnets: 2; added IPv6 subnets: 2",
               conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
-
 }
 
 // Verifies that we can get and set the client class dictionary

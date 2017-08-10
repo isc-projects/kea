@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,11 @@
 #include <dhcp/option.h>
 #include <cc/cfg_to_element.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <util/optional_value.h>
 #include <boost/shared_ptr.hpp>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -48,6 +50,40 @@ public:
     const Subnet6Collection* getAll() const {
         return (&subnets_);
     }
+
+    /// @brief Returns const pointer to a subnet identified by the specified
+    /// subnet identifier.
+    ///
+    /// The const pointer is returned by this method to prevent a caller from
+    /// modifying the subnet configuration. Modifications to subnet configuration
+    /// is dangerous and must be done carefully. The subnets' configuration is
+    /// held in the multi index container and any modifications to the subnet
+    /// id or subnet prefix must trigger re-indexing of multi index container.
+    /// There is no possibility to enforce this when the non-const pointer is
+    /// returned.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Pointer to the @c Subnet6 object or null pointer if such
+    /// subnet doesn't exist.
+    ConstSubnet6Ptr getBySubnetId(const SubnetID& subnet_id) const;
+
+    /// @brief Returns const pointer to a subnet which matches the specified
+    /// prefix in the canonical form.
+    ///
+    /// The const pointer is returned by this method to prevent a caller from
+    /// modifying the subnet configuration. Modifications to subnet configuration
+    /// is dangerous and must be done carefully. The subnets' configruation is
+    /// held in the multi index container and any modifications to the subnet
+    /// id or subnet prefix must trigger re-indexing of multi index container.
+    /// There is no possibility to enforce this when the non-const pointer is
+    /// returned.
+    ///
+    /// @param subnet_prefix Subnet prefix, e.g. 2001:db8:1::/64
+    ///
+    /// @return Pointer to the @c Subnet6 object or null pointer if such
+    /// subnet doesn't exist.
+    ConstSubnet6Ptr getByPrefix(const std::string& subnet_prefix) const;
 
     /// @brief Selects a subnet using parameters specified in the selector.
     ///
