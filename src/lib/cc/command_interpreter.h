@@ -41,6 +41,11 @@ const int CONTROL_RESULT_ERROR = 1;
 /// @brief Status code indicating that the specified command is not supported.
 const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
 
+/// @brief Status code indicating that the specified command was completed
+///        correctly, but failed to produce any results. For example, get
+///        completed the search, but couldn't find the object it was looking for.
+const int CONTROL_RESULT_EMPTY = 3;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {
