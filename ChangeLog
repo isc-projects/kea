@@ -1,3 +1,10 @@
+1285.	[func]		tomek
+	Several new commands implemented in lease_cmds library:
+	lease4-del, lease6-del, lease4-update, lease6-update,
+	lease4-wipe and lease6-wipe that allow deleting and updating
+	leases and also wipe all leases from a specific subnet.
+	(Trac #5280, #5281, 94ff2448c8cf6e3321f4d1b3666a2e2b736f6c50)
+
 1284.	[func]		tomek
 	A new library, lease_cmds, has been implemented. Its intended
 	purpose is to support commands for lease management. Currently
