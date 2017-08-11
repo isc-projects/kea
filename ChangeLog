@@ -1,3 +1,10 @@
+1287.	[bug]		tmark
+	Logger configuration now correctly uses maxsize and maxver parameters,
+	allowing log rotation to function properly.  Prior to this these values
+	were not being propagatedc downard, causing log rotation to always be
+	disabled.  The defaults for maxsize and maxver are 10Mb and 1 respectively.
+	(Trac #5324, git 75f148458bdeeed27eb877cc2c3ce3069b152f38)
+
 1286.	[func]		marcin
 	Configured subnets are now indexed by subnet identifier and
 	prefix for faster subnet lookups in the configuration.
