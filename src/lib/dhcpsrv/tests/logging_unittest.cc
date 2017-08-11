@@ -73,7 +73,7 @@ class LoggingTest : public ::testing::Test {
 };
 
 const char* LoggingTest::TEST_LOG_NAME = "kea.test.log";
-const int LoggingTest::TEST_MAX_SIZE = 207800;  // Slightly larger than default
+const int LoggingTest::TEST_MAX_SIZE = 204800;  // Smallest without disabling rotation 
 const int LoggingTest::TEST_MAX_VERS = 2;       // More than the default of 1
 
 // Tests that the spec file is valid.

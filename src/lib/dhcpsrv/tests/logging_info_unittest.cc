@@ -74,7 +74,7 @@ TEST_F(LoggingInfoTest, defaults) {
     std::string header = "{\n"
         "\"name\": \"kea\",\n"
         "\"output_options\": [ {\n"
-        " \"output\": \"stdout\",\n \"maxsize\": 204800,\n"
+        " \"output\": \"stdout\",\n \"maxsize\": 10240000,\n"
         " \"maxver\": 1,\n \"flush\": true } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";
@@ -91,7 +91,7 @@ TEST_F(LoggingInfoTest, defaults) {
     ASSERT_EQ(1, info_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
 
-    EXPECT_EQ(204800, info_verbose.destinations_[0].maxsize_);
+    EXPECT_EQ(10240000, info_verbose.destinations_[0].maxsize_);
     EXPECT_EQ(1, info_verbose.destinations_[0].maxver_);
 
     expected = header + "DEBUG" + dbglvl + "99" + trailer;

@@ -45,7 +45,7 @@ struct LoggingDestination : public isc::data::CfgToElement {
 
     /// @brief Default constructor.
     LoggingDestination()
-        : output_("stdout"), maxver_(1), maxsize_(204800), flush_(true) {
+        : output_("stdout"), maxver_(1), maxsize_(10240000), flush_(true) {
     }
 
     /// @brief Unparse a configuration object

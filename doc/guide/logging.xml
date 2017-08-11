@@ -635,8 +635,8 @@
             is renamed ".2", etc. This is referred to as rotation.
           </para>
           <para>
-            The default value is 204800. This is also the smallest value that
-            may be specified without disabling rotation.  Any value less than
+            The default value is 10240000 (10MB).  The smallest value that may
+            be specified without disabling rotation is 204800. Any value less than
             this, including 0, disables rotation.
           </para>
           <note>
