@@ -41,7 +41,7 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 
 void
 CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
-    auto& index = subnets_.get<SubnetIdIndexTag>();
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
     if (subnet_it == index.end()) {
         isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()

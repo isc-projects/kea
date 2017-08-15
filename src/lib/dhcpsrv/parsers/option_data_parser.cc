@@ -162,6 +162,19 @@ OptionDataParser::extractSpace(ConstElementPtr parent) const {
     return (space);
 }
 
+OptionalValue<bool>
+OptionDataParser::extractPersistent(ConstElementPtr parent) const {
+    bool persist = false;
+    try {
+        persist = getBoolean(parent, "always-send");
+
+    } catch (...) {
+        return (OptionalValue<bool>(persist));
+    }
+
+    return (OptionalValue<bool>(persist, OptionalValueState(true)));
+}
+
 template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
@@ -203,6 +216,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     OptionalValue<uint32_t> code_param =  extractCode(option_data);
     OptionalValue<std::string> name_param = extractName(option_data);
     OptionalValue<bool> csv_format_param = extractCSVFormat(option_data);
+    OptionalValue<bool> persist_param = extractPersistent(option_data);
     std::string data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
 
@@ -283,7 +297,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     OptionDescriptor desc(false);
 
     if (!def) {
-        // @todo We have a limited set of option definitions initalized at
+        // @todo We have a limited set of option definitions initialized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
@@ -292,7 +306,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                                     binary));
 
         desc.option_ = option;
-        desc.persistent_ = false;
+        desc.persistent_ = persist_param.isSpecified() && persist_param;
     } else {
 
         // Option name is specified it should match the name in the definition.
@@ -313,7 +327,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                 def->optionFactory(universe, def->getCode(), data_tokens) :
                 def->optionFactory(universe, def->getCode(), binary);
             desc.option_ = option;
-            desc.persistent_ = false;
+            desc.persistent_ = persist_param.isSpecified() && persist_param;
             if (use_csv) {
                 desc.formatted_value_ = data_param;
             }

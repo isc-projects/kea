@@ -40,7 +40,7 @@ CfgSubnets6::add(const Subnet6Ptr& subnet) {
 
 void
 CfgSubnets6::del(const ConstSubnet6Ptr& subnet) {
-    auto& index = subnets_.get<SubnetIdIndexTag>();
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
     if (subnet_it == index.end()) {
         isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()
@@ -210,18 +210,6 @@ CfgSubnets6::getSubnet(const SubnetID id) const {
         }
     }
     return (Subnet6Ptr());
-}
-
-
-bool
-CfgSubnets6::isDuplicate(const Subnet6& subnet) const {
-    for (Subnet6Collection::const_iterator subnet_it = subnets_.begin();
-         subnet_it != subnets_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
 }
 
 void

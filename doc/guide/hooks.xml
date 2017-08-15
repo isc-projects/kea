@@ -1490,7 +1490,6 @@ as follows:
 
           <para>Note: not all backends support this command.</para>
         </section>
-
       </section>
     </section>
 
@@ -1558,13 +1557,13 @@ as follows:
     "result": 0,
     "text": "2 IPv4 subnets found",
     "arguments": {
-    "subnet-ids": [
+    "subnets": [
         {
-            "subnet-id": 10,
+            "id": 10,
             "subnet": "10.0.0.0/8"
         },
         {
-            "subnet-id": 100,
+            "id": 100,
             "subnet": "192.0.2.0/24"
         }
     ]
@@ -1602,13 +1601,13 @@ as follows:
     "result": 0,
     "text": "2 IPv6 subnets found",
     "arguments": {
-    "subnet-ids": [
+    "subnets": [
         {
-            "subnet-id": 11,
+            "id": 11,
             "subnet": "2001:db8:1::/64"
         },
         {
-            "subnet-id": 233,
+            "id": 233,
             "subnet": "3000::/16"
         }
     ]
@@ -1656,7 +1655,7 @@ or
     "result": 0,
     "text": "Info about IPv4 subnet 10.0.0.0/8 (subnet-id 10) returned",
     "arguments": {
-        "subnet4": [
+        "subnets": [
             {
                 "subnet": "10.0.0.0/8",
                 "id": 1,
@@ -1706,7 +1705,7 @@ If the subnet exists the response will be similar to this:
     "result": 0,
     "text": "Info about IPv6 subnet 2001:db8:1::/64 (subnet-id 11) returned",
     "arguments": {
-        "subnet6": [
+        "subnets": [
             {
                 "subnet": "2001:db8:1::/64",
                 "id": 1,
@@ -1742,7 +1741,7 @@ If the subnet exists the response will be similar to this:
 {
     "command": "subnet4-add",
     "arguments": {
-        "subnet4": [ {
+        "subnets": [ {
             "id": 123,
             "subnet": "10.20.30.0/24",
             ...
@@ -1759,7 +1758,7 @@ If the subnet exists the response will be similar to this:
     "result": 0,
     "text": "IPv4 subnet added",
     "arguments": {
-        "subnet4": [
+        "subnets": [
             {
                 "id": 123,
                 "subnet": "10.20.30.0/24"
@@ -1818,6 +1817,33 @@ If the subnet exists the response will be similar to this:
 }
 </screen>
         </para>
+
+        <para>
+          It is recommended, but not mandatory to specify subnet
+          id. If not specified, Kea will try to assign the next
+          subnet-id value. This automatic ID value generator is
+          simple. It returns a previously automatically assigned value
+          increased by 1. This works well, unless you manually create
+          a subnet with a value bigger than previously used. For
+          example, if you call subnet4-add five times, each without
+          id, Kea will assign IDs: 1,2,3,4 and 5 and it will work just
+          fine. However, if you try to call subnet4-add five times,
+          with the first subnet having subnet-id of value 3 and
+          remaining ones having no subnet-id, it will fail. The first
+          command (with explicit value) will use subnet-id 3, the
+          second command will create a subnet with id of 1, the third
+          will use value of 2 and finally the fourth will have the
+          subnet-id value auto-generated as 3. However, since there is
+          already a subnet with that id, it will fail.
+        </para>
+        <para>
+          The general recommendation is to either: never use explicit
+          values (so the auto-generated values will always work) or
+          always use explicit values (so the auto-generation is never
+          used). You can mix those two approaches only if you
+          understand how the internal automatic subnet-id generation works.
+        </para>
+          
       </section>
 
       <section>
@@ -1860,7 +1886,15 @@ If the subnet exists the response will be similar to this:
 <screen>
 {
     "result": 0,
-    "text": "IPv4 subnet 192.0.2.0/24 (subnet-id 123) deleted"
+    "text": "IPv4 subnet 192.0.2.0/24 (subnet-id 123) deleted",
+    "arguments": {
+        "subnets": [
+            {
+                "id": 123,
+                "subnet": "192.0.2.0/24"
+            }
+        ]
+    }
 }
 </screen>
         </para>
@@ -1906,7 +1940,13 @@ If the subnet exists the response will be similar to this:
 <screen>
 {
     "result": 0,
-    "text": "IPv6 subnet 2001:db8:1::/64 (subnet-id 234) deleted"
+    "text": "IPv6 subnet 2001:db8:1::/64 (subnet-id 234) deleted",
+    "subnets": [
+        {
+            "id": 234,
+            "subnet": "2001:db8:1::/64"
+        }
+    ]
 }
 </screen>
         </para>
@@ -1934,4 +1974,7 @@ If the subnet exists the response will be similar to this:
         user context capability.
       </para>
     </section>
+
+
+    
    </chapter> <!-- hooks-libraries -->
