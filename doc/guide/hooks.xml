@@ -1437,7 +1437,7 @@ as follows:
   }
 }</screen>
           </para>
-          
+
           <para>
             An example command updating IPv6 lease looks as follows:
 <screen>{
@@ -1632,7 +1632,7 @@ as follows:
 {
     "command": "subnet4-get",
     "arguments": {
-        "subnet-id": 10
+        "id": 10
     }
 }</screen>
 
@@ -1653,7 +1653,7 @@ or
 <screen>
 {
     "result": 0,
-    "text": "Info about IPv4 subnet 10.0.0.0/8 (subnet-id 10) returned",
+    "text": "Info about IPv4 subnet 10.0.0.0/8 (id 10) returned",
     "arguments": {
         "subnets": [
             {
@@ -1684,7 +1684,7 @@ or
 {
     "command": "subnet6-get",
     "arguments": {
-        "subnet-id": 11
+        "id": 11
     }
 }
 </screen>
@@ -1703,7 +1703,7 @@ If the subnet exists the response will be similar to this:
 <screen>
 {
     "result": 0,
-    "text": "Info about IPv6 subnet 2001:db8:1::/64 (subnet-id 11) returned",
+    "text": "Info about IPv6 subnet 2001:db8:1::/64 (id 11) returned",
     "arguments": {
         "subnets": [
             {
@@ -1843,7 +1843,7 @@ If the subnet exists the response will be similar to this:
           used). You can mix those two approaches only if you
           understand how the internal automatic subnet-id generation works.
         </para>
-          
+
       </section>
 
       <section>
@@ -1876,7 +1876,7 @@ If the subnet exists the response will be similar to this:
 {
     "command": "subnet4-del",
     "arguments": {
-        "subnet-id": 123
+        "id": 123
     }
 }
 </screen>
@@ -1886,7 +1886,7 @@ If the subnet exists the response will be similar to this:
 <screen>
 {
     "result": 0,
-    "text": "IPv4 subnet 192.0.2.0/24 (subnet-id 123) deleted",
+    "text": "IPv4 subnet 192.0.2.0/24 (id 123) deleted",
     "arguments": {
         "subnets": [
             {
@@ -1930,7 +1930,7 @@ If the subnet exists the response will be similar to this:
 {
     "command": "subnet6-del",
     "arguments": {
-        "subnet-id": 234
+        "id": 234
     }
 }
 </screen>
@@ -1940,7 +1940,7 @@ If the subnet exists the response will be similar to this:
 <screen>
 {
     "result": 0,
-    "text": "IPv6 subnet 2001:db8:1::/64 (subnet-id 234) deleted",
+    "text": "IPv6 subnet 2001:db8:1::/64 (id 234) deleted",
     "subnets": [
         {
             "id": 234,
@@ -1976,5 +1976,5 @@ If the subnet exists the response will be similar to this:
     </section>
 
 
-    
+
    </chapter> <!-- hooks-libraries -->
