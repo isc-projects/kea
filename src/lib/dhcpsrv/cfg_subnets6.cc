@@ -22,15 +22,34 @@ namespace dhcp {
 
 void
 CfgSubnets6::add(const Subnet6Ptr& subnet) {
-    /// @todo: Check that this new subnet does not cross boundaries of any
-    /// other already defined subnet.
-    if (isDuplicate(*subnet)) {
+    if (getBySubnetId(subnet->getID())) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv6 subnet '"
                   << subnet->getID() << "' is already in use");
+
+    } else if (getByPrefix(subnet->toText())) {
+        /// @todo: Check that this new subnet does not cross boundaries of any
+        /// other already defined subnet.
+        isc_throw(isc::dhcp::DuplicateSubnetID, "subnet with the prefix of '"
+                  << subnet->toText() << "' already exists");
     }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
     subnets_.push_back(subnet);
+}
+
+void
+CfgSubnets6::del(const ConstSubnet6Ptr& subnet) {
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet->getID());
+    if (subnet_it == index.end()) {
+        isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()
+                  << "' found");
+    }
+    index.erase(subnet_it);
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET6)
+        .arg(subnet->toText());
 }
 
 ConstSubnet6Ptr
@@ -191,18 +210,6 @@ CfgSubnets6::getSubnet(const SubnetID id) const {
         }
     }
     return (Subnet6Ptr());
-}
-
-
-bool
-CfgSubnets6::isDuplicate(const Subnet6& subnet) const {
-    for (Subnet6Collection::const_iterator subnet_it = subnets_.begin();
-         subnet_it != subnets_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
 }
 
 void

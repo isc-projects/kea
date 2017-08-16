@@ -18,6 +18,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>

@@ -39,6 +39,13 @@ public:
     /// duplicates id of an existing subnet.
     void add(const Subnet4Ptr& subnet);
 
+    /// @brief Removes subnet from the configuration.
+    ///
+    /// @param subnet Pointer to the subnet to be removed.
+    ///
+    /// @throw isc::BadValue if such subnet doesn't exist.
+    void del(const ConstSubnet4Ptr& subnet);
+
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///
     /// This is used in a hook (subnet4_select), where the hook is able
@@ -234,14 +241,6 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
 private:
-
-    /// @brief Checks that the IPv4 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    ///
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet4& subnet) const;
 
     /// @brief A container for IPv4 subnets.
     Subnet4Collection subnets_;
