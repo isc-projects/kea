@@ -1,3 +1,9 @@
+1288.	[func]		marcin
+	Documented subnet_cmds library in the Kea User's Guide.  Also moved
+	several classes from dhcp<4/6> into lib/dhcpsrv to facilitate subnet
+	command parsing.
+	(Trac #5315, git d259f330a1690b20eb368f6252f5da2cdb6187de)
+
 1287.	[bug]		tmark
 	Logger configuration now correctly uses maxsize and maxver parameters,
 	allowing log rotation to function properly.  Prior to this these values
@@ -110,7 +116,7 @@
 1268.	[func]		fdupont
 	Kea now re-detects network interfaces every time configuration is
 	changed. 're-detect' parameter added to restore old behavior, if
-        needed.
+	needed.
 	(Trac #3389, git b2ce84790c33d1580dcfa773d7fcfb65c27addc7)
 
 1267.	[bug]		fdupont
