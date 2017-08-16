@@ -7,8 +7,8 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
@@ -113,7 +113,7 @@ HostReservationParser::parseInternal(const SubnetID&,
     try {
         // Gather those parameters that are common for both IPv4 and IPv6
         // reservations.
-        BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
+        BOOST_FOREACH(auto element, reservation_data->mapValue()) {
             // Check if we support this parameter.
             if (!isSupportedParameter(element.first)) {
                 isc_throw(DhcpConfigError, "unsupported configuration"
@@ -183,7 +183,7 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
 
     host->setIPv4SubnetID(subnet_id);
 
-    BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
+    BOOST_FOREACH(auto element, reservation_data->mapValue()) {
         // For 'option-data' element we will use another parser which
         // already returns errors with position appended, so don't
         // surround it with try-catch.
@@ -242,7 +242,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
 
     host->setIPv6SubnetID(subnet_id);
 
-    BOOST_FOREACH(ConfigPair element, reservation_data->mapValue()) {
+    BOOST_FOREACH(auto element, reservation_data->mapValue()) {
         // Parse option values. Note that the configuration option parser
         // returns errors with position information appended, so there is no
         // need to surround it with try-clause (and rethrow with position

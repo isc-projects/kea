@@ -74,6 +74,34 @@ TEST(CfgSubnets4Test, getSpecificSubnet) {
     EXPECT_FALSE(cfg.getByPrefix("10.20.30.0/29"));
 }
 
+// This test verifies that a single subnet can be removed from the configuration.
+TEST(CfgSubnets4Test, deleteSubnet) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 3, SubnetID(5)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 3, SubnetID(8)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 1, 2, 3, SubnetID(10)));
+
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // There should be three subnets.
+    ASSERT_EQ(3, cfg.getAll()->size());
+    // We're going to remove the subnet #2. Let's make sure it exists before
+    // we remove it.
+    ASSERT_TRUE(cfg.getByPrefix("192.0.3.0/26"));
+
+    // Remove the subnet and make sure it is gone.
+    ASSERT_NO_THROW(cfg.del(subnet2));
+    ASSERT_EQ(2, cfg.getAll()->size());
+    EXPECT_FALSE(cfg.getByPrefix("192.0.3.0/26"));
+}
+
 // This test verifies that it is possible to retrieve a subnet using an
 // IP address.
 TEST(CfgSubnets4Test, selectSubnetByCiaddr) {

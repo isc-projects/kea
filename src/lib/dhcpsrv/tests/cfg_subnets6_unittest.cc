@@ -83,6 +83,31 @@ TEST(CfgSubnets6Test, getSpecificSubnet) {
     EXPECT_FALSE(cfg.getByPrefix("3000::/16"));
 }
 
+// This test verifies that a single subnet can be removed from the configuration.
+TEST(CfgSubnets6Test, deleteSubnet) {
+    CfgSubnets6 cfg;
+
+    // Create 3 subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // There should be three subnets.
+    ASSERT_EQ(3, cfg.getAll()->size());
+    // We're going to remove the subnet #2. Let's make sure it exists before
+    // we remove it.
+    ASSERT_TRUE(cfg.getByPrefix("2001:db8:2::/48"));
+
+    // Remove the subnet and make sure it is gone.
+    ASSERT_NO_THROW(cfg.del(subnet2));
+    ASSERT_EQ(2, cfg.getAll()->size());
+    EXPECT_FALSE(cfg.getByPrefix("2001:db8:2::/48"));
+}
+
 // This test checks that the subnet can be selected using a relay agent's
 // link address.
 TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {

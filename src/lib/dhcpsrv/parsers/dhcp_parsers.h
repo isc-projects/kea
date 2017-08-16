@@ -341,164 +341,6 @@ public:
     void parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value);
 };
 
-
-/// @brief Parser for option data value.
-///
-/// This parser parses configuration entries that specify value of
-/// a single option. These entries include option name, option code
-/// and data carried by the option. The option data can be specified
-/// in one of the two available formats: binary value represented as
-/// a string of hexadecimal digits or a list of comma separated values.
-/// The format being used is controlled by csv-format configuration
-/// parameter. When setting this value to True, the latter format is
-/// used. The subsequent values in the CSV format apply to relevant
-/// option data fields in the configured option. For example the
-/// configuration: "data" : "192.168.2.0, 56, hello world" can be
-/// used to set values for the option comprising IPv4 address,
-/// integer and string data field. Note that order matters. If the
-/// order of values does not match the order of data fields within
-/// an option the configuration will not be accepted. If parsing
-/// is successful then an instance of an option is created and
-/// added to the storage provided by the calling class.
-class OptionDataParser : public isc::data::SimpleParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    explicit OptionDataParser(const uint16_t address_family);
-
-    /// @brief Parses ElementPtr containing option definition
-    ///
-    /// This method parses ElementPtr containing the option definition,
-    /// instantiates the option for it and then returns a pair
-    /// of option descriptor (that holds that new option) and
-    /// a string that specifies the option space.
-    ///
-    /// Note: ElementPtr is expected to contain all fields. If your
-    /// ElementPtr does not have them, please use
-    /// @ref isc::data::SimpleParser::setDefaults to fill the missing fields
-    /// with default values.
-    ///
-    /// @param single_option ElementPtr containing option definition
-    /// @return Option object wrapped in option description and an option
-    ///         space
-    std::pair<OptionDescriptor, std::string>
-    parse(isc::data::ConstElementPtr single_option);
-private:
-
-    /// @brief Finds an option definition within an option space
-    ///
-    /// Given an option space and an option code, find the corresponding
-    /// option definition within the option definition storage.
-    ///
-    /// @param option_space name of the parameter option space
-    /// @param search_key an option code or name to be used to lookup the
-    /// option definition.
-    /// @tparam A numeric type for searching using an option code or the
-    /// string for searching using the option name.
-    ///
-    /// @return OptionDefinitionPtr of the option definition or an
-    /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid
-    /// for this server.
-    template<typename SearchKey>
-    OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
-                                             const SearchKey& search_key) const;
-
-    /// @brief Create option instance.
-    ///
-    /// Creates an instance of an option and adds it to the provided
-    /// options storage. If the option data parsed by \ref build function
-    /// are invalid or insufficient this function emits an exception.
-    ///
-    /// @param option_data An element holding data for a single option being
-    /// created.
-    ///
-    /// @return created option descriptor
-    ///
-    /// @throw DhcpConfigError if parameters provided in the configuration
-    /// are invalid.
-    std::pair<OptionDescriptor, std::string>
-    createOption(isc::data::ConstElementPtr option_data);
-
-    /// @brief Retrieves parsed option code as an optional value.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    ///
-    /// @return Option code, possibly unspecified.
-    /// @throw DhcpConfigError if option code is invalid.
-    util::OptionalValue<uint32_t>
-    extractCode(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves parsed option name as an optional value.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    ///
-    /// @return Option name, possibly unspecified.
-    /// @throw DhcpConfigError if option name is invalid.
-    util::OptionalValue<std::string>
-    extractName(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves csv-format parameter as an optional value.
-    ///
-    /// @return Value of the csv-format parameter, possibly unspecified.
-    util::OptionalValue<bool> extractCSVFormat(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves option data as a string.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    /// @return Option data as a string. It will return empty string if
-    /// option data is unspecified.
-    std::string extractData(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves option space name.
-    ///
-    /// If option space name is not specified in the configuration the
-    /// 'dhcp4' or 'dhcp6' option space name is returned, depending on
-    /// the universe specified in the parser context.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    ///
-    /// @return Option space name.
-    std::string extractSpace(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves persistent/always-send parameter as an optional value.
-    ///
-    /// @return Value of the persistent parameter, possibly unspecified.
-    util::OptionalValue<bool> extractPersistent(data::ConstElementPtr parent) const;
-
-    /// @brief Address family: @c AF_INET or @c AF_INET6.
-    uint16_t address_family_;
-};
-
-/// @brief Parser for option data values within a subnet.
-///
-/// This parser iterates over all entries that define options
-/// data for a particular subnet and creates a collection of options.
-/// If parsing is successful, all these options are added to the Subnet
-/// object.
-class OptionDataListParser : public isc::data::SimpleParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param address_family Address family: @c AF_INET or AF_INET6
-    explicit OptionDataListParser(const uint16_t address_family);
-
-    /// @brief Parses a list of options, instantiates them and stores in cfg
-    ///
-    /// This method expects to get a list of options in option_data_list,
-    /// iterates over them, creates option objects, wraps them with
-    /// option descriptor and stores in specified cfg.
-    ///
-    /// @param cfg created options will be stored here
-    /// @param option_data_list configuration that describes the options
-    void parse(const CfgOptionPtr& cfg,
-               isc::data::ConstElementPtr option_data_list);
-private:
-    /// @brief Address family: @c AF_INET or @c AF_INET6
-    uint16_t address_family_;
-};
-
 typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionTuple;
 
 /// @brief Parser for a single option definition.
@@ -590,6 +432,37 @@ protected:
                               int32_t ptype = 0) = 0;
 };
 
+/// @brief Parser for IPv4 pool definitions.
+///
+/// This is the IPv4 derivation of the PoolParser class and handles pool
+/// definitions, i.e. a list of entries of one of two syntaxes: min-max and
+/// prefix/len for IPv4 pools. Pool4 objects are created and stored in chosen
+/// PoolStorage container.
+///
+/// It is useful for parsing Dhcp4/subnet4[X]/pool parameters.
+class Pool4Parser : public PoolParser {
+protected:
+    /// @brief Creates a Pool4 object given a IPv4 prefix and the prefix length.
+    ///
+    /// @param addr is the IPv4 prefix of the pool.
+    /// @param len is the prefix length.
+    /// @param ignored dummy parameter to provide symmetry between the
+    /// PoolParser derivations. The V6 derivation requires a third value.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &addr, uint32_t len,
+                       int32_t ignored);
+
+    /// @brief Creates a Pool4 object given starting and ending IPv4 addresses.
+    ///
+    /// @param min is the first IPv4 address in the pool.
+    /// @param max is the last IPv4 address in the pool.
+    /// @param ignored dummy parameter to provide symmetry between the
+    /// PoolParser derivations. The V6 derivation requires a third value.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &min, asiolink::IOAddress &max,
+                       int32_t ignored);
+};
+
 /// @brief Parser for a list of pools
 ///
 /// This parser parses a list pools. Each element on that list gets its own
@@ -611,6 +484,20 @@ public:
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
     virtual void parse(PoolStoragePtr pools,
                        isc::data::ConstElementPtr pools_list) = 0;
+};
+
+/// @brief Specialization of the pool list parser for DHCPv4
+class Pools4ListParser : PoolsListParser {
+public:
+
+    /// @brief parses the actual structure
+    ///
+    /// This method parses the actual list of pools.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pools_list a list of pool structures
+    /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
 };
 
 /// @brief parser for additional relay information
@@ -733,6 +620,235 @@ protected:
 
     /// Pointer to the options configuration.
     CfgOptionPtr options_;
+};
+
+/// @anchor Subnet4ConfigParser
+/// @brief This class parses a single IPv4 subnet.
+///
+/// This is the IPv4 derivation of the SubnetConfigParser class and it parses
+/// the whole subnet definition. It creates parsersfor received configuration
+/// parameters as needed.
+class Subnet4ConfigParser : public SubnetConfigParser {
+public:
+    /// @brief Constructor
+    ///
+    /// stores global scope parameters, options, option definitions.
+    Subnet4ConfigParser();
+
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    /// @return a pointer to created Subnet4 object
+    Subnet4Ptr parse(data::ConstElementPtr subnet);
+
+protected:
+
+    /// @brief Instantiates the IPv4 Subnet based on a given IPv4 address
+    /// and prefix length.
+    ///
+    /// @param params Data structure describing a subnet.
+    /// @param addr is IPv4 address of the subnet.
+    /// @param len is the prefix length
+    void initSubnet(data::ConstElementPtr params,
+                    asiolink::IOAddress addr, uint8_t len);
+};
+
+/// @brief this class parses list of DHCP4 subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet4
+/// definitions. It iterates over all entries and creates Subnet4ConfigParser
+/// for each entry.
+class Subnets4ListConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
+    ///
+    /// @param cfg Pointer to server configuration.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return number of subnets created
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+};
+
+/// @brief Parser for IPv6 pool definitions.
+///
+/// This is the IPv6 derivation of the PoolParser class and handles pool
+/// definitions, i.e. a list of entries of one of two syntaxes: min-max and
+/// prefix/len for IPv6 pools. Pool6 objects are created and stored in chosen
+/// PoolStorage container.
+///
+/// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
+class Pool6Parser : public PoolParser {
+protected:
+    /// @brief Creates a Pool6 object given a IPv6 prefix and the prefix length.
+    ///
+    /// @param addr is the IPv6 prefix of the pool.
+    /// @param len is the prefix length.
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
+    /// polymorphic interface.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &addr, uint32_t len, int32_t ptype);
+
+    /// @brief Creates a Pool6 object given starting and ending IPv6 addresses.
+    ///
+    /// @param min is the first IPv6 address in the pool.
+    /// @param max is the last IPv6 address in the pool.
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
+    /// polymorphic interface.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &min, asiolink::IOAddress &max,
+                       int32_t ptype);
+};
+
+/// @brief Specialization of the pool list parser for DHCPv6
+class Pools6ListParser : PoolsListParser {
+public:
+
+    /// @brief parses the actual structure
+    ///
+    /// This method parses the actual list of pools.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pools_list a list of pool structures
+    /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
+};
+
+/// @brief Parser for IPv6 prefix delegation definitions.
+///
+/// This class handles prefix delegation pool definitions for IPv6 subnets
+/// Pool6 objects are created and stored in the given PoolStorage container.
+///
+/// PdPool definitions currently support three elements: prefix, prefix-len,
+/// and delegated-len, as shown in the example JSON text below:
+///
+/// @code
+///
+/// {
+///     "prefix": "2001:db8:1::",
+///     "prefix-len": 64,
+///     "delegated-len": 128
+/// }
+/// @endcode
+///
+class PdPoolParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    PdPoolParser();
+
+    /// @brief Builds a prefix delegation pool from the given configuration
+    ///
+    /// This function parses configuration entries and creates an instance
+    /// of a dhcp::Pool6 configured for prefix delegation.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pd_pool_ pointer to an element that holds configuration entries
+    /// that define a prefix delegation pool.
+    ///
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_);
+
+private:
+
+    /// Pointer to the created pool object.
+    isc::dhcp::Pool6Ptr pool_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
+
+    isc::data::ConstElementPtr user_context_;
+};
+
+/// @brief Parser for a list of prefix delegation pools.
+///
+/// This parser iterates over a list of prefix delegation pool entries and
+/// creates pool instances for each one. If the parsing is successful, the
+/// collection of pools is committed to the provided storage.
+class PdPoolsListParser : public PoolsListParser {
+public:
+
+    /// @brief Parse configuration entries.
+    ///
+    /// This function parses configuration entries and creates instances
+    /// of prefix delegation pools .
+    ///
+    /// @param storage is the pool storage in which to store the parsed
+    /// @param pd_pool_list pointer to an element that holds entries
+    /// that define a prefix delegation pool.
+    ///
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_list);
+};
+
+/// @anchor Subnet6ConfigParser
+/// @brief This class parses a single IPv6 subnet.
+///
+/// This is the IPv6 derivation of the SubnetConfigParser class and it parses
+/// the whole subnet definition. It creates parsersfor received configuration
+/// parameters as needed.
+class Subnet6ConfigParser : public SubnetConfigParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// stores global scope parameters, options, option definitions.
+    Subnet6ConfigParser();
+
+    /// @brief Parses a single IPv6 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    /// @return a pointer to created Subnet6 object
+    Subnet6Ptr parse(data::ConstElementPtr subnet);
+
+protected:
+    /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
+    /// options.
+    ///
+    /// @param code is the numeric option code of the duplicate option
+    /// @param addr is the subnet address
+    /// @todo A means to know the correct logger and perhaps a common
+    /// message would allow this message to be emitted by the base class.
+    virtual void duplicate_option_warning(uint32_t code,
+                                         asiolink::IOAddress& addr);
+
+    /// @brief Instantiates the IPv6 Subnet based on a given IPv6 address
+    /// and prefix length.
+    ///
+    /// @param params Data structure describing a subnet.
+    /// @param addr is IPv6 prefix of the subnet.
+    /// @param len is the prefix length
+    void initSubnet(isc::data::ConstElementPtr params,
+                    isc::asiolink::IOAddress addr, uint8_t len);
+};
+
+
+/// @brief this class parses a list of DHCP6 subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet6
+/// definitions. It iterates over all entries and creates Subnet6ConfigParser
+/// for each entry.
+class Subnets6ListConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
+    ///
+    /// @param cfg configuration (parsed subnets will be stored here)
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
 };
 
 /// @brief Parser for  D2ClientConfig

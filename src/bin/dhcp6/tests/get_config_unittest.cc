@@ -11,12 +11,12 @@
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp6/simple_parser6.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
