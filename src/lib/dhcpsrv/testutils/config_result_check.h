@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace test {
 ///
 /// This function checks that the error string returned by the configuration
 /// parsers contains the position of the element which caused an error. The
-/// error string is expected to contain at least one occurence of the following:
+/// error string is expected to contain at least one occurrence of the following:
 ///
 /// @code
 ///     [filename]:[linenum]:[pos]

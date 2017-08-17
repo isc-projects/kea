@@ -101,7 +101,7 @@ public:
 
     /// @brief Checks whether content of output buffer is correct
     ///
-    /// Output buffer is expected to be filled with an option matchin
+    /// Output buffer is expected to be filled with an option matching
     /// buf_ content as defined in setExampleBuffer().
     ///
     /// @param expected_type expected option type

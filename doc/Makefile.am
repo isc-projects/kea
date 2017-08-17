@@ -1,15 +1,23 @@
 SUBDIRS = guide design
 
 EXTRA_DIST  = version.ent.in Doxyfile Doxyfile-xml
+EXTRA_DIST += devel/bison.dox
 EXTRA_DIST += devel/config-backend.dox
 EXTRA_DIST += devel/contribute.dox
 EXTRA_DIST += devel/mainpage.dox
+EXTRA_DIST += devel/terminology.dox
 EXTRA_DIST += devel/unit-tests.dox
 
-nobase_dist_doc_DATA  = examples/ddns/sample1.json
+nobase_dist_doc_DATA  = examples/agent/simple.json
+nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
+nobase_dist_doc_DATA += examples/https/httpd2/kea-httpd2.conf
+nobase_dist_doc_DATA += examples/https/nginx/kea-nginx.conf
+nobase_dist_doc_DATA += examples/kea4/advanced.json
 nobase_dist_doc_DATA += examples/kea4/backends.json
+nobase_dist_doc_DATA += examples/kea4/cassandra.json
 nobase_dist_doc_DATA += examples/kea4/classify.json
+nobase_dist_doc_DATA += examples/kea4/dhcpv4-over-dhcpv6.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
 nobase_dist_doc_DATA += examples/kea4/leases-expiration.json
 nobase_dist_doc_DATA += examples/kea4/multiple-options.json
@@ -18,9 +26,13 @@ nobase_dist_doc_DATA += examples/kea4/pgsql-reservations.json
 nobase_dist_doc_DATA += examples/kea4/reservations.json
 nobase_dist_doc_DATA += examples/kea4/several-subnets.json
 nobase_dist_doc_DATA += examples/kea4/single-subnet.json
+nobase_dist_doc_DATA += examples/kea4/with-ddns.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
 nobase_dist_doc_DATA += examples/kea6/backends.json
+nobase_dist_doc_DATA += examples/kea6/cassandra.json
 nobase_dist_doc_DATA += examples/kea6/classify.json
+nobase_dist_doc_DATA += examples/kea6/dhcpv4-over-dhcpv6.json
+nobase_dist_doc_DATA += examples/kea6/duid.json
 nobase_dist_doc_DATA += examples/kea6/hooks.json
 nobase_dist_doc_DATA += examples/kea6/leases-expiration.json
 nobase_dist_doc_DATA += examples/kea6/multiple-options.json
@@ -31,6 +43,7 @@ nobase_dist_doc_DATA += examples/kea6/several-subnets.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 
 devel:
 	mkdir -p html

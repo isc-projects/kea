@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,9 +131,33 @@ HostMgr::get4(const SubnetID& subnet_id,
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (!host && alternate_source_) {
+
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER)
+            .arg(subnet_id)
+            .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                           identifier_len));
+
         host = alternate_source_->get4(subnet_id, identifier_type,
                                        identifier_begin, identifier_len);
+
+        if (host) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len))
+                .arg(host->toText());
+
+        } else {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_NULL)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len));
+        }
     }
+
     return (host);
 }
 
@@ -193,8 +217,33 @@ HostMgr::get6(const SubnetID& subnet_id,
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (!host && alternate_source_) {
+
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+                  HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER)
+            .arg(subnet_id)
+            .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                           identifier_len));
+
+
         host = alternate_source_->get6(subnet_id, identifier_type,
                                        identifier_begin, identifier_len);
+
+        if (host) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len))
+                .arg(host->toText());
+
+        } else {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                      HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL)
+                .arg(subnet_id)
+                .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
+                                               identifier_len));
+        }
+
     }
     return (host);
 }
@@ -216,10 +265,44 @@ HostMgr::get6(const SubnetID& subnet_id,
 void
 HostMgr::add(const HostPtr& host) {
     if (!alternate_source_) {
-        isc_throw(NoHostDataSourceManager, "unable to add new host because there is "
-                  "no alternate host data source present");
+        isc_throw(NoHostDataSourceManager, "Unable to add new host because there is "
+                  "no hosts-database configured.");
     }
     alternate_source_->add(host);
+}
+
+bool
+HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
+                  "no hosts-database configured.");
+    }
+
+    return (alternate_source_->del(subnet_id, addr));
+}
+
+bool
+HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
+                  "no hosts-database configured.");
+    }
+
+    return (alternate_source_->del4(subnet_id, identifier_type,
+                                    identifier_begin, identifier_len));
+}
+
+bool
+HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin, const size_t identifier_len) {
+    if (!alternate_source_) {
+        isc_throw(NoHostDataSourceManager, "unable to delete a host because there is "
+                  "no alternate host data source present");
+    }
+
+    return (alternate_source_->del6(subnet_id, identifier_type,
+                                    identifier_begin, identifier_len));
 }
 
 } // end of isc::dhcp namespace

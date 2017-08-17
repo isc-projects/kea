@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -166,7 +166,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     if (expected_result == SHOULD_PASS) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
 
-        // The decline succeded, so the declined-addresses statistic should
+        // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
         EXPECT_EQ(after, before + 1);
         EXPECT_EQ(after_global, before_global + 1);

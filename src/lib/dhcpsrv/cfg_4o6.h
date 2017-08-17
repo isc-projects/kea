@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,9 @@
 #ifndef CFG_4OVER6_H
 #define CFG_4OVER6_H
 
-#include <string>
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -17,7 +18,7 @@ namespace dhcp {
 ///
 /// DHCP4o6 is completely optional. If it is not enabled, this structure
 /// does not contain any information.
-struct Cfg4o6 {
+struct Cfg4o6 : public isc::data::CfgToElement {
 
     /// the default constructor.
     ///
@@ -77,6 +78,11 @@ struct Cfg4o6 {
         interface_id_ = opt;
         enabled_ = true;
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

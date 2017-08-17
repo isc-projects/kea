@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,6 +35,16 @@ namespace asiolink {
 /// derived class for testing purposes rather than providing factory methods
 /// (i.e., getDummy variants below).
 class IOSocket {
+public:
+
+    /// @name Types of objects encapsulating socket options.
+    //@{
+
+    /// @brief Represents SO_REUSEADDR socket option.
+    typedef boost::asio::socket_base::reuse_address ReuseAddress;
+
+    //@}
+
     ///
     /// \name Constructors and Destructor
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,7 +68,7 @@ Iface::closeSockets() {
 
 void
 Iface::closeSockets(const uint16_t family) {
-    // Check that the correect 'family' value has been specified.
+    // Check that the correct 'family' value has been specified.
     // The possible values are AF_INET or AF_INET6. Note that, in
     // the current code they are used to differentiate that the
     // socket is used to transmit IPv4 or IPv6 traffic. However,
@@ -937,7 +937,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received  or for some other
-        // reasaon. This is because DHCP servers use signals to trigger
+        // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the
         // error returned by the function is due to the reception of the
@@ -1047,7 +1047,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received  or for some other
-        // reasaon. This is because DHCP servers use signals to trigger
+        // reason. This is because DHCP servers use signals to trigger
         // certain actions, like reconfiguration or graceful shutdown.
         // By catching a dedicated exception the caller will know if the
         // error returned by the function is due to the reception of the
@@ -1161,7 +1161,7 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     }
 
     const Iface::SocketCollection& socket_collection = iface->getSockets();
-    // A candidate being an end of the iterator marks that it is a begining of
+    // A candidate being an end of the iterator marks that it is a beginning of
     // the socket search and that the candidate needs to be set to the first
     // socket found.
     Iface::SocketCollection::const_iterator candidate = socket_collection.end();

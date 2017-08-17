@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -401,7 +401,7 @@ GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
             // Options must be represented by the same C++ class derived from
             // the Option class.
             EXPECT_TRUE(typeid(*option1) == typeid(*option2))
-                << "Comapared DHCP options, having option code "
+                << "Compared DHCP options, having option code "
                 << desc1.option_->getType() << " and belonging to the "
                 << space << " option space, are represented "
                 "by different C++ classes: "
@@ -532,7 +532,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     ASSERT_TRUE(hdsptr_);
 
     // The database is initially opened in "read-write" mode. We can
-    // insert some data to the databse.
+    // insert some data to the database.
     HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     ASSERT_TRUE(host);
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -848,7 +848,7 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
         EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
     }
 
-    // Finally, check that the hosts can be retrived by HW address or DUID
+    // Finally, check that the hosts can be retrieved by HW address or DUID
     ConstHostCollection all_by_id =
         hdsptr_->getAll(id, &host->getIdentifier()[0],
                         host->getIdentifier().size());
@@ -976,7 +976,7 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
         EXPECT_EQ(i + 1000, from_hds->getIPv6SubnetID());
     }
 
-    // Check that the hosts can all be retrived by HW address or DUID
+    // Check that the hosts can all be retrieved by HW address or DUID
     ConstHostCollection all_by_id = hdsptr_->getAll(id, &host->getIdentifier()[0],
                                                     host->getIdentifier().size());
     ASSERT_EQ(subnets, all_by_id.size());
@@ -1224,7 +1224,7 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted) {
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY));
     // Insert host and the options into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // getAll4(address)
@@ -1297,7 +1297,7 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:
@@ -1359,7 +1359,7 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
     // Fetch the host via:
@@ -1425,7 +1425,7 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
     // Fetch the host from the source.
@@ -1454,7 +1454,7 @@ GenericHostDataSourceTest::testMessageFields4() {
     // Add the host.
     ASSERT_NO_THROW(hdsptr_->add(host));
 
-    // Subnet id will be used in quries to the database.
+    // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:
@@ -1499,6 +1499,199 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
+void GenericHostDataSourceTest::testDeleteByAddr4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Now try to delete it: del(subnet-id, addr4)
+    EXPECT_TRUE(hdsptr_->del(subnet1, IOAddress("192.0.2.1")));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
+void GenericHostDataSourceTest::testDeleteById4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
+// Test checks when a IPv4 host with options is deleted that the options are
+// deleted as well.
+void GenericHostDataSourceTest::testDeleteById4Options() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v4 host...
+    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    // Add a bunch of DHCPv4 and DHCPv6 options for the host.
+    ASSERT_NO_THROW(addTestOptions(host1, true, DHCP4_ONLY));
+    // Insert host and the options into respective tables.
+
+    SubnetID subnet1 = host1->getIPv4SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // There must be some options
+    EXPECT_NE(0, countDBOptions4());
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBOptions4());
+}
+
+void GenericHostDataSourceTest::testDeleteById6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    SubnetID subnet1 = host1->getIPv6SubnetID();
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get6(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get6(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+}
+
+void GenericHostDataSourceTest::testDeleteById6Options() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    SubnetID subnet1 = host1->getIPv6SubnetID();
+    ASSERT_NO_THROW(addTestOptions(host1, true, DHCP6_ONLY));
+
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // Check that the options are stored...
+    EXPECT_NE(0, countDBOptions6());
+
+    // ... and so are v6 reservations.
+    EXPECT_NE(0, countDBReservations6());
+
+    // And then try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get6(subnet1,
+                                        host1->getIdentifierType(),
+                                        &host1->getIdentifier()[0],
+                                        host1->getIdentifier().size());
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                              &host1->getIdentifier()[0],
+                              host1->getIdentifier().size()));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get6(subnet1,
+                                       host1->getIdentifierType(),
+                                       &host1->getIdentifier()[0],
+                                       host1->getIdentifier().size());
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBOptions6());
+
+    // Check the options are indeed gone.
+    EXPECT_EQ(0, countDBReservations6());
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc
+

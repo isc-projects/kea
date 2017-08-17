@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,17 +74,15 @@ public:
 
     /// @brief Runs timers for specified time.
     ///
-    /// Internally, this method calls @c IfaceMgr::receive6 to run the
-    /// callbacks for the installed timers.
-    ///
+    /// @param io_service Pointer to the IO service to be ran.
     /// @param timeout_ms Amount of time after which the method returns.
-    void runTimersWithTimeout(const long timeout_ms) {
-        isc::util::Stopwatch stopwatch;
-        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
-            // Block for up to one millisecond waiting for the timers'
-            // callbacks to be executed.
-            IfaceMgr::instancePtr()->receive6(0, 1000);
-        }
+    void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms) {
+        IntervalTimer timer(*io_service);
+        timer.setup([this, &io_service]() {
+            io_service->stop();
+        }, timeout_ms, IntervalTimer::ONE_SHOT);
+        io_service->run();
+        io_service->get_io_service().reset();
     }
 
     static const char* TEST_FILE;
@@ -169,6 +167,32 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ("2001:db8:3::", pools3.at(0)->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:3::ffff:ffff:ffff", pools3.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
+}
+
+// This test verifies that the configurations for various servers
+// can coexist and that the DHCPv6 configuration parsers will simply
+// ignore them.
+TEST_F(JSONFileBackendTest, serverConfigurationsCoexistence) {
+    std::string config = "{ \"Dhcp6\": {"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"preferred-lifetime\": 1000, \n"
+        "\"valid-lifetime\": 4000 }, "
+        "\"Dhcp4\": { },"
+        "\"DhcpDdns\": { },"
+        "\"Control-agent\": { }"
+        "}";
+
+    writeFile(TEST_FILE, config);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using the config file.
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
 }
 
 // This test checks if configuration can be read from a JSON file
@@ -485,7 +509,7 @@ TEST_F(JSONFileBackendTest, timers) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -521,7 +545,7 @@ TEST_F(JSONFileBackendTest, timers) {
 
     // Poll the timers for a while to make sure that each of them is executed
     // at least once.
-    ASSERT_NO_THROW(runTimersWithTimeout(5000));
+    ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 5000));
 
     // Verify that the leases in the database have been processed as expected.
 
@@ -562,7 +586,7 @@ TEST_F(JSONFileBackendTest, serverId) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -593,7 +617,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -696,7 +720,7 @@ testBackendReconfiguration(const std::string& backend_first,
                            const std::string& backend_second) {
     writeFile(TEST_FILE, createConfiguration(backend_first));
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<NakedControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv6Srv()));
     srv->setConfigFile(TEST_FILE);

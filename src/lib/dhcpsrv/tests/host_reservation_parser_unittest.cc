@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,10 +14,14 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <testutils/test_to_element.h>
 #include <boost/pointer_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <sstream>
@@ -27,6 +31,7 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -115,29 +120,26 @@ protected:
 
         ElementPtr config_element = Element::fromJSON(config);
 
-        ParserType parser(SubnetID(10));
-        ASSERT_NO_THROW(parser.build(config_element));
+        HostPtr host;
+        ParserType parser;
+        ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
 
-        // Retrieve a host.
-        HostCollection hosts;
-        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
-        ASSERT_EQ(1, hosts.size());
+        ASSERT_TRUE(host);
 
         // There should be no options assigned to a host.
-        EXPECT_TRUE(hosts[0]->getCfgOption4()->empty());
-        EXPECT_TRUE(hosts[0]->getCfgOption6()->empty());
+        EXPECT_TRUE(host->getCfgOption4()->empty());
+        EXPECT_TRUE(host->getCfgOption6()->empty());
     }
 
-    /// @brief This test verfies that the parser can parse a DHCPv4
+    /// @brief This test verifies that the parser can parse a DHCPv4
     /// reservation configuration including a specific identifier.
     ///
     /// @param identifier_name Identifier name.
     /// @param identifier_type Identifier type.
     void testIdentifier4(const std::string& identifier_name,
                          const std::string& identifier_value,
-                         const Host::IdentifierType& expected_identifier_type,
-                         const std::vector<uint8_t>& expected_identifier) const {
+                         const Host::IdentifierType& /*expected_identifier_type*/,
+                         const std::vector<uint8_t>& /*expected_identifier*/) const {
         std::ostringstream config;
         config << "{ \"" << identifier_name << "\": \"" << identifier_value
                << "\","
@@ -146,24 +148,18 @@ protected:
 
         ElementPtr config_element = Element::fromJSON(config.str());
 
-        HostReservationParser4 parser(SubnetID(10));
-        ASSERT_NO_THROW(parser.build(config_element));
+        HostPtr host;
+        HostReservationParser4 parser;
+        ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+        ASSERT_TRUE(host);
 
-        CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
-        HostCollection hosts;
-        ASSERT_NO_THROW(hosts = cfg_hosts->getAll(expected_identifier_type,
-                                                  &expected_identifier[0],
-                                                  expected_identifier.size()));
-
-        ASSERT_EQ(1, hosts.size());
-
-        EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-        EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
-        EXPECT_EQ("192.0.2.112", hosts[0]->getIPv4Reservation().toText());
-        EXPECT_TRUE(hosts[0]->getHostname().empty());
+        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(0, host->getIPv6SubnetID());
+        EXPECT_EQ("192.0.2.112", host->getIPv4Reservation().toText());
+        EXPECT_TRUE(host->getHostname().empty());
     }
 
-    /// @brief This test verfies that the parser returns an error when
+    /// @brief This test verifies that the parser returns an error when
     /// configuration is invalid.
     ///
     /// @param config JSON configuration to be tested.
@@ -171,8 +167,12 @@ protected:
     template<typename ParserType>
     void testInvalidConfig(const std::string& config) const {
         ElementPtr config_element = Element::fromJSON(config);
-        ParserType parser(SubnetID(10));
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        HostPtr host;
+        ParserType parser;
+        EXPECT_THROW({
+            host = parser.parse(SubnetID(10), config_element);
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+        }, isc::Exception);
     }
 
     /// @brief HW Address object used by tests.
@@ -215,7 +215,78 @@ HostReservationParserTest::TearDown() {
     CfgMgr::instance().clear();
 }
 
-// This test verfies that the parser can parse the reservation entry for
+/// @brief class of subnet_id reservations
+class CfgHostsSubnet : public CfgToElement {
+public:
+    /// @brief constructor
+    CfgHostsSubnet(ConstCfgHostsPtr hosts, SubnetID id)
+        : hosts_(hosts), id_(id) { }
+
+    /// @brief unparse method
+    ElementPtr toElement() const;
+
+private:
+    /// @brief the host reservation configuration
+    ConstCfgHostsPtr hosts_;
+
+    /// @brief the subnet ID
+    SubnetID id_;
+};
+
+ElementPtr
+CfgHostsSubnet::toElement() const {
+    CfgHostsList list;
+    try {
+        list.internalize(hosts_->toElement());
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "CfgHostsSubnet::toElement: " << ex.what();
+    }
+    ElementPtr result = boost::const_pointer_cast<Element>(list.get(id_));
+
+    // Strip
+    for (size_t i = 0; i < result->size(); ++i) {
+        ElementPtr resv = result->getNonConst(i);
+        ConstElementPtr ip_address = resv->get("ip-address");
+        if (ip_address && (ip_address->stringValue() == "0.0.0.0")) {
+            resv->remove("ip-address");
+        }
+        ConstElementPtr ip_addresses = resv->get("ip-addresses");
+        if (ip_addresses && ip_addresses->empty()) {
+            resv->remove("ip-addresses");
+        }
+        ConstElementPtr prefixes = resv->get("prefixes");
+        if (prefixes && prefixes->empty()) {
+            resv->remove("prefixes");
+        }
+        ConstElementPtr hostname = resv->get("hostname");
+        if (hostname && hostname->stringValue().empty()) {
+            resv->remove("hostname");
+        }
+        ConstElementPtr next_server = resv->get("next-server");
+        if (next_server && (next_server->stringValue() == "0.0.0.0")) {
+            resv->remove("next-server");
+        }
+        ConstElementPtr server_hostname = resv->get("server-hostname");
+        if (server_hostname && server_hostname->stringValue().empty()) {
+            resv->remove("server-hostname");
+        }
+        ConstElementPtr boot_file_name = resv->get("boot-file-name");
+        if (boot_file_name && boot_file_name->stringValue().empty()) {
+            resv->remove("boot-file-name");
+        }
+        ConstElementPtr client_classess = resv->get("client-classes");
+        if (client_classess && client_classess->empty()) {
+            resv->remove("client-classes");
+        }
+        ConstElementPtr option_data = resv->get("option-data");
+        if (option_data && option_data->empty()) {
+            resv->remove("option-data");
+        }
+    }
+    return (result);
+}
+
+// This test verifies that the parser can parse the reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp4HWaddr) {
     testIdentifier4("hw-address", "1:2:3:4:5:6", Host::IDENT_HWADDR,
@@ -280,15 +351,18 @@ TEST_F(HostReservationParserTest, dhcp4ClientIdHexWithPrefix) {
 // This test verifies that the parser can parse the reservation entry
 // when IPv4 address is specified, but hostname is not.
 TEST_F(HostReservationParserTest, dhcp4NoHostname) {
-    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0a\","
         "\"ip-address\": \"192.0.2.10\" }";
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
 
@@ -298,6 +372,19 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
+
+    // lower duid value
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that it is possible to specify DHCPv4 client classes
@@ -308,10 +395,14 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
 
@@ -321,6 +412,18 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
     ASSERT_EQ(2, classes.size());
     EXPECT_EQ(1, classes.count("foo"));
     EXPECT_EQ(1, classes.count("bar"));
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that the parser can parse reservation entry
@@ -334,10 +437,14 @@ TEST_F(HostReservationParserTest, dhcp4MessageFields) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
@@ -349,6 +456,24 @@ TEST_F(HostReservationParserTest, dhcp4MessageFields) {
     EXPECT_EQ("192.0.2.11", hosts[0]->getNextServer().toText());
     EXPECT_EQ("some-name.example.org", hosts[0]->getServerHostname());
     EXPECT_EQ("/tmp/some-file.efi", hosts[0]->getBootFileName());
+
+    // canonize hw-address
+    config_element->set("hw-address",
+                        Element::create(std::string("01:02:03:04:05:06")));
+    ElementPtr expected = Element::createList();
+    expected->add(config_element);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>(expected, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that the invalid value of the next server is rejected.
@@ -421,10 +546,14 @@ TEST_F(HostReservationParserTest, noIPAddress) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
 
@@ -434,6 +563,20 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
+
+    // lower duid value
+    boost::algorithm::to_lower(config);
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies  that the configuration parser for host reservations
@@ -505,7 +648,7 @@ TEST_F(HostReservationParserTest, invalidParameterName) {
     testInvalidConfig<HostReservationParser4>(config);
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry for
+// This test verifies that the parser can parse the IPv6 reservation entry for
 // which hw-address is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6HWaddr) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
@@ -516,10 +659,14 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_, DuidPtr()));
 
@@ -551,9 +698,27 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
                                             64),
                                   prefixes));
 
+    // canonize prefixes
+    config_element->set("prefixes",
+                        Element::fromJSON("[ \"2001:db8:2000:101::/64\", "
+                                          "\"2001:db8:2000:102::/64\" ]"));
+    ElementPtr expected = Element::createList();
+    expected->add(config_element);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>(expected, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry for
+// This test verifies that the parser can parse the IPv6 reservation entry for
 // which DUID is a host identifier.
 TEST_F(HostReservationParserTest, dhcp6DUID) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
@@ -563,10 +728,14 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(12));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(12), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
 
@@ -589,6 +758,23 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
+
+    // remove prefixes and lower duid value
+    config_element->remove("prefixes");
+    config = prettyPrint(config_element);
+    boost::algorithm::to_lower(config);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(12));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(12));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that host reservation parser for DHCPv6 rejects
@@ -613,7 +799,7 @@ TEST_F(HostReservationParserTest, dhcp6ClientId) {
     testInvalidConfig<HostReservationParser6>(config);
 }
 
-// This test verfies that the parser can parse the IPv6 reservation entry
+// This test verifies that the parser can parse the IPv6 reservation entry
 // which lacks hostname parameter.
 TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
@@ -622,10 +808,14 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(12));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(12), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
 
@@ -648,6 +838,23 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
 
     IPv6ResrvRange prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(0, std::distance(prefixes.first, prefixes.second));
+
+    // remove prefixes and lower duid value
+    config_element->remove("prefixes");
+    config = prettyPrint(config_element);
+    boost::algorithm::to_lower(config);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(12));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(12));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that it is possible to specify DHCPv4 client classes
@@ -658,10 +865,14 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
@@ -672,6 +883,20 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
     ASSERT_EQ(2, classes.size());
     EXPECT_EQ(1, classes.count("foo"));
     EXPECT_EQ(1, classes.count("bar"));
+
+    // lower duid value
+    boost::algorithm::to_lower(config);
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that the configuration parser throws an exception
@@ -759,7 +984,8 @@ TEST_F(HostReservationParserTest, options4) {
            "\"code\": 7,"
            "\"csv-format\": true,"
            "\"space\": \"dhcp4\","
-           "\"data\": \"172.16.15.23\""
+           "\"data\": \"172.16.15.23\","
+           "\"always-send\": false"
         "},"
         "{"
            "\"name\": \"default-ip-ttl\","
@@ -769,10 +995,14 @@ TEST_F(HostReservationParserTest, options4) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser4 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
     ASSERT_EQ(1, hosts.size());
@@ -799,6 +1029,34 @@ TEST_F(HostReservationParserTest, options4) {
         OptionUint8>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_DEFAULT_IP_TTL));
     ASSERT_TRUE(opt_ttl);
     EXPECT_EQ(64, opt_ttl->getValue());
+
+    // Canonize the config
+    ElementPtr option = config_element->get("option-data")->getNonConst(0);
+    option->set("code", Element::create(DHO_NAME_SERVERS));
+    option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
+    option->set("csv-format", Element::create(true));
+    option->set("always-send", Element::create(false));
+    option = config_element->get("option-data")->getNonConst(1);
+    option = config_element->get("option-data")->getNonConst(2);
+    option->set("code", Element::create(DHO_DEFAULT_IP_TTL));
+    option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
+    option->set("csv-format", Element::create(true));
+    option->set("always-send", Element::create(false));
+    ElementPtr expected = Element::createList();
+    expected->add(config_element);
+
+    // Try to unparse it.
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>(expected, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet6(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that it is possible to specify DHCPv6 options for
@@ -816,7 +1074,8 @@ TEST_F(HostReservationParserTest, options6) {
            "\"code\": 27,"
            "\"csv-format\": true,"
            "\"space\": \"dhcp6\","
-           "\"data\": \"2001:db8:1::1204\""
+           "\"data\": \"2001:db8:1::1204\","
+           "\"always-send\": true"
         "},"
         "{"
            "\"name\": \"preference\","
@@ -826,11 +1085,15 @@ TEST_F(HostReservationParserTest, options6) {
 
     ElementPtr config_element = Element::fromJSON(config);
 
-    HostReservationParser6 parser(SubnetID(10));
-    ASSERT_NO_THROW(parser.build(config_element));
+    HostPtr host;
+    HostReservationParser6 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
+    ASSERT_TRUE(host);
 
     // One host should have been added to the configuration.
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_NO_THROW(cfg_hosts->add(host));
+
     HostCollection hosts;
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
     ASSERT_EQ(1, hosts.size());
@@ -857,6 +1120,34 @@ TEST_F(HostReservationParserTest, options6) {
         OptionUint8>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_PREFERENCE));
     ASSERT_TRUE(opt_prf);
     EXPECT_EQ(11, opt_prf->getValue());
+
+    // Canonize the config
+    ElementPtr option = config_element->get("option-data")->getNonConst(0);
+    option->set("code", Element::create(D6O_NAME_SERVERS));
+    option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    option->set("csv-format", Element::create(true));
+    option->set("always-send", Element::create(false));
+    option = config_element->get("option-data")->getNonConst(1);
+    option = config_element->get("option-data")->getNonConst(2);
+    option->set("code", Element::create(D6O_PREFERENCE));
+    option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    option->set("csv-format", Element::create(true));
+    option->set("always-send", Element::create(false));
+    config = prettyPrint(config_element);
+    boost::algorithm::to_lower(config);
+    
+    // Try to unparse it.
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[" + config + "]", cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(10));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
 // This test verifies that it is possible to specify an empty list of
@@ -981,7 +1272,7 @@ public:
     void testInvalidConfig(const std::string& config) const {
         ElementPtr config_element = Element::fromJSON(config);
         ParserType parser;
-        EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+        EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
     }
 
 };
@@ -995,7 +1286,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
@@ -1007,6 +1298,8 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_CLIENT_ID);
+
+    runToElementTest<CfgHostOperations>(config, *cfg);
 }
 
 // Test that list of supported DHCPv6 identifiers list is correctly
@@ -1017,7 +1310,7 @@ TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser6 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
@@ -1027,6 +1320,8 @@ TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
+
+    runToElementTest<CfgHostOperations>(config, *cfg);
 }
 
 // Test that invalid DHCPv4 identifier causes error.
@@ -1051,18 +1346,19 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser4 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(4, ids.size());
+    ASSERT_EQ(5, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
     EXPECT_EQ(*id++, Host::IDENT_CLIENT_ID);
+    EXPECT_EQ(*id++, Host::IDENT_FLEX);
 }
 
 // This test verifies that use of "auto" together with an explicit
@@ -1094,16 +1390,17 @@ TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
     ElementPtr config_element = Element::fromJSON(config);
 
     HostReservationIdsParser6 parser;
-    ASSERT_NO_THROW(parser.build(config_element));
+    ASSERT_NO_THROW(parser.parse(config_element));
 
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(2, ids.size());
+    ASSERT_EQ(3, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
     EXPECT_EQ(*id++, Host::IDENT_DUID);
+    EXPECT_EQ(*id++, Host::IDENT_FLEX);
 }
 
 // This test verifies that use of "auto" together with an explicit

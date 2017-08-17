@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -231,7 +231,7 @@ TEST_F(Rdata_SOA_Test, compare) {
 
     // Compare other numeric fields: 1076895760 = 0x40302010,
     // 270544960 = 0x10203040.  These are chosen to make sure that machine
-    // endian doesn't confuse the comparison results.
+    // endianness doesn't confuse the comparison results.
     compareCheck(generic::SOA(". . 270544960 0 0 0 0"),
                  generic::SOA(". . 1076895760 0 0 0 0"));
     compareCheck(generic::SOA(". . 0 270544960 0 0 0"),

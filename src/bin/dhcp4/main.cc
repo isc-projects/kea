@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,9 @@
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/parser_context.h>
+#include <dhcp4/json_config_parser.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
@@ -17,6 +20,7 @@
 
 #include <iostream>
 
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace std;
 
@@ -38,12 +42,13 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-c cfgfile] [-p number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
+    cerr << "  -t file: check the configuration file syntax and exit" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
@@ -56,11 +61,12 @@ main(int argc, char* argv[]) {
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
     bool verbose_mode = false; // Should server be verbose?
+    bool check_mode = false;   // Check syntax
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:t:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -77,6 +83,10 @@ main(int argc, char* argv[]) {
         case 'W':
             cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
+
+        case 't':
+            check_mode = true;
+            // falls through
 
         case 'c': // config file
             config_file = optarg;
@@ -112,6 +122,57 @@ main(int argc, char* argv[]) {
     if (config_file.empty()) {
         cerr << "Configuration file not specified." << endl;
         usage();
+    }
+
+    // This is the DHCPv4 server
+    CfgMgr::instance().setFamily(AF_INET);
+
+    if (check_mode) {
+        try {
+
+            // We need to initialize logging, in case any error messages are to be printed.
+            // This is just a test, so we don't care about lockfile.
+            setenv("KEA_LOCKFILE_DIR", "none", 0);
+            CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+            Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
+
+            // Check the syntax first.
+            Parser4Context parser;
+            ConstElementPtr json;
+            json = parser.parseFile(config_file, Parser4Context::PARSER_DHCP4);
+            if (!json) {
+                cerr << "No configuration found" << endl;
+                return (EXIT_FAILURE);
+            }
+            if (verbose_mode) {
+                cerr << "Syntax check OK" << endl;
+            }
+
+            // Check the logic next.
+            ConstElementPtr dhcp4 = json->get("Dhcp4");
+            if (!dhcp4) {
+                cerr << "Missing mandatory Dhcp4 element" << endl;
+                return (EXIT_FAILURE);
+            }
+            ControlledDhcpv4Srv server(0);
+            ConstElementPtr answer;
+
+            // Now we pass the Dhcp4 configuration to the server, but
+            // tell it to check the configuration only (check_only = true)
+            answer = configureDhcp4Server(server, dhcp4, true);
+
+            int status_code = 0;
+            answer = isc::config::parseAnswer(status_code, answer);
+            if (status_code == 0) {
+                return (EXIT_SUCCESS);
+            } else {
+                cerr << "Error encountered: " << answer->stringValue() << endl;
+                return (EXIT_FAILURE);
+            }
+        } catch (const std::exception& ex) {
+            cerr << "Syntax check failed with: " << ex.what() << endl;
+        }
+        return (EXIT_FAILURE);
     }
 
     int ret = EXIT_SUCCESS;

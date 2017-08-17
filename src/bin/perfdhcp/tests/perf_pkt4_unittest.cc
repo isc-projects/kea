@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -344,7 +344,7 @@ TEST_F(PerfPkt4Test, PackTransactionId) {
 }
 
 TEST_F(PerfPkt4Test, UnpackTransactionId) {
-    // Initialize packet data, lebgth 268, zeros only.
+    // Initialize packet data, length 268, zeros only.
     std::vector<uint8_t> in_data(268, 0);
 
     // Assume that transaction id is at offset 100.
@@ -377,7 +377,7 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
 }
 
 TEST_F(PerfPkt4Test, Writes) {
-    // Initialize intput buffer with 260 elements set to value 1.
+    // Initialize input buffer with 260 elements set to value 1.
     dhcp::OptionBuffer in_data(260, 1);
     // Initialize buffer to be used for write: 1,2,3,4,...,9
     dhcp::OptionBuffer write_buf(10);

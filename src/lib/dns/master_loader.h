@@ -132,7 +132,7 @@ public:
     /// \note While this method works even before the loading is complete (by
     ///     returning false in that case), it is meant to be called only after
     ///     finishing the load.
-    bool loadedSucessfully() const;
+    bool loadedSuccessfully() const;
 
     /// \brief Return the total size of the zone files and streams.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,7 +110,7 @@ public:
     ///
     /// @param type An expected type of the NameChangeRequest (Add or Remove).
     /// @param reverse An expected setting of the reverse update flag.
-    /// @param forward An expected setting of the forward udpate flag.
+    /// @param forward An expected setting of the forward update flag.
     /// @param addr A string representation of the IPv6 address held in the
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.

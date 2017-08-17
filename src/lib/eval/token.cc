@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,7 +179,17 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
         try {
             // Now that we have the right type of packet we can
             // get the option and return it.
-            return(pkt6.getRelayOption(option_code_, nest_level_));
+            if (nest_level_ >= 0) {
+                uint8_t nesting_level = static_cast<uint8_t>(nest_level_);
+                return(pkt6.getRelayOption(option_code_, nesting_level));
+            } else {
+                int nesting_level = pkt6.relay_info_.size() + nest_level_;
+                if (nesting_level < 0) {
+                    return (OptionPtr());
+                }
+                return(pkt6.getRelayOption(option_code_,
+                                           static_cast<uint8_t>(nesting_level)));
+            }
         }
         catch (const isc::OutOfRange&) {
             // The only exception we expect is OutOfRange if the nest
@@ -383,18 +393,29 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
         const Pkt6& pkt6 = dynamic_cast<const Pkt6&>(pkt);
+        uint8_t relay_level;
 
         try {
-        switch (type_) {
+            if (nest_level_ >= 0) {
+                relay_level = static_cast<uint8_t>(nest_level_);
+            } else {
+                int nesting_level = pkt6.relay_info_.size() + nest_level_;
+                if (nesting_level < 0) {
+                    // Don't throw OutOfRange here
+                    nesting_level = 32;
+                }
+                relay_level = static_cast<uint8_t>(nesting_level);
+            }
+            switch (type_) {
             // Now that we have the right type of packet we can
             // get the option and return it.
             case LINKADDR:
                 type_str = "linkaddr";
-                binary = pkt6.getRelay6LinkAddress(nest_level_).toBytes();
+                binary = pkt6.getRelay6LinkAddress(relay_level).toBytes();
                 break;
             case PEERADDR:
                 type_str = "peeraddr";
-                binary = pkt6.getRelay6PeerAddress(nest_level_).toBytes();
+                binary = pkt6.getRelay6PeerAddress(relay_level).toBytes();
                 break;
             }
         } catch (const isc::OutOfRange&) {
@@ -404,7 +425,7 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
             // Log what we pushed
             LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6_RANGE)
               .arg(type_str)
-              .arg(unsigned(nest_level_))
+              .arg(int(nest_level_))
               .arg("0x");
             return;
         }
@@ -422,7 +443,7 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6)
         .arg(type_str)
-        .arg(unsigned(nest_level_))
+        .arg(int(nest_level_))
         .arg(toHex(value));
 }
 

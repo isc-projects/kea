@@ -1,85 +1,92 @@
-# This is an example configuration file for the DHCPv4 server in Kea.
-# It is a basic scenario with one IPv4 subnet configured. It demnstrates
-# how to configure Kea to use various backends to store leases:
-# - memfile
-# - MySQL
-# - PostgreSQL
-# - CQL (Cassandra) backend
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It is a basic scenario with one IPv4 subnet configured. It demonstrates
+// how to configure Kea to use various backends to store leases:
+// - memfile
+// - MySQL
+// - PostgreSQL
+// - CQL (Cassandra) backend
 
 { "Dhcp4":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify lease type. Exactly one lease-database section
-# should be present. Make sure you uncomment only one.
+// We need to specify lease type. Exactly one lease-database section
+// should be present. Make sure you uncomment only one.
 
-# 1. memfile backend. Leases information will be stored in flat CSV file.
-# This is the easiest backend to use as it does not require any extra
-# dependencies or services running.
-#  "lease-database": {
-#      "type": "memfile"
-#  },
+// 1. memfile backend. Leases information will be stored in flat CSV file.
+// This is the easiest backend to use as it does not require any extra
+// dependencies or services running.
+//  "lease-database": {
+//      "type": "memfile",
+//      "persist": true,
+//      "lfc-interval": 3600
+//  },
 
-# 2. MySQL backend. Leases will be stored in MySQL database. Make sure it
-# is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
-# parameters are type and name. If other parameters are not specified,
-# Kea will assume the database is avaiable on localhost, that user and
-# password is not necessary to connect and that timeout is 5 seconds.
-# Kea must be compiled with --with-dhcp-mysql option to use this backend.
-#  "lease-database": {
-#      "type": "mysql",
-#      "name": "keatest",
-#      "host": "localhost",
-#      "user": "keatest",
-#      "password": "secret1",
-#      "connect-timeout": 3
-#  },
+// 2. MySQL backend. Leases will be stored in MySQL database. Make sure it
+// is up, running and properly initialized. See kea-admin documentation
+// for details on how to initialize the database. The only strictly required
+// parameters are type and name. If other parameters are not specified,
+// Kea will assume the database is available on localhost, that user and
+// password is not necessary to connect and that timeout is 5 seconds.
+// Kea must be compiled with --with-dhcp-mysql option to use this backend.
+//  "lease-database": {
+//      "type": "mysql",
+//      "name": "keatest",
+//      "host": "localhost",
+//      "port": 3306,
+//      "user": "keatest",
+//      "password": "secret1",
+//      "connect-timeout": 3
+//  },
 
-# 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
-# sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
-# parameters are type and name. If other parameters are not specified,
-# Kea will assume the database is avaiable on localhost, that user and
-# password is not necessary to connect and that timeout is 5 seconds.
-# Kea must be compiled with --with-dhcp-pgsql option to use this backend.
-#  "lease-database": {
-#      "type": "pgsql",
-#      "name": "keatest",
-#      "host": "localhost",
-#      "user": "keatest",
-#      "password": "secret1"
-#  },
+// 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
+// sure it is up, running and properly initialized. See kea-admin documentation
+// for details on how to initialize the database. The only strictly required
+// parameters are type and name. If other parameters are not specified,
+// Kea will assume the database is available on localhost, that user and
+// password is not necessary to connect and that timeout is 5 seconds.
+// Kea must be compiled with --with-dhcp-pgsql option to use this backend.
+//  "lease-database": {
+//      "type": "pgsql",
+//      "name": "keatest",
+//      "host": "localhost",
+//      "port": 5432,
+//      "user": "keatest",
+//      "password": "secret1",
+//      "connect-timeout": 3
+//  },
 
-# 4. CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
-# sure it is up, running and properly initialized. See kea-admin documentation
-# for details on how to intialize the database. The only strictly required
-# parameters are type, keyspace and contact_points. At least one contact point
-# must be specified, but more than one is required for redundancy. Make sure
-# you specify the contact points without spaces. Kea must be compiled with
-# --with-cql option to use this backend.
-#  "lease-database": {
-#      "type": "cql",
-#      "keyspace": "keatest",
-#      "contact_points": "192.0.2.1,192.0.2.2,192.0.2.3"
-#  },
+// 4. CQL (Cassandra) backend. Leases will be stored in Cassandra
+// database. Make sure it is up, running and properly initialized. See
+// kea-admin documentation for details on how to initialize the
+// database. The only strictly required parameters are type, keyspace
+// and contact-points. At least one contact point must be specified, but
+// more than one is required for redundancy. Make sure you specify the
+// contact points without spaces. Kea must be compiled with --with-cql
+// option to use this backend.
+//  "lease-database": {
+//      "type": "cql",
+//      "keyspace": "keatest",
+//      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
+//      "port": 9042
+//  },
 
-# Addresses will be assigned with a lifetime of 4000 seconds.
+// Addresses will be assigned with a lifetime of 4000 seconds.
   "valid-lifetime": 4000,
 
-# Renew and rebind timers are commented out. This implies that options
-# 58 and 59 will not be sent to the client. In this case it is up to
-# the client to pick the timer values according to RFC2131. Uncomment the
-# timers to send these options to the client.
-#  "renew-timer": 1000,
-#  "rebind-timer": 2000,
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
 
-# The following list defines subnets. We have only one subnet
-# here. We tell Kea that it is directly available over local interface.
+// The following list defines subnets. We have only one subnet
+// here. We tell Kea that it is directly available over local interface.
   "subnet4": [
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
@@ -89,8 +96,9 @@
   ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

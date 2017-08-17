@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define EVALUATE_H
 
 #include <eval/token.h>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -22,7 +23,10 @@ namespace dhcp {
 ///        stack at the end of the evaluation
 /// @throw EvalTypeError if the value at the top of the stack at the
 ///        end of the evaluation is not "false" or "true"
-bool evaluate(const Expression& expr, Pkt& pkt);
+bool evaluateBool(const Expression& expr, Pkt& pkt);
+
+
+std::string evaluateString(const Expression& expr, Pkt& pkt);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
