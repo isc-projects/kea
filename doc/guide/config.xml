@@ -1,11 +1,13 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config"><info><title>Kea Configuration</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config">
+  <title>Kea Configuration</title>
 
   <para>Kea is using JSON structures to handle configuration. Previously
   we there was a concept of other configuration backends, but that never was
   implemented and the idea was abandoned.</para>
 
-  <section xml:id="json"><info><title>JSON Configuration</title></info>
+  <section xml:id="json">
+    <title>JSON Configuration</title>
     <para>JSON is notation used throughout the Kea project. The most obvious
     usage is for configuration file, but it is also used for sending commands
     over Management API (see <xref linkend="ctrl-channel"/>) and for
@@ -16,7 +18,8 @@
     The JSON backend uses certain signals to influence Kea. The
     configuration file is specified upon startup using the -c parameter.</para>
 
-    <section xml:id="json-format"><info><title>JSON Syntax</title></info>
+    <section xml:id="json-format">
+      <title>JSON Syntax</title>
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
       in an extended JSON format. Basic JSON is defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link>. Note that Kea
       1.2 introduces a new parser that is better at following the JSON spec.  In
@@ -126,7 +129,9 @@
         where extra parameters may appear are denoted by an ellipsis.</para>
     </section>
 
-    <section><info><title>Simplified Notation</title></info>
+    <section>
+      <title>Simplified Notation</title>
+
         <para>It is sometimes convenient to refer to a specific element in the
         configuration hierarchy. Each hierarchy level is separated by a slash.
         If there is an array, a specific instance within that array is referenced by

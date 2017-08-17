@@ -1,4 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+<!-- Converted by db4-upgrade version 1.1 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
 
   <info>
@@ -50,8 +50,8 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection><info><title>DESCRIPTION</title></info>
-    
+  <refsect1>
+    <title>DESCRIPTION</title>
     <para>
       The <command>kea-lfc</command> service process removes redundant
       information from the files used to provide persistent storage for
@@ -60,10 +60,10 @@
       is usually no need to do this.  It will be run on a periodic basis
       by the Kea DHCP servers.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>ARGUMENTS</title></info>
-    
+  <refsect1>
+    <title>ARGUMENTS</title>
 
     <para>The arguments are as follows:</para>
 
@@ -180,10 +180,10 @@
         </para></listitem>
       </varlistentry>
     </variablelist>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>DOCUMENTATION</title></info>
-    
+  <refsect1>
+    <title>DOCUMENTATION</title>
     <para>Kea comes with an extensive Kea User's Guide documentation
       that covers all aspects of running the Kea software -
       compilation, installation, configuration, configuration examples
@@ -201,10 +201,10 @@
     <para>
       Kea project website is available at: http://kea.isc.org.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>MAILING LISTS AND SUPPORT</title></info>
-    
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
     <para>
       There are two mailing lists available for Kea project. kea-users
       (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
@@ -217,18 +217,18 @@
       ISC provides professional support for Kea services. See
       https://www.isc.org/kea/ for details.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>HISTORY</title></info>
-    
+  <refsect1>
+    <title>HISTORY</title>
     <para>
       The <command>kea-lfc</command> process was first coded in January
       2015 by the ISC Kea/DHCP team.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>SEE ALSO</title></info>
-    
+  <refsect1>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry>
         <refentrytitle>kea-dhcp4</refentrytitle>
@@ -242,6 +242,11 @@
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 
@@ -263,6 +268,6 @@
       <citetitle>Kea Administrator's Guide</citetitle>.
 
     </para>
-  </refsection>
+  </refsect1>
 
 </refentry>

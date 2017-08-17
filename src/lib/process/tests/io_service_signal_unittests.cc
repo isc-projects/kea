@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ namespace process {
 /// @brief Test fixture for testing the use of IOSignals.
 ///
 /// This fixture is exercises IOSignaling as it is intended to be used in
-/// an application in conjuction with util::SignalSet.
+/// an application in conjunction with util::SignalSet.
 class IOSignalTest : public ::testing::Test {
 public:
     /// @brief IOService instance to process IO.
@@ -126,7 +126,7 @@ public:
     }
 };
 
-// Used for constuctor tests.
+// Used for constructor tests.
 void dummyHandler(IOSignalId) {
 }
 
@@ -241,7 +241,7 @@ TEST_F(IOSignalTest, singleSignalTest) {
     // Use TimedSignal to generate SIGINT 100 ms after we start IOService::run.
     TimedSignal sig_int(*io_service_, SIGINT, 100);
 
-    // The first handler executed is the IOSignal's internal timer expirey
+    // The first handler executed is the IOSignal's internal timer expire
     // callback.
     io_service_->run_one();
 
@@ -356,8 +356,8 @@ TEST_F(IOSignalTest, mixedSignals) {
     // Verify we received the expected number of signals.
     ASSERT_EQ(stop_at_count_, processed_signals_.size());
 
-    // There is no gaurantee that the signals will always be delivered in the
-    // order they are raised, but all of them should get delievered.  Loop
+    // There is no guarantee that the signals will always be delivered in the
+    // order they are raised, but all of them should get delivered.  Loop
     // through and tally them up.
     int sigint_cnt = 0;
     int sigusr1_cnt = 0;

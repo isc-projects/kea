@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,10 @@ class Dhcpv6Srv;
 /// extra parameter is a reference to DHCPv6 server component. It is currently
 /// not used and CfgMgr::instance() is accessed instead.
 ///
+/// Test-only mode is supported. If check_only flag is set to true, the
+/// configuration is parsed, but the actual change is not applied. The goal is
+/// to have the ability to test configuration.
+///
 /// This method does not throw. It catches all exceptions and returns them as
 /// reconfiguration statuses. It may return the following response codes:
 /// 0 - configuration successful
@@ -33,15 +37,12 @@ class Dhcpv6Srv;
 ///
 /// @param server DHCPv6 server object.
 /// @param config_set a new configuration for DHCPv6 server.
+/// @param check_only whether this configuration is for testing only
 /// @return answer that contains result of the reconfiguration.
 /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
-
-/// @brief Returns the global context
-///
-/// @returns a reference to the global context
-ParserContextPtr& globalContext();
+configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
+                     bool check_only = false);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +63,10 @@ public:
     ///
     /// This will return the control to the caller of the \c run() method.
     void stop();
+
+    /// \brief Removes IO service work object to let it finish running
+    /// when all handlers have been invoked.
+    void stopWork();
 
     /// \brief Return the native \c io_service object used in this wrapper.
     ///

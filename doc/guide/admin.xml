@@ -1,7 +1,10 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="admin"><info><title>Kea Database Administration</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="admin">
+  <title>Kea Database Administration</title>
 
-  <section xml:id="kea-database-version"><info><title>Databases and Database Version Numbers</title></info>
+  <section xml:id="kea-database-version">
+    <title>Databases and Database Version Numbers</title>
+
     <para>
       Kea supports storing leases and host reservations (i.e. static
       assignments of addresses, prefixes and options) in one of
@@ -44,7 +47,9 @@
     </para>
   </section>
 
-  <section xml:id="kea-admin"><info><title>The kea-admin Tool</title></info>
+  <section xml:id="kea-admin">
+    <title>The kea-admin Tool</title>
+
     <para>
       To manage the databases, Kea provides the
       <command>kea-admin</command> tool. It is able to initialize
@@ -139,28 +144,30 @@
     </para>
   </section>
 
-  <section xml:id="supported-databases"><info><title>Supported Databases</title></info>
+  <section xml:id="supported-databases">
+    <title>Supported Databases</title>
+
     <para>The following table presents the capabilities of available
     backends. Please refer to the specific sections dedicated to each backend to
     better understand their capabilities and limitations. Choosing the right
     backend may be essential for success or failure of your deployment.</para>
 
     <para>
-      <table frame="all" id="backends">
+      <table frame="all" xml:id="backends">
         <title>List of available backends</title>
-        <tgroup cols='5'>
-          <colspec colname='feature'/>
-          <colspec colname='memfile'/>
-          <colspec colname='mysql'/>
-          <colspec colname='pgsql'/>
-          <colspec colname='cql' colwidth='1.5*'/>
+        <tgroup cols="2">
+          <colspec colname="feature"/>
+          <colspec colname="memfile"/>
+          <colspec colname="mysql"/>
+          <colspec colname="pgsql"/>
+          <colspec colname="cql"/>
           <thead>
             <row>
               <entry>Feature</entry>
               <entry>Memfile</entry>
               <entry>MySQL</entry>
               <entry>PostgreSQL</entry>
-              <entry>CQL (Cassandra)</entry>
+              <entry>CQL(Cassandra)</entry>
             </row>
           </thead>
           <tbody>
@@ -194,7 +201,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>yes</entry>
+              <entry>no</entry>
             </row>
 
             <row>
@@ -202,7 +209,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>yes</entry>
+              <entry>no</entry>
             </row>
 
           </tbody>
@@ -210,7 +217,9 @@
        </table>
     </para>
 
-    <section><info><title>memfile</title></info>
+    <section>
+      <title>memfile</title>
+
       <para>
         The memfile backend is able to store lease information, but is not able to
         store host reservation details: these must be stored in the configuration
@@ -226,7 +235,8 @@
         present. Necessary disk write permission is required.
       </para>
 
-      <section xml:id="memfile-upgrade"><info><title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title></info>
+      <section xml:id="memfile-upgrade">
+        <title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title>
         <para>
         There are no special steps required to upgrade memfile lease files
         from an earlier version of Kea to a new version of Kea.
@@ -249,14 +259,18 @@
       <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
     </section>
 
-    <section><info><title>MySQL</title></info>
+    <section>
+      <title>MySQL</title>
+
       <para>
         MySQL is able to store leases, host reservations and options defined on
         a per host basis. This section can be safely ignored
         if you chose to store the data in other backends.
       </para>
 
-      <section xml:id="mysql-database-create"><info><title>First Time Creation of the MySQL Database</title></info>
+      <section xml:id="mysql-database-create">
+        <title>First Time Creation of the MySQL Database</title>
+
         <para>
           If you are setting the MySQL database for the first time,
           you need to create the database area within MySQL and set up
@@ -268,7 +282,7 @@
         <para>
           To create the database:
 
-          <orderedlist inheritnum="ignore" continuation="restarts">
+          <orderedlist>
             <listitem>
               <para>
                 Log into MySQL as "root":
@@ -352,7 +366,9 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
         </para>
       </section>
 
-      <section xml:id="mysql-upgrade"><info><title>Upgrading a MySQL Database from an Earlier Version of Kea</title></info>
+      <section xml:id="mysql-upgrade">
+        <title>Upgrading a MySQL Database from an Earlier Version of Kea</title>
+
         <para>
           Sometimes a new Kea version may use newer database schema, so
           there will be a need to upgrade the existing database. This can
@@ -384,22 +400,24 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of MySQL sections -->
 
-    <section><info><title>PostgreSQL</title></info>
+    <section>
+      <title>PostgreSQL</title>
+
       <para>
-        PostgreSQL is able to store leases, host reservations and options
-        defined on a per host basis.
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
       </para>
 
-      <section xml:id="pgsql-database-create"><info><title>First Time Creation of the PostgreSQL Database</title></info>
+      <section xml:id="pgsql-database-create">
+        <title>First Time Creation of the PostgreSQL Database</title>
+
         <para>
           The first task is to create both the lease database and the
           user under which the servers will access it. A number of steps
           are required:
 
-          <orderedlist inheritnum="ignore" continuation="restarts">
+          <orderedlist>
             <listitem>
               <para>
                 Log into PostgreSQL as "root":
@@ -523,7 +541,8 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
         </para>
       </section>
 
-      <section><info><title>Initialize the PostgreSQL Database Using kea-admin</title></info>
+      <section>
+        <title>Initialize the PostgreSQL Database Using kea-admin</title>
         <para>
           If you elected not to create the tables manually, you can do
           so now by running the <command>kea-admin</command> tool:
@@ -539,7 +558,8 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
           by <command>kea-admin</command>.)
         </para>
       </section>
-      <section xml:id="pgsql-upgrade"><info><title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title></info>
+      <section xml:id="pgsql-upgrade">
+        <title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title>
         <para>
           The PostgreSQL database schema can be upgraded using the same tool and
           commands as described in <xref linkend="mysql-upgrade"/>, with the
@@ -559,13 +579,16 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of PostgreSQL sections -->
 
-    <section><info><title>CQL (Cassandra)</title></info>
+    <section>
+      <title>CQL (Cassandra)</title>
+
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental. Please use
-        with caution. The Casandra backend is currently able to store leases,
-        host reservations and options defined on a per host basis.
+        testing as other backends, it is considered experimental: please use
+        with caution. The CQL backend is currently able to store leases only. The
+        ability to store host reservations will likely be added some time in the
+        future.
       </para>
 
       <para>
@@ -574,7 +597,9 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
         store the data in other backends.
       </para>
 
-    <section xml:id="cql-database-create"><info><title>First Time Creation of the Cassandra Database</title></info>
+    <section xml:id="cql-database-create">
+      <title>First Time Creation of the Cassandra Database</title>
+
       <para>
         If you are setting up the CQL database for the first time, you need to
         create the keyspace area within CQL. This needs to be done manually:
@@ -583,7 +608,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
 
       <para>
         To create the database:
-        <orderedlist inheritnum="ignore" continuation="restarts">
+        <orderedlist>
           <listitem>
             <para>
               Export CQLSH_HOST environment variable:
@@ -644,7 +669,9 @@ $ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable
       </para>
     </section>
 
-    <section xml:id="cql-upgrade"><info><title>Upgrading a CQL Database from an Earlier Version of Kea</title></info>
+    <section xml:id="cql-upgrade">
+      <title>Upgrading a CQL Database from an Earlier Version of Kea</title>
+
       <para>
         Sometimes a new Kea version may use newer database schema, so
         there will be a need to upgrade the existing database. This can
@@ -676,7 +703,8 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
     </section>
   </section> <!-- end of CQL sections -->
 
-    <section><info><title>Using Read-Only Databases with Host Reservations</title></info>
+    <section>
+      <title>Using Read-Only Databases with Host Reservations</title>
       <para>If a read-only database is used for storing host reservations,
       Kea must be explicitly configured to operate on the database in
       read-only mode.
@@ -687,21 +715,58 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       </para>
     </section>
 
-    <section><info><title>Limitations Related to the use of SQL Databases</title></info>
-      <para>
-        The lease expiration time is stored in the SQL database for each lease
-        as a timestamp value. Kea developers observed that MySQL database doesn't
-        accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
-        from the beginning of the epoch. At the same time, some versions of PostgreSQL
-        do accept greater values but the value is altered when it is read back.
-        For this reason the lease database backends put the restriction for the
-        maximum timestamp to be stored in the database, which is equal to the
-        maximum signed 32-bit number. This effectively means that the current
-        Kea version can't store the leases which expiration time is later than
-        2147483647 seconds since the beginning of the epoch (around year 2038).
-        This will be fixed when the database support for longer timestamps
-        is available.
-      </para>
+    <section>
+      <title>Limitations Related to the use of SQL Databases</title>
+
+
+      <section>
+        <title>Year 2038 issue</title>
+        <para>
+          The lease expiration time is stored in the SQL database for each lease
+          as a timestamp value. Kea developers observed that MySQL database doesn't
+          accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
+          from the beginning of the epoch. At the same time, some versions of PostgreSQL
+          do accept greater values but the value is altered when it is read back.
+          For this reason the lease database backends put the restriction for the
+          maximum timestamp to be stored in the database, which is equal to the
+          maximum signed 32-bit number. This effectively means that the current
+          Kea version can't store the leases which expiration time is later than
+          2147483647 seconds since the beginning of the epoch (around year 2038).
+          This will be fixed when the database support for longer timestamps
+          is available.
+        </para>
+      </section>
+
+      <section>
+        <title>Server Terminates when Database Connection is Lost</title>
+        <para>
+          If Kea is configured to use an external database it opens a connection
+          to the database and requires that this connection is not interrupted.
+          When the database connection breaks, e.g. as a result of SQL server
+          restart, DHCP servers will terminate indicating a fatal error. In such
+          a case, the system administrator is required to start the database and
+          then "manually" start Kea to resume the service.
+        </para>
+
+        <para>
+          Although the engineering team is planning to implement some form of
+          reconnect mechanism in the future, this will mostly be applicable in
+          cases when the database service is restarted and the connection
+          down time is relatively short. The DHCP server can't provide its
+          service as long as the database is down, because it can't store
+          leases being assigned to the clients. The server will have to
+          reject any DHCP messages as long as the connection is down and
+          terminate if the reconnection attempt fails multiple times.
+        </para>
+
+        <para>
+          Because the database connection is critical for the operation of the
+          DHCP service, the current behavior is to terminate when that
+          connection is unavailable to indicate that server is in inconsistent
+          state and can't serve clients.
+        </para>
+      </section>
+
     </section>
 
   </section> <!-- End of Database sections -->

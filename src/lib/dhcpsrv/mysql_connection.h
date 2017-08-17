@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ extern const int MLM_MYSQL_FETCH_FAILURE;
 /// @name Current database schema version values.
 //@{
 const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 5;
-const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 0;
+const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 1;
 
 //@}
 
@@ -381,7 +381,7 @@ public:
             switch(mysql_errno(mysql_)) {
                 // These are the ones we consider fatal. Remember this method is
                 // used to check errors of API calls made subsequent to successfully
-                // connecting.  Errors occuring while attempting to connect are
+                // connecting.  Errors occurring while attempting to connect are
                 // checked in the connection code. An alternative would be to call
                 // mysql_ping() - assuming autoreconnect is off. If that fails
                 // then we know connection is toast.

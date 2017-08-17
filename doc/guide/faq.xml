@@ -1,5 +1,6 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="faq"><info><title>Frequently Asked Questions</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="faq">
+  <title>Frequently Asked Questions</title>
 
   <para>This chapter contains a number of frequently asked questions and
   troubleshooting tips. It currently lacks content, but it is expected to grow
@@ -11,15 +12,21 @@
     at least 2 years. If you have something short term, please consider putting
     it in the known issues list. -->
 
-  <section xml:id="faq-generic"><info><title>General Frequently Asked Questions</title></info>
+  <section xml:id="faq-generic">
+    <title>General Frequently Asked Questions</title>
 
-    <section xml:id="q1-generic"><info><title>Where did the Kea name came from?</title></info>
+    <section xml:id="q1-generic">
+      <title>Where did the Kea name came from?</title>
+
       <para>Kea is the name of a high mountain parrot living in New Zealand.
       See this <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://lists.isc.org/pipermail/kea-users/2014-October/000032.html">https://lists.isc.org/pipermail/kea-users/2014-October/000032.html</uri>
       for an extended answer.</para>
+
     </section>
 
-    <section xml:id="q2-generic"><info><title>Feature X is not supported yet. When/if will it be available?</title></info>
+    <section xml:id="q2-generic">
+      <title>Feature X is not supported yet. When/if will it be available?</title>
+
       <para>Kea is developed by a small team of engineers. Our resources are
       limited, so we need to prioritize requests. The complexity of a new
       feature (how difficult it is to implement a feature and how likely it
@@ -76,9 +83,12 @@
 
   </section>
 
-  <section xml:id="faq-dhcp4"><info><title>Frequently Asked Questions about DHCPv4</title></info>
+  <section xml:id="faq-dhcp4">
+    <title>Frequently Asked Questions about DHCPv4</title>
 
-    <section iq="q1-dhcp4"><info><title>I set up a firewall, but the Kea server still receives the traffic. Why?</title></info>
+    <section iq="q1-dhcp4">
+      <title>I set up a firewall, but the Kea server still receives the traffic. Why?</title>
+
       <para>Any DHCPv4 server must be able to receive from and send traffic to
       hosts that don't have an IPv4 address assigned yet. That is typically not
       possible with regular UDP sockets, therefore the Kea DHCPv4 server uses raw
@@ -96,10 +106,13 @@
 
   </section> <!-- end of DHCPv4 FAQ section -->
 
-  <section xml:id="faq-dhcp6"><info><title>Frequently Asked Questions about DHCPv6</title></info>
+  <section xml:id="faq-dhcp6">
+    <title>Frequently Asked Questions about DHCPv6</title>
 
-    <section iq="q1-dhcp6"><info><title>Kea DHCPv6 doesn't seem to get incoming traffic. I checked with tcpdump (or other traffic
-      capture software) that the incoming traffic is reaching the box. What's wrong?</title></info>
+    <section iq="q1-dhcp6">
+      <title>Kea DHCPv6 doesn't seem to get incoming traffic. I checked with tcpdump (or other traffic
+      capture software) that the incoming traffic is reaching the box. What's wrong?</title>
+
       <para>Please check whether your OS has any IPv6 filtering rules. Many
       operating systems are shipped with firewalls that discard incoming IPv6
       traffic by default. In particular, many Linux distributions do that. Please
@@ -112,5 +125,6 @@
     </section>
 
   </section> <!-- end of DHCPv6 FAQ section -->
+
 
   </chapter>

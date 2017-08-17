@@ -1,7 +1,10 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="installation"><info><title>Installation</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="installation">
+    <title>Installation</title>
 
-    <section xml:id="packages"><info><title>Packages</title></info>
+    <section xml:id="packages">
+      <title>Packages</title>
+
       <para>
         Some operating systems or software package vendors may provide
         ready-to-use, pre-built software packages for Kea.  Installing a
@@ -17,7 +20,8 @@
       </para>
     </section>
 
-    <section xml:id="install-hierarchy"><info><title>Installation Hierarchy</title></info>
+    <section xml:id="install-hierarchy">
+      <title>Installation Hierarchy</title>
       <para>
         The following is the directory layout of the complete Kea installation.
         (All directory paths are relative to the installation directory):
@@ -80,7 +84,9 @@
       </para>
     </section>
 
-    <section xml:id="build-requirements"><info><title>Building Requirements</title></info>
+    <section xml:id="build-requirements">
+      <title>Building Requirements</title>
+
         <para>
           In addition to the run-time requirements (listed in <xref linkend="required-software"/>), building Kea from source code requires
           various development include headers and program development tools.
@@ -133,7 +139,7 @@ Debian and Ubuntu:
           Kea 1.1.0 builds have been tested with GCC g++ 4.2.1,
           4.4.7, 4.6.3, 4.8.3, 4.8.4, 4.8.5, 5.4.0; Clang++ 3.4.1;
           and Apple Clang++ 703.0.31.
-      <!-- @todo update this list -->
+	  <!-- @todo update this list -->
         </para>
         </listitem>
 
@@ -146,7 +152,7 @@ Debian and Ubuntu:
         <listitem>
         <para>
           The MySQL client and the client development libraries, when using
-          the --with-mysql configuration flag to build the Kea MySQL
+          the --with-dhcp-mysql configuration flag to build the Kea MySQL
           database backend. In this case an instance of the MySQL server
           running locally or on a machine reachable over a network
           is required. Note that
@@ -157,7 +163,7 @@ Debian and Ubuntu:
         <listitem>
         <para>
           The PostgreSQL client and the client development libraries, when
-          using the --with-pgsql configuration flag to build the Kea
+          using the --with-dhcp-pgsql configuration flag to build the Kea
           PostgreSQL database backend. In this case an instance of the
           PostgreSQL server running locally or on some other machine,
           reachable over the network from the machine running Kea, is
@@ -188,9 +194,11 @@ Debian and Ubuntu:
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/SystemSpecificNotes">http://kea.isc.org/wiki/SystemSpecificNotes</uri>
           for system-specific installation tips.
         </para>
+
     </section>
 
-    <section xml:id="install"><info><title>Installation from Source</title></info>
+    <section xml:id="install">
+      <title>Installation from Source</title>
       <para>
         Kea is open source software written in C++.  It is freely available in
         source code form from ISC as a downloadable tar file.  A copy of the Kea
@@ -198,14 +206,17 @@ Debian and Ubuntu:
         in pre-compiled ready-to-use packages from operating system vendors.
       </para>
 
-      <section><info><title>Download Tar File</title></info>
+      <section>
+
+        <title>Download Tar File</title>
         <para>
           The Kea release tarballs may be downloaded from:
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">http://ftp.isc.org/isc/kea/</uri> (using FTP or HTTP).
         </para>
       </section>
 
-      <section><info><title>Retrieve from Git</title></info>
+      <section>
+        <title>Retrieve from Git</title>
         <para>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
@@ -255,13 +266,16 @@ Debian and Ubuntu:
           your code. Please consult
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
           how to fork a Github repository.
-          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea
+          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea 
           Developer's Guide</link> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>
+
       </section>
 
-      <section xml:id="configure"><info><title>Configure Before the Build</title></info>
+
+      <section xml:id="configure">
+        <title>Configure Before the Build</title>
         <para>
           Kea uses the GNU Build System to discover build environment
           details.
@@ -301,7 +315,7 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-mysql</term>
+            <term>--with-dhcp-mysql</term>
             <listitem>
               <simpara>
                 Build Kea with code to allow it to store leases (and access
@@ -311,7 +325,7 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-pgsql</term>
+            <term>--with-dhcp-pgsql</term>
             <listitem>
               <simpara>
                 Build Kea with code to allow it to store leases (and access
@@ -372,7 +386,7 @@ Debian and Ubuntu:
 
           <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
-      --with-pgsql=/usr/local/bin/pg_config \
+      --with-dhcp-pgsql=/usr/local/bin/pg_config \
       --prefix=/opt/kea</userinput></screen>
         </para>
 
@@ -397,9 +411,11 @@ Debian and Ubuntu:
           the file <filename>config.report</filename> and is also embedded into
           the executable binaries, e.g., <userinput>kea-dhcp4</userinput>.
         </para>
+
       </section>
 
-      <section><info><title>Build</title></info>
+      <section>
+        <title>Build</title>
         <para>
           After the configure step is complete, build the executables
           from the C++ code and prepare the Python scripts by running the command:
@@ -407,7 +423,8 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section><info><title>Install</title></info>
+      <section>
+        <title>Install</title>
         <para>
           To install the Kea executables, support files,
           and documentation, issue the command:
@@ -422,22 +439,22 @@ Debian and Ubuntu:
           <para>The install step may require superuser privileges.</para>
         </note>
         <para>
-      If required, run <command>ldconfig</command> as root with
-      <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
-      configured with --prefix) in
-      <filename>/etc/ld.so.conf</filename> (or the relevant linker
-      cache configuration file for your OS):
-      <screen>$ <userinput>ldconfig</userinput></screen>
+	  If required, run <command>ldconfig</command> as root with
+	  <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
+	  configured with --prefix) in
+	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
+	  cache configuration file for your OS):
+	  <screen>$ <userinput>ldconfig</userinput></screen>
         </para>
         <note>
           <para>
-        If you do not run <command>ldconfig</command> where it is
-        required, you may see errors like the following:
+	    If you do not run <command>ldconfig</command> where it is
+	    required, you may see errors like the following:
             <screen>
-          program: error while loading shared libraries: libkea-something.so.1:
-          cannot open shared object file: No such file or directory
-        </screen>
-      </para>
+	      program: error while loading shared libraries: libkea-something.so.1:
+	      cannot open shared object file: No such file or directory
+	    </screen>
+	  </para>
         </note>
       </section>
 
@@ -445,7 +462,8 @@ Debian and Ubuntu:
 
     </section>
 
-    <section xml:id="dhcp-config-backend"><info><title>Selecting the Configuration Backend</title></info>
+    <section xml:id="dhcp-config-backend">
+      <title>Selecting the Configuration Backend</title>
       <para>Kea 0.9 introduced configuration backends that are
       switchable during the compilation phase. Only one backend, JSON,
       is currently supported.
@@ -456,18 +474,20 @@ Debian and Ubuntu:
         <varlistentry>
           <term>JSON</term>
           <listitem>
-        <simpara>JSON is the new default configuration backend
-        that allows Kea to read JSON configuration files from
-        disk. It does not require any framework and thus is
-        considered more lightweight. It will allow dynamic
-        on-line reconfiguration, but lacks remote capabilities
-        (i.e. no RESTful API).</simpara>
+	    <simpara>JSON is the new default configuration backend
+	    that allows Kea to read JSON configuration files from
+	    disk. It does not require any framework and thus is
+	    considered more lightweight. It will allow dynamic
+	    on-line reconfiguration, but lacks remote capabilities
+	    (i.e. no RESTful API).</simpara>
           </listitem>
         </varlistentry>
       </variablelist>
+
     </section>
 
-    <section xml:id="dhcp-install-configure"><info><title>DHCP Database Installation and Configuration</title></info>
+    <section xml:id="dhcp-install-configure">
+      <title>DHCP Database Installation and Configuration</title>
       <para>
         Kea stores its leases in a lease database.  The software has been
         written in a way that makes it possible to choose which database product
@@ -490,7 +510,8 @@ Debian and Ubuntu:
         </simpara>
       </note>
 
-      <section><info><title>Building with MySQL Support</title></info>
+      <section>
+        <title>Building with MySQL Support</title>
         <para>
           Install MySQL according to the instructions for your system.  The client development
           libraries must be installed.
@@ -498,12 +519,12 @@ Debian and Ubuntu:
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the MySQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), the --with-mysql switch
+          "configure" step (see <xref linkend="configure"/>), the --with-dhcp-mysql switch
           should be specified:
-          <screen><userinput>./configure [other-options] --with-mysql</userinput></screen>
-          If MySQL was not installed in the default location, the location of the MySQL
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+	      If MySQL was not installed in the default location, the location of the MySQL
           configuration program "mysql_config" should be included with the switch, i.e.
-          <screen><userinput>./configure [other-options] --with-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="mysql-database-create"/> for details regarding
@@ -511,7 +532,8 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section><info><title>Building with PostgreSQL support</title></info>
+      <section>
+        <title>Building with PostgreSQL support</title>
         <para>
           Install PostgreSQL according to the instructions for your system.  The client development
           libraries must be installed. Client development libraries are often packaged as "libpq".
@@ -519,12 +541,12 @@ Debian and Ubuntu:
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the PostgreSQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), the --with-pgsql switch
+          "configure" step (see <xref linkend="configure"/>), the --with-dhcp-pgsql switch
           should be specified:
-          <screen><userinput>./configure [other-options] --with-pgsql</userinput></screen>
-          If PostgreSQL was not installed in the default location, the location of the PostgreSQL
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+	      If PostgreSQL was not installed in the default location, the location of the PostgreSQL
           configuration program "pg_config" should be included with the switch, i.e.
-          <screen><userinput>./configure [other-options] --with-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="pgsql-database-create"/> for details regarding
@@ -532,7 +554,8 @@ Debian and Ubuntu:
         </para>
       </section>
 
-      <section><info><title>Building with CQL (Cassandra) support</title></info>
+      <section>
+        <title>Building with CQL (Cassandra) support</title>
         <para>
           Install Cassandra according to the instructions for your system. The
           Cassandra project website contains useful pointers: <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cassandra.apache.org">http://cassandra.apache.org</uri>.

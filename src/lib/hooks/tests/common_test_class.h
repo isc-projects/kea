@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,6 +124,46 @@ public:
         handle.getArgument(RESULT, result);
         EXPECT_EQ(r3, result) << "hookpt_three" << COMMON_TEXT;
     }
+
+    /// @brief Call command handlers test.
+    ///
+    /// This test is similar to @c executeCallCallouts but it uses
+    /// @ref CalloutManager::callCommandHandlers to execute the command
+    /// handlers for the following commands: 'command-one' and 'command-two'.
+    ///
+    /// @param manager CalloutManager to use for the test
+    /// @param r1..r2, d1..d2 Data (dN) and expected results (rN).
+    void executeCallCommandHandlers(
+             const boost::shared_ptr<isc::hooks::CalloutManager>& manager,
+             int d1, int r1, int d2, int r2) {
+        static const char* COMMON_TEXT = " command handler returned the wrong value";
+        static const char* RESULT = "result";
+
+        int result;
+
+        // Set up a callout handle for the calls.
+        isc::hooks::CalloutHandle handle(manager);
+
+        // Initialize the argument RESULT.  This simplifies testing by
+        // eliminating the generation of an exception when we try the unload
+        // test.  In that case, RESULT is unchanged.
+        handle.setArgument(RESULT, -1);
+
+        // Perform the first calculation: it should assign the data to the
+        // result.
+        handle.setArgument("data_1", d1);
+        manager->callCommandHandlers("command-one", handle);
+        handle.getArgument(RESULT, result);
+        EXPECT_EQ(d1, result) << "command-one" << COMMON_TEXT;
+
+        // Perform the second calculation: it should multiply the data by 10
+        // and return in the result.
+        handle.setArgument("data_2", d2);
+        manager->callCommandHandlers("command-two", handle);
+        handle.getArgument(RESULT, result);
+        EXPECT_EQ(r2, result) << "command-two" << COMMON_TEXT;
+    }
+
 
     /// Hook indexes.  These are are made public for ease of reference.
     int hookpt_one_index_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ YY_DECL;
 namespace isc {
 namespace eval {
 
-/// @brief Evaluation error exception raised when trying to parse an axceptions.
+/// @brief Evaluation error exception raised when trying to parse an exceptions.
 class EvalParseError : public isc::Exception {
 public:
     EvalParseError(const char* file, size_t line, const char* what) :
@@ -34,6 +34,14 @@ public:
 class EvalContext
 {
 public:
+
+    /// @brief Specifies what type of expression the parser is expected to see
+    typedef enum {
+        PARSER_BOOL,  ///< expression is expected to evaluate to bool
+        PARSER_STRING ///< expression is expected to evaluate to string
+    } ParserType;
+
+
     /// @brief Default constructor.
     ///
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
@@ -48,16 +56,19 @@ public:
     isc::dhcp::Expression expression;
 
     /// @brief Method called before scanning starts on a string.
-    void scanStringBegin();
+    ///
+    /// @param type specifies type of the expression to be parsed
+    void scanStringBegin(ParserType type);
 
     /// @brief Method called after the last tokens are scanned from a string.
     void scanStringEnd();
 
     /// @brief Run the parser on the string specified.
     ///
-    /// @param str string to be written
+    /// @param str string to be parsed
+    /// @param type type of the expression expected/parser type to be created
     /// @return true on success.
-    bool parseString(const std::string& str);
+    bool parseString(const std::string& str, ParserType type = PARSER_BOOL);
 
     /// @brief The name of the file being parsed.
     /// Used later to pass the file name to the location tracker.
@@ -122,15 +133,24 @@ public:
     static uint8_t convertUint8(const std::string& number,
                                 const isc::eval::location& loc);
 
+    /// @brief Attempts to convert string to signed 8bit integer
+    ///
+    /// @param number string to be converted
+    /// @param loc the location of the token
+    /// @return the integer value
+    /// @throw EvalParseError if conversion fails or the value is out of range.
+    static int8_t convertInt8(const std::string& number,
+                              const isc::eval::location& loc);
+
     /// @brief Nest level conversion
     ///
     /// @param nest_level a string representing the integer nesting level
     /// @param loc the location of the token
     /// @return the nesting level
     /// @throw calls the syntax error function if the value is not in
-    ///        the range 0..31
-    uint8_t convertNestLevelNumber(const std::string& nest_level,
-                                   const isc::eval::location& loc);
+    ///        the range -32..31
+    int8_t convertNestLevelNumber(const std::string& nest_level,
+                                  const isc::eval::location& loc);
 
     /// @brief Converts integer to string representation
     ///
@@ -153,7 +173,7 @@ public:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
-    /// @brief Flag determing parser debugging.
+    /// @brief Flag determining parser debugging.
     bool trace_parsing_;
 
     /// @brief Option universe: DHCPv4 or DHCPv6.

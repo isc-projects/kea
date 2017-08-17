@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -453,7 +453,7 @@ TEST_F(StatsMgrTest, commandStatisticGetNegative) {
     EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", rsp->str());
 }
 
-// This test checks whether statistc-get-all command returns all statistics
+// This test checks whether statistic-get-all command returns all statistics
 // correctly.
 TEST_F(StatsMgrTest, commandGetAll) {
 

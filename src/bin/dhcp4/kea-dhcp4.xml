@@ -1,4 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+<!-- Converted by db4-upgrade version 1.1 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
 
   <info>
@@ -39,22 +39,23 @@
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
       <arg choice="opt" rep="norepeat"><option>-W</option></arg>
       <arg choice="opt" rep="norepeat"><option>-d</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg choice="opt" rep="norepeat"><option>-p<replaceable class="parameter">port-number</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port-number</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection><info><title>DESCRIPTION</title></info>
-    
+  <refsect1>
+    <title>DESCRIPTION</title>
     <para>
       The <command>kea-dhcp4</command> daemon provides the
        DHCPv4 server implementation.
     </para>
 
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>ARGUMENTS</title></info>
-    
+  <refsect1>
+    <title>ARGUMENTS</title>
 
     <para>The arguments are as follows:</para>
 
@@ -97,6 +98,16 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para> Check the configuration file
+          and report the first error if any. Note
+          that not all parameters are completely checked, in
+          particular, service and control channel sockets
+          are not opened, and hook libraries are not loaded.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-p</option></term>
         <listitem><para>
           Port number (1-65535) on which the server listens. This is useful
@@ -105,10 +116,10 @@
       </varlistentry>
 
     </variablelist>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>DOCUMENTATION</title></info>
-    
+  <refsect1>
+    <title>DOCUMENTATION</title>
     <para>Kea comes with an extensive Kea User's Guide documentation
       that covers all aspects of running the Kea software -
       compilation, installation, configuration, configuration examples
@@ -126,10 +137,10 @@
     <para>
       Kea project website is available at: http://kea.isc.org.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>MAILING LISTS AND SUPPORT</title></info>
-    
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
     <para>
       There are two mailing lists available for Kea project. kea-users
       (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
@@ -142,10 +153,10 @@
       ISC provides professional support for Kea services. See
       https://www.isc.org/kea/ for details.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>HISTORY</title></info>
-    
+  <refsect1>
+    <title>HISTORY</title>
     <para>
       The <command>b10-dhcp4</command> daemon was first coded in
       November 2011 by Tomek Mrugalski.
@@ -155,10 +166,10 @@
       standalone DHCP server. The DHCPv4 server binary was renamed to
       kea-dhcp4. Kea 1.0.0 was released in December 2015.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>SEE ALSO</title></info>
-    
+  <refsect1>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry>
         <refentrytitle>kea-dhcp6</refentrytitle>
@@ -167,6 +178,11 @@
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 
@@ -193,6 +209,6 @@
       <citetitle>Kea Administrator's Guide</citetitle>.
 
     </para>
-  </refsection>
+  </refsect1>
 
 </refentry>

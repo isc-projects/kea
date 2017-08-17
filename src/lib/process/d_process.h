@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,21 @@ public:
     DProcessBaseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief String value for the version-get command.
+static const std::string VERSION_GET_COMMAND("version-get");
+
+/// @brief String value for the build-report command.
+static const std::string BUILD_REPORT_COMMAND("build-report");
+
+/// @brief String value for the config-get command.
+static const std::string CONFIG_GET_COMMAND("config-get");
+
+/// @brief String value for the config-write command.
+static const std::string CONFIG_WRITE_COMMAND("config-write");
+
+/// @brief String value for the config-test command.
+static const std::string CONFIG_TEST_COMMAND("config-test");
 
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
@@ -102,7 +117,7 @@ public:
     ///  
     /// @throw DProcessBaseError if an operational error is encountered.
     virtual isc::data::ConstElementPtr 
-        shutdown(isc::data::ConstElementPtr args) = 0;
+    shutdown(isc::data::ConstElementPtr args) = 0;
 
     /// @brief Processes the given configuration.
     ///
@@ -113,31 +128,13 @@ public:
     /// below.
     ///
     /// @param config_set a new configuration (JSON) for the process
+    /// @param check_only true if configuration is to be verified only, not applied
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr configure(isc::data::ConstElementPtr
-                                                 config_set) = 0;
-
-    /// @brief Processes the given command.
-    ///
-    /// This method is called to execute any custom commands supported by the
-    /// process. This method must not throw, it should catch any processing
-    /// errors and return a success or failure answer as described below.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value: 
-    ///
-    /// - COMMAND_SUCCESS indicates a command was successful.
-    /// - COMMAND_ERROR indicates a valid command failed execute.
-    /// - COMMAND_INVALID indicates a command is not valid.
-    ///
-    /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr command(
-            const std::string& command, isc::data::ConstElementPtr args) = 0;
+    virtual isc::data::ConstElementPtr
+    configure(isc::data::ConstElementPtr config_set,
+              bool check_only = false) = 0;
 
     /// @brief Destructor
     virtual ~DProcessBase(){};

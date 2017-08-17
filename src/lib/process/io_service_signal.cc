@@ -60,7 +60,7 @@ IOSignal::TimerCallback::operator()() {
 IOSignalQueue::IOSignalQueue(asiolink::IOServicePtr& io_service)
     : io_service_(io_service), signals_() {
     if (!io_service_) {
-        isc_throw(IOSignalError, "IOSignalQueue - io_serivce cannot be NULL");
+        isc_throw(IOSignalError, "IOSignalQueue - io_service cannot be NULL");
     }
 }
 

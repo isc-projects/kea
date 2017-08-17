@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ D2Process::run() {
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
 
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
 };
 
@@ -147,9 +147,9 @@ D2Process::canShutdown() const {
         }
 
         if (all_clear) {
-            LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
+            LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
                      DHCP_DDNS_CLEARED_FOR_SHUTDOWN)
-                     .arg(getShutdownTypeStr(shutdown_type_));
+                .arg(getShutdownTypeStr(shutdown_type_));
         }
     }
 
@@ -158,8 +158,9 @@ D2Process::canShutdown() const {
 
 isc::data::ConstElementPtr
 D2Process::shutdown(isc::data::ConstElementPtr args) {
-    LOG_DEBUG(d2_logger, DBGLVL_START_SHUT, DHCP_DDNS_SHUTDOWN_COMMAND)
-              .arg(args ? args->str() : "(no arguments)");
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
+              DHCP_DDNS_SHUTDOWN_COMMAND)
+        .arg(args ? args->str() : "(no arguments)");
 
     // Default shutdown type is normal.
     std::string type_str(getShutdownTypeStr(SD_NORMAL));
@@ -191,13 +192,19 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
 }
 
 isc::data::ConstElementPtr
-D2Process::configure(isc::data::ConstElementPtr config_set) {
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
-              DHCP_DDNS_CONFIGURE).arg(config_set->str());
+D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
+    LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC, DHCP_DDNS_CONFIGURE)
+        .arg(check_only ? "check" : "update")
+        .arg(config_set->str());
+
+    isc::data::ConstElementPtr answer;
+    answer = getCfgMgr()->parseConfig(config_set, check_only);;
+    if (check_only) {
+        return (answer);
+    }
 
     int rcode = 0;
     isc::data::ConstElementPtr comment;
-    isc::data::ConstElementPtr answer = getCfgMgr()->parseConfig(config_set);;
     comment = isc::config::parseAnswer(rcode, answer);
 
     if (rcode) {
@@ -237,13 +244,12 @@ D2Process::checkQueueStatus() {
             // canceling active listening which may generate an IO event, so
             // instigate the stop and get out.
             try {
-                LOG_DEBUG(d2_logger, DBGLVL_START_SHUT,
+                LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT,
                           DHCP_DDNS_QUEUE_MGR_STOPPING)
-                         .arg(reconf_queue_flag_ ? "reconfiguration"
-                                                 : "shutdown");
+                    .arg(reconf_queue_flag_ ? "reconfiguration" : "shutdown");
                 queue_mgr_->stopListening();
             } catch (const isc::Exception& ex) {
-                // It is very unlikey that we would experience an error
+                // It is very unlikely that we would experience an error
                 // here, but theoretically possible.
                 LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_STOP_ERROR)
                           .arg(ex.what());
@@ -297,7 +303,7 @@ D2Process::checkQueueStatus() {
         // we can do the reconfigure. In other words, we aren't RUNNING or
         // STOPPING.
         if (reconf_queue_flag_) {
-            LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(d2_logger, isc::log::DBGLVL_TRACE_BASIC,
                       DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
             reconfigureQueueMgr();
         }
@@ -354,19 +360,6 @@ D2Process::reconfigureQueueMgr() {
         // which is a configuration issue.
         LOG_ERROR(d2_logger, DHCP_DDNS_QUEUE_MGR_START_ERROR).arg(ex.what());
     }
-}
-
-isc::data::ConstElementPtr
-D2Process::command(const std::string& command,
-                   isc::data::ConstElementPtr args) {
-    // @todo This is the initial implementation.  If and when D2 is extended
-    // to support its own commands, this implementation must change. Otherwise
-    // it should reject all commands as it does now.
-    LOG_DEBUG(d2_logger, DBGLVL_TRACE_BASIC, DHCP_DDNS_COMMAND)
-        .arg(command).arg(args ? args->str() : "(no args)");
-
-    return (isc::config::createAnswer(COMMAND_INVALID, "Unrecognized command: "
-                                      + command));
 }
 
 D2Process::~D2Process() {

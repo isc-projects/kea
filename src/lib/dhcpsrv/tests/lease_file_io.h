@@ -23,7 +23,7 @@ class LeaseFileIO {
 public:
     /// @brief Constructor
     ///
-    /// @param filename Abolsute path to the file.
+    /// @param filename Absolute path to the file.
     /// @param recreate A boolean flag indicating if the new file should
     /// be created, even if one exists.
     LeaseFileIO(const std::string& filename, const bool recreate = true);

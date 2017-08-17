@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ public:
     ///
     /// This function checks if the direct response capability is supported,
     /// i.e. if the server can respond to the client which doesn't have an
-    /// address yet. For this dummy class, the true is alaways returned.
+    /// address yet. For this dummy class, the true is always returned.
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const;
@@ -40,7 +40,7 @@ public:
     /// @brief Simulate opening of the socket.
     ///
     /// This function simulates opening a primary socket. Rather than open
-    /// an actual socket, the stub peforms a read-only open of "/dev/null".
+    /// an actual socket, the stub performs a read-only open of "/dev/null".
     /// The fd returned by this open saved as the socket's descriptor in the
     /// SocketInfo structure.  This way the filter consumes an actual
     /// descriptor and retains it until its socket is closed.

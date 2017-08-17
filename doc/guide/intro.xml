@@ -1,6 +1,6 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="intro"><info><title>Introduction</title></info>
-
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="intro">
+    <title>Introduction</title>
     <para>
       Kea is the next generation of DHCP software developed by ISC.
       It supports both DHCPv4 and DHCPv6 protocols along with their
@@ -18,12 +18,13 @@
       This guide covers Kea version .
     </para>
 
-    <section><info><title>Supported Platforms</title></info>
+    <section>
+      <title>Supported Platforms</title>
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
-        CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-        other platforms: Kea 1.1.0 builds have been tested on (in no
-        particular order) Red Hat Enteprise Linux 6.4, Debian GNU/Linux 7,
+	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
+	    other platforms: Kea 1.1.0 builds have been tested on (in no
+        particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
         Ubuntu 12.04, Ubuntu 14.04, Ubuntu 16.04, Fedora Linux 19,
         Fedora 20, Fedora 22, CentOS Linux 7, NetBSD 6, FreeBSD 10.3,
         OpenBSD 5.7, OpenBSD 6.0, OS X 10.10, OS X 10.11.
@@ -31,7 +32,9 @@
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
 
-    <section xml:id="required-software"><info><title>Required Software at Run-time</title></info>
+    <section xml:id="required-software">
+      <title>Required Software at Run-time</title>
+
       <para>
         Running Kea uses various extra software which may
         not be provided in the default installation of some operating systems,
@@ -64,7 +67,7 @@
 
         <listitem>
             <simpara>
-    In order to store lease information in a MySQL database, Kea requires MySQL
+	In order to store lease information in a MySQL database, Kea requires MySQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without MySQL support.
             </simpara>
@@ -72,7 +75,7 @@
 
         <listitem>
             <simpara>
-    In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
+	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without PostgreSQL support.
             </simpara>
@@ -80,7 +83,7 @@
 
         <listitem>
             <simpara>
-    In order to store lease information in a Cassandra  database (CQL), Kea
+	In order to store lease information in a Cassandra  database (CQL), Kea
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>
@@ -88,7 +91,8 @@
       </itemizedlist>
     </section>
 
-    <section xml:id="kea_software"><info><title>Kea Software</title></info>
+    <section xml:id="kea_software">
+      <title>Kea Software</title>
       <para>
         Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
@@ -147,7 +151,7 @@
               <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
-              While it can be run standalone, it is normally run as and when
+              While it can be run standalone, it is normally run as and when 
               required by the Kea DHCP servers.
             </simpara>
           </listitem>
@@ -162,6 +166,7 @@
 
         </itemizedlist>
       </para>
+
     </section>
 
     <para>

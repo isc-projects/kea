@@ -1,7 +1,9 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="classify"><info><title>Client Classification</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="classify">
+  <title>Client Classification</title>
 
-  <section><info><title>Client Classification Overview</title></info>
+  <section>
+    <title>Client Classification Overview</title>
       <para>
       In certain cases it is useful to differentiate between different
       types of clients and treat them accordingly. Common reasons include:
@@ -34,7 +36,7 @@
 
       <para>
       The process of doing classification is conducted in three steps:
-      <orderedlist inheritnum="ignore" continuation="restarts">
+      <orderedlist>
       <listitem><para>
       Assess an incoming packet and assign it to zero or more classes.
       </para></listitem>
@@ -88,14 +90,16 @@
       </note>
   </section>
 
-  <section xml:id="classification-using-host-reservations"><info><title>Using Static Host Reservations In Classification</title></info>
+  <section xml:id="classification-using-host-reservations">
+    <title>Using Static Host Reservations In Classification</title>
     <para>Classes can be statically assigned to the clients using techniques described
     in <xref linkend="reservation4-client-classes"/> and
     <xref linkend="reservation6-client-classes"/>.
     </para>
   </section>
 
-  <section xml:id="classification-using-vendor"><info><title>Using Vendor Class Information In Classification</title></info>
+  <section xml:id="classification-using-vendor">
+    <title>Using Vendor Class Information In Classification</title>
       <para>
       The server checks whether an incoming DHCPv4 packet includes
       the vendor class identifier option (60) or an incoming DHCPv6 packet
@@ -107,7 +111,8 @@
       </para>
   </section>
 
-  <section xml:id="classification-using-expressions"><info><title>Using Expressions In Classification</title></info>
+  <section xml:id="classification-using-expressions">
+    <title>Using Expressions In Classification</title>
       <para>
       The expression portion of classification contains operators and values.
       All values are currently strings and operators take a string or strings and
@@ -142,7 +147,8 @@
       </para>
 
       <para>
-        <table frame="all" xml:id="classification-values-list"><info><title>List of Classification Values</title></info>
+        <table frame="all" xml:id="classification-values-list">
+          <title>List of Classification Values</title>
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="example"/>
@@ -473,9 +479,12 @@
       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
       relays that forwarded the packet.  The "nest" level specifies the relay
       from which to extract the information, with a value of 0 indicating
-      the relay closest to the DHCPv6 server.  If the requested encapsulation
-      doesn't exist an empty string "" is returned.  This expression is
-      allowed in DHCPv6 only.
+      the relay closest to the DHCPv6 server. Negative values allow to
+      specify relays counted from the DHCPv6 client, -1 indicating the
+      relay closest to the client. In general negative "nest" level is
+      the same as the number of relays + "nest" level.
+      If the requested encapsulation doesn't exist an empty string ""
+      is returned.  This expression is allowed in DHCPv6 only.
       </para></listitem>
 
       <listitem><para>
@@ -537,7 +546,8 @@
       </itemizedlist>
 
       <para>
-        <table frame="all" xml:id="classification-expressions-list"><info><title>List of Classification Expressions</title></info>
+        <table frame="all" xml:id="classification-expressions-list">
+          <title>List of Classification Expressions</title>
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="example"/>
@@ -562,7 +572,8 @@ concatenation of the strings</entry></row>
         </table>
       </para>
 
-      <section><info><title>Logical operators</title></info>
+      <section>
+        <title>Logical operators</title>
         The Not, And and Or logical operators are the common operators. Not
         has the highest precedence and Or the lowest. And and Or are (left)
         associative, parentheses around a logical expression can be used
@@ -570,7 +581,8 @@ concatenation of the strings</entry></row>
         (without parentheses "A and B or C" means "(A and B) or C").
       </section>
 
-      <section><info><title>Substring</title></info>
+      <section>
+        <title>Substring</title>
         The substring operator "substring(value, start, length)" accepts both positive and
         negative values for the starting position and the length.  For "start", a value of
         0 is the first byte in the string while -1 is the last byte.  If the starting
@@ -592,15 +604,14 @@ concatenation of the strings</entry></row>
         substring('foobar', 10, 2) == ''
           </screen>
       </section>
-
-      <section><info><title>Concat</title></info>
+      <section>
+        <title>Concat</title>
         The concat function "concat(string1, string2)" returns the
         concatenation of its two arguments. For instance:
           <screen>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
-
     </section>
 
   <note>
@@ -611,7 +622,8 @@ concatenation of the strings</entry></row>
     complex or time consuming expressions you should write a <link linkend="hooks-libraries">hook</link> to perform the necessary work.
   </para> </note>
 
-  <section xml:id="classification-configuring"><info><title>Configuring Classes</title></info>
+  <section xml:id="classification-configuring">
+    <title>Configuring Classes</title>
       <para>
       A class contains three items: a name, a test expression and option data.
       The name must exist and must be unique amongst all classes. The test
@@ -686,7 +698,8 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section xml:id="classification-subnets"><info><title>Configuring Subnets With Class Information</title></info>
+  <section xml:id="classification-subnets">
+    <title>Configuring Subnets With Class Information</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given class, using the "client-class"
@@ -765,7 +778,8 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section><info><title>Using Classes</title></info>
+  <section>
+    <title>Using Classes</title>
       <para>
       Currently classes can be used for two functions.  They can supply options
       to the members of the class and they can be used to choose a subnet from which an
@@ -780,7 +794,8 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section><info><title>Classes and Hooks</title></info>
+  <section>
+    <title>Classes and Hooks</title>
       <para>
       You may use a hook to classify your packets. This may be useful if the
       expression would either be complex or time consuming and be easier or
@@ -793,7 +808,8 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section><info><title>Debugging Expressions</title></info>
+  <section>
+   <title>Debugging Expressions</title>
      <para>
      While you are constructing your classification expressions you may
      find it useful to enable logging see <xref linkend="logging"/> for

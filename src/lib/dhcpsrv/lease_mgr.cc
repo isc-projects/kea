@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,7 +62,8 @@ LeaseMgr::recountLeaseStats4() {
     // Zero out the global stats.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
-    stats_mgr.setValue("declined-reclaimed-addresses", zero);
+    stats_mgr.setValue("reclaimed-declined-addresses", zero);
+    stats_mgr.setValue("reclaimed-leases", zero);
 
     // Clear subnet level stats.  This ensures we don't end up with corner
     // cases that leave stale values in place.
@@ -79,8 +80,13 @@ LeaseMgr::recountLeaseStats4() {
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "declined-addresses"),
                            zero);
+
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
-                                                  "declined-reclaimed-addresses"),
+                                                  "reclaimed-declined-addresses"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "reclaimed-leases"),
                            zero);
     }
 
@@ -133,7 +139,8 @@ LeaseMgr::recountLeaseStats6() {
     // clearing it when we clear the rest.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
-    stats_mgr.setValue("declined-reclaimed-addresses", zero);
+    stats_mgr.setValue("reclaimed-declined-addresses", zero);
+    stats_mgr.setValue("reclaimed-leases", zero);
 
     // Clear subnet level stats.  This ensures we don't end up with corner
     // cases that leave stale values in place.
@@ -153,11 +160,15 @@ LeaseMgr::recountLeaseStats6() {
 
         stats_mgr.setValue(StatsMgr::
                            generateName("subnet", subnet_id,
-                                        "declined-reclaimed-addresses"),
+                                        "reclaimed-declined-addresses"),
                            zero);
 
         stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
                                                   "assigned-pds"),
+                           zero);
+
+        stats_mgr.setValue(StatsMgr::generateName("subnet", subnet_id,
+                                                  "reclaimed-leases"),
                            zero);
     }
 
