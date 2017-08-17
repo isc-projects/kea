@@ -13,6 +13,7 @@ exec_prefix=@exec_prefix@
 dhcp4_srv=@sbindir@/kea-dhcp4
 dhcp6_srv=@sbindir@/kea-dhcp6
 dhcp_ddns_srv=@sbindir@/kea-dhcp-ddns
+ctrl_agent_srv=@sbindir@/kea-ctrl-agent
 
 # Start DHCPv4 server?
 dhcp4=yes
@@ -22,6 +23,9 @@ dhcp6=yes
 
 # Start DHCP DDNS server?
 dhcp_ddns=no
+
+# Start Control Agent?
+ctrl_agent=yes
 
 # Be verbose?
 kea_verbose=no

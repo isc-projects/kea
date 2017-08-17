@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -221,6 +221,18 @@ public:
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
                   " is not implemented");
+    }
+
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
+    virtual size_t wipeLeases4(const SubnetID&) {
+        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
+    }
+
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
+    virtual size_t wipeLeases6(const SubnetID&) {
+        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
     }
 
     /// @brief Returns backend type.

@@ -484,9 +484,12 @@
       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
       relays that forwarded the packet.  The "nest" level specifies the relay
       from which to extract the information, with a value of 0 indicating
-      the relay closest to the DHCPv6 server.  If the requested encapsulation
-      doesn't exist an empty string "" is returned.  This expression is
-      allowed in DHCPv6 only.
+      the relay closest to the DHCPv6 server. Negative values allow to
+      specify relays counted from the DHCPv6 client, -1 indicating the
+      relay closest to the client. In general negative "nest" level is
+      the same as the number of relays + "nest" level.
+      If the requested encapsulation doesn't exist an empty string ""
+      is returned.  This expression is allowed in DHCPv6 only.
       </para></listitem>
 
       <listitem><para>
@@ -820,7 +823,7 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     To enable the debug statements in the classifciaton system you will
+     To enable the debug statements in the classification system you will
      need to set the severity to "DEBUG" and the debug level to at least 55.
      The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
      </para>

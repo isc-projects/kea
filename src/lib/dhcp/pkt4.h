@@ -73,7 +73,7 @@ public:
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in buffer_out_.
-    /// The buffer_out_ is cleared before writting to the buffer.
+    /// The buffer_out_ is cleared before writing to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
     virtual void pack();
@@ -113,7 +113,7 @@ public:
                                  const ClientIdPtr& client_id,
                                  const uint32_t transid);
 
-    /// @brief Returns text representation of the given packet identifers.
+    /// @brief Returns text representation of the given packet identifiers.
     ///
     /// This variant of the method does not include transaction id.
     ///

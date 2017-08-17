@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,7 +131,7 @@ TEST_F(OptionTest, v4_data2) {
     data.push_back(67);
 
     // Data contains extra garbage at beginning and at the end. It should be
-    // ignored, as we pass interators to proper data. Only subset (limited by
+    // ignored, as we pass iterators to proper data. Only subset (limited by
     // iterators) of the vector should be used.
     // expData contains expected content (just valid data, without garbage).
     scoped_ptr<Option> opt;

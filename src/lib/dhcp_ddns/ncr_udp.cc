@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,7 +114,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
 
 void
 NameChangeUDPListener::doReceive() {
-    // Call the socket's asychronous receiving, passing ourself in as callback.
+    // Call the socket's asynchronous receiving, passing ourself in as callback.
     RawBufferPtr recv_buffer = recv_callback_->getBuffer();
     socket_->asyncReceive(recv_buffer.get(), recv_callback_->getBufferSize(),
                           0, recv_callback_->getDataSource().get(),
@@ -174,7 +174,7 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
         if (error_code.value() == boost::asio::error::operation_aborted) {
             // A shutdown cancels all outstanding reads.  For this reason,
             // it can be an expected event, so log it as a debug message.
-            LOG_DEBUG(dhcp_ddns_logger, DBGLVL_TRACE_BASIC,
+            LOG_DEBUG(dhcp_ddns_logger, isc::log::DBGLVL_TRACE_BASIC,
                       DHCP_DDNS_NCR_UDP_RECV_CANCELED);
             result = STOPPED;
         } else {
@@ -235,7 +235,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
             asio_socket_->set_option(boost::asio::socket_base::reuse_address(true));
         }
 
-        // Bind the low leve socket to our endpoint.
+        // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (boost::system::system_error& ex) {
         isc_throw (NcrUDPError, ex.code().message());
@@ -294,7 +294,7 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
     send_callback_->putData(static_cast<const uint8_t*>(ncr_buffer.getData()),
                             ncr_buffer.getLength());
 
-    // Call the socket's asychronous send, passing our callback
+    // Call the socket's asynchronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),
                        send_callback_->getDataSource().get(), *send_callback_);
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_EXPIRATION_H
 
 #include <asiolink/interval_timer.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -57,7 +58,7 @@ namespace dhcp {
 /// The @c CfgExpiration class provides a collection of accessors and
 /// modifiers to manage the data. Each accessor checks if the given value
 /// is in range allowed for this value.
-class CfgExpiration {
+class CfgExpiration : public isc::data::CfgToElement {
 public:
 
     /// @name Default values.
@@ -98,7 +99,7 @@ public:
     /// @brief Maximum value for max-reclaim-leases.
     static const uint32_t LIMIT_MAX_RECLAIM_LEASES;
 
-    /// @brief Defalt value for max-reclaim-time.
+    /// @brief Default value for max-reclaim-time.
     static const uint16_t LIMIT_MAX_RECLAIM_TIME;
 
     /// @brief Maximum value for unwarned-reclaim-cycles.
@@ -112,7 +113,7 @@ public:
     /// @brief Name of the timer for reclaiming expired leases.
     static const std::string RECLAIM_EXPIRED_TIMER_NAME;
 
-    /// @brief Name of the timer for flushing relclaimed leases.
+    /// @brief Name of the timer for flushing reclaimed leases.
     static const std::string FLUSH_RECLAIMED_TIMER_NAME;
 
     //@}
@@ -223,6 +224,11 @@ public:
                      void (Instance::*delete_fun)(const uint32_t),
                      Instance* instance_ptr) const;
 
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Checks if the value being set by one of the modifiers is
@@ -307,7 +313,7 @@ CfgExpiration::setupTimers(void (Instance::*reclaim_fun)(const size_t,
         timer_mgr_->setup(RECLAIM_EXPIRED_TIMER_NAME);
     }
 
-    // If the interval for the timer flusing expired-reclaimed leases
+    // If the interval for the timer flushing expired-reclaimed leases
     // is set we will schedule the timer.
     if (!flush_timer_disabled) {
         // The interval is specified in milliseconds if we're in the test mode.

@@ -1,85 +1,94 @@
-# This is an example configuration file for the DHCPv4 server in Kea.
-# It contains one subnet in which there are two static address reservations
-# for the clients identified by the MAC addresses.
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It contains one subnet in which there are two static address reservations
+// for the clients identified by the MAC addresses.
 { "Dhcp4":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify the the database used to store leases. As of
-# September 2016, four database backends are supported: MySQL,
-# PostgreSQL, Cassandra, and the in-memory database, Memfile.
-# We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of September
+// 2016, four database backends are supported: MySQL, PostgreSQL, Cassandra, and
+// the in-memory database, Memfile.  We'll use memfile because it doesn't
+// require any prior set up.
   "lease-database": {
-    "type": "memfile"
+      "type": "memfile",
+      "lfc-interval": 3600
   },
 
-# Addresses will be assigned with a lifetime of 4000 seconds.
+// Addresses will be assigned with a lifetime of 4000 seconds.
   "valid-lifetime": 4000,
 
-# Renew and rebind timers are commented out. This implies that options
-# 58 and 59 will not be sent to the client. In this case it is up to
-# the client to pick the timer values according to RFC2131. Uncomment the
-# timers to send these options to the client.
-#  "renew-timer": 1000,
-#  "rebind-timer": 2000,
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
 
+// Kea supports reservations by several different types of identifiers:
+// hw-address (hardware/MAC address of the client), duid (DUID inserted by the
+// client), client-id (client identifier inserted by the client), circuit-id
+// (circuit identifier inserted by the relay agent) and flex-id (flexible
+// identifier available when flex_id hook library is loaded). When told to do
+// so, Kea can check for all of those identifier types, but it takes a costly
+// database lookup to do so. It is therefore useful from a performance
+// perspective to use only the reservation types that are actually used in a
+// given network.
 
-# Kea supports reservations by several different types of identifiers:
-# hw-address (hardware/MAC address of the client), duid (DUID inserted by the
-# client), client-id (client identifier inserted by the client) and circuit-id
-# (circuit identifier inserted by the relay agent). When told to do so, Kea can
-# check for all of those identifier types, but it takes a costly database lookup
-# to do so. It is therefore useful from a performance perspective to use only
-# the reservation types that are actually used in a given network.
+// The example below is not optimal from a performance perspective, but it
+// nicely showcases the host reservation capabilities. Please use the minimum
+// set of identifier types used in your network.
+"host-reservation-identifiers": [ "circuit-id", "hw-address", "duid",
+                                  "client-id", "flex-id" ],
 
-# The example below is not optimal from a performance perspective, but it
-# nicely showcases the host reservation capabilities. Please use the minimum
-# set of identifier types used in your network.
-"host-reservation-identifiers": [ "circuit-id", "hw-address", "duid", "client-id" ],
+// Define a subnet with four reservations. Some of the reservations belong
+// to the dynamic pool. Kea is able to handle this case, but it is not
+// recommended from a performance perspective, as Kea would not only need to
+// check if a given address is free, but also whether it is reserved.
+// To avoid this check, one can change reservation-mode to out-of-pool, rather
+// than 'all'. If a subnet does not have reservations at all, the reservation
+// lookup can be skipped altogether (reservation-mode is set to 'disabled').
 
-# Define a subnet with four reservations. Some of the reservations belong
-# to the dynamic pool. Kea is able to handle this case, but it is not
-# recommended from a performance perspective, as Kea would not only need to
-# check if a given address is free, but also whether it is reserved.
-# To avoid this check, one can change reservation-mode to out-of-pool, rather
-# than 'all'. If a subnet does not have reservations at all, the reservation
-# lookup can be skipped altogether (reservation-mode is set to 'disabled').
-
-# Note that the second reservation is for an address which is within the
-# range of the pool of the dynamically allocated address. The server will
-# exclude this address from this pool and only assign it to the client which
-# has a reservation for it.
+// Note that the second reservation is for an address which is within the
+// range of the pool of the dynamically allocated address. The server will
+// exclude this address from this pool and only assign it to the client which
+// has a reservation for it.
   "subnet4": [
     {
        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "eth0",
+        "interface": "eth0",
+        // This directive tells Kea that reservations may be made both in-pool
+        // and out-of-pool. For improved performance, you may move all reservations
+        // out of the dynamic pool and change reservation-mode to "out-of-pool".
+        // Kea will then be able to skip querying for host reservations when
+        // assigning leases from dynamic pool.
+        "reservation-mode": "all",
         "reservations": [
 
-# This is a reservation for a specific hardware/MAC address. It's a very
-# simple reservation: just an address and nothing else.
+// This is a reservation for a specific hardware/MAC address. It's a very
+// simple reservation: just an address and nothing else.
          {
              "hw-address": "1a:1b:1c:1d:1e:1f",
-             "ip-address": "192.0.2.202"
+             "ip-address": "192.0.2.201"
          },
 
-# This is a reservation for a specific client-id. It also shows
-# the this client will get a reserved hostname. A hostname can be defined
-# for any identifier type, not just client-id.
+// This is a reservation for a specific client-id. It also shows
+// the this client will get a reserved hostname. A hostname can be defined
+// for any identifier type, not just client-id.
          {
              "client-id": "01:11:22:33:44:55:66",
-             "ip-address": "192.0.2.100",
+             "ip-address": "192.0.2.202",
              "hostname": "special-snowflake"
          },
 
-# The third reservation is based on DUID. This reservation also
-# defines special option values for this particular client. If
-# the domain-name-servers option would have been defined on a global,
-# subnet or class level, the host specific values take preference.
+// The third reservation is based on DUID. This reservation also
+// defines special option values for this particular client. If
+// the domain-name-servers option would have been defined on a global,
+// subnet or class level, the host specific values take preference.
          {
              "duid": "01:02:03:04:05",
              "ip-address": "192.0.2.203",
@@ -89,9 +98,9 @@
              } ]
          },
 
-# The fourth reservation is based on circuit-id. This is an option inserted
-# by the relay agent that forwards the packet from client to the server.
-# In this example the host is also assigned vendor specific options.
+// The fourth reservation is based on circuit-id. This is an option inserted
+// by the relay agent that forwards the packet from client to the server.
+// In this example the host is also assigned vendor specific options.
          {
              "client-id": "01:11:22:33:44:55:66",
              "ip-address": "192.0.2.204",
@@ -106,14 +115,40 @@
                      "data": "10.1.1.202,10.1.1.203"
                  }
              ]
+         },
+// This reservation is for a client that needs specific DHCPv4 fields to be
+// set. Three supported fields are next-server, server-hostname and
+// boot-file-name
+         {
+             "client-id": "01:0a:0b:0c:0d:0e:0f",
+             "ip-address": "192.0.2.205",
+             "next-server": "192.0.2.1",
+             "server-hostname": "hal9000",
+             "boot-file-name": "/dev/null"
+         },
+
+// This reservation is using flexible identifier. Instead of relying
+// on specific field, sysadmin can define an expression similar to what
+// is used for client classification,
+// e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+// that expression for incoming packet, the reservation is matched.
+// Expression can be specified either as hex or plain text using single
+// quotes.
+// Note: flexible identifier requires flex_id hook library to be
+// loaded to work.
+         {
+             "flex-id": "s0mEVaLue",
+             "ip-address": "192.0.2.206"
          }
+
        ]
     }
   ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

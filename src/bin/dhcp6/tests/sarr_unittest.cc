@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -513,7 +513,7 @@ TEST_F(SARRTest, sarrStats) {
     // Server should have assigned a prefix.
     ASSERT_EQ(1, client.getLeaseNum());
 
-    // All expected statstics must be present now.
+    // All expected statistics must be present now.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
     pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
     pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");

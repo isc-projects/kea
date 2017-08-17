@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,7 @@
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
  * - @subpage dhcpv6Hooks
+ * - @subpage agentHooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
  * - @subpage libdhcp_user_chk
@@ -71,9 +72,6 @@
  *   - @subpage dhcpv6SignalBasedReconfiguration
  *   - @subpage dhcpv6Other
  *   - @subpage dhcpv4o6Dhcp6
- * - @subpage libprocess
- *   - @subpage cpl
- *   - @subpage cplSignals
  * - @subpage d2
  *   - @subpage d2ProcessDerivation
  *   - @subpage d2ConfigMgt
@@ -83,6 +81,11 @@
  *   - @subpage d2TransDetail
  *   - @subpage d2StateModel
  *   - @subpage d2TransExecExample
+ * - @subpage controlAgent
+ *   - @subpage ctrlAgentHttp
+ *   - @subpage ctrlAgentCreatingResponse
+ *   - @subpage ctrlAgentCommandMgr
+ *   - @subpage CtrlAgentSecurity
  * - @subpage lfc
  *   - @subpage lfcProcessing
  *   - @subpage lfcFiles
@@ -91,6 +94,13 @@
  *   - @subpage ctrlSocketClient
  *   - @subpage ctrlSocketImpl
  *   - @subpage ctrlSocketConnections
+ * - @subpage dhcpDatabaseBackends
+ * - @subpage configBackend
+ *   - @subpage configBackendJSONDesign
+ * - @subpage perfdhcpInternals
+ *
+ * @section libraries Kea libraries
+ * - @subpage libcc
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
@@ -98,6 +108,7 @@
  *   - @subpage libdhcpPktFilter
  *   - @subpage libdhcpPktFilter6
  *   - @subpage libdhcpErrorLogging
+ * - @subpage libdhcp_ddns
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
@@ -108,14 +119,14 @@
  *   - @subpage leaseReclamationRoutine
  *   - @subpage subnetSelect
  *   - @subpage dhcp4o6Ipc
- * - @subpage libdhcp_ddns
- * - @subpage dhcpDatabaseBackends
- * - @subpage dhcpEval
- * - @subpage configBackend
- *   - @subpage configBackendJSONDesign
- * - @subpage perfdhcpInternals
+ * - @subpage libeval
+ * - @subpage libprocess
+ *   - @subpage cpl
+ *   - @subpage cplSignals
  *
  * @section miscellaneousTopics Miscellaneous Topics
+ * - @subpage terminology
+ * - @subpage parser
  * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
  *   - @subpage logDeveloperUse

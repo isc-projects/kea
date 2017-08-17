@@ -636,10 +636,10 @@ modify the server's behavior by taking responsibility for processing
 the DHCP message at certain stages and instructing the server to skip
 the default processing for that stage. Thus, hooks libraries play an
 important role in the DHCP server operation and, depending on their
-purpose, they may have high complexity, which increases likehood of the
+purpose, they may have high complexity, which increases likelihood of the
 defects in the libraries.
 
-All hooks libraries should use Kea logging system to faciliate diagnostics
+All hooks libraries should use Kea logging system to facilitate diagnostics
 of the defects in the libraries and issues with the DHCP server's operation.
 Even if the issue doesn't originate in the hooks library itself, the use
 of the library may uncover issues in the Kea code that only
@@ -724,7 +724,7 @@ the debug severity) should use different debug levels for the
 messages of different importance or having different performance
 requirements to generate the log message. For example, generation of
 a log message, which prints full details of a packet, usually requires
-more CPU bandwith than the generation of the message which only prints
+more CPU bandwidth than the generation of the message which only prints
 the packet type and length. Thus, the former should be logged at
 lower debug level (see @ref logSeverity for details of using
 various debug levels using "dbglevel" parameter).

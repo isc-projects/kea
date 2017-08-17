@@ -3,7 +3,7 @@
 #
 # Valid compressed RDATA for "(ns.example.com. root.example.com.
 # 2010012601 3600 300 3600000 1200)"
-# RDLENGHT=43 bytes
+# RDLENGTH=43 bytes
 # 0  1
  00 2b
 # MNAME: non compressed

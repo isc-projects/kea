@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,12 @@
 #include <dhcpsrv/host.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
+#include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <sstream>
+
+using namespace isc::data;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
@@ -160,7 +164,8 @@ Host::getIdentifierType(const std::string& identifier_name) {
 
     } else if (identifier_name == "client-id") {
         return (IDENT_CLIENT_ID);
-
+    } else if (identifier_name == "flex-id") {
+        return (IDENT_FLEX);
     } else {
         isc_throw(isc::BadValue, "invalid client identifier type '"
                   << identifier_name << "'");
@@ -204,6 +209,9 @@ Host::getIdentifierAsText(const IdentifierType& type, const uint8_t* value,
     case IDENT_CLIENT_ID:
         s << "client-id";
         break;
+    case IDENT_FLEX:
+        s << "flex-id";
+        break;
     default:
         // This should never happen actually, unless we add new identifier
         // and forget to add a case for it above.
@@ -228,6 +236,9 @@ Host::getIdentifierName(const IdentifierType& type) {
 
     case Host::IDENT_CLIENT_ID:
         return ("client-id");
+
+    case Host::IDENT_FLEX:
+        return ("flex-id");
 
     default:
         ;
@@ -257,7 +268,7 @@ Host::setIdentifier(const std::string& identifier, const std::string& name) {
     // Set identifier type.
     identifier_type_ = getIdentifierType(name);
 
-    // Idetifier value can either be specified as string of hexadecimal
+    // Identifier value can either be specified as string of hexadecimal
     // digits or a string in quotes. The latter is copied to a vector excluding
     // quote characters.
 
@@ -391,6 +402,122 @@ Host::setBootFileName(const std::string& boot_file_name) {
                   << (Pkt4::MAX_FILE_LEN - 1));
     }
     boot_file_name_ = boot_file_name;
+}
+
+ElementPtr
+Host::toElement4() const {
+
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+    // Set the identifier
+    Host::IdentifierType id_type = getIdentifierType();
+    if (id_type == Host::IDENT_HWADDR) {
+        HWAddrPtr hwaddr = getHWAddress();
+        map->set("hw-address", Element::create(hwaddr->toText(false)));
+    } else if (id_type == Host::IDENT_DUID) {
+        DuidPtr duid = getDuid();
+        map->set("duid", Element::create(duid->toText()));
+    } else if (id_type == Host::IDENT_CIRCUIT_ID) {
+        const std::vector<uint8_t>& bin = getIdentifier();
+        std::string circuit_id = util::encode::encodeHex(bin);
+        map->set("circuit-id", Element::create(circuit_id));
+    } else if (id_type == Host::IDENT_CLIENT_ID) {
+        const std::vector<uint8_t>& bin = getIdentifier();
+        std::string client_id = util::encode::encodeHex(bin);
+        map->set("client-id", Element::create(client_id));
+    } else if (id_type == Host::IDENT_FLEX) {
+        const std::vector<uint8_t>& bin = getIdentifier();
+        std::string flex = util::encode::encodeHex(bin);
+        map->set("flex-id", Element::create(flex));
+    } else {
+        isc_throw(ToElementError, "invalid identifier type: " << id_type);
+    }
+    // Set the reservation
+    const IOAddress& address = getIPv4Reservation();
+    map->set("ip-address", Element::create(address.toText()));
+    // Set the hostname
+    const std::string& hostname = getHostname();
+    map->set("hostname", Element::create(hostname));
+    // Set next-server
+    const IOAddress& next_server = getNextServer();
+    map->set("next-server", Element::create(next_server.toText()));
+    // Set server-hostname
+    const std::string& server_hostname = getServerHostname();
+    map->set("server-hostname", Element::create(server_hostname));
+    // Set boot-file-name
+    const std::string& boot_file_name = getBootFileName();
+    map->set("boot-file-name", Element::create(boot_file_name));
+    // Set client-classes
+    const ClientClasses& cclasses = getClientClasses4();
+    ElementPtr classes = Element::createList();
+    for (ClientClasses::const_iterator cclass = cclasses.cbegin();
+         cclass != cclasses.end(); ++cclass) {
+        classes->add(Element::create(*cclass));
+    }
+    map->set("client-classes", classes);
+    // Set option-data
+    ConstCfgOptionPtr opts = getCfgOption4();
+    map->set("option-data", opts->toElement());
+
+    return (map);
+}
+
+ElementPtr
+Host::toElement6() const {
+    // Prepare the map
+    ElementPtr map = Element::createMap();
+    // Set the identifier
+    Host::IdentifierType id_type = getIdentifierType();
+    if (id_type == Host::IDENT_HWADDR) {
+        HWAddrPtr hwaddr = getHWAddress();
+        map->set("hw-address", Element::create(hwaddr->toText(false)));
+    } else if (id_type == Host::IDENT_DUID) {
+        DuidPtr duid = getDuid();
+        map->set("duid", Element::create(duid->toText()));
+    } else if (id_type == Host::IDENT_CIRCUIT_ID) {
+        isc_throw(ToElementError, "unexpected circuit-id DUID type");
+    } else if (id_type == Host::IDENT_CLIENT_ID) {
+        isc_throw(ToElementError, "unexpected client-id DUID type");
+    } else if (id_type == Host::IDENT_FLEX) {
+        const std::vector<uint8_t>& bin = getIdentifier();
+        std::string flex = util::encode::encodeHex(bin);
+        map->set("flex-id", Element::create(flex));
+    } else {
+        isc_throw(ToElementError, "invalid DUID type: " << id_type);
+    }
+    // Set reservations (ip-addresses)
+    IPv6ResrvRange na_resv = getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ElementPtr resvs = Element::createList();
+    for (IPv6ResrvIterator resv = na_resv.first;
+         resv != na_resv.second; ++resv) {
+        resvs->add(Element::create(resv->second.toText()));
+    }
+    map->set("ip-addresses", resvs);
+    // Set reservations (prefixes)
+    IPv6ResrvRange pd_resv = getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    resvs = Element::createList();
+    for (IPv6ResrvIterator resv = pd_resv.first;
+         resv != pd_resv.second; ++resv) {
+        resvs->add(Element::create(resv->second.toText()));
+    }
+    map->set("prefixes", resvs);
+    // Set the hostname
+    const std::string& hostname = getHostname();
+    map->set("hostname", Element::create(hostname));
+    // Set client-classes
+    const ClientClasses& cclasses = getClientClasses6();
+    ElementPtr classes = Element::createList();
+    for (ClientClasses::const_iterator cclass = cclasses.cbegin();
+         cclass != cclasses.end(); ++cclass) {
+        classes->add(Element::create(*cclass));
+    }
+    map->set("client-classes", classes);
+
+    // Set option-data
+    ConstCfgOptionPtr opts = getCfgOption6();
+    map->set("option-data", opts->toElement());
+
+    return (map);
 }
 
 std::string

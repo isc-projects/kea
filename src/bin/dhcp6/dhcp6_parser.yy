@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,16 +52,25 @@ using namespace std;
   DHCP6 "Dhcp6"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
+  RE_DETECT "re-detect"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   TYPE "type"
+  MEMFILE "memfile"
+  MYSQL "mysql"
+  POSTGRESQL "postgresql"
+  CQL "cql"
   USER "user"
   PASSWORD "password"
   HOST "host"
+  PORT "port"
   PERSIST "persist"
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
+  CONNECT_TIMEOUT "connect-timeout"
+  CONTACT_POINTS "contact-points"
+  KEYSPACE "keyspace"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -76,6 +85,7 @@ using namespace std;
   CODE "code"
   SPACE "space"
   CSV_FORMAT "csv-format"
+  ALWAYS_SEND "always-send"
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
@@ -88,6 +98,7 @@ using namespace std;
   EXCLUDED_PREFIX "excluded-prefix"
   EXCLUDED_PREFIX_LEN "excluded-prefix-len"
   DELEGATED_LEN "delegated-len"
+  USER_CONTEXT "user-context"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -95,6 +106,9 @@ using namespace std;
   ID "id"
   RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
+  DISABLED "disabled"
+  OUT_OF_POOL "out-of-pool"
+  ALL "all"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
@@ -110,6 +124,7 @@ using namespace std;
   DUID "duid"
   HW_ADDRESS "hw-address"
   HOSTNAME "hostname"
+  FLEX_ID "flex-id"
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
@@ -119,41 +134,50 @@ using namespace std;
   PARAMETERS "parameters"
 
   EXPIRED_LEASES_PROCESSING "expired-leases-processing"
+  RECLAIM_TIMER_WAIT_TIME "reclaim-timer-wait-time"
+  FLUSH_RECLAIMED_TIMER_WAIT_TIME "flush-reclaimed-timer-wait-time"
+  HOLD_RECLAIMED_TIME "hold-reclaimed-time"
+  MAX_RECLAIM_LEASES "max-reclaim-leases"
+  MAX_RECLAIM_TIME "max-reclaim-time"
+  UNWARNED_RECLAIM_CYCLES "unwarned-reclaim-cycles"
 
   SERVER_ID "server-id"
+  LLT "LLT"
+  EN "EN"
+  LL "LL"
   IDENTIFIER "identifier"
   HTYPE "htype"
   TIME "time"
   ENTERPRISE_ID "enterprise-id"
 
   DHCP4O6_PORT "dhcp4o6-port"
-  VERSION "version"
 
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
   DHCP_DDNS "dhcp-ddns"
-
- /// @todo: Implement proper parsing for those parameters in Dhcp6/dhcp-ddns/*.
- /// This should be part of the #5043 ticket. Listing the keywords here for
- /// completeness.
-
- // These are tokens defined in Dhcp6/dhcp-ddns/*
- // They're not
- //  ENABLE_UPDATES "enable-updates"
- //  SERVER_IP "server-ip"
- //  SENDER_IP "sender-ip"
- //  SENDER_PORT "sender-port"
- //  MAX_QUEUE_SIZE "max-queue-size"
- //  NCR_PROTOCOL "ncr-protocol"
- //  NCR_FORMAT "ncr-format"
- //  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
- //  OVERRDIDE_NO_UPDATE "override-no-update"
- //  OVERRDIDE_CLIENT_UPDATE "override-client-update"
- //  REPLACE_CLIENT_NAME "replace-client-name"
- //  GENERATED_PREFIX "generated-prefix"
- //  QUALIFYING_SUFFIX "qualifying-suffix"
+  ENABLE_UPDATES "enable-updates"
+  QUALIFYING_SUFFIX "qualifying-suffix"
+  SERVER_IP "server-ip"
+  SERVER_PORT "server-port"
+  SENDER_IP "sender-ip"
+  SENDER_PORT "sender-port"
+  MAX_QUEUE_SIZE "max-queue-size"
+  NCR_PROTOCOL "ncr-protocol"
+  NCR_FORMAT "ncr-format"
+  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
+  OVERRIDE_NO_UPDATE "override-no-update"
+  OVERRIDE_CLIENT_UPDATE "override-client-update"
+  REPLACE_CLIENT_NAME "replace-client-name"
+  GENERATED_PREFIX "generated-prefix"
+  UDP "UDP"
+  TCP "TCP"
+  JSON "JSON"
+  WHEN_PRESENT "when-present"
+  NEVER "never"
+  ALWAYS "always"
+  WHEN_NOT_PRESENT "when-not-present"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -161,9 +185,13 @@ using namespace std;
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
+  FLUSH "flush"
+  MAXSIZE "maxsize"
+  MAXVER "maxver"
 
   DHCP4 "Dhcp4"
   DHCPDDNS "DhcpDdns"
+  CONTROL_AGENT "Control-agent"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
@@ -178,6 +206,7 @@ using namespace std;
   SUB_OPTION_DEF
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
+  SUB_DHCP_DDNS
 ;
 
 %token <std::string> STRING "constant string"
@@ -186,14 +215,19 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
-%type <ElementPtr> version_value
+%type <ElementPtr> map_value
+%type <ElementPtr> db_type
+%type <ElementPtr> hr_mode
+%type <ElementPtr> duid_type
+%type <ElementPtr> ncr_protocol_value
+%type <ElementPtr> replace_client_name_value
 
 %printer { yyoutput << $$; } <*>;
 
 %%
 
 // The whole grammar starts with a map, because the config file
-// constists of Dhcp, Logger and DhcpDdns entries in one big { }.
+// consists of Dhcp, Logger and DhcpDdns entries in one big { }.
 // We made the same for subparsers at the exception of the JSON value.
 %start start;
 
@@ -208,6 +242,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
+     | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -240,6 +275,8 @@ map2: LCURLY_BRACKET {
     // for it.
 };
 
+map_value: map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); };
+
 // Assignments rule
 map_content: %empty // empty map
            | not_empty_map
@@ -263,14 +300,6 @@ list_generic: LSQUARE_BRACKET {
     // list parsing complete. Put any sanity checking here
 };
 
-// This one is used in syntax parser.
-list2: LSQUARE_BRACKET {
-    // List parsing about to start
-} list_content RSQUARE_BRACKET {
-    // list parsing complete. Put any sanity checking here
-    //ctx.stack_.pop_back();
-};
-
 list_content: %empty // Empty list
             | not_empty_list
             ;
@@ -285,6 +314,28 @@ not_empty_list: value {
                   }
               ;
 
+// This one is used in syntax parser and is restricted to strings.
+list_strings: LSQUARE_BRACKET {
+    // List parsing about to start
+} list_strings_content RSQUARE_BRACKET {
+    // list parsing complete. Put any sanity checking here
+    //ctx.stack_.pop_back();
+};
+
+list_strings_content: %empty // Empty list
+                    | not_empty_list_strings
+                    ;
+
+not_empty_list_strings: STRING {
+                          ElementPtr s(new StringElement($1, ctx.loc2pos(@1)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      | not_empty_list_strings COMMA STRING {
+                          ElementPtr s(new StringElement($3, ctx.loc2pos(@3)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      ;
+
 // ---- generic JSON parser ends here ----------------------------------
 
 // ---- syntax checking parser starts here -----------------------------
@@ -298,8 +349,8 @@ unknown_map_entry: STRING COLON {
 };
 
 
-// This defines the top-level { } that holds Dhcp6, Dhcp4, DhcpDdns or Logging
-// objects.
+// This defines the top-level { } that holds Control-agent, Dhcp6, Dhcp4,
+// DhcpDdns or Logging objects.
 syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -321,6 +372,7 @@ global_object: dhcp6_object
              | logging_object
              | dhcp4_json_object
              | dhcpddns_json_object
+             | control_agent_json_object
              | unknown_map_entry
              ;
 
@@ -374,7 +426,6 @@ global_param: preferred_lifetime
             | expired_leases_processing
             | server_id
             | dhcp4o6_port
-            | version
             | control_socket
             | dhcp_ddns
             | unknown_map_entry
@@ -410,7 +461,7 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
-} COLON LCURLY_BRACKET interface_config_map RCURLY_BRACKET {
+} COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -419,19 +470,33 @@ sub_interfaces6: LCURLY_BRACKET {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} interface_config_map RCURLY_BRACKET {
+} interfaces_config_params RCURLY_BRACKET {
     // parsing completed
 };
 
-interface_config_map: INTERFACES {
+interfaces_config_params: interfaces_config_param
+                        | interfaces_config_params COMMA interfaces_config_param
+                        ;
+
+interfaces_config_param: interfaces_list
+                       | re_detect
+                       ;
+
+interfaces_list: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+re_detect: RE_DETECT COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("re-detect", b);
+};
+
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -457,24 +522,33 @@ database_map_params: database_map_param
                    | database_map_params COMMA database_map_param
                    ;
 
-database_map_param: type
+database_map_param: database_type
                   | user
                   | password
                   | host
+                  | port
                   | name
                   | persist
                   | lfc_interval
                   | readonly
+                  | connect_timeout
+                  | contact_points
+                  | keyspace
                   | unknown_map_entry
 ;
 
-type: TYPE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("type", prf);
+database_type: TYPE {
+    ctx.enter(ctx.DATABASE_TYPE);
+} COLON db_type {
+    ctx.stack_.back()->set("type", $4);
     ctx.leave();
 };
+
+db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
+       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
+       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
+       | CQL { $$ = ElementPtr(new StringElement("cql", ctx.loc2pos(@1))); }
+       ;
 
 user: USER {
     ctx.enter(ctx.NO_KEYWORD);
@@ -500,6 +574,11 @@ host: HOST {
     ctx.leave();
 };
 
+port: PORT COLON INTEGER {
+    ElementPtr p(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("port", p);
+};
+
 name: NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -522,6 +601,28 @@ readonly: READONLY COLON BOOLEAN {
     ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("readonly", n);
 };
+
+connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("connect-timeout", n);
+};
+
+contact_points: CONTACT_POINTS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("contact-points", cp);
+    ctx.leave();
+};
+
+keyspace: KEYSPACE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("keyspace", ks);
+    ctx.leave();
+};
+
 
 mac_sources: MAC_SOURCES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -567,6 +668,7 @@ host_reservation_identifiers_list: host_reservation_identifier
 
 host_reservation_identifier: duid_id
                            | hw_address_id
+                           | flex_id
                            ;
 
 hw_address_id : HW_ADDRESS {
@@ -574,12 +676,19 @@ hw_address_id : HW_ADDRESS {
     ctx.stack_.back()->add(hwaddr);
 };
 
+flex_id : FLEX_ID {
+    ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(flex_id);
+};
+
+// list_content below accepts any value when options are by name (string)
+// or by code (number)
 relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("relay-supplied-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON LSQUARE_BRACKET list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -647,7 +756,7 @@ expired_leases_processing: EXPIRED_LEASES_PROCESSING {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 } COLON LCURLY_BRACKET expired_leases_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -657,12 +766,42 @@ expired_leases_params: expired_leases_param
                      | expired_leases_params COMMA expired_leases_param
                      ;
 
-// This is a bit of a simplification. But it can also serve as an example.
-// Instead of explicitly listing all allowed expired leases parameters, we
-// simply say that all of them as integers.
-expired_leases_param: STRING COLON INTEGER {
+expired_leases_param: reclaim_timer_wait_time
+                    | flush_reclaimed_timer_wait_time
+                    | hold_reclaimed_time
+                    | max_reclaim_leases
+                    | max_reclaim_time
+                    | unwarned_reclaim_cycles
+                    ;
+
+reclaim_timer_wait_time: RECLAIM_TIMER_WAIT_TIME COLON INTEGER {
     ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set($1, value);
+    ctx.stack_.back()->set("reclaim-timer-wait-time", value);
+};
+
+flush_reclaimed_timer_wait_time: FLUSH_RECLAIMED_TIMER_WAIT_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
+};
+
+hold_reclaimed_time: HOLD_RECLAIMED_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("hold-reclaimed-time", value);
+};
+
+max_reclaim_leases: MAX_RECLAIM_LEASES COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reclaim-leases", value);
+};
+
+max_reclaim_time: MAX_RECLAIM_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reclaim-time", value);
+};
+
+unwarned_reclaim_cycles: UNWARNED_RECLAIM_CYCLES COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 };
 
 // --- subnet6 ------------------------------------------
@@ -782,12 +921,16 @@ client_class: CLIENT_CLASS {
 };
 
 reservation_mode: RESERVATION_MODE {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr rm(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("reservation-mode", rm);
+    ctx.enter(ctx.RESERVATION_MODE);
+} COLON hr_mode {
+    ctx.stack_.back()->set("reservation-mode", $4);
     ctx.leave();
 };
+
+hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
+       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
+       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
+       ;
 
 id: ID COLON INTEGER {
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
@@ -873,7 +1016,13 @@ code: CODE COLON INTEGER {
 
 option_def_code: code;
 
-option_def_type: type;
+option_def_type: TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("type", prf);
+    ctx.leave();
+};
 
 option_def_record_types: RECORD_TYPES {
     ctx.enter(ctx.NO_KEYWORD);
@@ -973,6 +1122,7 @@ option_data_param: option_data_name
                  | option_data_code
                  | option_data_space
                  | option_data_csv_format
+                 | option_data_always_send
                  | unknown_map_entry
                  ;
 
@@ -993,6 +1143,11 @@ option_data_space: space;
 option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
     ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("csv-format", space);
+};
+
+option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
+    ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("always-send", persist);
 };
 
 // ---- pools ------------------------------------
@@ -1040,6 +1195,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
+          | user_context
           | unknown_map_entry
           ;
 
@@ -1048,6 +1204,13 @@ pool_entry: POOL {
 } COLON STRING {
     ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pool", pool);
+    ctx.leave();
+};
+
+user_context: USER_CONTEXT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ctx.stack_.back()->set("user-context", $4);
     ctx.leave();
 };
 
@@ -1100,6 +1263,7 @@ pd_pool_param: pd_prefix
              | option_data_list
              | excluded_prefix
              | excluded_prefix_len
+             | user_context
              | unknown_map_entry
              ;
 
@@ -1186,6 +1350,7 @@ reservation_param: duid
                  | prefixes
                  | hw_address
                  | hostname
+                 | flex_id_value
                  | option_data_list
                  | unknown_map_entry
                  ;
@@ -1195,7 +1360,7 @@ ip_addresses: IP_ADDRESSES {
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1205,7 +1370,7 @@ prefixes: PREFIXES  {
     ctx.stack_.back()->set("prefixes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1234,12 +1399,20 @@ hostname: HOSTNAME {
     ctx.leave();
 };
 
+flex_id_value: FLEX_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("flex-id", hw);
+    ctx.leave();
+};
+
 reservation_client_classes: CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
-} COLON list2 {
+} COLON list_strings {
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1331,7 +1504,7 @@ server_id_params: server_id_param
                 | server_id_params COMMA server_id_param
                 ;
 
-server_id_param: type
+server_id_param: server_id_type
                | identifier
                | time
                | htype
@@ -1339,6 +1512,18 @@ server_id_param: type
                | persist
                | unknown_map_entry
                ;
+
+server_id_type: TYPE {
+    ctx.enter(ctx.DUID_TYPE);
+} COLON duid_type {
+    ctx.stack_.back()->set("type", $4);
+    ctx.leave();
+};
+
+duid_type: LLT { $$ = ElementPtr(new StringElement("LLT", ctx.loc2pos(@1))); }
+         | EN { $$ = ElementPtr(new StringElement("EN", ctx.loc2pos(@1))); }
+         | LL { $$ = ElementPtr(new StringElement("LL", ctx.loc2pos(@1))); }
+         ;
 
 htype: HTYPE COLON INTEGER {
     ElementPtr htype(new IntElement($3, ctx.loc2pos(@3)));
@@ -1369,20 +1554,6 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 };
-
-// code says it is a string, unit test a number
-version: VERSION {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON version_value {
-    ctx.stack_.back()->set("version", $4);
-    ctx.leave();
-};
-
-version_value:
-    INTEGER { $$ = ElementPtr(new IntElement($1, ctx.loc2pos(@1))); }
-  | FLOAT { $$ = ElementPtr(new DoubleElement($1, ctx.loc2pos(@1))); }
-  | STRING { $$ = ElementPtr(new StringElement($1, ctx.loc2pos(@1))); }
-  ;
 
 // --- control socket ----------------------------------------
 
@@ -1426,9 +1597,151 @@ dhcp_ddns: DHCP_DDNS {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON LCURLY_BRACKET not_empty_map RCURLY_BRACKET {
+    ctx.enter(ctx.DHCP_DDNS);
+} COLON LCURLY_BRACKET dhcp_ddns_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_dhcp_ddns: LCURLY_BRACKET {
+    // Parse the dhcp-ddns map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} dhcp_ddns_params RCURLY_BRACKET {
+    // parsing completed
+};
+
+dhcp_ddns_params: dhcp_ddns_param
+                | dhcp_ddns_params COMMA dhcp_ddns_param
+                ;
+
+dhcp_ddns_param: enable_updates
+               | qualifying_suffix
+               | server_ip
+               | server_port
+               | sender_ip
+               | sender_port
+               | max_queue_size
+               | ncr_protocol
+               | ncr_format
+               | always_include_fqdn
+               | override_no_update
+               | override_client_update
+               | replace_client_name
+               | generated_prefix
+               | unknown_map_entry
+               ;
+
+enable_updates: ENABLE_UPDATES COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-updates", b);
+};
+
+qualifying_suffix: QUALIFYING_SUFFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("qualifying-suffix", s);
+    ctx.leave();
+};
+
+server_ip: SERVER_IP {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-ip", s);
+    ctx.leave();
+};
+
+server_port: SERVER_PORT COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("server-port", i);
+};
+
+sender_ip: SENDER_IP {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("sender-ip", s);
+    ctx.leave();
+};
+
+sender_port: SENDER_PORT COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("sender-port", i);
+};
+
+max_queue_size: MAX_QUEUE_SIZE COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-queue-size", i);
+};
+
+ncr_protocol: NCR_PROTOCOL {
+    ctx.enter(ctx.NCR_PROTOCOL);
+} COLON ncr_protocol_value {
+    ctx.stack_.back()->set("ncr-protocol", $4);
+    ctx.leave();
+};
+
+ncr_protocol_value:
+    UDP { $$ = ElementPtr(new StringElement("UDP", ctx.loc2pos(@1))); }
+  | TCP { $$ = ElementPtr(new StringElement("TCP", ctx.loc2pos(@1))); }
+  ;
+
+ncr_format: NCR_FORMAT {
+    ctx.enter(ctx.NCR_FORMAT);
+} COLON JSON {
+    ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ncr-format", json);
+    ctx.leave();
+};
+
+always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("always-include-fqdn", b);
+};
+
+override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("override-no-update", b);
+};
+
+override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("override-client-update", b);
+};
+
+replace_client_name: REPLACE_CLIENT_NAME {
+    ctx.enter(ctx.REPLACE_CLIENT_NAME);
+} COLON replace_client_name_value {
+    ctx.stack_.back()->set("replace-client-name", $4);
+    ctx.leave();
+};
+
+replace_client_name_value:
+    WHEN_PRESENT {
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      }
+  | NEVER {
+      $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
+      }
+  | ALWAYS {
+      $$ = ElementPtr(new StringElement("always", ctx.loc2pos(@1)));
+      }
+  | WHEN_NOT_PRESENT {
+      $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
+      }
+  | BOOLEAN  {
+      error(@1, "boolean values for the replace-client-name are "
+                "no longer supported");
+      }
+  ;
+
+generated_prefix: GENERATED_PREFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 };
 
@@ -1447,6 +1760,14 @@ dhcpddns_json_object: DHCPDDNS {
     ctx.stack_.back()->set("DhcpDdns", $4);
     ctx.leave();
 };
+
+control_agent_json_object: CONTROL_AGENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set("Control-agent", $4);
+    ctx.leave();
+};
+
 
 // --- logging entry -----------------------------------------
 
@@ -1515,6 +1836,7 @@ debuglevel: DEBUGLEVEL COLON INTEGER {
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("debuglevel", dl);
 };
+
 severity: SEVERITY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -1541,21 +1863,42 @@ output_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
-} output_params RCURLY_BRACKET {
+} output_params_list RCURLY_BRACKET {
     ctx.stack_.pop_back();
 };
 
-output_params: output_param
-             | output_params COMMA output_param
+output_params_list: output_params
+                  | output_params_list COMMA output_params
+                  ;
+
+output_params: output
+             | flush
+             | maxsize
+             | maxver
              ;
 
-output_param: OUTPUT {
+output: OUTPUT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 };
+
+flush: FLUSH COLON BOOLEAN {
+    ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("flush", flush);
+}
+
+maxsize: MAXSIZE COLON INTEGER {
+    ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("maxsize", maxsize);
+}
+
+maxver: MAXVER COLON INTEGER {
+    ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("maxver", maxver);
+}
 
 %%
 
