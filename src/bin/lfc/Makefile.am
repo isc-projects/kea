@@ -17,7 +17,7 @@ EXTRA_DIST = $(man_MANS) kea-lfc.xml lfc.dox
 
 if GENERATE_DOCS
 kea-lfc.8: kea-lfc.xml
-	@XSLTPROC@ --novalid --xinclude -o $@ \
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-lfc.xml
 

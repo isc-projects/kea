@@ -22,7 +22,7 @@ kea-messages.xml:
 if GENERATE_DOCS
 
 kea-guide.html: $(DOCBOOK)
-	@XSLTPROC@ --novalid --xinclude \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam section.autolabel 1 \
@@ -35,7 +35,7 @@ kea-guide.txt: kea-guide.html
 	@ELINKS@ -dump -no-numbering -no-references kea-guide.html > $@
 
 kea-messages.html: kea-messages.xml
-	@XSLTPROC@ --novalid --xinclude \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam generate.toc "book toc" \
