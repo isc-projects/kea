@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,7 +117,7 @@ public:
     /// reservations from the alternate source.
     ///
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -162,11 +162,11 @@ public:
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// This method returns a single reservation for a particular host as
-    /// documneted in the @c BaseHostDataSource::get4.
+    /// documented in the @c BaseHostDataSource::get4.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -213,7 +213,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -237,7 +237,7 @@ public:
 
     /// @brief Returns a host from specific subnet and reserved address.
     ///
-    /// @param subnet_id subnet identfier.
+    /// @param subnet_id subnet identifier.
     /// @param addr specified address.
     ///
     /// @return Const @c host object that has a reservation for specified address.
@@ -268,6 +268,59 @@ public:
     HostDataSourcePtr getHostDataSource() const {
         return (alternate_source_);
     }
+
+    /// @brief Sets the alternate host data source.
+    ///
+    /// Note: This should be used only for testing. Do not use
+    /// in production. Normal control flow assumes that
+    /// HostMgr::create(...) is called and it instantiates
+    /// appropriate host data source. However, some tests
+    /// (e.g. host_cmds) implement their own very simple
+    /// data source. It's not production ready by any means,
+    /// so it does not belong in host_data_source_factory.cc.
+    /// The testing nature of this method is reflected in its name.
+    ///
+    /// @param source new source to be set (may be NULL)
+    void setTestHostDataSource(const HostDataSourcePtr& source) {
+        alternate_source_ = source;
+    }
+
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool
+    del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+         const uint8_t* identifier_begin, const size_t identifier_len);
 
 private:
 

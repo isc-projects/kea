@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,7 @@ public:
 
 /// @brief Thrown if the queue manager's receive handler is passed
 /// a failure result.
+/// @todo use or remove it.
 class D2QueueMgrReceiveError : public isc::Exception {
 public:
     D2QueueMgrReceiveError(const char* file, size_t line, const char* what) :
@@ -41,6 +42,7 @@ public:
 
 
 /// @brief Thrown if the request queue is full when an enqueue is attempted.
+/// @todo use or remove it.
 class D2QueueMgrQueueFull : public isc::Exception {
 public:
     D2QueueMgrQueueFull(const char* file, size_t line, const char* what) :
@@ -192,7 +194,7 @@ public:
     ///
     /// This method is invoked by the listener as part of its receive
     /// completion callback and is how the inbound NameChangeRequests are
-    /// passed up to the D2QueueMgr for queueing.
+    /// passed up to the D2QueueMgr for queuing.
     /// If the given result indicates a successful receive completion and
     /// there is room left in the queue, the given request is queued.
     ///

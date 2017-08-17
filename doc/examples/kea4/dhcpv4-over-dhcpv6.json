@@ -1,9 +1,9 @@
-# This is an example configuration file for the DHCPv4 server of
-# DHCPv4-over-DHCPv6 tests in Kea.
+// This is an example configuration file for the DHCPv4 server of
+// DHCPv4-over-DHCPv6 tests in Kea.
 
 {
 
-# DHCPv4 conf
+// DHCPv4 conf
 "Dhcp4":
 {
   "interfaces-config": {
@@ -11,21 +11,22 @@
   },
 
   "lease-database": {
-    "type": "memfile",
-    "name": "leases4"
+      "type": "memfile",
+      "name": "leases4",
+      "lfc-interval": 3600
   },
 
   "valid-lifetime": 4000,
 
   "subnet4": [
    {    "subnet": "10.10.10.0/24",
-        # Don't forget the "4o6-" before "interface" here!
+// Don't forget the "4o6-" before "interface" here!
         "4o6-interface": "eno33554984",
         "4o6-subnet": "2001:db8:1:1::/64",
         "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ] }
   ],
 
-  # This enables DHCPv4-over-DHCPv6 support
+// This enables DHCPv4-over-DHCPv6 support
   "dhcp4o6-port": 6767
 
 },

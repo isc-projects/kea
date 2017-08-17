@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ Dhcp4to6Ipc& Dhcp4to6Ipc::instance() {
 }
 
 void Dhcp4to6Ipc::open() {
-    uint32_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
+    uint16_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
     if (port == 0) {
         Dhcp4o6IpcBase::close();
         return;
@@ -45,8 +45,7 @@ void Dhcp4to6Ipc::open() {
     }
 
     int old_fd = socket_fd_;
-    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port),
-                                      ENDPOINT_TYPE_V4);
+    socket_fd_ = Dhcp4o6IpcBase::open(port, ENDPOINT_TYPE_V4);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
         IfaceMgr::instance().addExternalSocket(socket_fd_,
                                                Dhcp4to6Ipc::handler);

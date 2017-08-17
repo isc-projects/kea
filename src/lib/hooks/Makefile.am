@@ -36,6 +36,8 @@ libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
 libkea_hooks_la_SOURCES += hooks.h
 libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
 libkea_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
+libkea_hooks_la_SOURCES += hooks_config.cc hooks_config.h
+libkea_hooks_la_SOURCES += hooks_parser.cc hooks_parser.h
 libkea_hooks_la_SOURCES += libinfo.cc libinfo.h
 libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
 libkea_hooks_la_SOURCES += library_manager.cc library_manager.h
@@ -47,7 +49,7 @@ nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 2:0:0
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 3:0:0
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la

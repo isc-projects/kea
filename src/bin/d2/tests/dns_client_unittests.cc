@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -524,7 +524,7 @@ TEST_F(DNSClientTest, sendReceive) {
 
 // Verify that the DNSClient reports an error when the response is received from
 // a DNS and this response is corrupted.
-TEST_F(DNSClientTest, sendReceiveCurrupted) {
+TEST_F(DNSClientTest, sendReceiveCorrupted) {
     // true means that server's response is corrupted.
     runSendReceiveTest(true, false);
 }

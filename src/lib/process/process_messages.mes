@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,9 +24,24 @@ to disconnect from its session with the Kea control channel.
 This debug message is issued just before the controller attempts
 to establish a session with the Kea control channel.
 
+% DCTL_CFG_FILE_RELOAD_ERROR configuration reload failed: %1, reverting to current configuration.
+This is an error message indicating that the application attempted to reload
+its configuration from file and encountered an error.  This is likely due to
+invalid content in the configuration file.  The application should continue
+to operate under its current configuration.
+
+% DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD OS signal %1 received, reloading configuration from file: %2
+This is an informational message indicating the application has received a signal
+instructing it to reload its configuration from file.
+
 % DCTL_COMMAND_RECEIVED %1 received command: %2, arguments: %3
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the controller.
+
+% DCTL_CONFIG_CHECK_COMPLETE server has completed configuration check: %1, result: %2
+This is an informational message announcing the successful processing of a
+new configuration check is complete. The result of that check is printed.
+This informational message is printed when configuration check is requested.
 
 % DCTL_CONFIG_COMPLETE server has completed configuration: %1
 This is an informational message announcing the successful processing of a
@@ -87,16 +102,6 @@ first argument is the process name.
 The controller has encountered a fatal error while running the
 application and is terminating. The reason for the failure is
 included in the message.
-
-% DCTL_CFG_FILE_RELOAD_ERROR configuration reload failed: %1, reverting to current configuration.
-This is an error message indicating that the application attempted to reload
-its configuration from file and encountered an error.  This is likely due to
-invalid content in the configuration file.  The application should continue
-to operate under its current configuration.
-
-% DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD OS signal %1 received, reloading configuration from file: %2
-This is an informational message indicating the application has received a signal
-instructing it to reload its configuration from file.
 
 % DCTL_RUN_PROCESS %1 starting application event loop
 This debug message is issued just before the controller invokes

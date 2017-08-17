@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ public:
     ///
     /// This function checks if the direct response capability is supported,
     /// i.e. if the server can respond to the client which doesn't have an
-    /// address yet. For this dummy class, the true is alaways returned.
+    /// address yet. For this dummy class, the true is always returned.
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const;

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define HOST_H
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -184,12 +185,13 @@ public:
         IDENT_HWADDR,
         IDENT_DUID,
         IDENT_CIRCUIT_ID,
-        IDENT_CLIENT_ID
+        IDENT_CLIENT_ID,
+        IDENT_FLEX, ///< Flexible host identifier.
     };
 
     /// @brief Constant pointing to the last identifier of the
     /// @ref IdentifierType enumeration.
-    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_CLIENT_ID;
+    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_FLEX;
 
     /// @brief Constructor.
     ///
@@ -240,7 +242,7 @@ public:
     /// - "yy:yy:yy:yy:yy:yy"
     /// - "yyyyyyyyyy",
     /// - "0xyyyyyyyyyy",
-    /// - "'some identfier'".
+    /// - "'some identifier'".
     /// where y is a hexadecimal digit.
     ///
     /// Note that it is possible to use textual representation, e.g. 'some identifier',
@@ -501,7 +503,7 @@ public:
     /// @brief Returns pointer to the DHCPv4 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption4() {
         return (cfg_option4_);
@@ -516,7 +518,7 @@ public:
     /// @brief Returns pointer to the DHCPv6 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption6() {
         return (cfg_option6_);
@@ -542,6 +544,16 @@ public:
     HostID getHostId() const {
         return (host_id_);
     }
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement4() const;
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement6() const;
 
 private:
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -253,7 +253,7 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
     // Choose the basic (normal address) lease type
     Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
 
-    // Initalize normal address allocators
+    // Initialize normal address allocators
     switch (engine_type) {
     case ALLOC_ITERATIVE:
         allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
@@ -268,7 +268,7 @@ AllocEngine::AllocEngine(AllocType engine_type, uint64_t attempts,
         isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
     }
 
-    // If this is IPv6 allocation engine, initalize also temporary addrs
+    // If this is IPv6 allocation engine, initialize also temporary addrs
     // and prefixes
     if (ipv6) {
         switch (engine_type) {
@@ -427,7 +427,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //       assign new leases
         //
         // We could implement those checks as nested ifs, but the performance
-        // gain would be minimal and the code readibility loss would be substantial.
+        // gain would be minimal and the code readability loss would be substantial.
         // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
@@ -710,6 +710,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 leases.push_back(lease);
                 return (leases);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() !=
+                        CalloutHandle::NEXT_STEP_CONTINUE)) {
+                // Don't retry when the callout status is not continue.
+                break;
             }
 
             // Although the address was free just microseconds ago, it may have
@@ -1088,6 +1093,16 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     if (!ctx.fake_allocation_) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease6(expired);
+
+        // If the lease is in the current subnet we need to account
+        // for the re-assignment of The lease.
+        if (ctx.subnet_->inPool(ctx.currentIA().type_, expired->addr_)) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                static_cast<int64_t>(1));
+        }
     }
 
     // We do nothing for SOLICIT. We'll just update database when
@@ -1382,6 +1397,15 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         if (old_data->expired()) {
             reclaimExpiredLease(old_data, ctx.callout_handle_);
 
+            // If the lease is in the current subnet we need to account
+            // for the re-assignment of The lease.
+            if (ctx.subnet_->inPool(ctx.currentIA().type_, old_data->addr_)) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                       "assigned-nas" : "assigned-pds"),
+                    static_cast<int64_t>(1));
+            }
         } else {
             if (!lease->hasIdenticalFqdn(*old_data)) {
                 // We're not reclaiming the lease but since the FQDN has changed
@@ -1419,6 +1443,22 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
         if (!ctx.fake_allocation_) {
+
+            if (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
+                // Transition lease state to default (aka assigned)
+                lease->state_ = Lease::STATE_DEFAULT;
+
+                // If the lease is in the current subnet we need to account
+                // for the re-assignment of The lease.
+                if (ctx.subnet_->inPool(ctx.currentIA().type_, lease->addr_)) {
+                    StatsMgr::instance().addValue(
+                        StatsMgr::generateName("subnet", ctx.subnet_->getID(),
+                                               ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds"),
+                        static_cast<int64_t>(1));
+                }
+            }
+
             bool fqdn_changed = ((lease->type_ != Lease::TYPE_PD) &&
                                  !(lease->hasIdenticalFqdn(**lease_it)));
 
@@ -1840,7 +1880,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     if (!skipped) {
 
         // Generate removal name change request for D2, if required.
-        // This will return immediatelly if the DNS wasn't updated
+        // This will return immediately if the DNS wasn't updated
         // when the lease was created.
         queueNCR(CHG_REMOVE, lease);
 
@@ -2651,13 +2691,14 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // involves execution of hooks and DNS update.
         if (ctx.old_lease_->expired()) {
             reclaimExpiredLease(ctx.old_lease_, ctx.callout_handle_);
-            lease->state_ = Lease::STATE_DEFAULT;
 
         } else if (!lease->hasIdenticalFqdn(*ctx.old_lease_)) {
             // The lease is not expired but the FQDN information has
             // changed. So, we have to remove the previous DNS entry.
             queueNCR(CHG_REMOVE, ctx.old_lease_);
         }
+
+        lease->state_ = Lease::STATE_DEFAULT;
     }
 
     bool skip = false;
@@ -2705,6 +2746,13 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     if (!ctx.fake_allocation_ && !skip) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
+
+        // We need to account for the re-assignment of The lease.
+        if (ctx.old_lease_->expired() || ctx.old_lease_->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                static_cast<int64_t>(1));
+        }
     }
     if (skip) {
         // Rollback changes (really useful only for memfile)
@@ -2791,6 +2839,11 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
     if (!ctx.fake_allocation_) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(expired);
+
+        // We need to account for the re-assignment of The lease.
+        StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+                static_cast<int64_t>(1));
     }
 
     // We do nothing for SOLICIT. We'll just update database when
@@ -2841,6 +2894,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             new_lease = allocateOrReuseLease4(candidate, ctx);
             if (new_lease) {
                 return (new_lease);
+            } else if (ctx.callout_handle_ &&
+                       (ctx.callout_handle_->getStatus() !=
+                        CalloutHandle::NEXT_STEP_CONTINUE)) {
+                // Don't retry when the callout status is not continue.
+                break;
             }
         }
     }

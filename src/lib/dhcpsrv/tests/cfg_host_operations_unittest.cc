@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,12 +8,14 @@
 #include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/host.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <iterator>
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -51,6 +53,7 @@ identifierAtPosition(const CfgHostOperations& cfg, const Host::IdentifierType& i
 TEST(CfgHostOperationsTest, defaults) {
     CfgHostOperations cfg;
     EXPECT_TRUE(cfg.getIdentifierTypes().empty());
+    runToElementTest<CfgHostOperations>("[ ]", cfg);
 }
 
 // This test verifies that identifier types can be added into an
@@ -76,12 +79,17 @@ TEST(CfgHostOperationsTest, addIdentifier) {
     EXPECT_TRUE(identifierAtPosition(cfg, Host::IDENT_DUID, 1));
     EXPECT_TRUE(identifierAtPosition(cfg, Host::IDENT_CIRCUIT_ID, 2));
 
+    // Check unparse
+    std::string ids = "[ \"hw-address\", \"duid\", \"circuit-id\" ]";
+    runToElementTest<CfgHostOperations>(ids, cfg);
+
     // Let's clear and make sure no identifiers are present.
     ASSERT_NO_THROW(cfg.clearIdentifierTypes());
     EXPECT_TRUE(cfg.getIdentifierTypes().empty());
+    runToElementTest<CfgHostOperations>("[ ]", cfg);
 }
 
-// This test verfies that the default DHCPv4 configuration is created
+// This test verifies that the default DHCPv4 configuration is created
 // as expected.
 TEST(CfgHostOperationsTest, createConfig4) {
     CfgHostOperationsPtr cfg = CfgHostOperations::createConfig4();
@@ -89,9 +97,10 @@ TEST(CfgHostOperationsTest, createConfig4) {
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_HWADDR, 0));
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_DUID, 1));
     EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_CIRCUIT_ID, 2));
+    EXPECT_TRUE(identifierAtPosition(*cfg, Host::IDENT_CLIENT_ID, 3));
 }
 
-// This test verfies that the default DHCPv6 configuration is created
+// This test verifies that the default DHCPv6 configuration is created
 // as expected.
 TEST(CfgHostOperationsTest, createConfig6) {
     CfgHostOperationsPtr cfg = CfgHostOperations::createConfig6();

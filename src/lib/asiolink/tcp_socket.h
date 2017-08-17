@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,8 +110,23 @@ public:
     /// \param endpoint Target of the send. (Unused for a TCP socket because
     ///        that was determined when the connection was opened.)
     /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
     virtual void asyncSend(const void* data, size_t length,
                            const IOEndpoint* endpoint, C& callback);
+
+    /// \brief Send Asynchronously without count.
+    ///
+    /// This variant of the method sends data over the TCP socket without
+    /// preceding the data with a data count. Eventually, we should migrate
+    /// the virtual method to not insert the count but there are existing
+    /// classes using the count. Once this migration is done, the existing
+    /// virtual method should be replaced by this method.
+    ///
+    /// \param data Data to send
+    /// \param length Length of data to send
+    /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
+    void asyncSend(const void* data, size_t length, C& callback);
 
     /// \brief Receive Asynchronously
     ///
@@ -153,6 +168,12 @@ public:
     /// \brief Close socket
     virtual void close();
 
+    /// \brief Returns reference to the underlying ASIO socket.
+    ///
+    /// \return Reference to underlying ASIO socket.
+    virtual boost::asio::ip::tcp::socket& getASIOSocket() const {
+        return (socket_);
+    }
 
 private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
@@ -160,7 +181,6 @@ private:
     // construction, or where it is asked to manage its own socket.
     boost::asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
     boost::asio::ip::tcp::socket&      socket_;        ///< Socket
-    bool                               isopen_;        ///< true when socket is open
 
     // TODO: Remove temporary buffer
     // The current implementation copies the buffer passed to asyncSend() into
@@ -182,7 +202,7 @@ private:
 
 template <typename C>
 TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
-    socket_ptr_(NULL), socket_(socket), isopen_(true), send_buffer_()
+    socket_ptr_(NULL), socket_(socket), send_buffer_()
 {
 }
 
@@ -191,7 +211,7 @@ TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
 template <typename C>
 TCPSocket<C>::TCPSocket(IOService& service) :
     socket_ptr_(new boost::asio::ip::tcp::socket(service.get_io_service())),
-    socket_(*socket_ptr_), isopen_(false)
+    socket_(*socket_ptr_)
 {
 }
 
@@ -211,14 +231,13 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes whan when using asynchronous I/O.
     // At also allows us a treat a passed-in socket as a self-managed socket.
-    if (!isopen_) {
+    if (!socket_.is_open()) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(boost::asio::ip::tcp::v4());
         }
         else {
             socket_.open(boost::asio::ip::tcp::v6());
         }
-        isopen_ = true;
 
         // Set options on the socket:
 
@@ -245,10 +264,34 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
+TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
+{
+    if (socket_.is_open()) {
+
+        try {
+            send_buffer_.reset(new isc::util::OutputBuffer(length));
+            send_buffer_->writeData(data, length);
+
+            // Send the data.
+            socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
+                                                   send_buffer_->getLength()),
+                               callback);
+        } catch (boost::numeric::bad_numeric_cast&) {
+            isc_throw(BufferTooLarge,
+                      "attempt to send buffer larger than 64kB");
+        }
+
+    } else {
+        isc_throw(SocketNotOpen,
+            "attempt to send on a TCP socket that is not open");
+    }
+}
+
+template <typename C> void
 TCPSocket<C>::asyncSend(const void* data, size_t length,
     const IOEndpoint*, C& callback)
 {
-    if (isopen_) {
+    if (socket_.is_open()) {
 
         // Need to copy the data into a temporary buffer and precede it with
         // a two-byte count field.
@@ -283,7 +326,7 @@ template <typename C> void
 TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
     IOEndpoint* endpoint, C& callback)
 {
-    if (isopen_) {
+    if (socket_.is_open()) {
         // Upconvert to a TCPEndpoint.  We need to do this because although
         // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
         // does not contain a method for getting at the underlying endpoint
@@ -385,7 +428,7 @@ TCPSocket<C>::processReceivedData(const void* staging, size_t length,
 
 template <typename C> void
 TCPSocket<C>::cancel() {
-    if (isopen_) {
+    if (socket_.is_open()) {
         socket_.cancel();
     }
 }
@@ -395,9 +438,8 @@ TCPSocket<C>::cancel() {
 
 template <typename C> void
 TCPSocket<C>::close() {
-    if (isopen_ && socket_ptr_) {
+    if (socket_.is_open() && socket_ptr_) {
         socket_.close();
-        isopen_ = false;
     }
 }
 

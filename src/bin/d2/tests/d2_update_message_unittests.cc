@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,7 +111,7 @@ TEST_F(D2UpdateMessageTest, setZone) {
     EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
 
     // Now, let's check that the existing Zone object can be
-    // overriden with a new one.
+    // overridden with a new one.
     msg.setZone(Name("foo.example.com"), RRClass::NONE());
     zone = msg.getZone();
     EXPECT_TRUE(zone);
@@ -455,7 +455,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
 
     // The simplest way to convert the name from wire format to a string
     // is to use dns::Name class. It should be ok to rely on the Name class
-    // to decode the name, because it is unit tested elswhere.
+    // to decode the name, because it is unit tested elsewhere.
     std::string zone_name = readNameFromWire(buf, 13);
     EXPECT_EQ("example.com.", zone_name);
 

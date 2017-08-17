@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ using namespace isc::util;
 
 // This test verifies that the value can be assigned and committed.
 TEST(StagedValueTest, assignAndCommit) {
-    // Initally the value should be set to a default
+    // Initially the value should be set to a default
     StagedValue<int> value;
     ASSERT_EQ(0, value.getValue());
 

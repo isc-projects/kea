@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@ In many cases it is useful to manage certain aspects of the DHCP servers
 while they are running. In Kea, this may be done via the Control Channel.
 Control Channel allows an external entity (e.g. a tool run by a sysadmin
 or a script) to issue commands to the server which can influence its
-behavior or retreive information from it. Several notable examples
+behavior or retrieve information from it. Several notable examples
 envisioned are: reconfiguration, statistics retrieval and manipulation,
 and shutdown.
 
@@ -134,7 +134,7 @@ int main(int argc, const char* argv[]) {
 
 @section ctrlSocketImpl Control Channel Implementation
 
-Control Channel is implemented in @ref isc::config::CommandMgr. It is a signleton
+Control Channel is implemented in @ref isc::config::CommandMgr. It is a singleton
 class that allows registration of callbacks that handle specific commands.
 It internally supports a single command: @c list-commands that returns a list
 of supported commands. This component is expected to be shared among all daemons.
@@ -154,39 +154,21 @@ or HTTPS connection):
 - @ref isc::config::CommandMgr::openCommandSocket that passes structure defined
   in the configuration file. Currently only two parameters are supported: socket-type
   (which must contain value 'unix') and socket-name (which contains unix path for
-  the named socket to be created). This method calls @ref
-  isc::config::CommandSocketFactory::create method, which parses the parameters
-  and instantiates one object from a class derived from @ref isc::config::CommandSocket.
-  Again, currently only UNIX type is supported, but the factory
-  class is expected to be extended to cover additional types.
+  the named socket to be created).
 - @ref isc::config::CommandMgr::closeCommandSocket() - it is used to close the
-  socket. It calls close method on the @ref isc::config::CommandSocket object, if
-  one exists. In particular, for UNIX socket, it also deletes the file after socket
-  was closed.
+  socket.
 
 @section ctrlSocketConnections Accepting connections
 
-Control Channel is connection oriented communication. In that sense it is
-different than all other communications supported so far in Kea. To facilitate
-connections, several mechanisms were implemented. Intially a single UNIX socket
-it opened (see @c isc::config::UnixCommandSocket in
-src/lib/config/command_socket_factory.cc). Its @ref
-isc::config::UnixCommandSocket::receiveHandler callback method is
-installed in @ref isc::dhcp::IfaceMgr to process incoming connections. When the
-select call in @ref isc::dhcp::IfaceMgr::receive4 indicates that there is some data to be
-processed, this callback calls accept, which creates a new socket for handling
-this particular incoming connection. Once the socket descriptor is known, a new
-instance of @ref isc::config::ConnectionSocket is created to represent that
-socket (and the whole ongoing connection). It installs another callback
-(@ref isc::config::ConnectionSocket::receiveHandler that calls
-(@ref isc::config::CommandMgr::commandReader) that will process incoming
-data or will close the socket when necessary. CommandReader reads data from
-incoming socket and attempts to parse it as JSON structures. If successful,
-it calls isc::config::CommandMgr::processCommand(), serializes the structure
-returned and attempts to send it back.
+The @ref isc::config::CommandMgr is implemented using boost ASIO and uses
+asynchronous calls to accept new connections and receive commands from the
+controlling clients. ASIO uses IO service object to run asynchronous calls.
+Thus, before the server can use the @ref isc::config::CommandMgr it must
+provide it with a common instance of the @ref isc::asiolink::IOService
+object using @ref isc::config::CommandMgr::setIOService. The server's
+main loop must contain calls to @ref isc::asiolink::IOService::run or
+@ref isc::asiolink::IOService::poll or their variants to invoke Command
+Manager's handlers as required for processing control requests.
 
-@todo Currently commands and responses up to 64KB are supported. It was deemed
-sufficient for the current needs, but in the future we may need to extend
-it to handle bigger structures.
 
 */
