@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ namespace dhcp {
 /// that the prefixes from the string are created locally (not received over the
 /// wire) and should be validated before the option is created. If we wanted
 /// to set non-significant bits to 0 when the prefix is created from the textual
-/// format it would have some peformance implications, because the option would
+/// format it would have some performance implications, because the option would
 /// need to be turned into wire format, appropriate bits set to 0 and then
 /// option would need to be created again from the wire format. We may consider
 /// doing it if we find a use case where it is required.

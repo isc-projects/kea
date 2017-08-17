@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ namespace dhcp {
 /// The format of DHCPv6 Vendor Class option (16) is described in section 22.16
 /// of RFC3315 and the format of the DHCPv4 V-I Vendor Class option (124) is
 /// described in section 3 of RFC3925. Each of these options carries enterprise
-/// id followed by the collection of tuples carring opaque data. A single tuple
+/// id followed by the collection of tuples carrying opaque data. A single tuple
 /// consists of the field holding opaque data length and the actual data.
 /// In case of the DHCPv4 V-I Vendor Class each tuple is preceded by the
 /// 4-byte long enterprise id. Also, the field which carries the length of

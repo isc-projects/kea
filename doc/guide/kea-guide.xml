@@ -1,8 +1,10 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+<!-- Converted by db4-upgrade version 1.1 -->
 <book xmlns="http://docbook.org/ns/docbook" version="5.0">
   <?xml-stylesheet href="kea-guide.css" type="text/css"?>
 
-  <info><title>
+  <info>
+
+    <title>
     <inlinemediaobject>
         <imageobject>
             <imagedata fileref="kea-logo-100x70.png" align="left"/>
@@ -15,8 +17,23 @@
         .</releaseinfo>
 
     <copyright>
-      <year>2010-2016</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2017</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
+
+    <abstract>
+
+      <para>
+        Kea is an open source implementation of the Dynamic Host Configuration
+        Protocol (DHCP) servers, developed and maintained by Internet Systems
+        Consortium (ISC).
+      </para>
+
+      <para>
+        This is the reference guide for Kea version .
+        The most up-to-date version of this document (in PDF, HTML,
+        and plain text formats), along with other documents for
+        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs">http://kea.isc.org/docs</uri>.
+        </para> </abstract>
 
   </info>
 
@@ -31,6 +48,8 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml"/>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="agent.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp4-srv.xml"/>
 
@@ -54,9 +73,13 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml"/>
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml"/>
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
 
-    <chapter xml:id="acknowledgments"><info><title>Acknowledgments</title></info>
+    <chapter xml:id="acknowledgments">
+      <title>Acknowledgments</title>
+
       <para>Kea is primarily designed, developed, and maintained by
       Internet Systems Consortium, Inc. It is an open source project
       and contributions are welcomed.</para>
@@ -89,9 +112,12 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, and
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link> were founding
       sponsors of the BIND 10 project.</para>
+
     </chapter>
 
+
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
+
 
 <!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
 

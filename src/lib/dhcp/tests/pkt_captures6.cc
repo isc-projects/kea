@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@
 /// 4. Right click on DHCPv6 -> Copy -> Bytes -> Hex Stream
 /// 5. Paste it as: string hex_string="[paste here]";
 /// 6. Coding guidelines line restrictions apply, so wrap your code as necessary
-/// 7. Make sure you decribe the capture appropriately
+/// 7. Make sure you describe the capture appropriately
 /// 8. Follow whatever rest of the methods are doing (set ports, ifaces etc.)
 /// 9. To easily copy packet description, click File... -> Extract packet
 ///    dissections -> as plain text file...
@@ -55,7 +55,7 @@ Pkt6Ptr PktCaptures::captureSimpleSolicit() {
         1,  // type 1 = SOLICIT
         0xca, 0xfe, 0x01, // trans-id = 0xcafe01
         0, 1, // option type 1 (client-id)
-        0, 10, // option lenth 10
+        0, 10, // option length 10
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // DUID
         0, 3, // option type 3 (IA_NA)
         0, 12, // option length 12

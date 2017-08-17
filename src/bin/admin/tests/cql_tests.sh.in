@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,7 +81,7 @@ cql_lease_version_test() {
     $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
 
-    # Verfiy that kea-admin lease-version returns the correct version.
+    # Verify that kea-admin lease-version returns the correct version.
     version=$($keaadmin lease-version cql -u $db_user -p $db_password -n $db_name)
     assert_str_eq "1.0" $version "Expected kea-admin to return %s, returned value was %s"
 

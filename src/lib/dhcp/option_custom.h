@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,6 +113,16 @@ public:
         buffers_.push_back(buf);
     }
 
+    /// @brief Create new buffer and store tuple value in it
+    ///
+    /// @param value value to be stored as a tuple in the created buffer.
+    void addArrayDataField(const std::string& value);
+
+    /// @brief Create new buffer and store tuple value in it
+    ///
+    /// @param value value to be stored as a tuple in the created buffer.
+    void addArrayDataField(const OpaqueDataTuple& value);
+
     /// @brief Create new buffer and store variable length prefix in it.
     ///
     /// @param prefix_len Prefix length.
@@ -162,6 +172,34 @@ public:
     /// @param buf buffer holding binary data to be written.
     /// @param index buffer index.
     void writeBinary(const OptionBuffer& buf, const uint32_t index = 0);
+
+    /// @brief Read a buffer as length and string tuple.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @return string read from a buffer.
+    std::string readTuple(const uint32_t index = 0) const;
+
+    /// @brief Read a buffer into a length and string tuple.
+    ///
+    /// @param tuple tuple to fill.
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void readTuple(OpaqueDataTuple& tuple, const uint32_t index = 0) const;
+
+    /// @brief Write a length and string tuple into a buffer.
+    ///
+    /// @param value value to be written.
+    /// @param index buffer index.
+    void writeTuple(const std::string& value, const uint32_t index = 0);
+
+    /// @brief Write a length and string tuple into a buffer.
+    ///
+    /// @param value value to be written.
+    /// @param index buffer index.
+    void writeTuple(const OpaqueDataTuple& value, const uint32_t index = 0);
 
     /// @brief Read a buffer as boolean value.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -274,7 +274,7 @@ TEST_F(ConfirmTest, relayedClientNoSubnet) {
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a status code option and this option should
-    // indicate that the client is NotOnLink becuase subnet could not be
+    // indicate that the client is NotOnLink because subnet could not be
     // selected.
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_NotOnLink, client.getStatusCode());

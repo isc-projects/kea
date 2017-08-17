@@ -1,4 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+<!-- Converted by db4-upgrade version 1.1 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info>
     <productname>ISC Kea</productname>
@@ -40,19 +40,20 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection><info><title>DESCRIPTION</title></info>
-    
+  <refsect1>
+    <title>DESCRIPTION</title>
     <para>
       keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
-      <command>kea-dhcp6</command> and <command>kea-dhcp-ddns</command>). It
-      also provides the means for checking the current status of the servers
-      and determining the configuration files in use.
+      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
+      <command>kea-ctrl-agent</command>). It also provides the means for
+      checking the current status of the servers and determining the
+      configuration files in use.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>CONFIGURATION FILE</title></info>
-    
+  <refsect1>
+    <title>CONFIGURATION FILE</title>
     <para>
      Depending on requirements, not all of the available servers need
      be run.  The keactrl configuration file sets which servers are
@@ -63,10 +64,10 @@
       See the Kea Administrator's Guide for the documentation of the parameters
       in the <command>keactrl</command> configuration file.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>OPTIONS</title></info>
-    
+  <refsect1>
+    <title>OPTIONS</title>
     <variablelist>
       <varlistentry>
         <term><option><replaceable class="parameter">command</replaceable></option></term>
@@ -153,6 +154,13 @@
             </varlistentry>
 
             <varlistentry>
+              <term>ctrl_agent</term>
+              <listitem>
+                <para>Control Agent (<command>kea-ctrl-agent</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term>all</term>
               <listitem>
                 <para>All servers (default).</para>
@@ -164,10 +172,10 @@
       </varlistentry>
 
     </variablelist>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>DOCUMENTATION</title></info>
-    
+  <refsect1>
+    <title>DOCUMENTATION</title>
     <para>Kea comes with an extensive Kea User's Guide documentation
       that covers all aspects of running the Kea software -
       compilation, installation, configuration, configuration examples
@@ -185,10 +193,10 @@
     <para>
       Kea project website is available at: http://kea.isc.org.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>MAILING LISTS AND SUPPORT</title></info>
-    
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
     <para>
       There are two mailing lists available for Kea project. kea-users
       (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
@@ -201,10 +209,10 @@
       ISC provides professional support for Kea services. See
       https://www.isc.org/kea/ for details.
     </para>
-  </refsection>
+  </refsect1>
 
-  <refsection><info><title>SEE ALSO</title></info>
-    
+  <refsect1>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry>
         <refentrytitle>kea-dhcp4</refentrytitle>
@@ -218,6 +226,11 @@
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 
@@ -240,6 +253,6 @@
       <citetitle>Kea Administrator's Guide</citetitle>.
 
     </para>
-  </refsection>
+  </refsect1>
 
 </refentry>

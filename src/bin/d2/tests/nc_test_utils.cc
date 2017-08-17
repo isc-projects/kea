@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,31 @@ using namespace isc::d2;
 
 namespace isc {
 namespace d2 {
+
+const char* valid_d2_config = "{ "
+                        "\"ip-address\" : \"127.0.0.1\" , "
+                        "\"port\" : 5031, "
+                        "\"tsig-keys\": ["
+                        "{ \"name\": \"d2_key.example.com\" , "
+                        "   \"algorithm\": \"HMAC-MD5\" ,"
+                        "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
+                        "} ],"
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
+                        "{ \"name\": \"example.com.\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.101\" } "
+                        "] } ] }, "
+                        "\"reverse-ddns\" : {"
+                        "\"ddns-domains\": [ "
+                        "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.101\" , "
+                        "    \"port\": 100 } ] } "
+                        "] } }";
+
 
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
@@ -107,7 +132,7 @@ FauxServer::requestHandler(const boost::system::error_code& error,
     try {
         request.fromWire(request_buf);
 
-        // If contex is not NULL, then we need to verify the message.
+        // If context is not NULL, then we need to verify the message.
         if (context) {
             dns::TSIGError error = context->verify(request.getTSIGRecord(),
                                                    receive_buffer_,

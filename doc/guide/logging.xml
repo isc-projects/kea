@@ -1,7 +1,9 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="logging"><info><title>Logging</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="logging">
+  <title>Logging</title>
 
-  <section><info><title>Logging Configuration</title></info>
+  <section>
+    <title>Logging Configuration</title>
     <para>
       During its operation Kea may produce many messages. They differ in
       severity (some are more important than others) and source (some are
@@ -21,7 +23,8 @@
       logging configuration between daemons.
     </para>
 
-    <section><info><title>Loggers</title></info>
+    <section>
+      <title>Loggers</title>
       <para>
         Within Kea, a message is logged through an entity called a
         "logger". Different components log messages through different
@@ -69,7 +72,8 @@
         debug-level logging has been selected.
       </para>
 
-      <section><info><title>name (string)</title></info>
+      <section>
+        <title>name (string)</title>
         <para>
           Each logger in the system has a name, the name being that of the
           component binary file using it to log messages. For instance, if you
@@ -160,6 +164,22 @@
           Currently defined loggers are:
         </para>
         <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>kea-ctrl-agent</command> - the root logger for the
+              Control Agent exposing RESTful control API. All components used
+              by the Control Agent inherit the settings from this logger.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-ctrl-agent.http</command> - a logger which outputs
+              log messages related to receiving, parsing and sending HTTP
+              messages.
+            </simpara>
+          </listitem>
+
           <listitem>
             <simpara>
               <command>kea-dhcp4</command> - the root logger for the DHCPv4
@@ -480,7 +500,8 @@
         </para>
       </section>
 
-      <section><info><title>severity (string)</title></info>
+      <section>
+        <title>severity (string)</title>
         <para>
           This specifies the category of messages logged.  Each message is
           logged with an associated severity which may be one of the following
@@ -546,7 +567,8 @@
         </note>
       </section>
 
-      <section><info><title>debuglevel (integer)</title></info>
+      <section>
+        <title>debuglevel (integer)</title>
         <para>
           When a logger's severity is set to DEBUG, this value specifies what
           level of debug messages should be printed. It ranges from 0 (least
@@ -555,14 +577,16 @@
         </para>
       </section>
 
-      <section><info><title>output_options (list)</title></info>
+      <section>
+        <title>output_options (list)</title>
         <para>
           Each logger can have zero or more <option>output_options</option>.
           These specify where log messages are sent. These are explained in
           detail below.
         </para>
 
-        <section><info><title>output (string)</title></info>
+        <section>
+          <title>output (string)</title>
           <para>
             This value determines the type of output. There are several special
             values allowed here: <command>stdout</command> (messages are printed
@@ -574,7 +598,8 @@
           </para>
         </section>
 
-        <section><info><title>flush (true of false)</title></info>
+        <section>
+          <title>flush (true of false)</title>
           <para>
             Flush buffers after each log message. Doing this will reduce
             performance but will ensure that if the program terminates
@@ -583,17 +608,20 @@
           </para>
         </section>
 
-        <section><info><title>maxsize (integer)</title></info>
+        <section>
+          <title>maxsize (integer)</title>
           <para>
-            Only relevant when destination is file, this is maximum file size of
-            output files in bytes. When the maximum size is reached, the file is
-            renamed and a new file opened.  (For example, a ".1" is appended to
-            the name — if a ".1" file exists, it is renamed ".2", etc.)
+            Only relevant when the destination is a file. This is maximum size
+            in bytes that a log file may reach.  When the maximum size is
+            reached, the file is renamed and a new file opened. For example,
+            a ".1" is appended to the name — if a ".1" file exists, it
+            is renamed ".2", etc. This is referred to as rotation.
           </para>
           <para>
-            If this is set to 0 or omitted, no maximum file size is used.
+            The default value is 10240000 (10MB).  The smallest value that may
+            be specified without disabling rotation is 204800. Any value less than
+            this, including 0, disables rotation.
           </para>
-
           <note>
             <simpara>
               Due to a limitation of the underlying logging library (log4cplus),
@@ -609,16 +637,22 @@
           </note>
         </section>
 
-        <section><info><title>maxver (integer)</title></info>
+        <section>
+          <title>maxver (integer)</title>
           <para>
-            Maximum number of old log files to keep around when rolling the
-            output file. Only relevant when <option>output</option> is
-            <quote>file</quote>.
+            Only relevant when the destination is file and rotation is enabled
+            (i.e. maxsize is large enough).  This is maximum number of rotated
+            versions that will be kept. Once that number of files has been
+            reached, the oldest file, "log-name.maxver", will be discarded
+            each time the log rotates. In other words, at most there will be
+            the active log file plus maxver rotated files.  The minimum and
+            default value is 1.
           </para>
         </section>
       </section>
 
-      <section><info><title>Example Logger Configurations</title></info>
+      <section>
+        <title>Example Logger Configurations</title>
         <para>
           In this example we want to set the global logging to write to the
           console using standard output.
@@ -666,7 +700,8 @@
 
     </section>
 
-    <section xml:id="logging-message-format"><info><title>Logging Message Format</title></info>
+    <section xml:id="logging-message-format">
+      <title>Logging Message Format</title>
       <para>
         Each message written  to the configured logging destinations comprises a
         number of components that identify the origin of the message and, if the
@@ -756,7 +791,8 @@
       </para>
     </section>
 
-    <section xml:id="logging-during-startup"><info><title>Logging During Kea Startup</title></info>
+    <section xml:id="logging-during-startup">
+      <title>Logging During Kea Startup</title>
       <para>
         The logging configuration is specified in the configuration file.
         However, when Kea starts, the file is not read until some way into the
@@ -833,5 +869,4 @@
       </variablelist>
     </section>
   </section>
-
 </chapter>

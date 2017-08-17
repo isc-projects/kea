@@ -1,4 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+<!-- Converted by db4-upgrade version 1.1 -->
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
 
     <info>
@@ -72,8 +72,8 @@
         </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsection><info><title>DESCRIPTION</title></info>
-        
+    <refsect1>
+        <title>DESCRIPTION</title>
         <para>
             <command>perfdhcp</command> is a DHCP benchmarking tool. It
             provides a way of measuring the performance of DHCP servers by
@@ -101,10 +101,10 @@
             <command>perfdhcp</command>, the elapsed time, or the number of
             requests dropped by the server.
         </para>
-    </refsection>
+    </refsect1>
 
-    <refsection><info><title>TEMPLATES</title></info>
-        
+    <refsect1>
+        <title>TEMPLATES</title>
         <para>
             To allow the contents of packets sent to the server to be
             customized, <command>perfdhcp</command> allows the specification
@@ -200,10 +200,10 @@
             or RELEASE packets are being sent.
         </para>
 
-    </refsection>
+    </refsect1>
 
-    <refsection><info><title>OPTIONS</title></info>
-        
+    <refsect1>
+        <title>OPTIONS</title>
 
         <variablelist>
 
@@ -546,8 +546,8 @@
 
         </variablelist>
 
-        <refsection><info><title>DHCPv4-Only Options</title></info>
-            
+        <refsect2>
+            <title>DHCPv4-Only Options</title>
             <para>
                 The following options only apply for DHCPv4 (i.e. when
                 <option>-4</option> is given).
@@ -563,10 +563,10 @@
                     </listitem>
                 </varlistentry>
             </variablelist>
-        </refsection>
+        </refsect2>
 
-        <refsection><info><title>DHCPv6-Only Options</title></info>
-            
+        <refsect2>
+            <title>DHCPv6-Only Options</title>
             <para>
                 The following options only apply for DHCPv6 (i.e. when
                 <option>-6</option> is given).
@@ -614,10 +614,10 @@
                 </varlistentry>
 
             </variablelist>
-        </refsection>
+        </refsect2>
 
-        <refsection><info><title>Template-Related Options</title></info>
-            
+        <refsect2>
+            <title>Template-Related Options</title>
             <para>
                 The following options may only be used in conjunction with
                 <option>-T</option> and control how <command>perfdhcp</command>
@@ -686,10 +686,10 @@
                     </para>
                 </listitem>
             </varlistentry>
-        </refsection>
+        </refsect2>
 
-        <refsection><info><title>Options Controlling a Test</title></info>
-            
+        <refsect2>
+            <title>Options Controlling a Test</title>
             <para>
                 The following options may only be used in conjunction with
                 <option>-r</option> and control both the length of the test
@@ -751,10 +751,10 @@
                 </varlistentry>
 
             </variablelist>
-        </refsection>
+        </refsect2>
 
-        <refsection><info><title>Arguments</title></info>
-            
+        <refsect2>
+            <title>Arguments</title>
 
             <variablelist>
                 <varlistentry>
@@ -774,13 +774,13 @@
                     </listitem>
                 </varlistentry>
             </variablelist>
-        </refsection>
+        </refsect2>
 
 
-    </refsection>
+    </refsect1>
 
-    <refsection><info><title>ERRORS</title></info>
-        
+    <refsect1>
+        <title>ERRORS</title>
 
         <para>
             <command>perfdhcp</command> can report the following errors in the packet exchange:
@@ -814,10 +814,10 @@
             </varlistentry>
         </variablelist>
 
-    </refsection>
+    </refsect1>
 
-    <refsection><info><title>EXIT STATUS</title></info>
-        
+    <refsect1>
+        <title>EXIT STATUS</title>
 
         <para>
             <command>perfdhcp</command> can exit with one of the following
@@ -853,15 +853,15 @@
             </varlistentry>
         </variablelist>
 
-    </refsection>
+    </refsect1>
 
     <!-- perfdhcp is not documented in the User's Guide at
          all. There's one reference when we list binaries, but that's
          it. Once it's documented, we can copy over the DOCUMENTATION
          section from src/bin/dhcp4/kea-dhcp4.xml -->
 
-  <refsection><info><title>MAILING LISTS AND SUPPORT</title></info>
-    
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
     <para>
       There are two mailing lists available for Kea project. kea-users
       (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
@@ -874,20 +874,20 @@
       ISC provides professional support for Kea services. See
       https://www.isc.org/kea/ for details.
     </para>
-  </refsection>
+  </refsect1>
 
-    <refsection><info><title>HISTORY</title></info>
-        
+    <refsect1>
+        <title>HISTORY</title>
         <para>
             The <command>perfdhcp</command> tool was initially coded
             in October 2011 by John DuBois, Francis Dupont and Marcin
             Siodelski of ISC. Kea 1.0.0 that included perfdhcp was
             released in December 2015.
         </para>
-    </refsection>
+    </refsect1>
 
-  <refsection><info><title>SEE ALSO</title></info>
-    
+  <refsect1>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry>
         <refentrytitle>kea-dhcp4</refentrytitle>
@@ -901,6 +901,11 @@
 
       <citerefentry>
         <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 
@@ -922,6 +927,6 @@
       <citetitle>Kea Administrator's Guide</citetitle>.
 
     </para>
-  </refsection>
+  </refsect1>
 
 </refentry>

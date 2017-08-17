@@ -24,6 +24,7 @@ CLEANFILES  = *.gcno *.gcda d2_messages.h d2_messages.cc s-messages
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
+EXTRA_DIST += d2_parser.yy
 
 EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
 EXTRA_DIST += images/config_data_classes.svg images/config_from_file_sequence.svg
@@ -64,7 +65,10 @@ libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
 libd2_la_SOURCES += d2_config.cc d2_config.h
 libd2_la_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
+libd2_la_SOURCES += d2_lexer.ll location.hh position.hh stack.hh
+libd2_la_SOURCES += d2_parser.cc d2_parser.h
 libd2_la_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
+libd2_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
 libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
 libd2_la_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 libd2_la_SOURCES += d2_zone.cc d2_zone.h
@@ -73,6 +77,7 @@ libd2_la_SOURCES += nc_add.cc nc_add.h
 libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
+libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
@@ -115,3 +120,30 @@ endif
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
 kea_dhcp_ddns_DATA = dhcp-ddns.spec
+
+if GENERATE_PARSER
+
+parser: d2_lexer.cc location.hh position.hh stack.hh d2_parser.cc d2_parser.h
+	@echo "Flex/bison files regenerated"
+
+# --- Flex/Bison stuff below --------------------------------------------------
+# When debugging grammar issues, it's useful to add -v to bison parameters.
+# bison will generate parser.output file that explains the whole grammar.
+# It can be used to manually follow what's going on in the parser.
+# This is especially useful if yydebug_ is set to 1 as that variable
+# will cause parser to print out its internal state.
+# Call flex with -s to check that the default rule can be suppressed
+# Call bison with -W to get warnings like unmarked empty rules
+# Note C++11 deprecated register still used by flex < 2.6.0
+location.hh position.hh stack.hh d2_parser.cc d2_parser.h: d2_parser.yy
+	$(YACC) --defines=d2_parser.h --report=all --report-file=d2_parser.report -o d2_parser.cc d2_parser.yy
+
+d2_lexer.cc: d2_lexer.ll
+	$(LEX) --prefix d2_parser_ -o d2_lexer.cc d2_lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh d2_parser.cc d2_parser.h d2_lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif

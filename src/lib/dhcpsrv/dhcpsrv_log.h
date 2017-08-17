@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,27 +23,27 @@ namespace dhcp {
 /// @brief Traces normal operations
 ///
 /// E.g. sending a query to the database etc.
-const int DHCPSRV_DBG_TRACE = DBGLVL_TRACE_BASIC;
+const int DHCPSRV_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
 
 /// @brief Records the results of the lookups
 ///
 /// Using the example of tracing queries from the backend database, this will
 /// just record the summary results.
-const int DHCPSRV_DBG_RESULTS = DBGLVL_TRACE_BASIC_DATA;
+const int DHCPSRV_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
 
 /// @brief Additional information
 ///
 /// Record detailed tracing. This is generally reserved for tracing access to
 /// the lease database.
-const int DHCPSRV_DBG_TRACE_DETAIL = DBGLVL_TRACE_DETAIL;
+const int DHCPSRV_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
 
 /// @brief Additional information
 ///
 /// Record detailed (and verbose) data on the server.
-const int DHCPSRV_DBG_TRACE_DETAIL_DATA = DBGLVL_TRACE_DETAIL_DATA;
+const int DHCPSRV_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 
 // Trace hook related operations
-const int DHCPSRV_DBG_HOOKS = DBGLVL_TRACE_BASIC;
+const int DHCPSRV_DBG_HOOKS = isc::log::DBGLVL_TRACE_BASIC;
 
 ///@}
 

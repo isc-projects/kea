@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,6 +84,49 @@ public:
         HostDataSourceFactory::destroy();
         HostDataSourceFactory::create(validMySQLConnectionString());
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+    }
+
+    /// @brief returns number of rows in a table
+    ///
+    /// Note: This method uses its own connection. It will not work if your test
+    /// uses transactions.
+    ///
+    /// @param name of the table
+    /// @return number of rows currently present in the table
+    int countRowsInTable(const std::string& table) {
+        string query = "SELECT * FROM " + table;
+
+        MySqlConnection::ParameterMap params;
+        params["name"] = "keatest";
+        params["user"] = "keatest";
+        params["password"] = "keatest";
+        MySqlConnection conn(params);
+        conn.openDatabase();
+        int status = mysql_query(conn.mysql_, query.c_str());
+        if (status !=0) {
+            isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
+        }
+
+        MYSQL_RES * res = mysql_store_result(conn.mysql_);
+        int numrows = static_cast<int>(mysql_num_rows(res));
+        mysql_free_result(res);
+
+        return (numrows);
+    }
+
+    /// @brief Returns number of IPv4 options currently stored in DB.
+    virtual int countDBOptions4() {
+        return (countRowsInTable("dhcp4_options"));
+    }
+
+    /// @brief Returns number of IPv4 options currently stored in DB.
+    virtual int countDBOptions6() {
+        return (countRowsInTable("dhcp6_options"));
+    }
+
+    /// @brief Returns number of IPv6 reservations currently stored in DB.
+    virtual int countDBReservations6() {
+        return (countRowsInTable("ipv6_reservations"));
     }
 
 };
@@ -262,6 +305,12 @@ TEST_F(MySqlHostDataSourceTest, get4ByDUID) {
 // circuit id.
 TEST_F(MySqlHostDataSourceTest, get4ByCircuitId) {
     testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
+}
+
+// Test verifies if a host reservation can be added and later retrieved by
+// client-id.
+TEST_F(MySqlHostDataSourceTest, get4ByClientId) {
+    testGet4ByIdentifier(Host::IDENT_CLIENT_ID);
 }
 
 // Test verifies if hardware address and client identifier are not confused.
@@ -527,6 +576,33 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
 /// from a database for a host.
 TEST_F(MySqlHostDataSourceTest, messageFields) {
     testMessageFields4();
+}
+
+// Check that delete(subnet-id, addr4) works.
+TEST_F(MySqlHostDataSourceTest, deleteByAddr4) {
+    testDeleteByAddr4();
+}
+
+// Check that delete(subnet4-id, identifier-type, identifier) works.
+TEST_F(MySqlHostDataSourceTest, deleteById4) {
+    testDeleteById4();
+}
+
+// Check that delete(subnet4-id, identifier-type, identifier) works,
+// even when options are present.
+TEST_F(MySqlHostDataSourceTest, deleteById4Options) {
+    testDeleteById4Options();
+}
+
+// Check that delete(subnet6-id, identifier-type, identifier) works.
+TEST_F(MySqlHostDataSourceTest, deleteById6) {
+    testDeleteById6();
+}
+
+// Check that delete(subnet6-id, identifier-type, identifier) works,
+// even when options are present.
+TEST_F(MySqlHostDataSourceTest, deleteById6Options) {
+    testDeleteById6Options();
 }
 
 }; // Of anonymous namespace

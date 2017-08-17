@@ -9,6 +9,7 @@ noinst_LTLIBRARIES = libkea-testutils.la
 
 libkea_testutils_la_SOURCES  = io_utils.cc io_utils.h
 libkea_testutils_la_SOURCES += log_utils.cc log_utils.h
+libkea_testutils_la_SOURCES += test_to_element.cc test_to_element.h
 libkea_testutils_la_SOURCES += unix_control_client.h unix_control_client.cc
 libkea_testutils_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libkea_testutils_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

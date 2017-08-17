@@ -1,7 +1,10 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp4"><info><title>The DHCPv4 Server</title></info>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp4">
+    <title>The DHCPv4 Server</title>
 
-    <section xml:id="dhcp4-start-stop"><info><title>Starting and Stopping the DHCPv4 Server</title></info>
+    <section xml:id="dhcp4-start-stop">
+      <title>Starting and Stopping the DHCPv4 Server</title>
+
       <para>
         It is recommended that the Kea DHCPv4 server be started and stopped
         using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
@@ -33,6 +36,18 @@
             useful during testing, as a DHCPv4 server listening on
             ports other than the standard ones will not be able to
             handle regular DHCPv4 queries.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+            <command>-t <replaceable>file</replaceable></command> -
+            specifies the configuration file to be tested. Kea-dhcp4
+            will attempt to load it, and will conduct sanity
+            checks. Note that certain checks are possible only while
+            running the actual server. The actual status is reported
+            with exit code (0 = configuration looks ok, 1 = error
+            encountered). Kea will print out log messages to standard
+            output and error to standard error when testing
+            configuration.</simpara>
           </listitem>
           <listitem>
             <simpara>
@@ -112,10 +127,10 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
       </para>
     </section>
 
-    <section xml:id="dhcp4-configuration"><info><title>DHCPv4 Server Configuration</title></info>
-
-<section><info><title>Introduction</title></info>
-
+    <section xml:id="dhcp4-configuration">
+      <title>DHCPv4 Server Configuration</title>
+<section>
+  <title>Introduction</title>
       <para>
         This section explains how to configure the DHCPv4 server using the
         Kea configuration backend. (Kea configuration using any other
@@ -175,7 +190,7 @@ opening curly bracket (or brace). Each configuration consists of
 one or more objects. In this specific example, we have only one
 object, called Dhcp4. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
-<command>DhcpDns</command>, but we omit them now for clarity. The Dhcp4
+<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp4
 configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
@@ -279,12 +294,14 @@ components defined such as Logging or DhcpDdns, so the closing brace would
 be followed by a comma and another object definition.</para>
 </section>
 
-<section><info><title>Lease Storage</title></info>
+<section>
+  <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
   default backend), MySQL, PostgreSQL and Cassandra.</para>
+<section>
+  <title>Memfile - Basic Storage for Leases</title>
 
-<section><info><title>Memfile - Basic Storage for Leases</title></info>
   <para>The server is able to store lease data in different repositories. Larger
   deployments may elect to store leases in a database. <xref linkend="database-configuration4"/> describes this option. In typical
   smaller deployments though, the server will store lease information in a CSV file rather
@@ -399,9 +416,12 @@ be followed by a comma and another object definition.</para>
   description of the LFC is located on the Kea wiki:
   <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/LFCDesign">http://kea.isc.org/wiki/LFCDesign</uri>.
   </para>
+
 </section>
 
-<section xml:id="database-configuration4"><info><title>Lease Database Configuration</title></info>
+<section xml:id="database-configuration4">
+  <title>Lease Database Configuration</title>
+
   <note>
     <para>Lease database access information must be configured for the DHCPv4 server,
     even if it has already been configured for the DHCPv6 server. The servers
@@ -434,6 +454,11 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
+  Should the database use a port different than default, it may be
+  specified as well:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+</screen>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
 <screen>
@@ -442,6 +467,17 @@ be followed by a comma and another object definition.</para>
 The default value of five seconds should be more than adequate for local connections.
 If a timeout is given though, it should be an integer greater than zero.
   </para>
+
+  <para>
+    Note that host parameter is used by MySQL and PostgreSQL
+    backends. Cassandra has a concept of contact points that could be
+    used to contact the cluster, instead of a single IP or
+    hostname. It takes a list of comma separated IP addresses. This may be specified as:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
+</screen>
+  </para>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -453,17 +489,18 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
-
 </section>
 
-<section xml:id="hosts4-storage"><info><title>Hosts Storage</title></info>
+<section xml:id="hosts4-storage">
+  <title>Hosts Storage</title>
     <para>Kea is also able to store information about host reservations in the
     database. The hosts database configuration uses the same syntax as the lease
     database. In fact, a Kea server opens independent connections for each
     purpose, be it lease or hosts information. This arrangement gives the most
     flexibility. Kea can be used to keep leases and host reservations
     separately, but can also point to the same database. Currently the
-    supported hosts database types are MySQL, PostgreSQL and CQL (Cassandra).</para>
+    supported hosts database types are MySQL and PostgreSQL. The Cassandra
+    backend does not support host reservations yet.</para>
 
     <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
@@ -474,7 +511,9 @@ If a timeout is given though, it should be an integer greater than zero.
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-<section xml:id="hosts-database-configuration4"><info><title>DHCPv4 Hosts Database Configuration</title></info>
+<section xml:id="hosts-database-configuration4">
+  <title>DHCPv4 Hosts Database Configuration</title>
+
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
   parameters. If enabled, the type of the database must be set to "mysql" or
   "postgresql". Other hosts backends may be added in later versions of Kea.
@@ -498,6 +537,12 @@ If a timeout is given though, it should be an integer greater than zero.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
+  Should the database use a port different than default, it may be
+  specified as well:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+</screen>
+
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
@@ -511,7 +556,8 @@ If a timeout is given though, it should be an integer greater than zero.
   "". (This is also the default.)</para>
 </section>
 
-<section xml:id="read-only-database-configuration4"><info><title>Using Read-Only Databases for Host Reservations</title></info>
+<section xml:id="read-only-database-configuration4">
+<title>Using Read-Only Databases for Host Reservations</title>
 <para>
 In some deployments the database user whose name is specified in the database backend
 configuration may not have write privileges to the database. This is often
@@ -543,7 +589,8 @@ for MySQL and PostgreSQL databases.</para></note>
 
 </section>
 
-<section xml:id="dhcp4-interface-configuration"><info><title>Interface Configuration</title></info>
+<section xml:id="dhcp4-interface-configuration">
+  <title>Interface Configuration</title>
   <para>The DHCPv4 server has to be configured to listen on specific network
   interfaces.  The simplest network interface configuration tells the server to
   listen on all available interfaces:
@@ -666,9 +713,27 @@ temporarily override a list of interface names and listen on all interfaces.
     supported on the particular OS, the server will issue a warning and
     fall back to use IP/UDP sockets.</para>
   </note>
+
+  <para>Interfaces are re-detected at each reconfiguration. This behavior
+  can be disabled by setting <command>re-detect</command> value to
+  <userinput>false</userinput>, for instance:
+
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ],
+        "re-detect": <userinput>false</userinput>
+    },
+    ...
+}
+  </screen>
+  Note interfaces are not re-detected during <command>config-test</command>.
+  </para>
+
 </section>
 
-<section xml:id="dhcpinform-unicast-issues"><info><title>Issues with Unicast Responses to DHCPINFORM</title></info>
+<section xml:id="dhcpinform-unicast-issues">
+  <title>Issues with Unicast Responses to DHCPINFORM</title>
   <para>The use of UDP sockets has certain benefits in deployments
   where the server receives only relayed traffic; these benefits are
   mentioned in <xref linkend="dhcp4-interface-configuration"/>. From
@@ -719,7 +784,8 @@ temporarily override a list of interface names and listen on all interfaces.
   </para>
 </section>
 
-<section xml:id="ipv4-subnet-id"><info><title>IPv4 Subnet Identifier</title></info>
+<section xml:id="ipv4-subnet-id">
+  <title>IPv4 Subnet Identifier</title>
   <para>
     The subnet identifier is a unique number associated with a particular subnet.
     In principle, it is used to associate clients' leases with their respective subnets.
@@ -763,7 +829,8 @@ temporarily override a list of interface names and listen on all interfaces.
       id -->
 </section>
 
-<section xml:id="dhcp4-address-config"><info><title>Configuration of IPv4 Address Pools</title></info>
+<section xml:id="dhcp4-address-config">
+  <title>Configuration of IPv4 Address Pools</title>
   <para>
     The main role of a DHCPv4 server is address assignment. For this, the server has to
     be configured with at least one subnet and one pool of dynamic addresses for it to manage.
@@ -859,7 +926,8 @@ temporarily override a list of interface names and listen on all interfaces.
   </para>
 </section>
 
-    <section xml:id="dhcp4-std-options"><info><title>Standard DHCPv4 Options</title></info>
+    <section xml:id="dhcp4-std-options">
+      <title>Standard DHCPv4 Options</title>
       <para>
         One of the major features of the DHCPv4 server is to provide configuration
         options to clients. Most of the options are sent by the server only if the
@@ -900,21 +968,84 @@ temporarily override a list of interface names and listen on all interfaces.
         ...
     ]
 }
-</screen>
+        </screen>
+        Note that only one of name or code is required, you don't need to
+        specify both. Space has a default value of "dhcp4", so you can skip this
+        as well if you define a regular (not encapsulated) DHCPv4 option.
+        Finally, csv-format defaults to true, so it too can be skipped, unless
+        you want to specify the option value as hexstring. Therefore the
+        above example can be simplified to:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2"</userinput>
+        },
+        ...
+    ]
+}
+        </screen>
+        Defined options are added to response when the client requests them
+        at a few exceptions which are always added. To enforce the addition
+        of a particular option set the always-send flag to true as in:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2",
+           "always-send": true</userinput>
+        },
+        ...
+    ]
+}
+        </screen>
+        The effect is the same as if the client added the option code in the
+        Parameter Request List option (or its equivalent for vendor
+        options) so in:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2",
+           "always-send": true</userinput>
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+           "subnet": "192.0.3.0/24",
+           "option-data": [
+               {
+                   <userinput>"name": "domain-name-servers",
+                   "data": "192.0.3.1, 192.0.3.2"</userinput>
+               },
+               ...
+           ],
+           ...
+        },
+        ...
+    ],
+    ...
+}
+        </screen>
+        The Domain Name Servers option is always added to responses
+        (the always-send is "sticky") but the value is the subnet one
+        when the client is localized in the subnet.
       </para>
     <para>
-      The <command>name</command> parameter specifies the
-      option name. For a list of currently supported names, see
-      <xref linkend="dhcp4-std-options-list"/> below.
-      The <command>code</command> parameter specifies the option code, which must match one of the
-      values from that list. The next line specifies the option space, which must always
-      be set to "dhcp4" as these are standard DHCPv4 options. For
-      other option spaces, including custom option spaces, see <xref linkend="dhcp4-option-spaces"/>. The next line specifies the format in
-      which the data will be entered: use of CSV (comma
-      separated values) is recommended. The sixth line gives the actual value to
-      be sent to clients. Data is specified as normal text, with
-      values separated by commas if more than one value is
-      allowed.
+      The <command>name</command> parameter specifies the option name. For a
+      list of currently supported names, see <xref linkend="dhcp4-std-options-list"/> below.  The <command>code</command>
+      parameter specifies the option code, which must match one of the values
+      from that list. The next line specifies the option space, which must
+      always be set to "dhcp4" as these are standard DHCPv4 options. For other
+      option spaces, including custom option spaces, see <xref linkend="dhcp4-option-spaces"/>. The next line specifies the format in
+      which the data will be entered: use of CSV (comma separated values) is
+      recommended. The sixth line gives the actual value to be sent to
+      clients. Data is specified as normal text, with values separated by commas
+      if more than one value is allowed.
     </para>
 
     <para>
@@ -984,13 +1115,84 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
+        In some cases it is useful to associate some options with an
+        address pool from which a client is assigned a lease. Pool
+        specific option values override subnet specific and global
+        option values. The server's administrator must not try to
+        prioritize assignment of pool specific options by trying to
+        order pools declarations in the server configuration. Future
+        Kea releases may change the order in which options are
+        assigned from the pools without any notice.
+      </para>
+
+     <para>
+       The following configuration snippet demonstrates how to specify the
+       DNS servers option, which will be assigned to a client only if the
+       client obtains an address from the given pool:
+<screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    "pool": "192.0.2.1 - 192.0.2.200",
+                    <userinput>"option-data": [
+                        {
+                            "name": "domain-name-servers",
+                            "data": "192.0.2.3"
+                         },
+                         ...
+                    ]</userinput>,
+                    ...
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
+
+      <para>
         The currently supported standard DHCPv4 options are
-        listed in <xref linkend="dhcp4-std-options-list"/>
-        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        listed in <xref linkend="dhcp4-std-options-list"/>.
         The "Name" and "Code"
         are the values that should be used as a name in the option-data
         structures. "Type" designates the format of the data: the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
+      </para>
+
+      <para>When a data field is a string, and that string contains the comma
+      (,; U+002C) character, the comma must be escaped with a double reverse solidus
+      character (\; U+005C). This double escape is required, because both the
+      routine splitting CSV data into fields and JSON use the same escape
+      character: a single escape (\,) would make the JSON invalid.
+      For example, the string "foo,bar" would be represented as:
+      <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    <userinput>"option-data": [
+                        {
+                            "name": "boot-file-name",
+                            "data": "foo\\,bar"
+                        }
+                    ]</userinput>
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
       </para>
       <para>
         Some options are designated as arrays, which means that more than one
@@ -1015,8 +1217,8 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
-        <table frame="all" xml:id="dhcp4-std-options-list"><info><title>List of standard DHCPv4 options</title></info>
-
+        <table frame="all" xml:id="dhcp4-std-options-list">
+          <title>List of standard DHCPv4 options</title>
           <tgroup cols="5">
           <colspec colname="name"/>
           <colspec colname="code" align="center"/>
@@ -1077,32 +1279,6 @@ This rather belong to the DDNS configuration
 <row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
-
-          </tbody>
-          </tgroup>
-        </table>
-      </para>
-
-      <para>
-        <table frame="all" xml:id="dhcp4-std-options-list-part2"><info><title>List of standard DHCPv4 options (continued)</title></info>
-
-          <tgroup cols="5">
-          <colspec colname="name"/>
-          <colspec colname="code" align="center"/>
-          <colspec colname="type" align="center"/>
-          <colspec colname="array" align="center"/>
-          <colspec colname="always-returned" align="center"/>
-          <thead>
-            <row>
-              <entry>Name</entry>
-              <entry>Code</entry>
-              <entry>Type</entry>
-              <entry>Array?</entry>
-              <entry>Returned if not requested?</entry>
-            </row>
-          </thead>
-          <tbody>
-
 <row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
@@ -1168,7 +1344,7 @@ It is merely echoed by the server
 <row><entry>client-ndi</entry><entry>94</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>uuid-guid</entry><entry>97</entry><entry>record (uint8, binary)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>domain-search</entry><entry>119</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
           </tbody>
@@ -1177,8 +1353,8 @@ It is merely echoed by the server
 
       </para>
       <para>
-        <table frame="all" xml:id="dhcp-types"><info><title>List of standard DHCP option types</title></info>
-
+        <table frame="all" xml:id="dhcp-types">
+          <title>List of standard DHCP option types</title>
           <tgroup cols="2">
           <colspec colname="name"/>
           <colspec colname="meaning"/>
@@ -1196,16 +1372,21 @@ It is merely echoed by the server
             <row><entry>psid</entry><entry>PSID and PSID length separated by a slash, e.g. 3/4 specifies PSID=3 and PSID length=4. In the wire format it is represented by an 8-bit field carrying PSID length (in this case equal to 4) and the 16-bits long PSID value field (in this case equal to "0011000000000000b" using binary notation). Allowed values for a PSID length are 0 to 16. See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7597">RFC 7597</link> for the details about the PSID wire representation</entry></row>
             <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty")</entry></row>
             <row><entry>string</entry><entry>Any text</entry></row>
+            <row><entry>tuple</entry><entry>A length encoded as a 8 (16 for DHCPv6) bit unsigned integer followed by a string of this length</entry></row>
             <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
             <row><entry>uint16</entry><entry>16 bit unsigned integer with allowed values 0 to 65535</entry></row>
             <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
+            <row><entry>int8</entry><entry>8 bit signed integer with allowed values -128 to 127</entry></row>
+            <row><entry>int16</entry><entry>16 bit signed integer with allowed values -32768 to 32767</entry></row>
+            <row><entry>int32</entry><entry>32 bit signed integer with allowed values -2147483648 to 2147483647</entry></row>
           </tbody>
           </tgroup>
        </table>
       </para>
     </section>
 
-    <section xml:id="dhcp4-custom-options"><info><title>Custom DHCPv4 options</title></info>
+    <section xml:id="dhcp4-custom-options">
+      <title>Custom DHCPv4 options</title>
       <para>Kea supports custom (non-standard) DHCPv4 options. Assume
       that we want to define a new DHCPv4 option called "foo" which
       will have a code 222 and will convey a single unsigned 32 bit
@@ -1324,9 +1505,16 @@ It is merely echoed by the server
        <command>"1"</command>. Future versions of Kea will accept all those values
        for all boolean parameters.</para>
      </note>
+     <note>
+       <para>Numbers can be specified in decimal or hexadecimal format.
+        The hexadecimal format can be either plain (e.g. abcd) or
+        prefixed with 0x (e.g. 0xabcd).
+       </para>
+     </note>
     </section>
 
-    <section xml:id="dhcp4-vendor-opts"><info><title>DHCPv4 Vendor Specific Options</title></info>
+    <section xml:id="dhcp4-vendor-opts">
+      <title>DHCPv4 Vendor Specific Options</title>
       <para>
       Currently there are two option spaces defined for the DHCPv4 daemon:
       "dhcp4" (for the top level DHCPv4 options) and
@@ -1397,7 +1585,9 @@ It is merely echoed by the server
       </para>
     </section>
 
-    <section xml:id="dhcp4-option-spaces"><info><title>Nested DHCPv4 Options (Custom Option Spaces)</title></info>
+    <section xml:id="dhcp4-option-spaces">
+
+      <title>Nested DHCPv4 Options (Custom Option Spaces)</title>
       <para>It is sometimes useful to define a completely new option
       space. This is the case when user creates new option in the
       standard option space ("dhcp4") and wants this option
@@ -1503,7 +1693,8 @@ It is merely echoed by the server
     </para>
     </section>
 
-    <section xml:id="dhcp4-option-data-defaults"><info><title>Unspecified Parameters for DHCPv4 Option Configuration</title></info>
+    <section xml:id="dhcp4-option-data-defaults">
+      <title>Unspecified Parameters for DHCPv4 Option Configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values may be used. However, it is
       important to understand the implications of not specifying some of them
@@ -1549,29 +1740,21 @@ It is merely echoed by the server
         </listitem>
 
         <listitem>
-          <simpara><command>csv-format</command> - if this value is not specified
-          and the definition for the particular option exists, the server will assume
-          that the option data is specified as a list of comma separated values to be
-          assigned to individual fields of the DHCP option. If the definition
-          does not exist for this option, the server will assume that the data
-          parameter contains the option payload in the binary format (represented
-          as a string of hexadecimal digits). Note that not specifying this
-          parameter doesn't imply that it defaults to a fixed value, but
-          the configuration data interpretation also depends on the presence
-          of the option definition. An administrator must be aware if the
-          definition for the particular option exists when this parameter
-          is not specified. It is generally recommended to not specify this
-          parameter only for the options for which the definition exists, e.g.
-          standard options. Setting <command>csv-format</command> to an explicit
-          value will cause the server to strictly check the format of the option
-          data specified.
+          <simpara><command>csv-format</command> - if this value is not
+          specified the server will assume that the option data is specified as
+          a list of comma separated values to be assigned to individual fields
+          of the DHCP option. This behavior has changed in Kea 1.2. Older
+          versions used additional logic to determine whether the csv-format
+          should be true or false. That is no longer the case.
           </simpara>
         </listitem>
       </itemizedlist>
       </para>
+
     </section>
 
-    <section xml:id="dhcp4-stateless-configuration"><info><title>Stateless Configuration of DHCPv4 Clients</title></info>
+    <section xml:id="dhcp4-stateless-configuration">
+      <title>Stateless Configuration of DHCPv4 Clients</title>
       <para>The DHCPv4 server supports the stateless client configuration whereby the
       client has an IP address configured (e.g. using manual configuration) and only
       contacts the server to obtain other configuration parameters, e.g. addresses of DNS servers.
@@ -1631,7 +1814,8 @@ It is merely echoed by the server
       </para>
     </section>
 
-    <section xml:id="dhcp4-client-classifier"><info><title>Client Classification in DHCPv4</title></info>
+    <section xml:id="dhcp4-client-classifier">
+      <title>Client Classification in DHCPv4</title>
       <para>
       The DHCPv4 server includes support for client classification.  For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
@@ -1683,7 +1867,8 @@ It is merely echoed by the server
         clients that do not meet class criteria to be denied any service altogether.
       </para></note>
 
-      <section><info><title>Setting Fixed Fields in Classification</title></info>
+      <section>
+        <title>Setting Fixed Fields in Classification</title>
         <para>
           It is possible to specify that clients belonging to a particular class
           should receive packets with specific values in certain fixed fields.
@@ -1727,7 +1912,8 @@ It is merely echoed by the server
           </para>
         </section>
 
-      <section><info><title>Using Vendor Class Information in Classification</title></info>
+      <section>
+        <title>Using Vendor Class Information in Classification</title>
         <para>
         The server checks whether an incoming packet includes the vendor class identifier
         option (60). If it does, the content of that option is prepended with
@@ -1768,7 +1954,8 @@ It is merely echoed by the server
 
       </section>
 
-      <section><info><title>Defining and Using Custom Classes</title></info>
+      <section>
+        <title>Defining and Using Custom Classes</title>
         <para>
         The following example shows how to configure a class using an expression
         and a subnet that makes use of the class. This configuration defines the
@@ -1808,15 +1995,15 @@ It is merely echoed by the server
 }</screen>
         </para>
       </section>
-
     </section>
 
-    <section xml:id="dhcp4-ddns-config"><info><title>DDNS for DHCPv4</title></info>
+    <section xml:id="dhcp4-ddns-config">
+      <title>DDNS for DHCPv4</title>
       <para>
       As mentioned earlier, kea-dhcp4 can be configured to generate requests to the
       DHCP-DDNS server (referred to here as "D2" ) to update DNS entries.  These requests are known as
       NameChangeRequests or NCRs.  Each NCR contains the following information:
-      <orderedlist inheritnum="ignore" continuation="restarts">
+      <orderedlist>
       <listitem><para>
       Whether it is a request to add (update) or remove DNS entries
       </para></listitem>
@@ -1894,7 +2081,8 @@ It is merely echoed by the server
       </itemizedlist>
       </para>
 
-      <section xml:id="dhcpv4-d2-io-config"><info><title>DHCP-DDNS Server Connectivity</title></info>
+      <section xml:id="dhcpv4-d2-io-config">
+      <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the D2 server, kea-dhcp4 must be able
       to communicate with it.  kea-dhcp4 uses the following configuration
@@ -1961,8 +2149,8 @@ It is merely echoed by the server
 </screen>
       </para>
       </section>
-
-      <section xml:id="dhcpv4-d2-rules-config"><info><title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title></info>
+      <section xml:id="dhcpv4-d2-rules-config">
+      <title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title>
       <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4702">RFC 4702</link>.
       It is important to keep in mind that kea-dhcp4 provides the initial decision
@@ -1975,7 +2163,7 @@ It is merely echoed by the server
       </para>
       <para>
       In general, kea-dhcp4 will generate DDNS update requests when:
-      <orderedlist inheritnum="ignore" continuation="restarts">
+      <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
       </para></listitem>
@@ -2001,8 +2189,8 @@ It is merely echoed by the server
       will respect the FQDN N and S flags specified by the client as shown
       in the following table:
       </para>
-        <table xml:id="fqdn-flag-table"><info><title>Default FQDN Flag Behavior</title></info>
-
+        <table xml:id="fqdn-flag-table">
+          <title>Default FQDN Flag Behavior</title>
           <tgroup cols="4" align="left">
           <colspec colname="cflags"/>
           <colspec colname="meaning"/>
@@ -2098,7 +2286,8 @@ It is merely echoed by the server
       </para>
       </section>
 
-      <section xml:id="dhcpv4-fqdn-name-generation"><info><title>kea-dhcp4 name generation for DDNS update requests</title></info>
+      <section xml:id="dhcpv4-fqdn-name-generation">
+      <title>kea-dhcp4 name generation for DDNS update requests</title>
       <para>Each NameChangeRequest must of course include the fully qualified domain
       name whose DNS entries are to be affected.  kea-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
@@ -2106,7 +2295,7 @@ It is merely echoed by the server
       <para>
        The default rules for constructing the FQDN that will be used for DNS
        entries are:
-      <orderedlist inheritnum="ignore" continuation="restarts">
+      <orderedlist>
       <listitem><para>
         If the DHCPREQUEST contains the client FQDN option, the candidate name
         is taken from there, otherwise it is taken from the Host Name option.
@@ -2147,9 +2336,10 @@ It is merely echoed by the server
     <note>
     Note that formerly, this parameter was a boolean and permitted only values
     of <command>true</command> and <command>false</command>.  Boolean values
-    will still be accepted but may eventually be deprecated. A value of
-    <command>true</command> equates to <command>when-present</command>,
-    <command>false</command> equates to <command>never</command>.
+    have been deprecated and are no longer accepted.  If you are currently using
+    booleans, you must replace them with the desired mode name. A value of
+    <command>true</command> maps to <command>"when-present"</command>, while
+    <command>false</command> maps to <command>"never"</command>.
     </note>
 
       For example, To instruct kea-dhcp4 to always generate the FQDN for a
@@ -2197,7 +2387,6 @@ It is merely echoed by the server
 }
 </screen>
       </section>
-
       <para>
       When generating a name, kea-dhcp4 will construct name of the format:
       </para>
@@ -2215,7 +2404,8 @@ It is merely echoed by the server
       </para>
     </section>
 
-    <section xml:id="dhcp4-next-server"><info><title>Next Server (siaddr)</title></info>
+    <section xml:id="dhcp4-next-server">
+      <title>Next Server (siaddr)</title>
       <para>In some cases, clients want to obtain configuration from a TFTP server.
       Although there is a dedicated option for it, some devices may use the siaddr field
       in the DHCPv4 packet for that purpose. That specific field can be configured
@@ -2240,7 +2430,8 @@ It is merely echoed by the server
 </screen>
     </section>
 
-    <section xml:id="dhcp4-echo-client-id"><info><title>Echoing Client-ID (RFC 6842)</title></info>
+    <section xml:id="dhcp4-echo-client-id">
+      <title>Echoing Client-ID (RFC 6842)</title>
       <para>The original DHCPv4 specification
       (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>)
       states that the DHCPv4
@@ -2270,7 +2461,8 @@ It is merely echoed by the server
 </screen>
     </section>
 
-    <section xml:id="dhcp4-match-client-id"><info><title>Using Client Identifier and Hardware Address</title></info>
+    <section xml:id="dhcp4-match-client-id">
+      <title>Using Client Identifier and Hardware Address</title>
       <para>The DHCP server must be able to identify the client (and distinguish it from
       other clients) from which it receives the message. There are many reasons
       why this identification is required and the most important ones are:
@@ -2381,7 +2573,7 @@ It is merely echoed by the server
      indicates that the server will use the "client identifier" for lease
      lookups and "chaddr" if the first lookup returns no results. The
      <command>false</command> means that the server will only
-     use the "chaddr" to search for client"s lease. Whether the DHCID for
+     use the "chaddr" to search for client's lease. Whether the DHCID for
      DNS updates is generated from the "client identifier" or "chaddr" is
      controlled through the same parameter accordingly.</para>
 
@@ -2430,9 +2622,11 @@ It is merely echoed by the server
      assumed to belong to another client and the new lease will be
      allocated.
      </para>
+
     </section>
 
-     <section xml:id="dhcp4-dhcp4o6-config"><info><title>DHCPv4-over-DHCPv6: DHCPv4 Side</title></info>
+     <section xml:id="dhcp4-dhcp4o6-config">
+      <title>DHCPv4-over-DHCPv6: DHCPv4 Side</title>
       <para>
       The support of DHCPv4-over-DHCPv6 transport is described in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7341">RFC 7341</link>
@@ -2456,7 +2650,7 @@ It is merely echoed by the server
       With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
       to several of the identifiers it would normally use to select a
       subnet.  In order to address this issue three new configuration
-      entires have been added.  The presence of any of these allows the
+      entries have been added.  The presence of any of these allows the
       subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
       <itemizedlist>
         <listitem>
@@ -2526,7 +2720,9 @@ It is merely echoed by the server
 
   <!-- Host reservation is a large topic. There will be many subsections,
    so it should be a section on its own. -->
-  <section xml:id="host-reservation-v4"><info><title>Host Reservation in DHCPv4</title></info>
+  <section xml:id="host-reservation-v4">
+    <title>Host Reservation in DHCPv4</title>
+
     <para>There are many cases where it is useful to provide a configuration on
     a per host basis. The most obvious one is to reserve a specific, static
     address for exclusive use by a given client (host) ‐ the returning client will
@@ -2595,12 +2791,12 @@ It is merely echoed by the server
     0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.) The third
     example reserves address 192.0.3.203 to a client whose request
-    would be relayed by a relay agent that inserts a circuid-it option
+    would be relayed by a relay agent that inserts a circuit-it option
     with the value 'charter950'. The fourth entry reserves address
     192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
 
-    <para>The above example is used for ilustrational purposes only
+    <para>The above example is used for illustrational purposes only
     and in actual deployments it is recommended to use as few types as possible
     (preferably just one). See <xref linkend="reservations4-tuning"/> for a detailed
     discussion of this point.</para>
@@ -2621,7 +2817,9 @@ It is merely echoed by the server
     could be used by someone else (i.e. there is a reservation for it). That
     additional check incurs additional overhead.</para>
 
-    <section xml:id="reservation4-types"><info><title>Address Reservation Types</title></info>
+    <section xml:id="reservation4-types">
+      <title>Address Reservation Types</title>
+
       <para>In a typical scenario there is an IPv4 subnet defined,
       e.g. 192.0.2.0/24, with certain part of it dedicated for dynamic allocation
       by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
@@ -2638,7 +2836,8 @@ It is merely echoed by the server
       possible.</para>
     </section>
 
-    <section xml:id="reservation4-conflict"><info><title>Conflicts in DHCPv4 Reservations</title></info>
+    <section xml:id="reservation4-conflict">
+      <title>Conflicts in DHCPv4 Reservations</title>
       <para>As the reservations and lease information are stored separately,
       conflicts may arise. Consider the following series of events. The server
       has configured the dynamic pool of addresses from the range of 192.0.2.10 to
@@ -2714,7 +2913,8 @@ It is merely echoed by the server
       </para>
     </section>
 
-    <section xml:id="reservation4-hostname"><info><title>Reserving a Hostname</title></info>
+    <section xml:id="reservation4-hostname">
+      <title>Reserving a Hostname</title>
       <para>When the reservation for a client includes the <command>hostname</command>,
       the server will return this hostname to the client in
       the Client FQDN or Hostname options. The server responds with the Client
@@ -2781,7 +2981,8 @@ It is merely echoed by the server
       </para>
     </section>
 
-    <section xml:id="reservation4-options"><info><title>Including Specific DHCPv4 Options in Reservations</title></info>
+    <section xml:id="reservation4-options">
+      <title>Including Specific DHCPv4 Options in Reservations</title>
       <para>Kea 1.1.0 introduced the ability to specify options on a
       per host basis. The options follow the same rules as any other
       options. These can be standard options (see <xref linkend="dhcp4-std-options"/>), custom options (see <xref linkend="dhcp4-custom-options"/>) or vendor specific options
@@ -2836,9 +3037,11 @@ It is merely echoed by the server
  if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
+
     </section>
 
-    <section xml:id="reservation4-message-fields"><info><title>Reserving Next Server, Server Hostname and Boot File Name</title></info>
+    <section xml:id="reservation4-message-fields">
+      <title>Reserving Next Server, Server Hostname and Boot File Name</title>
       <para>BOOTP/DHCPv4 messages include "siaddr", "sname" and "file" fields.
       Even though, DHCPv4 includes corresponding options, such as option 66 and
       option 67, some clients may not support these options. For this reason, server
@@ -2866,7 +3069,8 @@ It is merely echoed by the server
     them can be omitted.</para>
     </section>
 
-    <section xml:id="reservation4-client-classes"><info><title>Reserving Client Classes in DHCPv4</title></info>
+    <section xml:id="reservation4-client-classes">
+      <title>Reserving Client Classes in DHCPv4</title>
       <para><xref linkend="classification-using-expressions"/> explains how
       to configure the server to assign classes to a client based on the content
       of the options that this client sends to the server. Host reservations
@@ -2920,11 +3124,13 @@ It is merely echoed by the server
     with classification using expressions.</para>
     </section>
 
-    <section xml:id="reservations4-mysql-pgsql-cql"><info><title>Storing Host Reservations in MySQL, PostgreSQL or CQL (Cassandra)</title></info>
+    <section xml:id="reservations4-mysql-pgsql">
+      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
+
       <para>
-        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        It is possible to store host reservations in MySQL or PostgreSQL database. See
         <xref linkend="hosts4-storage"/> for information on how to configure Kea to use
-        reservations stored in MySQL, PostgreSQL or Cassandra. Kea does not provide any dedicated
+        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
         tools for managing reservations in a database. The Kea wiki <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri> provides detailed
         information and examples of how reservations can be inserted into the
         database.
@@ -2934,29 +3140,16 @@ It is merely echoed by the server
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
-    <section xml:id="reservations4-pgsql"><info><title>Storing host reservations in PostgreSQL</title></info>
-      <para>
-        It is possible to store host reservations in PostgreSQL. See <xref linkend="hosts4-storage"/> for information on how to configure Kea to
-        use reservations stored in PostgreSQL. Kea does not provide any
-        dedicated tools for managing PostgreSQL reservations. See Kea wiki
-        <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wikiHostReservationsHowTo</uri> for
-        detailed information and examples of how reservations can be inserted
-        into the database.
-      </para>
+    <section xml:id="reservations4-cql">
+      <title>Storing host reservations in CQL (Cassandra)</title>
+      <para>Kea currently does not support storing reservations in
+      Cassandra (CQL).</para>
     </section>
 
-    <section xml:id="reservations4-cql"><info><title>Storing host reservations in Cassandra CQL</title></info>
-      <para>
-        It is possible to store host reservations in Cassandra CQL. See <xref linkend="hosts4-storage"/> for information on how to configure Kea to
-        use reservations stored in Cassandra CQL. Kea does not provide any
-        dedicated tools for managing Cassandra CQL reservations. See Kea wiki
-        <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri>
-        detailed information and examples of how reservations can be inserted
-        into the database.
-      </para>
-    </section>
 
-    <section xml:id="reservations4-tuning"><info><title>Fine Tuning DHCPv4 Host Reservation</title></info>
+    <section xml:id="reservations4-tuning">
+      <title>Fine Tuning DHCPv4 Host Reservation</title>
+
       <para>The host reservation capability introduces additional restrictions for the
       allocation engine (the component of Kea that selects an address for a client)
       during lease selection and renewal. In particular, three
@@ -3062,12 +3255,16 @@ If not specified, the default value is:
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 </para>
+
+
+
    </section>
 
   </section>
   <!-- end of host reservations section -->
 
-    <section xml:id="dhcp4-serverid"><info><title>Server Identifier in DHCPv4</title></info>
+    <section xml:id="dhcp4-serverid">
+      <title>Server Identifier in DHCPv4</title>
       <para>
         The DHCPv4 protocol uses a "server identifier" to allow clients
         to discriminate between several servers present on the same link: this
@@ -3083,7 +3280,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       </para>
     </section>
 
-    <section xml:id="dhcp4-subnet-selection"><info><title>How the DHCPv4 Server Selects a Subnet for the Client</title></info>
+    <section xml:id="dhcp4-subnet-selection">
+      <title>How the DHCPv4 Server Selects a Subnet for the Client</title>
       <para>
         The DHCPv4 server differentiates between the directly connected clients,
         clients trying to renew leases and clients sending their messages through
@@ -3120,7 +3318,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         depending on the classes to which the client belongs.</para>
       </note>
 
-    <section xml:id="dhcp4-relay-override"><info><title>Using a Specific Relay Agent for a Subnet</title></info>
+    <section xml:id="dhcp4-relay-override">
+      <title>Using a Specific Relay Agent for a Subnet</title>
       <para>
         A relay has to have an interface connected to the link on which
         the clients are being configured. Typically the relay has an IPv4
@@ -3164,9 +3363,13 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 </screen>
       </para>
 
+      <para>If "relay" is specified, the "ip-address" parameter within
+      it is mandatory.</para>
+
     </section>
 
-      <section xml:id="dhcp4-srv-example-client-class-relay"><info><title>Segregating IPv4 Clients in a Cable Network</title></info>
+      <section xml:id="dhcp4-srv-example-client-class-relay">
+        <title>Segregating IPv4 Clients in a Cable Network</title>
         <para>
           In certain cases, it is useful to mix relay address information,
           introduced in <xref linkend="dhcp4-relay-override"/> with client
@@ -3209,7 +3412,9 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
     </section>
 
-    <section xml:id="dhcp4-decline"><info><title>Duplicate Addresses (DHCPDECLINE Support)</title></info>
+    <section xml:id="dhcp4-decline">
+      <title>Duplicate Addresses (DHCPDECLINE Support)</title>
+
       <para>The DHCPv4 server is configured with a certain pool of addresses
       that it is expected to hand out to the DHCPv4 clients.  It is
       assumed that the server is authoritative and has complete jurisdiction
@@ -3273,9 +3478,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       potential for major issues, we decided not to decrease assigned addresses
       immediately after receiving DHCPDECLINE, but to do it later when we
       recover the address back to the available pool.</para>
+
     </section>
 
-    <section xml:id="dhcp4-stats"><info><title>Statistics in the DHCPv4 Server</title></info>
+    <section xml:id="dhcp4-stats">
+      <title>Statistics in the DHCPv4 Server</title>
       <note>
         <para>This section describes DHCPv4-specific statistics. For a general
         overview and usage of statistics, see <xref linkend="stats"/>.</para>
@@ -3284,8 +3491,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       <para>
         The DHCPv4 server supports the following statistics:
       </para>
-        <table frame="all" xml:id="dhcp4-statistics"><info><title>DHCPv4 Statistics</title></info>
-
+        <table frame="all" xml:id="dhcp4-statistics">
+          <title>DHCPv4 Statistics</title>
           <tgroup cols="3">
           <colspec colname="statistic" align="center"/>
           <colspec colname="type" align="center"/>
@@ -3506,7 +3713,25 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
               separately. This statistic is reset during reconfiguration event.
               </entry>
             </row>
-
+            <row>
+              <entry>reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases that have
+              been reclaimed since server startup. It is incremented each time
+              an expired lease is reclaimed and is reset when the server is
+              reconfigured.
+              </entry>
+            </row>
+            <row>
+              <entry>subnet[id].reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases associated
+              with a given subnet (<emphasis>id</emphasis> is the subnet-id)
+              that have been reclaimed since server startup. It is incremented
+              each time an expired lease is reclaimed and is reset when the
+              server is reconfigured.
+              </entry>
+            </row>
             <row>
             <entry>declined-addresses</entry>
             <entry>integer</entry>
@@ -3570,7 +3795,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         </table>
     </section>
 
-    <section xml:id="dhcp4-ctrl-channel"><info><title>Management API for the DHCPv4 Server</title></info>
+    <section xml:id="dhcp4-ctrl-channel">
+      <title>Management API for the DHCPv4 Server</title>
       <para>
         The management API allows the issuing of specific
         management commands, such as statistics retrieval, reconfiguration or shutdown.
@@ -3604,20 +3830,40 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>
         Communication over control channel is conducted using JSON structures.
-        See the Control Channel section in the Kea Developer's Guide for more details.
+        See the Control Channel section in the Kea Developer's Guide for more
+        details.
       </para>
 
-      <para>The DHCPv4 server supports <command>statistic-get</command>,
-      <command>statistic-reset</command>, <command>statistic-remove</command>,
-      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
-      and <command>statistic-remove-all</command>, specified in
-      <xref linkend="command-stats"/>. It also supports
-      <command>list-commands</command> and <command>shutdown</command>,
-      specified in <xref linkend="command-list-commands"/> and
-      <xref linkend="command-shutdown"/>, respectively.</para>
+      <para>The DHCPv4 server supports the following operational commands:
+        <itemizedlist>
+            <listitem>build-report</listitem>
+            <listitem>config-get</listitem>
+            <listitem>config-reload</listitem>
+            <listitem>config-set</listitem>
+            <listitem>config-test</listitem>
+            <listitem>config-write</listitem>
+            <listitem>leases-reclaim</listitem>
+            <listitem>list-commands</listitem>
+            <listitem>shutdown</listitem>
+            <listitem>version-get</listitem>
+        </itemizedlist>
+         as described in <xref linkend="commands-common"/>.  In addition,
+         it supports the following statistics related commands:
+        <itemizedlist>
+            <listitem>statistic-get</listitem>
+            <listitem>statistic-reset</listitem>
+            <listitem>statistic-remove</listitem>
+            <listitem>statistic-get-all</listitem>
+            <listitem>statistic-reset-all</listitem>
+            <listitem>statistic-remove-all</listitem>
+        </itemizedlist>
+        as described here <xref linkend="command-stats"/>.
+      </para>
+
     </section>
 
-    <section xml:id="dhcp4-std"><info><title>Supported DHCP Standards</title></info>
+    <section xml:id="dhcp4-std">
+      <title>Supported DHCP Standards</title>
       <para>The following standards are currently supported:</para>
       <itemizedlist>
           <listitem>
@@ -3657,7 +3903,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
       </itemizedlist>
     </section>
 
-      <section><info><title>User context in IPv4 pools</title></info>
+      <section>
+        <title>User context in IPv4 pools</title>
         <para>
           Kea allows loading hook libraries that sometimes could benefit from
           additional parameters. If such a parameter is specific to the whole
@@ -3701,7 +3948,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         </para>
     </section>
 
-    <section xml:id="dhcp4-limit"><info><title>DHCPv4 Server Limitations</title></info>
+    <section xml:id="dhcp4-limit">
+      <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the current stage of
       development and should be treated as <quote>not implemented
