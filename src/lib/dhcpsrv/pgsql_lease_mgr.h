@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,10 +24,6 @@ namespace dhcp {
 // See pgsql_lease_mgr.cc file for actual class definitions
 class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
-
-/// Defines PostgreSQL backend version: 3.0
-const uint32_t PG_CURRENT_VERSION = 3;
-const uint32_t PG_CURRENT_MINOR = 0;
 
 /// @brief PostgreSQL Lease Manager
 ///
@@ -323,7 +319,7 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS4 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
@@ -333,9 +329,31 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS6 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
     /// @brief Return backend type
     ///
@@ -499,7 +517,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
@@ -511,7 +529,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query

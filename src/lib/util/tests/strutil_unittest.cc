@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,42 @@ TEST(StringUtilTest, Tokens) {
     EXPECT_EQ(string("gamma"), result[3]);
     EXPECT_EQ(string("delta"), result[4]);
     EXPECT_EQ(string("epsilon"), result[5]);
+
+    // Escaped delimiter
+    result = isc::util::str::tokens("foo\\,bar", ",", true);
+    EXPECT_EQ(1, result.size());
+    EXPECT_EQ(string("foo,bar"), result[0]);
+
+    // Escaped escape
+    result = isc::util::str::tokens("foo\\\\,bar", ",", true);
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("foo\\"), result[0]);
+    EXPECT_EQ(string("bar"), result[1]);
+
+    // Double escapes
+    result = isc::util::str::tokens("foo\\\\\\\\,\\bar", ",", true);
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("foo\\\\"), result[0]);
+    EXPECT_EQ(string("\\bar"), result[1]);
+
+    // Escaped standard character
+    result = isc::util::str::tokens("fo\\o,bar", ",", true);
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("fo\\o"), result[0]);
+    EXPECT_EQ(string("bar"), result[1]);
+
+    // Escape at the end
+    result = isc::util::str::tokens("foo,bar\\", ",", true);
+    ASSERT_EQ(2, result.size());
+    EXPECT_EQ(string("foo"), result[0]);
+    EXPECT_EQ(string("bar\\"), result[1]);
+
+    // Escape opening a token
+    result = isc::util::str::tokens("foo,\\,,bar", ",", true);
+    ASSERT_EQ(3, result.size());
+    EXPECT_EQ(string("foo"), result[0]);
+    EXPECT_EQ(string(","), result[1]);
+    EXPECT_EQ(string("bar"), result[2]);
 }
 
 // Changing case
@@ -405,7 +441,7 @@ TEST(StringUtilTest, decodeFormattedHexString) {
     testFormatted("", "");
 
     std::vector<uint8_t> decoded;
-    // Whitepspace.
+    // Whitespace.
     EXPECT_THROW(decodeFormattedHexString("0a ", decoded),
                  isc::BadValue);
     // Whitespace within a string.

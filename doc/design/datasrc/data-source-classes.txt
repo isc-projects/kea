@@ -310,7 +310,7 @@ image::memmgr-mapped-init.png[]
 
 4. The memmgr module then calls
    `ConfigurableClientList::getZoneTableAccessor()`, and calls the
-   `getItertor()` method on it to get a list of zones for which
+   `getIterator()` method on it to get a list of zones for which
    zone data are to be loaded into the memory segment.
 
 5. The memmgr module loads the zone data for each such zone.  This

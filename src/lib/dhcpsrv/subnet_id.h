@@ -15,7 +15,7 @@ namespace dhcp {
 
 /// @brief Defines unique IPv4 or IPv6 subnet identifier.
 ///
-/// Each subnet for which the DHCP service has been configured is identifed
+/// Each subnet for which the DHCP service has been configured is identified
 /// by the unique value called subnet id. Right now it is represented as
 /// a simple unsigned integer. In the future it may be extended to more complex
 /// type.

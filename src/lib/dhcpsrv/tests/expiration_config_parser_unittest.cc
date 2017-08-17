@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdint.h>
@@ -105,7 +106,7 @@ ExpirationConfigParserTest::renderConfig() const {
 
     // Parse the configuration. This may emit exceptions.
     ExpirationConfigParser parser;
-    parser.build(config_element);
+    parser.parse(config_element);
 
     // No exception so return configuration.
     return (CfgMgr::instance().getStagingCfg()->getCfgExpiration());
@@ -220,15 +221,6 @@ TEST_F(ExpirationConfigParserTest, otherParameters) {
     EXPECT_EQ(20, cfg->getUnwarnedReclaimCycles());
 }
 
-// This test verifies that the exception is thrown if unsupported
-// parameter is specified.
-TEST_F(ExpirationConfigParserTest, invalidParameter) {
-   addParam("reclaim-timer-wait-time", 20);
-   addParam("invalid-parameter", 20);
-
-   EXPECT_THROW(renderConfig(), DhcpConfigError);
-}
-
 // This test verifies that negative parameter values are not allowed.
 TEST_F(ExpirationConfigParserTest, outOfRangeValues) {
     testOutOfRange("reclaim-timer-wait-time",
@@ -254,7 +246,7 @@ TEST_F(ExpirationConfigParserTest, notNumberValue) {
 
     // Parse the configuration. It should throw exception.
     ExpirationConfigParser parser;
-    EXPECT_THROW(parser.build(config_element), DhcpConfigError);
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
 }
 
 } // end of anonymous namespace

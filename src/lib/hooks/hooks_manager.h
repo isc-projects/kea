@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,6 +90,17 @@ public:
     /// @throw NoSuchHook Given index does not correspond to a valid hook.
     static bool calloutsPresent(int index);
 
+    /// @brief Checks if control command handlers are present for the
+    /// specified command.
+    ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
+    /// @return true if there is a hook point associated with the specified
+    /// command and callouts/command handlers are installed for this hook
+    /// point, false otherwise.
+    static bool commandHandlersPresent(const std::string& command_name);
+
     /// @brief Calls the callouts for a given hook
     ///
     /// Iterates through the library handles and calls the callouts associated
@@ -102,6 +113,22 @@ public:
     /// @param handle Reference to the CalloutHandle object for the current
     ///        object being processed.
     static void callCallouts(int index, CalloutHandle& handle);
+
+    /// @brief Calls the callouts/command handlers for a given command name.
+    ///
+    /// Iterates through the library handles and calls the command handlers
+    /// associated with the given command. It expects that the hook point
+    /// for this command exists (with a name being a command_name prefixed
+    /// with a dollar sign and with hyphens replaced with underscores).
+    ///
+    /// @param command_name Command name for which handlers should be called.
+    /// @param handle Reference to the CalloutHandle object for the current
+    /// object being processed.
+    ///
+    /// @throw NoSuchHook if the hook point for the specified command does
+    ///        not exist.
+    static void callCommandHandlers(const std::string& command_name,
+                                    CalloutHandle& handle);
 
     /// @brief Return pre-callouts library handle
     ///
@@ -199,6 +226,14 @@ public:
     static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
     static const int CONTEXT_DESTROY = ServerHooks::CONTEXT_DESTROY;
 
+    /// @brief Return the shared callout manager
+    ///
+    /// Declared as static as other methods but only one for the
+    /// singleton will be created.
+    ///
+    /// @return A reference to the shared callout manager
+    static boost::shared_ptr<CalloutManager>& getSharedCalloutManager();
+
 private:
 
     /// @brief Constructor
@@ -245,12 +280,34 @@ private:
     /// @throw NoSuchHook Given index does not correspond to a valid hook.
     bool calloutsPresentInternal(int index);
 
+    /// @brief Checks if control command handlers are present for the
+    /// specified command.
+    ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
+    /// @return true if there is a hook point associated with the specified
+    /// command and callouts/command handlers are installed for this hook
+    /// point, false otherwise.
+    bool commandHandlersPresentInternal(const std::string& command_name);
+
     /// @brief Calls the callouts for a given hook
     ///
     /// @param index Index of the hook to call.
     /// @param handle Reference to the CalloutHandle object for the current
     ///        object being processed.
     void callCalloutsInternal(int index, CalloutHandle& handle);
+
+    /// @brief Calls the callouts/command handlers for a given command name.
+    ///
+    /// @param command_name Command name for which handlers should be called.
+    /// @param handle Reference to the CalloutHandle object for the current
+    /// object being processed.
+    ///
+    /// @throw NoSuchHook if the hook point for the specified command does
+    ///        not exist.
+    void callCommandHandlersInternal(const std::string& command_name,
+                                     CalloutHandle& handle);
 
     /// @brief Return callout handle
     ///
@@ -312,6 +369,10 @@ private:
 
     /// Callout manager for the set of library managers.
     boost::shared_ptr<CalloutManager> callout_manager_;
+
+    /// Shared callout manager to survive library reloads.
+    boost::shared_ptr<CalloutManager> shared_callout_manager_;
+
 };
 
 } // namespace util

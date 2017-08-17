@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@
 /// cases it is expected that the exception is thrown instead. A possible
 /// solution would be to enclose this conditional behavior in a function.
 /// However, despite the hate for macros, the macro seems to be a bit
-/// better solution in this case as it allows to convenietly pass an
+/// better solution in this case as it allows to conveniently pass an
 /// error string in a stream (not as a string).
 ///
 /// @param ex_type Exception to be thrown if error_handler is NULL.

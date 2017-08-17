@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -189,8 +189,8 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 
 void
 NameChangeSender::stopSending() {
-    // Set it send indicator to false, no matter what. This allows us to at 
-    // least try to re-open via startSending(). Also, setting it false now, 
+    // Set it send indicator to false, no matter what. This allows us to at
+    // least try to re-open via startSending(). Also, setting it false now,
     // allows us to break sendNext() chain in invokeSendHandler.
     setSending(false);
 
@@ -393,7 +393,7 @@ NameChangeSender::runReadyIO() {
     }
 
     // We shouldn't be here if IO isn't ready to execute.
-    // By running poll we're gauranteed not to hang.
+    // By running poll we're guaranteed not to hang.
     /// @todo Trac# 3325 requests that asiolink::IOService provide a
     /// wrapper for poll().
     io_service_->get_io_service().poll_one();

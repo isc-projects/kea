@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -202,7 +202,7 @@ public:
     template <class T>
     void adjustFqdnFlags(const T& fqdn, T& fqdn_resp);
 
-    /// @brief Get direcional update flags based on server FQDN flags
+    /// @brief Get directional update flags based on server FQDN flags
     ///
     /// Templated convenience method which determines whether forward and
     /// reverse updates should be performed based on a server response version
@@ -213,9 +213,9 @@ public:
     /// * reverse will be true if N_FLAG is false
     ///
     /// @param fqdn_resp FQDN option from which to read server (outbound) flags
-    /// @param [out] forward bool value will be set to true if forward udpates
+    /// @param [out] forward bool value will be set to true if forward updates
     /// should be done, false if not.
-    /// @param [out] reverse bool value will be set to true if reverse udpates
+    /// @param [out] reverse bool value will be set to true if reverse updates
     /// should be done, false if not.
     /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
@@ -258,7 +258,7 @@ public:
     /// @param io_service IOService to be used for sender IO event processing
     /// @warning It is up to the invoking layer to ensure the io_service
     /// instance used outlives the D2ClientMgr send mode. When the send mode
-    /// is exited, either expliclity by callind stopSender() or implicitly
+    /// is exited, either explicitly by callind stopSender() or implicitly
     /// through D2CLientMgr destruction, any ASIO objects such as sockets or
     /// timers will be closed and released.  If the io_service goes out of scope
     /// first this behavior could be unpredictable.

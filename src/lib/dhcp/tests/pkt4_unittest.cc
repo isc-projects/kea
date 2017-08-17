@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -684,7 +684,7 @@ TEST_F(Pkt4Test, unpackMalformed) {
     orig.push_back(0x53);
     orig.push_back(0x63);
 
-    orig.push_back(53); // Message Type 
+    orig.push_back(53); // Message Type
     orig.push_back(1); // length=1
     orig.push_back(2); // type=2
 
@@ -727,7 +727,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     orig.push_back(0x53);
     orig.push_back(0x63);
 
-    orig.push_back(53); // Message Type 
+    orig.push_back(53); // Message Type
     orig.push_back(1); // length=1
     orig.push_back(2); // type=2
 
@@ -943,7 +943,7 @@ TEST_F(Pkt4Test, clientClasses) {
 TEST_F(Pkt4Test, getMAC) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
-    // DHCPv4 packet by default doens't have MAC address specified.
+    // DHCPv4 packet by default doesn't have MAC address specified.
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_ANY));
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_RAW));
 
@@ -1093,7 +1093,7 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
               "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
               "options:\n"
               "  type=053, len=001: 1 (uint8)\n"
@@ -1109,7 +1109,7 @@ TEST_F(Pkt4Test, toText) {
     pkt.delOption(87);
     pkt.delOption(53);
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_adress=192.10.33.4:68, "
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
               "msg_type=(missing), transid=0x9ef, "
               "message contains no options",
               pkt.toText());

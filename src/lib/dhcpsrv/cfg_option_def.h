@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space_container.h>
+#include <cc/cfg_to_element.h>
 #include <string>
 
 namespace isc {
@@ -26,7 +27,7 @@ namespace dhcp {
 /// following names: "dhcp4" and "dhcp6" are reserved, though. They are
 /// names of option spaces used for standard top-level DHCPv4 and DHCPv6
 /// options respectively.
-class CfgOptionDef {
+class CfgOptionDef : public isc::data::CfgToElement {
 public:
 
     /// @brief Copies this configuration to a new configuration.
@@ -104,7 +105,7 @@ public:
 
     /// @brief Return option definition for the particular option space and name.
     ///
-    /// @param option_space pption space.
+    /// @param option_space option space.
     /// @param option_name option name.
     ///
     /// @return An option definition or NULL pointer if option definition
@@ -116,6 +117,11 @@ public:
     const OptionDefSpaceContainer& getContainer() const {
         return (option_definitions_);
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

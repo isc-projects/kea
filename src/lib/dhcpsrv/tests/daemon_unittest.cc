@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -262,7 +262,7 @@ TEST_F(DaemonTest, PIDFileCleanup) {
 }
 
 // Checks that configureLogger method is behaving properly.
-// More dedicated tests are availablef for LogConfigParser class.
+// More dedicated tests are available for LogConfigParser class.
 // See logger_unittest.cc
 TEST_F(DaemonTest, parsingConsoleOutput) {
     CfgMgr::instance().setVerbose(false);

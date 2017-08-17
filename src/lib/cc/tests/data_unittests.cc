@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,12 @@
 
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <climits>
 
 #include <cc/data.h>
+#include <util/unittests/check_valgrind.h>
 
 using namespace isc::data;
 
@@ -100,7 +102,7 @@ TEST(Element, from_and_to_json) {
 
     BOOST_FOREACH(const std::string& s, sv) {
         // Test two types of fromJSON(): with string and istream.
-        for (int i = 0; i < 2; ++i) {
+        for (unsigned i = 0; i < 2; ++i) {
             // test << operator, which uses Element::str()
             if (i == 0) {
                 el = Element::fromJSON(s);
@@ -131,11 +133,13 @@ TEST(Element, from_and_to_json) {
     sv.push_back("{1}");
     //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
     //std::cout << ep << std::endl;
-    sv.push_back("\n\nTru");
+    sv.push_back("\n\nTrue");
+    sv.push_back("\n\ntru");
     sv.push_back("{ \n \"aaa\nbbb\"err:");
-    sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n True, \"\\\"");
+    sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n true, \"\\\"");
     sv.push_back("{ \"a\": None}");
     sv.push_back("");
+    sv.push_back("NULL");
     sv.push_back("nul");
     sv.push_back("hello\"foobar\"");
     sv.push_back("\"foobar\"hello");
@@ -178,12 +182,6 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
-    EXPECT_EQ("null", Element::fromJSON("Null")->str());
-    EXPECT_EQ("null", Element::fromJSON("NULL")->str());
-    EXPECT_EQ("false", Element::fromJSON("False")->str());
-    EXPECT_EQ("false", Element::fromJSON("FALSE")->str());
-    EXPECT_EQ("true", Element::fromJSON("True")->str());
-    EXPECT_EQ("true", Element::fromJSON("TRUE")->str());
     EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
@@ -210,7 +208,7 @@ testGetValueInt() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1);
@@ -270,7 +268,7 @@ testGetValueDouble() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1.1);
@@ -297,7 +295,7 @@ testGetValueBool() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(true);
@@ -324,7 +322,7 @@ testGetValueString() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create("foo");
@@ -351,7 +349,7 @@ testGetValueList() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createList();
@@ -378,7 +376,7 @@ testGetValueMap() {
     double d;
     bool b;
     std::string s;
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::createMap();
@@ -406,7 +404,7 @@ TEST(Element, create_and_value_throws) {
     double d = 0.0;
     bool b = false;
     std::string s("asdf");
-    std::vector<ConstElementPtr> v;
+    std::vector<ElementPtr> v;
     std::map<std::string, ConstElementPtr> m;
     ConstElementPtr tmp;
 
@@ -559,6 +557,35 @@ TEST(Element, escape) {
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
     // A whitespace test
     EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
+    // Escape for forward slash is optional
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\/bar\""));
+    EXPECT_EQ("foo/bar", Element::fromJSON("\"foo\\/bar\"")->stringValue());
+    // Control characters
+    StringElement bell("foo\abar");
+    EXPECT_EQ("\"foo\\u0007bar\"", bell.str());
+}
+
+// This test verifies that strings are copied.
+TEST(Element, stringCopy) {
+    // StringElement constructor copies its string argument.
+    std::string foo = "foo";
+    ElementPtr elem = ElementPtr(new StringElement(foo));
+    EXPECT_EQ(foo, elem->stringValue());
+    foo[1] = 'O';
+    EXPECT_EQ("fOo", foo);
+    EXPECT_NE(foo, elem->stringValue());
+
+    // Map keys are copied too.
+    ElementPtr map = ElementPtr(new MapElement());
+    std::string bar = "bar";
+    map->set(bar, ElementPtr(new IntElement(1)));
+    ConstElementPtr item = map->get("bar");
+    ASSERT_TRUE(item);
+    EXPECT_EQ(1, item->intValue());
+    bar[0] = 'B';
+    EXPECT_EQ("Bar", bar);
+    EXPECT_TRUE(map->get("bar"));
+    EXPECT_FALSE(map->get(bar));
 }
 
 // This test verifies that a backslash can be used in element content
@@ -659,6 +686,12 @@ TEST(Element, MapElement) {
     el->set(long_maptag, Element::create("bar"));
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
+    // Null pointer value
+    el.reset(new MapElement());
+    ConstElementPtr null_ptr;
+    el->set("value", null_ptr);
+    EXPECT_FALSE(el->get("value"));
+    EXPECT_EQ("{ \"value\": None }", el->str());
 }
 
 TEST(Element, to_and_from_wire) {
@@ -709,35 +742,35 @@ TEST(Element, equals) {
     EXPECT_NE(*efs("1"), *efs("2"));
     EXPECT_NE(*efs("1"), *efs("\"1\""));
     EXPECT_NE(*efs("1"), *efs("[]"));
-    EXPECT_NE(*efs("1"), *efs("True"));
+    EXPECT_NE(*efs("1"), *efs("true"));
     EXPECT_NE(*efs("1"), *efs("{}"));
 
     EXPECT_EQ(*efs("1.1"), *efs("1.1"));
     EXPECT_NE(*efs("1.0"), *efs("1"));
     EXPECT_NE(*efs("1.1"), *efs("\"1\""));
     EXPECT_NE(*efs("1.1"), *efs("[]"));
-    EXPECT_NE(*efs("1.1"), *efs("True"));
+    EXPECT_NE(*efs("1.1"), *efs("true"));
     EXPECT_NE(*efs("1.1"), *efs("{}"));
 
-    EXPECT_EQ(*efs("True"), *efs("True"));
-    EXPECT_NE(*efs("True"), *efs("False"));
-    EXPECT_NE(*efs("True"), *efs("1"));
-    EXPECT_NE(*efs("True"), *efs("\"1\""));
-    EXPECT_NE(*efs("True"), *efs("[]"));
-    EXPECT_NE(*efs("True"), *efs("{}"));
+    EXPECT_EQ(*efs("true"), *efs("true"));
+    EXPECT_NE(*efs("true"), *efs("false"));
+    EXPECT_NE(*efs("true"), *efs("1"));
+    EXPECT_NE(*efs("true"), *efs("\"1\""));
+    EXPECT_NE(*efs("true"), *efs("[]"));
+    EXPECT_NE(*efs("true"), *efs("{}"));
 
     EXPECT_EQ(*efs("\"foo\""), *efs("\"foo\""));
     EXPECT_NE(*efs("\"foo\""), *efs("\"bar\""));
     EXPECT_NE(*efs("\"foo\""), *efs("1"));
     EXPECT_NE(*efs("\"foo\""), *efs("\"1\""));
-    EXPECT_NE(*efs("\"foo\""), *efs("True"));
+    EXPECT_NE(*efs("\"foo\""), *efs("true"));
     EXPECT_NE(*efs("\"foo\""), *efs("[]"));
     EXPECT_NE(*efs("\"foo\""), *efs("{}"));
 
     EXPECT_EQ(*efs("[]"), *efs("[]"));
     EXPECT_EQ(*efs("[ 1, 2, 3 ]"), *efs("[ 1, 2, 3 ]"));
-    EXPECT_EQ(*efs("[ \"a\", [ True, 1], 2.2 ]"), *efs("[ \"a\", [ True, 1], 2.2 ]"));
-    EXPECT_NE(*efs("[ \"a\", [ True, 1], 2.2 ]"), *efs("[ \"a\", [ True, 2], 2.2 ]"));
+    EXPECT_EQ(*efs("[ \"a\", [ true, 1], 2.2 ]"), *efs("[ \"a\", [ true, 1], 2.2 ]"));
+    EXPECT_NE(*efs("[ \"a\", [ true, 1], 2.2 ]"), *efs("[ \"a\", [ true, 2], 2.2 ]"));
     EXPECT_NE(*efs("[]"), *efs("[1]"));
     EXPECT_NE(*efs("[]"), *efs("1"));
     EXPECT_NE(*efs("[]"), *efs("\"1\""));
@@ -861,8 +894,9 @@ TEST(Element, constRemoveIdentical) {
     c = Element::fromJSON("{ \"a\": 1 }");
     EXPECT_EQ(*removeIdentical(a, b), *c);
 
-    EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)),
-                 TypeError);
+    // removeIdentical() is overloaded so force the first argument to const
+    ConstElementPtr bad = Element::create(1);
+    EXPECT_THROW(removeIdentical(bad, Element::create(2)), TypeError);
 }
 
 TEST(Element, merge) {
@@ -951,6 +985,152 @@ TEST(Element, merge) {
 
 }
 
+// This test checks copy.
+TEST(Element, copy) {
+    // Null pointer
+    ElementPtr elem;
+    EXPECT_THROW(copy(elem, 0), isc::BadValue);
+    EXPECT_THROW(copy(elem), isc::BadValue);
+    EXPECT_THROW(copy(elem, -1), isc::BadValue);
+
+    // Basic types
+    elem.reset(new IntElement(1));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("1")));
+    EXPECT_EQ("1", elem->str());
+    ElementPtr copied;
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+
+    elem.reset(new DoubleElement(1.0));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("1.0")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+
+    elem.reset(new BoolElement(true));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("true")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+
+    elem.reset(new NullElement());
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("null")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+
+    elem.reset(new StringElement("foo"));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("\"foo\"")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+    ASSERT_NO_THROW(elem->setValue(std::string("bar")));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("\"bar\"")));
+    EXPECT_FALSE(elem->equals(*copied));
+
+    elem.reset(new ListElement());
+    ElementPtr item = ElementPtr(new IntElement(1));
+    elem->add(item);
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("[ 1 ]")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+    ElementPtr deep;
+    ASSERT_NO_THROW(deep = copy(elem));
+    EXPECT_TRUE(elem->equals(*deep));
+    ASSERT_NO_THROW(item = elem->getNonConst(0));
+    ASSERT_NO_THROW(item->setValue(2));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("[ 2 ]")));
+    EXPECT_TRUE(elem->equals(*copied));
+    EXPECT_FALSE(elem->equals(*deep));
+
+    elem.reset(new MapElement());
+    item.reset(new StringElement("bar"));
+    elem->set("foo", item);
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("{ \"foo\": \"bar\" }")));
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+    ASSERT_NO_THROW(deep = copy(elem));
+    EXPECT_TRUE(elem->equals(*deep));
+    ASSERT_NO_THROW(item->setValue(std::string("Bar")));
+    EXPECT_TRUE(elem->equals(*Element::fromJSON("{ \"foo\": \"Bar\" }")));
+    EXPECT_TRUE(elem->equals(*copied));
+    EXPECT_FALSE(elem->equals(*deep));
+
+    // Complex example
+    std::string input = "{ \n"
+        "\"integer\": 1,\n"
+        "\"double\": 1.0,\n"
+        "\"boolean\": true,\n"
+        "\"null\": null,\n"
+        "\"string\": \"foobar\",\n"
+        "\"list\": [ 1, 2 ],\n"
+        "\"map\": { \"foo\": \"bar\" } }\n";
+    ConstElementPtr complex;
+    ASSERT_NO_THROW(complex = Element::fromJSON(input));
+    ASSERT_NO_THROW(copied = copy(complex, 0));
+    EXPECT_TRUE(copied->equals(*complex));
+    ASSERT_NO_THROW(deep = copy(complex));
+    EXPECT_TRUE(deep->equals(*complex));
+    ElementPtr shallow;
+    ASSERT_NO_THROW(shallow = copy(complex, 1));
+    EXPECT_TRUE(shallow->equals(*complex));
+    // Try to modify copies
+    ASSERT_NO_THROW(item = deep->get("list")->getNonConst(1));
+    ASSERT_NO_THROW(item->setValue(3));
+    EXPECT_FALSE(deep->equals(*complex));
+    EXPECT_TRUE(shallow->equals(*complex));
+    ASSERT_NO_THROW(item = boost::const_pointer_cast<Element>(shallow->get("string")));
+    ASSERT_NO_THROW(item->setValue(std::string("FooBar")));
+    EXPECT_FALSE(shallow->equals(*complex));
+    EXPECT_TRUE(copied->equals(*complex));
+}
+
+// This test checks the isEquivalent function.
+TEST(Element, isEquivalent) {
+    // All are different but a is equivalent to b
+    string texta = "{ \"a\": 1, \"b\": [ ], \"c\": [ 1, 1, 2 ] }";
+    string textb = "{ \"b\": [ ], \"a\": 1, \"c\": [ 1, 2, 1 ] }";
+    string textc = "{ \"a\": 2, \"b\": [ ], \"c\": [ 1, 1, 2 ] }";
+    string textd = "{ \"a\": 1, \"c\": [ ], \"b\": [ 1, 1, 2 ] }";
+    string texte = "{ \"a\": 1, \"b\": [ ], \"c\": [ 1, 2, 2 ] }";
+
+    ElementPtr a = Element::fromJSON(texta);
+    ElementPtr b = Element::fromJSON(textb);
+    ElementPtr c = Element::fromJSON(textc);
+    ElementPtr d = Element::fromJSON(textd);
+    ElementPtr e = Element::fromJSON(texte);
+
+    EXPECT_TRUE(isEquivalent(a, b));
+    EXPECT_NE(a, b);
+    EXPECT_FALSE(isEquivalent(a, c));
+    EXPECT_FALSE(isEquivalent(a, d));
+    EXPECT_FALSE(isEquivalent(a, e));
+
+    // Verifies isEquivalent handles cycles
+    if (isc::util::unittests::runningOnValgrind()) {
+        ElementPtr l = Element::createList();
+        l->add(l);
+        EXPECT_THROW(isEquivalent(l, l), isc::BadValue);
+    }
+}
+
+
+// This test checks the pretty print function.
+TEST(Element, prettyPrint) {
+
+    // default step is 2, order is alphabetic, no \n at the end
+    string text = "{\n"
+        "  \"boolean\": true,\n"
+        "  \"empty-list\": [ ],\n"
+        "  \"empty-map\": { },\n"
+        "  \"integer\": 1,\n"
+        "  \"list\": [ 1, 2, 3 ],\n"
+        "  \"map\": {\n"
+        "    \"item\": null\n"
+        "  },\n"
+        "  \"string\": \"foobar\"\n"
+        "}";
+    ElementPtr json = Element::fromJSON(text);
+    string pprinted = prettyPrint(json);
+    EXPECT_EQ(text, pprinted);
+}
+
 // This test checks whether it is possible to ignore comments. It also checks
 // that the comments are ignored only when told to.
 TEST(Element, preprocessor) {
@@ -1003,6 +1183,10 @@ TEST(Element, preprocessor) {
     EXPECT_THROW(Element::fromJSON(dbl_head_comment), JSONError);
     EXPECT_THROW(Element::fromJSON(dbl_mid_comment), JSONError);
     EXPECT_THROW(Element::fromJSON(dbl_tail_comment), JSONError);
+
+    // For coverage
+    std::istringstream iss(no_comment);
+    EXPECT_TRUE(exp->equals(*Element::fromJSON(iss, true)));
 }
 
 TEST(Element, getPosition) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,8 +65,8 @@ public:
     }
 
     /// @brief DNSClient callback
-    /// Overrides the callback in NameChangeTranscation to allow testing
-    /// sendUpdate without incorporating exectution of the state model
+    /// Overrides the callback in NameChangeTransaction to allow testing
+    /// sendUpdate without incorporating execution of the state model
     /// into the test.
     /// It sets the DNS status update and posts IO_COMPLETED_EVT as does
     /// the normal callback.
@@ -313,7 +313,7 @@ public:
     /// @brief Builds and then sends an update request
     ///
     /// This method is used to build and send and update request. It is used
-    /// in conjuction with FauxServer to test various message response
+    /// in conjunction with FauxServer to test various message response
     /// scenarios.
     /// @param name_change Transaction under test
     /// @param run_time Maximum time to permit IO processing to run before
@@ -824,7 +824,7 @@ TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
     EXPECT_TRUE(name_change->getForwardChangeCompleted());
 }
 
-/// @brief Tests the ability to use startTransaction to initate the state
+/// @brief Tests the ability to use startTransaction to initiate the state
 /// model execution, and DNSClient callback, operator(), to resume the
 /// model with a update failure outcome.
 TEST_F(NameChangeTransactionTest, failedUpdateTest) {
@@ -836,7 +836,7 @@ TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
     ASSERT_NO_THROW(name_change->startTransaction());
 
-    // Vefity that the model is running but waiting, and that the forward
+    // Verify that the model is running but waiting, and that the forward
     // change has not been completed.
     EXPECT_TRUE(name_change->isModelRunning());
     EXPECT_TRUE(name_change->isModelWaiting());
@@ -1043,7 +1043,7 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
-    // Do the udpate.
+    // Do the update.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
@@ -1074,7 +1074,7 @@ TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
-    // Do the udpate.
+    // Do the update.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
@@ -1124,7 +1124,7 @@ TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
     EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
-/// @brief Tests that a TSIG udpate succeeds when client and server both use
+/// @brief Tests that a TSIG update succeeds when client and server both use
 /// the right key.  Runs the test for all supported algorithms.
 TEST_F(NameChangeTransactionTest, tsigAllValid) {
     std::vector<std::string>algorithms;
@@ -1195,6 +1195,15 @@ TEST_F(NameChangeTransactionTest, prepNewRequest) {
     // valid input.
     ASSERT_NO_THROW(request = name_change->prepNewRequest(forward_domain_));
     checkZone(request, forward_domain_->getName());
+
+    // The query id is random so 0 is not impossible
+    for (unsigned i = 0; i < 10; ++i) {
+        if (request->getId() == 0) {
+            request = name_change->prepNewRequest(forward_domain_);
+        }
+    }
+
+    EXPECT_NE(0, request->getId());
 }
 
 /// @brief Tests the addLeaseAddressRData method
