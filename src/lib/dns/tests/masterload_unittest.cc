@@ -392,7 +392,7 @@ TEST_F(MasterLoadTest, loadFromFile) {
     EXPECT_THROW(masterLoad(NULL, origin, zclass, callback), MasterLoadError);
 
     // Non existent file name.  Ditto.
-    EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/notexistent.txt", origin,
+    EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/nonexistent.txt", origin,
                             zclass, callback), MasterLoadError);
 }
 } // end namespace

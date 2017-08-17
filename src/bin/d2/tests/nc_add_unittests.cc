@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test class derived from NameAddTransaction to provide visiblity
+/// @brief Test class derived from NameAddTransaction to provide visibility
 // to protected methods.
 class NameAddStub : public NameAddTransaction {
 public:
@@ -70,7 +70,7 @@ public:
 
     /// @brief Prepares the initial D2UpdateMessage
     ///
-    /// This method overrides the NameChangeTransactio implementation to
+    /// This method overrides the NameChangeTransaction implementation to
     /// provide the ability to simulate an exception throw in the build
     /// request logic.
     /// If the one-shot flag, simulate_build_request_exception_ is true,
@@ -479,7 +479,7 @@ TEST_F(NameAddTransactionTest, selectingFwdServerHandler) {
                   name_add->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))
@@ -1030,7 +1030,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
@@ -1213,7 +1213,7 @@ TEST_F(NameAddTransactionTest, selectingRevServerHandler) {
                   name_add->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))

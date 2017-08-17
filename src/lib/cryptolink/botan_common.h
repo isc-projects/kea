@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@ namespace btn {
 ///
 /// @param algorithm algorithm to be converted
 /// @return static text representation of the algorithm name
-const char*
+const std::string
 getHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm);
 
 } // namespace btn

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,6 +147,8 @@ TEST_F(LFCControllerTest, initialValues) {
     EXPECT_TRUE(lfc_controller.getPidFile().empty());
 }
 
+/// @todo verify that parsing -v/V/W/h works well without ASSERT_EXIT
+
 /// @brief Verify that parsing a full command line works.
 /// Parse a complete command line then verify the parsed
 /// and saved data matches our expectations.
@@ -221,7 +223,7 @@ TEST_F(LFCControllerTest, notEnoughData) {
 /// @brief Verify that extra arguments cause the parse to fail.
 /// Parse a full command line plus some extra arguments on the end
 /// to verify that we don't stop parsing when we find all of the
-/// required arguments.  We exepct the parse to fail with an
+/// required arguments.  We expect the parse to fail with an
 /// InvalidUsage exception.
 TEST_F(LFCControllerTest, tooMuchData) {
     LFCController lfc_controller;
@@ -299,7 +301,7 @@ TEST_F(LFCControllerTest, fileRotate) {
     int argc = 14;
     lfc_controller.parseArgs(argc, argv);
 
-    // Test 1: Start with no files - we expect an execption as there
+    // Test 1: Start with no files - we expect an exception as there
     // is no file to copy.
     EXPECT_THROW(lfc_controller.fileRotate(), RunTimeFail);
     removeTestFile();
@@ -485,7 +487,7 @@ TEST_F(LFCControllerTest, launch4) {
     // Run the cleanup
     launch(lfc_controller, argc, argv);
 
-    // Compare the results, we expect a header and no leaes.
+    // Compare the results, we expect a header and no leases.
     // We also verify none of the temp or pid files remain.
     test_str = v4_hdr_;
     EXPECT_EQ(readFile(xstr_), test_str);
@@ -664,5 +666,7 @@ TEST_F(LFCControllerTest, launch6) {
     EXPECT_EQ(readFile(xstr_), test_str);
     EXPECT_TRUE(noExistIOFP());
 }
+
+// @todo double launch (how to do that)
 
 } // end of anonymous namespace

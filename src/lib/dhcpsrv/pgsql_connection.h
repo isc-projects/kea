@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,14 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <vector>
-
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Define PostgreSQL backend version: 3.0
+const uint32_t PG_SCHEMA_VERSION_MAJOR = 3;
+const uint32_t PG_SCHEMA_VERSION_MINOR = 1;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't
@@ -23,7 +27,7 @@ namespace dhcp {
 // statement.
 const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 
-/// @brief  Defines a Postgresql SQL statement
+/// @brief Define a PostgreSQL SQL statement
 ///
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
@@ -46,8 +50,9 @@ struct PgSqlTaggedStatement {
 };
 
 /// @brief Constants for PostgreSQL data types
-/// This are defined by PostreSQL in <catalog/pg_type.h>, but including
+/// These are defined by PostgreSQL in <catalog/pg_type.h>, but including
 /// this file is extraordinarily convoluted, so we'll use these to fill-in.
+/// @{
 const size_t OID_NONE = 0;   // PostgreSQL infers proper type
 const size_t OID_BOOL = 16;
 const size_t OID_BYTEA = 17;
@@ -57,10 +62,9 @@ const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
 const size_t OID_TIMESTAMP = 1114;
+///@}
 
-//@}
-
-/// @brief RAII wrapper for Posgtresql Result sets
+/// @brief RAII wrapper for PostgreSQL Result sets
 ///
 /// When a Postgresql statement is executed, the results are returned
 /// in pointer allocated structure, PGresult*. Data and status information
@@ -289,7 +293,7 @@ private:
 /// that use instances of PgSqlConnection.
 class PgSqlConnection : public DatabaseConnection {
 public:
-    /// @brief Defines the PgSql error state for a duplicate key error
+    /// @brief Define the PgSql error state for a duplicate key error
     static const char DUPLICATE_KEY[];
 
     /// @brief Constructor

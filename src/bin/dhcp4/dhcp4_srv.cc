@@ -1,11 +1,10 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -76,23 +75,25 @@ using namespace std;
 
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
-    int hook_index_buffer4_receive_;///< index for "buffer4_receive" hook point
-    int hook_index_pkt4_receive_;   ///< index for "pkt4_receive" hook point
-    int hook_index_subnet4_select_; ///< index for "subnet4_select" hook point
-    int hook_index_lease4_release_; ///< index for "lease4_release" hook point
-    int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
-    int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
-    int hook_index_lease4_decline_; ///< index for "lease4_decline" hook point
+    int hook_index_buffer4_receive_; ///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;    ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_;  ///< index for "subnet4_select" hook point
+    int hook_index_lease4_release_;  ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;       ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;    ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_;  ///< index for "lease4_decline" hook point
+    int hook_index_host4_identifier_;///< index for "host4_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
-        hook_index_buffer4_receive_= HooksManager::registerHook("buffer4_receive");
-        hook_index_pkt4_receive_   = HooksManager::registerHook("pkt4_receive");
-        hook_index_subnet4_select_ = HooksManager::registerHook("subnet4_select");
-        hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
-        hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
-        hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
-        hook_index_lease4_decline_ = HooksManager::registerHook("lease4_decline");
+        hook_index_buffer4_receive_  = HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_     = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_   = HooksManager::registerHook("subnet4_select");
+        hook_index_pkt4_send_        = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_   = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_     = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_   = HooksManager::registerHook("lease4_decline");
+        hook_index_host4_identifier_ = HooksManager::registerHook("host4_identifier");
     }
 };
 
@@ -257,7 +258,7 @@ void
 Dhcpv4Exchange::copyDefaultOptions() {
     // Let's copy client-id to response. See RFC6842.
     // It is possible to disable RFC6842 to keep backward compatibility
-    bool echo = CfgMgr::instance().echoClientId();
+    bool echo = CfgMgr::instance().getCurrentCfg()->getEchoClientId();
     OptionPtr client_id = query_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (client_id && echo) {
         resp_->addOption(client_id);
@@ -287,6 +288,7 @@ void
 Dhcpv4Exchange::setHostIdentifiers() {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations4();
+
     // Collect host identifiers. The identifiers are stored in order of preference.
     // The server will use them in that order to search for host reservations.
     BOOST_FOREACH(const Host::IdentifierType& id_type,
@@ -338,7 +340,42 @@ Dhcpv4Exchange::setHostIdentifiers() {
                 }
             }
             break;
+        case Host::IDENT_FLEX:
+            {
+                if (!HooksManager::calloutsPresent(Hooks.hook_index_host4_identifier_)) {
+                    break;
+                }
 
+                CalloutHandlePtr callout_handle = getCalloutHandle(context_->query_);
+
+                Host::IdentifierType type = Host::IDENT_FLEX;
+                std::vector<uint8_t> id;
+
+                // Delete previously set arguments
+                callout_handle->deleteAllArguments();
+
+                // Pass incoming packet as argument
+                callout_handle->setArgument("query4", context_->query_);
+                callout_handle->setArgument("id_type", type);
+                callout_handle->setArgument("id_value", id);
+
+                // Call callouts
+                HooksManager::callCallouts(Hooks.hook_index_host4_identifier_,
+                                           *callout_handle);
+
+                callout_handle->getArgument("id_type", type);
+                callout_handle->getArgument("id_value", id);
+
+                if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                    !id.empty()) {
+
+                    LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
+                        .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+
+                    context_->addHostIdentifier(type, id);
+                }
+                break;
+            }
         default:
             ;
         }
@@ -380,7 +417,7 @@ const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
-    : shutdown_(true), alloc_engine_(), port_(port),
+    : io_service_(new IOService()), shutdown_(true), alloc_engine_(), port_(port),
       use_bcast_(use_bcast) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
@@ -470,7 +507,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
     // that desires to specify a subnet/link for a DHCP client request
     // that it is relaying but needs the subnet/link specification to
     // be different from the IP address the DHCP server should use
-    // when communicating with the relay agent." (RFC 3257)
+    // when communicating with the relay agent." (RFC 3527)
     //
     // Try first Relay Agent Link Selection sub-option
     OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
@@ -679,6 +716,7 @@ Dhcpv4Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
@@ -702,7 +740,10 @@ Dhcpv4Srv::run_one() {
     Pkt4Ptr rsp;
 
     try {
-        uint32_t timeout = 1000;
+        // Set select() timeout to 1s. This value should not be modified
+        // because it is important that the select() returns control
+        // frequently so as the IOService can be polled for ready handlers.
+        uint32_t timeout = 1;
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
         query = receivePacket(timeout);
 
@@ -728,7 +769,7 @@ Dhcpv4Srv::run_one() {
     } catch (const SignalInterruptOnSelect) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
-        // SIGINT, SIGHUP or SIGCHILD which are handled by the server. For
+        // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
@@ -899,7 +940,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
                 .arg(query->getIface())
                 .arg(e.what());
 
-            // Increase the statistics of parse failues and dropped packets.
+            // Increase the statistics of parse failures and dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
                                                       static_cast<int64_t>(1));
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -1185,21 +1226,37 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     }
 
     Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr resp = ex.getResponse();
+    std::vector<uint8_t> requested_opts;
 
     // try to get the 'Parameter Request List' option which holds the
     // codes of requested options.
     OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
         OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-    // If there is no PRL option in the message from the client then
-    // there is nothing to do.
-    if (!option_prl) {
-        return;
+    // Get the codes of requested options.
+    if (option_prl) {
+        requested_opts = option_prl->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(DHCP4_OPTION_SPACE);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                requested_opts.push_back(code);
+            }
+        }
     }
 
-    Pkt4Ptr resp = ex.getResponse();
-
-    // Get the codes of requested options.
-    const std::vector<uint8_t>& requested_opts = option_prl->getValues();
     // For each requested option code get the instance of the option
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
@@ -1247,15 +1304,39 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     }
 
     uint32_t vendor_id = vendor_req->getVendorId();
+    std::vector<uint8_t> requested_opts;
 
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other
     /// vendors may have different policies.
     OptionUint8ArrayPtr oro =
         boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    // Get the list of options that client requested.
+    if (oro) {
+        requested_opts = oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                requested_opts.push_back(code);
+            }
+        }
+    }
 
-    // Option ORO not found. Don't do anything then.
-    if (!oro) {
+    // If there is nothing to add don't do anything then.
+    if (requested_opts.empty()) {
         return;
     }
 
@@ -1263,8 +1344,6 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
 
     // Get the list of options that client requested.
     bool added = false;
-    const std::vector<uint8_t>& requested_opts = oro->getValues();
-
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         if  (!vendor_rsp->getOption(*code)) {
@@ -1892,7 +1971,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     IOAddress local_addr = query->getLocalAddr();
 
     // In many cases the query is sent to a broadcast address. This address
-    // apears as a local address in the query message. We can't simply copy
+    // appears as a local address in the query message. We can't simply copy
     // this address to a response message and use it as a source address.
     // Instead we will need to use the address assigned to the interface
     // on which the query has been received. In other cases, we will just
@@ -2044,7 +2123,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             getClientClassDictionary()->getClasses();
 
         // Now we need to iterate over the classes assigned to the
-        // query packet and find corresponding class defintions for it.
+        // query packet and find corresponding class definitions for it.
         for (ClientClasses::const_iterator name = classes.begin();
              name != classes.end(); ++name) {
 
@@ -2065,18 +2144,18 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
             const string& sname = cl->second->getSname();
             if (!sname.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reineterpret_cast is not the most elegant solution,
+                // tricky. reinterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
                 // sname and file fields in Pkt4 to string one day and life
                 // will be easier.
                 response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
                                    sname.size());
             }
-            
+
             const string& filename = cl->second->getFilename();
             if (!filename.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
-                // tricky. reineterpret_cast is not the most elegant solution,
+                // tricky. reinterpret_cast is not the most elegant solution,
                 // but it does avoid us making unnecessary copy. We will convert
                 // sname and file fields in Pkt4 to string one day and life
                 // will be easier.
@@ -2713,7 +2792,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
-            bool status = evaluate(*expr_ptr, *pkt);
+            bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(options4_logger, EVAL_RESULT)
                     .arg(it->first)

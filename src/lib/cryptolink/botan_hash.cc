@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,9 @@
 
 #include <cryptolink/botan_common.h>
 
-#include <cstring>
+#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,0)
+#define secure_vector SecureVector
+#endif
 
 namespace isc {
 namespace cryptolink {
@@ -27,7 +29,7 @@ namespace cryptolink {
 ///
 /// @param algorithm algorithm to be converted
 /// @return text representation of the algorithm name
-const char*
+const std::string
 btn::getHashAlgorithmName(HashAlgorithm algorithm) {
     switch (algorithm) {
     case isc::cryptolink::MD5:
@@ -62,13 +64,20 @@ public:
     : hash_algorithm_(hash_algorithm), hash_() {
         Botan::HashFunction* hash;
         try {
-            hash = Botan::get_hash(btn::getHashAlgorithmName(hash_algorithm));
+            const std::string& name =
+                btn::getHashAlgorithmName(hash_algorithm);
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
+            hash = Botan::HashFunction::create(name).release();
+#else
+            hash = Botan::get_hash(name);
+#endif
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
                       static_cast<int>(hash_algorithm));
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(isc::cryptolink::LibraryError,
+                      "Botan error: " << exc.what());
         }
 
         hash_.reset(hash);
@@ -104,7 +113,8 @@ public:
         try {
             hash_->update(static_cast<const Botan::byte*>(data), len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(isc::cryptolink::LibraryError,
+                      "Botan error: " << exc.what());
         }
     }
 
@@ -113,14 +123,15 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     void final(isc::util::OutputBuffer& result, size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hash_->final());
+            Botan::secure_vector<Botan::byte> b_result(hash_->final());
 
             if (len > b_result.size()) {
                 len = b_result.size();
             }
-            result.writeData(b_result.begin(), len);
+            result.writeData(&b_result[0], len);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(isc::cryptolink::LibraryError,
+                      "Botan error: " << exc.what());
         }
     }
 
@@ -129,14 +140,15 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     void final(void* result, size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hash_->final());
+            Botan::secure_vector<Botan::byte> b_result(hash_->final());
             size_t output_size = getOutputLength();
             if (output_size > len) {
                 output_size = len;
             }
-            std::memcpy(result, b_result.begin(), output_size);
+            std::memcpy(result, &b_result[0], output_size);
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(isc::cryptolink::LibraryError,
+                      "Botan error: " << exc.what());
         }
     }
 
@@ -145,14 +157,14 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     std::vector<uint8_t> final(size_t len) {
         try {
-            Botan::SecureVector<Botan::byte> b_result(hash_->final());
+            Botan::secure_vector<Botan::byte> b_result(hash_->final());
             if (len > b_result.size()) {
-                return (std::vector<uint8_t>(b_result.begin(), b_result.end()));
-            } else {
-                return (std::vector<uint8_t>(b_result.begin(), &b_result[len]));
+                len = b_result.size();
             }
+            return (std::vector<uint8_t>(&b_result[0], &b_result[len]));
         } catch (const Botan::Exception& exc) {
-            isc_throw(isc::cryptolink::LibraryError, exc.what());
+            isc_throw(isc::cryptolink::LibraryError,
+                      "Botan error: " << exc.what());
         }
     }
 

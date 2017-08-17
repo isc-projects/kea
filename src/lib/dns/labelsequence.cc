@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ namespace dns {
 
 LabelSequence::LabelSequence(const void* buf) {
 #ifdef ENABLE_DEBUG
-    // In non-debug mode, derefencing the NULL pointer further below
+    // In non-debug mode, dereferencing the NULL pointer further below
     // will lead to a crash, so disabling this check is not
     // unsafe. Except for a programming mistake, this case should not
     // happen.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -148,7 +148,7 @@ TEST_F(MasterLoaderTest, basicLoad) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
 
     // The following three should be set to 0 initially in case the loader
     // is constructed from a file name.
@@ -156,7 +156,7 @@ TEST_F(MasterLoaderTest, basicLoad) {
     EXPECT_EQ(0, loader_->getPosition());
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -193,7 +193,7 @@ TEST_F(MasterLoaderTest, include) {
                   MasterLoader::MANY_ERRORS);
 
         loader_->load();
-        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(loader_->loadedSuccessfully());
         EXPECT_TRUE(errors_.empty());
         EXPECT_TRUE(warnings_.empty());
 
@@ -288,7 +288,7 @@ TEST_F(MasterLoaderTest, origin) {
                   MasterLoader::MANY_ERRORS);
 
         loader_->load();
-        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(loader_->loadedSuccessfully());
         EXPECT_TRUE(errors_.empty());
         // There's a relative origin in it, we warn about that.
         EXPECT_EQ(1, warnings_.size());
@@ -328,7 +328,7 @@ TEST_F(MasterLoaderTest, generate) {
                   MasterLoader::MANY_ERRORS);
 
         loader_->load();
-        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(loader_->loadedSuccessfully());
         EXPECT_TRUE(errors_.empty());
 
         // The "before" and "after" scaffolding below checks that no
@@ -351,7 +351,7 @@ TEST_F(MasterLoaderTest, generateRelativeLHS) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("example.org", RRType::NS(), "ns1.example.org.");
@@ -368,7 +368,7 @@ TEST_F(MasterLoaderTest, generateInFront) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("9host.example.org", RRType::TXT(), "9 pomegranate");
@@ -385,7 +385,7 @@ TEST_F(MasterLoaderTest, generateInMiddle) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("num9-host.example.org", RRType::TXT(), "This is 9 pomegranate");
@@ -402,7 +402,7 @@ TEST_F(MasterLoaderTest, generateAtEnd) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("num9-host.example.org", RRType::TXT(), "Pomegranate9");
@@ -418,7 +418,7 @@ TEST_F(MasterLoaderTest, generateStripsQuotes) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("example.org", RRType::MX(), "1 mx1.example.org.");
@@ -434,7 +434,7 @@ TEST_F(MasterLoaderTest, generateWithDoublePlaceholder) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("host9.example.org", RRType::TXT(), "This is $ pomegranate");
@@ -450,7 +450,7 @@ TEST_F(MasterLoaderTest, generateWithEscape) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("host9.example.org", RRType::TXT(), "This is \\$\\pomegranate");
@@ -471,7 +471,7 @@ TEST_F(MasterLoaderTest, generateWithParams) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("host2.example.org", RRType::A(), "192.0.2.2");
@@ -501,7 +501,7 @@ TEST_F(MasterLoaderTest, generateWithStep) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("host2.example.org", RRType::A(), "192.0.2.2");
@@ -560,7 +560,7 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
 
     checkRR("host3.example.org", RRType::A(), "192.0.2.1");
@@ -611,7 +611,7 @@ TEST_F(MasterLoaderTest, generateWithNoModifiers) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     ASSERT_EQ(2, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -631,7 +631,7 @@ TEST_F(MasterLoaderTest, generateWithBadModifiers) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     ASSERT_EQ(2, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -650,7 +650,7 @@ TEST_F(MasterLoaderTest, generateMissingRange) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -667,7 +667,7 @@ TEST_F(MasterLoaderTest, generateMissingLHS) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -684,7 +684,7 @@ TEST_F(MasterLoaderTest, generateMissingType) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -701,7 +701,7 @@ TEST_F(MasterLoaderTest, generateMissingRHS) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -718,7 +718,7 @@ TEST_F(MasterLoaderTest, generateWithBadRangeSyntax) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -736,7 +736,7 @@ TEST_F(MasterLoaderTest, generateWithInvalidRange) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -753,7 +753,7 @@ TEST_F(MasterLoaderTest, generateWithInvalidClass) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -770,7 +770,7 @@ TEST_F(MasterLoaderTest, generateWithNoAvailableTTL) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
     EXPECT_TRUE(warnings_.empty());
 
@@ -789,7 +789,7 @@ TEST_F(MasterLoaderTest, popAfterError) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size()); // For the broken RR
     EXPECT_EQ(1, warnings_.size()); // For missing EOLN
 
@@ -805,7 +805,7 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
 
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
 
     // Unlike the basicLoad test, if we construct the loader from a stream
     // getSize() returns the data size in the stream immediately after the
@@ -814,7 +814,7 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     EXPECT_EQ(0, loader_->getPosition());
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -833,9 +833,9 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
     setLoader(TEST_DATA_SRCDIR "/example.org", Name("example.org."),
               RRClass::IN(), MasterLoader::MANY_ERRORS);
 
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_FALSE(loader_->loadIncremental(2));
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -850,7 +850,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
 
     // Load the rest.
     EXPECT_TRUE(loader_->loadIncremental(20));
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
 
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
@@ -863,7 +863,7 @@ TEST_F(MasterLoaderTest, incrementalLoad) {
 // saying so.
 TEST_F(MasterLoaderTest, invalidFile) {
     setLoader("This file doesn't exist at all",
-              Name("exmaple.org."), RRClass::IN(), MasterLoader::MANY_ERRORS);
+              Name("example.org."), RRClass::IN(), MasterLoader::MANY_ERRORS);
 
     // Nothing yet. The loader is dormant until invoked.
     // Is it really what we want?
@@ -943,7 +943,7 @@ struct ErrorCase {
     { "$INCLUDES " TEST_DATA_SRCDIR "/example.org",
         "Unknown directive 'INCLUDES'", "Include too long" },
     { "$INCLUDE", "unexpected end of input", "Missing include path" },
-    // The following two error messages are system dependant, omitting
+    // The following two error messages are system dependent, omitting
     { "$INCLUDE /file/not/found", NULL, "Include file not found" },
     { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
         NULL, "Include file not found and garbage at the end of line" },
@@ -979,9 +979,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::DEFAULT);
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_THROW(loader_->load(), MasterLoaderError);
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_EQ(1, errors_.size());
             if (ec->reason != NULL) {
                 checkCallbackMessage(errors_.at(0), ec->reason, 2);
@@ -1001,9 +1001,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zone);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_NO_THROW(loader_->load());
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_EQ(1, errors_.size());
             EXPECT_TRUE(warnings_.empty());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
@@ -1021,9 +1021,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             stringstream zone_stream(zoneEOF);
             setLoader(zone_stream, Name("example.org."), RRClass::IN(),
                       MasterLoader::MANY_ERRORS);
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_NO_THROW(loader_->load());
-            EXPECT_FALSE(loader_->loadedSucessfully());
+            EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_EQ(1, errors_.size()) << errors_[0] << "\n" << errors_[1];
             // The unexpected EOF warning
             EXPECT_EQ(1, warnings_.size());
@@ -1047,7 +1047,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
               MasterLoader::MANY_ERRORS);
 
     EXPECT_NO_THROW(loader_->load());
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     ASSERT_EQ(1, errors_.size());
     checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     // It says something about extra tokens at the end
@@ -1066,7 +1066,7 @@ TEST_F(MasterLoaderTest, originWithGarbage) {
     setLoader(ss, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     EXPECT_NO_THROW(loader_->load());
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     ASSERT_EQ(1, errors_.size());
     checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     EXPECT_TRUE(warnings_.empty());
@@ -1088,7 +1088,7 @@ TEST_F(MasterLoaderTest, includeAndOrigin) {
               MasterLoader::MANY_ERRORS);
     // Successfully load the data
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
     // And check it's the correct data
@@ -1108,7 +1108,7 @@ TEST_F(MasterLoaderTest, includeAndBadOrigin) {
     setLoader(ss, Name("example.org"), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size());
     checkCallbackMessage(errors_.at(0), "duplicate period in example..org.",
                          1);
@@ -1127,7 +1127,7 @@ TEST_F(MasterLoaderTest, includeOriginRestore) {
               MasterLoader::MANY_ERRORS);
     // Successfully load the data
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
     // And check it's the correct data
@@ -1146,7 +1146,7 @@ TEST_F(MasterLoaderTest, includeAndInitialWS) {
               MasterLoader::MANY_ERRORS);
     // Successfully load the data
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     EXPECT_EQ(1, warnings_.size());
     checkCallbackMessage(warnings_.at(0),
@@ -1175,7 +1175,7 @@ TEST_F(MasterLoaderTest, ttlDirective) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     checkRR("example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
     checkRR("a.example.org", RRType::A(), "192.0.2.2", RRTTL(100));
     checkRR("b.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
@@ -1192,7 +1192,7 @@ TEST_F(MasterLoaderTest, ttlFromSOA) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 1800", RRTTL(1800));
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
 
@@ -1211,7 +1211,7 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
     checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(1800));
@@ -1239,7 +1239,7 @@ TEST_F(MasterLoaderTest, RRParamsOrdering) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
     checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(3600));
@@ -1259,7 +1259,7 @@ TEST_F(MasterLoaderTest, ttlFromPreviousSOA) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::DEFAULT);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
 
     checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 1800", RRTTL(100));
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(100));
@@ -1282,7 +1282,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndContinue) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
 
     EXPECT_TRUE(warnings_.empty());
@@ -1297,7 +1297,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     setLoader(zone_stream, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_TRUE(rrsets_.empty());
 
     EXPECT_EQ(1, errors_.size());
@@ -1321,7 +1321,7 @@ TEST_F(MasterLoaderTest, ttlOverflow) {
               MasterLoader::DEFAULT);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_EQ(3, rrsets_.size());
 
     checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 2147483648", RRTTL(0));
@@ -1382,7 +1382,7 @@ TEST_F(MasterLoaderTest, noEOLN) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
     EXPECT_EQ(1, warnings_.size());
@@ -1398,7 +1398,7 @@ TEST_F(MasterLoaderTest, noPreviousName) {
     setLoader(ss, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     loader_->load();
-    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_EQ(1, errors_.size());
     checkCallbackMessage(errors_.at(0), "No previous name to use in place of "
                          "initial whitespace", 1);
@@ -1413,7 +1413,7 @@ TEST_F(MasterLoaderTest, previousInInclude) {
     setLoader(ss, Name("example.org"), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
     EXPECT_EQ(1, warnings_.size());
@@ -1431,7 +1431,7 @@ TEST_F(MasterLoaderTest, numericOwnerName) {
               MasterLoader::MANY_ERRORS);
 
     loader_->load();
-    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     EXPECT_TRUE(warnings_.empty());
 

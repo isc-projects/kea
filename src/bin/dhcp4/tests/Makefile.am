@@ -23,6 +23,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp4/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea4\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
@@ -88,10 +89,13 @@ dhcp4_unittests_SOURCES += inform_unittest.cc
 dhcp4_unittests_SOURCES += dora_unittest.cc
 dhcp4_unittests_SOURCES += host_options_unittest.cc
 dhcp4_unittests_SOURCES += release_unittest.cc
+dhcp4_unittests_SOURCES += parser_unittest.cc
 dhcp4_unittests_SOURCES += out_of_range_unittest.cc
 dhcp4_unittests_SOURCES += decline_unittest.cc
 dhcp4_unittests_SOURCES += kea_controller_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
+dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
+dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 

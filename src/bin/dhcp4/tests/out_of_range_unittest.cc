@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -203,7 +203,7 @@ public:
         IfaceMgr::instance().openSockets4();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     /// Cleans up statistics after the test.
     ~OutOfRangeTest() {
@@ -224,7 +224,7 @@ public:
     /// off the queue.  Note the function expects there to be 1 and only
     /// 1 NCR queued.
     ///
-    /// @param type - NCR type exepcted, either CHG_ADD or CHG_REMOVE
+    /// @param type - NCR type expected, either CHG_ADD or CHG_REMOVE
     /// @param addr - string containing the ip address expected in the NCR
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const std::string& addr) {
@@ -245,7 +245,7 @@ public:
     ///
     /// Each test cycles consists of a the following two stages, the first is
     /// a set-up stage during which the server is configured with an initial,
-    /// reference, configuration and a client then verifies that it can aquire
+    /// reference, configuration and a client then verifies that it can acquire
     /// and renew a lease.  The second stage verifies that the server, having
     /// been reconfigured such that the original lease is now "out-of-range",
     /// responds correctly to the same client first attempting to renew the
@@ -301,7 +301,7 @@ OutOfRangeTest::oorRenewReleaseTest(enum CfgIndex cfg_idx,
         client.setHWAddress(hwaddress);
     }
 
-    // Aquire the lease via DORA
+    // Acquire the lease via DORA
     ASSERT_NO_THROW(client.doDORA());
 
     // Make sure that the server responded.
@@ -406,7 +406,7 @@ TEST_F(OutOfRangeTest, dynamicOutOfSubnet) {
                         DOES_NOT_RENEW);
 }
 
-// Test verifies that once-valid dynamic address host reserveration,
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within the subnet's pool:
 //
 // a: Is NAKed upon a renewal attempt
@@ -419,7 +419,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfPool) {
     oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_NOT_RENEW);
 }
 
-// Test verifies that once-valid dynamic address host reserveration,
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within any configured subnet:
 //
 // a: Is NAKed upon a renewal attempt
@@ -433,7 +433,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnet) {
                         DOES_NOT_RENEW);
 }
 
-// Test verifies that once-valid dynamic address host reserveration,
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is within the configured subnet and pool, but whose
 // reservation has been removed:
 //
@@ -449,7 +449,7 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
     oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_RENEW);
 }
 
-// Test verifies that once-valid dynamic address host reserveration,
+// Test verifies that once-valid dynamic address host reservation,
 // whose address is no longer within any configured subnet, and which
 // no longer has reservation defined:
 //
@@ -466,7 +466,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
                         DOES_NOT_RENEW);
 }
 
-// Test verifies that once-valid in-subnet fixed-address host reserveration,
+// Test verifies that once-valid in-subnet fixed-address host reservation,
 // after the subnet pool changes:
 //
 // a: Is NAK'd upon a renewal attempt
@@ -481,7 +481,7 @@ TEST_F(OutOfRangeTest, fixedHostOutOfSubnet) {
 }
 
 
-// Test verifies that once-valid in-subnet fixed-address host reserveration,
+// Test verifies that once-valid in-subnet fixed-address host reservation,
 // after the subnet pool is changed:
 //
 // a: Is ACK'd upon a renewal attempt
@@ -494,7 +494,7 @@ TEST_F(OutOfRangeTest, fixedHostDifferentPool) {
     oorRenewReleaseTest(DIFF_POOL, hwaddress, expected_address, DOES_RENEW);
 }
 
-// Test verifies that once-valid in-subnet fixed-address host reserveration,
+// Test verifies that once-valid in-subnet fixed-address host reservation,
 // whose reservation has been removed from the configuration
 //
 // a: Is NAK'd upon a renewal attempt
@@ -507,7 +507,7 @@ TEST_F(OutOfRangeTest, fixedHostReservationRemoved) {
     oorRenewReleaseTest(NO_HR, hwaddress, expected_address, DOES_NOT_RENEW);
 }
 
-// Test verifies that once-valid fixed address host reserveration,
+// Test verifies that once-valid fixed address host reservation,
 // whose address is no longer within any configured subnet
 //
 // a: Is NAKed upon a renewal attempt

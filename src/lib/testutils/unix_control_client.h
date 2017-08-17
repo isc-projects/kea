@@ -44,13 +44,16 @@ public:
     /// @brief Reads the response text from the open Control Channel
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param timeout_sec Timeout for receiving response in seconds.
     /// @return true if data was successfully read from the socket,
     /// false otherwise
-    bool getResponse(std::string& response);
+    bool getResponse(std::string& response, const unsigned int timeout_sec = 0);
 
     /// @brief Uses select to poll the Control Channel for data waiting
+    ///
+    /// @param timeout_sec Select timeout in seconds
     /// @return -1 on error, 0 if no data is available,  1 if data is ready
-    int selectCheck();
+    int selectCheck(const unsigned int timeout_sec);
 
     /// @brief Retains the fd of the open socket
     int socket_fd_;

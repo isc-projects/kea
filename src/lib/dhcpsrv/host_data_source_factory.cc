@@ -47,7 +47,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
 
-    // Get the databaase type and open the corresponding database
+    // Get the database type and open the corresponding database
     DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
     if (it == parameters.end()) {
         isc_throw(InvalidParameter, "Host database configuration does not "

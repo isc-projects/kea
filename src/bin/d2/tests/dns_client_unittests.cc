@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -219,7 +219,7 @@ public:
         dns::Message request(Message::PARSE);
         request.fromWire(received_data_buffer);
 
-        // If contex is not NULL, then we need to verify the message.
+        // If context is not NULL, then we need to verify the message.
         if (context) {
             TSIGError error = context->verify(request.getTSIGRecord(),
                                               receive_buffer_, receive_length);
@@ -502,7 +502,7 @@ TEST_F(DNSClientTest, runTSIGTest) {
     // Neither client nor server will attempt to sign or verify.
     runTSIGTest(nokey, nokey);
 
-    // Client signs the request, server verfies but doesn't sign.
+    // Client signs the request, server verifies but doesn't sign.
     runTSIGTest(key_one, nokey, false);
 
     // Client and server use the same key to sign and verify.
@@ -525,7 +525,7 @@ TEST_F(DNSClientTest, sendReceive) {
 
 // Verify that the DNSClient reports an error when the response is received from
 // a DNS and this response is corrupted.
-TEST_F(DNSClientTest, sendReceiveCurrupted) {
+TEST_F(DNSClientTest, sendReceiveCorrupted) {
     // true means that server's response is corrupted.
     runSendReceiveTest(true, false);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,7 +37,7 @@ that your code compiles. This may seem obvious, but there's more to
 it. You have surely checked that it compiles on your system, but Kea
 is portable software. Besides Linux, it is compiled and used on
 relatively uncommon systems like OpenBSD. Will your code
-compile and work there? What about endianess? It is likely that you used
+compile and work there? What about endianness? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
 system specific build notes (http://kea.isc.org/wiki/Install).
@@ -145,7 +145,7 @@ command. Second, this request pops up instantly on our list of open pull
 requests and will stay there. The third benefit is that the pull request mechanism is
 very flexible. Kea engineers (and other users, too) can comment on it, attach
 links, mention other users etc.  You as a submitter can augment the patch by
-commiting extra changes to your repository. Those extra commits will appear instantly
+committing extra changes to your repository. Those extra commits will appear instantly
 in the pull request. This is really useful during the review. Finally, ISC engineers can
 better assess all open pull requests and add labels to them, such as "enhancement", "bug", or
 "unit-tests missing". This makes our life easier. Oh, and your commits will later
@@ -192,7 +192,7 @@ like the ability to easily update the code, have a meaningful discussion
 or see what the exact scope of changes are. Nevertheless, if we given a choice
 of getting a tarball or not getting a patch at all, we prefer tarballs. Just
 keep in mind that processing a tarball is really cumbersome for ISC
-engineers, so it may take sigificantly longer than other ways.
+engineers, so it may take significantly longer than other ways.
 
 @section contributorGuideReview Going through a review
 

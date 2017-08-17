@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
@@ -53,6 +54,10 @@ public:
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
 class Dhcpv6Srv : public Daemon {
+private:
+
+    /// @brief Pointer to IO service used by the server.
+    asiolink::IOServicePtr io_service_;
 
 public:
     /// @brief defines if certain option may, must or must not appear
@@ -78,11 +83,16 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
+    /// @brief Returns pointer to the IO service used by the server.
+    asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
 
-    /// @brief Returns server-indentifier option.
+    /// @brief Returns server-identifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -639,7 +649,7 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Attempts to get a MAC/hardware address using configred sources
+    /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
     /// using MAC sources configured in 'mac-sources' configuration parameter.
@@ -679,7 +689,7 @@ protected:
     /// @param [out] ctx reference to context object to be initialized.
     void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.
@@ -692,7 +702,7 @@ protected:
     /// This method iterates over all IA_NA options and calls @ref declineIA on
     /// each of them.
     ///
-    /// @param decline Decline messege sent by a client
+    /// @param decline Decline message sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
     /// @param ctx context
     /// @return true when expected to continue, false when hooks told us to drop
@@ -722,7 +732,7 @@ protected:
     /// - cleans up DNS, if necessary
     /// - updates subnet[X].declined-addresses (per subnet stat)
     /// - updates declined-addresses (global stat)
-    /// - deassociates client information from the lease
+    /// - disassociates client information from the lease
     /// - moves the lease to DECLINED state
     /// - sets lease expiration time to decline-probation-period
     /// - adds status-code success

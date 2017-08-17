@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,41 +9,15 @@
 #include <process/d_log.h>
 #include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <cc/command_interpreter.h>
 
 using namespace boost::asio;
 
 namespace isc {
 namespace process {
 
-const char* valid_d2_config = "{ "
-                        "\"ip-address\" : \"127.0.0.1\" , "
-                        "\"port\" : 5031, "
-                        "\"tsig-keys\": ["
-                        "{ \"name\": \"d2_key.tmark.org\" , "
-                        "   \"algorithm\": \"HMAC-MD5\" ,"
-                        "   \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
-                        "} ],"
-                        "\"forward-ddns\" : {"
-                        "\"ddns-domains\": [ "
-                        "{ \"name\": \"tmark.org.\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
-                        "  \"dns-servers\" : [ "
-                        "  { \"ip-address\": \"127.0.0.101\" } "
-                        "] } ] }, "
-                        "\"reverse-ddns\" : {"
-                        "\"ddns-domains\": [ "
-                        "{ \"name\": \" 0.168.192.in.addr.arpa.\" , "
-                        "  \"key-name\": \"d2_key.tmark.org\" , "
-                        "  \"dns-servers\" : [ "
-                        "  { \"ip-address\": \"127.0.0.101\" , "
-                        "    \"port\": 100 } ] } "
-                        "] } }";
-
 // Initialize the static failure flag.
 SimFailure::FailureType SimFailure::failure_type_ = SimFailure::ftNoFailure;
-
-// Define custom process command supported by DStubProcess.
-const char*  DStubProcess::stub_proc_command_("cool_proc_cmd");
 
 DStubProcess::DStubProcess(const char* name, asiolink::IOServicePtr io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new DStubCfgMgr())) {
@@ -86,45 +60,24 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 
     setShutdownFlag(true);
     stopIOService();
-    return (isc::config::createAnswer(0, "Shutdown inititiated."));
+    return (isc::config::createAnswer(0, "Shutdown initiated."));
 }
 
 isc::data::ConstElementPtr
-DStubProcess::configure(isc::data::ConstElementPtr config_set) {
+DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
         return (isc::config::createAnswer(1,
                 "Simulated process configuration error."));
     }
 
-    return (getCfgMgr()->parseConfig(config_set));
-}
-
-isc::data::ConstElementPtr
-DStubProcess::command(const std::string& command,
-                      isc::data::ConstElementPtr /* args */) {
-    isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftProcessCommand)) {
-        // Simulates a process command execution failure.
-        answer = isc::config::createAnswer(COMMAND_ERROR,
-                                          "SimFailure::ftProcessCommand");
-    } else if (command.compare(stub_proc_command_) == 0) {
-        answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
-    } else {
-        answer = isc::config::createAnswer(COMMAND_INVALID,
-                                           "Unrecognized command:" + command);
-    }
-
-    return (answer);
+    return (getCfgMgr()->parseConfig(config_set, check_only));
 }
 
 DStubProcess::~DStubProcess() {
 };
 
 //************************** DStubController *************************
-
-// Define custom controller command supported by DStubController.
-const char* DStubController::stub_ctl_command_("spiffy");
 
 // Define custom command line option command supported by DStubController.
 const char* DStubController::stub_option_x_ = "x";
@@ -149,7 +102,7 @@ DStubController::instance() {
 
 DStubController::DStubController()
     : DControllerBase(stub_app_name_, stub_bin_name_),
-      processed_signals_(), record_signal_only_(false) {
+      processed_signals_(), record_signal_only_(false), use_alternate_parser_(false) {
 
     if (getenv("KEA_FROM_BUILD")) {
         setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
@@ -185,24 +138,6 @@ DProcessBase* DStubController::createProcess() {
     return (new DStubProcess(getAppName().c_str(), getIOService()));
 }
 
-isc::data::ConstElementPtr
-DStubController::customControllerCommand(const std::string& command,
-                                     isc::data::ConstElementPtr /* args */) {
-    isc::data::ConstElementPtr answer;
-    if (SimFailure::shouldFailOn(SimFailure::ftControllerCommand)) {
-        // Simulates command failing to execute.
-        answer = isc::config::createAnswer(COMMAND_ERROR,
-                                          "SimFailure::ftControllerCommand");
-    } else if (command.compare(stub_ctl_command_) == 0) {
-        answer = isc::config::createAnswer(COMMAND_SUCCESS, "Command accepted");
-    } else {
-        answer = isc::config::createAnswer(COMMAND_INVALID,
-                                           "Unrecognized command:" + command);
-    }
-
-    return (answer);
-}
-
 const std::string DStubController::getCustomOpts() const {
     // Return the "list" of custom options supported by DStubController.
     return (std::string(stub_option_x_));
@@ -216,6 +151,22 @@ DStubController::processSignal(int signum){
     }
 
     DControllerBase::processSignal(signum);
+}
+
+isc::data::ConstElementPtr
+DStubController::parseFile(const std::string& /*file_name*/) {
+    isc::data::ConstElementPtr elements;
+    if (use_alternate_parser_) {
+        std::ostringstream os;
+
+        os << "{ \"" << getController()->getAppName()
+            << "\": " << std::endl;
+        os <<  "{ \"string_test\": \"alt value\" } ";
+        os << " } " << std::endl;
+        elements = isc::data::Element::fromJSON(os.str());
+    }
+
+    return (elements);
 }
 
 DStubController::~DStubController() {
@@ -273,7 +224,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
                          const_cast<char*>("-d") };
         launch(4, argv);
     } catch (...) {
-        // calculate elasped time, then rethrow it
+        // calculate elapsed time, then rethrow it
         elapsed_time = microsec_clock::universal_time() - start;
         throw;
     }
@@ -316,37 +267,6 @@ DControllerTest::InstanceGetter DControllerTest::instanceGetter_ = NULL;
 /// @brief Defines the name of the configuration file to use
 const char* DControllerTest::CFG_TEST_FILE = "d2-test-config.json";
 
-//************************** ObjectParser *************************
-
-ObjectParser::ObjectParser(const std::string& param_name,
-                       ObjectStoragePtr& object_values)
-    : param_name_(param_name), object_values_(object_values) {
-}
-
-ObjectParser::~ObjectParser(){
-}
-
-void
-ObjectParser::build(isc::data::ConstElementPtr new_config) {
-    if (SimFailure::shouldFailOn(SimFailure::ftElementBuild)) {
-        // Simulates an error during element data parsing.
-        isc_throw (DCfgMgrBaseError, "Simulated build exception");
-    }
-
-    value_ = new_config;
-}
-
-void
-ObjectParser::commit() {
-    if (SimFailure::shouldFailOn(SimFailure::ftElementCommit)) {
-        // Simulates an error while committing the parsed element data.
-        throw std::runtime_error("Simulated commit exception");
-    }
-
-    object_values_->setParam(param_name_, value_,
-                             isc::data::Element::Position());
-}
-
 //************************** DStubContext *************************
 
 DStubContext::DStubContext(): object_values_(new ObjectStorage()) {
@@ -375,6 +295,11 @@ DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
     object_values_(new ObjectStorage(*(rhs.object_values_))) {
 }
 
+isc::data::ElementPtr
+DStubContext::toElement() const {
+    return (isc::data::Element::createMap());
+}
+
 //************************** DStubCfgMgr *************************
 
 DStubCfgMgr::DStubCfgMgr()
@@ -389,22 +314,25 @@ DStubCfgMgr::createNewContext() {
     return (DCfgContextBasePtr (new DStubContext()));
 }
 
-isc::dhcp::ParserPtr
-DStubCfgMgr::createConfigParser(const std::string& element_id,
-                                const isc::data::Element::Position& pos) {
-    isc::dhcp::ParserPtr parser;
+void
+DStubCfgMgr::parseElement(const std::string& element_id,
+                          isc::data::ConstElementPtr element) {
     DStubContextPtr context
         = boost::dynamic_pointer_cast<DStubContext>(getContext());
+
     if (element_id == "bool_test") {
-        parser.reset(new isc::dhcp::
-                         BooleanParser(element_id,
-                                       context->getBooleanStorage()));
+        bool value = element->boolValue();
+        context->getBooleanStorage()->setParam(element_id, value,
+                                               element->getPosition()); 
     } else if (element_id == "uint32_test") {
-        parser.reset(new isc::dhcp::Uint32Parser(element_id,
-                                                 context->getUint32Storage()));
+        uint32_t value = element->intValue();
+        context->getUint32Storage()->setParam(element_id, value,
+                                              element->getPosition()); 
+
     } else if (element_id == "string_test") {
-        parser.reset(new isc::dhcp::StringParser(element_id,
-                                                 context->getStringStorage()));
+        std::string value = element->stringValue();
+        context->getStringStorage()->setParam(element_id, value,
+                                              element->getPosition()); 
     } else {
         // Fail only if SimFailure dictates we should.  This makes it easier
         // to test parse ordering, by permitting a wide range of element ids
@@ -412,15 +340,20 @@ DStubCfgMgr::createConfigParser(const std::string& element_id,
         if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
             isc_throw(DCfgMgrBaseError,
                       "Configuration parameter not supported: " << element_id
-                      << pos);
+                      << element->getPosition());
         }
 
         // Going to assume anything else is an object element.
-        parser.reset(new ObjectParser(element_id, context->getObjectStorage()));
+        context->getObjectStorage()->setParam(element_id, element,
+                                              element->getPosition()); 
     }
 
     parsed_order_.push_back(element_id);
-    return (parser);
+}
+
+isc::data::ConstElementPtr
+DStubCfgMgr::parse(isc::data::ConstElementPtr /*config*/, bool /*check_only*/) {
+    return (isc::config::createAnswer(0, "It all went fine. I promise"));
 }
 
 }; // namespace isc::process

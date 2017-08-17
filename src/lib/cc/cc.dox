@@ -1,0 +1,99 @@
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libcc libkea-cc - Kea Configuration Utilities Library
+
+@section ccSimpleParser Simple JSON Parser
+
+Since the early beginnings, our configuration parsing code was a mess. It
+started back in 2011 when Tomek joined ISC recently and was told to implement
+Kea configuration handling in similar way as DNS Auth module. The code grew
+over time (DHCP configuration is significantly more complex than DNS, with
+more interdependent values) and as of Kea 1.1 release it became very difficult
+to manage. The decision has been made to significantly refactor or even
+partially rewrite the parser code. The design for this effort is documented
+here: http://kea.isc.org/wiki/SimpleParser It discusses the original issues
+and the proposed architecture.
+
+There are several aspects of this new approach. The base class for all parsers
+is @ref isc::data::SimpleParser. It simplifies the parsers based on
+@ref isc::dhcp::DhcpConfigParser by rejecting the
+concept of build/commit phases. Instead, there should be a single method
+called parse that takes ConstElementPtr as a single parameter (that's the
+JSON structures to be parsed) and returns the config structure to be used
+in CfgMgr. An example of such a method can be the following:
+
+@code
+std::pair<OptionDescriptor, std::string>
+OptionDataParser::parse(isc::data::ConstElementPtr single_option)
+@endcode
+
+Since each derived class will have the same parameter, but a different return
+type, it's not possible to use virtual methods mechanism. That's perfectly
+ok, though, as there is only a single instance of the class needed to parse
+arbitrary number of parameters of the same type. There is no need to
+keep pointers to the parser object. As such there are fewer incentives to have
+one generic way to handle all parsers.
+
+@subsection ccSimpleParserDefaults Default values in Simple Parser
+
+Another simplification comes from the fact that almost all parameters
+are mandatory in SimpleParser. One source of complexities in the old
+parser was the necessity to deal with optional parameters. Simple
+parser deals with that by explicitly requiring the input structure to
+have all parameters filled. Obviously, it's not feasible to expect
+everyone to always specify all parameters, therefore there's an easy
+way to fill missing parameters with their default values. There are
+several methods to do this, but the most generic one is:
+
+@code
+static size_t
+isc::data::SimpleParser::setDefaults(isc::data::ElementPtr scope,
+                                     const SimpleDefaults& default_values);
+@endcode
+
+It takes a pointer to element to be filled with default values and
+vector of default values. Having those values specified in a single
+place in a way that can easily be read even by non-programmers is a
+big advantage of this approach. Here's an example from simple_parser.cc file:
+
+@code
+/// This table defines default values for option definitions in DHCPv6
+const SimpleDefaults OPTION6_DEF_DEFAULTS = {
+    { "record-types", Element::string,  ""},
+    { "space",        Element::string,  "dhcp6"},
+    { "array",        Element::boolean, "false"},
+    { "encapsulate",  Element::string,  "" }
+};
+@endcode
+
+This array (which technically is implemented as a vector and
+initialized the C++11 way) can be passed to the aforementioned
+setDefaults. That code will iterate over all default values and see if
+there are explicit values provided. If not, the gaps will be filled
+with default values. There are also convenience methods specified for
+filling in option data defaults, option definition defaults and
+setAllDefaults that sets all defaults (starts with global, but then
+walks down the Element tree and fills defaults in subsequent scopes).
+
+@subsection ccSimpleParserInherits Inheriting parameters between scopes
+
+SimpleParser provides a mechanism to inherit parameters between scopes,
+e.g. to inherit global parameters in the subnet scope if more specific
+values are not defined in the subnet scope. This is achieved by calling
+@code
+static size_t SimpleParser::deriveParams(isc::data::ConstElementPtr parent,
+                                         isc::data::ElementPtr child,
+                                         const ParamsList& params);
+
+@endcode
+
+ParamsList is a simple vector<string>. There will be more specific
+methods implemented in the future, but for the time being only
+@ref isc::data::SimpleParser::deriveParams is implemented.
+
+*/
