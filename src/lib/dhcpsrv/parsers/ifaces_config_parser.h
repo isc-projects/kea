@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,147 +8,53 @@
 #define IFACES_CONFIG_PARSER_H
 
 #include <cc/data.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
+#include <cc/simple_parser.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Parser for interface list definition.
-///
-/// This parser handles Dhcp4/interfaces-config/interfaces and
-/// Dhcp6/interfaces-config/interfaces entries.
-/// It contains a list of network interfaces that the server listens on.
-/// In particular, it can contain an "*" that designates all interfaces.
-class InterfaceListConfigParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    InterfaceListConfigParser(const uint16_t protocol);
-
-    /// @brief Parses a list of interface names.
-    ///
-    /// This method parses a list of interface/address tuples in a text
-    /// format. The tuples specify the IP addresses and corresponding
-    /// interface names on which the server should listen to the DHCP
-    /// messages. The address is optional in each tuple and, if not
-    /// specified, the interface name (without slash character) should
-    /// be present.
-    ///
-    /// @param value pointer to the content of parsed values
-    ///
-    /// @throw DhcpConfigError if the interface names and/or addresses
-    /// are invalid.
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-private:
-
-    /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    uint16_t protocol_;
-
-};
-
-
 /// @brief Parser for the configuration of interfaces.
 ///
 /// This parser parses the "interfaces-config" parameter which holds the
 /// full configuration of the DHCP server with respect to the use of
-/// interfaces, sockets and alike.
+/// interfaces, DHCP traffic sockets and alike.
 ///
-/// This parser uses the @c InterfaceListConfigParser to parse the
-/// list of interfaces on which the server should listen. It handles
-/// remaining parameters internally.
-///
-/// This parser is used as a base for the DHCPv4 and DHCPv6 specific
-/// parsers and should not be used directly.
-class IfacesConfigParser : public DhcpConfigParser {
+/// This parser is used in both DHCPv4 and DHCPv6. Derived parsers
+/// are not needed.
+class IfacesConfigParser : public isc::data::SimpleParser {
 public:
 
     /// @brief Constructor
     ///
     /// @param protocol AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    IfacesConfigParser(const uint16_t protocol);
+    explicit IfacesConfigParser(const uint16_t protocol);
 
-    /// @brief Parses generic parameters in "interfaces-config".
+    /// @brief Parses content of the "interfaces-config".
     ///
-    /// The generic parameters in the "interfaces-config" map are
-    /// the ones that are common for DHCPv4 and DHCPv6.
+    /// @param config parsed structures will be stored here
+    /// @param values pointer to the content of parsed values
     ///
-    /// @param ifaces_config A data element holding configuration of
-    /// interfaces.
-    virtual void build(isc::data::ConstElementPtr ifaces_config);
-
-    /// @brief Commit, unused.
-    virtual void commit() { }
-
-    /// @brief Checks if the specified parameter is a common parameter
-    /// for DHCPv4 and DHCPv6 interface configuration.
-    ///
-    /// This method is invoked by the derived classes to check if the
-    /// particular parameter is supported.
-    ///
-    /// @param parameter A name of the parameter.
-    ///
-    /// @return true if the specified parameter is a common parameter
-    /// for DHCPv4 and DHCPv6 server.
-    bool isGenericParameter(const std::string& parameter) const;
+    /// @throw DhcpConfigError if the interface names and/or addresses
+    /// are invalid.
+    void parse(const CfgIfacePtr& config, const isc::data::ConstElementPtr& values);
 
 private:
+    /// @brief parses interfaces-list structure
+    ///
+    /// This method goes through all the interfaces-specified in
+    /// 'interfaces-list' and enabled them in the specified configuration
+    /// structure
+    ///
+    /// @param cfg_iface parsed interfaces will be specified here
+    /// @param ifaces_list interfaces-list to be parsed
+    /// @throw DhcpConfigError if the interface names are invalid.
+    void parseInterfacesList(const CfgIfacePtr& cfg_iface,
+                             isc::data::ConstElementPtr ifaces_list);
 
     /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
     int protocol_;
-
-};
-
-
-/// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
-class IfacesConfigParser4 : public IfacesConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// Sets the protocol to AF_INET.
-    IfacesConfigParser4();
-
-    /// @brief Parses DHCPv4 specific parameters.
-    ///
-    /// Internally it invokes the @c InterfaceConfigParser::build to parse
-    /// generic parameters. In addition, it parses the following parameters:
-    /// - dhcp-socket-type
-    ///
-    /// @param ifaces_config A data element holding configuration of
-    /// interfaces.
-    ///
-    /// @throw DhcpConfigError if unsupported parameters is specified.
-    virtual void build(isc::data::ConstElementPtr ifaces_config);
-
-};
-
-/// @brief Parser for the "interfaces-config" parameter of the DHCPv4 server.
-class IfacesConfigParser6 : public IfacesConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// Sets the protocol to AF_INET6.
-    IfacesConfigParser6();
-
-    /// @brief Parses DHCPv6 specific parameters.
-    ///
-    /// Internally it invokes the @c InterfaceConfigParser::build to parse
-    /// generic parameters. Currently it doesn't parse any other parameters.
-    ///
-    /// @param ifaces_config A data element holding configuration of
-    /// interfaces.
-    ///
-    /// @throw DhcpConfigError if unsupported parameters is specified.
-    virtual void build(isc::data::ConstElementPtr ifaces_config);
-
 };
 
 }

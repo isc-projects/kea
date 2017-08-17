@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,9 +8,12 @@
 #define CFG_SUBNETS4_H
 
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <boost/shared_ptr.hpp>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -25,7 +28,7 @@ namespace dhcp {
 ///
 /// See @c CfgSubnets4::selectSubnet documentation for more details on how the
 /// subnet is selected for the client.
-class CfgSubnets4 {
+class CfgSubnets4 : public isc::data::CfgToElement {
 public:
 
     /// @brief Adds new subnet to the configuration.
@@ -35,6 +38,13 @@ public:
     /// @throw isc::DuplicateSubnetID If the subnet id for the new subnet
     /// duplicates id of an existing subnet.
     void add(const Subnet4Ptr& subnet);
+
+    /// @brief Removes subnet from the configuration.
+    ///
+    /// @param subnet Pointer to the subnet to be removed.
+    ///
+    /// @throw isc::BadValue if such subnet doesn't exist.
+    void del(const ConstSubnet4Ptr& subnet);
 
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///
@@ -46,6 +56,40 @@ public:
     const Subnet4Collection* getAll() const {
         return (&subnets_);
     }
+
+    /// @brief Returns const pointer to a subnet identified by the specified
+    /// subnet identifier.
+    ///
+    /// The const pointer is returned by this method to prevent a caller from
+    /// modifying the subnet configuration. Modifications to subnet configuration
+    /// is dangerous and must be done carefully. The subnets' configruation is
+    /// held in the multi index container and any modifications to the subnet
+    /// id or subnet prefix must trigger re-indexing of multi index container.
+    /// There is no possibility to enforce this when the non-const pointer is
+    /// returned.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Pointer to the @c Subnet4 object or null pointer if such
+    /// subnet doesn't exist.
+    ConstSubnet4Ptr getBySubnetId(const SubnetID& subnet_id) const;
+
+    /// @brief Returns const pointer to a subnet which matches the specified
+    /// prefix in the canonical form.
+    ///
+    /// The const pointer is returned by this method to prevent a caller from
+    /// modifying the subnet configuration. Modifications to subnet configuration
+    /// is dangerous and must be done carefully. The subnets' configruation is
+    /// held in the multi index container and any modifications to the subnet
+    /// id or subnet prefix must trigger re-indexing of multi index container.
+    /// There is no possibility to enforce this when the non-const pointer is
+    /// returned.
+    ///
+    /// @param subnet_prefix Subnet prefix, e.g. 10.2.3.0/24
+    ///
+    /// @return Pointer to the @c Subnet4 object or null pointer if such
+    /// subnet doesn't exist.
+    ConstSubnet4Ptr getByPrefix(const std::string& subnet_prefix) const;
 
     /// @brief Returns a pointer to the selected subnet.
     ///
@@ -81,7 +125,7 @@ public:
     ///
     /// @todo This method requires performance improvement! It currently
     /// iterates over all existing subnets (possibly a couple of times)
-    /// to find the one which fulfils the search criteria. The subnet storage
+    /// to find the one which fulfills the search criteria. The subnet storage
     /// is implemented as a simple STL vector which precludes fast searches
     /// using specific keys. Hence, full scan is required. To improve the
     /// search performance a different container type is required, e.g.
@@ -96,6 +140,14 @@ public:
     /// or they are insufficient to select a subnet.
     Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
+    /// @brief Returns subnet with specified subnet-id value
+    ///
+    /// Warning: this method uses full scan. Its use is not recommended for
+    /// packet processing.
+    ///
+    /// @return Subnet (or NULL)
+    Subnet4Ptr getSubnet(const SubnetID id) const;
+
     /// @brief Returns a pointer to a subnet if provided address is in its range.
     ///
     /// This method returns a pointer to the subnet if the address passed in
@@ -104,7 +156,7 @@ public:
     /// @c selectSubnet(SubnetSelector).
     ///
     /// @todo This method requires performance improvement! It currently
-    /// iterates over all existing subnets to find the one which fulfils
+    /// iterates over all existing subnets to find the one which fulfills
     /// the search criteria. The subnet storage is implemented as a simple
     /// STL vector which precludes fast searches using specific keys.
     /// Hence, full scan is required. To improve the search performance a
@@ -129,7 +181,7 @@ public:
     /// @c selectSubnet(SubnetSelector).
     ///
     /// @todo This method requires performance improvement! It currently
-    /// iterates over all existing subnets to find the one which fulfils
+    /// iterates over all existing subnets to find the one which fulfills
     /// the search criteria. The subnet storage is implemented as a simple
     /// STL vector which precludes fast searches using specific keys.
     /// Hence, full scan is required. To improve the search performance a
@@ -171,7 +223,7 @@ public:
     /// This method updates statistics that are affected by the newly committed
     /// configuration. In particular, it updates the number of available addresses
     /// in each subnet. Other statistics may be added in the future. In general,
-    /// these are statistics that are dependant only on configuration, so they are
+    /// these are statistics that are dependent only on configuration, so they are
     /// not expected to change until the next reconfiguration event.
     void updateStatistics();
 
@@ -183,15 +235,12 @@ public:
     /// configuration and also subnet-ids may change.
     void removeStatistics();
 
-private:
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
-    /// @brief Checks that the IPv4 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    ///
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet4& subnet) const;
+private:
 
     /// @brief A container for IPv4 subnets.
     Subnet4Collection subnets_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,7 @@ public:
     }
 };
 
-// This test verifies that the fallback socket is successfuly opened and
+// This test verifies that the fallback socket is successfully opened and
 // bound using the protected function of the PktFilter class.
 TEST_F(PktFilterBaseClassTest, openFallbackSocket) {
     // Open socket using the function under test. Note that, we don't have to

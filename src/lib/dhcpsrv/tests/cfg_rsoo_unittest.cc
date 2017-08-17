@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
 
@@ -64,7 +65,7 @@ TEST(CfgRSOOTest, enableAndClear) {
     }
 }
 
-// This test verfies that the same option may be specified
+// This test verifies that the same option may be specified
 // multiple times and that the code doesn't fail.
 TEST(CfgRSOOTest, enableTwice) {
     CfgRSOO rsoo;
@@ -86,6 +87,14 @@ TEST(CfgRSOOTest, enableTwice) {
     ASSERT_NO_THROW(rsoo.clear());
     ASSERT_FALSE(rsoo.enabled(D6O_ERP_LOCAL_DOMAIN_NAME));
     ASSERT_FALSE(rsoo.enabled(88));
+}
+
+// This test verifies that the unparse function returns what is expected.
+TEST(CfgRSOOTest, unparse) {
+    CfgRSOO rsoo;
+    // option codes are put in strings
+    isc::test::runToElementTest<CfgRSOO>("[ \"65\" ]", rsoo);
+    // isc::test::runToElementTest<CfgRSOO>("[ 65 ]", rsoo);
 }
 
 } // end of anonymous namespace

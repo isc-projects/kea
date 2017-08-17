@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,7 +57,7 @@ RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 //
 // Three 1 byte fields to describe a network interface: type, major and minor
 RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
-// A client identifer: a 1 byte type field followed by opaque data depending on the type
+// A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
@@ -177,7 +177,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
-    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
+    // Unfortunately the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
     // dedicated option class to handle it so we simply return
@@ -192,12 +192,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    // The following options need a special encoding of data
-    // being carried by them. Therefore, there is no way they can
-    // be handled by OptionCustom. We may need to implement
-    // dedicated classes to handle them. Until that happens
-    // let's treat them as 'binary' options.
-    { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "domain-search", DHO_DOMAIN_SEARCH, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, OPT_RECORD_TYPE,
       false, RECORD_DEF(VIVCO_RECORDS), "" },
     // Vendor-Identifying Vendor Specific Information option payload begins with a
@@ -215,7 +210,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
       false, NO_RECORD_DEF, "" }
 
-        // @todo add definitions for all remaning options.
+        // @todo add definitions for all remaining options.
 };
 
 /// Number of option definitions defined.
@@ -269,9 +264,9 @@ RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 ///
 /// @warning in this array, the initializers are provided for all
 /// OptionDefParams struct's members despite initializers for
-/// 'records' and 'record_size' could be ommited for entries for
+/// 'records' and 'record_size' could be omitted for entries for
 /// which 'type' does not equal to OPT_RECORD_TYPE. If initializers
-/// are ommitted the corresponding values should default to 0.
+/// are omitted the corresponding values should default to 0.
 /// This however does not work on Solaris (GCC) which issues a
 /// warning about lack of initializers for some struct members
 /// causing build to fail.
@@ -285,7 +280,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "preference", D6O_PREFERENCE, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "elapsed-time", D6O_ELAPSED_TIME, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "relay-msg", D6O_RELAY_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
-    // Unfortunatelly the AUTH option contains a 64-bit data field
+    // Unfortunately the AUTH option contains a 64-bit data field
     // called 'replay-detection' that can't be added as a record
     // field to a custom option. Also, there is no dedicated
     // option class to handle it so we simply return binary
@@ -355,7 +350,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
     { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "nii", D6O_NII, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NII_RECORDS), "" },
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
@@ -376,12 +371,6 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
-    { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
-        MAPE_V6_OPTION_SPACE },
-    { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
-        MAPT_V6_OPTION_SPACE },
-    { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
-        LW_V6_OPTION_SPACE }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
@@ -392,14 +381,6 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
 const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V6_OPTION_DEFINITIONS) /
     sizeof(STANDARD_V6_OPTION_DEFINITIONS[0]);
-
-// Option definitions that belong to two or more option spaces are defined here.
-const OptionDefParams OPTION_DEF_PARAMS_S46_BR = { "s46-br", D6O_S46_BR,
-    OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" };
-const OptionDefParams OPTION_DEF_PARAMS_S46_RULE = { "s46-rule", D6O_S46_RULE,
-    OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE };
-const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
-    D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" };
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
@@ -420,52 +401,43 @@ const int ISC_V6_OPTION_DEFINITIONS_SIZE =
 
 /// @brief MAPE option definitions
 const OptionDefParams MAPE_V6_OPTION_DEFINITIONS[] = {
-    OPTION_DEF_PARAMS_S46_BR,
-    OPTION_DEF_PARAMS_S46_RULE
 };
 
 const int MAPE_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPE_V6_OPTION_DEFINITIONS) /
-    sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
+    sizeof(const OptionDefParams);
 
 /// @brief MAPT option definitions
 const OptionDefParams MAPT_V6_OPTION_DEFINITIONS[] = {
-    OPTION_DEF_PARAMS_S46_RULE,
-    { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" }
 };
 
 const int MAPT_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPT_V6_OPTION_DEFINITIONS) /
-    sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
+    sizeof(const OptionDefParams);
 
 /// @brief LW option definitions
 const OptionDefParams LW_V6_OPTION_DEFINITIONS[] = {
-    OPTION_DEF_PARAMS_S46_BR,
-    { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false,
-        RECORD_DEF(S46_V4V6BIND), V4V6_BIND_OPTION_SPACE }
 };
 
 const int LW_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(LW_V6_OPTION_DEFINITIONS) /
-    sizeof(LW_V6_OPTION_DEFINITIONS[0]);
+    sizeof(const OptionDefParams);
 
 /// @brief Rule option definitions
 const OptionDefParams V4V6_RULE_OPTION_DEFINITIONS[] = {
-    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_RULE_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_RULE_OPTION_DEFINITIONS) /
-    sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
+    sizeof(const OptionDefParams);
 
 /// @brief Bind option definitions
 const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
-    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
-    sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
+    sizeof(const OptionDefParams);
 
 } // unnamed namespace
 

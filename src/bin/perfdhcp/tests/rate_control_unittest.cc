@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,7 +122,7 @@ TEST(RateControl, isLateSent) {
 // depends on time.
 TEST(RateControl, getOutboundMessageCount) {
     // Test that the number of outbound messages is correctly defined by the
-    // rate.  The agressivity is set high enough so that it will not restrict
+    // rate.  The aggressivity is set high enough so that it will not restrict
     // the calculated count.
     NakedRateControl rc1(1000, 1000000);
     // Set the timestamp of the last sent message well to the past. The
@@ -135,7 +135,7 @@ TEST(RateControl, getOutboundMessageCount) {
     // The number of messages to be sent must be roughly equal to the time
     // between the last sent message and the current time multiplied by the
     // rate.  ("Roughly", as current time is advancing, so the actual interval
-    // when the calcuation is made may be different from the interval set.)  The
+    // when the measurement is made may be different from the interval set.) The
     // margin in this test is reasonably generous, allowing for a timing error
     // of around 10ms.
     uint64_t count = 0;
@@ -143,7 +143,7 @@ TEST(RateControl, getOutboundMessageCount) {
     EXPECT_TRUE((count >= 5240) && (count <= 5260)) <<
         "count is " << count << ", expected range 5240-5260";
 
-    // Check that the agressivity limits the count of messages.
+    // Check that the aggressivity limits the count of messages.
     NakedRateControl rc2(1000, 3500);
     rc2.last_sent_ =
         NakedRateControl::currentTime() - boost::posix_time::seconds(5) -

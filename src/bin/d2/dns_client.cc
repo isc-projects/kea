@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ public:
     // received. This allows a single DNSClientImpl instance to be used for
     // multiple, sequential IOFetch calls. (@todo Trac# 3286 has been opened
     // against dns::Message::fromWire.  Should the behavior of fromWire change
-    // the behavior here with could be rexamined).
+    // the behavior here with could be reexamined).
     D2UpdateMessagePtr& response_;
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.
@@ -139,7 +139,7 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
                                 tsig_context_.get());
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
-            LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+            LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
 
         }

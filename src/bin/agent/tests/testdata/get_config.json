@@ -1,0 +1,28 @@
+{
+    "Control-agent": {
+        "control-sockets": {
+            "d2": {
+                "socket-name": "/path/to/the/unix/socket-d2",
+                "socket-type": "unix"
+            },
+            "dhcp4": {
+                "socket-name": "/path/to/the/unix/socket-v4",
+                "socket-type": "unix"
+            },
+            "dhcp6": {
+                "socket-name": "/path/to/the/unix/socket-v6",
+                "socket-type": "unix"
+            }
+        },
+        "hooks-libraries": [
+            {
+                "library": "/opt/local/control-agent-commands.so",
+                "parameters": {
+                    "param1": "foo"
+                }
+            }
+        ],
+        "http-host": "127.0.0.1",
+        "http-port": 8000
+    }
+}

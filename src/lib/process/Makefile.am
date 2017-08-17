@@ -47,7 +47,7 @@ nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_process_la_LDFLAGS += -no-undefined -version-info 1:0:0
+libkea_process_la_LDFLAGS += -no-undefined -version-info 0:0:0
 
 libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
@@ -60,7 +60,7 @@ libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
 # Specify the headers for copying into the installation directory tree.
 libkea_process_includedir = $(pkgincludedir)/process

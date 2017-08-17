@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,11 +19,14 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <string>
+#include <set>
 
 namespace isc {
 namespace process {
 
 /// @brief Exception thrown when the command line is invalid.
+/// Can be used to transmit negative messages too.
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
@@ -34,7 +37,7 @@ public:
 /// Since command line argument parsing is done as part of
 /// DControllerBase::launch(), it uses this exception to propagate
 /// version information up to main(), when command line argument
-/// -v or -V is given.
+/// -v, -V or -W is given. Can be used to transmit positive messages too.
 class VersionMessage : public isc::Exception {
 public:
     VersionMessage(const char* file, size_t line, const char* what) :
@@ -112,8 +115,8 @@ public:
 
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref isc::dhcp::Daemon::getVersion()
-    static std::string getVersion(bool extended);
- 
+    std::string getVersion(bool extended);
+
     /// @brief Acts as the primary entry point into the controller execution
     /// and provides the outermost application control logic:
     ///
@@ -128,7 +131,7 @@ public:
     /// arguments.
     ///
     /// This function can be run in "test mode". It prevents initialization
-    /// of D2 module logger. This is used in unit tests which initialize logger
+    /// of module logger. This is used in unit tests which initialize logger
     /// in their main function. Such a logger uses environmental variables to
     /// control severity, verbosity etc.
     ///
@@ -161,13 +164,32 @@ public:
     virtual isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr
                                                     new_config);
 
+    /// @brief Instance method invoked by the configuration event handler and
+    /// which processes the actual configuration check.  Provides behavioral
+    /// path for both integrated and stand-alone modes. The current
+    /// implementation will merge the configuration update into the existing
+    /// configuration and then invoke the application process' configure method
+    /// with a final rollback.
+    ///
+    /// @param  new_config is the new configuration
+    ///
+    /// @return returns an Element that contains the results of configuration
+    /// update composed of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                                   new_config);
+
     /// @brief Reconfigures the process from a configuration file
     ///
     /// By default the file is assumed to be a JSON text file whose contents
     /// include at least:
     ///
     /// @code
-    ///  { "<module-name>": {<module-config>} }
+    ///  { "<module-name>": {<module-config>}
+    ///
+    ///   # Logging element is optional
+    ///   ,"Logging": {<logger config}
+    ///  }
     ///
     ///  where:
     ///     module-name : is a label which uniquely identifies the
@@ -177,9 +199,17 @@ public:
     ///                    the application's configuration values
     /// @endcode
     ///
-    /// The method extracts the set of configuration elements for the
-    /// module-name which matches the controller's app_name_ and passes that
-    /// set into @c udpateConfig().
+    /// To translate the JSON content into Elements, @c parseFile() is called
+    /// first.  This virtual method provides derivations a means to parse the
+    /// file content using an alternate parser.  If it returns an empty pointer
+    /// than the JSON parsing providing by Element::fromJSONFile() is called.
+    ///
+    /// Once parsed, the method looks for the Element "Logging" and, if present
+    /// uses it to configure logging.
+    ///
+    /// It then extracts the set of configuration elements for the
+    /// module-name that matches the controller's app_name_ and passes that
+    /// set into @c updateConfig() (or @c checkConfig()).
     ///
     /// The file may contain an arbitrary number of other modules.
     ///
@@ -187,39 +217,6 @@ public:
     /// update composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr configFromFile();
-
-    /// @brief Instance method invoked by the command event handler and  which
-    /// processes the actual command directive.
-    ///
-    /// It supports the execution of:
-    ///
-    ///   1. Stock controller commands - commands common to all DControllerBase
-    /// derivations.  Currently there is only one, the shutdown command.
-    ///
-    ///   2. Custom controller commands - commands that the deriving controller
-    /// class implements.  These commands are executed by the deriving
-    /// controller.
-    ///
-    ///   3. Custom application commands - commands supported by the application
-    /// process implementation.  These commands are executed by the application
-    /// process.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    ///
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
-    ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as valid be either
-    ///   the controller or the application process.
-    virtual isc::data::ConstElementPtr executeCommand(const std::string&
-                                                      command,
-                                                      isc::data::
-                                                      ConstElementPtr args);
 
     /// @brief Fetches the name of the application under control.
     ///
@@ -234,6 +231,82 @@ public:
     std::string getBinName() const {
         return (bin_name_);
     }
+
+    /// @brief handler for version-get command
+    ///
+    /// This method handles the version-get command. It returns the basic and
+    /// extended version.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer with version details.
+    isc::data::ConstElementPtr
+    versionGetHandler(const std::string& command,
+                      isc::data::ConstElementPtr args);
+
+    /// @brief handler for 'build-report' command
+    ///
+    /// This method handles build-report command. It returns the output printed
+    /// by configure script which contains most compilation parameters.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer with build report
+    isc::data::ConstElementPtr
+    buildReportHandler(const std::string& command,
+                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-get command
+    ///
+    /// This method handles the config-get command, which retrieves
+    /// the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    configGetHandler(const std::string& command,
+                     isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-write command
+    ///
+    /// This handle processes write-config command, which writes the
+    /// current configuration to disk. This command takes one optional
+    /// parameter called filename. If specified, the current configuration
+    /// will be written to that file. If not specified, the file used during
+    /// Kea start-up will be used. To avoid any exploits, the path is
+    /// always relative and .. is not allowed in the filename. This is
+    /// a security measure against exploiting file writes remotely.
+    ///
+    /// @param command (ignored)
+    /// @param args may contain optional string argument filename
+    /// @return status of the configuration file write
+    isc::data::ConstElementPtr
+    configWriteHandler(const std::string& command,
+                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-test command
+    ///
+    /// This method handles the config-test command, which checks
+    /// configuration specified in args parameter.
+    ///
+    /// @param command (ignored)
+    /// @param args configuration to be checked.
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configTestHandler(const std::string& command,
+                      isc::data::ConstElementPtr args);
+
+    /// @brief handler for 'shutdown' command
+    ///
+    /// This method handles shutdown command. It initiates the shutdown procedure
+    /// using CPL methods.
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return answer confirming that the shutdown procedure is started
+    isc::data::ConstElementPtr
+    shutdownHandler(const std::string& command,
+                    isc::data::ConstElementPtr args);
 
 protected:
     /// @brief Virtual method that provides derivations the opportunity to
@@ -259,26 +332,6 @@ protected:
     /// Note this value is subsequently wrapped in a smart pointer.
     virtual DProcessBase* createProcess() = 0;
 
-    /// @brief Virtual method that provides derivations the opportunity to
-    /// support custom external commands executed by the controller.  This
-    /// method is invoked by the processCommand if the received command is
-    /// not a stock controller command.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    ///
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is one of the following:
-    ///   D2::COMMAND_SUCCESS - Command executed successfully
-    ///   D2::COMMAND_ERROR - Command is valid but suffered an operational
-    ///   failure.
-    ///   D2::COMMAND_INVALID - Command is not recognized as a valid custom
-    ///   controller command.
-    virtual isc::data::ConstElementPtr customControllerCommand(
-            const std::string& command, isc::data::ConstElementPtr args);
-
     /// @brief Virtual method which can be used to contribute derivation
     /// specific usage text.  It is invoked by the usage() method under
     /// invalid usage conditions.
@@ -290,13 +343,20 @@ protected:
 
     /// @brief Virtual method which returns a string containing the option
     /// letters for any custom command line options supported by the derivation.
-    /// These are added to the stock options of "c" and "v" during command
+    /// These are added to the stock options of "c", "d", ..., during command
     /// line interpretation.
     ///
     /// @return returns a string containing the custom option letters.
     virtual const std::string getCustomOpts() const {
         return ("");
     }
+
+    /// @brief Check the configuration
+    ///
+    /// Called by @c launch() when @c check_only_ mode is enabled
+    /// @throw VersionMessage when successful but a message should be displayed
+    /// @throw InvalidUsage when an error was detected
+    void checkConfigOnly();
 
     /// @brief Application-level signal processing method.
     ///
@@ -328,6 +388,22 @@ protected:
     /// @param value is the new value to assign the flag.
     void setVerbose(bool value) {
         verbose_ = value;
+    }
+
+    /// @brief Supplies whether or not check only mode is enabled.
+    ///
+    /// @return returns true if check only is enabled.
+    bool isCheckOnly() const {
+        return (check_only_);
+    }
+
+    /// @brief Method for enabling or disabling check only mode.
+    ///
+    /// @todo this method and @c setVerbose are currently not used.
+    ///
+    /// @param value is the new value to assign the flag.
+    void setCheckOnly(bool value) {
+        check_only_ = value;
     }
 
     /// @brief Getter for fetching the controller's IOService
@@ -373,15 +449,55 @@ protected:
     /// list of options with those returned by getCustomOpts(), and uses
     /// cstdlib's getopt to loop through the command line.
     /// It handles stock options directly, and passes any custom options into
-    /// the customOption method.  Currently there are only two stock options
-    /// -c for specifying the configuration file, and -v for verbose logging.
+    /// the customOption method.  Currently there are only some stock options
+    /// -c/t for specifying the configuration file, -d for verbose logging,
+    /// and -v/V/W for version reports.
     ///
     /// @param argc  is the number of command line arguments supplied
     /// @param argv  is the array of string (char *) command line arguments
     ///
     /// @throw InvalidUsage when there are usage errors.
-    /// @throw VersionMessage if the -v or -V arguments is given.
+    /// @throw VersionMessage if the -v, -V or -W arguments is given.
     void parseArgs(int argc, char* argv[]);
+
+
+    ///@brief Parse a given file into Elements
+    ///
+    /// This method provides a means for deriving classes to use alternate
+    /// parsing mechanisms to parse configuration files into the corresponding
+    /// isc::data::Elements. The elements produced must be equivalent to those
+    /// which would be produced by the original JSON parsing.  Implementations
+    /// should throw when encountering errors.
+    ///
+    /// The default implementation returns an empty pointer, signifying to
+    /// callers that they should submit the file to the original parser.
+    ///
+    /// @param file_name pathname of the file to parse
+    ///
+    /// @return pointer to the elements created
+    ///
+    virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
+
+    ///@brief Parse text into Elements
+    ///
+    /// This method provides a means for deriving classes to use alternate
+    /// parsing mechanisms to parse configuration text into the corresponding
+    /// isc::data::Elements. The elements produced must be equivalent to those
+    /// which would be produced by the original JSON parsing.  Implementations
+    /// should throw when encountering errors.
+    ///
+    /// The default implementation returns an empty pointer, signifying to
+    /// callers that they should submit the text to the original parser.
+    ///
+    /// @param input text to parse
+    ///
+    /// @return pointer to the elements created
+    ///
+    virtual isc::data::ConstElementPtr parseText(const std::string& input) {
+        static_cast<void>(input); // just tu shut up the unused parameter warning
+        isc::data::ConstElementPtr elements;
+        return (elements);
+    }
 
     /// @brief Instantiates the application process and then initializes it.
     /// This is the second step taken during launch, following successful
@@ -471,6 +587,15 @@ protected:
     /// This is intended to be used for specific usage violation messages.
     void usage(const std::string& text);
 
+    /// @brief Fetches text containing additional version specifics
+    ///
+    /// This method is provided so derivations can append any additional
+    /// desired information such as library dependencies to the extended
+    /// version text returned when DControllerBase::getVersion(true) is
+    /// invoked.
+    /// @return a string containing additional version info
+    virtual std::string getVersionAddendum() { return (""); }
+
 private:
     /// @brief Name of the service under control.
     /// This name is used as the configuration module name and appears in log
@@ -484,6 +609,10 @@ private:
 
     /// @brief Indicates if the verbose logging mode is enabled.
     bool verbose_;
+
+    /// @brief Indicates if the check only mode for the configuration
+    /// is enabled (usually specified by the command line -t argument).
+    bool check_only_;
 
     /// @brief The absolute file name of the JSON spec file.
     std::string spec_file_name_;

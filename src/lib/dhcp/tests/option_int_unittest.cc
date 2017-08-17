@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,7 +131,7 @@ public:
         // Data length is 2 bytes.
         EXPECT_EQ(2, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(TEST_OPT_CODE, opt->getType());
-        // The total length is 2 bytes for data and 2 or 4 bytes for aheader.
+        // The total length is 2 bytes for data and 2 or 4 bytes for a header.
         if (u == Option::V4) {
             EXPECT_EQ(4, out_buf_.getLength());
         } else {
@@ -296,7 +296,7 @@ TEST_F(OptionIntTest, setValueUint8) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(111, opt->getValue());
 }
 
@@ -310,7 +310,7 @@ TEST_F(OptionIntTest, setValueInt8) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_PREFERENCE, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-111, opt->getValue());
 }
 
@@ -325,7 +325,7 @@ TEST_F(OptionIntTest, setValueUint16) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(0x0102, opt->getValue());
 }
 
@@ -339,7 +339,7 @@ TEST_F(OptionIntTest, setValueInt16) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-20100, opt->getValue());
 }
 
@@ -353,7 +353,7 @@ TEST_F(OptionIntTest, setValueUint32) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(0x01020304, opt->getValue());
 }
 
@@ -367,7 +367,7 @@ TEST_F(OptionIntTest, setValueInt32) {
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
-    // Check if the value has been overriden.
+    // Check if the value has been overridden.
     EXPECT_EQ(-125000, opt->getValue());
 }
 

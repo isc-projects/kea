@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,7 +54,7 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
     { "device-id",      DOCSIS3_V6_DEVICE_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "time-offset",    DOCSIS3_V6_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
     { "cmts-cm-mac",    DOCSIS3_V6_CMTS_CM_MAC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" }
-    // @todo add definitions for all remaning options.
+    // @todo add definitions for all remaining options.
 };
 
 /// Number of option definitions defined.

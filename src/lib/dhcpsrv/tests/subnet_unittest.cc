@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -293,13 +293,15 @@ TEST(Subnet4Test, clientClasses) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
 
-    // Let's allow only clients belongning to "bar" class.
+    // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
+    EXPECT_EQ(1, subnet->getClientClasses().size());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -325,13 +327,15 @@ TEST(Subnet4Test, clientClassesMultiple) {
     bar_class.insert("bar");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
 
-    // Let's allow clients belongning to "bar" or "foo" class.
+    // Let's allow clients belonging to "bar" or "foo" class.
     subnet->allowClientClass("bar");
     subnet->allowClientClass("foo");
+    EXPECT_EQ(2, subnet->getClientClasses().size());
 
     // Class-less clients are to be rejected.
     EXPECT_FALSE(subnet->clientSupported(no_class));
@@ -462,7 +466,7 @@ TEST(Subnet4Test, PoolType) {
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.1.5")));
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.2.254")));
 
-    // Try with bogus hints (hints should be ingored)
+    // Try with bogus hints (hints should be ignored)
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("10.1.1.1")));
 
     // Trying to add Pool6 to Subnet4 is a big no,no!
@@ -694,7 +698,7 @@ TEST(Subnet6Test, poolTypes) {
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:2::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
 
-    // Try with bogus hints (hints should be ingored)
+    // Try with bogus hints (hints should be ignored)
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:7::1")));
     EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:7::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:7::1")));
@@ -740,13 +744,15 @@ TEST(Subnet6Test, clientClasses) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
 
-    // Let's allow only clients belongning to "bar" class.
+    // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
+    EXPECT_EQ(1, subnet->getClientClasses().size());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -772,13 +778,15 @@ TEST(Subnet6Test, clientClassesMultiple) {
     bar_class.insert("bar");
 
     // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
 
-    // Let's allow only clients belongning to "foo" or "bar" class.
+    // Let's allow only clients belonging to "foo" or "bar" class.
     subnet->allowClientClass("foo");
     subnet->allowClientClass("bar");
+    EXPECT_EQ(2, subnet->getClientClasses().size());
 
     // Class-less clients are to be rejected.
     EXPECT_FALSE(subnet->clientSupported(no_class));
@@ -936,11 +944,9 @@ TEST(Subnet6Test, addNonUniqueOptions) {
     // Look for the codes 100-109.
     for (uint16_t code = 100; code < 110; ++ code) {
         // For each code we should get two instances of options->
-        std::pair<OptionContainerTypeIndex::const_iterator,
-                  OptionContainerTypeIndex::const_iterator> range =
-            idx.equal_range(code);
+        OptionContainerTypeRange range = idx.equal_range(code);
         // Distance between iterators indicates how many options
-        // have been retured for the particular code.
+        // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
         // Check that returned options actually have the expected option code.
         for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
@@ -952,9 +958,7 @@ TEST(Subnet6Test, addNonUniqueOptions) {
 
     // Let's try to find some non-exiting option.
     const uint16_t non_existing_code = 150;
-    std::pair<OptionContainerTypeIndex::const_iterator,
-              OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(non_existing_code);
+    OptionContainerTypeRange range = idx.equal_range(non_existing_code);
     // Empty set is expected.
     EXPECT_EQ(0, distance(range.first, range.second));
 }
@@ -986,17 +990,13 @@ TEST(Subnet6Test, addPersistentOption) {
     OptionContainerPersistIndex& idx = options->get<2>();
 
     // Get all persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_persistent =
-        idx.equal_range(true);
-    // 3 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_persistent = idx.equal_range(true);
+    // 7 out of 10 options have been flagged persistent.
     ASSERT_EQ(7, distance(range_persistent.first, range_persistent.second));
 
     // Get all non-persistent options->
-    std::pair<OptionContainerPersistIndex::const_iterator,
-              OptionContainerPersistIndex::const_iterator> range_non_persistent =
-        idx.equal_range(false);
-    // 7 out of 10 options have been flagged persistent.
+    OptionContainerPersistRange range_non_persistent = idx.equal_range(false);
+    // 3 out of 10 options have been flagged not persistent.
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 }
 
@@ -1088,7 +1088,7 @@ TEST(Subnet6Test, inRangeinPool) {
                              IOAddress("2001:db8::20")));
     subnet->addPool(pool1);
 
-    // 192.1.1.1 belongs to the subnet...
+    // 2001:db8::1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
     // ... but it does not belong to any pool within
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::1")));
@@ -1112,6 +1112,40 @@ TEST(Subnet6Test, inRangeinPool) {
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
+}
+
+// This test verifies that inRange() and inPool() methods work properly
+// for prefixes too.
+TEST(Subnet6Test, PdinRangeinPool) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4));
+
+    // this one is in subnet
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"),
+                             96, 112));
+    subnet->addPool(pool1);
+
+    // this one is not in subnet
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
+                             96, 112));
+    subnet->addPool(pool2);
+
+    // 2001:db8::1:0:0 belongs to the subnet...
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1:0:0")));
+    // ... but it does not belong to any pool within
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8::1:0:0")));
+
+    // 2001:db8:1::1 does not belong to the subnet...
+    EXPECT_FALSE(subnet->inRange(IOAddress("2001:db8:1::1")));
+    // ... but it belongs to the second pool
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8:1::1")));
+
+    // 2001:db8::1 belongs to the subnet and to the first pool
+    EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8::1")));
+
+    // 2001:db8:0:1:0:1:: does not belong to the subnet and any pool
+    EXPECT_FALSE(subnet->inRange(IOAddress("2001:db8:0:1:0:1::")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_PD, IOAddress("2001:db8:0:1:0:1::")));
 }
 
 // This test checks if the toText() method returns text representation

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_HOSTS_H
 
 #include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
@@ -35,7 +36,8 @@ namespace dhcp {
 /// when the new configuration is applied for the server. The reservations
 /// are retrieved by the @c HostMgr class when the server is allocating or
 /// renewing an address or prefix for the particular client.
-class CfgHosts : public BaseHostDataSource, public WritableHostDataSource {
+class CfgHosts : public BaseHostDataSource, public WritableHostDataSource,
+                 public isc::data::CfgToElement {
 public:
 
     /// @brief Destructor.
@@ -77,7 +79,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type One of the supported identifier types.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -93,7 +95,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type One of the supported identifier types.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -181,7 +183,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -195,7 +197,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -249,7 +251,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -263,7 +265,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -320,6 +322,45 @@ public:
     /// has already been added to the IPv4 or IPv6 subnet.
     virtual void add(const HostPtr& host);
 
+    /// @brief Attempts to delete a host by address.
+    ///
+    /// This method supports both v4 and v6.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
+    ///
+    /// This method supports v4 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
+    ///
+    /// This method supports v6 only.
+    /// @todo: Not implemented.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false otherwise.
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -328,6 +369,24 @@ public:
     virtual std::string getType() const {
         return (std::string("configuration file"));
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// host reservation lists are not autonomous so they are
+    /// not returned directly but with the subnet where they are
+    /// declared as:
+    /// @code
+    /// [
+    ///   { "id": 123, "reservations": [ <resv1>, <resv2> ] },
+    ///   { "id": 456, "reservations": [ <resv3 ] },
+    ///   ...
+    /// ]
+    /// @endcode
+    ///
+    /// @ref isc::dhcp::CfgHostsList can be used to handle this
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement() const;
 
 private:
 
@@ -340,7 +399,7 @@ private:
     /// @param identifier_type The type of the supplied identifier.
     /// @param identifier Pointer to a first byte of the identifier.
     /// @param identifier_len Length of the identifier.
-    /// @param [out] storage Container to which the retreived objects are
+    /// @param [out] storage Container to which the retrieved objects are
     /// appended.
     /// @tparam One of the @c ConstHostCollection of @c HostCollection.
     template<typename Storage>
@@ -421,7 +480,7 @@ private:
     /// @param subnet_id IPv4 or IPv6 subnet identifier.
     /// @param subnet6 A boolean flag which indicates if the subnet identifier
     /// points to a IPv4 (if false) or IPv6 subnet (if true).
-    /// @param identifier_type Indentifier type.
+    /// @param identifier_type Identifier type.
     /// @param identifier Pointer to a first byte of the buffer holding an
     /// identifier.
     /// @param identifier_len Identifier length.
@@ -450,15 +509,18 @@ private:
     /// @c Host object.
     template<typename ReturnType, typename Storage>
     ReturnType getHostInternal6(const SubnetID& subnet_id,
-                                const asiolink::IOAddress& adddress) const;
+                                const asiolink::IOAddress& address) const;
 
     template<typename ReturnType>
     ReturnType getHostInternal6(const asiolink::IOAddress& prefix,
                                 const uint8_t prefix_len) const;
 
-    /// @brief Adds a new host to the v4 collection.
+    /// @brief Adds a new host to the collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. Contrary to its
+    /// name, this is useful for both IPv4 and IPv6 hosts, as this adds the
+    /// host to hosts_ storage that is shared by both families. Notes that
+    /// for IPv6 host additional steps may be required (see @ref add6).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///
@@ -466,9 +528,11 @@ private:
     /// has already been added to the IPv4 subnet.
     virtual void add4(const HostPtr& host);
 
-    /// @brief Adds a new host to the v6 collection.
+    /// @brief Adds IPv6-specific reservation to hosts collection.
     ///
-    /// This is an internal method called by public @ref add.
+    /// This is an internal method called by public @ref add. This method adds
+    /// IPv6 reservations (IPv6 addresses or prefixes reserved) to the hosts6_
+    /// storage. Note the host has been added to the hosts_ already (in @ref add4).
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///
@@ -491,6 +555,16 @@ private:
     /// - IPv6 address
     /// - IPv6 prefix
     HostContainer6 hosts6_;
+
+    /// @brief Unparse a configuration object (DHCPv4 reservations)
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement4() const;
+
+    /// @brief Unparse a configuration object (DHCPv6 reservations)
+    ///
+    /// @return a pointer to unparsed configuration
+    isc::data::ElementPtr toElement6() const;
 };
 
 /// @name Pointers to the @c CfgHosts objects.

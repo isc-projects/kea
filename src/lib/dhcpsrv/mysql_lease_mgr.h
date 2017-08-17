@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -329,6 +329,28 @@ public:
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
 
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+
     /// @brief Deletes all expired-reclaimed DHCPv6 leases.
     ///
     /// @param secs Number of seconds since expiration of leases before
@@ -409,8 +431,8 @@ public:
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry
         UPDATE_LEASE6,               // Update a Lease6 entry
-        RECOUNT_LEASE4_STATS,        // Fetches IPv4 address statisics
-        RECOUNT_LEASE6_STATS,        // Fetches IPv6 address statisics
+        RECOUNT_LEASE4_STATS,        // Fetches IPv4 address statistics
+        RECOUNT_LEASE6_STATS,        // Fetches IPv6 address statistics
         NUM_STATEMENTS               // Number of statements
     };
 
@@ -421,7 +443,7 @@ private:
     /// of the addLease method.  It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
-    /// @param stindex Index of statemnent being executed
+    /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array that has been created for the type
     ///        of lease in question.
     ///
@@ -502,7 +524,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
@@ -514,7 +536,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease46)
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters

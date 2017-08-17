@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -150,7 +150,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
     opterr = 0;
     optind = 1;
-    while ((ch = getopt(argc, argv, ":46dvVWp:x:i:o:c:f:")) != -1) {
+    while ((ch = getopt(argc, argv, ":46dhvVWp:x:i:o:c:f:")) != -1) {
         switch (ch) {
         case '4':
             // Process DHCPv4 lease files.
@@ -163,12 +163,12 @@ LFCController::parseArgs(int argc, char* argv[]) {
             break;
 
         case 'v':
-            // Print just Kea vesion and exit.
+            // Print just Kea version and exit.
             std::cout << getVersion(false) << std::endl;
             exit(EXIT_SUCCESS);
 
         case 'V':
-            // Print extended  Kea vesion and exit.
+            // Print extended  Kea version and exit.
             std::cout << getVersion(true) << std::endl;
             exit(EXIT_SUCCESS);
 
@@ -236,6 +236,7 @@ LFCController::parseArgs(int argc, char* argv[]) {
 
         case '?':
             // Unknown argument
+            // note this will catch all the previous ... name missing
             isc_throw(InvalidUsage, "Unknown argument");
 
         case ':':
@@ -311,7 +312,7 @@ LFCController::usage(const std::string& text) {
               << "   -f <file>: finish file" << std::endl
               << "   -c <file>: configuration file" << std::endl
               << "   -v: print version number and exit" << std::endl
-              << "   -V: print extended version inforamtion and exit" << std::endl
+              << "   -V: print extended version information and exit" << std::endl
               << "   -d: optional, verbose output " << std::endl
               << "   -h: print this message " << std::endl
               << std::endl;
