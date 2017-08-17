@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,6 +96,36 @@ public:
 /// - INT_MAX: used for server-registered callouts called after
 ///   user-registered callouts.
 ///
+/// Since Kea 1.3.0 release hook libraries can register callouts as control
+/// command handlers. Such handlers are associated with dynamically created
+/// hook points which names are created after command names. For example,
+/// if a command name is 'foo-bar', the name of the hook point to which
+/// callouts/command handlers are registered is '$foo_bar'. Prefixing the
+/// hook point name with the dollar sign eliminates potential conflicts
+/// between hook points dedicated to commands handling and other (fixed)
+/// hook points.
+///
+/// Prefixing hook names for command handlers with a dollar sign precludes
+/// auto registration of command handlers, i.e. hooks framework is unable
+/// to match hook points with names of functions implementing command
+/// handlers, because the dollar sign is not legal in C++ function names.
+/// This is intended because we want hook libraries to explicitly register
+/// commands handlers for supported commands and not rely on Kea to register
+/// hook points for them. Should we find use cases for auto registration of
+/// command handlers, we may modify the
+/// @ref ServerHooks::commandToHookName to use an encoding of hook
+/// point names for command handlers that would only contain characters
+/// allowed in function names.
+///
+/// The @ref CalloutManager::registerCommandHook has been added to allow for
+/// dynamically creating hook points for which command handlers are registered.
+/// This method is called from the @ref LibraryHandle::registerCommandCallout
+/// as a result of registering the command handlers by the hook library in
+/// its @c load() function. If the hook point for the given command already
+/// exists, this function doesn't do anything. The
+/// @ref LibraryHandle::registerCommandCallout can install callouts on this
+/// hook point.
+///
 /// Note that the callout functions do not access the CalloutManager: instead,
 /// they use a LibraryHandle object.  This contains an internal pointer to
 /// the CalloutManager, but provides a restricted interface.  In that way,
@@ -184,9 +214,20 @@ public:
     /// @throw NoSuchHook Given index does not correspond to a valid hook.
     bool calloutsPresent(int hook_index) const;
 
+    /// @brief Checks if control command handlers are present for the
+    /// specified command.
+    ///
+    /// @param command_name Command name for which handlers' presence should
+    ///        be checked.
+    ///
+    /// @return true if there is a hook point associated with the specified
+    /// command and callouts/command handlers are installed for this hook
+    /// point, false otherwise.
+    bool commandHandlersPresent(const std::string& command_name) const;
+
     /// @brief Calls the callouts for a given hook
     ///
-    /// Iterates through the libray handles and calls the callouts associated
+    /// Iterates through the library handles and calls the callouts associated
     /// with the given hook index.
     ///
     /// @note This method invalidates the current library index set with
@@ -196,6 +237,34 @@ public:
     /// @param callout_handle Reference to the CalloutHandle object for the
     ///        current object being processed.
     void callCallouts(int hook_index, CalloutHandle& callout_handle);
+
+    /// @brief Calls the callouts/command handlers for a given command name.
+    ///
+    /// Iterates through the library handles and calls the command handlers
+    /// associated with the given command. It expects that the hook point
+    /// for this command exists (with a name being a command_name prefixed
+    /// with a dollar sign and with hyphens replaced with underscores).
+    ///
+    /// @param command_name Command name for which handlers should be called.
+    /// @param callout_handle Reference to the CalloutHandle object for the
+    ///        current object being processed.
+    ///
+    /// @throw NoSuchHook if the hook point for the specified command does
+    ///        not exist.
+    void callCommandHandlers(const std::string& command_name,
+                             CalloutHandle& callout_handle);
+
+    /// @brief Registers a hook point for the specified command name.
+    ///
+    /// If the hook point for such command already exists, this function
+    /// doesn't do anything. The registered hook point name is created
+    /// after command_name by prefixing it with a dollar sign and replacing
+    /// all hyphens with underscores, e.g. for the 'foo-bar' command the
+    /// following hook point name will be generated: '$foo_bar'.
+    ///
+    /// @param command_name Command name for which the hook point should be
+    ///        registered.
+    void registerCommandHook(const std::string& command_name);
 
     /// @brief Get current hook index
     ///

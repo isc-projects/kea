@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,11 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <iostream>
+#include <string>
+#include <string.h>
 
 using namespace isc;
+using namespace isc::data;
 using namespace isc::util::encode;
 using namespace isc::util::str;
 
@@ -71,6 +74,39 @@ CfgDUID::create(const std::string& duid_file_path) const {
     return (factory.get());
 }
 
+ElementPtr
+CfgDUID::toElement() const {
+    ElementPtr result = Element::createMap();
+    // The type item is required
+    std::string duid_type = "LLT";
+    switch (type_) {
+    case DUID::DUID_LLT:
+        break;
+    case DUID::DUID_EN:
+        duid_type = "EN";
+        break;
+    case DUID::DUID_LL:
+        duid_type = "LL";
+        break;
+    default:
+        isc_throw(ToElementError, "invalid DUID type: " << getType());
+        break;
+    }
+    result->set("type", Element::create(duid_type));
+    // Set the identifier
+    result->set("identifier",
+                Element::create(util::encode::encodeHex(identifier_)));
+    // Set the hardware type
+    result->set("htype", Element::create(htype_));
+    // Set the time
+    result->set("time", Element::create(static_cast<long long>(time_)));
+    // Set the enterprise id
+    result->set("enterprise-id",
+                Element::create(static_cast<long long>(enterprise_id_)));
+    // Set the persistence flag
+    result->set("persist", Element::create(persist_));
+    return (result);
+}
 
 }
 }

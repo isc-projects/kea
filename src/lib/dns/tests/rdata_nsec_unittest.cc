@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,7 +117,7 @@ TEST_F(Rdata_NSEC_Test, compare) {
     EXPECT_THROW(generic::NSEC(nsec_txt).compare(*rdata_nomatch),
                  bad_cast);
 
-    // test RDATAs, sorted in the ascendent order.  We only compare the
+    // test RDATAs, sorted in the ascending order.  We only compare the
     // next name here.  Bitmap comparison is tested in the bitmap tests.
     // Note that names are compared as wire-format data, not based on the
     // domain name comparison.

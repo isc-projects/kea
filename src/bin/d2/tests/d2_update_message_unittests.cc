@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,7 +112,7 @@ TEST_F(D2UpdateMessageTest, setZone) {
     EXPECT_EQ(RRClass::ANY().getCode(), zone->getClass().getCode());
 
     // Now, let's check that the existing Zone object can be
-    // overriden with a new one.
+    // overridden with a new one.
     msg.setZone(Name("foo.example.com"), RRClass::NONE());
     zone = msg.getZone();
     EXPECT_TRUE(zone);
@@ -282,7 +282,7 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidOpcode) {
     };
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
-    // can be used to decode the binary mesasage data.
+    // can be used to decode the binary message data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid Opcode, the fromWire function should
     // throw NotUpdateMessage exception.
@@ -306,7 +306,7 @@ TEST_F(D2UpdateMessageTest, fromWireInvalidQRFlag) {
     };
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
-    // can be used to decode the binary mesasage data.
+    // can be used to decode the binary message data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When using invalid QR flag, the fromWire function should
     // throw InvalidQRFlag exception.
@@ -345,7 +345,7 @@ TEST_F(D2UpdateMessageTest, fromWireTooManyZones) {
 
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
-    // can be used to decode the binary mesasage data.
+    // can be used to decode the binary message data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     // When parsing a message with more than one Zone record,
     // exception should be thrown.
@@ -366,7 +366,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
     // one Zone. toWire function would fail if Zone is not set.
     msg.setZone(Name("example.com"), RRClass::IN());
 
-    // Set prerequisities.
+    // Set prerequisites.
 
     // 'Name Is Not In Use' prerequisite (RFC 2136, section 2.4.5)
     RRsetPtr prereq1(new RRset(Name("foo.example.com"), RRClass::NONE(),
@@ -433,7 +433,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
     EXPECT_EQ(1, buf.readUint16());
 
     // PRCOUNT - holds the number of prerequisites. Earlier we have added
-    // two prerequisites. Thus, expect that this conter is 2.
+    // two prerequisites. Thus, expect that this counter is 2.
     EXPECT_EQ(2, buf.readUint16());
 
     // UPCOUNT - holds the number of RRs in the Update Section. We have
@@ -456,7 +456,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
 
     // The simplest way to convert the name from wire format to a string
     // is to use dns::Name class. It should be ok to rely on the Name class
-    // to decode the name, because it is unit tested elswhere.
+    // to decode the name, because it is unit tested elsewhere.
     std::string zone_name = readNameFromWire(buf, 13);
     EXPECT_EQ("example.com.", zone_name);
 
@@ -484,7 +484,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
 
     // Check the name first. Message renderer is using compression for domain
     // names as described in RFC 1035, section 4.1.4. The name in this RR is
-    // foo.example.com. The name of the zone is example.com and it has occured
+    // foo.example.com. The name of the zone is example.com and it has occurred
     // in this message already at offset 12 (the size of the header is 12).
     // Therefore, name of this RR is encoded as 'foo', followed by a pointer
     // to offset in this message where the remainder of this name was used.
@@ -566,7 +566,7 @@ TEST_F(D2UpdateMessageTest, toWireInvalidQRFlag) {
 
     // The 'true' argument passed to the constructor turns the
     // message into the parse mode in which the fromWire function
-    // can be used to decode the binary mesasage data.
+    // can be used to decode the binary message data.
     D2UpdateMessage msg(D2UpdateMessage::INBOUND);
     ASSERT_NO_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)));
 

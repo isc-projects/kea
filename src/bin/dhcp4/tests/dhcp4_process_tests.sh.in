@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,6 +57,84 @@ CONFIG="{
         ]
     }
 }"
+# Invalid configuration (syntax error) to check that Kea can check syntax.
+# This config has following errors:
+# - it should be interfaces-config/interfaces, not interfaces
+# - it should be subnet4/pools, no subnet4/pool
+CONFIG_BAD_SYNTAX="{
+    \"Dhcp4\":
+    {
+        \"interfaces\": [ ],
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/8\",
+            \"pool\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# This config has bad pool values. The pool it out of scope for the subnet
+# it is defined in. Syntactically the config is correct, though.
+CONFIG_BAD_VALUES="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"persist\": false
+        },
+        \"subnet4\": [
+        {
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"192.168.0.10-192.168.0.100\" } ]
+        } ]
+    },
+
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
 # Invalid configuration (negative valid-lifetime) to check that Kea
 # gracefully handles reconfiguration errors.
 CONFIG_INVALID="{
@@ -102,6 +180,33 @@ bin_path=@abs_top_builddir@/src/bin/dhcp4
 
 # Import common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# This test verifies that syntax checking works properly. This function
+# requires 3 parameters:
+# testname
+# config - string with a content of the config (will be written to a file)
+# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+syntax_check_test() {
+    local TESTNAME="${1}"
+    local CONFIG="${2}"
+    local EXP_CODE="${3}"
+
+    # Log the start of the test and print test name.
+    test_start $TESTNAME
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    ${bin_path}/${bin} -t ${CFG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne $EXP_CODE ]; then
+        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    test_finish 0
+}
 
 # This test verifies that DHCPv4 can be reconfigured with a SIGHUP signal.
 dynamic_reconfiguration_test() {
@@ -275,7 +380,7 @@ shutdown_test() {
 }
 
 # This test verifies that DHCPv4 can be configured to run lease file cleanup
-# periodially.
+# periodically.
 lfc_timer_test() {
     # Log the start of the test and print test name.
     test_start "dhcpv4_srv.lfc_timer_test"
@@ -380,3 +485,6 @@ shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
 logger_vars_test "dhcpv4.variables"
 lfc_timer_test
+syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0
+syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
+syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1

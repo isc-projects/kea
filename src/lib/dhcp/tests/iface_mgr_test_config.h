@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,7 +194,7 @@ public:
     ///
     /// The test uses stub implementation of packet filter object. It is
     /// possible to configure that object to report having a capability
-    /// to directly repond to clients which don't have an address yet.
+    /// to directly respond to clients which don't have an address yet.
     /// This function sets this property for packet filter object.
     ///
     /// @param direct_resp Value to be set.

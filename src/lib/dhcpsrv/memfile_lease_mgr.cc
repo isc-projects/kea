@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,7 +50,7 @@ namespace dhcp {
 /// the interval timer and assigns a callback function (pointer to which is
 /// passed in the constructor), which will be called at the specified
 /// intervals to perform the cleanup. It is also responsible for creating
-/// and maintaing the object which is used to spawn the new process which
+/// and maintaining the object which is used to spawn the new process which
 /// executes the @c kea-lfc program.
 ///
 /// This functionality is enclosed in a separate class so as the implementation
@@ -127,12 +127,6 @@ LFCSetup::LFCSetup(asiolink::IntervalTimer::Callback callback)
 
 LFCSetup::~LFCSetup() {
     try {
-        // If we're here it means that either the process is terminating
-        // or we're reconfiguring the server. In both cases the thread has
-        // probably been stopped already, but we make sure by calling
-        // stopThread explicitly here.
-        timer_mgr_->stopThread();
-
         // Remove the timer. This will throw an exception if the timer does not
         // exist.  There are several possible reasons for this:
         // a) It hasn't been registered (although if the LFC Setup instance
@@ -216,7 +210,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
         callback_();
     }
 
-    // If it's suposed to run periodically, setup that now.
+    // If it's supposed to run periodically, setup that now.
     if (lfc_interval > 0) {
         // Set the timer to call callback function periodically.
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SETUP).arg(lfc_interval);
@@ -332,7 +326,7 @@ public:
     /// The result set is populated by iterating over the IPv4 leases in
     /// storage, in ascending order by address, accumulating the lease state
     /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not gaurantee
+    /// inherently group them by subnet, and while this does not guarantee
     /// ascending order of subnet id, it should be sufficient to accumulate
     /// state counts per subnet.  This avoids introducing an additional
     /// subnet_id index.
@@ -425,7 +419,7 @@ public:
     /// The result set is populated by iterating over the IPv6 leases in
     /// storage, in ascending order by address, accumulating the lease state
     /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not gaurantee
+    /// inherently group them by subnet, and while this does not guarantee
     /// ascending order of subnet id, it should be sufficient to accumulate
     /// state counts per subnet.  This avoids introducing an additional
     /// subnet_id index.
@@ -556,7 +550,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
         if (conversion_needed) {
-            LOG_WARN(dhcpsrv_logger, DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES)
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
                     .arg(MAJOR_VERSION).arg(MINOR_VERSION);
         }
         lfcSetup(conversion_needed);
@@ -644,14 +638,17 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
     Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
-        lease != idx.end(); ++lease) {
 
-        // Every Lease4 has a hardware address, so we can compare it
-        if ( (*(*lease)->hwaddr_) == hwaddr) {
-            collection.push_back((*lease));
-        }
+    // Using composite index by 'hw address' and 'subnet id'. It is
+    // ok to use it for searching by the 'hw address' only.
+    const Lease4StorageHWAddressSubnetIdIndex& idx =
+        storage4_.get<HWAddressSubnetIdIndexTag>();
+    std::pair<Lease4StorageHWAddressSubnetIdIndex::const_iterator,
+              Lease4StorageHWAddressSubnetIdIndex::const_iterator> l
+        = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
+
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
 
     return (collection);
@@ -683,15 +680,16 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
     Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
-        lease != idx.end(); ++ lease) {
+    // Using composite index by 'client id' and 'subnet id'. It is ok
+    // to use it to search by 'client id' only.
+    const Lease4StorageClientIdSubnetIdIndex& idx =
+        storage4_.get<ClientIdSubnetIdIndexTag>();
+    std::pair<Lease4StorageClientIdSubnetIdIndex::const_iterator,
+              Lease4StorageClientIdSubnetIdIndex::const_iterator> l
+        = idx.equal_range(boost::make_tuple(client_id.getClientId()));
 
-        // client-id is not mandatory in DHCPv4. There can be a lease that does
-        // not have a client-id. Dereferencing null pointer would be a bad thing
-        if((*lease)->client_id_ && *(*lease)->client_id_ == client_id) {
-            collection.push_back((*lease));
-        }
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
 
     return (collection);
@@ -993,12 +991,12 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
 
     // This returns the first element which is greater than the specified
     // tuple (true, time(NULL) - secs). However, the range between the
-    // beginnng of the index and returned element also includes all the
+    // beginning of the index and returned element also includes all the
     // elements for which the first value is false (lease state is NOT
     // reclaimed), because false < true. All elements between the
     // beginning of the index and the element returned, for which the
     // first value is true, represent the reclaimed leases which should
-    // be deleted, because their expiration time + secs has occured earlier
+    // be deleted, because their expiration time + secs has occurred earlier
     // than current time.
     typename IndexType::const_iterator upper_limit =
         index.upper_bound(boost::make_tuple(true, time(NULL) - secs));
@@ -1324,6 +1322,63 @@ Memfile_LeaseMgr::startLeaseStatsQuery6() {
     query->start();
     return(query);
 }
+
+size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4)
+        .arg(subnet_id);
+
+    // Get the index by DUID, IAID, lease type.
+    const Lease4StorageSubnetIdIndex& idx = storage4_.get<SubnetIdIndexTag>();
+
+    // Try to get the lease using the DUID, IAID and lease type.
+    std::pair<Lease4StorageSubnetIdIndex::const_iterator,
+              Lease4StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    // Let's collect all leases.
+    Lease4Collection leases;
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        leases.push_back(*lease);
+    }
+
+    size_t num = leases.size();
+    for (auto l = leases.begin(); l != leases.end(); ++l) {
+        deleteLease((*l)->addr_);
+    }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
+        .arg(subnet_id).arg(num);
+
+    return (num);
+}
+
+size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6)
+        .arg(subnet_id);
+
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
+
+    // Try to get the lease using the DUID, IAID and lease type.
+    std::pair<Lease6StorageSubnetIdIndex::const_iterator,
+              Lease6StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    // Let's collect all leases.
+    Lease6Collection leases;
+    for(auto lease = l.first; lease != l.second; ++lease) {
+        leases.push_back(*lease);
+    }
+
+    size_t num = leases.size();
+    for (auto l = leases.begin(); l != leases.end(); ++l) {
+        deleteLease((*l)->addr_);
+    }
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
+        .arg(subnet_id).arg(num);
+
+    return (num);
+}
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

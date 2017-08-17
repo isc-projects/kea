@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,9 +34,18 @@ int main(int argc, char* argv[]) {
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
     } catch (const VersionMessage& ex) {
-        std::cout << ex.what() << std::endl;
+        std::string msg(ex.what());
+        if (!msg.empty()) {
+            std::cout << msg << std::endl;
+        }
+    } catch (const InvalidUsage& ex) {
+        std::string msg(ex.what());
+        if (!msg.empty()) {
+            std::cerr << msg << std::endl;
+        }
+        ret = EXIT_FAILURE;
     } catch (const isc::Exception& ex) {
-        std::cerr << "Service failed:" << ex.what() << std::endl;
+        std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
     }
 

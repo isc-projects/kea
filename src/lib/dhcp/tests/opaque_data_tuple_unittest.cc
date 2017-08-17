@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -386,7 +386,7 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     EXPECT_EQ(0, tuple.getLength());
 }
 
-// This test verfifies that exception is thrown if the empty buffer is being
+// This test verifies that exception is thrown if the empty buffer is being
 // parsed.
 TEST(OpaqueDataTuple, unpack1ByteEmptyBuffer) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -417,7 +417,7 @@ TEST(OpaqueDataTuple, unpack2Byte) {
     for (int i = 0; i < 400; ++i) {
         wire_data.push_back(i);
     }
-    // The unpack shoud succeed.
+    // The unpack should succeed.
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     // The decoded length should be 400.
     ASSERT_EQ(400, tuple.getLength());

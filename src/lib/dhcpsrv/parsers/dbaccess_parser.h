@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,24 +8,14 @@
 #define DBACCESS_PARSER_H
 
 #include <cc/data.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <cc/simple_parser.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Exception thrown when 'type' keyword is missing from string
-///
-/// This condition is checked, but should never occur because 'type' is marked
-/// as mandatory in the .spec file for the server.
-class TypeKeywordMissing : public isc::Exception {
-public:
-    TypeKeywordMissing(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
 
 /// @brief Parse Lease Database Parameters
 ///
@@ -35,7 +25,7 @@ public:
 ///
 /// Only the "type" sub-element is mandatory: the remaining sub-elements 
 /// depend on the database chosen.
-class DbAccessParser: public DhcpConfigParser {
+class DbAccessParser: public isc::data::SimpleParser {
 public:
 
     /// @brief Specifies the database type
@@ -52,58 +42,36 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param param_name Name of the parameter under which the database
-    ///        access details are held.
     /// @param db_type Specifies database type (lease or hosts)
-    DbAccessParser(const std::string& param_name, DBType db_type);
+    explicit DbAccessParser(DBType db_type);
 
     /// The destructor.
     virtual ~DbAccessParser()
     {}
 
-    /// @brief Prepare configuration value.
+    /// @brief Parse configuration value.
     ///
     /// Parses the set of strings forming the database access specification and
     /// checks that all are OK.  In particular it checks:
     ///
     /// - "type" is "memfile", "mysql" or "postgresql"
     /// - "lfc-interval" is a number from the range of 0 to 4294967295.
-    /// - "timeout" is a number from the range of 0 to 4294967295.
+    /// - "connect-timeout" is a number from the range of 0 to 4294967295.
+    /// - "port" is a number from the range of 0 to 65535.
     ///
     /// Once all has been validated, constructs the database access string
     /// expected by the lease manager.
     ///
-    /// @param config_value The configuration value for the "lease-database"
+    /// @param cfg_db The configuration where the access string will be set
+    /// @param database_config The configuration value for the "*-database"
     ///        identifier.
     ///
-    /// @throw isc::BadValue The 'type' keyword contains an unknown database
-    ///        type.
-    /// @throw isc::dhcp::MissingTypeKeyword The 'type' keyword is missing from
-    ///        the list of database access keywords.
-    virtual void build(isc::data::ConstElementPtr config_value);
+    /// @throw isc::dhcp::DhcpConfigError The 'type' keyword contains an
+    ///        unknown database type or is missing from the list of
+    ///        database access keywords.
+    void parse(isc::dhcp::CfgDbAccessPtr& cfg_db,
+               isc::data::ConstElementPtr database_config);
 
-    /// @brief This method is no-op.
-    virtual void commit();
-
-    /// @brief Factory method to create parser
-    ///
-    /// Creates an instance of this parser.
-    ///
-    /// @param param_name Name of the parameter used to access the
-    ///         configuration.
-    ///
-    /// @return Pointer to a DbAccessParser.  The caller is responsible for
-    ///         destroying the parser after use.
-    static DhcpConfigParser* factory(const std::string& param_name) {
-        if (param_name == "lease-database") {
-            return (new DbAccessParser(param_name, DbAccessParser::LEASE_DB));
-        } else if (param_name == "hosts-database") {
-            return (new DbAccessParser(param_name, DbAccessParser::HOSTS_DB));
-        } else {
-            isc_throw(BadValue, "Unexpected parameter name (" << param_name
-                      << ") passed to DbAccessParser::factory");
-        }
-    }
 
 protected:
     /// @brief Get database access parameters
@@ -117,6 +85,7 @@ protected:
     const StringPairMap& getDbAccessParameters() const {
         return (values_);
     }
+
 
     /// @brief Construct database access string
     ///

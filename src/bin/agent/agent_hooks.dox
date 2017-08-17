@@ -1,0 +1,58 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page agentHooks The Hooks API for the Control Agent
+
+@section agentHooksIntroduction Introduction
+The Kea Control Agent features "Hooks" API that allows the user-written
+code to be integrated with the Control Agent and handle some
+of the control commands. The hooks library can be either used to provide
+support for the new commands (not supported natively by the Control Agent)
+or "override" implementation of the existing handlers. The hooks library
+signals to the Control Agent that it has processed the given command by
+setting "next step status" value to SKIP.
+
+The hooks library can also be used to perform some additional tasks
+related to reception of the control command instead of handling it, e.g.
+logging or notifying some external service about reception of the
+command.
+
+@section agentHooksHookPoints Hooks in the Control Agent
+
+ @subsection agentHooksControlCommandReceive control_command_receive
+
+ - @b Arguments:
+   - name: @b command, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+   - name: @b response, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when Control Agent receives a
+   control command over the RESTful interface (HTTP).
+   The "command" argument is a pointer to the parsed JSON structure
+   including command name and command arguments. If the callout implements
+   the specified command, it handles the command and creates appropriate
+   response. The response should be returned in the "response" argument.
+   In most cases, the callout which handles the command will set the next
+   step action to SKIP, to prevent the server from trying to handle the
+   command on its own and overriding the response created by the callouts.
+   A notable exception is the 'list-commands' command for which the callouts
+   should not set the next step action to SKIP. The server has a special
+   code path for this command which combines the list of commands returned
+   by the callouts with the list of commands supported by the server. If
+   the callout sets the next step action to SKIP in this case, the server
+   will only return the list of commands supported by the hook library.
+   The callout can modify the command arguments to influence the command
+   processing by the Command Manager. For example, it may freely modify
+   the configuration received in 'config-set' before it is processed by
+   the server. The SKIP action is not set in this case.
+
+ - <b>Next step status</b>: if any callout sets the next step action to SKIP,
+   the server will assume that the command has been handled by the callouts
+   and will expect that the response is provided in the "response" argument.
+   The Control Agent will not handle the command in this case but simply
+   return the response returned by the callout to the caller.
+
+*/

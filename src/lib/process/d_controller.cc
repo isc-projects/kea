@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <cfgrpt/config_report.h>
-#include <cryptolink/cryptolink.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <log/logger.h>
@@ -29,6 +28,9 @@
 #include <sstream>
 #include <unistd.h>
 
+using namespace isc::data;
+using namespace isc::config;
+
 namespace isc {
 namespace process {
 
@@ -37,7 +39,7 @@ DControllerBasePtr DControllerBase::controller_;
 // Note that the constructor instantiates the controller's primary IOService.
 DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
-      verbose_(false), spec_file_name_(""),
+      verbose_(false), check_only_(false), spec_file_name_(""),
       io_service_(new isc::asiolink::IOService()),
       io_signal_queue_() {
 }
@@ -54,6 +56,12 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     controller_ = controller;
 }
 
+ConstElementPtr
+DControllerBase::parseFile(const std::string&) {
+    ConstElementPtr elements;
+    return (elements);
+}
+
 void
 DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
@@ -62,10 +70,16 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         parseArgs(argc, argv);
     } catch (const InvalidUsage& ex) {
         usage(ex.what());
-        throw; // rethrow it
+        // rethrow it with an empty message
+        isc_throw(InvalidUsage, "");
     }
 
     setProcName(bin_name_);
+
+    if (isCheckOnly()) {
+        checkConfigOnly();
+        return;
+    }
 
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
@@ -109,12 +123,12 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
                    "Application Process initialization failed: " << ex.what());
     }
 
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_STANDALONE).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_STANDALONE)
+        .arg(app_name_);
 
     // Step 3 is to load configuration from file.
     int rcode;
-    isc::data::ConstElementPtr comment
-        = isc::config::parseAnswer(rcode, configFromFile());
+    ConstElementPtr comment = parseAnswer(rcode, configFromFile());
     if (rcode != 0) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
                   .arg(app_name_).arg(comment->stringValue());
@@ -141,15 +155,69 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 }
 
 void
+DControllerBase::checkConfigOnly() {
+    try {
+        // We need to initialize logging, in case any error
+        // messages are to be printed.
+        // This is just a test, so we don't care about lockfile.
+        setenv("KEA_LOCKFILE_DIR", "none", 0);
+        isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
+        isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
+        Daemon::loggerInit(bin_name_.c_str(), verbose_);
+
+        // Check the syntax first.
+        std::string config_file = getConfigFile();
+        if (config_file.empty()) {
+            // Basic sanity check: file name must not be empty.
+            isc_throw(InvalidUsage, "JSON configuration file not specified");
+        }
+        ConstElementPtr whole_config = parseFile(config_file);
+        if (!whole_config) {
+            // No fallback to fromJSONFile
+            isc_throw(InvalidUsage, "No configuration found");
+        }
+        if (verbose_) {
+            std::cerr << "Syntax check OK" << std::endl;
+        }
+
+        // Check the logic next.
+        ConstElementPtr module_config;
+        module_config = whole_config->get(getAppName());
+        if (!module_config) {
+            isc_throw(InvalidUsage, "Config file " << config_file <<
+                      " does not include '" << getAppName() << "' entry");
+        }
+
+        // Get an application process object.
+        initProcess();
+
+        ConstElementPtr answer = checkConfig(module_config);
+        int rcode = 0;
+        answer = parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            isc_throw(InvalidUsage, "Error encountered: "
+                      << answer->stringValue());
+        }
+    } catch (const VersionMessage&) {
+        throw;
+    } catch (const InvalidUsage&) {
+        throw;
+    } catch (const std::exception& ex) {
+        isc_throw(InvalidUsage, "Syntax check failed with: " << ex.what());
+    }
+    return;
+}
+
+void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
     // Iterate over the given command line options. If its a stock option
-    // ("s" or "v") handle it here.  If its a valid custom option, then
+    // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVWc:" + getCustomOpts());
+    std::string opts("dvVWc:t:" + getCustomOpts());
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -168,7 +236,7 @@ DControllerBase::parseArgs(int argc, char* argv[])
             // rather than calling exit() here which disrupts gtest.
             isc_throw(VersionMessage, getVersion(true));
             break;
-            
+
         case 'W':
             // gather Kea config report and throw so main() can catch and
             // return rather than calling exit() here which disrupts gtest.
@@ -176,12 +244,17 @@ DControllerBase::parseArgs(int argc, char* argv[])
             break;
 
         case 'c':
+        case 't':
             // config file name
             if (optarg == NULL) {
                 isc_throw(InvalidUsage, "configuration file name missing");
             }
 
             setConfigFile(optarg);
+
+            if (ch == 't') {
+                check_only_ = true;
+            }
             break;
 
         case '?': {
@@ -220,7 +293,8 @@ DControllerBase::customOption(int /* option */, char* /*optarg*/)
 
 void
 DControllerBase::initProcess() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_INIT_PROCESS).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_INIT_PROCESS)
+        .arg(app_name_);
 
     // Invoke virtual method to instantiate the application process.
     try {
@@ -240,15 +314,15 @@ DControllerBase::initProcess() {
     process_->init();
 }
 
-isc::data::ConstElementPtr
+ConstElementPtr
 DControllerBase::configFromFile() {
     // Rollback any previous staging configuration. For D2, only a
     // logger configuration is used here.
     isc::dhcp::CfgMgr::instance().rollback();
     // Will hold configuration.
-    isc::data::ConstElementPtr module_config;
+    ConstElementPtr module_config;
     // Will receive configuration result.
-    isc::data::ConstElementPtr answer;
+    ConstElementPtr answer;
     try {
         std::string config_file = getConfigFile();
         if (config_file.empty()) {
@@ -257,9 +331,13 @@ DControllerBase::configFromFile() {
                                 "use -c command line option.");
         }
 
-        // Read contents of the file and parse it as JSON
-        isc::data::ConstElementPtr whole_config =
-            isc::data::Element::fromJSONFile(config_file, true);
+        // If parseFile returns an empty pointer, then pass the file onto the
+        // original JSON parser.
+        ConstElementPtr whole_config = parseFile(config_file);
+        if (!whole_config) {
+            // Read contents of the file and parse it as JSON
+            whole_config = Element::fromJSONFile(config_file, true);
+        }
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
@@ -282,7 +360,7 @@ DControllerBase::configFromFile() {
 
         answer = updateConfig(module_config);
         int rcode = 0;
-        isc::config::parseAnswer(rcode, answer);
+        parseAnswer(rcode, answer);
         if (!rcode) {
             // Configuration successful, so apply the logging configuration
             // to log4cplus.
@@ -294,9 +372,8 @@ DControllerBase::configFromFile() {
         // Rollback logging configuration.
         isc::dhcp::CfgMgr::instance().rollback();
         // build an error result
-        isc::data::ConstElementPtr error =
-            isc::config::createAnswer(1,
-                std::string("Configuration parsing failed: ") + ex.what());
+        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+                 std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
 
@@ -306,7 +383,8 @@ DControllerBase::configFromFile() {
 
 void
 DControllerBase::runProcess() {
-    LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT, DCTL_RUN_PROCESS).arg(app_name_);
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_RUN_PROCESS)
+        .arg(app_name_);
     if (!process_) {
         // This should not be possible.
         isc_throw(DControllerBaseError, "Process not initialized");
@@ -318,49 +396,168 @@ DControllerBase::runProcess() {
 }
 
 // Instance method for handling new config
-isc::data::ConstElementPtr
-DControllerBase::updateConfig(isc::data::ConstElementPtr new_config) {
-    return (process_->configure(new_config));
+ConstElementPtr
+DControllerBase::updateConfig(ConstElementPtr new_config) {
+    return (process_->configure(new_config, false));
 }
 
+// Instance method for checking new config
+ConstElementPtr
+DControllerBase::checkConfig(ConstElementPtr new_config) {
+    return (process_->configure(new_config, true));
+}
 
-// Instance method for executing commands
-isc::data::ConstElementPtr
-DControllerBase::executeCommand(const std::string& command,
-                            isc::data::ConstElementPtr args) {
+ConstElementPtr
+DControllerBase::configGetHandler(const std::string&,
+                                  ConstElementPtr /*args*/) {
+    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+
+    return (createAnswer(COMMAND_SUCCESS, config));
+}
+
+ConstElementPtr
+DControllerBase::configWriteHandler(const std::string&,
+                                    ConstElementPtr args) {
+    std::string filename;
+
+    if (args) {
+        if (args->getType() != Element::map) {
+            return (createAnswer(COMMAND_ERROR, "Argument must be a map"));
+        }
+        ConstElementPtr filename_param = args->get("filename");
+        if (filename_param) {
+            if (filename_param->getType() != Element::string) {
+                return (createAnswer(COMMAND_ERROR,
+                                     "passed parameter 'filename' "
+                                     "is not a string"));
+            }
+            filename = filename_param->stringValue();
+        }
+    }
+
+    if (filename.empty()) {
+        // filename parameter was not specified, so let's use
+        // whatever we remember
+        filename = getConfigFile();
+        if (filename.empty()) {
+            return (createAnswer(COMMAND_ERROR,
+                                 "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    }
+
+
+    // Ok, it's time to write the file.
+    size_t size = 0;
+    ElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
+
+    // Logging storage is messed up in CA. During its configuration (see
+    // DControllerBase::configFromFile() it calls Daemon::configureLogger()
+    // that stores the logging info in isc::dhcp::CfgMgr::getStagingCfg().
+    // This is later moved to getCurrentCfg() when the configuration is
+    // commited. All control-agent specific configuration is stored in
+    // a structure accessible by process_->getCfgMgr()->getContext(). Note
+    // logging information is not stored there.
+    //
+    // As a result, we need to extract the CA configuration from one
+    // place and logging from another.
+    ConstElementPtr loginfo = isc::dhcp::CfgMgr::instance().getCurrentCfg()->toElement();
+    if (loginfo) {
+        // If there was a config stored in dhcp::CfgMgr, try to get Logging info from it.
+        loginfo = loginfo->get("Logging");
+    }
+    if (loginfo) {
+        // If there is some logging information, add it to our config.
+        cfg->set("Logging", loginfo);
+    }
+
+    try {
+        size = writeConfigFile(filename, cfg);
+    } catch (const isc::Exception& ex) {
+        return (createAnswer(COMMAND_ERROR,
+                             std::string("Error during write-config:")
+                             + ex.what()));
+    }
+    if (size == 0) {
+        return (createAnswer(COMMAND_ERROR,
+                             "Error writing configuration to " + filename));
+    }
+
+    // Ok, it's time to return the successful response.
+    ElementPtr params = Element::createMap();
+    params->set("size", Element::create(static_cast<long long>(size)));
+    params->set("filename", Element::create(filename));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Configuration written to "
+                         + filename + " successful", params));
+}
+
+ConstElementPtr
+DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
+    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    ConstElementPtr module_config;
+    std::string app_name = getAppName();
+    std::string message;
+
+    // Command arguments are expected to be:
+    // { "Module": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+      module_config = args->get(app_name);
+        if (!module_config) {
+            message = "Missing mandatory '" + app_name + "' parameter.";
+        } else if (module_config->getType() != Element::map) {
+            message = "'" + app_name + "' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    isc::dhcp::CfgMgr::instance().rollback();
+
+    // Now we check the server proper.
+    return (checkConfig(module_config));
+}
+
+ConstElementPtr
+DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
+    ConstElementPtr answer;
+
+    // For version-get put the extended version in arguments
+    ElementPtr extended = Element::create(getVersion(true));
+    ElementPtr arguments = Element::createMap();
+    arguments->set("extended", extended);
+    answer = createAnswer(COMMAND_SUCCESS, getVersion(false), arguments);
+    return (answer);
+}
+
+ConstElementPtr
+DControllerBase::buildReportHandler(const std::string&, ConstElementPtr) {
+    return (createAnswer(COMMAND_SUCCESS, isc::detail::getConfigReport()));
+}
+
+ConstElementPtr
+DControllerBase::shutdownHandler(const std::string&, ConstElementPtr args) {
     // Shutdown is universal.  If its not that, then try it as
     // a custom command supported by the derivation.  If that
     // doesn't pan out either, than send to it the application
     // as it may be supported there.
-    isc::data::ConstElementPtr answer;
-    if (command.compare(SHUT_DOWN_COMMAND) == 0) {
-        answer = shutdownProcess(args);
-    } else {
-        // It wasn't shutdown, so it may be a custom controller command.
-        int rcode = 0;
-        answer = customControllerCommand(command, args);
-        isc::config::parseAnswer(rcode, answer);
-        if (rcode == COMMAND_INVALID)
-        {
-            // It wasn't a controller command, so it may be an application command.
-            answer = process_->command(command, args);
-        }
-    }
-
-    return (answer);
+    return (shutdownProcess(args));
 }
 
-isc::data::ConstElementPtr
-DControllerBase::customControllerCommand(const std::string& command,
-                                     isc::data::ConstElementPtr /* args */) {
-
-    // Default implementation always returns invalid command.
-    return (isc::config::createAnswer(COMMAND_INVALID,
-                                      "Unrecognized command: " + command));
-}
-
-isc::data::ConstElementPtr
-DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
+ConstElementPtr
+DControllerBase::shutdownProcess(ConstElementPtr args) {
     if (process_) {
         return (process_->shutdown(args));
     }
@@ -368,7 +565,7 @@ DControllerBase::shutdownProcess(isc::data::ConstElementPtr args) {
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    return (isc::config::createAnswer(0, "Process has not been initialized."));
+    return (createAnswer(COMMAND_SUCCESS, "Process has not been initialized"));
 }
 
 void
@@ -416,9 +613,7 @@ DControllerBase::processSignal(int signum) {
             LOG_INFO(dctl_logger, DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD)
                      .arg(signum).arg(getConfigFile());
             int rcode;
-            isc::data::ConstElementPtr comment = isc::config::
-                                                 parseAnswer(rcode,
-                                                             configFromFile());
+            ConstElementPtr comment = parseAnswer(rcode, configFromFile());
             if (rcode != 0) {
                 LOG_ERROR(dctl_logger, DCTL_CFG_FILE_RELOAD_ERROR)
                           .arg(comment->stringValue());
@@ -430,10 +625,10 @@ DControllerBase::processSignal(int signum) {
         case SIGINT:
         case SIGTERM:
         {
-            LOG_DEBUG(dctl_logger, DBGLVL_START_SHUT,
+            LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT,
                       DCTL_SHUTDOWN_SIGNAL_RECVD).arg(signum);
-            isc::data::ElementPtr arg_set;
-            executeCommand(SHUT_DOWN_COMMAND, arg_set);
+            ElementPtr arg_set;
+            shutdownHandler(SHUT_DOWN_COMMAND, arg_set);
             break;
         }
 
@@ -458,7 +653,9 @@ DControllerBase::usage(const std::string & text)
               << std::endl
               << "  -d: optional, verbose output " << std::endl
               << "  -c <config file name> : mandatory,"
-              <<   " specifies name of configuration file " << std::endl;
+              << " specify name of configuration file" << std::endl
+              << "  -t <config file name> : check the"
+              << " configuration file and exit" << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;
@@ -479,20 +676,7 @@ DControllerBase::getVersion(bool extended) {
         tmp << std::endl << EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << isc::log::Logger::getVersion() << std::endl;
-        tmp << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-        tmp << "database:" << std::endl; 
-#ifdef HAVE_MYSQL
-        tmp << isc::dhcp::MySqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << isc::dhcp::PgSqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-#ifdef HAVE_CQL
-        tmp << isc::dhcp::CqlLeaseMgr::getDBVersion() << std::endl;
-#endif
-        tmp << isc::dhcp::Memfile_LeaseMgr::getDBVersion();
-
-        // @todo: more details about database runtime
+        tmp << getVersionAddendum();
     }
 
     return (tmp.str());

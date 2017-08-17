@@ -26,13 +26,14 @@ man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
 EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
+EXTRA_DIST += dhcp6_parser.yy
 
 if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-        $(srcdir)/kea-dhcp6.xml
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/kea-dhcp6.xml
 
 else
 
@@ -63,13 +64,9 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
-
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
-libdhcp6_la_SOURCES += parser_context.cc parser_context.h
-
-libdhcp6_la_SOURCES += kea_controller.cc
-
+libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
@@ -79,8 +76,8 @@ kea_dhcp6_SOURCES  = main.cc
 
 kea_dhcp6_LDADD  = libdhcp6.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la

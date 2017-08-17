@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # A list of Kea processes, mainly used by the cleanup functions.
-KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns"
+KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
 
 ### Logging functions ###
 
@@ -88,7 +88,7 @@ assert_string_contains() {
     fi
 }
 
-# Begins a test by prining its name.
+# Begins a test by printing its name.
 test_start() {
     TEST_NAME=${1}
     if [ -z ${TEST_NAME} ]; then
@@ -155,7 +155,7 @@ configuration"
 # ${LOG_FILE}.
 set_logger() {
     if [ -z ${LOG_FILE} ]; then
-        test_lib_error "set_logger requies LOG_FILE variable be set"
+        test_lib_error "set_logger requires LOG_FILE variable be set"
         clean_exit 1
     fi
     printf "Kea log will be stored in %s.\n" ${LOG_FILE}
@@ -163,7 +163,7 @@ set_logger() {
 }
 
 # PID file path is by default <kea-install-dir>/var/kea, but can be
-# overriden by the environmental variable.
+# overridden by the environmental variable.
 PID_FILE_PATH=@localstatedir@/@PACKAGE@/
 if [ ! -z ${KEA_PIDFILE_DIR} ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
@@ -174,7 +174,7 @@ fi
 # This function uses PID file to obtain the PID and then calls
 # 'kill -0 <pid>' to check if the process is alive.
 # The PID files are expected to be located in the ${PID_FILE_PATH},
-# and their names should match the follwing pattern:
+# and their names should match the following pattern:
 # <cfg_file_name>.<proc_name>.pid. If the <cfg_file_name> is not
 # specified a 'test_config' is used by default.
 #
@@ -261,8 +261,8 @@ get_log_messages() {
 #   _GET_RECONFIGS: number of configurations so far.
 #   _GET_RECONFIG_ERRORS: number of configuration errors.
 get_reconfigs() {
-    # Grep log file for CONFIG_COMPLETE occurences. There should
-    # be one occurence per (re)configuration.
+    # Grep log file for CONFIG_COMPLETE occurrences. There should
+    # be one occurrence per (re)configuration.
     _GET_RECONFIGS=$( grep -o CONFIG_COMPLETE ${LOG_FILE} | wc -w )
     # Grep log file for CONFIG_LOAD_FAIL to check for configuration
     # failures.
@@ -276,7 +276,7 @@ get_reconfigs() {
 # It shuts down running Kea processes and removes temporary files.
 # The location of the log file and the configuration files should be set
 # in the ${LOG_FILE}, ${CFG_FILE} and ${KEACTRL_CFG_FILE} variables
-# recpectively, prior to calling this function.
+# respectively, prior to calling this function.
 cleanup() {
 
     # If there is no KEA_PROCS set, just return
@@ -291,7 +291,7 @@ cleanup() {
         get_pid ${proc_name}
         # Shut down running Kea process.
         if [ ${_GET_PIDS_NUM} -ne 0 ]; then
-            printf "Shutting down Kea proccess having pid %d.\n" ${_GET_PID}
+            printf "Shutting down Kea process having pid %d.\n" ${_GET_PID}
             kill -9 ${_GET_PID}
         fi
     done
@@ -307,6 +307,7 @@ cleanup() {
 
     # Remove temporary files.
     rm -rf ${LOG_FILE}
+    rm -rf ${LOG_FILE}.lock
     # Use asterisk to remove all files starting with the given name,
     # in case the LFC has been run. LFC creates files with postfixes
     # appended to the lease file name.
@@ -318,7 +319,7 @@ cleanup() {
 }
 
 # Exists the test in the clean way.
-# It peformes the cleanup and prints whether the test has passed or failed.
+# It performs the cleanup and prints whether the test has passed or failed.
 # If a test fails, the Kea log is dumped.
 clean_exit() {
     exit_code=${1}  # Exit code to be returned by the exit function.
@@ -344,7 +345,7 @@ start_kea() {
 }
 
 # Waits with timeout for Kea to start.
-# This function repeatedly checs if the Kea log file has been created
+# This function repeatedly checks if the Kea log file has been created
 # and is non-empty. If it is, the function assumes that Kea has started.
 # It doesn't check the contents of the log file though.
 # If the log file doesn't exist the function sleeps for a second and
@@ -384,7 +385,7 @@ wait_for_kea() {
 # of message occurrences to show up. If the expected number of
 # message doesn't occur, the error status is returned.
 # Return value:
-#    _WAIT_FOR_MESSAGE: 0 if the message hasn't occured, 1 otherwise.
+#    _WAIT_FOR_MESSAGE: 0 if the message hasn't occurred, 1 otherwise.
 wait_for_message() {
     local timeout=${1}     # Expected timeout value in seconds.
     local message="${2}"   # Expected message id.
@@ -435,7 +436,7 @@ must be a number"
 
 # Waits for server to be down.
 # Return value:
-#    _WAIT_FOR_SERVER_DOWN: 1 if server is down, 0 if timeout occured and the
+#    _WAIT_FOR_SERVER_DOWN: 1 if server is down, 0 if timeout occurred and the
 #                             server is still running.
 wait_for_server_down() {
     local timeout=${1}    # Timeout specified in seconds.
