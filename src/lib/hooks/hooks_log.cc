@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 /// Defines the logger used by the Hooks
 
 #include <hooks/hooks_log.h>
+#include <log/macros.h>
 
 namespace isc {
 namespace hooks {
@@ -14,6 +15,11 @@ namespace hooks {
 isc::log::Logger hooks_logger("hooks");
 
 isc::log::Logger callouts_logger("callouts");
+
+const int HOOKS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+const int HOOKS_DBG_CALLS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int HOOKS_DBG_EXTENDED_CALLS = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 
 } // namespace hooks
 } // namespace isc

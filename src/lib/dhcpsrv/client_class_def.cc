@@ -1,11 +1,14 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "client_class_def.h"
+#include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -74,6 +77,16 @@ ClientClassDef::setMatchExpr(const ExpressionPtr& match_expr) {
     match_expr_ = match_expr;
 }
 
+std::string
+ClientClassDef::getTest() const {
+    return (test_);
+}
+
+void
+ClientClassDef::setTest(const std::string& test) {
+    test_ = test;
+}
+
 const CfgOptionPtr&
 ClientClassDef::getCfgOption() const {
     return (cfg_option_);
@@ -96,6 +109,31 @@ ClientClassDef::equals(const ClientClassDef& other) const {
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
+}
+
+ElementPtr
+ClientClassDef:: toElement() const {
+    uint16_t family = CfgMgr::instance().getFamily();
+    ElementPtr result = Element::createMap();
+    // Set name
+    result->set("name", Element::create(name_));
+    // Set original match expression (empty string won't parse)
+    if (!test_.empty()) {
+        result->set("test", Element::create(test_));
+    }
+    // Set option-data
+    result->set("option-data", cfg_option_->toElement());
+    if (family != AF_INET) {
+        // Other parameters are DHCPv4 specific
+        return (result);
+    }
+    // Set next-server
+    result->set("next-server", Element::create(next_server_.toText()));
+    // Set server-hostname
+    result->set("server-hostname", Element::create(sname_));
+    // Set boot-file-name
+    result->set("boot-file-name", Element::create(filename_));
+    return (result);
 }
 
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
@@ -123,11 +161,13 @@ ClientClassDictionary::~ClientClassDictionary() {
 void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
+                                const std::string& test,
                                 const CfgOptionPtr& cfg_option,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
+    cclass->setTest(test);
     cclass->setNextServer(next_server);
     cclass->setSname(sname);
     cclass->setFilename(filename);
@@ -191,6 +231,16 @@ ClientClassDictionary::equals(const ClientClassDictionary& other) const {
     return (true);
 }
 
+ElementPtr
+ClientClassDictionary::toElement() const {
+    ElementPtr result = Element::createList();
+    // Iterate on the map
+    for (ClientClassDefMap::iterator this_class = classes_->begin();
+         this_class != classes_->end(); ++this_class) {
+        result->add(this_class->second->toElement());
+    }
+    return (result);
+}
 
 } // namespace isc::dhcp
 } // namespace isc

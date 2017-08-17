@@ -1,5 +1,5 @@
 #
-# A longest possible (without EDNS) DNS response with TSIG, i.e. totatl
+# A longest possible (without EDNS) DNS response with TSIG, i.e. total
 # length should be 512 bytes.
 #
 

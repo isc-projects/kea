@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,60 +7,62 @@
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <dhcp6/parser_context.h>
+#include <testutils/io_utils.h>
 
 using namespace isc::data;
 using namespace std;
+using namespace isc::test;
 
-namespace {
+namespace isc {
+namespace dhcp {
+namespace test {
 
-void compareJSON(ConstElementPtr a, ConstElementPtr b, bool print = true) {
+/// @brief compares two JSON trees
+///
+/// If differences are discovered, gtest failure is reported (using EXPECT_EQ)
+///
+/// @param a first to be compared
+/// @param b second to be compared
+void compareJSON(ConstElementPtr a, ConstElementPtr b) {
     ASSERT_TRUE(a);
     ASSERT_TRUE(b);
-    if (print) {
-        // std::cout << "JSON A: -----" << endl << a->str() << std::endl;
-        // std::cout << "JSON B: -----" << endl << b->str() << std::endl;
-        // cout << "---------" << endl << endl;
-    }
     EXPECT_EQ(a->str(), b->str());
 }
 
-void testParser(const std::string& txt, Parser6Context::ParserType parser_type) {
-    ElementPtr reference_json;
+/// @brief Tests if the input string can be parsed with specific parser
+///
+/// The input text will be passed to bison parser of specified type.
+/// Then the same input text is passed to legacy JSON parser and outputs
+/// from both parsers are compared. The legacy comparison can be disabled,
+/// if the feature tested is not supported by the old parser (e.g.
+/// new comment styles)
+///
+/// @param txt text to be compared
+/// @param parser_type bison parser type to be instantiated
+/// @param compare whether to compare the output with legacy JSON parser
+void testParser(const std::string& txt, Parser6Context::ParserType parser_type,
+    bool compare = true) {
     ConstElementPtr test_json;
 
-    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     ASSERT_NO_THROW({
             try {
-        Parser6Context ctx;
-        test_json = ctx.parseString(txt, parser_type);
+                Parser6Context ctx;
+                test_json = ctx.parseString(txt, parser_type);
             } catch (const std::exception &e) {
                 cout << "EXCEPTION: " << e.what() << endl;
                 throw;
             }
 
     });
+
+    if (!compare) {
+        return;
+    }
 
     // Now compare if both representations are the same.
+    ElementPtr reference_json;
+    ASSERT_NO_THROW(reference_json = Element::fromJSON(txt, true));
     compareJSON(reference_json, test_json);
-}
-
-void testParser2(const std::string& txt, Parser6Context::ParserType parser_type) {
-    ConstElementPtr test_json;
-
-    ASSERT_NO_THROW({
-            try {
-        Parser6Context ctx;
-        test_json = ctx.parseString(txt, parser_type);
-            } catch (const std::exception &e) {
-                cout << "EXCEPTION: " << e.what() << endl;
-                throw;
-            }
-    });
-    /// @todo: Implement actual validation here. since the original
-    /// Element::fromJSON does not support several comment types, we don't
-    /// have anything to compare with.
-    /// std::cout << "Original text:" << txt << endl;
-    /// std::cout << "Parsed text  :" << test_json->str() << endl;
 }
 
 TEST(ParserTest, mapInMap) {
@@ -85,7 +87,7 @@ TEST(ParserTest, nestedLists) {
 }
 
 TEST(ParserTest, listsInMaps) {
-    string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelguese\" ], "
+    string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
                     "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
@@ -125,9 +127,11 @@ TEST(ParserTest, keywordDhcp6) {
                   "    \"subnet\": \"2001:db8:1::/48\", "
                   "    \"interface\": \"test\" } ],\n"
                    "\"valid-lifetime\": 4000 } }";
-     testParser2(txt, Parser6Context::PARSER_DHCP6);
+     testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
+// Tests if bash (#) comments are supported. That's the only comment type that
+// was supported by the old parser.
 TEST(ParserTest, bashComments) {
     string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -144,10 +148,11 @@ TEST(ParserTest, bashComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
-TEST(ParserTest, cComments) {
+// Tests if C++ (//) comments can start anywhere, not just in the first line.
+TEST(ParserTest, cppComments) {
     string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
                 "},\n"
@@ -160,9 +165,10 @@ TEST(ParserTest, cComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
+// Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
     string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -176,9 +182,10 @@ TEST(ParserTest, bashCommentsInline) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
+// Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
     string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
                 "  \"interfaces\": [ \"*\" ]"
@@ -193,17 +200,29 @@ TEST(ParserTest, multilineComments) {
                 "    \"interface\": \"eth0\""
                 " } ],"
                 "\"valid-lifetime\": 4000 } }";
-    testParser2(txt, Parser6Context::PARSER_DHCP6);
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
-
-void testFile(const std::string& fname, bool print) {
+/// @brief Loads specified example config file
+///
+/// This test loads specified example file twice: first, using the legacy
+/// JSON file and then second time using bison parser. Two created Element
+/// trees are then compared. The input is decommented before it is passed
+/// to legacy parser (as legacy support for comments is very limited).
+///
+/// @param fname name of the file to be loaded
+void testFile(const std::string& fname) {
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
-    cout << "Attempting to load file " << fname << endl;
+    string decommented = decommentJSONfile(fname);
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(fname, true));
+    cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
+
+    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+
+    // remove the temporary file
+    EXPECT_NO_THROW(::remove(decommented.c_str()));
 
     EXPECT_NO_THROW(
     try {
@@ -217,9 +236,7 @@ void testFile(const std::string& fname, bool print) {
     ASSERT_TRUE(reference_json);
     ASSERT_TRUE(test_json);
 
-    compareJSON(reference_json, test_json, print);
-
-
+    compareJSON(reference_json, test_json);
 }
 
 // This test loads all available existing files. Each config is loaded
@@ -241,12 +258,18 @@ TEST(ParserTest, file) {
     configs.push_back("several-subnets.json");
     configs.push_back("simple.json");
     configs.push_back("stateless.json");
+    configs.push_back("with-ddns.json");
 
     for (int i = 0; i<configs.size(); i++) {
-        testFile(string(CFG_EXAMPLES) + "/" + configs[i], false);
+        testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
 
+/// @brief Tests error conditions in Dhcp6Parser
+///
+/// @param txt text to be parsed
+/// @param parser_type type of the parser to be used in the test
+/// @param msg expected content of the exception
 void testError(const std::string& txt,
                Parser6Context::ParserType parser_type,
                const std::string& msg)
@@ -265,7 +288,7 @@ void testError(const std::string& txt,
     }
 }
 
-// Check errors
+// Verify that error conditions are handled correctly.
 TEST(ParserTest, errors) {
     // no input
     testError("", Parser6Context::PARSER_JSON,
@@ -330,13 +353,22 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_JSON,
               "Can't open include file /foo/bar");
 
-    // case sensitivity
+    // JSON keywords
     testError("{ \"foo\": True }",
               Parser6Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: T");
-    testError("{ \"foo\": NULL  }",
+              "<string>:1.10-13: JSON true reserved keyword is lower case only");
+    testError("{ \"foo\": False }",
               Parser6Context::PARSER_JSON,
-              "<string>:1.10: Invalid character: N");
+              "<string>:1.10-14: JSON false reserved keyword is lower case only");
+    testError("{ \"foo\": NULL }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10-13: JSON null reserved keyword is lower case only");
+    testError("{ \"foo\": Tru }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: T");
+    testError("{ \"foo\": nul }",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.10: Invalid character: n");
 
     // numbers
     testError("123",
@@ -386,9 +418,9 @@ TEST(ParserTest, errors) {
     testError("\"a\\x01b\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-8: Bad escape in \"a\\x01b\"");
-    testError("\"a\\u0062\"",
+    testError("\"a\\u0162\"",
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0062\"");
+              "<string>:1.1-9: Unsupported unicode escape in \"a\\u0162\"");
     testError("\"a\\u062z\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-9: Bad escape in \"a\\u062z\"");
@@ -476,4 +508,47 @@ TEST(ParserTest, errors) {
               "\"preferred_lifetime\" in Dhcp6 map.");
 }
 
+// Check unicode escapes
+TEST(ParserTest, unicodeEscapes) {
+    ConstElementPtr result;
+    string json;
+
+    // check we can reread output
+    for (char c = -128; c < 127; ++c) {
+        string ins(" ");
+        ins[1] = c;
+        ConstElementPtr e(new StringElement(ins));
+        json = e->str();
+        ASSERT_NO_THROW(
+        try {
+            Parser6Context ctx;
+            result = ctx.parseString(json, Parser6Context::PARSER_JSON);
+        } catch (const std::exception &x) {
+            cout << "EXCEPTION: " << x.what() << endl;
+            throw;
+        });
+        ASSERT_EQ(Element::string, result->getType());
+        EXPECT_EQ(ins, result->stringValue());
+    }
+}
+
+// This test checks that all representations of a slash is recognized properly.
+TEST(ParserTest, unicodeSlash) {
+    // check the 4 possible encodings of solidus '/'
+    ConstElementPtr result;
+    string json = "\"/\\/\\u002f\\u002F\"";
+    ASSERT_NO_THROW(
+    try {
+        Parser6Context ctx;
+        result = ctx.parseString(json, Parser6Context::PARSER_JSON);
+    } catch (const std::exception &x) {
+        cout << "EXCEPTION: " << x.what() << endl;
+        throw;
+    });
+    ASSERT_EQ(Element::string, result->getType());
+    EXPECT_EQ("////", result->stringValue());
+}
+
+};
+};
 };

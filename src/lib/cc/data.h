@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ typedef boost::shared_ptr<Element> ElementPtr;
 typedef boost::shared_ptr<const Element> ConstElementPtr;
 
 ///
-/// \brief A standard Data module exception that is thrown if a function
+/// @brief A standard Data module exception that is thrown if a function
 /// is called for an Element that has a wrong type (e.g. int_value on a
 /// ListElement)
 ///
@@ -34,7 +34,7 @@ public:
 };
 
 ///
-/// \brief A standard Data module exception that is thrown if a parse
+/// @brief A standard Data module exception that is thrown if a parse
 /// error is encountered when constructing an Element from a string
 ///
 // i'd like to use Exception here but we need one that is derived from
@@ -47,38 +47,38 @@ public:
 };
 
 ///
-/// \brief The \c Element class represents a piece of data, used by
+/// @brief The @c Element class represents a piece of data, used by
 /// the command channel and configuration parts.
 ///
-/// An \c Element can contain simple types (int, real, string, bool and
+/// An @c Element can contain simple types (int, real, string, bool and
 /// None), and composite types (list and string->element maps)
 ///
 /// Elements should in calling functions usually be referenced through
-/// an \c ElementPtr, which can be created using the factory functions
-/// \c Element::create() and \c Element::fromJSON()
+/// an @c ElementPtr, which can be created using the factory functions
+/// @c Element::create() and @c Element::fromJSON()
 ///
 /// Notes to developers: Element is a base class, implemented by a
 /// specific subclass for each type (IntElement, BoolElement, etc).
 /// Element does define all functions for all types, and defaults to
-/// raising a \c TypeError for functions that are not supported for
+/// raising a @c TypeError for functions that are not supported for
 /// the type in question.
 ///
 class Element {
 
 public:
-    /// \brief Represents the position of the data element within a
+    /// @brief Represents the position of the data element within a
     /// configuration string.
     ///
     /// Position comprises a file name, line number and an offset within this
     /// line where the element value starts. For example, if the JSON string is
     ///
-    /// \code
+    /// @code
     /// { "foo": "some string",
     ///   "bar": 123 }
     /// \endcode
     ///
     /// the position of the element "bar" is: line_ = 2; pos_ = 9, because
-    /// begining of the value "123" is at offset 9 from the beginning of
+    /// beginning of the value "123" is at offset 9 from the beginning of
     /// the second line, including whitespaces.
     ///
     /// Note that the @c Position structure is used as an argument to @c Element
@@ -90,27 +90,27 @@ public:
         uint32_t line_;    ///< Line number.
         uint32_t pos_;     ///< Position within the line.
 
-        /// \brief Default constructor.
+        /// @brief Default constructor.
         Position() : file_(""), line_(0), pos_(0) {
         }
 
-        /// \brief Constructor.
+        /// @brief Constructor.
         ///
-        /// \param file File name.
-        /// \param line Line number.
-        /// \param pos Position within the line.
+        /// @param file File name.
+        /// @param line Line number.
+        /// @param pos Position within the line.
         Position(const std::string& file, const uint32_t line,
                  const uint32_t pos)
             : file_(file), line_(line), pos_(pos) {
         }
 
-        /// \brief Returns the position in the textual format.
+        /// @brief Returns the position in the textual format.
         ///
         /// The returned position has the following format: file:line:pos.
         std::string str() const;
     };
 
-    /// \brief Returns @c Position object with line_ and pos_ set to 0, and
+    /// @brief Returns @c Position object with line_ and pos_ set to 0, and
     /// with an empty file name.
     ///
     /// The object containing two zeros is a default for most of the
@@ -128,15 +128,15 @@ private:
     // function getType?
     int type_;
 
-    /// \brief Position of the element in the configuration string.
+    /// @brief Position of the element in the configuration string.
     Position position_;
 
 protected:
 
-    /// \brief Constructor.
+    /// @brief Constructor.
     ///
-    /// \param t Element type.
-    /// \param pos Structure holding position of the value of the data element.
+    /// @param t Element type.
+    /// @param pos Structure holding position of the value of the data element.
     /// It comprises the line number and the position within this line. The values
     /// held in this structure are used for error logging purposes.
     Element(int t, const Position& pos = ZERO_POSITION())
@@ -152,10 +152,10 @@ public:
     // base class; make dtor virtual
     virtual ~Element() {};
 
-    /// \return the type of this element
+    /// @return the type of this element
     int getType() const { return (type_); }
 
-    /// \brief Returns position where the data element's value starts in a
+    /// @brief Returns position where the data element's value starts in a
     /// configuration string.
     ///
     /// @warning The returned reference is valid as long as the object which
@@ -168,17 +168,17 @@ public:
     ///
     /// The resulting string will contain the Element in JSON format.
     ///
-    /// \return std::string containing the string representation
+    /// @return std::string containing the string representation
     std::string str() const;
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
     ///
-    /// \return std::string containing the element in wire format
+    /// @return std::string containing the element in wire format
     std::string toWire() const;
     void toWire(std::ostream& out) const;
 
-    /// \brief Add the position to a TypeError message
+    /// @brief Add the position to a TypeError message
     /// should be used in place of isc_throw(TypeError, error)
 #define throwTypeError(error)                   \
     {                                           \
@@ -186,23 +186,23 @@ public:
         if ((position_.file_ != "") ||          \
             (position_.line_ != 0) ||           \
             (position_.pos_ != 0)) {            \
-            msg_ += " in " + position_.str();   \
+            msg_ += " in (" + position_.str() + ")";   \
         }                                       \
         isc_throw(TypeError, msg_);             \
     }
 
-    /// \name pure virtuals, every derived class must implement these
+    /// @name pure virtuals, every derived class must implement these
 
-    /// \return true if the other ElementPtr has the same type and value
+    /// @return true if the other ElementPtr has the same type and value
     virtual bool equals(const Element& other) const = 0;
 
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
     virtual void toJSON(std::ostream& ss) const = 0;
 
-    /// \name Type-specific getters
+    /// @name Type-specific getters
     ///
-    /// \brief These functions only
+    /// @brief These functions only
     /// work on their corresponding Element type. For all other
     /// types, a TypeError is thrown.
     /// If you want an exception-safe getter method, use
@@ -216,7 +216,7 @@ public:
     { throwTypeError("boolValue() called on non-Bool Element"); };
     virtual std::string stringValue() const
     { throwTypeError("stringValue() called on non-string Element"); };
-    virtual const std::vector<ConstElementPtr>& listValue() const {
+    virtual const std::vector<ElementPtr>& listValue() const {
         // replace with real exception or empty vector?
         throwTypeError("listValue() called on non-list Element");
     };
@@ -226,9 +226,9 @@ public:
     };
     //@}
 
-    /// \name Exception-safe getters
+    /// @name Exception-safe getters
     ///
-    /// \brief The getValue() functions return false if the given reference
+    /// @brief The getValue() functions return false if the given reference
     /// is of another type than the element contains
     /// By default it always returns false; the derived classes
     /// override the function for their type, copying their
@@ -239,14 +239,14 @@ public:
     virtual bool getValue(double& t) const;
     virtual bool getValue(bool& t) const;
     virtual bool getValue(std::string& t) const;
-    virtual bool getValue(std::vector<ConstElementPtr>& t) const;
+    virtual bool getValue(std::vector<ElementPtr>& t) const;
     virtual bool getValue(std::map<std::string, ConstElementPtr>& t) const;
     //@}
 
     ///
-    /// \name Exception-safe setters.
+    /// @name Exception-safe setters.
     ///
-    /// \brief Return false if the Element is not
+    /// @brief Return false if the Element is not
     /// the right type. Set the value and return true if the Elements
     /// is of the correct type
     ///
@@ -259,7 +259,7 @@ public:
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
-    virtual bool setValue(const std::vector<ConstElementPtr>& v);
+    virtual bool setValue(const std::vector<ElementPtr>& v);
     virtual bool setValue(const std::map<std::string, ConstElementPtr>& v);
     //@}
 
@@ -267,29 +267,35 @@ public:
 
     // Other functions for specific subtypes
 
-    /// \name ListElement functions
+    /// @name ListElement functions
     ///
-    /// \brief If the Element on which these functions are called are not
+    /// @brief If the Element on which these functions are called are not
     /// an instance of ListElement, a TypeError exception is thrown.
     //@{
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
-    /// \param i The position of the ElementPtr to return
+    /// @param i The position of the ElementPtr to return
     virtual ConstElementPtr get(const int i) const;
+
+    /// @brief returns element as non-const pointer
+    ///
+    /// @param i The position of the ElementPtr to retrieve
+    /// @return specified element pointer
+    virtual ElementPtr getNonConst(const int i) const;
 
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
-    /// \param i The position of the ElementPtr to set
-    /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i, ConstElementPtr element);
+    /// @param i The position of the ElementPtr to set
+    /// @param element The ElementPtr to set at the position
+    virtual void set(const size_t i, ElementPtr element);
 
     /// Adds an ElementPtr to the list
-    /// \param element The ElementPtr to add
-    virtual void add(ConstElementPtr element);
+    /// @param element The ElementPtr to add
+    virtual void add(ElementPtr element);
 
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
-    /// \param i The index of the element to remove.
+    /// @param i The index of the element to remove.
     virtual void remove(const int i);
 
     /// Returns the number of elements in the list.
@@ -300,28 +306,28 @@ public:
     //@}
 
 
-    /// \name MapElement functions
+    /// @name MapElement functions
     ///
-    /// \brief If the Element on which these functions are called are not
+    /// @brief If the Element on which these functions are called are not
     /// an instance of MapElement, a TypeError exception is thrown.
     //@{
     /// Returns the ElementPtr at the given key
-    /// \param name The key of the Element to return
-    /// \return The ElementPtr at the given key, or null if not present
+    /// @param name The key of the Element to return
+    /// @return The ElementPtr at the given key, or null if not present
     virtual ConstElementPtr get(const std::string& name) const;
 
     /// Sets the ElementPtr at the given key
-    /// \param name The key of the Element to set
-    /// \param element The ElementPtr to set at the given key.
+    /// @param name The key of the Element to set
+    /// @param element The ElementPtr to set at the given key.
     virtual void set(const std::string& name, ConstElementPtr element);
 
     /// Remove the ElementPtr at the given key
-    /// \param name The key of the Element to remove
+    /// @param name The key of the Element to remove
     virtual void remove(const std::string& name);
 
     /// Checks if there is data at the given key
-    /// \param name The key of the Element to remove
-    /// \return true if there is data at the key, false if not.
+    /// @param name The key of the Element checked for existence
+    /// @return true if there is data at the key, false if not.
     virtual bool contains(const std::string& name) const;
 
     /// Recursively finds any data at the given identifier. The
@@ -333,30 +339,30 @@ public:
     /// Another Element at key "bar", the identifier for that last
     /// element from the first is "foo/bar".
     ///
-    /// \param identifier The identifier of the element to find
-    /// \return The ElementPtr at the given identifier. Returns a
+    /// @param identifier The identifier of the element to find
+    /// @return The ElementPtr at the given identifier. Returns a
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
     virtual ConstElementPtr find(const std::string& identifier) const;
 
-    /// See \c Element::find()
-    /// \param identifier The identifier of the element to find
-    /// \param t Reference to store the resulting ElementPtr, if found.
-    /// \return true if the element was found, false if not.
+    /// See @c Element::find()
+    /// @param identifier The identifier of the element to find
+    /// @param t Reference to store the resulting ElementPtr, if found.
+    /// @return true if the element was found, false if not.
     virtual bool find(const std::string& identifier, ConstElementPtr& t) const;
     //@}
 
 
-    /// \name Factory functions
+    /// @name Factory functions
 
     // TODO: should we move all factory functions to a different class
     // so as not to burden the Element base with too many functions?
     // and/or perhaps even to a separate header?
 
-    /// \name Direct factory functions
-    /// \brief These functions simply wrap the given data directly
+    /// @name Direct factory functions
+    /// @brief These functions simply wrap the given data directly
     /// in an Element object, and return a reference to it, in the form
-    /// of an \c ElementPtr.
+    /// of an @c ElementPtr.
     /// These factory functions are exception-free (unless there is
     /// no memory available, in which case bad_alloc is raised by the
     /// underlying system).
@@ -384,42 +390,42 @@ public:
     static ElementPtr create(const char *s,
                              const Position& pos = ZERO_POSITION());
 
-    /// \brief Creates an empty ListElement type ElementPtr.
+    /// @brief Creates an empty ListElement type ElementPtr.
     ///
-    /// \param pos A structure holding position of the data element value
+    /// @param pos A structure holding position of the data element value
     /// in the configuration string. It is used for error logging purposes.
     static ElementPtr createList(const Position& pos = ZERO_POSITION());
 
-    /// \brief Creates an empty MapElement type ElementPtr.
+    /// @brief Creates an empty MapElement type ElementPtr.
     ///
-    /// \param pos A structure holding position of the data element value
+    /// @param pos A structure holding position of the data element value
     /// in the configuration string. It is used for error logging purposes.
     static ElementPtr createMap(const Position& pos = ZERO_POSITION());
     //@}
 
 
-    /// \name Compound factory functions
+    /// @name Compound factory functions
 
-    /// \brief These functions will parse the given string (JSON)
+    /// @brief These functions will parse the given string (JSON)
     /// representation  of a compound element. If there is a parse
     /// error, an exception of the type isc::data::JSONError is thrown.
 
     //@{
     /// Creates an Element from the given JSON string
-    /// \param in The string to parse the element from
-    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    /// @param in The string to parse the element from
+    /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
-    /// \return An ElementPtr that contains the element(s) specified
+    /// @return An ElementPtr that contains the element(s) specified
     /// in the given string.
     static ElementPtr fromJSON(const std::string& in, bool preproc = false);
 
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
-    /// \param in The string to parse the element from
-    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    /// @param in The string to parse the element from
+    /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
-    /// \return An ElementPtr that contains the element(s) specified
+    /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in, bool preproc = false)
         throw(JSONError);
@@ -427,11 +433,11 @@ public:
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
-    /// \param in The string to parse the element from
-    /// \param file_name specified input file name (used in error reporting)
-    /// \param preproc specified whether preprocessing (e.g. comment removal)
+    /// @param in The string to parse the element from
+    /// @param file_name specified input file name (used in error reporting)
+    /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
-    /// \return An ElementPtr that contains the element(s) specified
+    /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
                                bool preproc = false)
@@ -440,13 +446,13 @@ public:
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///
-    /// \param in The string to parse the element from.
-    /// \param file The input file name.
-    /// \param line A reference to the int where the function keeps
+    /// @param in The string to parse the element from.
+    /// @param file The input file name.
+    /// @param line A reference to the int where the function keeps
     /// track of the current line.
-    /// \param pos A reference to the int where the function keeps
+    /// @param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
-    /// \return An ElementPtr that contains the element(s) specified
+    /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
@@ -464,23 +470,23 @@ public:
                                    bool preproc = false);
     //@}
 
-    /// \name Type name conversion functions
+    /// @name Type name conversion functions
 
     /// Returns the name of the given type as a string
     ///
-    /// \param type The type to return the name of
-    /// \return The name of the type, or "unknown" if the type
+    /// @param type The type to return the name of
+    /// @return The name of the type, or "unknown" if the type
     ///         is not known.
     static std::string typeToName(Element::types type);
 
     /// Converts the string to the corresponding type
     /// Throws a TypeError if the name is unknown.
     ///
-    /// \param type_name The name to get the type of
-    /// \return the corresponding type value
+    /// @param type_name The name to get the type of
+    /// @return the corresponding type value
     static Element::types nameToType(const std::string& type_name);
 
-    /// \brief input text preprocessor
+    /// @brief input text preprocessor
     ///
     /// This method performs preprocessing of the input stream (which is
     /// expected to contain a text version of to be parsed JSON). For now the
@@ -496,7 +502,7 @@ public:
     /// @param out output stream (filtered content will be written here)
     static void preprocess(std::istream& in, std::stringstream& out);
 
-    /// \name Wire format factory functions
+    /// @name Wire format factory functions
 
     /// These function pparse the wireformat at the given stringstream
     /// (of the given length). If there is a parse error an exception
@@ -505,20 +511,20 @@ public:
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
-    /// Since the wire format is JSON, thise is the same as
+    /// Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
-    /// \param in The input stringstream.
-    /// \param length The length of the wireformat data in the stream
-    /// \return ElementPtr with the data that is parsed.
+    /// @param in The input stringstream.
+    /// @param length The length of the wireformat data in the stream
+    /// @return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(std::stringstream& in, int length);
 
     /// Creates an Element from the wire format in the given string
-    /// Since the wire format is JSON, thise is the same as
+    /// Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
-    /// \param s The input string
-    /// \return ElementPtr with the data that is parsed.
+    /// @param s The input string
+    /// @return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
     //@}
 };
@@ -603,29 +609,30 @@ public:
 };
 
 class ListElement : public Element {
-    std::vector<ConstElementPtr> l;
+    std::vector<ElementPtr> l;
 
 public:
     ListElement(const Position& pos = ZERO_POSITION())
         : Element(list, pos) {}
-    const std::vector<ConstElementPtr>& listValue() const { return (l); }
+    const std::vector<ElementPtr>& listValue() const { return (l); }
     using Element::getValue;
-    bool getValue(std::vector<ConstElementPtr>& t) const {
+    bool getValue(std::vector<ElementPtr>& t) const {
         t = l;
         return (true);
     }
     using Element::setValue;
-    bool setValue(const std::vector<ConstElementPtr>& v) {
+    bool setValue(const std::vector<ElementPtr>& v) {
         l = v;
         return (true);
     }
     using Element::get;
     ConstElementPtr get(int i) const { return (l.at(i)); }
+    ElementPtr getNonConst(int i) const  { return (l.at(i)); }
     using Element::set;
-    void set(size_t i, ConstElementPtr e) {
+    void set(size_t i, ElementPtr e) {
         l.at(i) = e;
     }
-    void add(ConstElementPtr e) { l.push_back(e); };
+    void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
     void toJSON(std::ostream& ss) const;
@@ -691,12 +698,12 @@ public:
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
-/// \param p The ElementPtr to check
-/// \return true if it is NULL, false if not.
+/// @param p The ElementPtr to check
+/// @return true if it is NULL, false if not.
 bool isNull(ConstElementPtr p);
 
 ///
-/// \brief Remove all values from the first ElementPtr that are
+/// @brief Remove all values from the first ElementPtr that are
 /// equal in the second. Both ElementPtrs MUST be MapElements
 /// The use for this function is to end up with a MapElement that
 /// only contains new and changed values (for ModuleCCSession and
@@ -704,14 +711,14 @@ bool isNull(ConstElementPtr p);
 /// Raises a TypeError if a or b are not MapElements
 void removeIdentical(ElementPtr a, ConstElementPtr b);
 
-/// \brief Create a new ElementPtr from the first ElementPtr, removing all
+/// @brief Create a new ElementPtr from the first ElementPtr, removing all
 /// values that are equal in the second. Both ElementPtrs MUST be MapElements.
 /// The returned ElementPtr will be a MapElement that only contains new and
 /// changed values (for ModuleCCSession and configuration update handlers).
 /// Raises a TypeError if a or b are not MapElements
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
-/// \brief Merges the data from other into element.
+/// @brief Merges the data from other into element.
 /// (on the first level). Both elements must be
 /// MapElements.
 /// Every string,value pair in other is copied into element
@@ -725,34 +732,78 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
+/// @brief Copy the data up to a nesting level.
 ///
-/// \brief Insert Element::Position as a string into stream.
+/// The copy is a deep copy so nothing is shared if it is not
+/// under the given nesting level.
 ///
-/// This operator converts the \c Element::Position into a string and
-/// inserts it into the output stream \c out.
+/// @param from the pointer to the element to copy
+/// @param level nesting level (default is 100, 0 means shallow copy,
+/// negative means outbound and perhaps looping forever).
+/// @return a pointer to a fresh copy
+/// \throw raises a BadValue is a null pointer occurs.
+ElementPtr copy(ConstElementPtr from, int level = 100); 
+
+/// @brief Compares the data with other using unordered lists
 ///
-/// \param out A \c std::ostream object on which the insertion operation is
+/// This comparison function handles lists (JSON arrays) as
+/// unordered multi sets (multi means an item can occurs more
+/// than once as soon as it occurs the same number of times).
+bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
+
+/// @brief Pretty prints the data into stream.
+///
+/// This operator converts the @c ConstElementPtr into a string and
+/// inserts it into the output stream @c out with an initial
+/// indentation @c indent and add at each level @c step spaces.
+///
+/// @param element A @c ConstElementPtr to pretty print
+/// @param out A @c std::ostream on which the print operation is performed
+/// @param indent An initial number of spaces to add each new line
+/// @param step A number of spaces to add to indentation at a new level
+void prettyPrint(ConstElementPtr element, std::ostream& out,
+                 unsigned indent = 0, unsigned step = 2);
+
+/// @brief Pretty prints the data into string
+///
+/// This operator converts the @c ConstElementPtr into a string with
+/// an initial indentation @c indent and add at each level @c step spaces.
+///
+/// @param element A @c ConstElementPtr to pretty print
+/// @param indent An initial number of spaces to add each new line
+/// @param step A number of spaces to add to indentation at a new level
+/// @return a string where element was pretty printed
+std::string prettyPrint(ConstElementPtr element,
+                        unsigned indent = 0, unsigned step = 2);
+
+///
+/// @brief Insert Element::Position as a string into stream.
+///
+/// This operator converts the @c Element::Position into a string and
+/// inserts it into the output stream @c out.
+///
+/// @param out A @c std::ostream object on which the insertion operation is
 /// performed.
-/// \param pos The \c Element::Position structure to insert.
-/// \return A reference to the same \c std::ostream object referenced by
-/// parameter \c out after the insertion operation.
+/// @param pos The @c Element::Position structure to insert.
+/// @return A reference to the same @c std::ostream object referenced by
+/// parameter @c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 
 ///
-/// \brief Insert the Element as a string into stream.
+/// @brief Insert the Element as a string into stream.
 ///
-/// This method converts the \c ElementPtr into a string with
-/// \c Element::str() and inserts it into the
-/// output stream \c out.
+/// This method converts the @c ElementPtr into a string with
+/// @c Element::str() and inserts it into the
+/// output stream @c out.
 ///
 /// This function overloads the global operator<< to behave as described in
-/// ostream::operator<< but applied to \c ElementPtr objects.
+/// ostream::operator<< but applied to @c ElementPtr objects.
 ///
-/// \param out A \c std::ostream object on which the insertion operation is
+/// @param out A @c std::ostream object on which the insertion operation is
 /// performed.
-/// \param e The \c ElementPtr object to insert.
-/// \return A reference to the same \c std::ostream object referenced by
-/// parameter \c out after the insertion operation.
+/// @param e The @c ElementPtr object to insert.
+/// @return A reference to the same @c std::ostream object referenced by
+/// parameter @c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element& e);
 
 bool operator==(const Element& a, const Element& b);

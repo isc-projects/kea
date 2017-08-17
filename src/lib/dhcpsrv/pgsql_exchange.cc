@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,8 +57,8 @@ void PsqlBindArray::add(const bool& value)  {
 }
 
 void PsqlBindArray::add(const uint8_t& byte) {
-    // We static_cast to an unsigned int, otherwise lexcial_cast may to
-    // treat byte as a character, which yields "" for unprintable values 
+    // We static_cast to an unsigned int, otherwise lexical_cast may to
+    // treat byte as a character, which yields "" for unprintable values
     addTempString(boost::lexical_cast<std::string>
                               (static_cast<unsigned int>(byte)));
 }
@@ -168,8 +168,8 @@ PgSqlExchange::getRawColumnValue(const PgSqlResult& r, const int row,
     return (value);
 }
 
-bool 
-PgSqlExchange::isColumnNull(const PgSqlResult& r, const int row, 
+bool
+PgSqlExchange::isColumnNull(const PgSqlResult& r, const int row,
                             const size_t col) {
     r.rowColCheck(row,col);
     return (PQgetisnull(r, row, col));
@@ -261,7 +261,7 @@ PgSqlExchange::getColumnLabel(const PgSqlResult& r, const size_t column) {
     return (r.getColumnLabel(column));
 }
 
-std::string 
+std::string
 PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     r.rowCheck(row);
     std::ostringstream stream;
@@ -269,7 +269,7 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     for (int col = 0; col < columns; ++col) {
         const char* val = getRawColumnValue(r, row, col);
         std::string name = r.getColumnLabel(col);
-        int format = PQfformat(r, col); 
+        int format = PQfformat(r, col);
 
         stream << col << "   " << name << " : " ;
         if (format == PsqlBindArray::TEXT_FMT) {

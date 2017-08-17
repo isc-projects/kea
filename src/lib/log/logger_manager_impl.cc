@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -166,8 +166,11 @@ void
 LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
                                          const OutputOption& opt)
 {
+    log4cplus::helpers::Properties properties;
+    properties.setProperty("ident", getRootLoggerName());
+    properties.setProperty("facility", opt.facility);
     log4cplus::SharedAppenderPtr syslogapp(
-        new log4cplus::SysLogAppender(opt.facility));
+        new log4cplus::SysLogAppender(properties));
     setSyslogAppenderLayout(syslogapp);
     logger.addAppender(syslogapp);
 }

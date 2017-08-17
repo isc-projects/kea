@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,6 +35,19 @@ namespace dhcp {
 Pkt6::RelayInfo::RelayInfo()
     :msg_type_(0), hop_count_(0), linkaddr_(DEFAULT_ADDRESS6),
     peeraddr_(DEFAULT_ADDRESS6), relay_msg_len_(0) {
+}
+
+std::string Pkt6::RelayInfo::toText() const {
+    stringstream tmp;
+    tmp << "msg-type=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
+        << "), hop-count=" << static_cast<int>(hop_count_)  << "," << endl
+        << "link-address=" << linkaddr_.toText()
+        << ", peer-address=" << peeraddr_.toText() << ", "
+        << options_.size() << " option(s)" << endl;
+    for (auto option = options_.cbegin(); option != options_.cend(); ++option) {
+        tmp << option->second->toText() << endl;
+    }
+    return (tmp.str());
 }
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */)
@@ -268,7 +281,7 @@ Pkt6::pack() {
 void
 Pkt6::packUDP() {
     try {
-        // Make sure that the buffer is empty before we start writting to it.
+        // Make sure that the buffer is empty before we start writing to it.
         buffer_out_.clear();
 
         // is this a relayed packet?
@@ -314,7 +327,7 @@ Pkt6::packUDP() {
 
         }
 
-        // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
+        // DHCPv6 header: message-type (1 octet) + transaction id (3 octets)
         buffer_out_.writeUint8(msg_type_);
         // store 3-octet transaction-id
         buffer_out_.writeUint8( (transid_ >> 16) & 0xff );
@@ -369,7 +382,7 @@ Pkt6::unpackUDP() {
     case DHCPV6_INFORMATION_REQUEST:
     case DHCPV6_DHCPV4_QUERY:
     case DHCPV6_DHCPV4_RESPONSE:
-    default: // assume that uknown messages are not using relay format
+    default: // assume that unknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
         }
@@ -429,7 +442,7 @@ Pkt6::unpackRelayMsg() {
     // we use offset + bufsize, because we want to avoid creating unnecessary
     // copies. There may be up to 32 relays. While using InputBuffer would
     // be probably a bit cleaner, copying data up to 32 times is unacceptable
-    // price here. Hence a single buffer with offets and lengths.
+    // price here. Hence a single buffer with offsets and lengths.
     size_t bufsize = data_.size();
     size_t offset = 0;
 
@@ -586,7 +599,7 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     label << "duid=[" << (duid ? duid->toText() : "no info")
           << "]";
 
-    // HW address is typically not carried in the DHCPv6 mmessages
+    // HW address is typically not carried in the DHCPv6 messages
     // and can be extracted using various, but not fully reliable,
     // techniques. If it is not present, don't print anything.
     if (hwaddr) {
@@ -607,15 +620,30 @@ Pkt6::getLabel() const {
 std::string
 Pkt6::toText() const {
     stringstream tmp;
+
+    // First print the basics
     tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_
-        << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
+        << " remoteAddr=[" << remote_addr_ << "]:" << remote_port_ << endl;
+    tmp << "msgtype=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
+        << "), transid=0x" <<
         hex << transid_ << dec << endl;
+
+    // Then print the options
     for (isc::dhcp::OptionCollection::const_iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
+    }
+
+    // Finally, print the relay information (if present)
+    if (!relay_info_.empty()) {
+        tmp << relay_info_.size() << " relay(s):" << endl;
+        int cnt = 0;
+        for (auto relay = relay_info_.cbegin(); relay != relay_info_.cend(); ++relay) {
+            tmp << "relay[" << cnt++ << "]: " << relay->toText();
+        }
+    } else {
+        tmp << "No relays traversed." << endl;
     }
     return tmp.str();
 }

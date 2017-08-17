@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,7 +37,7 @@ to shutdown and has met the required criteria to exit.
 This is a debug message issued when the DHCP-DDNS application command method
 has been invoked.
 
-% DHCP_DDNS_CONFIGURE configuration update received: %1
+% DHCP_DDNS_CONFIGURE configuration %1 received: %2
 This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
 

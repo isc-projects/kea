@@ -66,9 +66,9 @@ Legend
 Goals
 -----
  * Run the CPU intensive tasks in multiple threads to allow concurrency.
- * Minimise waiting for locks.
+ * Minimize waiting for locks.
  * Don't require too much memory.
- * Minimise the number of upstream queries (both because they are slow and
+ * Minimize the number of upstream queries (both because they are slow and
    expensive and also because we don't want to eat too much bandwidth and spam
    the authoritative servers).
  * Design simple enough so it can be implemented.

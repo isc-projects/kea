@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,7 +71,7 @@ public:
     /// @return a list of option spaces.
     ///
     /// @todo This function is likely to be removed once
-    /// we create a structore of OptionSpaces defined
+    /// we create a structure of OptionSpaces defined
     /// through the configuration manager.
     std::list<Selector> getOptionSpaceNames() const {
         std::list<Selector> names;

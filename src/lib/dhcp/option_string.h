@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,7 @@ public:
     ///
     /// This function decodes option data from the provided buffer. Note that
     /// it does not decode the option code and length, so the iterators must
-    /// point to the begining and end of the option payload respectively.
+    /// point to the beginning and end of the option payload respectively.
     /// The size of the decoded payload must be at least 1 byte.
     ///
     /// @param begin the iterator pointing to the option payload.

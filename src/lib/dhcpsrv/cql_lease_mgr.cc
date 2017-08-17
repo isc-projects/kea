@@ -1,4 +1,4 @@
-// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+// Copyright (C) 2015 - 2017 Deutsche Telekom AG.
 //
 // Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //
@@ -1883,6 +1883,16 @@ CqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
         }
     }
     return (result);
+}
+
+size_t
+CqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for Cassandra backend");
+}
+
+size_t
+CqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for Cassandra backend");
 }
 
 std::string

@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -104,14 +104,6 @@
 //#define D6O_V6_PCP_SERVER                       86 /* RFC7291 */
 #define D6O_DHCPV4_MSG                          87 /* RFC7341 */
 #define D6O_DHCPV4_O_DHCPV6_SERVER              88 /* RFC7341 */
-#define D6O_S46_RULE                            89 /* RFC7598 */
-#define D6O_S46_BR                              90 /* RFC7598 */
-#define D6O_S46_DMR                             91 /* RFC7598 */
-#define D6O_S46_V4V6BIND                        92 /* RFC7598 */
-#define D6O_S46_PORTPARAMS                      93 /* RFC7598 */
-#define D6O_S46_CONT_MAPE                       94 /* RFC7598 */
-#define D6O_S46_CONT_MAPT                       95 /* RFC7598 */
-#define D6O_S46_CONT_LW                         96 /* RFC7598 */
 //#define D6O_4RD                                 97 /* RFC7600 */
 //#define D6O_4RD_MAP_RULE                        98 /* RFC7600 */
 //#define D6O_4RD_NON_MAP_RULE                    99 /* RFC7600 */
