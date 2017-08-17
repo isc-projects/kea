@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,7 +167,7 @@ TEST_F(Rdata_TSIG_Test, badText) {
     checkFromText_LexerError("foo 0 FUDGE 0 0 BADKEY 0");
     // MAC size is too large
     checkFromText_InvalidText("foo 0 0 65536 0 BADKEY 0");
-    // invalide MAC size (negative)
+    // invalid MAC size (negative)
     checkFromText_LexerError("foo 0 0 -1 0 BADKEY 0");
     // invalid MAC size (not a number)
     checkFromText_LexerError("foo 0 0 MACSIZE 0 BADKEY 0");
@@ -288,7 +288,7 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
                                               17, 0, NULL)));
 
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
-                                  0x14, 0x02, 0x84, 0x14, 0x02, 0x84 }; 
+                                  0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
     EXPECT_EQ(0, any::TSIG(valid_text2).compare(
                   any::TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
                             fake_data, 16020, 16, 0, NULL)));
@@ -399,7 +399,7 @@ TEST_F(Rdata_TSIG_Test, toText) {
 }
 
 TEST_F(Rdata_TSIG_Test, compare) {
-    // test RDATAs, sorted in the ascendent order.
+    // test RDATAs, sorted in the ascending order.
     // "AAAA" encoded in BASE64 corresponds to 0x000000, so it should be the
     // smallest data of the same length.
     vector<any::TSIG> compare_set;

@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,9 +27,9 @@ public:
         ASSERT_TRUE(eval.parseString(expr));
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
         if (expected) {
-            EXPECT_TRUE(evaluate(eval.expression, *pkt4));
+            EXPECT_TRUE(evaluateBool(eval.expression, *pkt4));
         } else {
-            EXPECT_FALSE(evaluate(eval.expression, *pkt4));
+            EXPECT_FALSE(evaluateBool(eval.expression, *pkt4));
         }
     }
 };

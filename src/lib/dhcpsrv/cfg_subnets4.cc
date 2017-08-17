@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,23 +13,58 @@
 #include <dhcpsrv/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <stats/stats_mgr.h>
+#include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
 
 void
 CfgSubnets4::add(const Subnet4Ptr& subnet) {
-    /// @todo: Check that this new subnet does not cross boundaries of any
-    /// other already defined subnet.
-    if (isDuplicate(*subnet)) {
+    if (getBySubnetId(subnet->getID())) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
                   << subnet->getID() << "' is already in use");
+
+    } else if (getByPrefix(subnet->toText())) {
+        /// @todo: Check that this new subnet does not cross boundaries of any
+        /// other already defined subnet.
+        isc_throw(isc::dhcp::DuplicateSubnetID, "subnet with the prefix of '"
+                  << subnet->toText() << "' already exists");
     }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
               .arg(subnet->toText());
     subnets_.push_back(subnet);
+}
+
+void
+CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet->getID());
+    if (subnet_it == index.end()) {
+        isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()
+                  << "' found");
+    }
+    index.erase(subnet_it);
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET4)
+        .arg(subnet->toText());
+}
+
+ConstSubnet4Ptr
+CfgSubnets4::getBySubnetId(const SubnetID& subnet_id) const {
+    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
+}
+
+ConstSubnet4Ptr
+CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
+    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto subnet_it = index.find(subnet_text);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
 }
 
 Subnet4Ptr
@@ -85,7 +120,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
     // If relayed message has been received, try to match the giaddr with the
     // relay address specified for a subnet. It is also possible that the relay
-    // address will not match with any of the relay addresses accross all
+    // address will not match with any of the relay addresses across all
     // subnets, but we need to verify that for all subnets before we can try
     // to use the giaddr to match with the subnet prefix.
     if (!selector.giaddr_.isV4Zero()) {
@@ -194,6 +229,19 @@ CfgSubnets4::selectSubnet(const std::string& iface,
 }
 
 Subnet4Ptr
+CfgSubnets4::getSubnet(const SubnetID id) const {
+
+    /// @todo: Once this code is migrated to multi-index container, use
+    /// an index rather than full scan.
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
+        if ((*subnet)->getID() == id) {
+            return (*subnet);
+        }
+    }
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
 CfgSubnets4::selectSubnet(const IOAddress& address,
                  const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
@@ -217,17 +265,6 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
     return (Subnet4Ptr());
 }
 
-bool
-CfgSubnets4::isDuplicate(const Subnet4& subnet) const {
-    for (Subnet4Collection::const_iterator subnet_it = subnets_.begin();
-         subnet_it != subnets_.end(); ++subnet_it) {
-        if ((*subnet_it)->getID() == subnet.getID()) {
-            return (true);
-        }
-    }
-    return (false);
-}
-
 void
 CfgSubnets4::removeStatistics() {
     using namespace isc::stats;
@@ -248,6 +285,9 @@ CfgSubnets4::removeStatistics() {
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "declined-reclaimed-addresses"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "reclaimed-leases"));
     }
 }
 
@@ -271,6 +311,17 @@ CfgSubnets4::updateStatistics() {
     if (subnets_.begin() != subnets_.end()) {
             LeaseMgrFactory::instance().recountLeaseStats4();
     }
+}
+
+ElementPtr
+CfgSubnets4::toElement() const {
+    ElementPtr result = Element::createList();
+    // Iterate subnets
+    for (Subnet4Collection::const_iterator subnet = subnets_.cbegin();
+         subnet != subnets_.cend(); ++subnet) {
+        result->add((*subnet)->toElement());
+    }
+    return (result);
 }
 
 } // end of namespace isc::dhcp

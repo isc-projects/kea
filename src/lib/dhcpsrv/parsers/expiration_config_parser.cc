@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
@@ -15,57 +16,51 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-ExpirationConfigParser::ExpirationConfigParser()
-    : DhcpConfigParser() {
-}
-
 void
-ExpirationConfigParser::build(ConstElementPtr expiration_config) {
+ExpirationConfigParser::parse(ConstElementPtr expiration_config) {
     CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
 
-    BOOST_FOREACH(ConfigPair config_element, expiration_config->mapValue()) {
+    std::string param;
 
-        // Get parameter name and value.
-        std::string param_name = config_element.first;
-        ConstElementPtr param_value = config_element.second;
-
-        try {
-            // Set configuration parameters.
-            if (param_name == "reclaim-timer-wait-time") {
-                cfg->setReclaimTimerWaitTime(param_value->intValue());
-
-            } else if (param_name == "flush-reclaimed-timer-wait-time") {
-                cfg->setFlushReclaimedTimerWaitTime(param_value->intValue());
-
-            } else if (param_name == "hold-reclaimed-time") {
-                cfg->setHoldReclaimedTime(param_value->intValue());
-
-            } else if (param_name == "max-reclaim-leases") {
-                cfg->setMaxReclaimLeases(param_value->intValue());
-
-            } else if (param_name == "max-reclaim-time") {
-                cfg->setMaxReclaimTime(param_value->intValue());
-
-            } else if (param_name == "unwarned-reclaim-cycles") {
-                cfg->setUnwarnedReclaimCycles(param_value->intValue());
-
-            } else {
-                isc_throw(DhcpConfigError, "unsupported parameter '"
-                          << param_name << "'");
-            }
-
-        } catch (const std::exception& ex) {
-            // Append position of the configuration parameter to the error
-            // message.
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << param_value->getPosition() << ")");
+    try {
+        param = "reclaim-timer-wait-time";
+        if (expiration_config->contains(param)) {
+            cfg->setReclaimTimerWaitTime(getInteger(expiration_config, param));
         }
-    }
-}
 
-void
-ExpirationConfigParser::commit() {
-    // Nothing to do.
+        param = "flush-reclaimed-timer-wait-time";
+        if (expiration_config->contains(param)) {
+            cfg->setFlushReclaimedTimerWaitTime(getInteger(expiration_config,
+                                                           param));
+        }
+
+        param = "hold-reclaimed-time";
+        if (expiration_config->contains(param)) {
+            cfg->setHoldReclaimedTime(getInteger(expiration_config, param));
+        }
+
+        param = "max-reclaim-leases";
+        if (expiration_config->contains(param)) {
+            cfg->setMaxReclaimLeases(getInteger(expiration_config, param));
+        }                          
+
+        param = "max-reclaim-time";
+        if (expiration_config->contains(param)) {
+            cfg->setMaxReclaimTime(getInteger(expiration_config, param));
+        }
+
+        param = "unwarned-reclaim-cycles";
+        if (expiration_config->contains(param)) {
+            cfg->setUnwarnedReclaimCycles(
+                getInteger(expiration_config, param));
+        }
+    } catch (const DhcpConfigError&) {
+        throw;
+    } catch (const std::exception& ex) {
+        // Append position of the configuration parameter to the error message.
+        isc_throw(DhcpConfigError, ex.what() << " ("
+                  << getPosition(param, expiration_config) << ")");
+    }
 }
 
 } // end of namespace isc::dhcp

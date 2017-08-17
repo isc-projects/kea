@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,7 @@ public:
 ///
 /// Each entry must have a valid entry for "type" and a valid entry or "id".
 ///
-/// If an entry contains duplicate option names, that option will be assigend
+/// If an entry contains duplicate option names, that option will be assigned
 /// the last value found. This is typical JSON behavior.
 /// Currently, only string option values (i.e. enclosed in quotes) are
 /// supported.

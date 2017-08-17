@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -234,7 +234,7 @@ public:
 
     /// @brief Adds IA option to the message.
     ///
-    /// Addded option holds an address.
+    /// Added option holds an address.
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
@@ -391,10 +391,8 @@ public:
     // in a client request correctly, according to the replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use client-name-replacment parameter - for
-    // mode labels such as NEVER and ALWAYS must incluce enclosing quotes:
-    // "\"NEVER\"".  This allows us to also pass in boolean literals which
-    // are unquoted.
+    // @param mode - value to use for replace-client-name mode
+    //
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
     // @param exp_replacement_flag - specifies whether or not the server is
@@ -420,7 +418,7 @@ public:
             "\"dhcp-ddns\": { \n"
             "\"enable-updates\": true, \n"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
-            "\"replace-client-name\": %s \n"
+            "\"replace-client-name\": \"%s\" \n"
             "}} \n";
 
         // Create the configuration and configure the server
@@ -556,7 +554,7 @@ public:
     ///
     /// @param type An expected type of the NameChangeRequest (Add or Remove).
     /// @param reverse An expected setting of the reverse update flag.
-    /// @param forward An expected setting of the forward udpate flag.
+    /// @param forward An expected setting of the forward update flag.
     /// @param addr A string representation of the IPv6 address held in the
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.
@@ -793,7 +791,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 // Checks that NameChangeRequests to add entries are not
 // created when ddns updates are disabled.
 TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
-    // Disable DDNS udpates.
+    // Disable DDNS updates.
     disableD2();
 
     // Create Reply message with Client Id and Server id.
@@ -1494,39 +1492,25 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
 TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
 
-    // We pass mode labels in with enclosing quotes so we can also test
-    // unquoted boolean literals true/false
-    testReplaceClientNameMode("\"never\"",
+    testReplaceClientNameMode("never",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"never\"",
+    testReplaceClientNameMode("never",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 
-    testReplaceClientNameMode("\"always\"",
+    testReplaceClientNameMode("always",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"always\"",
+    testReplaceClientNameMode("always",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"when-present\"",
+    testReplaceClientNameMode("when-present",
                               CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("\"when-present\"",
+    testReplaceClientNameMode("when-present",
                               CLIENT_NAME_PRESENT, NAME_REPLACED);
 
-    testReplaceClientNameMode("\"when-not-present\"",
+    testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
-    testReplaceClientNameMode("\"when-not-present\"",
+    testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean false produces the same result as RCM_NEVER
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("false",
-                              CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
-
-    // Verify that boolean true produces the same result as RCM_WHEN_PRESENT
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_NOT_PRESENT, NAME_NOT_REPLACED);
-    testReplaceClientNameMode("true",
-                              CLIENT_NAME_PRESENT, NAME_REPLACED);
 }
 
 }   // end of anonymous namespace

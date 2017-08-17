@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,6 +31,10 @@ const uint32_t bitMask4[] = { 0xffffffff, 0x7fffffff, 0x3fffffff, 0x1fffffff,
 
 /// @brief mask used for first/last address calculation in a IPv6 prefix
 const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+
+/// @brief mask used for IPv6 prefix calculation
+const uint8_t revMask6[]= { 0xff, 0x7f, 0x3f, 0x1f, 0xf, 0x7, 0x3, 0x1 };
+
 
 /// @brief calculates the first IPv6 address in a IPv6 prefix
 ///
@@ -267,6 +271,77 @@ addrsInRange(const isc::asiolink::IOAddress& min,
         }
 
         return (numeric);
+    }
+}
+
+int
+prefixLengthFromRange(const isc::asiolink::IOAddress& min,
+                      const isc::asiolink::IOAddress& max) {
+    if (min.getFamily() != max.getFamily()) {
+        isc_throw(BadValue, "Both addresses have to be the same family");
+    }
+
+    if (max < min) {
+        isc_throw(BadValue, min.toText() << " must not be greater than "
+                  << max.toText());
+    }
+
+    if (min.isV4()) {
+        // Get addresses as integers
+        uint32_t max_numeric = max.toUint32();
+        uint32_t min_numeric = min.toUint32();
+
+        // Get the exclusive or which must be one of the bit masks
+        uint32_t xor_numeric = max_numeric ^ min_numeric;
+        for (uint8_t prefix_len = 0; prefix_len <= 32; ++prefix_len) {
+            if (xor_numeric == bitMask4[prefix_len]) {
+                // Got it: the wanted value is also the index
+                return (static_cast<int>(prefix_len));
+            }
+        }
+
+        // If it was not found the range is not from a prefix / prefix_len
+        return (-1);
+    } else {
+        // Get addresses as 16 bytes
+        uint8_t min_packed[V6ADDRESS_LEN];
+        memcpy(min_packed, &min.toBytes()[0], 16);
+        uint8_t max_packed[V6ADDRESS_LEN];
+        memcpy(max_packed, &max.toBytes()[0], 16);
+
+        // Scan the exclusive or of addresses to find a difference
+        int candidate = 128;
+        bool zeroes = true;
+        for (uint8_t i = 0; i < 16; ++i) {
+            uint8_t xor_byte = min_packed[i] ^ max_packed[i];
+            if (zeroes) {
+                // Skipping zero bits searching for one bits
+                if (xor_byte == 0) {
+                    continue;
+                }
+                // Found a one bit: note the fact
+                zeroes = false;
+                // Compare the exclusive or to masks
+                for (uint8_t j = 0; j < 8; ++j) {
+                    if (xor_byte == revMask6[j]) {
+                        // Got it the prefix length: note it
+                        candidate = static_cast<int>((i * 8) + j);
+                    }
+                }
+                if (candidate == 128) {
+                    // Not found? The range is not from a prefix / prefix_len
+                    return (-1);
+                }
+            } else {
+                // Checking that trailing bits are on bits
+                if (xor_byte == 0xff) {
+                    continue;
+                }
+                // Not all ones is bad
+                return (-1);
+            }
+        }
+        return (candidate);
     }
 }
 

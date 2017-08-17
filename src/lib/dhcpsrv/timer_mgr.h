@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,13 +24,9 @@ class TimerMgr;
 /// @brief Type definition of the shared pointer to @c TimerMgr.
 typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 
-/// @brief Manages a pool of asynchronous interval timers for DHCP server.
+/// @brief Manages a pool of asynchronous interval timers.
 ///
-/// This class holds a pool of asynchronous interval timers which are
-/// capable of interrupting the blocking call to @c select() function in
-/// the main threads of the DHCP servers. The main thread can then
-/// timely execute the callback function associated with the particular
-/// timer.
+/// This class holds a pool of asynchronous interval timers.
 ///
 /// This class is useful for performing periodic actions at the specified
 /// intervals, e.g. act upon expired leases (leases reclamation) or
@@ -52,64 +48,9 @@ typedef boost::shared_ptr<TimerMgr> TimerMgrPtr;
 /// The registered timer's interval does not begin to elapse until the
 /// @c TimerMgr::setup method is called for it.
 ///
-/// The @c TimerMgr uses worker thread to run the timers. The thread is
-/// started and stopped using the @c TimerMgr::startThread and
-/// @c TimerMgr::stopThread respectively. The thread calls the blocking
-/// @c IOService::run. All the registered timers are associated with
-/// this instance of the @c IOService that the thread is running.
-/// When the timer elapses a generic callback function is executed
-/// @c TimerMgr::timerCallback with the parameter giving the name
-/// of the timer for which it has been executed.
-///
-/// Every registered timer is associated with an instance of the
-/// @c util::WatchSocket object. The socket is registered in the
-/// @c IfaceMgr as an "external" socket. When the generic callback
-/// function is invoked for the timer, it obtains the instance of the
-/// @c util::WatchSocket and marks it "ready". This call effectively
-/// writes the data to a socket (pipe) which interrupts the call
-/// to the @c select() function in the main thread. When the
-/// @c IfaceMgr (in the main thread) detects data transmitted over
-/// the external socket it will invoke a callback function
-/// associated with this socket. This is the
-/// @c TimerMgr::ifaceMgrCallback associated with the socket when the
-/// timer is registered. This callback function is executed in the
-/// main thread. It clears the socket, which unblocks the worker
-/// thread. It also invokes the user callback function specified
-/// for a given timer.
-///
-/// The @c TimerMgr::timerCallback function searches for the
-/// registered timer for which it has been called. This may cause
-/// race conditions between the worker thread and the main thread
-/// if the latter is modifying the collection of the registered
-/// timers. Therefore, the @c TimerMgr does not allow for
-/// registering or unregistering the timers when the worker thread
-/// is running. The worker thread must be stopped first.
-/// It is possible to call @c TimerMgr::setup and @c TimerMgr::cancel
-/// while the worker thread is running but this is considered
-/// unreliable (may cause race conditions) except the case when the
-/// @c TimerMgr::setup is called from the installed callback
-/// function to reschedule the ONE_SHOT timer. This is thread safe
-/// because the worker thread is blocked while the callback function
-/// is executed.
-///
-/// The worker thread is blocked when it executes a generic callback
-/// function in the @c TimerMgr, which marks the watch socket
-/// associated with the elapsed timer as "ready". The thread waits
-/// in the callback function until it is notified by the main thread
-/// (via conditional variable), that one of the watch sockets has
-/// been cleared. It then checks if the main thread cleared the
-/// socket that the worker thread had set. It continues to block
-/// if this was a different socket. It returns (unblocks) otherwise.
-/// The main thread clears the socket when the @c IfaceMgr detects
-/// that this socket has been marked ready by the worker thread.
-/// This is triggered only when the @c IfaceMgr::receive4 or
-/// @c IfaceMgr::receive6 is called. They are called in the main
-/// loops of the DHCP servers, which are also responsible for
-/// processing received packets. Therefore it may take some
-/// time for the main loop to detect that the socket has been
-/// marked ready, call appropriate handler for it and clear it.
-/// In the mean time, the worker thread will remain blocked.
-///
+/// Before the @c TimerMgr can be used the server process must call
+/// @c TimerMgr::setIOService to associate the manager with the IO service
+/// that the server is using to its run tasks.
 class TimerMgr : public boost::noncopyable {
 public:
 
@@ -118,20 +59,19 @@ public:
 
     /// @brief Destructor.
     ///
-    /// Stops the worker thread if it is running and unregisteres any
+    /// Stops the worker thread if it is running and unregisters any
     /// registered timers.
     ~TimerMgr();
+
+    /// @brief Sets IO service to be used by the Timer Manager.
+    ///
+    /// @param io_service Pointer to the new IO service.
+    void setIOService(const asiolink::IOServicePtr& io_service);
 
     /// @name Registering, unregistering and scheduling the timers.
     //@{
 
-    /// @brief Registers new timers in the @c TimerMgr.
-    ///
-    /// This method must not be called while the worker thread is running,
-    /// as it modifies the internal data structure holding registered
-    /// timers, which is also accessed from the worker thread via the
-    /// callback. Inserting new element to this data structure and
-    /// reading it at the same time would yield undefined behavior.
+    /// @brief Registers new timer in the @c TimerMgr.
     ///
     /// @param timer_name Unique name for the timer.
     /// @param callback Pointer to the callback function to be invoked
@@ -142,7 +82,6 @@ public:
     /// @c asiolink::IntervalTimer::Mode.
     ///
     /// @throw BadValue if the timer name is invalid or duplicate.
-    /// @throw InvalidOperation if the worker thread is running.
     void registerTimer(const std::string& timer_name,
                        const asiolink::IntervalTimer::Callback& callback,
                        const long interval,
@@ -150,15 +89,8 @@ public:
 
     /// @brief Unregisters specified timer.
     ///
-    /// This method cancels the timer if it is setup. It removes the external
-    /// socket from the @c IfaceMgr and closes it. It finally removes the
-    /// timer from the internal collection of timers.
-    ///
-    /// This method must not be called while the worker thread is running,
-    /// as it modifies the internal data structure holding registered
-    /// timers, which is also accessed from the worker thread via the
-    /// callback. Removing element from this data structure and
-    /// reading it at the same time would yield undefined behavior.
+    /// This method cancels the timer if it is setup and removes it from the
+    /// internal collection of timers.
     ///
     /// @param timer_name Name of the timer to be unregistered.
     ///
@@ -196,50 +128,6 @@ public:
     void cancel(const std::string& timer_name);
 
     //@}
-
-    /// @name Starting and stopping the worker thread.
-    //@{
-
-    /// @brief Starts worker thread
-    ///
-    /// This method has no effect if the thread has already been started.
-    void startThread();
-
-    /// @brief Stops worker thread.
-    ///
-    /// When the thread is being stopped, it is possible that some of the
-    /// timers have elapsed and marked their respective watch sockets
-    /// as "ready", but the sockets haven't been yet cleared in the
-    /// main thread and the installed callbacks haven't been executed.
-    /// It is possible to control whether those pending callbacks should
-    /// be executed or not before the call to @c stopThread ends.
-    /// If the thread is being stopped as a result of the DHCP server
-    /// reconfiguration running pending callback may take significant
-    /// amount of time, e.g. when operations on the lease database are
-    /// involved. If this is a concern, the function parameter should
-    /// be left at its default value. In this case, however, it is
-    /// important to note that callbacks installed on ONE_SHOT timers
-    /// often reschedule the timer. If such callback is not executed
-    /// the timer will have to be setup by the application when the
-    /// thread is started again.
-    ///
-    /// Setting the @c run_pending_callbacks to true will guarantee
-    /// that all callbacks for which the timers have already elapsed
-    /// (and marked their watch sockets as ready) will be executed
-    /// prior to the return from @c stopThread method. However, this
-    /// should be avoided if the longer execution time of the
-    /// @c stopThread function is a concern.
-    ///
-    /// This method has no effect if the thread is not running.
-    ///
-    /// @param run_pending_callbacks Indicates if the pending callbacks
-    /// should be executed (if true).
-    void stopThread(const bool run_pending_callbacks = false);
-
-    //@}
-
-    /// @brief Returns a reference to IO service used by the @c TimerMgr.
-    asiolink::IOService& getIOService() const;
 
 private:
 

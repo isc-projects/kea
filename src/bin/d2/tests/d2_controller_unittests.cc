@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <process/spec_config.h>
+#include <d2/tests/nc_test_utils.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/pointer_cast.hpp>
@@ -149,7 +150,7 @@ TEST_F(D2ControllerTest, launchNormalShutdown) {
     time_duration elapsed_time;
     runWithConfig(valid_d2_config, 1000, elapsed_time);
 
-    // Give a generous margin to accomodate slower test environs.
+    // Give a generous margin to accommodate slower test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() >= 800 &&
                 elapsed_time.total_milliseconds() <= 1300);
 }
@@ -180,41 +181,22 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
+    // Verify that given a valid config we get a successful check result.
+    answer = checkConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode);
+
     // Use an invalid configuration to verify parsing error return.
     std::string config = "{ \"bogus\": 1000 } ";
     config_set = isc::data::Element::fromJSON(config);
     answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
-}
 
-/// @brief Command execution tests.
-/// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions.
-/// This test verifies that:
-/// 1. That an unrecognized command is detected and returns a status of
-/// d2::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a d2::COMMAND_SUCCESS status.
-TEST_F(D2ControllerTest, executeCommandTests) {
-    int rcode = -1;
-    isc::data::ConstElementPtr answer;
-    isc::data::ElementPtr arg_set;
-
-    // Initialize the application process.
-    ASSERT_NO_THROW(initProcess());
-    EXPECT_TRUE(checkProcess());
-
-    // Verify that an unknown command returns an COMMAND_INVALID response.
-    std::string bogus_command("bogus");
-    answer = executeCommand(bogus_command, arg_set);
+    // Use an invalid configuration to verify checking error return.
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_INVALID, rcode);
-
-    // Verify that shutdown command returns COMMAND_SUCCESS response.
-    //answer = executeCommand(SHUT_DOWN_COMMAND, isc::data::ElementPtr());
-    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
+    EXPECT_EQ(1, rcode);
 }
 
 // Tests that the original configuration is retained after a SIGHUP triggered
@@ -294,7 +276,7 @@ TEST_F(D2ControllerTest, sigintShutdown) {
     runWithConfig(valid_d2_config, 1000, elapsed_time);
 
     // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accomodate slow
+    // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 
@@ -311,7 +293,7 @@ TEST_F(D2ControllerTest, sigtermShutdown) {
     runWithConfig(valid_d2_config, 1000, elapsed_time);
 
     // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accomodate slow
+    // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 

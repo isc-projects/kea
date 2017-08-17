@@ -1,0 +1,78 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It is a basic scenario with one IPv4 subnet configured but with DDNS
+// enabled. 
+
+{ "Dhcp4":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
+  "lease-database": {
+      "type": "memfile",
+      "lfc-interval": 3600
+  },
+
+// Addresses will be assigned with a lifetime of 4000 seconds.
+  "valid-lifetime": 4000,
+
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
+
+// The following list defines subnets. We have only one subnet
+// here. We tell Kea that it is directly available over local interface.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "interface": "ethX"
+    }
+  ],
+
+// Enable dynamic DNS updates
+  "dhcp-ddns" : {
+        "enable-updates" : true,
+        "server-ip" : "192.0.2.0",
+        "server-port" : 3432,
+        "sender-ip" : "192.0.2.1",
+        "sender-port" : 3433,
+        "max-queue-size" : 2048,
+        "ncr-protocol" : "UDP",
+        "ncr-format" : "JSON",
+        "always-include-fqdn" : true,
+        "override-no-update" : true,
+        "override-client-update" : true,
+        "replace-client-name" : "when-present",
+        "generated-prefix" : "test.prefix",
+        "qualifying-suffix" : "test.suffix."
+    }
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}

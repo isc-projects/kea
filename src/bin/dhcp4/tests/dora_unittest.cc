@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,10 +69,12 @@ namespace {
 ///     - IP address 10.0.0.7 for HW address aa:bb:cc:dd:ee:ff
 ///     - IP address 10.0.0.8 for DUID 01:02:03:04:05
 ///     - IP address 10.0.0.9 for circuit-id 'charter950'
+///     - IP address 10.0.0.1 for client-id
 ///
 /// - Configuration 5:
 ///   - The same as configuration 4, but using the following order of
-///     host-reservation-identifiers: duid, circuit-id, hw-address.
+///     host-reservation-identifiers: duid, circuit-id, hw-address,
+///     client-id.
 ///
 /// - Configuration 6:
 ///   - This configuration provides reservations for next-server,
@@ -355,7 +357,7 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     /// Cleans up statistics after the test.
     ~DORATest() {
@@ -609,7 +611,7 @@ TEST_F(DORATest, initRebootRequest) {
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
     // Change client identifier. The server should treat the request
-    // as a resquest from unknown client and ignore it.
+    // as a request from unknown client and ignore it.
     client.includeClientId("12:34");
     ASSERT_NO_THROW(client.doRequest());
     ASSERT_FALSE(client.getContext().response_);
@@ -890,7 +892,7 @@ TEST_F(DORATest, reservation) {
 // DUID carried in the Client Identifier option.
 TEST_F(DORATest, reservationByDUID) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-    // Use relay agent so as the circuit-id can be inserted.
+    // Use relay agent.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
     // Modify HW address so as the server doesn't assign reserved
     // address by HW address.
@@ -940,6 +942,31 @@ TEST_F(DORATest, reservationByCircuitId) {
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Make sure that the client has got the lease for the reserved address.
     ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+}
+
+// This test checks that it is possible to make a reservation by
+// client-id.
+TEST_F(DORATest, reservationByClientId) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[2], *client.getServer());
+    // Client A performs 4-way exchange and should obtain a reserved
+    // address.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("0.0.0.0"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.1", client.config_.lease_.addr_.toText());
 }
 
 // This test verifies that order in which host identifiers are used to
@@ -1315,7 +1342,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
 
     // Client A performs 4-way exchange.
     client.setState(Dhcp4Client::SELECTING);
-    // Revert to the broadcast address for the selcting client.
+    // Revert to the broadcast address for the selecting client.
     client.setDestAddress(IOAddress::IPV4_BCAST_ADDRESS());
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -1379,7 +1406,7 @@ TEST_F(DORATest, statisticsDORA) {
     ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_discover_received);
     ASSERT_TRUE(pkt4_offer_sent);
@@ -1441,7 +1468,7 @@ TEST_F(DORATest, statisticsNAK) {
     ObservationPtr pkt4_nak_sent = mgr.getObservation("pkt4-nak-sent");
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_request_received);
     ASSERT_FALSE(pkt4_ack_sent); // No acks were sent, no such statistic expected.
@@ -1551,7 +1578,7 @@ class DORAMySQLTest : public DORATest {
 public:
     /// @brief Constructor.
     ///
-    /// Recreats MySQL schema for a test.
+    /// Recreates MySQL schema for a test.
     DORAMySQLTest() : DORATest() {
         destroyMySQLSchema();
         createMySQLSchema();

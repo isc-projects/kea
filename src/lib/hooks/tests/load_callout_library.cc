@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,7 +77,7 @@ hook_nonstandard_two(CalloutHandle& handle) {
     return (0);
 }
 
-// Final callout adds "data_3" to the result.
+// Third callout adds "data_3" to the result.
 
 static int
 hook_nonstandard_three(CalloutHandle& handle) {
@@ -88,6 +88,38 @@ hook_nonstandard_three(CalloutHandle& handle) {
     handle.getArgument("result", result);
 
     result *= data;
+    handle.setArgument("result", result);
+
+    return (0);
+}
+
+// First command handler assigns data to a result.
+
+static int
+command_handler_one(CalloutHandle& handle) {
+    int data;
+    handle.getArgument("data_1", data);
+
+    int result;
+    handle.getArgument("result", result);
+
+    result = data;
+    handle.setArgument("result", result);
+
+    return (0);
+}
+
+// Second command handler multiples the result by data by 10.
+
+static int
+command_handler_two(CalloutHandle& handle) {
+    int data;
+    handle.getArgument("data_2", data);
+
+    int result;
+    handle.getArgument("result", result);
+
+    result *= data * 10;
     handle.setArgument("result", result);
 
     return (0);
@@ -108,6 +140,10 @@ int load(LibraryHandle& handle) {
     // Register the non-standard functions
     handle.registerCallout("hookpt_two", hook_nonstandard_two);
     handle.registerCallout("hookpt_three", hook_nonstandard_three);
+
+    // Register command_handler_one as control command handler.
+    handle.registerCommandCallout("command-one", command_handler_one);
+    handle.registerCommandCallout("command-two", command_handler_two);
 
     return (0);
 }

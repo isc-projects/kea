@@ -118,7 +118,7 @@ public:
     /// As for the format of "CLASSnnnn", "nnnn" must represent a valid 16-bit
     /// unsigned integer, which may contain leading 0's as long as it consists
     /// of at most 5 characters (inclusive).
-    /// For example, "CLASS1" and "CLASSS001" are valid and represent the same
+    /// For example, "CLASS1" and "CLASS0001" are valid and represent the same
     /// class, but "CLASS65536" and "CLASS000001" are invalid.
     /// A "CLASSnnnn" representation is valid even if the corresponding class
     /// code is registered in the \c RRParamRegistry object.  For example, both

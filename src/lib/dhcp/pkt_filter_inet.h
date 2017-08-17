@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ namespace dhcp {
 
 /// @brief Packet handling class using AF_INET socket family
 ///
-/// This class provides methods to send and recive packet via socket using
+/// This class provides methods to send and receive packet via socket using
 /// AF_INET family and SOCK_DGRAM type.
 class PktFilterInet : public PktFilter {
 public:
@@ -28,7 +28,7 @@ public:
     /// @brief Check if packet can be sent to the host without address directly.
     ///
     /// This Packet Filter sends packets through AF_INET datagram sockets, so
-    /// it can't inject the HW address of the destionation host into the packet.
+    /// it can't inject the HW address of the destination host into the packet.
     /// Therefore this class does not support direct responses.
     ///
     /// @return false always.
@@ -61,7 +61,7 @@ public:
     /// @return Received packet
     /// @throw isc::dhcp::SocketReadError if an error occurs during reception
     /// of the packet.
-    /// @throw An execption thrown by the isc::dhcp::Pkt4 object if DHCPv4
+    /// @throw An exception thrown by the isc::dhcp::Pkt4 object if DHCPv4
     /// message parsing fails.
     virtual Pkt4Ptr receive(Iface& iface, const SocketInfo& socket_info);
 
@@ -72,7 +72,7 @@ public:
     /// @param pkt packet to be sent
     ///
     /// @return result of sending a packet. It is 0 if successful.
-    /// @throw isc::dhcp::SocketWriteError if an error occures during sending
+    /// @throw isc::dhcp::SocketWriteError if an error occurs during sending
     /// a DHCP message through the socket.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt);
