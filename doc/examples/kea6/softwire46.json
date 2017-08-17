@@ -1,50 +1,50 @@
-# This is an example configuration file for DHCPv6 server in Kea.
-# It demonstrates how user can specify values for Softwire options
-# defined in RFC 7598 for Lightweight 4over6 architecture.
+// This is an example configuration file for DHCPv6 server in Kea.
+// It demonstrates how user can specify values for Softwire options
+// defined in RFC 7598 for Lightweight 4over6 architecture.
 
 { "Dhcp6":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# Let's use a Memfile backend to store leases.
+// Let's use a Memfile backend to store leases.
   "lease-database": {
     "type": "memfile"
   },
 
-# Addresses will be assigned with preferred and valid lifetimes
-# being 3000 and 4000, respectively. Client is told to start
-# renewing after 1000 seconds. If the server does not respond
-# after 2000 seconds since the lease was granted, client is supposed
-# to start REBIND procedure (emergency renewal that allows switching
-# to a different server).
+// Addresses will be assigned with preferred and valid lifetimes
+// being 3000 and 4000, respectively. Client is told to start
+// renewing after 1000 seconds. If the server does not respond
+// after 2000 seconds since the lease was granted, client is supposed
+// to start REBIND procedure (emergency renewal that allows switching
+// to a different server).
   "preferred-lifetime": 3000,
   "valid-lifetime": 4000,
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-# The following list defines subnets. Each subnet consists of at
-# least subnet and pool entries.
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
   "subnet6": [
     {
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
       "interface": "ethX",
-# Include MAP-E Container option for hosts connected to this subnet.
+// Include MAP-E Container option for hosts connected to this subnet.
       "option-data": [
         {
             "name": "s46-cont-mape"
         }
       ],
-# Send host specific softwire options.
+// Send host specific softwire options.
       "reservations": [
         {
             "duid": "01:02:03:04:05:06:07:08:09:0A",
             "option-data": [
-# These two options will be included in the MAP-E Container
+// These two options will be included in the MAP-E Container
               {
                 "space": "s46-cont-mape-options",
                 "name": "s46-rule",
@@ -55,10 +55,10 @@
                 "name": "s46-br",
                 "data": "2001:db8:cafe::1"
               },
-# This option will be included in the S46 Rule option. It includes
-# PSID/PSID length value in a user friendly form. The PSID length
-# specifies the number of bits on which PSID is coded. The PSID
-# value 3 is a 4th value that is coded on these 4 bits: "0011b".
+// This option will be included in the S46 Rule option. It includes
+// PSID/PSID length value in a user friendly form. The PSID length
+// specifies the number of bits on which PSID is coded. The PSID
+// value 3 is a 4th value that is coded on these 4 bits: "0011b".
               {
                 "space": "s46-rule-options",
                 "name": "s46-portparams",
@@ -71,8 +71,8 @@
   ]
 },
 
-# The following configures logging. Kea will log all debug messages
-# to /var/log/kea-debug.log file.
+// The following configures logging. Kea will log all debug messages
+// to /var/log/kea-debug.log file.
 "Logging": {
     "loggers": [
         {

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ namespace stats {
 /// As of May 2015, Tomek ran performance benchmarks (see unit-tests in
 /// stats_mgr_unittest.cc with performance in their names) and it seems
 /// the code is able to register ~2.5-3 million observations per second, even
-/// with 1000 different statistics recored. That seems sufficient for now,
+/// with 1000 different statistics recorded. That seems sufficient for now,
 /// so there is no immediate need to develop any multi-threading solutions
 /// for now. However, should this decision be revised in the future, the
 /// best place for it would to be modify @ref addObservation method here.
@@ -47,7 +47,7 @@ namespace stats {
 ///   significantly. While it's possible to log on sufficiently high debug
 ///   level, such a log would be not that useful)
 /// - dependency (statistics are intended to be a lightweight library, adding
-///   dependency on libkea-log, which has its own dependecies, including
+///   dependency on libkea-log, which has its own dependencies, including
 ///   external log4cplus, is against 'lightweight' design)
 /// - if logging of specific statistics is warranted, it is recommended to
 ///   add log entries in the code that calls StatsMgr.

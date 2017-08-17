@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,7 +98,7 @@ DUIDFactory::createLLT(const uint16_t htype, const uint32_t time_in,
         }
 
     } else if (htype_out == 0) {
-        // If link layer type unspecified and link layer adddress
+        // If link layer type unspecified and link layer address
         // is specified, use current type or HTYPE_ETHER.
         htype_out = ((htype_current != 0) ? htype_current :
                      static_cast<uint16_t>(HTYPE_ETHER));
@@ -223,7 +223,7 @@ DUIDFactory::createLL(const uint16_t htype,
         }
 
     } else if (htype_out == 0) {
-        // If link layer type unspecified and link layer adddress
+        // If link layer type unspecified and link layer address
         // is specified, use current type or HTYPE_ETHER.
         htype_out = ((htype_current != 0) ? htype_current :
             static_cast<uint16_t>(HTYPE_ETHER));
@@ -287,6 +287,12 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
         // Assign link layer address and type.
         identifier.assign(iface->getMac(), iface->getMac() + iface->getMacLen());
         htype = iface->getHWType();
+
+        // If it looks like an Ethernet interface we should be happy
+        if ((htype == static_cast<uint16_t>(HTYPE_ETHER)) &&
+            (iface->getMacLen() == 6)) {
+            break;
+        }
     }
 
     // We failed to find an interface which link layer address could be

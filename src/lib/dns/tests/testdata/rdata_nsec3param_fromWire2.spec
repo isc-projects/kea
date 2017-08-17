@@ -1,6 +1,6 @@
 #
 # A malformed NSEC3PARAM RDATA: RDLEN indicates it doesn't even contain the
-# fixed 5 octects
+# fixed 5 octets
 #
 
 [custom]

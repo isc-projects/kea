@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ const std::string FILE_HEADER =
     <title>Kea Messages Manual</title>\n\
 \n\
     <copyright>\n\
-      <year>2011-2015</year><holder>Internet Systems Consortium, Inc.</holder>\n\
+      <year>2011-2017</year><holder>Internet Systems Consortium, Inc.</holder>\n\
     </copyright>\n\
 \n\
     <abstract>\n\
@@ -174,7 +174,7 @@ const std::string SECTION_TRAILER =
   </section>";
 
 /// @brief File trailer
-/// The trailier is copied to the output verbatim after the last section.
+/// The trailer is copied to the output verbatim after the last section.
 const std::string FILE_TRAILER =
 "  </chapter>\n\
 </book>";
@@ -488,7 +488,7 @@ void processFileContent(const std::string& filename,
         }
     }
 
-    // All done, add the last message to the global dictionaty.
+    // All done, add the last message to the global dictionary.
     if (!msgid.empty()) {
         addToDictionary(msgid, msgtext, description, filename);
     }
@@ -549,7 +549,7 @@ void processFile(const std::string& filename)
         if (line[0] != '#') {
             lines1.push_back(line);
         }
-    }  
+    }
 
     // Remove leading/trailing empty line sequences from the result
     LinesType lines2 = removeEmptyLeadingTrailing(lines1);

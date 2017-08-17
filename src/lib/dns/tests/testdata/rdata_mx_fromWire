@@ -3,7 +3,7 @@
 #
 # Valid RDATA for "10 mail.example.com"
 #
-# RDLENGHT=18 bytes
+# RDLENGTH=18 bytes
 # 0  1
  00 12
 #  2  3

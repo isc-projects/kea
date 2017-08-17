@@ -17,23 +17,25 @@ BUILT_SOURCES = config_messages.h config_messages.cc
 lib_LTLIBRARIES = libkea-cfgclient.la
 libkea_cfgclient_la_SOURCES = config_data.h config_data.cc
 libkea_cfgclient_la_SOURCES += module_spec.h module_spec.cc
+libkea_cfgclient_la_SOURCES += base_command_mgr.cc base_command_mgr.h
+libkea_cfgclient_la_SOURCES += client_connection.cc client_connection.h
 libkea_cfgclient_la_SOURCES += command_mgr.cc command_mgr.h
-libkea_cfgclient_la_SOURCES += command_socket.cc command_socket.h
-libkea_cfgclient_la_SOURCES += command_socket_factory.cc command_socket_factory.h
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
+libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
 
 libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 2:1:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 3:0:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace dns {
 
 /// \brief A converter from a stream of RRs to a stream of collated RRsets
 ///
-/// This class is mainly intended to be a helper used as an adaptor for
+/// This class is mainly intended to be a helper used as an adapter for
 /// user applications of the \c MasterLoader class; it works as a callback
 /// for \c MasterLoader, buffers given RRs from the loader, collating
 /// consecutive RRs that belong to the same RRset (ones having the same
@@ -93,7 +93,7 @@ public:
     /// \brief Return \c MasterLoader compatible callback.
     ///
     /// This method returns a functor in the form of \c AddRRCallback
-    /// that works as an adaptor between \c MasterLoader and an application
+    /// that works as an adapter between \c MasterLoader and an application
     /// that needs to get a stream of RRsets.  When the returned callback
     /// is called, this \c RRCollator object accepts the corresponding RR,
     /// and collates it with other RRs of the same RRset if necessary.

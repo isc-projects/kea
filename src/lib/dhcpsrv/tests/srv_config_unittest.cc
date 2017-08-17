@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
@@ -50,10 +51,10 @@ public:
             test_subnets4_.push_back(subnet);
         }
         // Create IPv6 subnets.
+        IOAddress prefix("2001:db8:1::");
         for (int i = 0; i < TEST_SUBNETS_NUM; ++i) {
             // This is a base prefix. All other prefixes will be created by
             // modifying this one.
-            IOAddress prefix("2001:db8:1::0");
             std::vector<uint8_t> prefix_bytes = prefix.toBytes();
             // Modify 5th byte of the prefix, so 2001:db8:1::0 becomes
             // 2001:db8:2::0 etc.
@@ -64,9 +65,9 @@ public:
         }
 
         // Build our reference dictionary of client classes
-        ref_dictionary_->addClass("cc1", ExpressionPtr(), CfgOptionPtr());
-        ref_dictionary_->addClass("cc2", ExpressionPtr(), CfgOptionPtr());
-        ref_dictionary_->addClass("cc3", ExpressionPtr(), CfgOptionPtr());
+        ref_dictionary_->addClass("cc1", ExpressionPtr(), "", CfgOptionPtr());
+        ref_dictionary_->addClass("cc2", ExpressionPtr(), "", CfgOptionPtr());
+        ref_dictionary_->addClass("cc3", ExpressionPtr(), "", CfgOptionPtr());
     }
 
 
@@ -141,8 +142,9 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
 
 void
 SrvConfigTest::enableDDNS(const bool enable) {
-    // D2 configuration should always be non-NULL.
-    CfgMgr::instance().getD2ClientConfig()->enableUpdates(enable);
+    const D2ClientConfigPtr& d2_config = conf_.getD2ClientConfig();
+    ASSERT_TRUE(d2_config);
+    d2_config->enableUpdates(enable);
 }
 
 // Check that by default there are no logging entries
@@ -237,7 +239,6 @@ TEST_F(SrvConfigTest, summarySubnets) {
     addSubnet6(1);
     EXPECT_EQ("added IPv4 subnets: 2; added IPv6 subnets: 2",
               conf_.getConfigSummary(SrvConfig::CFGSEL_SUBNET));
-
 }
 
 // Verifies that we can get and set the client class dictionary
@@ -258,6 +259,27 @@ TEST_F(SrvConfigTest, classDictionaryBasics) {
     const ClientClassDictionaryPtr cd = conf.getClientClassDictionary();
     ASSERT_TRUE(cd);
     EXPECT_EQ(ref_dictionary_->getClasses()->size(), cd->getClasses()->size());
+}
+
+// This test verifies that RFC6842 (echo client-id) compatibility may be
+// configured.
+TEST_F(SrvConfigTest, echoClientId) {
+    SrvConfig conf;
+
+    // Check that the default is true
+    EXPECT_TRUE(conf.getEchoClientId());
+
+    // Check that it can be modified to false
+    conf.setEchoClientId(false);
+    EXPECT_FALSE(conf.getEchoClientId());
+
+    // Check that the default value can be restored
+    conf.setEchoClientId(true);
+    EXPECT_TRUE(conf.getEchoClientId());
+
+    // Check the other constructor has the same default
+    SrvConfig conf1(1);
+    EXPECT_TRUE(conf1.getEchoClientId());
 }
 
 // This test checks if entire configuration can be copied and that the sequence
@@ -377,5 +399,90 @@ TEST_F(SrvConfigTest, equality) {
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
 }
+
+// Verifies that we can get and set configured hooks libraries
+TEST_F(SrvConfigTest, hooksLibraries) {
+    SrvConfig conf(32);
+    isc::hooks::HooksConfig& libraries = conf.getHooksConfig();
+
+    // Upon construction configured hooks libraries should be empty.
+    EXPECT_EQ(0, libraries.get().size());
+
+    // Verify we can update it.
+    isc::data::ConstElementPtr elem0;
+    libraries.add("foo", elem0);
+    std::string config = "{ \"library\": \"bar\" }";
+    isc::data::ConstElementPtr elem1 = isc::data::Element::fromJSON(config);
+    libraries.add("bar", elem1);
+    EXPECT_EQ(2, libraries.get().size());
+    EXPECT_EQ(2, conf.getHooksConfig().get().size());
+
+    // Try to copy
+    SrvConfig copied(64);
+    ASSERT_TRUE(conf != copied);
+    ASSERT_NO_THROW(conf.copy(copied));
+    ASSERT_TRUE(conf == copied);
+    EXPECT_EQ(2, copied.getHooksConfig().get().size());
+
+    EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
+}
+
+// Verifies that the toElement method works well (tests limited to
+// direct parameters)
+TEST_F(SrvConfigTest, unparse) {
+    SrvConfig conf(32);
+    std::string header4 = "{\n\"Dhcp4\": {\n";
+    std::string header6 = "{\n\"Dhcp6\": {\n";
+
+    std::string defaults = "\"decline-probation-period\": 0,\n";
+    defaults += "\"dhcp4o6-port\": 0,\n";
+    defaults += "\"interfaces-config\": { \"interfaces\": [ ],\n";
+    defaults += " \"re-detect\": false },\n";
+    defaults += "\"option-def\": [ ],\n";
+    defaults += "\"option-data\": [ ],\n";
+    defaults += "\"expired-leases-processing\": ";
+    defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
+    defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
+    defaults += "\"hooks-libraries\": [ ],\n";
+    defaults += "\"dhcp-ddns\": \n";
+    defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
+
+    std::string defaults4 = "\"echo-client-id\": true,\n";
+    defaults4 += "\"subnet4\": [ ],\n";
+    defaults4 += "\"host-reservation-identifiers\": ";
+    defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n";
+
+    std::string defaults6 = "\"relay-supplied-options\": [ \"65\" ],\n";
+    defaults6 += "\"subnet6\": [ ],\n";
+    defaults6 += "\"server-id\": ";
+    defaults6 += conf.getCfgDUID()->toElement()->str() + ",\n";
+    defaults6 += "\"host-reservation-identifiers\": ";
+    defaults6 += "[ \"hw-address\", \"duid\" ],\n";
+    defaults6 += "\"dhcp4o6-port\": 0,\n";
+    defaults6 += "\"mac-sources\": [ \"any\" ]\n";
+
+    std::string params = "\"echo-client-id\": true,\n";
+    params += "\"dhcp4o6-port\": 0\n";
+    std::string trailer = "}\n}\n";
+
+    // Verify DHCPv4
+    CfgMgr::instance().setFamily(AF_INET);
+    isc::test::runToElementTest<SrvConfig>
+        (header4 + defaults + defaults4 + params + trailer, conf);
+
+    // Verify DHCPv6
+    CfgMgr::instance().setFamily(AF_INET6);
+    isc::test::runToElementTest<SrvConfig>
+        (header6 + defaults + defaults6 + trailer, conf);
+
+    // Verify direct non-default parameters
+    CfgMgr::instance().setFamily(AF_INET);
+    conf.setEchoClientId(false);
+    conf.setDhcp4o6Port(6767);
+    params = "\"echo-client-id\": false,\n";
+    params += "\"dhcp4o6-port\": 6767\n";
+    isc::test::runToElementTest<SrvConfig>
+        (header4 + defaults + defaults4 + params + trailer, conf);
+}    
 
 } // end of anonymous namespace

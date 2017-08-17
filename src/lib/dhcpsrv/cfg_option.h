@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcp/option.h>
 #include <dhcp/option_space_container.h>
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/key_from_key.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -183,6 +184,11 @@ typedef std::pair<OptionContainerTypeIndex::const_iterator,
                   OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
 /// Type of the index #2 - option persistency flag.
 typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
+/// Pair of iterators to represent the range of options having the
+/// same persistency flag. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<OptionContainerPersistIndex::const_iterator,
+                  OptionContainerPersistIndex::const_iterator> OptionContainerPersistRange;
 
 /// @brief Represents option data configuration for the DHCP server.
 ///
@@ -210,7 +216,7 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// options is useful when the client requests stateless configuration from
 /// the DHCP server and no subnet is selected for this client. This client
 /// will only receive global options.
-class CfgOption {
+class CfgOption : public isc::data::CfgToElement {
 public:
 
     /// @brief default constructor
@@ -316,7 +322,7 @@ public:
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
-    /// name in the format of "vendor-X" where X is 32-bit unsiged integer.
+    /// name in the format of "vendor-X" where X is 32-bit unsigned integer.
     /// See @c getAll(uint32_t) for vendor options.
     ///
     /// @param option_space Name of the option space.
@@ -393,6 +399,11 @@ public:
     ///
     /// @return List comprising option space names for vendor options.
     std::list<std::string> getVendorIdsSpaceNames() const;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

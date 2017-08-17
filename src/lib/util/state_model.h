@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,7 +90,7 @@ public:
     /// @brief Adds a state definition to the set of states.
     ///
     /// @param value is the numeric value of the state
-    /// @param label is the text label to assig to the state
+    /// @param label is the text label to assign to the state
     /// @param handler is the bound instance method which handles the state's
     ///
     /// @throw StateModelError if the value is already defined in the set, or
@@ -265,7 +265,7 @@ public:
     /// @brief Begins execution of the model.
     ///
     /// This method invokes initDictionaries method to initialize the event
-    /// and state dictionaries and then starts the model execution setting 
+    /// and state dictionaries and then starts the model execution setting
     /// the current state to the given start state, and the event to START_EVT.
     ///
     /// @param start_state is the state in which to begin execution.
@@ -314,7 +314,7 @@ protected:
     /// @brief Initializes the event and state dictionaries.
     ///
     /// This method invokes the define and verify methods for both events and
-    /// states to initialize their respective dictionaries. 
+    /// states to initialize their respective dictionaries.
     ///
     /// @throw StateModelError or others indirectly, as this method calls
     /// dictionary define and verify methods.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,6 @@
 #include <dhcp/classify.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/pool.h>
-#include <dhcpsrv/subnet.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/buffer.h>
 
@@ -41,12 +40,9 @@ public:
 /// @brief Configuration Manager
 ///
 /// This singleton class holds the whole configuration for DHCPv4 and DHCPv6
-/// servers. It currently holds information about zero or more subnets6.
-/// Each subnet may contain zero or more pools. Pool4 and Pool6 is the most
-/// basic "chunk" of configuration. It contains a range of assignable
-/// addresses.
+/// servers.
 ///
-/// Below is a sketch of configuration inheritance (not implemented yet).
+/// Below is a sketch of configuration inheritance.
 /// Let's investigate the following configuration:
 ///
 /// @code
@@ -67,13 +63,9 @@ public:
 /// and a valid lifetime of 1000s. The second subnet has preferred lifetime
 /// of 500s, but valid lifetime of 2000s.
 ///
-/// Parameter inheritance is likely to be implemented in configuration handling
-/// routines, so there is no storage capability in a global scope for
-/// subnet-specific parameters.
-///
-/// @todo: Implement Subnet4 support (ticket #2237)
-/// @todo: Implement option definition support
-/// @todo: Implement parameter inheritance
+/// Parameter inheritance is implemented in dedicated classes. See
+/// @ref isc::dhcp::SimpleParser4::deriveParameters and
+/// @ref isc::dhcp::SimpleParser6::deriveParameters.
 class CfgMgr : public boost::noncopyable {
 public:
 
@@ -88,39 +80,9 @@ public:
     /// accessing it.
     static CfgMgr& instance();
 
-    /// @brief Adds new DHCPv4 option space to the collection.
-    ///
-    /// @param space option space to be added.
-    ///
-    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
-    /// has been specified.
-    void addOptionSpace4(const OptionSpacePtr& space);
-
-    /// @brief Adds new DHCPv6 option space to the collection.
-    ///
-    /// @param space option space to be added.
-    ///
-    /// @throw isc::dhcp::InvalidOptionSpace invalid option space
-    /// has been specified.
-    void addOptionSpace6(const OptionSpacePtr& space);
-
-    /// @brief Return option spaces for DHCPv4.
-    ///
-    /// @return A collection of option spaces.
-    const OptionSpaceCollection& getOptionSpaces4() const {
-        return (spaces4_);
-    }
-
-    /// @brief Return option spaces for DHCPv6.
-    ///
-    /// @return A collection of option spaces.
-    const OptionSpaceCollection& getOptionSpaces6() const {
-        return (spaces6_);
-    }
-
     /// @brief returns path do the data directory
     ///
-    /// This method returns a path to writeable directory that DHCP servers
+    /// This method returns a path to writable directory that DHCP servers
     /// can store data in.
     /// @return data directory
     std::string getDataDir() const;
@@ -130,23 +92,12 @@ public:
     /// @param datadir New data directory.
     void setDataDir(const std::string& datadir);
 
-    /// @brief Sets whether server should send back client-id in DHCPv4
-    ///
-    /// This is a compatibility flag. The default (true) is compliant with
-    /// RFC6842. False is for backward compatibility.
-    ///
-    /// @param echo should the client-id be sent or not
-    void echoClientId(const bool echo) {
-        echo_v4_client_id_ = echo;
-    }
-
-    /// @brief Returns whether server should send back client-id in DHCPv4.
-    /// @return true if client-id should be returned, false otherwise.
-    bool echoClientId() const {
-        return (echo_v4_client_id_);
-    }
-
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
+    ///
+    /// Passes the new configuration to the D2ClientMgr instance,
+    /// d2_client_mgr_, which will attempt to apply the new configuration
+    /// by shutting down its sender and opening a new connection per the new
+    /// configuration (see @c D2ClientMgr::setD2ClientConfig()).
     ///
     /// @param new_config pointer to the new client configuration.
     ///
@@ -172,7 +123,7 @@ public:
     /// @name Methods managing the collection of configurations.
     ///
     /// The following methods manage the process of preparing a configuration
-    /// without affecting a currently used configuration and then commiting
+    /// without affecting a currently used configuration and then committing
     /// the configuration to replace current configuration atomically.
     /// They also allow for keeping a history of previous configurations so
     /// as the @c CfgMgr can revert to the historical configuration when
@@ -245,10 +196,26 @@ public:
     ///
     /// This function returns pointer to the current configuration. If the
     /// current configuration is not set it will create a default configuration
-    /// and return it. Current configuration returned is read-only.
+    /// and return it.
     ///
-    /// @return Non-null const pointer to the current configuration.
-    ConstSrvConfigPtr getCurrentCfg();
+    /// In the previous Kea releases this method used to return a const pointer
+    /// to the current configuration to ensure that it is not accidentally
+    /// modified while the server is running. This has been changed in Kea 1.3
+    /// release and now this function returns a non-const pointer. The reason
+    /// is that there are certain use cases when current configuration must
+    /// be modified without going through a full cycle of server
+    /// reconfiguration, e.g. add a subnet to the current configuration as
+    /// a result of receiving a command over control API. In such case the
+    /// performance of processing such command is critical and rebuilding the
+    /// whole configuration just for this small configuration change is out
+    /// of question.
+    ///
+    /// Nevertheless, such configuration updates should always be made with
+    /// caution and one has to make sure that the configuration data integrity
+    /// is preserved.
+    ///
+    /// @return Non-null pointer to the current configuration.
+    SrvConfigPtr getCurrentCfg();
 
     /// @brief Returns a pointer to the staging configuration.
     ///
@@ -297,6 +264,16 @@ public:
         return (default_logger_name_);
     }
 
+    /// @brief Sets address family (AF_INET or AF_INET6)
+    void setFamily(uint16_t family) {
+        family_ = family == AF_INET ? AF_INET : AF_INET6;
+    }
+
+    /// @brief Returns address family.
+    uint16_t getFamily() const {
+        return (family_);
+    }
+
     //@}
 
 protected:
@@ -312,14 +289,6 @@ protected:
     /// @brief virtual destructor
     virtual ~CfgMgr();
 
-    /// @brief a container for IPv6 subnets.
-    ///
-    /// That is a simple vector of pointers. It does not make much sense to
-    /// optimize access time (e.g. using a map), because typical search
-    /// pattern will use calling inRange() method on each subnet until
-    /// a match is found.
-    Subnet6Collection subnets6_;
-
 private:
 
     /// @brief Checks if current configuration is created and creates it if needed.
@@ -329,24 +298,8 @@ private:
     /// default current configuration.
     void ensureCurrentAllocated();
 
-    /// @brief Checks that the IPv6 subnet with the given id already exists.
-    ///
-    /// @param subnet Subnet for which this function will check if the other
-    /// subnet with equal id already exists.
-    /// @return true if the duplicate subnet exists.
-    bool isDuplicate(const Subnet6& subnet) const;
-
-    /// @brief Container for defined DHCPv6 option spaces.
-    OptionSpaceCollection spaces6_;
-
-    /// @brief Container for defined DHCPv4 option spaces.
-    OptionSpaceCollection spaces4_;
-
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
-
-    /// Indicates whether v4 server should send back client-id
-    bool echo_v4_client_id_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;
@@ -372,6 +325,9 @@ private:
 
     /// @brief Default logger name.
     std::string default_logger_name_;
+
+    /// @brief Address family.
+    uint16_t family_;
 };
 
 } // namespace isc::dhcp

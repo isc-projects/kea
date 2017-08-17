@@ -86,18 +86,18 @@ bool UnixControlClient::sendCommand(const std::string& command) {
     return (true);
 }
 
-bool UnixControlClient::getResponse(std::string& response) {
+bool UnixControlClient::getResponse(std::string& response,
+                                    const unsigned int timeout_sec) {
     // Receive response
     char buf[65536];
     memset(buf, 0, sizeof(buf));
-    switch (selectCheck()) {
+    switch (selectCheck(timeout_sec)) {
     case -1: {
         const char* errmsg = strerror(errno);
         ADD_FAILURE() << "getResponse - select failed: " << errmsg;
         return (false);
     }
     case 0:
-        ADD_FAILURE() << "No response data sent";
         return (false);
 
     default:
@@ -112,17 +112,12 @@ bool UnixControlClient::getResponse(std::string& response) {
         return (false);
     }
 
-    if (bytes_rcvd >= sizeof(buf)) {
-        ADD_FAILURE() << "Response size too large: " << bytes_rcvd;
-        return (false);
-    }
-
     // Convert the response to a string
     response = std::string(buf, bytes_rcvd);
     return (true);
 }
 
-int UnixControlClient::selectCheck() {
+int UnixControlClient::selectCheck(const unsigned int timeout_sec) {
     int maxfd = 0;
 
     fd_set read_fds;
@@ -133,7 +128,7 @@ int UnixControlClient::selectCheck() {
     maxfd = socket_fd_;
 
     struct timeval select_timeout;
-    select_timeout.tv_sec = 0;
+    select_timeout.tv_sec = static_cast<time_t>(timeout_sec);
     select_timeout.tv_usec = 0;
 
     return (select(maxfd + 1, &read_fds, NULL, NULL, &select_timeout));
