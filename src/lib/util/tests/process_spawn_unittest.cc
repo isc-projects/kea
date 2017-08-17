@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ bool waitForProcess(const ProcessSpawn& process, const pid_t pid,
 ///
 /// This method does not use any sleep() calls, but rather iterates through
 /// the loop very fast. This is not recommended in general, but is necessary
-/// to avoid updating errno by sleep() after receving a signal.
+/// to avoid updating errno by sleep() after receiving a signal.
 ///
 /// Note: the timeout is only loosely accurate. Depending on the fraction
 /// of second it was started on, it may terminate later by up to almost
@@ -88,6 +88,21 @@ bool waitForProcessFast(const ProcessSpawn& process, const pid_t pid,
     }
 
     return (true);
+}
+
+// This test verifies that if the thread calling spawn has SIGCHLD
+// already block ProcessSpawnError is thrown (@todo the second error
+// case: fork() failing)
+TEST(ProcessSpawn, sigchldBlocked) {
+    std::vector<std::string> args;
+    ProcessSpawn process(getApp(), args);
+    sigset_t sset;
+    sigemptyset(&sset);
+    sigaddset(&sset, SIGCHLD);
+    sigset_t osset;
+    pthread_sigmask(SIG_BLOCK, &sset, &osset);
+    EXPECT_THROW(process.spawn(), ProcessSpawnError);
+    sigprocmask(SIG_SETMASK, &osset, 0);
 }
 
 // This test verifies that the external application can be ran with
@@ -224,7 +239,7 @@ TEST(ProcessSpawn, errnoInvariance) {
 
     EXPECT_EQ(64, process.getExitStatus(pid));
 
-    // errno value should be set to be preserved, despite the SIGCHILD
+    // errno value should be set to be preserved, despite the SIGCHLD
     // handler (ProcessSpawnImpl::waitForProcess) calling waitpid(), which
     // will likely set errno to ECHILD. See trac4000.
     EXPECT_EQ(123, errno);

@@ -7,7 +7,7 @@
 ]>
 
 <!--
- - Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@
         &__VERSION__;.</releaseinfo>
 
     <copyright>
-      <year>2010-2016</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2017</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
@@ -64,6 +64,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml" />
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="agent.xml" />
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp4-srv.xml" />
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp6-srv.xml" />
@@ -85,6 +87,8 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml" />
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml" />
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml" />
 

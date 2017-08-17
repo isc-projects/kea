@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <dhcpsrv/cfg_expiration.h>
 #include <exceptions/exceptions.h>
 #include <limits>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -94,13 +96,43 @@ CfgExpiration::rangeCheck(const int64_t value, const uint64_t max_value,
                           const std::string& config_parameter_name) const {
     if (value < 0) {
         isc_throw(OutOfRange, "value for configuration parameter '"
-                  << config_parameter_name << "' must not be negtive");
+                  << config_parameter_name << "' must not be negative");
 
     } else if (value > max_value) {
         isc_throw(OutOfRange, "out range value '" << value << "' for configuration"
                   " parameter '" << config_parameter_name << "', expected maximum"
                   " value of '" << max_value << "'");
     }
+}
+
+ElementPtr
+CfgExpiration::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set reclaim-timer-wait-time
+    result->set("reclaim-timer-wait-time",
+                Element::create(static_cast<long long>
+                                (reclaim_timer_wait_time_)));
+    // Set flush-reclaimed-timer-wait-time
+    result->set("flush-reclaimed-timer-wait-time",
+                Element::create(static_cast<long long>
+                                (flush_reclaimed_timer_wait_time_)));
+    // Set hold-reclaimed-time
+    result->set("hold-reclaimed-time",
+                Element::create(static_cast<long long>
+                                (hold_reclaimed_time_)));
+    // Set max-reclaim-leases
+    result->set("max-reclaim-leases",
+                Element::create(static_cast<long long>
+                                (max_reclaim_leases_)));
+    // Set max-reclaim-time
+    result->set("max-reclaim-time",
+                Element::create(static_cast<long long>
+                                (max_reclaim_time_)));
+    // Set unwarned-reclaim-cycles
+    result->set("unwarned-reclaim-cycles",
+                Element::create(static_cast<long long>
+                                (unwarned_reclaim_cycles_)));
+    return (result);
 }
 
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,8 +69,7 @@ const char* CONFIGS[] = {
         "   \"name\": \"pxe4\","
         "   \"test\": \"option[93].hex == 0x0001\","
         "   \"boot-file-name\": \"ipxe.efi\""
-        "},"
-        "],"
+        "}],"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
@@ -138,7 +137,7 @@ public:
         IfaceMgr::instance().openSockets4();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     ~ClassifyTest() {
     }

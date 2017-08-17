@@ -21,7 +21,7 @@ namespace test {
 /// ensure that the getCalloutHandle() template function is referred to by
 /// two separate compilation units, and so test that data stored in one unit
 /// can be accessed by another. (This should be the case, but some compilers
-/// mabe be odd when it comes to template instantiation.)
+/// maybe be odd when it comes to template instantiation.)
 ///
 /// @param pktptr Pointer to a Pkt6 object.
 ///

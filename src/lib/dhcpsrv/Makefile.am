@@ -43,6 +43,11 @@ EXTRA_DIST += parsers/host_reservation_parser.h
 EXTRA_DIST += parsers/host_reservations_list_parser.h
 EXTRA_DIST += parsers/ifaces_config_parser.cc
 EXTRA_DIST += parsers/ifaces_config_parser.h
+EXTRA_DIST += parsers/option_data_parser.h
+EXTRA_DIST += parsers/simple_parser4.cc
+EXTRA_DIST += parsers/simple_parser4.h
+EXTRA_DIST += parsers/simple_parser6.cc
+EXTRA_DIST += parsers/simple_parser6.h
 
 # Devel guide diagrams
 EXTRA_DIST += images/pgsql_host_data_source.svg
@@ -85,10 +90,11 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
-libkea_dhcpsrv_la_SOURCES += cfg_4o6.h
+libkea_dhcpsrv_la_SOURCES += cfg_4o6.cc cfg_4o6.h
 libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
 libkea_dhcpsrv_la_SOURCES += cfg_duid.cc cfg_duid.h
 libkea_dhcpsrv_la_SOURCES += cfg_hosts.cc cfg_hosts.h
+libkea_dhcpsrv_la_SOURCES += cfg_hosts_util.cc cfg_hosts_util.h
 libkea_dhcpsrv_la_SOURCES += cfg_iface.cc cfg_iface.h
 libkea_dhcpsrv_la_SOURCES += cfg_expiration.cc cfg_expiration.h
 libkea_dhcpsrv_la_SOURCES += cfg_host_operations.cc cfg_host_operations.h
@@ -174,6 +180,12 @@ libkea_dhcpsrv_la_SOURCES += parsers/host_reservation_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/host_reservations_list_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.cc
+libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.h
+libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
+libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
 
 nodist_libkea_dhcpsrv_la_SOURCES = alloc_engine__messages.h
 nodist_libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.cc
@@ -198,7 +210,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 6:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 7:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)

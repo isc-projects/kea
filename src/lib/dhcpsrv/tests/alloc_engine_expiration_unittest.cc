@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ const unsigned int TEST_LEASES_NUM = 100;
 struct LowerBound {
     /// @brief Constructor.
     ///
-    /// @param lower_bound Interger value wrapped by the structure.
+    /// @param lower_bound Integer value wrapped by the structure.
     explicit LowerBound(const size_t lower_bound)
         : lower_bound_(lower_bound) { };
 
@@ -70,7 +70,7 @@ struct LowerBound {
 struct UpperBound {
     /// @brief Constructor.
     ///
-    /// @param lower_bound Interger value wrapped by the structure.
+    /// @param lower_bound Integer value wrapped by the structure.
     explicit UpperBound(const size_t upper_bound)
         : upper_bound_(upper_bound) { };
 
@@ -98,7 +98,7 @@ std::string callout_argument_name("lease4");
 /// - it processes multiple leases,
 /// - leases are processed in certain order,
 /// - number of processed leases may be limited by the parameters,
-/// - maxium duration of the lease reclamation routine may be limited,
+/// - maximum duration of the lease reclamation routine may be limited,
 /// - reclaimed leases may be marked as reclaimed or deleted,
 /// - DNS records for some of the leases must be removed when the lease
 ///   is reclaimed and DNS updates are enabled,
@@ -132,7 +132,7 @@ std::string callout_argument_name("lease4");
 /// to mark leases with even indexes as expired and then test whether
 /// leases with even indexes have been successfully reclaimed.
 ///
-/// The "lease algorithm" verifies if the given lease fulfils the
+/// The "lease algorithm" verifies if the given lease fulfills the
 /// specific conditions after reclamation. These are the examples of
 /// the lease algorithms:
 /// - leaseExists - lease still exists in the database,
@@ -144,7 +144,7 @@ std::string callout_argument_name("lease4");
 /// - dnsUpdateNotGeneratedForLease - DNS updates not generated for lease
 ///
 /// The combination of index algorithm and lease algorithm allows for
-/// verifying that the whole sets of leases in the lease database fulfil
+/// verifying that the whole sets of leases in the lease database fulfill
 /// certain conditions. For example, it is possible to verify that
 /// after lease reclamation leases with even indexes have state set to
 /// "expired-reclaimed".
@@ -304,7 +304,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -359,7 +359,7 @@ public:
             LeasePtrType lease = getLease(i);
             // index_algorithm(i) checks if the lease should be checked.
             // If so, check if the lease_algorithm indicates that the
-            // lease fulfils a given condition, e.g. is present in the
+            // lease fulfills a given condition, e.g. is present in the
             // database. If not, return false.
             if (index_algorithm(i) && !lease_algorithm(lease)) {
                 return (false);
@@ -654,7 +654,7 @@ public:
     /// of reclaimed leases.
     void testReclaimExpiredLeasesLimit() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-            // Mark all leaes as expired. The higher the index the less
+            // Mark all leases as expired. The higher the index the less
             // expired the lease.
             expire(i, 1000 - i);
         }
@@ -783,7 +783,7 @@ public:
                 << "check failed for i = " << i;
 
 
-            // At early stages of iterations, there should be conitnuous
+            // At early stages of iterations, there should be continuous
             // group of leases (expired and not expired) which haven't been
             // reclaimed.
             if (reclaimed_lower_bound > 0) {
@@ -811,7 +811,7 @@ public:
             if (evenLeaseIndex(i)) {
                 // Hostname with two consecutive dots is invalid and may result
                 // in exception if the reclamation routine doesn't protect
-                // aginst such exceptions.
+                // against such exceptions.
                 std::ostringstream hostname_s;
                 hostname_s << "invalid-host" << i << "..example.com";
                 leases_[i]->hostname_ = hostname_s.str();
@@ -838,7 +838,7 @@ public:
         EXPECT_TRUE(testLeases(&dnsUpdateGeneratedForLease, &oddLeaseIndex));
     }
 
-    /// @brief This test verfies that callouts are executed for each expired
+    /// @brief This test verifies that callouts are executed for each expired
     /// lease when installed.
     void testReclaimExpiredLeasesHooks() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
@@ -868,7 +868,7 @@ public:
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
     }
 
-    /// @brief This test verfies that callouts are executed for each expired
+    /// @brief This test verifies that callouts are executed for each expired
     /// lease and that the lease is not reclaimed when skip flag is set.
     void testReclaimExpiredLeasesHooksWithSkip() {
         for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
@@ -1000,11 +1000,11 @@ public:
     ///
     /// This method works for both v4 and v6. Just make sure the correct
     /// statistic name is passed. This is the name of the assigned addresses,
-    /// that is expected to be decreased once the reclaimation procedure
+    /// that is expected to be decreased once the reclamation procedure
     /// is complete.
     ///
     /// @param stat_name name of the statistic for assigned addresses statistic
-    ///        ("assgined-addresses" for both v4 and "assigned-nas" for v6)
+    ///        ("assigned-addresses" for both v4 and "assigned-nas" for v6)
     void testReclaimDeclinedStats(const std::string& stat_name) {
 
         // Leases by default all belong to subnet_id_ = 1. Let's count the
@@ -1072,8 +1072,8 @@ public:
 
         // subnet[X].assigned-addresses should go down. Between the time
         // of DHCPDECLINE(v4)/DECLINE(v6) reception and declined expired lease
-        // reclaimation, we count this address as assigned-addresses. We decrease
-        // assigned-addresses(v4)/assgined-nas(v6) when we reclaim the lease,
+        // reclamation, we count this address as assigned-addresses. We decrease
+        // assigned-addresses(v4)/assigned-nas(v6) when we reclaim the lease,
         // not when the packet is received. For explanation, see Duplicate
         // Addresses (DHCPDECLINE support) (v4) or Duplicate Addresses (DECLINE
         // support) sections in the User's Guide or a comment in
@@ -1164,7 +1164,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -1349,7 +1349,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids and lease types for some leases.
@@ -1437,13 +1437,12 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
     // initially reclaimed.
     if (use_reclaimed || (msg_type == DHCPV6_SOLICIT)) {
         EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
-
     } else {
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-nas", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
-
     }
 
 }
@@ -1707,7 +1706,7 @@ public:
     /// @brief Wrapper method running lease reclamation routine.
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in seconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -2002,7 +2001,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
-        // Mark all leaes as expired. The higher the index the less
+        // Mark all leases as expired. The higher the index the less
         // expired the lease.
         expire(i, 1000 - i);
         // Modify subnet ids of some leases.
@@ -2099,6 +2098,7 @@ ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
     } else if (msg_type == DHCPREQUEST) {
         // Re-allocation of expired leases should result in reclamations.
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));

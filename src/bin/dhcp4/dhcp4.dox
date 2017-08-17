@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,9 @@ component implementation.
 
 @section dhcpv4ConfigParser Configuration Parser in DHCPv4
 
+Note: parsers are currently being migrated to @ref isc::data::SimpleParser. See
+@ref ccSimpleParser page for details.
+
 The common configuration parsers for the DHCP servers are located in the
 src/lib/dhcpsrv/parsers/ directory. Parsers specific to the DHCPv4 component
 are located in the src/bin/dhcp4/json_config_parser.cc. These parsers derive
@@ -41,6 +44,43 @@ all configuration parsers. All DHCPv4 parsers deriving from this class
 directly have their entire implementation in the
 src/bin/dhcp4/json_config_parser.cc.
 
+@section dhcpv4ConfigParserBison Configuration Parser for DHCPv4 (bison)
+
+If you are here only to learn absolute minimum about the new parser, here's how you
+use it:
+
+@code
+ // The following code:
+ json = isc::data::Element::fromJSONFile(file_name, true);
+
+ // can be replaced with this:
+ Parser4Context parser;
+ json = parser.parseFile(file_name, Parser4Context::PARSER_DHCP4);
+@endcode
+
+For an introduction, rationale and issues the new parser tries to address,
+see @ref dhcpv6ConfigParserBison.
+
+The code change for 5017 introduces flex/bison based parser. It is
+essentially defined in two files: dhcp4_lexer.ll, which defines
+regular expressions that are used on the input (be it a file or a
+string in memory). In essence, this code is being called repeatedly
+and each time it returns a token. This repeats until either the
+parsing is complete or syntax error is encountered. For detailed
+discussion, how they operate see @ref dhcpv6ConfigParserBison.
+
+@section dhcpv4ConfigSubParser Parsing Partial Configuration in DHCPv4
+
+See @ref dhcpv6ConfigSubParser.
+
+@section dhcp4ParserIncludes Config File Includes
+
+See @ref dhcp6ParserIncludes.
+
+@section dhcp4ParserConflicts Avoiding syntactical conflicts in parsers
+
+See @ref dhcp6ParserConflicts.
+
 @section dhcpv4ConfigInherit DHCPv4 configuration inheritance
 
 One notable useful feature of DHCP configuration is its parameter inheritance.
@@ -48,7 +88,7 @@ For example, the "renew-timer" value may be specified at a global scope and it t
 applies to all subnets. However, some subnets may have it overwritten with subnet
 specific values that takes precedence over global values that are considered
 defaults. The parameters inheritance is implemented by means of the "global
-context". The global context is represented by the @ref isc::dhcp::ParserContext
+context". The global context is represented by the isc::dhcp::ParserContext
 class and it holds pointers to storage of different kinds, e.g. text parameters,
 numeric parameters etc. When the server is parsing the top level configuration
 parameters it passes pointers to the storages of the appropriate kind, to the
@@ -239,7 +279,7 @@ class definitions that are subnet specific.
 Client classification is done in isc::dhcp::Dhcpv4Srv::classifyPacket. First, the old
 "built-in" (see @ref dhcpv4ClassifierSimple) classification is called. Then the code
 iterates over all class definitions and for each class definition it calls
-isc::dhcp::evaluate, which is implemented in libeval (see @ref dhcpEval). If the
+isc::dhcp::evaluate, which is implemented in libeval (see @ref libeval). If the
 evaluation is successful, the class name is added to the packet (by calling
 isc::dhcp::pkt::addClass).
 

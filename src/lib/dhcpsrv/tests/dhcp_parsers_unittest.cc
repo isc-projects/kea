@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,19 +7,24 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_parser.h>
 #include <hooks/hooks_manager.h>
+#include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
@@ -37,6 +42,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::test;
 
 namespace {
 
@@ -187,7 +193,7 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     Uint32StoragePtr storage(new Uint32Storage());
     Uint32Parser parser(name, storage);
 
-    // Verify that parser with rejects a non-interger element.
+    // Verify that parser with rejects a non-integer element.
     ElementPtr wrong_element = Element::create("I am a string");
     EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
 
@@ -225,47 +231,94 @@ TEST_F(DhcpParserTest, uint32ParserTest) {
     EXPECT_EQ(test_value, actual_value);
 }
 
-/// @brief Check MACSourcesListConfigParser  basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Does not allow name other than "mac-sources"
-/// 3. Parses list of mac sources and adds them to CfgMgr
-TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
-
-    const std::string valid_name = "mac-sources";
-    const std::string bogus_name = "bogus-name";
-
-    ParserContextPtr parser_context(new ParserContext(Option::V6));
-
-    // Verify that parser constructor fails if parameter name isn't "mac-sources"
-    EXPECT_THROW(MACSourcesListConfigParser(bogus_name, parser_context),
-                 isc::BadValue);
+/// Verifies the code that parses mac sources and adds them to CfgMgr
+TEST_F(DhcpParserTest, MacSources) {
 
     // That's an equivalent of the following snippet:
     // "mac-sources: [ \"duid\", \"ipv6\" ]";
-    ElementPtr config = Element::createList();
-    config->add(Element::create("duid"));
-    config->add(Element::create("ipv6-link-local"));
+    ElementPtr values = Element::createList();
+    values->add(Element::create("duid"));
+    values->add(Element::create("ipv6-link-local"));
 
-    boost::scoped_ptr<MACSourcesListConfigParser>
-        parser(new MACSourcesListConfigParser(valid_name, parser_context));
-
-    // This should parse the configuration and add eth0 and eth1 to the list
-    // of interfaces that server should listen on.
-    EXPECT_NO_THROW(parser->build(config));
-    EXPECT_NO_THROW(parser->commit());
-
-    // Use CfgMgr instance to check if eth0 and eth1 was added, and that
-    // eth2 was not added.
+    // Let's grab server configuration from CfgMgr
     SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
     ASSERT_TRUE(cfg);
-    CfgMACSources configured_sources =  cfg->getMACSources().get();
+    CfgMACSource& sources = cfg->getMACSources();
 
+    // This should parse the configuration and check that it doesn't throw.
+    MACSourcesListConfigParser parser;
+    EXPECT_NO_THROW(parser.parse(sources, values));
+
+    // Finally, check the sources that were configured
+    CfgMACSources configured_sources =  cfg->getMACSources().get();
     ASSERT_EQ(2, configured_sources.size());
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
 }
+
+/// @brief Check MACSourcesListConfigParser rejecting empty list
+///
+/// Verifies that the code rejects an empty mac-sources list.
+TEST_F(DhcpParserTest, MacSourcesEmpty) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should throw, because if specified, at least one MAC source
+    // has to be specified.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
+}
+
+/// @brief Check MACSourcesListConfigParser rejecting empty list
+///
+/// Verifies that the code rejects fake mac source.
+TEST_F(DhcpParserTest, MacSourcesBogus) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+    values->add(Element::create("from-ebay"));
+    values->add(Element::create("just-guess-it"));
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should throw, because these are not valid sources.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
+}
+
+/// Verifies the code that properly catches duplicate entries
+/// in mac-sources definition.
+TEST_F(DhcpParserTest, MacSourcesDuplicate) {
+
+    // That's an equivalent of the following snippet:
+    // "mac-sources: [ \"duid\", \"ipv6\" ]";
+    ElementPtr values = Element::createList();
+    values->add(Element::create("ipv6-link-local"));
+    values->add(Element::create("duid"));
+    values->add(Element::create("duid"));
+    values->add(Element::create("duid"));
+
+    // Let's grab server configuration from CfgMgr
+    SrvConfigPtr cfg = CfgMgr::instance().getStagingCfg();
+    ASSERT_TRUE(cfg);
+    CfgMACSource& sources = cfg->getMACSources();
+
+    // This should parse the configuration and check that it throws.
+    MACSourcesListConfigParser parser;
+    EXPECT_THROW(parser.parse(sources, values), DhcpConfigError);
+}
+
 
 /// @brief Test Fixture class which provides basic structure for testing
 /// configuration parsing.  This is essentially the same structure provided
@@ -273,7 +326,8 @@ TEST_F(DhcpParserTest, MacSourcesListConfigParserTest) {
 class ParseConfigTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ParseConfigTest() {
+    ParseConfigTest()
+        :family_(AF_INET6) {
         reset_context();
         CfgMgr::instance().clear();
     }
@@ -292,7 +346,7 @@ public:
     /// @return returns an ConstElementPtr containing the numeric result
     /// code and outcome comment.
     isc::data::ConstElementPtr parseElementSet(isc::data::ConstElementPtr
-                                           config_set) {
+                                               config_set) {
         // Answer will hold the result.
         ConstElementPtr answer;
         if (!config_set) {
@@ -301,33 +355,69 @@ public:
             return (answer);
         }
 
-        // option parsing must be done last, so save it if we hit if first
-        ParserPtr option_parser;
-
         ConfigPair config_pair;
         try {
             // Iterate over the config elements.
             const std::map<std::string, ConstElementPtr>& values_map =
                                                       config_set->mapValue();
             BOOST_FOREACH(config_pair, values_map) {
-                // Create the parser based on element name.
-                ParserPtr parser(createConfigParser(config_pair.first));
-                // Options must be parsed last
-                if (config_pair.first == "option-data") {
-                    option_parser = parser;
-                } else {
-                    // Anything else  we can call build straight away.
-                    parser->build(config_pair.second);
-                    parser->commit();
+
+                // These are the simple parsers. No need to go through
+                // the ParserPtr hooplas with them.
+                if ((config_pair.first == "option-data") ||
+                    (config_pair.first == "option-def") ||
+                    (config_pair.first == "dhcp-ddns")) {
+                    continue;
                 }
+
+                // We also don't care about the default values that may be been
+                // inserted
+                if ((config_pair.first == "preferred-lifetime") ||
+                    (config_pair.first == "valid-lifetime") ||
+                    (config_pair.first == "renew-timer") ||
+                    (config_pair.first == "rebind-timer")) {
+                    continue;
+                }
+
+                if (config_pair.first == "hooks-libraries") {
+                    HooksLibrariesParser hook_parser;
+                    HooksConfig&  libraries =
+                        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+                    hook_parser.parse(libraries, config_pair.second);
+                    libraries.verifyLibraries(config_pair.second->getPosition());
+                    libraries.loadLibraries();
+                    continue;
+                }
+            }
+
+            // The option definition parser is the next one to be run.
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                def_config = values_map.find("option-def");
+            if (def_config != values_map.end()) {
+
+                CfgOptionDefPtr cfg_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
+                OptionDefListParser def_list_parser;
+                def_list_parser.parse(cfg_def, def_config->second);
             }
 
             // The option values parser is the next one to be run.
             std::map<std::string, ConstElementPtr>::const_iterator
                                 option_config = values_map.find("option-data");
             if (option_config != values_map.end()) {
-                option_parser->build(option_config->second);
-                option_parser->commit();
+                CfgOptionPtr cfg_option = CfgMgr::instance().getStagingCfg()->getCfgOption();
+
+                OptionDataListParser option_list_parser(family_);
+                option_list_parser.parse(cfg_option, option_config->second);
+            }
+
+            // The dhcp-ddns parser is the next one to be run.
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                d2_client_config = values_map.find("dhcp-ddns");
+            if (d2_client_config != values_map.end()) {
+                // Used to be done by parser commit
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(d2_client_config->second);
+                CfgMgr::instance().setD2ClientConfig(cfg);
             }
 
             // Everything was fine. Configuration is successful.
@@ -344,44 +434,85 @@ public:
         return (answer);
     }
 
-    /// @brief Create an element parser based on the element name.
+    /// @brief DHCP-specific method that sets global, and option specific defaults
     ///
-    /// Creates a parser for the appropriate element and stores a pointer to it
-    /// in the appropriate class variable.
+    /// This method sets the defaults in the global scope, in option definitions,
+    /// and in option data.
     ///
-    /// Note that the method currently it only supports option-defs, option-data
-    /// and hooks-libraries.
-    ///
-    /// @param config_id is the name of the configuration element.
-    ///
-    /// @return returns a shared pointer to DhcpConfigParser.
-    ///
-    /// @throw throws NotImplemented if element name isn't supported.
-    ParserPtr createConfigParser(const std::string& config_id) {
-        ParserPtr parser;
-        int family = parser_context_->universe_ == Option::V4 ?
-            AF_INET : AF_INET6;
-        if (config_id.compare("option-data") == 0) {
-            parser.reset(new OptionDataListParser(config_id, CfgOptionPtr(),
-                                                  family));
+    /// @param global pointer to the Element tree that holds configuration
+    /// @param global_defaults array with global default values
+    /// @param option_defaults array with option-data default values
+    /// @param option_def_defaults array with default values for option definitions
+    /// @return number of default values inserted.
+    size_t setAllDefaults(isc::data::ElementPtr global,
+                          const SimpleDefaults& global_defaults,
+                          const SimpleDefaults& option_defaults,
+                          const SimpleDefaults& option_def_defaults) {
+        size_t cnt = 0;
+        // Set global defaults first.
+        cnt = SimpleParser::setDefaults(global, global_defaults);
 
-        } else if (config_id.compare("option-def") == 0) {
-            parser.reset(new OptionDefListParser(config_id,
-                                                 parser_context_));
-
-        } else if (config_id.compare("hooks-libraries") == 0) {
-            parser.reset(new HooksLibrariesParser(config_id));
-            hooks_libraries_parser_ =
-                boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
-        } else if (config_id.compare("dhcp-ddns") == 0) {
-            parser.reset(new D2ClientConfigParser(config_id));
-        } else {
-            isc_throw(NotImplemented,
-                "Parser error: configuration parameter not supported: "
-                << config_id);
+        // Now set option definition defaults for each specified option definition
+        ConstElementPtr option_defs = global->get("option-def");
+        if (option_defs) {
+            BOOST_FOREACH(ElementPtr single_def, option_defs->listValue()) {
+                cnt += SimpleParser::setDefaults(single_def, option_def_defaults);
+            }
         }
 
-        return (parser);
+        ConstElementPtr options = global->get("option-data");
+        if (options) {
+            BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
+                cnt += SimpleParser::setDefaults(single_option, option_defaults);
+            }
+        }
+
+        return (cnt);
+    }
+
+    /// This table defines default values for option definitions in DHCPv6
+    static const SimpleDefaults OPTION6_DEF_DEFAULTS;
+
+    /// This table defines default values for option definitions in DHCPv4
+    static const SimpleDefaults OPTION4_DEF_DEFAULTS;
+
+    /// This table defines default values for options in DHCPv6
+    static const SimpleDefaults OPTION6_DEFAULTS;
+
+    /// This table defines default values for options in DHCPv4
+    static const SimpleDefaults OPTION4_DEFAULTS;
+
+    /// This table defines default values for both DHCPv4 and DHCPv6
+    static const SimpleDefaults GLOBAL6_DEFAULTS;
+
+    /// @brief sets all default values for DHCPv4 and DHCPv6
+    ///
+    /// This function largely duplicates what SimpleParser4 and SimpleParser6 classes
+    /// provide. However, since there are tons of unit-tests in dhcpsrv that need
+    /// this functionality and there are good reasons to keep those classes in
+    /// src/bin/dhcp{4,6}, the most straightforward way is to simply copy the
+    /// minimum code here. Hence this method.
+    ///
+    /// @todo - TKM, I think this is fairly hideous and we should figure out a
+    /// a way to not have to replicate in this fashion.  It may be minimum code
+    /// now, but it won't be fairly soon.
+    ///
+    /// @param config configuration structure to be filled with default values
+    /// @param v6 true = DHCPv6, false = DHCPv4
+    void setAllDefaults(ElementPtr config, bool v6) {
+        if (v6) {
+            setAllDefaults(config, GLOBAL6_DEFAULTS, OPTION6_DEFAULTS,
+                           OPTION6_DEF_DEFAULTS);
+        } else {
+            setAllDefaults(config, GLOBAL6_DEFAULTS, OPTION4_DEFAULTS,
+                           OPTION4_DEF_DEFAULTS);
+        }
+
+        /// D2 client configuration code is in this library
+        ConstElementPtr d2_client = config->get("dhcp-ddns");
+        if (d2_client) {
+            D2ClientConfigParser::setAllDefaults(d2_client);
+        }
     }
 
     /// @brief Convenience method for parsing a configuration
@@ -390,21 +521,24 @@ public:
     /// and parse them.
     /// @param config is the configuration string to parse
     ///
-    /// @return retuns 0 if the configuration parsed successfully,
+    /// @return returns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
-    int parseConfiguration(const std::string& config) {
+    int parseConfiguration(const std::string& config, bool v6 = false) {
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
         ElementPtr json = Element::fromJSON(config);
         EXPECT_TRUE(json);
         if (json) {
+            setAllDefaults(json, v6);
+
             ConstElementPtr status = parseElementSet(json);
             ConstElementPtr comment = parseAnswer(rcode_, status);
             error_text_ = comment->stringValue();
             // If error was reported, the error string should contain
             // position of the data element which caused failure.
             if (rcode_ != 0) {
+                std::cout << "Error text:" << error_text_ << std::endl;
                 EXPECT_TRUE(errorContainsPosition(status, "<string>"));
             }
         }
@@ -447,7 +581,7 @@ public:
     void reset_context(){
         // Note set context universe to V6 as it has to be something.
         CfgMgr::instance().clear();
-        parser_context_.reset(new ParserContext(Option::V6));
+        family_ = AF_INET6;
 
         // Ensure no hooks libraries are loaded.
         HooksManager::unloadLibraries();
@@ -457,16 +591,130 @@ public:
         CfgMgr::instance().setD2ClientConfig(tmp);
     }
 
-    /// @brief Parsers used in the parsing of the configuration
-    ///
-    /// Allows the tests to interrogate the state of the parsers (if required).
-    boost::shared_ptr<HooksLibrariesParser> hooks_libraries_parser_;
+    /// Allows the tests to interrogate the state of the libraries (if required).
+    const isc::hooks::HookLibsCollection& getLibraries() {
+        return (CfgMgr::instance().getStagingCfg()->getHooksConfig().get());
+    }
 
-    /// @brief Parser context - provides storage for options and definitions
-    ParserContextPtr parser_context_;
+    /// @brief specifies IP protocol family (AF_INET or AF_INET6)
+    uint16_t family_;
 
     /// @brief Error string if the parsing failed
     std::string error_text_;
+};
+
+/// This table defines default values for option definitions in DHCPv6
+const SimpleDefaults ParseConfigTest::OPTION6_DEF_DEFAULTS = {
+    { "record-types", Element::string,  ""},
+    { "space",        Element::string,  "dhcp6"},
+    { "array",        Element::boolean, "false"},
+    { "encapsulate",  Element::string,  "" }
+};
+
+/// This table defines default values for option definitions in DHCPv4
+const SimpleDefaults ParseConfigTest::OPTION4_DEF_DEFAULTS = {
+    { "record-types", Element::string,  ""},
+    { "space",        Element::string,  "dhcp4"},
+    { "array",        Element::boolean, "false"},
+    { "encapsulate",  Element::string,  "" }
+};
+
+/// This table defines default values for options in DHCPv6
+const SimpleDefaults ParseConfigTest::OPTION6_DEFAULTS = {
+    { "space",        Element::string,  "dhcp6"},
+    { "csv-format",   Element::boolean, "true"},
+    { "always-send",  Element::boolean,"false"}
+};
+
+/// This table defines default values for options in DHCPv4
+const SimpleDefaults ParseConfigTest::OPTION4_DEFAULTS = {
+    { "space",        Element::string,  "dhcp4"},
+    { "csv-format",   Element::boolean, "true"},
+    { "always-send",  Element::boolean, "false"}
+};
+
+/// This table defines default values for both DHCPv4 and DHCPv6
+const SimpleDefaults ParseConfigTest::GLOBAL6_DEFAULTS = {
+    { "renew-timer",        Element::integer, "900" },
+    { "rebind-timer",       Element::integer, "1800" },
+    { "preferred-lifetime", Element::integer, "3600" },
+    { "valid-lifetime",     Element::integer, "7200" }
+};
+
+/// @brief Option configuration class
+///
+/// This class handles option-def and option-data which can be recovered
+/// using the toElement() method
+class CfgOptionsTest : public CfgToElement {
+public:
+    /// @brief Constructor
+    ///
+    /// @param cfg the server configuration where to get option-{def,data}
+    CfgOptionsTest(SrvConfigPtr cfg) :
+        cfg_option_def_(cfg->getCfgOptionDef()),
+        cfg_option_(cfg->getCfgOption()) { }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration (a map with
+    /// not empty option-def and option-data lists)
+    ElementPtr toElement() const {
+        ElementPtr result = Element::createMap();
+        // Set option-def
+        ConstElementPtr option_def = cfg_option_def_->toElement();
+        if (!option_def->empty()) {
+            result->set("option-def", option_def);
+        }
+        // Set option-data
+        ConstElementPtr option_data = cfg_option_->toElement();
+        if (!option_data->empty()) {
+            result->set("option-data", option_data);
+        }
+        return (result);
+    }
+
+    /// @brief Run a toElement test (Element version)
+    ///
+    /// Use the runToElementTest template but add defaults to the config
+    ///
+    /// @param family the address family
+    /// @param config the expected result without defaults
+    void runCfgOptionsTest(uint16_t family, ConstElementPtr expected) {
+        ConstElementPtr option_def = expected->get("option-def");
+        if (option_def) {
+            SimpleParser::setListDefaults(option_def,
+                                          family == AF_INET ?
+                                          ParseConfigTest::OPTION4_DEF_DEFAULTS :
+                                          ParseConfigTest::OPTION6_DEF_DEFAULTS);
+        }
+        ConstElementPtr option_data = expected->get("option-data");
+        if (option_data) {
+            SimpleParser::setListDefaults(option_data,
+                                          family == AF_INET ?
+                                          ParseConfigTest::OPTION4_DEFAULTS :
+                                          ParseConfigTest::OPTION6_DEFAULTS);
+        }
+        runToElementTest<CfgOptionsTest>(expected, *this);
+    }
+
+    /// @brief Run a toElement test
+    ///
+    /// Use the runToElementTest template but add defaults to the config
+    ///
+    /// @param family the address family
+    /// @param expected the expected result without defaults
+    void runCfgOptionsTest(uint16_t family, std::string config) {
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = Element::fromJSON(config)) << config;
+        runCfgOptionsTest(family, json);
+    }
+
+private:
+    /// @brief Pointer to option definitions configuration.
+    CfgOptionDefPtr cfg_option_def_;
+
+    /// @brief Reference to options (data) configuration.
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief Check basic parsing of option definitions.
@@ -483,7 +731,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
         "      \"name\": \"foo\","
         "      \"code\": 100,"
         "      \"type\": \"ipv4-address\","
-        "      \"array\": False,"
+        "      \"array\": false,"
         "      \"record-types\": \"\","
         "      \"space\": \"isc\","
         "      \"encapsulate\": \"\""
@@ -515,6 +763,10 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
     // but the values should be equal.
     EXPECT_TRUE(def_libdhcp != def);
     EXPECT_TRUE(*def_libdhcp == *def);
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 /// @brief Check minimal parsing of option definitions.
@@ -548,6 +800,10 @@ TEST_F(ParseConfigTest, minimalOptionDefTest) {
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 /// @brief Check parsing of option definitions using default dhcp6 space.
@@ -566,7 +822,7 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
         "}";
 
     // Verify that the configuration string parses.
-    int rcode = parseConfiguration(config);
+    int rcode = parseConfiguration(config, true);
     ASSERT_EQ(0, rcode);
 
 
@@ -581,6 +837,10 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, def->getType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 /// @brief Check basic parsing of options.
@@ -604,7 +864,8 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"space\": \"isc\","
         "    \"code\": 100,"
         "    \"data\": \"192.0.2.0\","
-        "    \"csv-format\": True"
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
         " } ]"
         "}";
 
@@ -620,6 +881,10 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
     std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 /// @brief Check minimal parsing of options.
@@ -654,6 +919,12 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     std::string val = "type=00100, len=00004: 192.0.2.0 (ipv4-address)";
 
     EXPECT_EQ(val, opt_ptr->toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(100));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 /// @brief Check parsing of options with escape characters.
@@ -665,7 +936,7 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
 /// has the actual character (e.g. an actual backslash, not double backslash).
 TEST_F(ParseConfigTest, escapedOptionDataTest) {
 
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
 
     // We need to use double escapes here. The first backslash will
     // be consumed by C++ preprocessor, so the actual string will
@@ -677,7 +948,6 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
         "    \"data\": \"\\\\SMSBoot\\\\x64\\\\wdsnbp.com\""
         " } ]"
         "}";
-    std::cout << config << std::endl;
 
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
@@ -698,6 +968,12 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
     EXPECT_EQ(Option::OPTION4_HDR_LEN + 23, buf.getLength());
 
     EXPECT_TRUE(0 == memcmp(buf.getData(), exp, 25));
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(DHO_BOOT_FILE_NAME));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 // This test checks behavior of the configuration parser for option data
@@ -715,7 +991,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     // The default universe is V6. We need to change it to use dhcp4 option
     // space.
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     ASSERT_EQ(0, rcode);
@@ -726,6 +1002,9 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+
     // Explicitly enable csv-format.
     CfgMgr::instance().clear();
     config =
@@ -733,7 +1012,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
         "    \"name\": \"swap-server\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 16,"
-        "    \"csv-format\": True,"
+        "    \"csv-format\": true,"
         "    \"data\": \"192.0.2.0\""
         " } ]"
         "}";
@@ -746,6 +1025,8 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
 
+    // To make runToElementTest to work the csv-format must be removed...
+
     // Explicitly disable csv-format and use hex instead.
     CfgMgr::instance().clear();
     config =
@@ -753,7 +1034,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
         "    \"name\": \"swap-server\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 16,"
-        "    \"csv-format\": False,"
+        "    \"csv-format\": false,"
         "    \"data\": \"C0000200\""
         " } ]"
         "}";
@@ -765,50 +1046,9 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
         OptionCustom>(getOptionPtr(DHCP4_OPTION_SPACE, 16));
     ASSERT_TRUE(addr_opt);
     EXPECT_EQ("192.0.2.0", addr_opt->readAddress().toText());
-}
 
-// This test verifies that definitions of standard encapsulated
-// options can be used.
-TEST_F(ParseConfigTest, encapsulatedOptionData) {
-    std::string config =
-        "{ \"option-data\": [ {"
-        "    \"space\": \"s46-cont-mape-options\","
-        "    \"name\": \"s46-rule\","
-        "    \"data\": \"1, 0, 24, 192.0.2.0, 2001:db8:1::/64\""
-        " } ]"
-        "}";
-
-    // Make sure that we're using correct universe.
-    parser_context_->universe_ = Option::V6;
-    int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
-    ASSERT_EQ(0, rcode);
-
-    // Verify that the option data is correct.
-    OptionCustomPtr s46_rule = boost::dynamic_pointer_cast<OptionCustom>
-        (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
-    ASSERT_TRUE(s46_rule);
-
-    uint8_t flags;
-    uint8_t ea_len;
-    uint8_t prefix4_len;
-    IOAddress ipv4_prefix(IOAddress::IPV4_ZERO_ADDRESS());
-    PrefixTuple ipv6_prefix(PrefixLen(0), IOAddress::IPV6_ZERO_ADDRESS());;
-
-    ASSERT_NO_THROW({
-        flags = s46_rule->readInteger<uint8_t>(0);
-        ea_len = s46_rule->readInteger<uint8_t>(1);
-        prefix4_len = s46_rule->readInteger<uint8_t>(2);
-        ipv4_prefix = s46_rule->readAddress(3);
-        ipv6_prefix = s46_rule->readPrefix(4);
-    });
-
-    EXPECT_EQ(1, flags);
-    EXPECT_EQ(0, ea_len);
-    EXPECT_EQ(24, prefix4_len);
-    EXPECT_EQ("192.0.2.0", ipv4_prefix.toText());
-    EXPECT_EQ(64, ipv6_prefix.first.asUnsigned());
-    EXPECT_EQ("2001:db8:1::", ipv6_prefix.second.toText());
+    CfgOptionsTest cfg2(CfgMgr::instance().getStagingCfg());
+    cfg2.runCfgOptionsTest(family_, config);
 }
 
 // This test checks behavior of the configuration parser for option data
@@ -828,7 +1068,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_NE(0, rcode);
 
     CfgMgr::instance().clear();
@@ -840,11 +1080,11 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
-        "    \"csv-format\": True,"
+        "    \"csv-format\": true,"
         "    \"data\": \"0\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_NE(0, rcode);
 
     CfgMgr::instance().clear();
@@ -855,16 +1095,23 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
-        "    \"csv-format\": False,"
+        "    \"csv-format\": false,"
         "    \"data\": \"0\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     ASSERT_EQ(0, rcode);
     OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getData().size());
     EXPECT_EQ(0, opt->getData()[0]);
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->remove("name");
+    opt_data->set("data", Element::create(std::string("00")));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 
     CfgMgr::instance().clear();
     // When csv-format is not specified, the parser will check if the definition
@@ -875,10 +1122,11 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
         "    \"name\": \"foo-name\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 25000,"
+        "    \"csv-format\": false,"
         "    \"data\": \"123456\""
         " } ]"
         "}";
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
@@ -886,6 +1134,12 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
     EXPECT_EQ(0x12, opt->getData()[0]);
     EXPECT_EQ(0x34, opt->getData()[1]);
     EXPECT_EQ(0x56, opt->getData()[2]);
+
+    expected = Element::fromJSON(config);
+    opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->remove("name");
+    CfgOptionsTest cfg2(CfgMgr::instance().getStagingCfg());
+    cfg2.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies that the option name is not mandatory, if the option
@@ -899,13 +1153,19 @@ TEST_F(ParseConfigTest, optionDataNoName) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("name", Element::create(std::string("dns-servers")));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies that the option code is not mandatory, if the option
@@ -919,13 +1179,19 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(D6O_NAME_SERVERS));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies that the option data configuration with a minimal
@@ -938,13 +1204,20 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
         " } ]"
         "}";
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::10", opt->getAddresses()[0].toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(D6O_NAME_SERVERS));
+    opt_data->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 
     CfgMgr::instance().clear();
     // This time using an option code.
@@ -955,18 +1228,25 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
         " } ]"
         "}";
     rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    23));
     ASSERT_TRUE(opt);
     ASSERT_EQ(1, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::20", opt->getAddresses()[0].toText());
+
+    expected = Element::fromJSON(config);
+    opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("name", Element::create(std::string("dns-servers")));
+    opt_data->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    CfgOptionsTest cfg2(CfgMgr::instance().getStagingCfg());
+    cfg2.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies that the option data configuration with a minimal
 // set of parameters works as expected when option definition is
-// created in the configruation file.
+// created in the configuration file.
 TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     // Configuration string.
     std::string config =
@@ -974,7 +1254,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"name\": \"foo-name\","
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"
@@ -984,7 +1264,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "}";
 
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 2345));
@@ -993,6 +1273,13 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
 
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(2345));
+    opt_data->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
+
     CfgMgr::instance().clear();
     // Do the same test but now use an option code.
     config =
@@ -1000,7 +1287,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "      \"name\": \"foo-name\","
         "      \"code\": 2345,"
         "      \"type\": \"ipv6-address\","
-        "      \"array\": True,"
+        "      \"array\": true,"
         "      \"space\": \"dhcp6\""
         "  } ],"
         "  \"option-data\": [ {"
@@ -1010,7 +1297,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
         "}";
 
     rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    2345));
@@ -1019,6 +1306,12 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
 
+    expected = Element::fromJSON(config);
+    opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("name", Element::create(std::string("foo-name")));
+    opt_data->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    CfgOptionsTest cfg2(CfgMgr::instance().getStagingCfg());
+    cfg2.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies an empty option data configuration is supported.
@@ -1031,16 +1324,25 @@ TEST_F(ParseConfigTest, emptyOptionData) {
         "}";
 
     int rcode = 0;
-    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_NO_THROW(rcode = parseConfiguration(config, true));
     EXPECT_EQ(0, rcode);
     const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getAddresses().size());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(D6O_DHCPV4_O_DHCPV6_SERVER));
+    opt_data->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
+    opt_data->set("csv-format", Element::create(false));
+    opt_data->set("data", Element::create(std::string("")));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 // This test verifies an option data without suboptions is supported
-TEST_F(ParseConfigTest, optionDataNoSubOpion) {
+TEST_F(ParseConfigTest, optionDataNoSubOption) {
     // Configuration string.
     const std::string config =
         "{ \"option-data\": [ {"
@@ -1050,13 +1352,60 @@ TEST_F(ParseConfigTest, optionDataNoSubOpion) {
 
     // The default universe is V6. We need to change it to use dhcp4 option
     // space.
-    parser_context_->universe_ = Option::V4;
+    family_ = AF_INET;
     int rcode = 0;
     ASSERT_NO_THROW(rcode = parseConfiguration(config));
     EXPECT_EQ(0, rcode);
     const OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
     ASSERT_EQ(0, opt->getOptions().size());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    opt_data->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
+    opt_data->set("csv-format", Element::create(false));
+    opt_data->set("data", Element::create(std::string("")));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
+}
+
+// This tests option-data in CSV format and embedded commas.
+TEST_F(ParseConfigTest, commaCSVFormatOptionData) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "     \"csv-format\": true,"
+        "     \"code\": 41,"
+        "     \"data\": \"EST5EDT4\\\\,M3.2.0/02:00\\\\,M11.1.0/02:00\","
+        "     \"space\": \"dhcp6\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 41);
+    ASSERT_TRUE(opt);
+
+    // Get the option as an option string.
+    OptionStringPtr opt_str = boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(opt_str);
+
+
+    // Verify that the option data is correct.
+    string val = "EST5EDT4,M3.2.0/02:00,M11.1.0/02:00";
+    EXPECT_EQ(val, opt_str->getValue());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->remove("csv-format");
+    opt_data->set("name", Element::create(std::string("new-posix-timezone")));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 /// The next set of tests check basic operation of the HooksLibrariesParser.
@@ -1121,11 +1470,17 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
     const int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // Check that the parser recorded nothing.
-    isc::hooks::HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     EXPECT_TRUE(libraries.empty());
 
     // Check that there are still no libraries loaded.
@@ -1146,11 +1501,17 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     const int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // Check that the parser recorded a single library.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(1, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
 
@@ -1174,11 +1535,17 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     const int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // Check that the parser recorded two libraries in the expected order.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1205,6 +1572,15 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // The previous test shows that the parser correctly recorded the two
     // libraries and that they loaded correctly.
 
@@ -1213,12 +1589,12 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has not changed between the two parse operations. However,
-    // the paramters (or the files they could point to) could have
+    // the parameters (or the files they could point to) could have
     // changed, so the libraries are reloaded anyway.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    const HooksConfig& cfg2 =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg2);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1256,10 +1632,7 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // The list has changed, and this is what we should see.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].first);
@@ -1294,11 +1667,17 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
     rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // The list has changed, and this is what we should see.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     EXPECT_TRUE(libraries.empty());
 
     // Check that no libraries are currently loaded
@@ -1329,10 +1708,7 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
 
     // Check that the parser recorded the names but, as they were in error,
     // does not flag them as changed.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1373,10 +1749,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
 
     // Check that the parser recorded the names but, as the library set was
     // incorrect, did not mark the configuration as changed.
-    HookLibsCollection libraries;
-    bool changed;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_FALSE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
@@ -1479,11 +1852,17 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
     const int rcode = parseConfiguration(config);
     ASSERT_EQ(0, rcode);
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected =
+                    Element::fromJSON(config)->get("hooks-libraries"));
+    ASSERT_TRUE(expected);
+    const HooksConfig& cfg =
+        CfgMgr::instance().getStagingCfg()->getHooksConfig();
+    runToElementTest<HooksConfig>(expected, cfg);
+
     // Check that the parser recorded the names.
-    HookLibsCollection libraries;
-    bool changed = false;
-    hooks_libraries_parser_->getLibraries(libraries, changed);
-    EXPECT_TRUE(changed);
+    isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
@@ -1574,6 +1953,12 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
+
     // Another valid Configuration string.
     // This one is disabled, has IPV6 server ip, control flags false,
     // empty prefix/suffix
@@ -1618,6 +2003,10 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 }
 
 /// @brief Checks that D2 client can be configured with enable flag of
@@ -1701,11 +2090,6 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
 /// @brief Check various invalid D2 client configurations.
 TEST_F(ParseConfigTest, invalidD2Config) {
     std::string invalid_configs[] = {
-        // Must supply at least enable-updates
-        "{ \"dhcp-ddns\" :"
-        "    {"
-        "    }"
-        "}",
         // Must supply qualifying-suffix when updates are enabled
         "{ \"dhcp-ddns\" :"
         "    {"
@@ -1877,410 +2261,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
     }
 }
 
-/// @brief DHCP Configuration Parser Context test fixture.
-class ParserContextTest : public ::testing::Test {
-public:
-    /// @brief Constructor
-    ParserContextTest() { }
-
-    /// @brief Check that the storages of the specific type hold the
-    /// same value.
-    ///
-    /// This function assumes that the ref_values storage holds parameter
-    /// called 'foo'.
-    ///
-    /// @param ref_values A storage holding reference value. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding value to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
-                      const boost::shared_ptr<ContainerType>& values) {
-        ASSERT_NO_THROW(values->getParam("foo"));
-        EXPECT_EQ(ref_values->getParam("foo"), values->getParam("foo"));
-    }
-
-    /// @brief Check that the storages of the specific type hold the same
-    /// position of the parameter.
-    ///
-    /// @param name A name of the parameter to check.
-    /// @param ref_values A storage holding reference position. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding position to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkPositionEq(const std::string& name,
-                         const boost::shared_ptr<ContainerType>& ref_values,
-                         const boost::shared_ptr<ContainerType>& values) {
-        // Verify that the position is correct.
-        EXPECT_EQ(ref_values->getPosition(name).line_,
-                  values->getPosition(name).line_);
-
-        EXPECT_EQ(ref_values->getPosition(name).pos_,
-                  values->getPosition(name).pos_);
-
-        EXPECT_EQ(ref_values->getPosition(name).file_,
-                  values->getPosition(name).file_);
-    }
-
-    /// @brief Check that the storages of the specific type hold different
-    /// value.
-    ///
-    /// This function assumes that the ref_values storage holds exactly
-    /// one parameter called 'foo'.
-    ///
-    /// @param ref_values A storage holding reference value. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding value to be checked.
-    /// @tparam ContainerType A type of the storage.
-    /// @tparam ValueType A type of the value in the container.
-    template<typename ContainerType>
-    void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
-                       const boost::shared_ptr<ContainerType>& values) {
-        ASSERT_NO_THROW(values->getParam("foo"));
-        EXPECT_NE(ref_values->getParam("foo"), values->getParam("foo"));
-    }
-
-    /// @brief Check that the storages of the specific type hold different
-    /// position.
-    ///
-    /// @param name A name of the parameter to be checked.
-    /// @param ref_values A storage holding reference position. In the typical
-    /// case it is a storage held in the original context, which is assigned
-    /// to another context.
-    /// @param values A storage holding position to be checked.
-    /// @tparam ContainerType A type of the storage.
-    template<typename ContainerType>
-    void checkPositionNeq(const std::string& name,
-                          const boost::shared_ptr<ContainerType>& ref_values,
-                          const boost::shared_ptr<ContainerType>& values) {
-        // At least one of the position fields must be different.
-        EXPECT_TRUE((ref_values->getPosition(name).line_ !=
-                     values->getPosition(name).line_) ||
-                    (ref_values->getPosition(name).pos_ !=
-                     values->getPosition(name).pos_) ||
-                    (ref_values->getPosition(name).file_ !=
-                     values->getPosition(name).file_));
-    }
-
-    /// @brief Test copy constructor or assignment operator when values
-    /// being copied are NULL.
-    ///
-    /// @param copy Indicates that copy constructor should be tested
-    /// (if true), or assignment operator (if false).
-    void testCopyAssignmentNull(const bool copy) {
-        ParserContext ctx(Option::V6);
-        // Release all pointers in the context.
-        ctx.boolean_values_.reset();
-        ctx.uint32_values_.reset();
-        ctx.string_values_.reset();
-        ctx.hooks_libraries_.reset();
-
-        // Even if the fields of the context are NULL, it should get
-        // copied.
-        ParserContextPtr ctx_new(new ParserContext(Option::V6));
-        if (copy) {
-            ASSERT_NO_THROW(ctx_new.reset(new ParserContext(ctx)));
-        } else {
-            *ctx_new = ctx;
-        }
-
-        // The resulting context has its fields equal to NULL.
-        EXPECT_FALSE(ctx_new->boolean_values_);
-        EXPECT_FALSE(ctx_new->uint32_values_);
-        EXPECT_FALSE(ctx_new->string_values_);
-        EXPECT_FALSE(ctx_new->hooks_libraries_);
-
-    }
-
-    /// @brief Test copy constructor or assignment operator.
-    ///
-    /// @param copy Indicates that copy constructor should be tested (if true),
-    /// or assignment operator (if false).
-    void testCopyAssignment(const bool copy) {
-        // Create new context. It will be later copied/assigned to another
-        // context.
-        ParserContext ctx(Option::V6);
-
-        // Set boolean parameter 'foo'.
-        ASSERT_TRUE(ctx.boolean_values_);
-        ctx.boolean_values_->setParam("foo", true,
-                                      Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.boolean_values_->setParam("pos0", true,
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.boolean_values_->setParam("pos1", true,
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.boolean_values_->setParam("pos2", true,
-                                      Element::Position("kea.conf", 100, 200));
-
-        // Set uint32 parameter 'foo'.
-        ASSERT_TRUE(ctx.uint32_values_);
-        ctx.uint32_values_->setParam("foo", 123,
-                                     Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.uint32_values_->setParam("pos0", 123,
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.uint32_values_->setParam("pos1", 123,
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.uint32_values_->setParam("pos2", 123,
-                                      Element::Position("kea.conf", 100, 200));
-
-        // Ser string parameter 'foo'.
-        ASSERT_TRUE(ctx.string_values_);
-        ctx.string_values_->setParam("foo", "some string",
-                                     Element::Position("kea.conf", 123, 234));
-
-        // Set various parameters to test that position is copied between
-        // contexts.
-        ctx.string_values_->setParam("pos0", "some string",
-                                      Element::Position("kea.conf", 1, 2));
-        ctx.string_values_->setParam("pos1", "some string",
-                                      Element::Position("kea.conf", 10, 20));
-        ctx.string_values_->setParam("pos2", "some string",
-                                      Element::Position("kea.conf", 100, 200));
-
-
-        // Allocate container for hooks libraries and add one library name.
-        ctx.hooks_libraries_.reset(new std::vector<HookLibInfo>());
-        ctx.hooks_libraries_->push_back(make_pair("library1", ConstElementPtr()));
-
-        // We will use ctx_new to assign another context to it or copy
-        // construct.
-        ParserContextPtr ctx_new(new ParserContext(Option::V4));;
-        if (copy) {
-            ctx_new.reset(new ParserContext(ctx));
-        } else {
-            *ctx_new = ctx;
-        }
-
-        // New context has the same boolean value.
-        ASSERT_TRUE(ctx_new->boolean_values_);
-        {
-            SCOPED_TRACE("Check that boolean values are equal in both"
-                         " contexts");
-            checkValueEq(ctx.boolean_values_, ctx_new->boolean_values_);
-        }
-
-        // New context has the same boolean values' positions.
-        {
-            SCOPED_TRACE("Check that positions of boolean values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-            checkPositionEq("pos1", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-            checkPositionEq("pos2", ctx.boolean_values_,
-                            ctx_new->boolean_values_);
-        }
-
-        // New context has the same uint32 value.
-        ASSERT_TRUE(ctx_new->uint32_values_);
-        {
-            SCOPED_TRACE("Check that uint32_t values are equal in both"
-                         " contexts");
-            checkValueEq(ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        // New context has the same uint32 values' positions.
-        {
-            SCOPED_TRACE("Check that positions of uint32 values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-            checkPositionEq("pos1", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-            checkPositionEq("pos2", ctx.uint32_values_,
-                            ctx_new->uint32_values_);
-        }
-
-        // New context has the same uint32 value position.
-        {
-            SCOPED_TRACE("Check that positions of uint32_t values are equal"
-                         " in both contexts");
-            checkPositionEq("foo", ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        // New context has the same string value.
-        ASSERT_TRUE(ctx_new->string_values_);
-        {
-            SCOPED_TRACE("Check that string values are equal in both contexts");
-            checkValueEq(ctx.string_values_, ctx_new->string_values_);
-        }
-
-        // New context has the same string values' positions.
-        {
-            SCOPED_TRACE("Check that positions of string values are equal"
-                         " in both contexts");
-            checkPositionEq("pos0", ctx.string_values_,
-                            ctx_new->string_values_);
-            checkPositionEq("pos1", ctx.string_values_,
-                            ctx_new->string_values_);
-            checkPositionEq("pos2", ctx.string_values_,
-                            ctx_new->string_values_);
-        }
-
-        // New context has the same hooks library.
-        ASSERT_TRUE(ctx_new->hooks_libraries_);
-        {
-            ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
-            EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0].first);
-        }
-
-        // New context has the same universe.
-        EXPECT_EQ(ctx.universe_, ctx_new->universe_);
-
-        // Change the value of the boolean parameter. This should not affect the
-        // corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that boolean value isn't changed when original"
-                         " value and position is changed");
-            ctx.boolean_values_->setParam("foo", false,
-                                          Element::Position("kea.conf",
-                                                            12, 10));
-            checkValueNeq(ctx.boolean_values_, ctx_new->boolean_values_);
-
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the boolean parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.boolean_values_->setParam("pos0", false,
-                                          Element::Position("foo.conf",
-                                                            1, 2));
-            checkPositionNeq("pos0", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-            // Modify line number.
-            ctx.boolean_values_->setParam("pos1", false,
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-            // Modify position within a line.
-            ctx.boolean_values_->setParam("pos2", false,
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.boolean_values_,
-                             ctx_new->boolean_values_);
-
-        }
-
-        // Change the value of the uint32_t parameter. This should not affect
-        // the corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that uint32_t value isn't changed when original"
-                         " value and position is changed");
-            ctx.uint32_values_->setParam("foo", 987,
-                                         Element::Position("kea.conf", 10, 11));
-            checkValueNeq(ctx.uint32_values_, ctx_new->uint32_values_);
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the uint32 parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.uint32_values_->setParam("pos0", 123,
-                                          Element::Position("foo.conf", 1, 2));
-            checkPositionNeq("pos0", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-            // Modify line number.
-            ctx.uint32_values_->setParam("pos1", 123,
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-            // Modify position within a line.
-            ctx.uint32_values_->setParam("pos2", 123,
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.uint32_values_,
-                             ctx_new->uint32_values_);
-
-        }
-
-        // Change the value of the string parameter. This should not affect the
-        // corresponding value in the new context.
-        {
-            SCOPED_TRACE("Check that string value isn't changed when original"
-                         " value and position is changed");
-            ctx.string_values_->setParam("foo", "different string",
-                                         Element::Position("kea.conf", 10, 11));
-            checkValueNeq(ctx.string_values_, ctx_new->string_values_);
-        }
-
-        {
-            SCOPED_TRACE("Check that positions of the string parameters aren't"
-                         " changed when the corresponding positions in the"
-                         " original context are changed");
-            // Modify file name.
-            ctx.string_values_->setParam("pos0", "some string",
-                                          Element::Position("foo.conf", 1, 2));
-            checkPositionNeq("pos0", ctx.string_values_,
-                             ctx_new->string_values_);
-            // Modify line number.
-            ctx.string_values_->setParam("pos1", "some string",
-                                          Element::Position("kea.conf",
-                                                            11, 20));
-            checkPositionNeq("pos1", ctx.string_values_,
-                             ctx_new->string_values_);
-            // Modify position within a line.
-            ctx.string_values_->setParam("pos2", "some string",
-                                          Element::Position("kea.conf",
-                                                            101, 201));
-            checkPositionNeq("pos2", ctx.string_values_,
-                             ctx_new->string_values_);
-
-        }
-
-        // Change the list of libraries. this should not affect the list in the
-        // new context.
-        ctx.hooks_libraries_->clear();
-        ctx.hooks_libraries_->push_back(make_pair("library2", ConstElementPtr()));
-        ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
-        EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0].first);
-
-        // Change the universe. This should not affect the universe value in the
-        // new context.
-        ctx.universe_ = Option::V4;
-        EXPECT_EQ(Option::V6, ctx_new->universe_);
-
-    }
-
-};
-
-// Check that the assignment operator of the ParserContext class copies all
-// fields correctly.
-TEST_F(ParserContextTest, assignment) {
-    testCopyAssignment(false);
-}
-
-// Check that the assignment operator of the ParserContext class copies all
-// fields correctly when these fields are NULL.
-TEST_F(ParserContextTest, assignmentNull) {
-    testCopyAssignmentNull(false);
-}
-
-// Check that the context is copy constructed correctly.
-TEST_F(ParserContextTest, copyConstruct) {
-    testCopyAssignment(true);
-}
-
-// Check that the context is copy constructed correctly, when context fields
-// are NULL.
-TEST_F(ParserContextTest, copyConstructNull) {
-    testCopyAssignmentNull(true);
-}
-
 /// @brief Checks that a valid relay info structure for IPv4 can be handled
 TEST_F(ParseConfigTest, validRelayInfo4) {
 
@@ -2290,6 +2270,19 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "     \"ip-address\" : \"192.0.2.1\""
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
+
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+
+    RelayInfoParser parser(Option::V4);
+
+    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
+    EXPECT_NO_THROW(parser.parse(result, json));
+    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+}
+
+/// @brief Checks that a bogus relay info structure for IPv4 is rejected.
+TEST_F(ParseConfigTest, bogusRelayInfo4) {
 
     // Invalid config (wrong family type of the ip-address field)
     std::string config_str_bogus1 =
@@ -2305,24 +2298,25 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 
+    // Invalid config (ip-address is mandatory)
+    std::string config_str_bogus3 =
+        "    {"
+        "    }";
+    ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
+
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
 
-    boost::shared_ptr<RelayInfoParser> parser;
+    RelayInfoParser parser(Option::V4);
 
-    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
-    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
-                                                     Option::V4)));
-    EXPECT_NO_THROW(parser->build(json));
-    EXPECT_NO_THROW(parser->commit());
+    // wrong family type
+    EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
-    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+    // Too large byte values in pseudo-IPv4 addr
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 
-    // Let's check negative scenario (wrong family type)
-    EXPECT_THROW(parser->build(json_bogus1), DhcpConfigError);
-
-    // Let's check negative scenario (too large byte values in pseudo-IPv4 addr)
-    EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
+    // Mandatory ip-address is missing. What a pity.
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 }
 
 /// @brief Checks that a valid relay info structure for IPv6 can be handled
@@ -2334,6 +2328,18 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "     \"ip-address\" : \"2001:db8::1\""
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
+
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+
+    RelayInfoParser parser(Option::V6);
+    // Subnet4 parser will pass :: to the RelayInfoParser
+    EXPECT_NO_THROW(parser.parse(result, json));
+    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+}
+
+/// @brief Checks that a valid relay info structure for IPv6 can be handled
+TEST_F(ParseConfigTest, bogusRelayInfo6) {
 
     // Invalid config (wrong family type of the ip-address field
     std::string config_str_bogus1 =
@@ -2349,23 +2355,25 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 
+    // Missing mandatory ip-address field.
+    std::string config_str_bogus3 =
+        "    {"
+        "    }";
+    ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
+
     // We need to set the default ip-address to something.
     Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
 
-    boost::shared_ptr<RelayInfoParser> parser;
-    // Subnet4 parser will pass :: to the RelayInfoParser
-    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
-                                                     Option::V6)));
-    EXPECT_NO_THROW(parser->build(json));
-    EXPECT_NO_THROW(parser->commit());
+    RelayInfoParser parser(Option::V6);
 
-    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+    // Negative scenario (wrong family type)
+    EXPECT_THROW(parser.parse(result, json_bogus1), DhcpConfigError);
 
-    // Let's check negative scenario (wrong family type)
-    EXPECT_THROW(parser->build(json_bogus1), DhcpConfigError);
+    // Looks like IPv6 address, but has too many colons
+    EXPECT_THROW(parser.parse(result, json_bogus2), DhcpConfigError);
 
-    // Unparseable text that looks like IPv6 address, but has too many colons
-    EXPECT_THROW(parser->build(json_bogus2), DhcpConfigError);
+    // Mandatory ip-address is missing. What a pity.
+    EXPECT_THROW(parser.parse(result, json_bogus3), DhcpConfigError);
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code

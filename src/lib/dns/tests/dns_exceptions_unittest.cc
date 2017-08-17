@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,7 @@ TEST(DNSExceptionsTest, checkExceptionsHierarchy) {
         const isc::dns::Exception& exception_cast2 =
           dynamic_cast<const isc::dns::Exception&>(exception);
         // to avoid compiler warning
+        exception_cast.getRcode();
         exception_cast.what();
         exception_cast2.what();
     });
@@ -53,6 +54,7 @@ TEST(DNSExceptionsTest, checkExceptionsHierarchy) {
         const isc::dns::Exception& exception_cast2 =
           dynamic_cast<const isc::dns::Exception&>(exception);
         // to avoid compiler warning
+        exception_cast.getRcode();
         exception_cast.what();
         exception_cast2.what();
     });

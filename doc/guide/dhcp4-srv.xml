@@ -44,6 +44,18 @@
           </listitem>
           <listitem>
             <simpara>
+            <command>-t <replaceable>file</replaceable></command> -
+            specifies the configuration file to be tested. Kea-dhcp4
+            will attempt to load it, and will conduct sanity
+            checks. Note that certain checks are possible only while
+            running the actual server. The actual status is reported
+            with exit code (0 = configuration looks ok, 1 = error
+            encountered). Kea will print out log messages to standard
+            output and error to standard error when testing
+            configuration.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
               <command>-v</command> - prints out the Kea version and exits.
             </simpara>
           </listitem>
@@ -183,7 +195,7 @@ opening curly bracket (or brace). Each configuration consists of
 one or more objects. In this specific example, we have only one
 object, called Dhcp4. This is a simplified configuration, as usually
 there will be additional objects, like <command>Logging</command> or
-<command>DhcpDns</command>, but we omit them now for clarity. The Dhcp4
+<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp4
 configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
@@ -460,6 +472,11 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"contact_points": ""</userinput>, ... }, ... }
 </screen>
+  Should the database use a port different than default, it may be
+  specified as well:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+</screen>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
 <screen>
@@ -468,6 +485,17 @@ be followed by a comma and another object definition.</para>
 The default value of five seconds should be more than adequate for local connections.
 If a timeout is given though, it should be an integer greater than zero.
   </para>
+
+  <para>
+    Note that host parameter is used by MySQL and PostgreSQL
+    backends. Cassandra has a concept of contact points that could be
+    used to contact the cluster, instead of a single IP or
+    hostname. It takes a list of comma separated IP addresses. This may be specified as:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
+</screen>
+  </para>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -527,6 +555,12 @@ If a timeout is given though, it should be an integer greater than zero.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
+  Should the database use a port different than default, it may be
+  specified as well:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+</screen>
+
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
@@ -697,6 +731,23 @@ temporarily override a list of interface names and listen on all interfaces.
     supported on the particular OS, the server will issue a warning and
     fall back to use IP/UDP sockets.</para>
   </note>
+
+  <para>Interfaces are re-detected at each reconfiguration. This behavior
+  can be disabled by setting <command>re-detect</command> value to
+  <userinput>false</userinput>, for instance:
+
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"eth1", "eth3"</userinput> ],
+        "re-detect": <userinput>false</userinput>
+    },
+    ...
+}
+  </screen>
+  Note interfaces are not re-detected during <command>config-test</command>.
+  </para>
+
 </section>
 
 <section id="dhcpinform-unicast-issues">
@@ -935,22 +986,86 @@ temporarily override a list of interface names and listen on all interfaces.
         ...
     ]
 }
-</screen>
+        </screen>
+        Note that only one of name or code is required, you don't need to
+        specify both. Space has a default value of "dhcp4", so you can skip this
+        as well if you define a regular (not encapsulated) DHCPv4 option.
+        Finally, csv-format defaults to true, so it too can be skipped, unless
+        you want to specify the option value as hexstring. Therefore the
+        above example can be simplified to:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2"</userinput>
+        },
+        ...
+    ]
+}
+        </screen>
+        Defined options are added to response when the client requests them
+        at a few exceptions which are always added. To enforce the addition
+        of a particular option set the always-send flag to true as in:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2",
+           "always-send": true</userinput>
+        },
+        ...
+    ]
+}
+        </screen>
+        The effect is the same as if the client added the option code in the
+        Parameter Request List option (or its equivalent for vendor
+        options) so in:
+        <screen>
+"Dhcp4": {
+    "option-data": [
+        {
+           <userinput>"name": "domain-name-servers",
+           "data": "192.0.2.1, 192.0.2.2",
+           "always-send": true</userinput>
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+           "subnet": "192.0.3.0/24",
+           "option-data": [
+               {
+                   <userinput>"name": "domain-name-servers",
+                   "data": "192.0.3.1, 192.0.3.2"</userinput>
+               },
+               ...
+           ],
+           ...
+        },
+        ...
+    ],
+    ...
+}
+        </screen>
+        The Domain Name Servers option is always added to responses
+        (the always-send is "sticky") but the value is the subnet one
+        when the client is localized in the subnet.
       </para>
     <para>
-      The <command>name</command> parameter specifies the
-      option name. For a list of currently supported names, see
-      <xref linkend="dhcp4-std-options-list"/> below.
-      The <command>code</command> parameter specifies the option code, which must match one of the
-      values from that list. The next line specifies the option space, which must always
-      be set to "dhcp4" as these are standard DHCPv4 options. For
-      other option spaces, including custom option spaces, see <xref
+      The <command>name</command> parameter specifies the option name. For a
+      list of currently supported names, see <xref
+      linkend="dhcp4-std-options-list"/> below.  The <command>code</command>
+      parameter specifies the option code, which must match one of the values
+      from that list. The next line specifies the option space, which must
+      always be set to "dhcp4" as these are standard DHCPv4 options. For other
+      option spaces, including custom option spaces, see <xref
       linkend="dhcp4-option-spaces"/>. The next line specifies the format in
-      which the data will be entered: use of CSV (comma
-      separated values) is recommended. The sixth line gives the actual value to
-      be sent to clients. Data is specified as normal text, with
-      values separated by commas if more than one value is
-      allowed.
+      which the data will be entered: use of CSV (comma separated values) is
+      recommended. The sixth line gives the actual value to be sent to
+      clients. Data is specified as normal text, with values separated by commas
+      if more than one value is allowed.
     </para>
 
     <para>
@@ -1020,13 +1135,84 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>
+        In some cases it is useful to associate some options with an
+        address pool from which a client is assigned a lease. Pool
+        specific option values override subnet specific and global
+        option values. The server's administrator must not try to
+        prioritize assignment of pool specific options by trying to
+        order pools declarations in the server configuration. Future
+        Kea releases may change the order in which options are
+        assigned from the pools without any notice.
+      </para>
+
+     <para>
+       The following configuration snippet demonstrates how to specify the
+       DNS servers option, which will be assigned to a client only if the
+       client obtains an address from the given pool:
+<screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    "pool": "192.0.2.1 - 192.0.2.200",
+                    <userinput>"option-data": [
+                        {
+                            "name": "domain-name-servers",
+                            "data": "192.0.2.3"
+                         },
+                         ...
+                    ]</userinput>,
+                    ...
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
+      </para>
+
+      <para>
         The currently supported standard DHCPv4 options are
-        listed in <xref linkend="dhcp4-std-options-list"/>
-        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        listed in <xref linkend="dhcp4-std-options-list"/>.
         The "Name" and "Code"
         are the values that should be used as a name in the option-data
         structures. "Type" designates the format of the data: the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
+      </para>
+
+      <para>When a data field is a string, and that string contains the comma
+      (,; U+002C) character, the comma must be escaped with a double reverse solidus
+      character (\; U+005C). This double escape is required, because both the
+      routine splitting CSV data into fields and JSON use the same escape
+      character: a single escape (\,) would make the JSON invalid.
+      For example, the string &quot;foo,bar&quot; would be represented as:
+      <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            "pools": [
+                {
+                    <userinput>"option-data": [
+                        {
+                            "name": "boot-file-name",
+                            "data": "foo\\,bar"
+                        }
+                    ]</userinput>
+                },
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
       </para>
       <para>
         Some options are designated as arrays, which means that more than one
@@ -1113,32 +1299,6 @@ This rather belong to the DDNS configuration
 <row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-interval</entry><entry>38</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry><entry>false</entry></row>
-
-          </tbody>
-          </tgroup>
-        </table>
-      </para>
-
-      <para>
-        <table frame="all" id="dhcp4-std-options-list-part2">
-          <title>List of standard DHCPv4 options (continued)</title>
-          <tgroup cols='5'>
-          <colspec colname='name'/>
-          <colspec colname='code' align='center'/>
-          <colspec colname='type' align='center'/>
-          <colspec colname='array' align='center'/>
-          <colspec colname='always-returned' align='center'/>
-          <thead>
-            <row>
-              <entry>Name</entry>
-              <entry>Code</entry>
-              <entry>Type</entry>
-              <entry>Array?</entry>
-              <entry>Returned if not requested?</entry>
-            </row>
-          </thead>
-          <tbody>
-
 <row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
@@ -1204,7 +1364,7 @@ It is merely echoed by the server
 <row><entry>client-ndi</entry><entry>94</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>uuid-guid</entry><entry>97</entry><entry>record (uint8, binary)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>domain-search</entry><entry>119</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
           </tbody>
@@ -1232,9 +1392,13 @@ It is merely echoed by the server
             <row><entry>psid</entry><entry>PSID and PSID length separated by a slash, e.g. 3/4 specifies PSID=3 and PSID length=4. In the wire format it is represented by an 8-bit field carrying PSID length (in this case equal to 4) and the 16-bits long PSID value field (in this case equal to "0011000000000000b" using binary notation). Allowed values for a PSID length are 0 to 16. See <ulink url="http://tools.ietf.org/html/rfc7597">RFC 7597</ulink> for the details about the PSID wire representation</entry></row>
             <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty")</entry></row>
             <row><entry>string</entry><entry>Any text</entry></row>
+            <row><entry>tuple</entry><entry>A length encoded as a 8 (16 for DHCPv6) bit unsigned integer followed by a string of this length</entry></row>
             <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
             <row><entry>uint16</entry><entry>16 bit unsigned integer with allowed values 0 to 65535</entry></row>
             <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
+            <row><entry>int8</entry><entry>8 bit signed integer with allowed values -128 to 127</entry></row>
+            <row><entry>int16</entry><entry>16 bit signed integer with allowed values -32768 to 32767</entry></row>
+            <row><entry>int32</entry><entry>32 bit signed integer with allowed values -2147483648 to 2147483647</entry></row>
           </tbody>
           </tgroup>
        </table>
@@ -1360,6 +1524,12 @@ It is merely echoed by the server
        <command>0</command>, <command>1</command>, <command>"0"</command> and
        <command>"1"</command>. Future versions of Kea will accept all those values
        for all boolean parameters.</para>
+     </note>
+     <note>
+       <para>Numbers can be specified in decimal or hexadecimal format.
+        The hexadecimal format can be either plain (e.g. abcd) or
+        prefixed with 0x (e.g. 0xabcd).
+       </para>
      </note>
     </section>
 
@@ -1590,22 +1760,12 @@ It is merely echoed by the server
         </listitem>
 
         <listitem>
-          <simpara><command>csv-format</command> - if this value is not specified
-          and the definition for the particular option exists, the server will assume
-          that the option data is specified as a list of comma separated values to be
-          assigned to individual fields of the DHCP option. If the definition
-          does not exist for this option, the server will assume that the data
-          parameter contains the option payload in the binary format (represented
-          as a string of hexadecimal digits). Note that not specifying this
-          parameter doesn't imply that it defaults to a fixed value, but
-          the configuration data interpretation also depends on the presence
-          of the option definition. An administrator must be aware if the
-          definition for the particular option exists when this parameter
-          is not specified. It is generally recommended to not specify this
-          parameter only for the options for which the definition exists, e.g.
-          standard options. Setting <command>csv-format</command> to an explicit
-          value will cause the server to strictly check the format of the option
-          data specified.
+          <simpara><command>csv-format</command> - if this value is not
+          specified the server will assume that the option data is specified as
+          a list of comma separated values to be assigned to individual fields
+          of the DHCP option. This behavior has changed in Kea 1.2. Older
+          versions used additional logic to determine whether the csv-format
+          should be true or false. That is no longer the case.
           </simpara>
         </listitem>
       </itemizedlist>
@@ -2196,9 +2356,10 @@ It is merely echoed by the server
     <note>
     Note that formerly, this parameter was a boolean and permitted only values
     of <command>true</command> and <command>false</command>.  Boolean values
-    will still be accepted but may eventually be deprecated. A value of
-    <command>true</command> equates to <command>when-present</command>,
-    <command>false</command> equates to <command>never</command>.
+    have been deprecated and are no longer accepted.  If you are currently using
+    booleans, you must replace them with the desired mode name. A value of
+    <command>true</command> maps to <command>"when-present"</command>, while
+    <command>false</command> maps to <command>"never"</command>.
     </note>
 
       For example, To instruct kea-dhcp4 to always generate the FQDN for a
@@ -2432,7 +2593,7 @@ It is merely echoed by the server
      indicates that the server will use the "client identifier" for lease
      lookups and "chaddr" if the first lookup returns no results. The
      <command>false</command> means that the server will only
-     use the "chaddr" to search for client"s lease. Whether the DHCID for
+     use the "chaddr" to search for client's lease. Whether the DHCID for
      DNS updates is generated from the "client identifier" or "chaddr" is
      controlled through the same parameter accordingly.</para>
 
@@ -2509,7 +2670,7 @@ It is merely echoed by the server
       With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
       to several of the identifiers it would normally use to select a
       subnet.  In order to address this issue three new configuration
-      entires have been added.  The presence of any of these allows the
+      entries have been added.  The presence of any of these allows the
       subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
       <itemizedlist>
         <listitem>
@@ -2650,12 +2811,12 @@ It is merely echoed by the server
     0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.) The third
     example reserves address 192.0.3.203 to a client whose request
-    would be relayed by a relay agent that inserts a circuid-it option
+    would be relayed by a relay agent that inserts a circuit-it option
     with the value 'charter950'. The fourth entry reserves address
     192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
 
-    <para>The above example is used for ilustrational purposes only
+    <para>The above example is used for illustrational purposes only
     and in actual deployments it is recommended to use as few types as possible
     (preferably just one). See <xref linkend="reservations4-tuning"/> for a detailed
     discussion of this point.</para>
@@ -2981,7 +3142,7 @@ It is merely echoed by the server
 
 </screen>
 
-    <para>Static class assignments, as shown above, can be used in conjuction
+    <para>Static class assignments, as shown above, can be used in conjunction
     with classification using expressions.</para>
     </section>
 
@@ -3220,6 +3381,9 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 }
 </screen>
       </para>
+
+      <para>If "relay" is specified, the "ip-address" parameter within
+      it is mandatory.</para>
 
     </section>
 
@@ -3568,7 +3732,25 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
               separately. This statistic is reset during reconfiguration event.
               </entry>
             </row>
-
+            <row>
+              <entry>reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases that have
+              been reclaimed since server startup. It is incremented each time
+              an expired lease is reclaimed and is reset when the server is
+              reconfigured.
+              </entry>
+            </row>
+            <row>
+              <entry>subnet[id].reclaimed-leases</entry>
+              <entry>integer</entry>
+              <entry>This statistic is the number of expired leases associated
+              with a given subnet (<emphasis>id</emphasis> is the subnet-id)
+              that have been reclaimed since server startup. It is incremented
+              each time an expired lease is reclaimed and is reset when the
+              server is reconfigured.
+              </entry>
+            </row>
             <row>
             <entry>declined-addresses</entry>
             <entry>integer</entry>
@@ -3667,17 +3849,36 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
       <para>
         Communication over control channel is conducted using JSON structures.
-        See the Control Channel section in the Kea Developer's Guide for more details.
+        See the Control Channel section in the Kea Developer's Guide for more
+        details.
       </para>
 
-      <para>The DHCPv4 server supports <command>statistic-get</command>,
-      <command>statistic-reset</command>, <command>statistic-remove</command>,
-      <command>statistic-get-all</command>, <command>statistic-reset-all</command>
-      and <command>statistic-remove-all</command>, specified in
-      <xref linkend="command-stats"/>. It also supports
-      <command>list-commands</command> and <command>shutdown</command>,
-      specified in <xref linkend="command-list-commands" /> and
-      <xref linkend="command-shutdown" />, respectively.</para>
+      <para>The DHCPv4 server supports the following operational commands:
+        <itemizedlist>
+            <listitem>build-report</listitem>
+            <listitem>config-get</listitem>
+            <listitem>config-reload</listitem>
+            <listitem>config-set</listitem>
+            <listitem>config-test</listitem>
+            <listitem>config-write</listitem>
+            <listitem>leases-reclaim</listitem>
+            <listitem>list-commands</listitem>
+            <listitem>shutdown</listitem>
+            <listitem>version-get</listitem>
+        </itemizedlist>
+         as described in <xref linkend="commands-common"/>.  In addition,
+         it supports the following statistics related commands:
+        <itemizedlist>
+            <listitem>statistic-get</listitem>
+            <listitem>statistic-reset</listitem>
+            <listitem>statistic-remove</listitem>
+            <listitem>statistic-get-all</listitem>
+            <listitem>statistic-reset-all</listitem>
+            <listitem>statistic-remove-all</listitem>
+        </itemizedlist>
+        as described here <xref linkend="command-stats"/>.
+      </para>
+
     </section>
 
     <section id="dhcp4-std">

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ public:
     /// group.
     ///
     /// @return A structure describing a primary and fallback socket.
-    /// @throw isc::dhcp::SocketConfigError if error occured when opening
+    /// @throw isc::dhcp::SocketConfigError if error occurred when opening
     /// or configuring a socket.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
@@ -69,7 +69,7 @@ public:
 
     /// @brief Sends DHCPv6 message through a specified interface and socket.
     ///
-    /// Thie function sends a DHCPv6 message through a specified interface and
+    /// The function sends a DHCPv6 message through a specified interface and
     /// socket. In general, there may be multiple sockets open on a single
     /// interface as a single interface may have multiple IPv6 addresses.
     ///
@@ -78,7 +78,7 @@ public:
     /// @param pkt A packet to be sent.
     ///
     /// @return A result of sending the message. It is 0 if successful.
-    /// @throw isc::dhcp::SocketWriteError if error occured when sending a
+    /// @throw isc::dhcp::SocketWriteError if error occurred when sending a
     /// packet.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt6Ptr& pkt);

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ namespace {
 ///   - one subnet used on eth0 interface
 ///     - with address and prefix pools
 ///     - dns-servers option
-/// - Configuation 1:
+/// - Configuration 1:
 ///   - one subnet used on eth0 interface
 ///     - no addresses or prefixes
 ///     - domain-search option

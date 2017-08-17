@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,8 +122,9 @@ DCfgMgrBase::setContext(DCfgContextBasePtr& context) {
 }
 
 isc::data::ConstElementPtr
-DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
-    LOG_DEBUG(dctl_logger, DBGLVL_COMMAND,
+DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set,
+                         bool check_only) {
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_COMMAND,
                 DCTL_CONFIG_START).arg(config_set->str());
 
     if (!config_set) {
@@ -147,6 +148,11 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
     std::string element_id;
 
     try {
+
+        // Make the configuration mutable so we can then insert default values.
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        setCfgDefaults(mutable_cfg);
+
         // Split the configuration into two maps. The first containing only
         // top-level scalar parameters (i.e. globals), the second containing
         // non-scalar or object elements (maps, lists, etc...).  This allows
@@ -156,7 +162,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         ElementMap objects_map;
 
         isc::dhcp::ConfigPair config_pair;
-        BOOST_FOREACH(config_pair, config_set->mapValue()) {
+        BOOST_FOREACH(config_pair, mutable_cfg->mapValue()) {
             std::string element_id = config_pair.first;
             isc::data::ConstElementPtr element = config_pair.second;
             switch (element->getType()) {
@@ -203,7 +209,7 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
                     isc_throw(DCfgMgrBaseError,
                                "Element required by parsing order is missing: "
                                << element_id << " ("
-                               << config_set->getPosition() << ")");
+                               << mutable_cfg->getPosition() << ")");
                 }
             }
 
@@ -240,8 +246,73 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         }
 
         // Everything was fine. Configuration set processed successfully.
-        LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
-        answer = isc::config::createAnswer(0, "Configuration committed.");
+        if (!check_only) {
+            LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
+            answer = isc::config::createAnswer(0, "Configuration committed.");
+        } else {
+            answer = isc::config::createAnswer(0, "Configuration seems sane.");
+            LOG_INFO(dctl_logger, DCTL_CONFIG_CHECK_COMPLETE)
+                .arg(getConfigSummary(0))
+                .arg(config::answerToText(answer));
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
+        answer = isc::config::createAnswer(1, ex.what());
+
+        // An error occurred, so make sure that we restore original context.
+        context_ = original_context;
+        return (answer);
+    }
+
+    if (check_only) {
+        // If this is a configuration check only, then don't actually apply
+        // the configuration and reverse to the previous one.
+        context_ = original_context;
+    }
+
+    return (answer);
+}
+
+isc::data::ConstElementPtr
+DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
+                               bool check_only,
+                               const std::function<void()>& post_config_cb) {
+    if (!config_set) {
+        return (isc::config::createAnswer(1,
+                                    std::string("Can't parse NULL config")));
+    }
+    LOG_DEBUG(dctl_logger, isc::log::DBGLVL_COMMAND,
+                DCTL_CONFIG_START).arg(config_set->str());
+
+    // The parsers implement data inheritance by directly accessing
+    // configuration context. For this reason the data parsers must store
+    // the parsed data into context immediately. This may cause data
+    // inconsistency if the parsing operation fails after the context has been
+    // modified. We need to preserve the original context here
+    // so as we can rollback changes when an error occurs.
+    DCfgContextBasePtr original_context = context_;
+    resetContext();
+
+    // Answer will hold the result returned to the caller.
+    ConstElementPtr answer;
+
+    try {
+        // Let's call the actual implementation
+        answer = parse(config_set, check_only);
+
+        // Everything was fine. Configuration set processed successfully.
+        if (!check_only) {
+            if (post_config_cb) {
+                post_config_cb();
+            }
+
+            LOG_INFO(dctl_logger, DCTL_CONFIG_COMPLETE).arg(getConfigSummary(0));
+            answer = isc::config::createAnswer(0, "Configuration committed.");
+        } else {
+            LOG_INFO(dctl_logger, DCTL_CONFIG_CHECK_COMPLETE)
+                .arg(getConfigSummary(0))
+                .arg(config::answerToText(answer));
+        }
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dctl_logger, DCTL_PARSER_FAIL).arg(ex.what());
@@ -252,42 +323,44 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set) {
         return (answer);
     }
 
+    if (check_only) {
+        // If this is a configuration check only, then don't actually apply
+        // the configuration and reverse to the previous one.
+        context_ = original_context;
+    }
+
     return (answer);
 }
+
+
+void
+DCfgMgrBase::setCfgDefaults(isc::data::ElementPtr) {
+}
+
+void
+DCfgMgrBase::parseElement(const std::string&, isc::data::ConstElementPtr) {
+};
+
 
 void
 DCfgMgrBase::buildParams(isc::data::ConstElementPtr params_config) {
     // Loop through scalars parsing them and committing them to storage.
     BOOST_FOREACH(dhcp::ConfigPair param, params_config->mapValue()) {
-        // Call derivation's method to create the proper parser.
-        dhcp::ParserPtr parser(createConfigParser(param.first,
-                                                  param.second->getPosition()));
-        parser->build(param.second);
-        parser->commit();
+        // Call derivation's element parser to parse the element.
+        parseElement(param.first, param.second);
     }
 }
 
 void DCfgMgrBase::buildAndCommit(std::string& element_id,
                                  isc::data::ConstElementPtr value) {
-    // Call derivation's implementation to create the appropriate parser
-    // based on the element id.
-    ParserPtr parser = createConfigParser(element_id, value->getPosition());
-    if (!parser) {
-        isc_throw(DCfgMgrBaseError, "Could not create parser");
-    }
+    // Call derivation's element parser to parse the element.
+    parseElement(element_id, value);
+}
 
-    // Invoke the parser's build method passing in the value. This will
-    // "convert" the Element form of value into the actual data item(s)
-    // and store them in parser's local storage.
-    parser->build(value);
-
-    // Invoke the parser's commit method. This "writes" the data
-    // item(s) stored locally by the parser into the context.  (Note that
-    // parsers are free to do more than update the context, but that is an
-    // nothing something we are concerned with here.)
-    parser->commit();
+isc::data::ConstElementPtr
+DCfgMgrBase::parse(isc::data::ConstElementPtr, bool) {
+    isc_throw(DCfgMgrBaseError, "This class does not implement simple parser paradigm yet");
 }
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
-

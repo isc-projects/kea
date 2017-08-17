@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,52 +70,48 @@ TEST_F(AllocEngine6Test, constructor) {
 // This test checks if the simple allocation (REQUEST) can succeed
 // and the stats counter is properly bumped by 1
 TEST_F(AllocEngine6Test, simpleAlloc6) {
-
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
     simpleAlloc6Test(pool_, IOAddress("::"), false);
 
-    // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(101, stat->getInteger().first);
+    // We should have bumped the assigned counter by 1
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
 // and the stats counter is properly bumped by 1
 TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
 
     simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
 
-    // We should have bumped the address counter by 1
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(101, stat->getInteger().first);
+    // We should have bumped the assigned counter by 1
+    EXPECT_TRUE(testStatistics("assigned-pds", 1, subnet_->getID()));
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
 // and the stats counter isn't bumped
 TEST_F(AllocEngine6Test, fakeAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
     simpleAlloc6Test(pool_, IOAddress("::"), true);
 
-    // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(100, stat->getInteger().first);
+    // We should not have bumped the assigned counter.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // This test checks if the fake PD allocation (for SOLICIT) can succeed
 // and the stats counter isn't bumped
 TEST_F(AllocEngine6Test, pdFakeAlloc6) {
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
+
     simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
 
-    // We should not have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(100, stat->getInteger().first);
+    // We should not have bumped the assigned counter
+    EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
 };
 
 // This test checks if the allocation with a hint that is valid (in range,
@@ -508,6 +504,11 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Initialize FQDN data for the lease.
     initFqdn("myhost.example.com", true, true);
 
+    // Verify the none of relevant stats are zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
+
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
@@ -545,6 +546,11 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
+
+    // Verify the none of relevant stats were altered.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
 
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
@@ -567,20 +573,18 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     // Let's create an expired lease
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
+
     const SubnetID other_subnetid = 999;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
                                501, 502, 503, 504, other_subnetid, HWAddrPtr(),
                                0));
+
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
     lease->fqdn_fwd_ = true;
     lease->fqdn_rev_ = true;
     lease->hostname_ = "myhost.example.com.";
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
-
-    // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
 
     // A client comes along, asking specifically for this address
     AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
@@ -615,12 +619,12 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 
-    // We should not have bumped the address counter
-    // NOTE: when we start expiring addresses and removing them from
-    // the stats this will no longer be true.
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(100, stat->getInteger().first);
+    // Verify the stats got adjusted correctly
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("assigned-nas", -1, other_subnetid));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 1, other_subnetid));
 }
 
 // Checks if the lease lifetime is extended when the client sends the
@@ -776,18 +780,15 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestNoHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
-    // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
 
-    // We should have bumped the address counter
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(101, stat->getInteger().first);
+    // Assigned count should have been incremented by one.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -807,12 +808,18 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitValidHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+
+    // Assigned count should not have been incremented.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -832,12 +839,18 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestValidHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+
+    // Assigned count should have been incremented.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -857,12 +870,18 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitMatchingHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+
+    // Assigned count should not have been incremented.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -882,12 +901,18 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolRequestMatchingHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8:1::1c", lease->addr_.toText());
+
+    // Assigned count should have been incremented.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -907,9 +932,15 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitNoHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), true, false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
+
+    // Assigned count should not have been incremented.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
 }
 
@@ -930,18 +961,15 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestNoHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
-    // By default we pretend our subnet has 100 addresses
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    StatsMgr::instance().setValue(name, static_cast<int64_t>(100));
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("::"), false, false);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
 
     // We should not have bumped the address counter
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(100, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (in-pool case)
@@ -961,12 +989,18 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitValidHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), true, false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
+
+    // We should not have bumped the address counter
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -986,12 +1020,18 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestValidHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::10"), false, false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
+
+    // We should not have bumped the address counter
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1011,12 +1051,18 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolSolicitMatchingHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), true, false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
+
+    // We should not have bumped the address counter
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // Checks that a client gets the address reserved (out-of-pool case)
@@ -1036,12 +1082,18 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Let's pretend the client sends hint 2001:db8:1::10.
     Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::1c"), false, false);
     ASSERT_TRUE(lease);
 
     // The hint should be ignored and the reserved address should be assigned
     EXPECT_EQ("2001:db8::abcd", lease->addr_.toText());
+
+    // We should not have bumped the address counter
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
 }
 
 // In the following situation:
@@ -1054,15 +1106,15 @@ TEST_F(AllocEngine6Test, reservedAddressOutOfPoolRequestMatchingHint) {
 TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease1);
 
     // We should have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // Just check that if the client requests again, it will get the same
     // address.
@@ -1071,7 +1123,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     detailCompareLease(lease1, lease2);
 
     // We should not have bumped the address counter again
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // Now admin creates a reservation for this client. This is in-pool
     // reservation, as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -1101,9 +1153,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
 
-    // Lastly check to see that the address counter is still 101 we should have
+    // Lastly check to see that the address counter is still 1, we should have
     // have decremented it on the implied release and incremented it on the reserved
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 // In the following situation:
 // - client X is assigned an address A
@@ -1114,15 +1166,15 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedThis) {
 TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
 
+    // Assigned count should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     // Client gets an address
     Lease6Ptr lease1 = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(lease1);
 
     // We should have bumped the address counter
-    string name = StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas");
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // Just check that if the client requests again, it will get the same
     // address.
@@ -1131,7 +1183,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     detailCompareLease(lease1, lease2);
 
     // We should not have bumped the address counter again
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // Now admin creates a reservation for this client. Let's use the
     // address client X just received. Let's generate a host, but don't add it
@@ -1143,8 +1195,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     host->setIdentifier(&other_duid[0], other_duid.size(), Host::IDENT_DUID);
 
     // Ok, now add it to the HostMgr
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
-    CfgMgr::instance().commit();
+    addHost(host);
 
     // Just check that this time the client will get a different lease.
     Lease6Ptr lease3 = simpleAlloc6Test(pool_, lease1->addr_, false);
@@ -1167,9 +1218,9 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolReassignedOther) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease3, from_mgr);
 
-    // Lastly check to see that the address counter is still 101 we should have
+    // Lastly check to see that the address counter is still 1 we should have
     // have decremented it on the implied release and incremented it on the reserved
-    EXPECT_EQ(101, stat->getInteger().first);
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks that a reserved address for client A is not assigned when
@@ -1267,10 +1318,16 @@ TEST_F(AllocEngine6Test, allocateLeasesInvalidData) {
 TEST_F(AllocEngine6Test, addressRenewal) {
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
+    // Assigned count should zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
     ASSERT_EQ(1, leases.size());
+
+    // Assigned count should be one.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -1287,6 +1344,9 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     EXPECT_EQ(leases[0]->type_, renewed[0]->type_);
     EXPECT_EQ(leases[0]->preferred_lft_, renewed[0]->preferred_lft_);
     EXPECT_EQ(leases[0]->valid_lft_, renewed[0]->valid_lft_);
+
+    // Assigned count should still be one.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks whether an address can be renewed (in-pool reservation)
@@ -1297,11 +1357,17 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
 
+    // Assigned count should zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
     ASSERT_EQ(1, leases.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
+
+    // Assigned count should be one.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -1310,6 +1376,9 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
+
+    // Assigned count should still be one.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
 }
 
 // Checks whether a single host can have more than one reservation.
@@ -1320,7 +1389,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 /// reservation for the second IA. This works for Requests and Renews, though.
 /// In both of those messages, when processing of the first IA is complete,
 /// we have a lease in the database. Based on that, when processing the second
-/// IA we can detect that the first reservated address is in use already and
+/// IA we can detect that the first reserved address is in use already and
 /// use the second reservation.
 TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     // Create reservation for the client. This is in-pool reservation,
@@ -1667,7 +1736,7 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
         address << "2001:db8:1::";
         address << i;
 
-        // Allocate the leease.
+        // Allocate the lease.
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(address.str()),
                                    duid, iaid, 501, 502, 503, 504, subnet_->getID(),
                                    HWAddrPtr(), 0));
@@ -1771,22 +1840,17 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     IOAddress addr(addr_txt);
     initSubnet(IOAddress("2001:db8:1::"), addr, addr);
 
+    // Stats should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
+
+
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
     Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
-
-    // Let's fix some global stats...
-    StatsMgr& stats_mgr = StatsMgr::instance();
-    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
-    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
-
-    // ...and subnet specific stats as well.
-    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
-                                          "declined-addresses");
-    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
-                                          "reclaimed-declined-addresses");
-    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
-    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
 
     // Ask for any address. There's only one address in the pool, so it doesn't
     // matter much.
@@ -1794,14 +1858,14 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6Stats) {
     testReuseLease6(engine, declined, "::", true, SHOULD_PASS, assigned);
 
     // Check that the stats were not modified
-    testStatistics("declined-addresses", 1000);
-    testStatistics("reclaimed-declined-addresses", 1000);
-
-    testStatistics(stat1, 1000);
-    testStatistics(stat2, 1000);
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
 }
 
-// This test checks if statistics are not updated when expired declined lease
+// This test checks if statistics are updated when expired declined lease
 // is reused when responding to REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
 
@@ -1815,34 +1879,102 @@ TEST_F(AllocEngine6Test, requestReuseDeclinedLease6Stats) {
     IOAddress addr(addr_txt);
     initSubnet(IOAddress("2001:db8::"), addr, addr);
 
+    // Stats should be zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0));
+    EXPECT_TRUE(testStatistics("declined-addresses", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
+
     // Now create a declined lease, decline it and rewind its cltt, so it
     // is expired.
     Lease6Ptr declined = generateDeclinedLease(addr_txt, 100, -10);
-
-    // Let's fix some global stats...
-    StatsMgr& stats_mgr = StatsMgr::instance();
-    stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
-    stats_mgr.setValue("reclaimed-declined-addresses", static_cast<int64_t>(1000));
-
-    // ...and subnet specific stats as well.
-    string stat1 = StatsMgr::generateName("subnet", subnet_->getID(),
-                                          "declined-addresses");
-    string stat2 = StatsMgr::generateName("subnet", subnet_->getID(),
-                                          "reclaimed-declined-addresses");
-    stats_mgr.setValue(stat1, static_cast<int64_t>(1000));
-    stats_mgr.setValue(stat2, static_cast<int64_t>(1000));
 
     // Ask for any address. There's only one address in the pool, so it doesn't
     // matter much.
     Lease6Ptr assigned;
     testReuseLease6(engine, declined, "::", false, SHOULD_PASS, assigned);
 
-    // Check that the stats were not modified
-    testStatistics("declined-addresses", 999);
-    testStatistics("reclaimed-declined-addresses", 1001);
+    // Check that the stats were modified as expected.
+    // assigned-nas should NOT get incremented. Currently we do not adjust assigned
+    // counts when we declines
+    // declined-addresses will -1, as the artificial creation of declined lease
+    // doesn't increment it from zero.  reclaimed-declined-addresses will be 1
+    // because the leases are implicitly reclaimed before they can be assigned.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("declined-addresses", -1));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
+    EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1, subnet_->getID()));
 
-    testStatistics(stat1, 999);
-    testStatistics(stat2, 1001);
+}
+
+// This test checks if an expired-reclaimed lease can be reused by
+// a returning client via REQUEST, rather than renew/rebind.  This
+// would be typical of cable modem clients which do not retain lease
+// data across reboots.
+TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    cfg_mgr.commit();
+
+    // Verify relevant stats are zero.
+    EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
+
+    // Let's create an expired lease
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               501, 502, 503, 504, subnet_->getID(), HWAddrPtr(),
+                               0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    lease->fqdn_fwd_ = true;
+    lease->fqdn_rev_ = true;
+    lease->hostname_ = "myhost.example.com.";
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Verify that the lease state is indeed expired-reclaimed
+    EXPECT_EQ(lease->state_, Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Same client comes along and issues a request
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+
+    // Check that he got the original lease back.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Verify that the lease state has been set back to the default.
+    EXPECT_EQ(lease->state_, Lease::STATE_DEFAULT);
+
+    // Verify assigned-nas got bumped.  Reclaimed stats should still
+    // be zero as we artificially marked it reclaimed.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
 
 }; // namespace test
