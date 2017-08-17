@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,7 +120,7 @@ public:
         pkt6_->addRelayInfo(relay1);
     }
 
-    /// @brief Verify that the relay6 option evaluatiosn work properly
+    /// @brief Verify that the relay6 option evaluations work properly
     ///
     /// Given the nesting level and option code extract the option
     /// and compare it to the expected string.
@@ -128,7 +128,7 @@ public:
     /// @param test_level The nesting level
     /// @param test_code The code of the option to extract
     /// @param result_addr The expected result of the address as a string
-    void verifyRelay6Option(const uint8_t test_level,
+    void verifyRelay6Option(const int8_t test_level,
                             const uint16_t test_code,
                             const TokenOption::RepresentationType& test_rep,
                             const std::string& result_string) {
@@ -159,7 +159,7 @@ public:
     /// @param test_level The nesting level
     /// @param test_field The type of the field to extract
     /// @param result_addr The expected result of the address as a string
-    void verifyRelay6Eval(const uint8_t test_level,
+    void verifyRelay6Eval(const int8_t test_level,
                           const TokenRelay6Field::FieldType test_field,
                           const int result_len,
                           const uint8_t result_addr[]) {
@@ -301,7 +301,7 @@ public:
             OpaqueDataTuple tuple(len);
             tuple.assign(string(content[i]));
             if (u == Option::V4 && i == 0) {
-                // vendor-clas for v4 has a pecurilar quirk. The first tuple is being
+                // vendor-class for v4 has a peculiar quirk. The first tuple is being
                 // added, even if there's no data at all.
                 vendor_class_->setTuple(0, tuple);
             } else {
@@ -1135,6 +1135,21 @@ TEST_F(TokenTest, relay6Option) {
     // Level 2, no encapsulation so no options
     verifyRelay6Option(2, 100, TokenOption::TEXTUAL, "");
 
+    // Level -1, the same as level 1
+    verifyRelay6Option(-1, 100, TokenOption::TEXTUAL, "hundred.one");
+    verifyRelay6Option(-1, 101, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(-1, 102, TokenOption::TEXTUAL, "hundredtwo.one");
+
+    // Level -2, the same as level 0
+    verifyRelay6Option(-2, 100, TokenOption::TEXTUAL, "hundred.zero");
+    verifyRelay6Option(-2, 100, TokenOption::EXISTS, "true");
+    verifyRelay6Option(-2, 101, TokenOption::TEXTUAL, "hundredone.zero");
+    verifyRelay6Option(-2, 102, TokenOption::TEXTUAL, "");
+    verifyRelay6Option(-2, 102, TokenOption::EXISTS, "false");
+
+    // Level -3, no encapsulation so no options
+    verifyRelay6Option(-3, 100, TokenOption::TEXTUAL, "");
+
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
@@ -1147,6 +1162,18 @@ TEST_F(TokenTest, relay6Option) {
     addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
     addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
     addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.one'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'hundredtwo.one'");
+
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'hundred.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 100 with value 'true'");
+    addString("EVAL_DEBUG_OPTION Pushing option 101 with value 'hundredone.zero'");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value ''");
+    addString("EVAL_DEBUG_OPTION Pushing option 102 with value 'false'");
 
     addString("EVAL_DEBUG_OPTION Pushing option 100 with value ''");
 
@@ -1465,6 +1492,17 @@ TEST_F(TokenTest, relay6Field) {
     // Level 2 has no encapsulation so the address should be zero length
     verifyRelay6Eval(2, TokenRelay6Field::LINKADDR, 0, zeroaddr);
 
+    // Level -1 is the same as level 1
+    verifyRelay6Eval(-1, TokenRelay6Field::LINKADDR, 16, linkaddr);
+    verifyRelay6Eval(-1, TokenRelay6Field::PEERADDR, 16, peeraddr);
+
+    // Level -2 is the same as level 0
+    verifyRelay6Eval(-2, TokenRelay6Field::LINKADDR, 16, zeroaddr);
+    verifyRelay6Eval(-2, TokenRelay6Field::PEERADDR, 16, zeroaddr);
+
+    // Level -3 has no encapsulation so the address should be zero length
+    verifyRelay6Eval(-3, TokenRelay6Field::LINKADDR, 0, zeroaddr);
+
     // Lets check that the layout of the address returned by the
     // token matches that of the TokenIpAddress
     TokenPtr trelay;
@@ -1496,8 +1534,19 @@ TEST_F(TokenTest, relay6Field) {
               "with value 0x00010000000000000000000000000001");
     addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest 1 "
               "with value 0x00010000000000000000000000000002");
-    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr nest 2 "
-              "with value 0x");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr "
+              "nest 2 with value 0x");
+
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest -1 "
+              "with value 0x00010000000000000000000000000001");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest -1 "
+              "with value 0x00010000000000000000000000000002");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest -2 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field peeraddr nest -2 "
+              "with value 0x00000000000000000000000000000000");
+    addString("EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field linkaddr "
+              "nest -3 with value 0x");
 
     addString("EVAL_DEBUG_RELAY6 Pushing PKT6 relay field linkaddr nest 1 "
               "with value 0x00010000000000000000000000000001");
@@ -1546,7 +1595,7 @@ TEST_F(TokenTest, optionEqualFalse) {
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
     // After evaluation there should be a single value that represents
-    // result of "foo" == "bar" comparision.
+    // result of "foo" == "bar" comparison.
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("false", values_.top());
 
@@ -1569,7 +1618,7 @@ TEST_F(TokenTest, optionEqualTrue) {
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
     // After evaluation there should be a single value that represents
-    // result of "foo" == "foo" comparision.
+    // result of "foo" == "foo" comparison.
     ASSERT_EQ(1, values_.size());
     EXPECT_EQ("true", values_.top());
 
@@ -1588,7 +1637,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
 
-    // Subsring requires three values on the stack, try
+    // Substring requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
 
@@ -1813,7 +1862,7 @@ TEST_F(TokenTest, substringReturnEmpty) {
 // We put the result on the stack first then the substring values
 // then evaluate the substring which should leave the original
 // result on the bottom with the substring result on next.
-// Evaulating the equals should produce true for the first
+// Evaluating the equals should produce true for the first
 // and false for the second.
 // throws an exception if there aren't enough values on the stack.
 // The stack from the top is: length, start, string.
@@ -2026,7 +2075,7 @@ TEST_F(TokenTest, operatorAndTrue) {
 }
 
 // This test checks if a token representing an or is able to
-// combinate two values (with incorrectly built stack).
+// combine two values (with incorrectly built stack).
 TEST_F(TokenTest, operatorOrInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
@@ -2134,7 +2183,7 @@ TEST_F(TokenTest, vendor6SpecificVendorExists) {
     // Case 2: option present, but uses different enterprise-id, should fail
     testVendorExists(Option::V6, 4491, 1234, "false");
 
-    // Case 3: option present and has matchin enterprise-id, should suceed
+    // Case 3: option present and has matchin enterprise-id, should succeed
     testVendorExists(Option::V6, 4491, 4491, "true");
 
     // Check if the logged messages are correct.

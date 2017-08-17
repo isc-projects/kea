@@ -27,7 +27,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param delegated_prefix Delagated prefix.
+    /// @param delegated_prefix Delegated prefix.
     /// @param delegated_prefix_length Delegated prefix length.
     /// @param excluded_prefix Excluded prefix.
     /// @param excluded_prefix_length Excluded prefix length.

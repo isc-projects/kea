@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,7 +114,7 @@ public:
     /// @brief Assigns data to the tuple.
     ///
     /// This function replaces existing data in the tuple with the new data.
-    /// If the speficified buffer length is greater than the size of the buffer,
+    /// If the specified buffer length is greater than the size of the buffer,
     /// the behavior of this function is undefined.
     /// @param data Iterator pointing to the beginning of the buffer being
     /// assigned. The source buffer may be an STL object or an array of
@@ -179,7 +179,7 @@ public:
     /// and writes it to the specified buffer. The new are appended to the
     /// buffer, so as data existing in the buffer is preserved.
     ///
-    /// The tuple is considered malformed if one of the follwing occurs:
+    /// The tuple is considered malformed if one of the following occurs:
     /// - the size of the data is 0 (tuple is empty),
     /// - the size of the data is greater than 255 and the size of the length
     /// field is 1 byte (see @c LengthFieldType).

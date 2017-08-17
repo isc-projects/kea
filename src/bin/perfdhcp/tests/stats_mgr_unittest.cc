@@ -157,7 +157,7 @@ public:
             stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
         );
 
-        // There is way to differentiate timstamps of two packets other than
+        // There is way to differentiate timestamps of two packets other than
         // sleep for before we create another packet. Packet is using current
         // time to update its timestamp.
         // Sleeping for X seconds will guarantee that delay between packets

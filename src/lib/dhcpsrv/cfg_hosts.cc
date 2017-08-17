@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,17 @@
 
 #include <config.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/hosts_log.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <ostream>
+#include <string>
+#include <vector>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -567,12 +573,13 @@ CfgHosts::add(const HostPtr& host) {
 
 void
 CfgHosts::add4(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
     // There should be at least one resource reserved: hostname, IPv4
     // address, siaddr, sname, file or IPv6 address or prefix.
+    /// @todo: this check should be done in add(), not in add4()
     if (host->getHostname().empty() &&
         (host->getIPv4Reservation().isV4Zero()) &&
         !host->hasIPv6Reservation() &&
@@ -627,7 +634,16 @@ CfgHosts::add4(const HostPtr& host) {
                   << ": There's already a reservation for this address");
     }
 
-    /// @todo This may need further sanity checks.
+    // Check if the (identifier type, identifier) tuple is already used.
+    const std::vector<uint8_t>& id = host->getIdentifier();
+    if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
+        if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
+                 id.size())) {
+            isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
+                      << Host::getIdentifierAsText(host->getIdentifierType(),
+                                                   &id[0], id.size()));
+        }
+    }
 
     // This is a new instance - add it.
     hosts_.insert(host);
@@ -635,7 +651,12 @@ CfgHosts::add4(const HostPtr& host) {
 
 void
 CfgHosts::add6(const HostPtr& host) {
-    /// @todo This may need further sanity checks.
+
+    if (host->getIPv6SubnetID() == 0) {
+        // This is IPv4-only host. No need to add it to v6 tables.
+        return;
+    }
+
     HWAddrPtr hwaddr = host->getHWAddress();
     DuidPtr duid = host->getDuid();
 
@@ -665,6 +686,82 @@ CfgHosts::add6(const HostPtr& host) {
         }
         hosts6_.insert(HostResrv6Tuple(it->second, host));
     }
+}
+
+bool
+CfgHosts::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
+bool
+CfgHosts::del4(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
+bool
+CfgHosts::del6(const SubnetID& /*subnet_id*/,
+               const Host::IdentifierType& /*identifier_type*/,
+               const uint8_t* /*identifier_begin*/,
+               const size_t /*identifier_len*/) {
+    /// @todo: Implement host removal
+    isc_throw(NotImplemented, "sorry, not implemented");
+    return (false);
+}
+
+ElementPtr
+CfgHosts::toElement() const {
+    uint16_t family = CfgMgr::instance().getFamily();
+    if (family == AF_INET) {
+        return (toElement4());
+    } else if (family == AF_INET6) {
+        return (toElement6());
+    } else {
+        isc_throw(ToElementError, "CfgHosts::toElement: unknown "
+                  "address family: " << family);
+    }
+}
+
+ElementPtr
+CfgHosts::toElement4() const {
+    CfgHostsList result;
+    // Iterate using arbitrary the index 0
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+
+        // Convert host to element representation
+        ElementPtr map = (*host)->toElement4();
+
+        // Push it on the list
+        SubnetID subnet_id = (*host)->getIPv4SubnetID();
+        result.add(subnet_id, map);
+    }
+    return (result.externalize());
+}
+
+ElementPtr
+CfgHosts::toElement6() const {
+    CfgHostsList result;
+    // Iterate using arbitrary the index 0
+    const HostContainerIndex0& idx = hosts_.get<0>();
+    for (HostContainerIndex0::const_iterator host = idx.begin();
+         host != idx.end(); ++host) {
+
+        // Convert host to Element representation
+        ElementPtr map = (*host)->toElement6();
+
+        // Push it on the list
+        SubnetID subnet_id = (*host)->getIPv6SubnetID();
+        result.add(subnet_id, map);
+    }
+    return (result.externalize());
 }
 
 } // end of namespace isc::dhcp

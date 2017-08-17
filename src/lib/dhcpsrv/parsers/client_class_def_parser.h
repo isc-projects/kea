@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015, 2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,11 @@
 #ifndef CLIENT_CLASS_DEF_PARSER_H
 #define CLIENT_CLASS_DEF_PARSER_H
 
+#include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcpsrv/client_class_def.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 
-/// @file client_class_def.h
+/// @file client_class_def_parser.h
 ///
 /// @brief Parsers for client class definitions
 ///
@@ -22,11 +23,10 @@
 /// There parsers defined are:
 ///
 /// ClientClassDefListParser  - creates a ClientClassDictionary from a list
-/// of element maps, where each map contains the entries that specifiy a
+/// of element maps, where each map contains the entries that specify a
 /// single class.  The names of the classes in the are expected to be
 /// unique.  Attempting to define a duplicate class will result in an
-/// DhcpConfigError throw.  Invoking @c commit() method causes the dictionary
-/// to be stored by the CfgMgr.
+/// DhcpConfigError throw.  At the end the dictionary is stored by the CfgMgr.
 ///
 /// ClientClassDefParser - creates a ClientClassDefinition from an element
 /// map. The elements are as follows:
@@ -37,7 +37,7 @@
 /// membership in the class. This is passed into the eval parser.
 ///
 /// -# "option-data" - a list which defines the options that should be
-/// assigned to memebers of the class.  This element is optional and parsed
+/// assigned to remembers of the class.  This element is optional and parsed
 /// using the @ref isc::dhcp::OptionDataListParser.
 ///
 /// ExpressionParser  - creates an eval::Expression from a string element,
@@ -51,87 +51,37 @@ namespace dhcp {
 /// This parser creates an instance of an Expression from a string.  The
 /// string is passed to the Eval Parser and the resultant Expression is
 /// stored into the ExpressionPtr reference passed into the constructor.
-class ExpressionParser : public DhcpConfigParser {
+class ExpressionParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param expression variable in which to store the new expression
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    ExpressionParser(const std::string& dummy, ExpressionPtr& expression,
-                     ParserContextPtr global_context);
 
     /// @brief Parses an expression configuration element into an Expression
     ///
+    /// @param expression variable in which to store the new expression
     /// @param expression_cfg the configuration entry to be parsed.
+    /// @param family the address family of the expression.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void build(isc::data::ConstElementPtr expression_cfg);
-
-    /// @brief Stores the parsed expression to the supplied storage.
-    void commit();
-
-private:
-    /// @brief Local storage for the parsed expression
-    ExpressionPtr local_expression_;
-
-    /// @brief Storage into which the parsed expression should be committed
-    ExpressionPtr& expression_;
-
-    /// @brief Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    void parse(ExpressionPtr& expression,
+               isc::data::ConstElementPtr expression_cfg, uint16_t family);
 };
-
-typedef boost::shared_ptr<ExpressionParser> ExpressionParserPtr;
 
 /// @brief Parser for a single client class definition.
 ///
 /// This parser creates an instance of a client class definition.
-class ClientClassDefParser : public DhcpConfigParser {
+class ClientClassDefParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param class_dictionary dictionary into which the class should be added
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    ClientClassDefParser(const std::string& dummy,
-                         ClientClassDictionaryPtr& class_dictionary,
-                         ParserContextPtr global_context);
 
     /// @brief Parses an entry that describes single client class definition.
     ///
-    /// Attempts to add the new class direclty into the given dictionary.
+    /// Attempts to add the new class directly into the given dictionary.
     /// This done here to detect duplicate classes prior to commit().
+    /// @param class_dictionary dictionary into which the class should be added
     /// @param client_class_def a configuration entry to be parsed.
+    /// @param family the address family of the client class.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void build(isc::data::ConstElementPtr client_class_def);
-
-    /// @brief Does nothing.
-    void commit() {};
-
-private:
-
-    /// @brief Storage for class string values.
-    StringStoragePtr string_values_;
-
-    /// @brief Storage for the class match expression
-    ExpressionPtr match_expr_;
-
-    /// @brief Storage for the class options
-    CfgOptionPtr options_;
-
-    /// @brief Dictionary to which the new class should be added
-    ClientClassDictionaryPtr class_dictionary_;
-
-    /// @brief Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    void parse(ClientClassDictionaryPtr& class_dictionary,
+               isc::data::ConstElementPtr client_class_def, uint16_t family);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
@@ -141,43 +91,25 @@ typedef boost::shared_ptr<ClientClassDefParser> ClientClassDefParserPtr;
 ///
 /// This parser iterates over all configuration entries that define
 /// client classes and creates ClientClassDef instances for each.
-/// If the parsing done in build() is successful, the collection of
+/// When the parsing successfully completes, the collection of
 /// created definitions is given to the CfgMgr.
-class ClientClassDefListParser : public DhcpConfigParser {
+class ClientClassDefListParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    ClientClassDefListParser(const std::string& dummy,
-                        ParserContextPtr global_context);
 
     /// @brief Parse configuration entries.
     ///
     /// This function parses configuration entries, creates instances
-    /// of client class definitions and tries to adds them to the a
-    /// local dictionary.
+    /// of client class definitions and tries to adds them to the
+    /// local dictionary. At the end the dictionary is returned.
     ///
     /// @param class_def_list pointer to an element that holds entries
     /// for client class definitions.
+    /// @param family the address family of the client class definitions.
+    /// @return a pointer to the filled dictionary
     /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr class_def_list);
-
-    /// @brief Commits class definitions to CfgMgr's global storage.
-    void commit();
-
-    /// @brief Local class dictionary to store classes as they are being parsed
-    ClientClassDictionaryPtr local_dictionary_;
-
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    ClientClassDictionaryPtr
+    parse(isc::data::ConstElementPtr class_def_list, uint16_t family);
 };
-
-/// @brief Defines a pointer to a ClientClassDefListParser
-typedef boost::shared_ptr<ClientClassDefListParser> ClientClassDefListParserPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

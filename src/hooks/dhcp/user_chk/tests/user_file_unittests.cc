@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,11 +41,11 @@ TEST(UserFile, construction) {
 TEST(UserFile, openFile) {
     UserFilePtr user_file;
 
-    // Construct a user file that refers to a non existant file.
+    // Construct a user file that refers to a non existing file.
     ASSERT_NO_THROW(user_file.reset(new UserFile("NoSuchFile")));
     EXPECT_FALSE(user_file->isOpen());
 
-    // Verify a non-existant file fails to open
+    // Verify a non-existing file fails to open
     ASSERT_THROW(user_file->open(), UserFileError);
     EXPECT_FALSE(user_file->isOpen());
 
@@ -62,7 +62,7 @@ TEST(UserFile, openFile) {
     // Verify that we cannot open an already open file.
     ASSERT_THROW(user_file->open(), UserFileError);
 
-    // Verifyt we can close it.
+    // Verify we can close it.
     ASSERT_NO_THROW(user_file->close());
     EXPECT_FALSE(user_file->isOpen());
 
@@ -75,7 +75,7 @@ TEST(UserFile, openFile) {
 /// @brief Tests makeUser with invalid user strings
 TEST(UserFile, makeUser) {
     const char* invalid_strs[]= {
-        // Missinge type element.
+        // Missing type element.
         "{ \"id\" : \"01AC00F03344\" }",
         // Invalid id type string value.
         "{ \"type\" : \"BOGUS\", \"id\" : \"01AC00F03344\"}",

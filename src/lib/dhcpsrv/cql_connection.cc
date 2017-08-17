@@ -74,7 +74,7 @@ CqlConnection::openDatabase() {
     const char* contact_points = "127.0.0.1";
     std::string scontact_points;
     try {
-        scontact_points = getParameter("contact_points");
+        scontact_points = getParameter("contact-points");
         contact_points = scontact_points.c_str();
     } catch (...) {
         // No host. Fine, we'll use "127.0.0.1".

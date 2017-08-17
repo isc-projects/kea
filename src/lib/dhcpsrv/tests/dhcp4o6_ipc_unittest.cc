@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,7 +64,7 @@ protected:
     /// @param msg_type Message type.
     /// @param postfix Postfix to be appended to the remote address. For example,
     /// for postfix = 5 the resulting remote address will be 2001:db8:1::5.
-    /// The postifx value is also used to generate the postfix for the interface.
+    /// The postfix value is also used to generate the postfix for the interface.
     /// The possible interface names are "eth0" and "eth1". For even postfix values
     /// the "eth0" will be used, for odd postfix values "eth1" will be used.
     ///
@@ -164,7 +164,7 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(uint16_t msg_type,
     // the servers. The receiving server will check that such interface
     // is present in the system. The fake configuration we're using for
     // this test includes two interfaces: "eth0" and "eth1". Therefore,
-    // we pick one or another, depending on the index of the interation.
+    // we pick one or another, depending on the index of the iteration.
     pkt->setIface(concatenate("eth", postfix % 2));
 
     // The remote address of the sender of the DHCPv6 packet is carried
@@ -260,7 +260,7 @@ Dhcp4o6IpcBaseTest::testSendReceive(uint16_t iterations_num,
         // in the source packet.
         has_vendor_option.push_back(static_cast<bool>(pkt->getOption(D6O_VENDOR_OPTS)));
 
-        // Actaully send the message through the IPC.
+        // Actually send the message through the IPC.
         ASSERT_NO_THROW(ipc_src.send(pkt))
             << "Failed to send the message over the IPC for iteration " << i;
     }
@@ -449,7 +449,7 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutVendorOption) {
     testReceiveError(pkt);
 }
 
-// This test verifies that receving packet over the IPC fails when the
+// This test verifies that receiving packet over the IPC fails when the
 // enterprise ID carried in the vendor option is invalid.
 TEST_F(Dhcp4o6IpcBaseTest, receiveInvalidEnterpriseId) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
@@ -501,7 +501,7 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithInvalidInterface) {
 }
 
 
-// This test verifies that receving packet over the IPC fails when the
+// This test verifies that receiving packet over the IPC fails when the
 // source address option is not present.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));

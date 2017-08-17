@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_DUID_H
 
 #include <dhcp/duid.h>
+#include <cc/cfg_to_element.h>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <vector>
@@ -25,7 +26,7 @@ namespace dhcp {
 /// generate. It also allows for overriding entire default DUID or parts of
 /// it via configuration file. This class holds the DUID configuration
 /// specified in the server configuration file.
-class CfgDUID {
+class CfgDUID : public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.
@@ -113,6 +114,11 @@ public:
     /// @param duid_file_path Absolute path to a DUID file.
     /// @return Pointer to an instance of new DUID.
     DuidPtr create(const std::string& duid_file_path) const;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

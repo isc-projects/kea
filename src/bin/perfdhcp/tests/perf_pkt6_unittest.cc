@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -217,7 +217,7 @@ TEST_F(PerfPkt6Test, InvalidOptions) {
 
     // Create packet.
     boost::scoped_ptr<PerfPkt6> pkt2(capture());
-    // Testing offset of the option (lower than pakcet size but
+    // Testing offset of the option (lower than packet size but
     // tail of the option out of bounds).
     LocalizedOptionPtr pkt2_serverid(new LocalizedOption(Option::V6,
                                                          D6O_SERVERID,
@@ -274,6 +274,9 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
     ASSERT_EQ(sizeof(data), out_buf.getLength());
     const uint8_t *out_buf_data = static_cast<const uint8_t*>
         (out_buf.getData());
+
+    // Try to make clang static analyzer happy.
+    ASSERT_LE(offset_transid[0], out_buf.getLength());
 
     // Validate transaction id.
     EXPECT_EQ(0, memcmp(out_buf_data + offset_transid[0], ref_data, 3));

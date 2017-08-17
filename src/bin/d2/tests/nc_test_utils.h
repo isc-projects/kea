@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 namespace isc {
 namespace d2 {
 
+extern const char* valid_d2_config;
 extern const char* TEST_DNS_SERVER_IP;
 extern size_t TEST_DNS_SERVER_PORT;
 
@@ -36,7 +37,7 @@ public:
     enum  ResponseMode {
         USE_RCODE,    // Generate a response with a given RCODE
         CORRUPT_RESP, // Generate a corrupt response
-        INVALID_TSIG  // Generate a repsonse with the wrong TSIG key
+        INVALID_TSIG  // Generate a response with the wrong TSIG key
     };
 
     // Reference to IOService to use for IO processing.

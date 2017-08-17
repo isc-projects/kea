@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define SUBNET_H
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
@@ -18,6 +19,11 @@
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
 
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/random_access_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -72,11 +78,12 @@ public:
 
     /// @brief checks if the specified address is in pools
     ///
-    /// Note the difference between inRange() and inPool(). For a given
-    /// subnet (e.g. 2001::/64) there may be one or more pools defined
-    /// that may or may not cover entire subnet, e.g. pool 2001::1-2001::10).
-    /// inPool() returning true implies inRange(), but the reverse implication
-    /// is not always true. For the given example, 2001::1234:abcd would return
+    /// Note the difference between inRange() and inPool() for addresses
+    /// (i.e. *not* prefixes). For a given subnet (e.g. 2001::/64) there
+    /// may be one or more pools defined that may or may not cover
+    /// entire subnet, e.g. pool 2001::1-2001::10). inPool() returning
+    /// true implies inRange(), but the reverse implication is not
+    /// always true. For the given example, 2001::1234:abcd would return
     /// true for inRange(), but false for inPool() check.
     ///
     /// @param type type of pools to iterate over
@@ -279,7 +286,7 @@ public:
     /// returned it is valid.
     ///
     /// @return const reference to the relay information
-    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() {
+    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() const {
         return (relay_);
     }
 
@@ -309,6 +316,16 @@ public:
     /// @param class_name client class to be supported by this subnet
     void
     allowClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief returns the client class white list
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return client classes @ref white_list_
+    const isc::dhcp::ClientClasses& getClientClasses() const {
+        return (white_list_);
+    }
 
     /// @brief Specifies what type of Host Reservations are supported.
     ///
@@ -357,7 +374,7 @@ protected:
     /// @param t2 T2 (rebind-time) timer, expressed in seconds
     /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
     /// @param relay optional relay information (currently with address only)
-    /// @param id arbitraty subnet id, value of 0 triggers autogeneration
+    /// @param id arbitrary subnet id, value of 0 triggers autogeneration
     /// of subnet id
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
@@ -374,7 +391,7 @@ protected:
 
     /// @brief keeps the subnet-id value
     ///
-    /// It is inreased every time a new Subnet object is created. It is reset
+    /// It is incremented every time a new Subnet object is created. It is reset
     /// (@ref resetSubnetID) every time reconfiguration
     /// occurs.
     ///
@@ -418,6 +435,11 @@ protected:
     /// type.
     bool poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const;
 
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const;
+
     /// @brief subnet-id
     ///
     /// Subnet-id is a unique value that can be used to find or identify
@@ -439,13 +461,13 @@ protected:
     /// @brief a prefix length of the subnet
     uint8_t prefix_len_;
 
-    /// @brief a tripet (min/default/max) holding allowed renew timer values
+    /// @brief a triplet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;
 
-    /// @brief a tripet (min/default/max) holding allowed rebind timer values
+    /// @brief a triplet (min/default/max) holding allowed rebind timer values
     Triplet<uint32_t> t2_;
 
-    /// @brief a tripet (min/default/max) holding allowed valid lifetime values
+    /// @brief a triplet (min/default/max) holding allowed valid lifetime values
     Triplet<uint32_t> valid_;
 
     /// @brief last allocated address
@@ -521,7 +543,7 @@ public:
     /// @param t1 renewal timer (in seconds)
     /// @param t2 rebind timer (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitraty subnet id, default value of 0 triggers
+    /// @param id arbitrary subnet id, default value of 0 triggers
     /// autogeneration of subnet id
     Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const Triplet<uint32_t>& t1,
@@ -566,6 +588,19 @@ public:
         return (dhcp4o6_);
     }
 
+    /// @brief Returns const DHCP4o6 configuration parameters.
+    ///
+    /// This structure is always available. If the 4o6 is not enabled, its
+    /// enabled_ field will be set to false.
+    const Cfg4o6& get4o6() const {
+        return (dhcp4o6_);
+    }
+
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -593,16 +628,12 @@ private:
     Cfg4o6 dhcp4o6_;
 };
 
-/// @brief A pointer to a @c Subnet4 object
+/// @brief A const pointer to a @c Subnet4 object.
+typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
+
+/// @brief A pointer to a @c Subnet4 object.
 typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 
-/// @brief A collection of @c Subnet4 objects
-///
-/// That is a simple vector of pointers. It does not make much sense to
-/// optimize access time (e.g. using a map), because typical search
-/// pattern will use calling inRange() method on each subnet until
-/// a match is found.
-typedef std::vector<Subnet4Ptr> Subnet4Collection;
 
 /// @brief A configuration holder for IPv6 subnet.
 ///
@@ -620,7 +651,7 @@ public:
     /// @param t2 rebind timer (in seconds)
     /// @param preferred_lifetime preferred lifetime of leases (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
-    /// @param id arbitraty subnet id, default value of 0 triggers
+    /// @param id arbitrary subnet id, default value of 0 triggers
     /// autogeneration of subnet id
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const Triplet<uint32_t>& t1,
@@ -629,7 +660,7 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
-    /// @brief Returns preverred lifetime (in seconds)
+    /// @brief Returns preferred lifetime (in seconds)
     ///
     /// @return a triplet with preferred lifetime
     Triplet<uint32_t> getPreferred() const {
@@ -665,6 +696,11 @@ public:
         return (rapid_commit_);
     }
 
+    /// @brief Unparse a subnet object.
+    ///
+    /// @return A pointer to unparsed subnet configuration.
+    virtual data::ElementPtr toElement() const;
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -696,11 +732,83 @@ private:
 
 };
 
+/// @brief A const pointer to a @c Subnet6 object.
+typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
+
 /// @brief A pointer to a Subnet6 object
 typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
-/// @brief A collection of Subnet6 objects
-typedef std::vector<Subnet6Ptr> Subnet6Collection;
+/// @name Definition of the multi index container holding subnet information
+///
+//@{
+
+/// @brief Tag for the random access index.
+struct SubnetRandomAccessIndexTag { };
+
+/// @brief Tag for the index for searching by subnet identifier.
+struct SubnetSubnetIdIndexTag { };
+
+/// @brief Tag for the index for searching by subnet prefix.
+struct SubnetPrefixIndexTag { };
+
+/// @brief Multi index container holding subnets.
+///
+/// This multi index container can hold pointers to @ref Subnet4 or
+/// @ref Subnet6 objects representing subnets. It provides indexes for
+/// subnet lookups using subnet properties such as: subnet identifier
+/// or subnet prefix. It also provides a random access index which
+/// allows for using the container like a vector.
+///
+/// The random access index is used by the DHCP servers which perform
+/// a full scan on subnets to find the one that matches some specific
+/// criteria for subnet selection.
+///
+/// The remaining indexes are used for searching for a specific subnet
+/// as a result of receiving a command over the control API, e.g.
+/// when 'subnet-get' command is received.
+///
+/// @todo We should consider optimizing subnet selection by leveraging
+/// the indexing capabilities of this container, e.g. searching for
+/// a subnet by interface name, relay address etc.
+///
+/// @tparam SubnetType Type of the subnet: @ref Subnet4 or @ref Subnet6.
+template<typename SubnetType>
+using SubnetCollection = boost::multi_index_container<
+    // Multi index container holds pointers to the subnets.
+    boost::shared_ptr<SubnetType>,
+    // The following holds all indexes.
+    boost::multi_index::indexed_by<
+        // First is the random access index allowing for accessing
+        // objects just like we'd do with a vector.
+        boost::multi_index::random_access<
+            boost::multi_index::tag<SubnetRandomAccessIndexTag>
+        >,
+        // Second index allows for searching using subnet identifier.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetSubnetIdIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
+        >,
+        // Third index allows for searching using an output from toText function.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >
+    >
+>;
+
+/// @brief A collection of @c Subnet4 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+typedef SubnetCollection<Subnet4> Subnet4Collection;
+
+/// @brief A collection of @c Subnet6 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+typedef SubnetCollection<Subnet6> Subnet6Collection;
+
+//@}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

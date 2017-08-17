@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,9 +47,9 @@ public:
 
     /// @brief Constructor, from wire data.
     ///
-    /// @param first An iterator pointing to the begining of the option data
+    /// @param first An iterator pointing to the beginning of the option data
     /// in the wire format.
-    /// @param last An iterator poiting to the end of the option data in the
+    /// @param last An iterator pointing to the end of the option data in the
     /// wire format.
     Option6ClientFqdnImpl(OptionBufferConstIter first,
                           OptionBufferConstIter last);
@@ -87,9 +87,9 @@ public:
 
     /// @brief Parse the Option provided in the wire format.
     ///
-    /// @param first An iterator pointing to the begining of the option data
+    /// @param first An iterator pointing to the beginning of the option data
     /// in the wire format.
-    /// @param last An iterator poiting to the end of the option data in the
+    /// @param last An iterator pointing to the end of the option data in the
     /// wire format.
     void parseWireData(OptionBufferConstIter first,
                        OptionBufferConstIter last);

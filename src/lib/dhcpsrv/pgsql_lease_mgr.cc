@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,8 +26,8 @@ using namespace std;
 
 namespace {
 
-/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source
-/// columns.  This is coverd by tickets #3557, #4530, and PR#9.
+/// @todo TKM lease6 needs to accommodate hwaddr,hwtype, and hwaddr source
+/// columns.  This is covered by tickets #3557, #4530, and PR#9.
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
@@ -230,7 +230,6 @@ namespace dhcp {
 /// database.
 class PgSqlLeaseExchange : public PgSqlExchange {
 public:
-
     PgSqlLeaseExchange()
         : addr_str_(""), valid_lifetime_(0), valid_lft_str_(""),
           expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
@@ -705,7 +704,7 @@ private:
 
 /// @brief Base PgSql derivation of the statistical lease data query
 ///
-/// This class provides the functionality such as results storgae and row
+/// This class provides the functionality such as results storage and row
 /// fetching common to fulfilling the statistical lease data query.
 ///
 class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
@@ -819,12 +818,14 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
                   << " does not match expected count:" << NUM_STATEMENTS);
     }
 
-    pair<uint32_t, uint32_t> code_version(PG_CURRENT_VERSION, PG_CURRENT_MINOR);
+    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
     pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError, "Posgresql schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "." << db_version.second);
+        isc_throw(DbOpenError,
+                  "PostgreSQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
     }
 }
 
@@ -834,8 +835,8 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 std::string
 PgSqlLeaseMgr::getDBVersion() {
     std::stringstream tmp;
-    tmp << "PostgreSQL backend " << PG_CURRENT_VERSION;
-    tmp << "." << PG_CURRENT_MINOR;
+    tmp << "PostgreSQL backend " << PG_SCHEMA_VERSION_MAJOR;
+    tmp << "." << PG_SCHEMA_VERSION_MINOR;
     tmp << ", library " << PQlibVersion();
     return (tmp.str());
 }
@@ -1360,6 +1361,16 @@ PgSqlLeaseMgr::startLeaseStatsQuery6() {
                                  true));
     query->start();
     return(query);
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PgSQL backend");
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PgSQL backend");
 }
 
 string

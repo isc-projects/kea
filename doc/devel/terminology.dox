@@ -1,0 +1,28 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page terminology Terminology
+
+This page explains some common abbreviations and terms:
+
+- CA - Control Agent. That's a separate module that talks with Kea DHCPv4, DHCPv6 (and soon also D2)
+  over control channel and exposes their internal commands using RESTful interface.
+
+- D2 - This is a nickname of DHCP-Dynamic DNS server module. Since using the full name is awkward,
+  we often use shortened version of it: D2.
+
+- DHCP - Dynamic Host Configuration Protocol. There are two similar, but operationally different
+  protocols: DHCPv4 and DHCPv6. When v4 or v6 is not specified, the DHCP expression applies to both.
+
+- DHCPv4 - Dynamic Host Configuration Protocol for IPv4, a protocol that defines how IPv4 hosts can
+  obtain IPv4 addresses and other configuration from the servers. Defined in RFC2131.
+
+- DHCPv6 - Dynamic Host Configuration Protocol for IPv6, a protocol that defines how IPv6 hosts and
+  router can obtain IPv6 addresses, IPv6 prefixes and other configuration from the servers. Defined
+  in RFC3315.
+
+*/

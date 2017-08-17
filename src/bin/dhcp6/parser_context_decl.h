@@ -7,7 +7,7 @@
 #ifndef PARSER6_CONTEXT_DECL_H
 #define PARSER6_CONTEXT_DECL_H
 
-/// @file parser_context_decl.h Forward declaration of the ParserContext class
+/// @file dhcp6/parser_context_decl.h Forward declaration of the ParserContext class
 
 namespace isc {
 namespace dhcp {

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ bool errorContainsPosition(ConstElementPtr error_element,
         // If the file name is present, check that it is followed by the line
         // number and position within the line.
         if (pos != std::string::npos) {
-            // Split the string starting at the begining of the <filename>. It
+            // Split the string starting at the beginning of the <filename>. It
             // should return a vector of strings.
             std::string sub = error_string.substr(pos);
             std::vector<std::string> split_pos;

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,7 +110,7 @@ public:
     static std::string createTempFilename() {
         string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
 
-        // Copy into writeable storage for the call to mkstemp
+        // Copy into writable storage for the call to mkstemp
         boost::scoped_array<char> tname(new char[filename.size() + 1]);
         strcpy(tname.get(), filename.c_str());
 

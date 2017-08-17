@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ public:
 
     /// @brief Compares hardware addresses of the two hosts.
     ///
-    /// This method compares two hwardware address and uses gtest
+    /// This method compares two hardware address and uses gtest
     /// macros to signal unexpected (mismatch if expect_match is true;
     /// match if expect_match is false) values.
     ///
@@ -163,7 +163,7 @@ public:
     void compareOptions(const ConstCfgOptionPtr& cfg1,
                         const ConstCfgOptionPtr& cfg2) const;
 
-    /// @brief Creates an opton descriptor holding an empty option.
+    /// @brief Creates an option descriptor holding an empty option.
     ///
     /// @param universe V4 or V6.
     /// @param option_type Option type.
@@ -307,6 +307,39 @@ public:
         return (desc);
     }
 
+    /// @brief Returns number of entries in the v4 options table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// host options in a table.
+    ///
+    /// @param number of existing entries in options table
+    virtual int countDBOptions4() {
+        return (-1);
+    }
+
+    /// @brief Returns number of entries in the v6 options table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// host options in a table.
+    ///
+    /// @param number of existing entries in options table
+    virtual int countDBOptions6() {
+        return (-1);
+    }
+
+    /// @brief Returns number of entries in the v6 reservations table.
+    ///
+    /// This utility method is expected to be implemented by specific backends.
+    /// The code here is just a boilerplate for backends that do not store
+    /// v6 reservations in a table.
+    ///
+    /// @param number of existing entries in v6_reservations table
+    virtual int countDBReservations6() {
+        return (-1);
+    }
+
     /// @brief Creates an instance of the vendor option.
     ///
     /// @param universe V4 or V6.
@@ -333,7 +366,7 @@ public:
     /// - DHCPv6 boot file url option,
     /// - DHCPv6 information refresh time option,
     /// - DHCPv6 vendor option with vendor id 2495,
-    /// - DHCPv6 option 1024, with a sigle IPv6 address,
+    /// - DHCPv6 option 1024, with a single IPv6 address,
     /// - DHCPv6 empty option 1, within isc2 option space,
     /// - DHCPv6 option 2, within isc2 option space with 3 IPv6 addresses,
     ///
@@ -408,7 +441,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrives them and checks that the hostnames are set properly.
+    /// retrieves them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///
@@ -537,7 +570,6 @@ public:
     /// from a database for a host.
     ///
     /// Uses gtest macros to report failures.
-    ///
     void testMessageFields4();
 
     /// @brief Stress test on adding and retrieving hosts
@@ -548,6 +580,28 @@ public:
     /// @param n_of_hosts number of hosts to insert into and retrieve from the
     ///     database; defaults to the maximum number of allowed hosts.
     void stressTest(uint32_t n_of_hosts /* = 0xfffdU */);
+    /// @brief Tests that delete(subnet-id, addr4) call works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteByAddr4();
+
+    /// @brief Tests that delete(subnet4-id, identifier-type, identifier) works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById4();
+
+    /// @brief Tests that delete(subnet4-id, id-type, id) also deletes options.
+    void testDeleteById4Options();
+
+    /// @brief Tests that delete(subnet6-id, identifier-type, identifier) works.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById6();
+
+    /// @brief Tests that delete(subnet6-id, id-type, id) also deletes options.
+    ///
+    /// Uses gtest macros to report failures.
+    void testDeleteById6Options();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///

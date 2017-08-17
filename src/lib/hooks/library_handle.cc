@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
 #include <hooks/hooks_manager.h>
+
+#include <iostream>
 
 namespace isc {
 namespace hooks {
@@ -32,6 +34,16 @@ LibraryHandle::registerCallout(const std::string& name, CalloutPtr callout) {
         callout_manager_->setLibraryIndex(saved_index);
     }
 }
+
+void
+LibraryHandle::registerCommandCallout(const std::string& command_name,
+                                      CalloutPtr callout) {
+    // Register hook point for this command, if one doesn't exist.
+    callout_manager_->registerCommandHook(command_name);
+    // Register the command handler as a callout.
+    registerCallout(ServerHooks::commandToHookName(command_name), callout);
+}
+
 
 bool
 LibraryHandle::deregisterCallout(const std::string& name, CalloutPtr callout) {
