@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -232,7 +232,11 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
 
     if (data_->stopped) {
         return;
-    } else if (ec) {
+
+    // On Debian it has been often observed that boost::asio async
+    // operations result in EINPROGRESS. This doesn't necessarily
+    // indicate an issue. Thus, we continue as if no error occurred.
+    } else if (ec && (ec.value() != boost::asio::error::in_progress)) {
         logIOFailure(ec);
         return;
     }
@@ -293,7 +297,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             // So... we need to loop until we have at least two bytes, then store
             // the expected amount of data.  Then we need to loop until we have
             // received all the data before copying it back to the user's buffer.
-            // And we want to minimise the amount of copying...
+            // And we want to minimize the amount of copying...
     
             data_->origin = ASIODNS_READ_DATA;
             data_->cumulative = 0;          // No data yet received

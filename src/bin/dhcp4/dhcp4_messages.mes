@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,14 +60,6 @@ packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
-
-% DHCP4_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the DHCPv4 server has
-successfully established a session with the Kea control channel.
-
-% DHCP4_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the DHCPv4 server attempts
-to establish a session with the Kea control channel.
 
 % DHCP4_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
@@ -246,6 +238,12 @@ This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
+
+% DHCP4_FLEX_ID flexible identifier generated for incoming packet: %1
+This debug message is printed when host reservation type is set to flexible identifier
+and the expression specified in its configuration generated (was evaluated to)
+an identifier for incoming packet. This debug message is mainly intended as a
+debugging assistance for flexible identifier.
 
 % DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be be generated for the client
 This debug message is issued when the server did not receive a Hostname option
@@ -536,11 +534,6 @@ On receipt of message containing details to a change of the DHCPv4
 server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
-
-% DHCP4_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the DHCPv4
-server, notifying that the parser for the specified configuration element
-has been successfully created.
 
 % DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,

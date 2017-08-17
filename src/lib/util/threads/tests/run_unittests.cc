@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <util/unittests/run_all.h>
 #include <stdlib.h>
 
-// This file uses TEST_DATA_TOPBUILDDIR macro, which must point to a writeable
+// This file uses TEST_DATA_TOPBUILDDIR macro, which must point to a writable
 // directory. It will be used for creating a logger lockfile.
 
 int

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef DHCPV4_SRV_H
 #define DHCPV4_SRV_H
 
+#include <asiolink/io_service.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
@@ -188,6 +189,10 @@ typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
 /// See the derived \ref ControlledDhcpv4Srv class for support for
 /// command and configuration updates over msgq.
 class Dhcpv4Srv : public Daemon {
+private:
+
+    /// @brief Pointer to IO service used by the server.
+    asiolink::IOServicePtr io_service_;
 
 public:
 
@@ -221,6 +226,11 @@ public:
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
+
+    /// @brief Returns pointer to the IO service used by the server.
+    asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
 
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
@@ -572,7 +582,7 @@ protected:
     /// server's response.
     void processClientName(Dhcpv4Exchange& ex);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.

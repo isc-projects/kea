@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -720,7 +720,7 @@ TEST_F (NameChangeUDPTest, roundTripTest) {
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
-// sendRequestt() is called.
+// sendRequest() is called.
 TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
@@ -739,7 +739,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     // Tamper with the watch socket by closing the select-fd.
     close(sender.getSelectFd());
 
-    // Send should fail as we interferred by closing the select-fd.
+    // Send should fail as we interfered by closing the select-fd.
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
@@ -776,7 +776,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     close (sender.getSelectFd());
 
     // Run one handler. This should execute the send completion handler
-    // after sending the first message.  Duing completion handling, we will
+    // after sending the first message.  Doing completion handling, we will
     // attempt to queue the second message which should fail.
     ASSERT_NO_THROW(sender.runReadyIO());
 
@@ -823,7 +823,7 @@ TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     ASSERT_NE(util::WatchSocket::MARKER, buf);
 
     // Run one handler. This should execute the send completion handler
-    // after sending the message.  Duing completion handling clearing the
+    // after sending the message.  Doing completion handling clearing the
     // watch socket should fail, which will close the socket, but not
     // result in a throw.
     ASSERT_NO_THROW(sender.runReadyIO());

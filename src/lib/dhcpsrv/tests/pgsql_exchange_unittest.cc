@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,7 +175,7 @@ public:
     const std::string& expectedColumnName(int col) {
         if (col < 0 || col >= NUM_BASIC_COLS) {
             isc_throw(BadValue,
-                      "definedColunName: invalid column value" << col);
+                      "definedColumnName: invalid column value" << col);
         }
 
         return (expectedColNames_[col]);
@@ -216,7 +216,7 @@ public:
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param sql string containing the SQL statement text.  Note that
     /// PostgreSQL supports executing text which contains more than one SQL
     /// statement separated by semicolons.
@@ -236,7 +236,7 @@ public:
     /// @brief Executes a SQL statement and tests for an expected outcome
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param statement statement descriptor of the prepared statement
     /// to execute.
     /// @param bind_array bind array containing the input values to submit
@@ -268,7 +268,7 @@ public:
     /// of the defined columns, in the order they are defined.
     ///
     /// @param r pointer which will contain the result set returned by the
-    /// statment's execution.
+    /// statement's execution.
     /// @param exp_rows expected number of rows fetched. (This can be 0).
     /// @lineno line number from where the call was invoked
     ///
@@ -302,13 +302,13 @@ public:
 #define FETCH_ROWS(a,b) (fetchRows(a,b,__LINE__))
 #define WIPE_ROWS(a) (RUN_SQL(a, "DELETE FROM BASICS", PGRES_COMMAND_OK))
 
-/// @brief Verifies that PgResultSet row and colum meta-data is correct
+/// @brief Verifies that PgResultSet row and column meta-data is correct
 TEST_F(PgSqlBasicsTest, rowColumnBasics) {
     // We fetch the table contents, which at this point should be no rows.
     PgSqlResultPtr r;
     FETCH_ROWS(r, 0);
 
-    // Column meta-data is deteremined by the select statement and is
+    // Column meta-data is determined by the select statement and is
     // present whether or not any rows were returned.
     EXPECT_EQ(r->getCols(), NUM_BASIC_COLS);
 

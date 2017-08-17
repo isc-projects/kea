@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -298,7 +298,7 @@ public:
     /// @brief Removes runtime option definitions.
     static void clearRuntimeOptionDefs();
 
-    /// @brief Reverts uncommited changes to runtime option definitions.
+    /// @brief Reverts uncommitted changes to runtime option definitions.
     static void revertRuntimeOptionDefs();
 
     /// @brief Commits runtime option definitions.
@@ -368,7 +368,7 @@ private:
     /// Container for v6 vendor option definitions
     static VendorOptionDefContainers vendor6_defs_;
 
-    /// Container for additional option defnitions created in runtime.
+    /// Container for additional option definitions created in runtime.
     static util::StagedValue<OptionDefSpaceContainer> runtime_option_defs_;
 };
 

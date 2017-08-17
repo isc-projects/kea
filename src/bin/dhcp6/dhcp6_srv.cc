@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,16 +100,18 @@ struct Dhcp6Hooks {
     int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
     int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
     int hook_index_lease6_decline_; ///< index for "lease6_decline" hook point
+    int hook_index_host6_identifier_;///< index for "host6_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
-        hook_index_buffer6_receive_= HooksManager::registerHook("buffer6_receive");
-        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
-        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
-        hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
-        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
-        hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
-        hook_index_lease6_decline_ = HooksManager::registerHook("lease6_decline");
+        hook_index_buffer6_receive_ = HooksManager::registerHook("buffer6_receive");
+        hook_index_pkt6_receive_    = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_  = HooksManager::registerHook("subnet6_select");
+        hook_index_lease6_release_  = HooksManager::registerHook("lease6_release");
+        hook_index_pkt6_send_       = HooksManager::registerHook("pkt6_send");
+        hook_index_buffer6_send_    = HooksManager::registerHook("buffer6_send");
+        hook_index_lease6_decline_  = HooksManager::registerHook("lease6_decline");
+        hook_index_host6_identifier_= HooksManager::registerHook("host6_identifier");
     }
 };
 
@@ -175,7 +177,8 @@ namespace dhcp {
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : port_(port), serverid_(), shutdown_(true), alloc_engine_()
+    : io_service_(new IOService()), port_(port), serverid_(), shutdown_(true),
+      alloc_engine_()
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -323,7 +326,41 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
                     ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
                 }
                 break;
+            case Host::IDENT_FLEX:
+                // At this point the information in the packet has been unpacked into
+                // the various packet fields and option objects has been created.
+                // Execute callouts registered for packet6_receive.
+                if (HooksManager::calloutsPresent(Hooks.hook_index_host6_identifier_)) {
+                    CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
 
+                    Host::IdentifierType type = Host::IDENT_FLEX;
+                    std::vector<uint8_t> id;
+
+                    // Delete previously set arguments
+                    callout_handle->deleteAllArguments();
+
+                    // Pass incoming packet as argument
+                    callout_handle->setArgument("query6", pkt);
+                    callout_handle->setArgument("id_type", type);
+                    callout_handle->setArgument("id_value", id);
+
+                    // Call callouts
+                    HooksManager::callCallouts(Hooks.hook_index_host6_identifier_,
+                                               *callout_handle);
+
+                    callout_handle->getArgument("id_type", type);
+                    callout_handle->getArgument("id_value", id);
+
+                    if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_CONTINUE) &&
+                        !id.empty()) {
+
+                        LOG_DEBUG(packet6_logger, DBGLVL_TRACE_BASIC, DHCP6_FLEX_ID)
+                            .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
+
+                        ctx.addHostIdentifier(type, id);
+                    }
+                }
+                break;
             default:
                 ;
             }
@@ -338,6 +375,7 @@ bool Dhcpv6Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
@@ -359,7 +397,10 @@ void Dhcpv6Srv::run_one() {
     Pkt6Ptr rsp;
 
     try {
-        uint32_t timeout = 1000;
+        // Set select() timeout to 1s. This value should not be modified
+        // because it is important that the select() returns control
+        // frequently so as the IOService can be polled for ready handlers.
+        uint32_t timeout = 1;
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
         query = receivePacket(timeout);
 
@@ -877,20 +918,39 @@ void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   const CfgOptionList& co_list) {
 
+    // Unlikely short cut
+    if (co_list.empty()) {
+        return;
+    }
+
+    std::vector<uint16_t> requested_opts;
+
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
     boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
         (question->getOption(D6O_ORO));
 
-    // If there is no ORO option, there is nothing more to do.
-    if (!option_oro) {
-        return;
-
-    }
-
     // Get the list of options that client requested.
-    const std::vector<uint16_t>& requested_opts = option_oro->getValues();
+    if (option_oro) {
+        requested_opts = option_oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(DHCP6_OPTION_SPACE);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            requested_opts.push_back(desc->option_->getType());
+        }
+    }
 
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         // Iterate on the configured option list
@@ -928,24 +988,44 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         return;
     }
 
+    uint32_t vendor_id = vendor_req->getVendorId();
+    std::vector<uint16_t> requested_opts;
+
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
     /// may have different policies.
     boost::shared_ptr<OptionUint16Array> oro =
         boost::dynamic_pointer_cast<OptionUint16Array>(vendor_req->getOption(DOCSIS3_V6_ORO));
-
-    // Option ORO not found. Don't do anything then.
-    if (!oro) {
-        return;
+    if (oro) {
+        requested_opts = oro->getValues();
+    }
+    // Iterate on the configured option list to add persistent options
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        if (!opts) {
+            continue;
+        }
+        // Get persistent options
+        const OptionContainerPersistIndex& idx = opts->get<2>();
+        const OptionContainerPersistRange& range = idx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = range.first;
+             desc != range.second; ++desc) {
+            // Add the persistent option code to requested options
+            requested_opts.push_back(desc->option_->getType());
+        }
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
+    // If there is nothing to add don't do anything then.
+    if (requested_opts.empty()) {
+        return;
+    }
 
     boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V6, vendor_id));
 
     // Get the list of options that client requested.
     bool added = false;
-    const std::vector<uint16_t>& requested_opts = oro->getValues();
+
     BOOST_FOREACH(uint16_t opt, requested_opts) {
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
@@ -1646,7 +1726,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
-    // Get DDNS udpate directions
+    // Get DDNS update directions
     bool do_fwd = false;
     bool do_rev = false;
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
@@ -1753,7 +1833,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // The server wasn't able allocate new lease and renew an exising
+        // The server wasn't able allocate new lease and renew an existing
         // lease. In that case, the server sends NoAddrsAvail per RFC7550.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoAddrsAvail,
@@ -1858,7 +1938,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
 
-    // For all the leases we have now, add the IAPPREFIX with non-zero lifetimes
+    // For all the leases we have now, add the IAPREFIX with non-zero lifetimes
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
 
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
@@ -1916,7 +1996,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // All is left is to insert the status code.
     if (leases.empty()) {
 
-        // The server wasn't able allocate new lease and renew an exising
+        // The server wasn't able allocate new lease and renew an existing
         // lease. In that case, the server sends NoPrefixAvail per RFC7550.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoPrefixAvail,
@@ -2903,7 +2983,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     // Try to assign options that were requested by the client.
     appendRequestedOptions(inf_request, reply, co_list);
 
-    // Try to assigne vendor options that were requested by the client.
+    // Try to assign vendor options that were requested by the client.
     appendRequestedVendorOptions(inf_request, reply, ctx, co_list);
 
     return (reply);
@@ -2972,7 +3052,7 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
-            bool status = evaluate(*expr_ptr, *pkt);
+            bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(dhcp6_logger, EVAL_RESULT)
                     .arg(it->first)

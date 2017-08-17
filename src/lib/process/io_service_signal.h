@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,7 +68,7 @@ typedef boost::function<void(IOSignalId sequence_id)> IOSignalHandler;
 /// pointer to instigating IOSignal from which the value of OS signal (i.e.
 /// SIGINT, SIGUSR1...) can be obtained.  Note that calling popSignal()
 /// removes the IOSignalPtr from the queue, which should reduce its
-/// reference count to zero upon exiting the handler (unless a delibrate
+/// reference count to zero upon exiting the handler (unless a deliberate
 /// copy of it is made).
 ///
 /// A typical IOSignalHandler might be structured as follows:
@@ -190,7 +190,7 @@ typedef std::map<IOSignalId, IOSignalPtr> IOSignalMap;
 /// This class is designed specifically to make managing them painless.
 /// It maintains an internal map of IOSignals keyed by sequence_id. When a
 /// signal is created via the pushSignal() method it is added to the map. When
-/// a signal is retrevied via the popSignal() method it is removed from the map.
+/// a signal is retrieved via the popSignal() method it is removed from the map.
 class IOSignalQueue {
 public:
     /// @brief Constructor
@@ -211,7 +211,7 @@ public:
     /// control to IOService::run()).
     ///
     /// @param signum OS signal value of the signal to propagate
-    /// @param handler IOSignalHandler to invoke when the signal is delivererd.
+    /// @param handler IOSignalHandler to invoke when the signal is delivered.
     ///
     /// @return The sequence_id of the newly created signal.
     ///
@@ -231,7 +231,7 @@ public:
     ///
     /// @throw IOSignalError if there is no matching IOSignal in the map for
     /// the given sequence_id.  Other than by doubling popping, this should be
-    /// very unlikley.
+    /// very unlikely.
     IOSignalPtr popSignal(IOSignalId sequence_id);
 
     /// @brief Erases the contents of the queue.

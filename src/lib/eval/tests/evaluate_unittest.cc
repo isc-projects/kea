@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,13 +64,13 @@ public:
 // This checks the empty expression: it should raise EvalBadStack
 // when evaluated with a Pkt4. (The actual packet is not used)
 TEST_F(EvaluateTest, empty4) {
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalBadStack);
 }
 
 // This checks the empty expression: it should raise EvalBadStack
 // when evaluated with a Pkt6. (The actual packet is not used)
 TEST_F(EvaluateTest, empty6) {
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalBadStack);
 }
 
 // This checks the { "false" } expression: it should return false
@@ -79,7 +79,7 @@ TEST_F(EvaluateTest, false4) {
     TokenPtr tfalse;
     ASSERT_NO_THROW(tfalse.reset(new TokenString("false")));
     e_.push_back(tfalse);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
 }
 
@@ -89,7 +89,7 @@ TEST_F(EvaluateTest, false6) {
     TokenPtr tfalse;
     ASSERT_NO_THROW(tfalse.reset(new TokenString("false")));
     e_.push_back(tfalse);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -99,7 +99,7 @@ TEST_F(EvaluateTest, true4) {
     TokenPtr ttrue;
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
 }
 
@@ -109,7 +109,7 @@ TEST_F(EvaluateTest, true6) {
     TokenPtr ttrue;
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -119,7 +119,7 @@ TEST_F(EvaluateTest, bad4) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalTypeError);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalTypeError);
 }
 
 // This checks the evaluation must lead to "false" or "true"
@@ -128,7 +128,7 @@ TEST_F(EvaluateTest, bad6) {
     TokenPtr bad;
     ASSERT_NO_THROW(bad.reset(new TokenString("bad")));
     e_.push_back(bad);
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalTypeError);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalTypeError);
 }
 
 // This checks the evaluation must leave only one value on the stack
@@ -138,7 +138,7 @@ TEST_F(EvaluateTest, two4) {
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
     e_.push_back(ttrue);
-    ASSERT_THROW(evaluate(e_, *pkt4_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt4_), EvalBadStack);
 }
 
 // This checks the evaluation must leave only one value on the stack
@@ -148,7 +148,7 @@ TEST_F(EvaluateTest, two6) {
     ASSERT_NO_THROW(ttrue.reset(new TokenString("true")));
     e_.push_back(ttrue);
     e_.push_back(ttrue);
-    ASSERT_THROW(evaluate(e_, *pkt6_), EvalBadStack);
+    ASSERT_THROW(evaluateBool(e_, *pkt6_), EvalBadStack);
 }
 
 // A more complex test evaluated with a Pkt4. (The actual packet is not used)
@@ -164,7 +164,7 @@ TEST_F(EvaluateTest, compare4) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
 }
 
@@ -181,7 +181,7 @@ TEST_F(EvaluateTest, compare6) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -192,9 +192,9 @@ TEST_F(EvaluateTest, exists) {
     ASSERT_NO_THROW(toption.reset(new TokenOption(100, TokenOption::EXISTS)));
     e_.push_back(toption);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -205,9 +205,9 @@ TEST_F(EvaluateTest, dontExists) {
     ASSERT_NO_THROW(toption.reset(new TokenOption(101, TokenOption::EXISTS)));
     e_.push_back(toption);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_FALSE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -224,9 +224,9 @@ TEST_F(EvaluateTest, packet) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -243,9 +243,9 @@ TEST_F(EvaluateTest, optionHex) {
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
     e_.push_back(tequal);
 
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_FALSE(result_);
 }
 
@@ -277,9 +277,9 @@ TEST_F(EvaluateTest, complex) {
     e_.push_back(tequal);
 
     // Should return true for v4 and v6 packets
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt4_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
     EXPECT_TRUE(result_);
-    ASSERT_NO_THROW(result_ = evaluate(e_, *pkt6_));
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
     EXPECT_TRUE(result_);
 }
 
@@ -294,7 +294,7 @@ TEST_F(EvaluateTest, complex) {
 class ExpressionsTest : public EvaluateTest {
 public:
 
-    /// @brief Checks if expression can be parsed and evaluated
+    /// @brief Checks if expression can be parsed and evaluated to bool
     ///
     /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
     /// tweak them as needed before calling this method.
@@ -315,11 +315,44 @@ public:
 
         switch (u) {
         case Option::V4:
-            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt4_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt4_))
                 << " for expression " << expr;
             break;
         case Option::V6:
-            ASSERT_NO_THROW(result = evaluate(eval.expression, *pkt6_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt6_))
+                << " for expression " << expr;
+            break;
+        }
+
+        EXPECT_EQ(exp_result, result) << " for expression " << expr;
+    }
+
+    /// @brief Checks if expression can be parsed and evaluated to string
+    ///
+    /// There are skeleton packets created in pkt4_ and pkt6_. Make sure you
+    /// tweak them as needed before calling this method.
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param expr expression to be parsed
+    /// @param exp_result expected result (string)
+    void testExpressionString(const Option::Universe& u, const std::string& expr,
+                              const std::string& exp_result) {
+
+        EvalContext eval(u);
+        string result;
+        bool parsed = false;
+
+        EXPECT_NO_THROW(parsed = eval.parseString(expr, EvalContext::PARSER_STRING))
+            << " while parsing expression " << expr;
+        EXPECT_TRUE(parsed) << " for expression " << expr;
+
+        switch (u) {
+        case Option::V4:
+            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt4_))
+                << " for expression " << expr;
+            break;
+        case Option::V6:
+            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt6_))
                 << " for expression " << expr;
             break;
         }
@@ -333,10 +366,11 @@ public:
     /// @param expr expression to be evaluated
     template<typename ex>
     void testExpressionNegative(const std::string& expr,
-                                const Option::Universe& u = Option::V4) {
+                                const Option::Universe& u = Option::V4,
+                                EvalContext::ParserType type = EvalContext::PARSER_BOOL) {
         EvalContext eval(u);
 
-        EXPECT_THROW(eval.parseString(expr), ex) << "while parsing expression "
+        EXPECT_THROW(eval.parseString(expr, type), ex) << "while parsing expression "
                                                  << expr;
     }
 };
@@ -440,4 +474,22 @@ TEST_F(ExpressionsTest, invalidIntegers) {
     // Oops, one too much.
     testExpressionNegative<EvalParseError>("4294967296 == 0");
 }
+
+// Tests whether expressions can be evaluated to a string.
+TEST_F(ExpressionsTest, evaluateString) {
+
+    // Check that content of the options is returned properly.
+    testExpressionString(Option::V4, "option[100].hex", "hundred4");
+    testExpressionString(Option::V6, "option[100].hex", "hundred6");
+
+    // Check that content of non-existing option returns empty string.
+    testExpressionString(Option::V4, "option[200].hex", "");
+    testExpressionString(Option::V6, "option[200].hex", "");
+
+    testExpressionNegative<EvalParseError>("pkt4.msgtype == 1", Option::V4,
+                                           EvalContext::PARSER_STRING);
+    testExpressionNegative<EvalParseError>("pkt6.msgtype == 1", Option::V6,
+                                           EvalContext::PARSER_STRING);
+}
+
 };

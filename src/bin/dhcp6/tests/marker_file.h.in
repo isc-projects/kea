@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,7 +45,7 @@ checkMarkerFile(const char* name, const char* expected);
 ///
 /// This function is used in some of the DHCP server tests.
 ///
-/// Checkes that the specified file does NOT exist.
+/// Checks that the specified file does NOT exist.
 ///
 /// @param name Name of the marker file.
 ///

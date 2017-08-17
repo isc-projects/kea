@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ UserId::UserId(UserIdType id_type, const std::string & id_str) :
     // Input is expected to be 2-digits per bytes, no delimiters.
     std::vector<uint8_t> addr_bytes;
 
-    // Strip out colon delimeters, decodeHex doesn't like them.
+    // Strip out colon delimiters, decodeHex doesn't like them.
     std::string clean_id_str = id_str;
     std::string::iterator end_pos = std::remove(clean_id_str.begin(),
                                                 clean_id_str.end(), ':');

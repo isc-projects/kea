@@ -1,0 +1,128 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page controlAgent Control Agent Component
+
+Kea 1.2 release has introduced the Control Agent component (CA), which
+is started by the "kea-ctrl-agent" binary. The CA exposes a RESTful API
+which is used by the administrators to manage Kea servers' instances.
+
+In the most typical case, the CA forwards commands received over the
+RESTful API to the respective Kea servers, e.g. DHCPv4 server, DHCPv6
+server etc. The communication between the CA and other servers is
+established with the use of unix domain sockets. This is possible because
+the CA is running on the same system as other Kea services to which
+messages are forwarded.
+
+The CA can forward the same command to multiple Kea services and return
+an aggregated response (from all services) over the RESTful API. The
+"service" parameter included in the client's command can contain one
+or more services at which the command is targeted. The CA will
+iterate over this list and forward the command to each of them
+individually.
+
+In some cases, the commands containing the "service" value can be handled
+directly by the CA. This is usually the case when the CA is running
+with hooks libraries attached. The hooks libraries must implement
+callouts for the "control_command_receive" hook point, which will be
+invoked by the CA when the command is received. If the hooks libraries
+set the 'skip' status, it is an indication to the CA that the command
+has been processed by the CA and that it should return the response created
+by the hooks libraries to the client. An example of the hooks library attached
+to the CA and handling the commands for other services is a library which
+stores or retrieves some data from the SQL database.
+
+The "service" parameter is optional. If it is not included in the command
+(or it is an empty list), this indicates that the command relates to the
+CA and that the CA should handle it, e.g. return its own configuration in
+response to a "config-get" command.
+
+@section ctrlAgentHttp Receiving commands over HTTP
+
+Control Agent uses libkea-http library to establish HTTP connections,
+receive messages and send responses over HTTP. This library uses boost ASIO
+for creating TCP connections and asynchronously receive and send the data
+over the sockets.
+
+The @ref isc::http::HttpListener provides an entry point to this library.
+It is used by the CA to bind the acceptor to the specific address and
+port. When the client connects to this address and port, the acceptor's
+callback function is invoked which opens a new connection and starts
+receiving data over that socket. The @ref isc::http::HttpConnection
+implements the logic to read and parse received data. Each new TCP
+connection is associated with unique instance of the @ref isc::http::HttpConnection
+When a portion of data is received (asynchronously) over
+the socket it is provided to the instance of the
+@ref isc::http::HttpRequestParser object (unique per connection) and
+data parsing is continued until the parser runs out of data or until
+the entire HTTP request has been received. The
+@ref isc::http::HttpRequestParser signals these events using the
+@ref isc::http::HttpRequestParser::needData and
+@ref isc::http::HttpRequestParser::httpParseOk respectively.
+
+libkea-http is designed to handle processing messages carrying different
+content types. The Control Agent uses "application/json" content
+type which describes messages with JSON structures carried within the
+message body. The JSON structures represent commands sent to the Kea
+server(s) by controlling clients. libkea-http provides generic classes
+(derived from @ref isc::http::HttpRequest) which facilitate validation of
+messages holding various content types.
+CA uses @ref isc::http::PostHttpRequestJson, which encapsulate messages
+sent using HTTP POST and including JSON content, to represent received messages.
+
+@section ctrlAgentCreatingResponse Creating HTTP responses
+
+The @ref isc::http::HttpResponseCreatorFactory is an interface which should
+be implemented by components using libkea-http to generate instances of
+the HTTP responses of a desired type. The instance of the factory class is
+provided to the @ref isc::http::HttpListener via its constructor. The listener
+calls an implementation of the
+@ref isc::http::HttpResponseCreatorFactory::create when a new HTTP
+message has been received and parsed.
+
+The CA component includes the @ref isc::agent::CtrlAgentResponseCreatorFactory
+class. Its @c create() method implementation returns
+an instance of the @ref isc::agent::CtrlAgentResponseCreator, which is a
+derivation of the @ref isc::http::HttpResponseCreator. This creator creates
+instances of the @ref isc::http::HttpResponseJson, holding responses to
+the commands in the JSON format.
+
+@section ctrlAgentCommandMgr Handling commands with Command Manager
+
+The @ref isc::agent::CtrlAgentCommandMgr is a derivation of the
+@ref isc::config::HookedCommandMgr which adds the capability to forward
+commands received over HTTP to specific Kea servers. The
+@ref isc::agent::CtrlAgentCommandMgr forwards commands over a Unix domain
+socket, using @ref isc::asiolink::UnixDomainSocket class. All responses
+to a particular command (possibly received from multiple Kea servers) are
+aggregated within a JSON list and sent back to the controlling client over
+HTTP.
+
+In some cases the responses may be generated locally (without forwarding).
+Typically, the command will be generated by the CA when the command sent
+by the client lacks the "service" parameter, which indicates that the
+command is targeted at the CA itself. In some cases the commands can also
+be processed by the hooks libraries attached to the CA.
+
+@section CtrlAgentSecurity Security considerations
+
+The Control Agent doesn't provide any mechanisms to secure the communication
+over the RESTful API. In the design of the CA we have considered including built-in
+HTTPS solutions (HTTP + TLS), making use of crypto libraries supported by Kea.
+It was eventually decided to not implement the secure layer within Kea for the following reasons:
+- additional code complexity which requires maintenance, bug fixing and
+  monitoring for security vulnerabilities in the OpenSSL/Botan code,
+- OpenSSL/Botan code may be awkward to use and it is likely we wouldn't
+  implement it right,
+- need to support two crypto backends: OpenSSL and Botan which puts significant
+  burden on Kea maintenance.
+
+In the installations where securing command channel is critical (most of the
+installations?), a reverse HTTP proxy can be setup using one of the third
+party HTTP server implementations, e.g. Apache, nginx etc.
+
+*/

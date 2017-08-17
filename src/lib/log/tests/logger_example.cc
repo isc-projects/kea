@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 
     // In the parsing loop that follows, the construction of the logging
     // specification is always "one behind".  In other words, the parsing of
-    // command-line options updates thge current logging specification/output
+    // command-line options updates the current logging specification/output
     // options.  When the flag indicating a new logger or output specification
     // is encountered, the previous one is added to the list.
     //

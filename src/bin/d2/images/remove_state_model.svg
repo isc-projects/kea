@@ -244,7 +244,7 @@
 	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="171" y="350">IO_COMPLETED_EVT</text>
 </g>
 <g>
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="133" y="580">SERVER_SELEGTED_EVT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="133" y="580">SERVER_SELECTED_EVT</text>
 </g>
 <g>
 	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="366" y="681">No reverse change requested</text>

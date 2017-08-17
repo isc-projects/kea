@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,14 +68,6 @@ by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
 
-% DHCP6_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the IPv6 DHCP server has
-successfully established a session with the Kea control channel.
-
-% DHCP6_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the IPv6 DHCP server attempts
-to establish a session with the Kea control channel.
-
 % DHCP6_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
 class or classes. This is a normal behavior and indicates successful operation.
@@ -104,15 +96,6 @@ This error message indicates that the DHCPv6 configuration has failed.
 If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
-
-% DHCP6_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified subnet.
-
-% DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
-This warning message is issued on an attempt to configure multiple options with the
-same option code for the particular subnet. Adding multiple options is uncommon
-for DHCPv6, but it is not prohibited.
 
 % DHCP6_CONFIG_RECEIVED received configuration: %1
 A debug message listing the configuration received by the DHCPv6 server.
@@ -262,6 +245,12 @@ as a result of receiving SIGHUP signal.
 % DHCP6_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
 This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
+
+% DHCP6_FLEX_ID flexible identifier generated for incoming packet: %1
+This debug message is printed when host reservation type is set to flexible identifier
+and the expression specified in its configuration generated (was evaluated to)
+an identifier for incoming packet. This debug message is mainly intended as a
+debugging assistance for flexible identifier.
 
 % DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
 This error message is printed when an exception was raised during signal
@@ -501,11 +490,6 @@ On receipt of message containing details to a change of the IPv6 DHCP
 server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
-
-% DHCP6_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the IPv6 DHCP
-server, notifying that the parser for the specified configuration element
-has been successfully created.
 
 % DHCP6_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,

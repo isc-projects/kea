@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,7 +167,7 @@ OptionVendorClass::toText(int indent) const {
 
     // Apply indentation
     s << std::string(indent, ' ');
-    // Print type, length and first occurence of enterprise id.
+    // Print type, length and first occurrence of enterprise id.
     s << "type=" << getType() << ", len=" << len() - getHeaderLen() << ", "
         " enterprise id=0x" << std::hex << getVendorId() << std::dec;
     // Iterate over all tuples and print their size and contents.

@@ -35,7 +35,7 @@
 <g>
 	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="233" y="735" width="151" height="22" rx="10" />
 	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="229" y="731" width="151" height="22" rx="10" />
-	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="305" y="747">PROCESSS_ADD_OK_ST</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="305" y="747">PROCESS_ADD_OK_ST</text>
 </g>
 <g>
 	<ellipse fill="white" stroke="black" stroke-width="1" stroke-opacity="1" cx="743" cy="746" rx="11.5" ry="11.5" />

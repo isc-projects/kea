@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ using namespace isc::util::io;
 // Essentially we need to check all four combinations of TCP/UDP and IPv4/IPv6.
 // The different address families (IPv4/IPv6) require different structures to
 // hold the address information, and so some common code is in the form of
-// templates (or overloads), parameterised on the structure type.
+// templates (or overloads), parameterized on the structure type.
 //
 // The protocol is determined by an integer (SOCK_STREAM or SOCK_DGRAM) so
 // cannot be templated in the same way.  Relevant check functions are
@@ -54,10 +54,10 @@ setAddressFamilyFields(sockaddr_in6* address) {
     address->sin6_addr = in6addr_loopback;
 }
 
-// Socket has been opened, peform a check on it.  The sole argument is the
+// Socket has been opened, perform a check on it.  The sole argument is the
 // socket descriptor.  The TCP check is the same regardless of the address
 // family.  The UDP check requires that the socket address be obtained so
-// is parameterised on the type of structure required to hold the address.
+// is parameterized on the type of structure required to hold the address.
 
 void
 tcpCheck(const int socknum) {
@@ -94,7 +94,7 @@ udpCheck(const int socknum) {
 // code, so provide a convenient typedef.
 typedef void (*socket_check_t)(const int);
 
-// Address-family-specific scoket checks.
+// Address-family-specific socket checks.
 //
 // The first argument is used to select the overloaded check function.
 // The other argument is the socket descriptor number.
@@ -144,7 +144,7 @@ closeIgnore(int) {
 
 // Generic version of the socket test.  It creates the socket and checks that
 // it is a valid descriptor.  The family-specific check functions are called
-// to check that the socket is valid.  The function is parameterised according
+// to check that the socket is valid.  The function is parameterized according
 // to the structure used to hold the address.
 //
 // Arguments:
@@ -306,7 +306,7 @@ getSockDummy(const int type, struct sockaddr* addr, const socklen_t,
 int
 send_FdDummy(const int destination, const int what) {
     // Make sure it is 1 byte so we know the length. We do not use more during
-    // the test anyway.  And even with the LS bute, we can distinguish between
+    // the test anyway.  And even with the LS byte, we can distinguish between
     // the different results.
     const char fd_data = what & 0xff;
     const bool status = write_data(destination, &fd_data, sizeof(fd_data));

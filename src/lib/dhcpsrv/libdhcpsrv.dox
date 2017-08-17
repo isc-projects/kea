@@ -1,11 +1,11 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
- @page libdhcpsrv libdhcpsrv - Server DHCP library
+ @page libdhcpsrv libkea-dhcpsrv - Server DHCP Library
 
 This library contains code used for the DHCPv4 and DHCPv6 servers' operations,
 including the "Lease Manager" that manages information about leases and the
@@ -78,6 +78,15 @@ distance between the current configuration and the previous
 configuration. For example: the value of 1 identifies an immediate
 predecessor of the current configuration, the value of 2 identifies the
 one that occurred before it etc.
+
+All configuration classes are derived from the abstract base class
+\ref isc::data::CfgToElement and define the toElement virtual method
+which returns a \ref isc::data::ConstElementPtr which must be
+parsed into the same object, i.e. fulfill this property:
+@code
+for all valid C: parse(parse(C)->toElement()) == parse(C)
+@endcode
+
 
 @section hostmgr Host Manager
 
@@ -263,54 +272,28 @@ the server.
 
 @section timerManager Timer Manager
 
-The fundamental role of the DHCP server is to receive and process DHCP
-messages received over the sockets opened on network interfaces. The
-servers' include the main loops in which the servers passively wait
-for the messages. This is done by calling the
-@c isc::dhcp::IfaceMgr::receive4 and/or @c isc::dhcp::IfaceMgr::receive6
-methods for DHCPv4 and DHCPv6 server respectively. Internally, these
-methods call @c select() on open sockets, which blocks for a
-specified amount of time.
+The @c isc::dhcp::TimerMgr is a singleton class used throughout the
+server process to register and unregister timers triggering periodic
+tasks such as lease file cleanup, reclamation of expired leases etc.
 
-The implication of using the @c select() is that the server has no
-means to process any "events" while it is waiting for the @c select()
-to return. An example of such an event is the expiration of the timer
-which controls when the server should detect and process expired
-leases.
+The Timer Manger is using ASIO deadline timers (wrapped in
+@c isc::asiolink::IntervalTimer class) to execute tasks according to
+the configured periods. Therefore, the server process must provide the
+Timer Manager with the pointer to the @c isc::asiolink::IOService which
+the server is using to run asynchronous tasks.
 
-The @c isc::dhcp::TimerMgr has been created to address the issue of
-processing expired leases according to the the dedicated timer.
-Nevertheless, this concept is universal and should be used for
-all timers which need to be triggered asynchronously, i.e. independently
-from processing the DHCP messages.
-
-The @c TimerMgr allows for registering timers and associating them with
-user callback functions, which are executed without waiting for the
-call to the @c select() function to return as a result of the timeout.
-When the particular timer elapses, the blocking call to select is
-interrupted by sending data over a dedicated (for a timer)
-@c isc::util::WatchSocket. Each timer has an instance of
-@c isc::util::WatchSocket associated with it, and each such socket
-is registered with the @c IfaceMgr using the @c IfaceMgr::addExternalSocket.
-When the transmission of the data over the watch socket interrupts the
-@c select() call, the user callback is executed by
-@c isc::dhcp::IfaceMgr and the watch socket is cleared to accept
-subsequent events for that particular timer.
-
-The timers are implemented using the @c isc::asiolink::IntervalTimer class.
-They are run in a dedicated thread which is owned (created and destroyed)
-by @c isc::dhcp::TimerMgr. This worker thread runs an instance
-of @c isc::asiolink::IOService object which is associated with all
-registered timers. The thread uses a common callback function which
-is executed when a timer elapses. This callback function receives
-a name of the elapsed timer as an argument and, based on that, selects the
-appropriate @c isc::util::WatchSocket to be marked as ready. In order to
-overcome the race conditions with the main thread, the worker thread blocks
-right after it marks the watch socket as ready, and waits for this
-socket to be cleared by the main thread. This is the indication
-that the timer specific callback function has been invoked and the
-worker thread may continue monitoring registered timers and signal
-their readiness when they elapse.
+Current implementation of the DHCP servers uses synchronous calls to
+@c select() function to check if any transmission has been received
+on any socket. This poses a problem with running asynchronous calls
+via @c IOService in the main server loop because the @c select()
+blocks for a specified amount of time while asynchronous calls
+are not triggered. In the future we should migrate from the synchronous
+@c select() calls into asynchronous calls using ASIO. Currently,
+we mitigate the problem by lowering the @c select() timeout to 1s,
+and polling @c IOService for "ready" timers (handlers) after
+@c select() returns. This may cause delays of "ready" handlers
+execution by around 1s. However, this is acceptable for the current
+applications of the periodic timers.
 
 @section leaseReclamationRoutine Leases Reclamation Routine
 
@@ -475,5 +458,6 @@ is used by DHCPv4 and DHCPv6 components.
 @todo
 
 DHCPv4-over-DHCPv6 which are relayed by a DHCPv6 relay are not yet supported.
+
 
 */

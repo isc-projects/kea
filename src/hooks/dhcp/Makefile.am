@@ -1,1 +1,1 @@
-SUBDIRS = user_chk
+SUBDIRS = user_chk lease_cmds

@@ -47,7 +47,7 @@ INSERT INTO dhcp_option_scope VALUES (3, 'host');
 --
 -- Table structure for table hosts
 --
--- Primary key and unique contraints automatically create indexes
+-- Primary key and unique constraints automatically create indexes
 -- foreign key constraints do not
 CREATE TABLE hosts (
   host_id SERIAL PRIMARY KEY NOT NULL,
