@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -186,7 +186,7 @@ Dhcp4Client::applyConfiguration() {
     // sname
     OptionBuffer buf = resp->getSname();
     // sname is a fixed length field holding null terminated string. Use
-    // of c_str() guarantess that only a useful portion (ending with null
+    // of c_str() guarantees that only a useful portion (ending with null
     // character) is assigned.
     config_.sname_.assign(std::string(buf.begin(), buf.end()).c_str());
     // (boot)file
@@ -335,7 +335,7 @@ Dhcp4Client::doDecline() {
     // Include client identifier.
     appendClientId();
 
-    // Incluer server identifier.
+    // Include server identifier.
     appendServerId();
 
     // Remove configuration.

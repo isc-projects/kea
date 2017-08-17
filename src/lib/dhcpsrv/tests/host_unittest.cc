@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -182,11 +182,12 @@ TEST_F(HostTest, getIdentifier) {
     EXPECT_EQ(Host::IDENT_DUID, Host::getIdentifierType("duid"));
     EXPECT_EQ(Host::IDENT_CIRCUIT_ID, Host::getIdentifierType("circuit-id"));
     EXPECT_EQ(Host::IDENT_CLIENT_ID, Host::getIdentifierType("client-id"));
+    EXPECT_EQ(Host::IDENT_FLEX, Host::getIdentifierType("flex-id"));
 
-    EXPECT_THROW(Host::getIdentifierType("unuspported"), isc::BadValue);
+    EXPECT_THROW(Host::getIdentifierType("unsupported"), isc::BadValue);
 }
 
-// This test verfies that it is possible to create a Host object
+// This test verifies that it is possible to create a Host object
 // using hardware address in the textual format.
 TEST_F(HostTest, createFromHWAddrString) {
     boost::scoped_ptr<Host> host;
@@ -407,7 +408,7 @@ TEST_F(HostTest, createFromIdentifierString) {
         const std::string identifier_name = Host::getIdentifierName(type);
 
         // Construct unique identifier for a host. This is a string
-        // consisting of a word "idenetifier", hyphen and the name of
+        // consisting of a word "identifier", hyphen and the name of
         // the identifier, e.g. "identifier-hw-address".
         std::ostringstream identifier_without_quotes;
         identifier_without_quotes << "identifier-" << identifier_name;
@@ -680,7 +681,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_THROW(host->setIPv4Reservation(IOAddress("2001:db8:1::1")),
                  isc::BadValue);
     // Zero address can't be set, the removeIPv4Reservation should be
-    // used intead.
+    // used instead.
     EXPECT_THROW(host->setIPv4Reservation(IOAddress::IPV4_ZERO_ADDRESS()),
                  isc::BadValue);
     // Broadcast address can't be set.

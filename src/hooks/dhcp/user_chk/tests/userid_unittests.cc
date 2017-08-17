@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,21 +50,21 @@ TEST(UserIdTest, hwAddress_type) {
     EXPECT_EQ(id->getType(), UserId::HW_ADDRESS);
     EXPECT_TRUE(bytes == id->getId());
 
-    // Check relational oeprators when a == b.
+    // Check relational operators when a == b.
     UserIdPtr id2;
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::HW_ADDRESS, id->toText())));
     EXPECT_TRUE(*id == *id2);
     EXPECT_FALSE(*id != *id2);
     EXPECT_FALSE(*id < *id2);
 
-    // Check relational oeprators when a < b.
+    // Check relational operators when a < b.
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::HW_ADDRESS,
                                          "01FF02AC030B0709")));
     EXPECT_FALSE(*id == *id2);
     EXPECT_TRUE(*id != *id2);
     EXPECT_TRUE(*id < *id2);
 
-    // Check relational oeprators when a > b.
+    // Check relational operators when a > b.
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::HW_ADDRESS,
                                          "01FF02AC030B0707")));
     EXPECT_FALSE(*id == *id2);
@@ -98,20 +98,20 @@ TEST(UserIdTest, duid_type) {
     EXPECT_EQ(id->getType(), UserId::DUID);
     EXPECT_TRUE(bytes == id->getId());
 
-    // Check relational oeprators when a == b.
+    // Check relational operators when a == b.
     UserIdPtr id2;
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::DUID, id->toText())));
     EXPECT_TRUE(*id == *id2);
     EXPECT_FALSE(*id != *id2);
     EXPECT_FALSE(*id < *id2);
 
-    // Check relational oeprators when a < b.
+    // Check relational operators when a < b.
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::DUID, "01FF02AC030B0709")));
     EXPECT_FALSE(*id == *id2);
     EXPECT_TRUE(*id != *id2);
     EXPECT_TRUE(*id < *id2);
 
-    // Check relational oeprators when a > b.
+    // Check relational operators when a > b.
     ASSERT_NO_THROW(id2.reset(new UserId(UserId::DUID, "01FF02AC030B0707")));
     EXPECT_FALSE(*id == *id2);
     EXPECT_TRUE(*id != *id2);

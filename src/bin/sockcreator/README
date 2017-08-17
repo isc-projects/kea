@@ -1,4 +1,4 @@
-Aguust 2014: As of Kea 0.9, this code is not built.  It is currently uncertain
+August 2014: As of Kea 0.9, this code is not built.  It is currently uncertain
 whether it will be needed in a future version Kea, so it is being retained
 in the repository for now: it may be deleted in the future.
 
@@ -11,7 +11,7 @@ ports lower than 1024. So we will have a separate process that keeps the
 rights, while the rest drops them for security reasons.
 
 This process is the socket creator. Its goal is to be as simple as possible
-and to contain as little code as possible to minimise the amount of code
+and to contain as little code as possible to minimize the amount of code
 running with higher privileges (to minimize the number of bugs and make
 checking/auditing it easier). It uses low-level OS API instead of some
 fancy library for that reason. It has only fixed-length reads so there's no

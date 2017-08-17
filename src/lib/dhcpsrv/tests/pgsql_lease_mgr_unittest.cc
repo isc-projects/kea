@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-	string connection_string = validPgSQLConnectionString() + string(" ") +
+        string connection_string = validPgSQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
@@ -190,8 +190,8 @@ TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(PG_CURRENT_VERSION, version.first);
-    EXPECT_EQ(PG_CURRENT_MINOR, version.second);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -410,6 +410,16 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
 // Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
+    testWipeLeases6();
 }
 
 }; // namespace

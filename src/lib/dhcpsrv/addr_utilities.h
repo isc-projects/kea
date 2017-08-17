@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,18 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len);
 /// @return number of addresses in range
 uint64_t addrsInRange(const isc::asiolink::IOAddress& min,
                       const isc::asiolink::IOAddress& max);
+
+/// @brief Returns prefix length from the specified range (min - max).
+///
+/// This can be considered as log2(addrsInRange)
+///
+/// @throw BadValue if min and max do not define a prefix.
+///
+/// @param min the first address in range
+/// @param max the last address in range
+/// @return the prefix length or -1 if the range is not from a prefix
+int prefixLengthFromRange(const isc::asiolink::IOAddress& min,
+                          const isc::asiolink::IOAddress& max);
 
 /// @brief Returns number of available IPv6 prefixes in the specified prefix.
 ///

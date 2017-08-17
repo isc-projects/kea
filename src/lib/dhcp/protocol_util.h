@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown when error occured during parsing packet's headers.
+/// @brief Exception thrown when error occurred during parsing packet's headers.
 ///
 /// This exception is thrown when parsing link, Internet or Transport layer
 /// header has failed.

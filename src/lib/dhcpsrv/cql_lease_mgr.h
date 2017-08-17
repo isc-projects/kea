@@ -1,4 +1,4 @@
-// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+// Copyright (C) 2015 - 2017 Deutsche Telekom AG.
 //
 // Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //
@@ -324,6 +324,28 @@ public:
     /// @return Number of leases deleted.
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
 
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+
     /// @brief Return backend type
     ///
     /// @return Type of the backend.
@@ -487,7 +509,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods. It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param data array containing input parameters for the query
@@ -500,7 +522,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods. It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param data array containing input parameters for the query

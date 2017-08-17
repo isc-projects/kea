@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,8 +93,33 @@ const char* CONFIGS[] = {
         "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
         " } ],"
-    "\"valid-lifetime\": 4000 }"
-};
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2:
+    // - 1 subnet, 2 global options (one forced with always-send)
+    "{"
+    "    \"interfaces-config\": {"
+    "    \"interfaces\": [ \"*\" ] }, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+    "        \"subnet\": \"192.0.2.0/24\""
+    "    } ], "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"default-ip-ttl\", "
+    "            \"data\": \"FF\", "
+    "            \"csv-format\": false"
+    "        }, "
+    "        {"
+    "            \"name\": \"ip-forwarding\", "
+    "            \"data\": \"false\", "
+    "            \"always-send\": true"
+    "        }"
+    "    ]"
+    "}" };
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -744,7 +769,14 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     checkResponse(offer, DHCPOFFER, 1234);
     checkClientId(offer, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+
     offer = srv.processDiscover(dis);
 
     // Check if we get response at all
@@ -812,7 +844,14 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+
     ack = srv.processRequest(dis);
 
     // Check if we get response at all
@@ -1067,7 +1106,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"10.253.175.16\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
@@ -1079,7 +1118,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1221,7 +1261,8 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1269,7 +1310,8 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1358,7 +1400,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"192.0.2.1, 192.0.2.2\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
@@ -1370,7 +1412,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
     ASSERT_TRUE(x);
@@ -1433,6 +1476,89 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     EXPECT_EQ("192.0.2.2", addrs[1].toText());
 }
 
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(Dhcpv4SrvTest, vendorPersistentOptions) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": true,"
+        "          \"always-send\": true"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr and hops to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    dis->setHops(1);
+
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    // Set interface. It is required by the server to generate server id.
+    dis->setIface("eth0");
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    dis->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
@@ -1448,7 +1574,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
         "          \"code\": ";
     string config_postfix = ","
         "          \"data\": \"192.0.2.1\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.50\" } ],"
@@ -1468,8 +1594,10 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     // definition, the config should fail.
     string config_bogus = config_prefix + "99" + config_postfix;
 
-    ElementPtr json_bogus = Element::fromJSON(config_bogus);
-    ElementPtr json_valid = Element::fromJSON(config_valid);
+    ConstElementPtr json_bogus;
+    ASSERT_NO_THROW(json_bogus = parseDHCP4(config_bogus));
+    ConstElementPtr json_valid;
+    ASSERT_NO_THROW(json_valid = parseDHCP4(config_valid));
 
     NakedDhcpv4Srv srv(0);
 
@@ -1543,7 +1671,8 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1629,7 +1758,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
         "{   \"name\": \"router\", "
         "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1652,7 +1782,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
@@ -1679,7 +1809,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
         "    \"code\": 250, "
         "    \"type\": \"string\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1702,7 +1833,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
@@ -1734,7 +1865,8 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1806,7 +1938,8 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
         "    {    \"name\": \"ip-forwarding\", "
         "         \"data\": \"true\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1877,7 +2010,8 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1902,6 +2036,85 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ASSERT_TRUE(prl);
     prl->addValue(DHO_IP_FORWARDING);
     query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt4Ptr response = srv.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, global to false/0
+    // Here class has the priority
+    EXPECT_NE(0, opt->getUint8());
+}
+
+// Checks class options have the priority over global persistent options
+TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // A global ip-forwarding option is set in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 12) and sets an ip-forwarding option in the response.
+    // Note the persistency flag follows a "OR" semantic so to set
+    // it to false (or to leave the default) has no effect.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"option-data\": ["
+        "    {    \"name\": \"ip-forwarding\", "
+        "         \"data\": \"false\", "
+        "         \"always-send\": true } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"true\", "
+        "             \"always-send\": false } ], "
+        "    \"test\": \"option[12].text == 'foo'\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Do not add a PRL
+    OptionPtr prl = query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    EXPECT_FALSE(prl);
 
     // Create and add a host-name option to the query
     OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
@@ -1980,6 +2193,59 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
 
     // This time it should work
     EXPECT_TRUE(srv_.selectSubnet(dis));
+}
+
+// Checks effect of persistency (aka always-true) flag on the PRL
+TEST_F(Dhcpv4SrvTest, prlPersistency) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(configure(CONFIGS[2]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option for another option
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_ARP_CACHE_TIMEOUT);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Let the server process it.
+    Pkt4Ptr response = srv_.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // But no default-ip-ttl
+    ASSERT_FALSE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // Nor an arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+
+    // Reset PRL adding default-ip-ttl
+    query->delOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    prl->addValue(DHO_DEFAULT_IP_TTL);
+    query->addOption(prl);
+
+    // Let the server process it again.
+    response = srv_.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // and now a default-ip-ttl
+    ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // and still no arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
 }
 
 // Checks if relay IP address specified in the relay-info structure in
@@ -2431,7 +2697,7 @@ TEST_F(Dhcpv4SrvTest, statisticsDecline) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Offer
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2439,7 +2705,7 @@ TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Ack
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2447,7 +2713,7 @@ TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Nak
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
     NakedDhcpv4Srv srv(0);
 

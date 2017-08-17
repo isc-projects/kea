@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +91,7 @@ specific prefix/prefix length. The arguments specify prefix, prefix
 length and host details respectively.
 
 % HOSTS_CFG_GET_ONE_PREFIX_NULL host not found using prefix %1/%2
-This debug messsage is issued when no host was found for a specified
+This debug message is issued when no host was found for a specified
 prefix and prefix length.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4 get one host with reservation for subnet id %1 and IPv4 address %2
@@ -146,6 +146,20 @@ host connected to the specific subnet and identified by the HW address
 or DUID, and it is starting to search for this host in the alternate
 host data source.
 
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER get one host with IPv4 reservation for subnet id %1, identified by %2
+This debug message is issued when starting to retrieve a host holding
+IPv4 reservation, which is connected to a specific subnet and
+is identified by a specific unique identifier.
+
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+This debug message includes the details of a host returned by an
+alternate hosts data source using a subnet id and specific host
+identifier.
+
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.
+
 % HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate source for host using prefix %1/%2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
@@ -163,3 +177,17 @@ This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and identified by the specified
 DUID or HW Address, and it is starting to search for this host in the
 alternate host data source.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
+This debug message is issued when starting to retrieve a host holding
+IPv4 reservation, which is connected to a specific subnet and
+is identified by a specific unique identifier.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+This debug message includes the details of a host returned by an
+alternate hosts data source using a subnet id and specific host
+identifier.
+
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.

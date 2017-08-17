@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_FALSE(chptr_1 == chptr_2);
 
     // Check reference counts.  The getCalloutHandle function should be storing
-    // pointers to the objects poiunted to by chptr_2 and pktptr_2.
+    // pointers to the objects pointed to by chptr_2 and pktptr_2.
     EXPECT_EQ(1, chptr_1.use_count());
     EXPECT_EQ(1, pktptr_1.use_count());
     EXPECT_EQ(2, chptr_2.use_count());
@@ -94,7 +94,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_EQ(1, pktptr_2.use_count());
 }
 
-// The followings is a trival test to check that if the template function
+// The followings is a trivial test to check that if the template function
 // is referred to in a separate compilation unit, only one copy of the static
 // objects stored in it are returned.  (For a change, we'll use a Pkt6 as the
 // packet object.)
