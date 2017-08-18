@@ -188,8 +188,7 @@ namespace config {
 
 ModuleSpec::ModuleSpec(ConstElementPtr module_spec_element,
                        const bool check)
-                       throw(ModuleSpecError)
-                       
+
 {
     module_specification = module_spec_element;
     if (check) {
@@ -298,7 +297,6 @@ ModuleSpec::validateStatistics(ConstElementPtr data, const bool full,
 
 ModuleSpec
 moduleSpecFromFile(const std::string& file_name, const bool check)
-                   throw(JSONError, ModuleSpecError)
 {
     std::ifstream file;
 
@@ -322,7 +320,6 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
 
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
-                   throw(JSONError, ModuleSpecError)
 {
     ConstElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
@@ -439,7 +436,7 @@ ModuleSpec::validateSpec(ConstElementPtr spec, ConstElementPtr data,
     bool optional = spec->get("item_optional")->boolValue();
     ConstElementPtr data_el;
     data_el = data->get(item_name);
-    
+
     if (data_el) {
         if (!validateItem(spec, data_el, full, errors)) {
             return (false);
@@ -468,7 +465,7 @@ ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
     }
 
     typedef std::pair<std::string, ConstElementPtr> maptype;
-    
+
     BOOST_FOREACH(maptype m, data->mapValue()) {
         // Ignore 'version' as a config element
         if (m.first.compare("version") != 0) {

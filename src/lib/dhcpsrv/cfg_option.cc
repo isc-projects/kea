@@ -4,10 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <dhcp/libdhcp++.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <string>
 #include <sstream>
@@ -169,9 +171,9 @@ CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
             // If there is no such option in the destination container,
             // add one.
             if (std::distance(range.first, range.second) == 0) {
-                dest_container.addItem(OptionDescriptor(src_opt->option_,
-                                                        src_opt->persistent_),
-                                       *it);
+                dest_container.addItem(OptionDescriptor(
+                    src_opt->option_, src_opt->persistent_,
+                    src_opt->formatted_value_), *it);
             }
         }
     }
@@ -276,5 +278,5 @@ CfgOption::toElement() const {
     return (result);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

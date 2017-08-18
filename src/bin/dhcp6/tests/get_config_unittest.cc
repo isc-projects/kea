@@ -3204,7 +3204,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                    {\n"
 "                        \"always-send\": false,\n"
 "                        \"code\": 7,\n"
-"                        \"csv-format\": false,\n"
+"                        \"csv-format\": true,\n"
 "                        \"data\": \"01\",\n"
 "                        \"name\": \"preference\",\n"
 "                        \"space\": \"dhcp6\"\n"
@@ -5831,7 +5831,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+}
 
 namespace isc {
 namespace dhcp {
@@ -5862,9 +5862,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 
@@ -6051,8 +6051,16 @@ TEST_P(Dhcp6GetConfigTest, run) {
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }
 
-/// Define the parameterized test loop
-INSTANTIATE_TEST_CASE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
-                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
-
+class IntToString {
+public:
+    std::string operator()(const testing::TestParamInfo<size_t>& n) {
+        return to_string(n.param);
+    }
 };
+
+/// Define the parameterized test loop.
+INSTANTIATE_TEST_CASE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
+                        ::testing::Range(static_cast<size_t>(0),
+                                         max_config_counter),
+                        IntToString());
+}  // namespace
