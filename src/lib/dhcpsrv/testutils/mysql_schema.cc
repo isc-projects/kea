@@ -9,9 +9,9 @@
 #include <mysql.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
-#include <gtest/gtest.h>
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdlib.h>
 
@@ -34,8 +34,7 @@ void destroyMySQLSchema(bool show_err) {
 }
 
 void createMySQLSchema(bool show_err) {
-    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql",
-                   show_err);
+    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql", show_err);
 }
 
 void runMySQLScript(const std::string& path, const std::string& script_name,
@@ -53,10 +52,11 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
     cmd << script_name;
 
     int retval = ::system(cmd.str().c_str());
-    ASSERT_EQ(0, retval) << "runMySQLSchema failed:" << cmd.str();
+    if (retval) {
+        std::cerr << "runMySQLSchema failed:" << cmd.str() << std::endl;
+    }
 }
 
-
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
