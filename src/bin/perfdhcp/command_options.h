@@ -247,6 +247,11 @@ public:
     /// \return local port number.
     int getLocalPort() const { return local_port_; }
 
+    /// @brief Returns the time in microseconds to delay the program by.
+    ///
+    /// @return the time in microseconds to delay the program by.
+    int getLateExitDelay() const { return late_exit_delay_; }
+
     /// \brief Checks if seed provided.
     ///
     /// \return true if seed was provided.
@@ -512,6 +517,8 @@ private:
     /// Collection of base values specified with -b<value>
     /// options. Supported "bases" are mac=<mac> and duid=<duid>
     std::vector<std::string> base_;
+    /// Number of microseconds by which you should delay the exit
+    int late_exit_delay_;
     /// Number of 2 or 4-way exchanges to perform.
     std::vector<int> num_request_;
     /// Test period in seconds
@@ -594,7 +601,7 @@ private:
     uint8_t v6_relay_encapsulation_level_;
 };
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
 
 #endif // COMMAND_OPTIONS_H

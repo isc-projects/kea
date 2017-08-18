@@ -727,16 +727,16 @@
                     <term><option>-D <replaceable class="parameter">max-drop</replaceable></option></term>
                     <listitem>
                         <para>
-                            Abort the test if more than <replaceable
-                            class="parameter">max-drop</replaceable>
-                            requests have been dropped.  Use <option>-D
-                            0</option> to abort if even a single
-                            request has been dropped.  If <replaceable
+                            Abort the test immediately if <replaceable
+                            class="parameter">max-drop</replaceable> requests
+                            have been dropped. <replaceable
+                            class="parameter">max-drop</replaceable> must be a
+                            positive integer. If <replaceable
                             class="parameter">max-drop</replaceable> includes
-                            the suffix '%', it specifies a maximum percentage
-                            of requests that may be dropped before abort.
-                            In this case, testing of the threshold begins after
-                            10 requests have been expected to be received.
+                            the suffix '%', it specifies a maximum percentage of
+                            requests that may be dropped before abort. In this
+                            case, testing of the threshold begins after 10
+                            requests have been expected to be received.
                         </para>
                     </listitem>
                 </varlistentry>
