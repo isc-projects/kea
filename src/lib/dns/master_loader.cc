@@ -1055,7 +1055,7 @@ MasterLoader::loadIncremental(size_t count_limit) {
 }
 
 bool
-MasterLoader::loadedSucessfully() const {
+MasterLoader::loadedSuccessfully() const {
     return (impl_->complete_ && !impl_->seen_error_);
 }
 

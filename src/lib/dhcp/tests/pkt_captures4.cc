@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@
 /// 4. Right click on DHCPv6 -> Copy -> Bytes -> Hex Stream
 /// 5. Paste it as: string hex_string="[paste here]";
 /// 6. Coding guidelines line restrictions apply, so wrap your code as necessary
-/// 7. Make sure you decribe the capture appropriately
+/// 7. Make sure you describe the capture appropriately
 /// 8. Follow whatever rest of the methods are doing (set ports, ifaces etc.)
 /// 9. To easily copy packet description, click File... -> Extract packet
 ///    dissections -> as plain text file...

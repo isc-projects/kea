@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,14 +22,15 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <string>
+#include <algorithm>
 #include <arpa/inet.h>
+#include <cstddef>
+#include <cstdlib>
+#include <errno.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <algorithm>
-#include <cstdlib>
-#include <cstddef>
+#include <string>
 #include <vector>
 
 using namespace boost::asio;
@@ -62,7 +63,7 @@ public:
         NONE = 4        ///< "Not set" state
     };
 
-    /// \brief Minimim size of buffers
+    /// \brief Minimum size of buffers
     enum {
         MIN_SIZE = (64 * 1024 + 2)          ///< 64kB + two bytes for a count
     };
@@ -149,7 +150,7 @@ public:
         return (ptr_->expected_);
     }
 
-    /// \brief Get offset intodData
+    /// \brief Get offset into data
     size_t& offset() {
         return (ptr_->offset_);
     }
@@ -355,7 +356,15 @@ TEST(TCPSocket, sequenceTest) {
     EXPECT_EQ(0, server_cb.getCode());
 
     EXPECT_EQ(TCPCallback::OPEN, client_cb.called());
-    EXPECT_EQ(0, client_cb.getCode());
+
+    // On some operating system the async_connect may return EINPROGRESS.
+    // This doesn't necessarily indicate an error. In most cases trying
+    // to asynchronously write and read from the socket would work just
+    // fine.
+    if ((client_cb.getCode()) != 0 && (client_cb.getCode() != EINPROGRESS)) {
+        ADD_FAILURE() << "expected error code of 0 or " << EINPROGRESS
+            << " as a result of async_connect, got " << client_cb.getCode();
+    }
 
     // Step 2.  Get the client to write to the server asynchronously.  The
     // server will loop reading the data synchronously.
@@ -418,7 +427,7 @@ TEST(TCPSocket, sequenceTest) {
     // Run the callbacks. Several options are possible depending on how ASIO
     // is implemented and whether the message gets fragmented:
     //
-    // 1) The send handler may complete immediately, regardess of whether the
+    // 1) The send handler may complete immediately, regardless of whether the
     // data has been read by the client.  (This is the most likely.)
     // 2) The send handler may only run after all the data has been read by
     // the client. (This could happen if the client's TCP buffers were too

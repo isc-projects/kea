@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ using namespace std;
 /// - data being retrieved from the database (as in getting lease information)
 /// - selection criteria used to determine which records to update/retrieve.
 ///
-/// All such data is associated with the prepared statment using an array of
+/// All such data is associated with the prepared statement using an array of
 /// MYSQL_BIND structures.  Each element in the array corresponds to one
 /// parameter in the prepared statement - the first element in the array is
 /// associated with the first parameter, the second element with the second
@@ -71,7 +71,7 @@ using namespace std;
 ///   lease object.
 
 namespace {
-    
+
 /// @brief Maximum length of the hostname stored in DNS.
 ///
 /// This length is restricted by the length of the domain-name carried
@@ -226,7 +226,7 @@ namespace dhcp {
 /// @brief Common MySQL and Lease Data Methods
 ///
 /// The MySqlLease4Exchange and MySqlLease6Exchange classes provide the
-/// functionaility to set up binding information between variables in the
+/// functionality to set up binding information between variables in the
 /// program and data extracted from the database.  This class is the common
 /// base to both of them, containing some common methods.
 
@@ -752,7 +752,7 @@ public:
             // is guaranteed to be valid until the next non-const operation on
             // addr6_.)
             //
-            // The const_cast could be avoided by copying the string to a writeable
+            // The const_cast could be avoided by copying the string to a writable
             // buffer and storing the address of that in the "buffer" element.
             // However, this introduces a copy operation (with additional overhead)
             // purely to get round the structures introduced by design of the
@@ -1227,7 +1227,7 @@ private:
 ///
 /// This class is used to recalculate lease statistics for MySQL
 /// lease storage.  It does so by executing a query which returns a result
-/// containining contain one row per monitored state per lease type per
+/// containing one row per monitored state per lease type per
 /// subnet, ordered by subnet id in ascending order.
 ///
 class MySqlLeaseStatsQuery : public LeaseStatsQuery {
@@ -1549,7 +1549,7 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" paraeter is true to indicate
+    // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
@@ -1568,7 +1568,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
-    // the selection criteria.  The "single" paraeter is true to indicate
+    // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
@@ -1786,7 +1786,7 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
     // the "const" is discarded before the uint8_t* is cast to char*.
     //
     // Note that the const_cast could be avoided by copying the DUID to
-    // a writeable buffer and storing the address of that in the "buffer"
+    // a writable buffer and storing the address of that in the "buffer"
     // element.  However, this introduces a copy operation (with additional
     // overhead) purely to get round the structures introduced by design of
     // the MySQL interface (which uses the area pointed to by "buffer" as
@@ -2100,7 +2100,15 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     return (deleted_leases);
 }
 
+size_t
+MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for MySQL backend");
+}
 
+size_t
+MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for MySQL backend");
+}
 
 // Miscellaneous database methods.
 

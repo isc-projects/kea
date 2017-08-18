@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,16 +12,16 @@
 #include <dhcp/protocol_util.h>
 #include <exceptions/exceptions.h>
 #include <fcntl.h>
+#include <net/ethernet.h>
 #include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
-#include <net/ethernet.h>
 
 namespace {
 
 using namespace isc::dhcp;
 
-/// The following structure defines a Berkely Packet Filter program to perform
+/// The following structure defines a Berkeley Packet Filter program to perform
 /// packet filtering. The program operates on Ethernet packets.  To help with
 /// interpretation of the program, for the types of Ethernet packets we are
 /// interested in, the header layout is:
@@ -136,7 +136,7 @@ PktFilterLPF::openSocket(Iface& iface,
 
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
-    // The function will throw an exception and effectivelly cease opening
+    // The function will throw an exception and effectively cease opening
     // raw socket below.
     int fallback = openFallbackSocket(addr, port);
 
@@ -227,10 +227,10 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     // have to get the data from the raw socket too.
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
     // If negative value is returned by read(), it indicates that an
-    // error occured. If returned value is 0, no data was read from the
+    // error occurred. If returned value is 0, no data was read from the
     // socket. In both cases something has gone wrong, because we expect
     // that a chunk of data is there. We signal the lack of data by
-    // returing an empty packet.
+    // returning an empty packet.
     if (data_len <= 0) {
         return Pkt4Ptr();
     }

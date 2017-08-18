@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfg_duid.h>
 #include <exceptions/exceptions.h>
 #include <testutils/io_utils.h>
+#include <testutils/test_to_element.h>
 #include <util/encode/hex.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
@@ -20,6 +21,7 @@
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::test;
 
 namespace {
 
@@ -92,6 +94,14 @@ TEST_F(CfgDUIDTest, defaults) {
     EXPECT_EQ(0, cfg_duid.getTime());
     EXPECT_EQ(0, cfg_duid.getEnterpriseId());
     EXPECT_TRUE(cfg_duid.persist());
+
+    std::string expected = "{ \"type\": \"LLT\",\n"
+        "\"identifier\": \"\",\n"
+        "\"htype\": 0,\n"
+        "\"time\": 0,\n"
+        "\"enterprise-id\": 0,\n"
+        "\"persist\": true }";
+    runToElementTest<CfgDUID>(expected, cfg_duid);
 }
 
 // This test verifies that it is possible to set values for the CfgDUID.
@@ -112,6 +122,14 @@ TEST_F(CfgDUIDTest, setValues) {
     EXPECT_EQ(32100, cfg_duid.getTime());
     EXPECT_EQ(10, cfg_duid.getEnterpriseId());
     EXPECT_FALSE(cfg_duid.persist());
+
+    std::string expected = "{ \"type\": \"EN\",\n"
+        " \"identifier\": \"ABCDEF\",\n"
+        " \"htype\": 100,\n"
+        " \"time\": 32100,\n"
+        " \"enterprise-id\": 10,\n"
+        " \"persist\": false }";
+    runToElementTest<CfgDUID>(expected, cfg_duid);
 }
 
 // This test checks positive scenarios for setIdentifier.
@@ -165,7 +183,7 @@ TEST_F(CfgDUIDTest, createLLT) {
               duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-EN can be created from the
@@ -185,7 +203,7 @@ TEST_F(CfgDUIDTest, createEN) {
     EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This method checks that the DUID-LL can be created from the
@@ -205,7 +223,7 @@ TEST_F(CfgDUIDTest, createLL) {
     EXPECT_EQ("00:03:00:02:12:41:34:a4:b3:67", duid->toText());
 
     // Verify that the DUID file has been created.
-    EXPECT_TRUE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_TRUE(fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 // This test verifies that it is possible to disable storing
@@ -226,7 +244,7 @@ TEST_F(CfgDUIDTest, createDisableWrite) {
     EXPECT_EQ("00:02:00:00:10:10:25:0f:3e:26:a7:62", duid->toText());
 
     // DUID persistence is disabled so there should be no DUID file.
-    EXPECT_FALSE(dhcp::test::fileExists(absolutePath(DUID_FILE_NAME)));
+    EXPECT_FALSE(fileExists(absolutePath(DUID_FILE_NAME)));
 }
 
 } // end of anonymous namespace

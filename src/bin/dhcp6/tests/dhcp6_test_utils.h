@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -376,7 +376,7 @@ public:
 // dependencies, we use forward declaration here.
 class Dhcp6Client;
 
-// Provides suport for tests against a preconfigured subnet6
+// Provides support for tests against a preconfigured subnet6
 // extends upon NakedDhcp6SrvTest
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
@@ -639,11 +639,23 @@ public:
     NakedDhcpv6Srv srv_;
 };
 
+/// @brief Patch the server config to add interface-config/re-detect=false
+/// @param json the server config
+inline void
+disableIfacesReDetect(isc::data::ConstElementPtr json) {
+    isc::data::ConstElementPtr ifaces_cfg = json->get("interfaces-config");
+    if (ifaces_cfg) {
+        isc::data::ElementPtr mutable_cfg =
+            boost::const_pointer_cast<isc::data::Element>(ifaces_cfg);
+        mutable_cfg->set("re-detect", isc::data::Element::create(false));
+    }
+}
+
 /// @brief Runs parser in JSON mode, useful for parser testing
 ///
 /// @param in string to be parsed
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseJSON(const std::string& in)
 {
     isc::dhcp::Parser6Context ctx;
@@ -658,12 +670,15 @@ parseJSON(const std::string& in)
 /// @param in string to be parsed
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseDHCP6(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser6Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6));
+        isc::data::ElementPtr json;
+        json = ctx.parseString(in, isc::dhcp::Parser6Context::SUBPARSER_DHCP6);
+        disableIfacesReDetect(json);
+        return (json);
     }
     catch (const std::exception& ex) {
         if (verbose) {
@@ -680,7 +695,7 @@ parseDHCP6(const std::string& in, bool verbose = false)
 /// @param in string to be parsed
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
-inline isc::data::ConstElementPtr
+inline isc::data::ElementPtr
 parseOPTION_DEF(const std::string& in, bool verbose = false)
 {
     try {

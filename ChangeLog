@@ -1,3 +1,532 @@
+1288.	[func]		marcin
+	Documented subnet_cmds library in the Kea User's Guide.  Also moved
+	several classes from dhcp<4/6> into lib/dhcpsrv to facilitate subnet
+	command parsing.
+	(Trac #5315, git d259f330a1690b20eb368f6252f5da2cdb6187de)
+
+1287.	[bug]		tmark
+	Logger configuration now correctly uses maxsize and maxver parameters,
+	allowing log rotation to function properly.  Prior to this these values
+	were not being propagatedc downard, causing log rotation to always be
+	disabled.  The defaults for maxsize and maxver are 10Mb and 1 respectively.
+	(Trac #5324, git 75f148458bdeeed27eb877cc2c3ce3069b152f38)
+
+1286.	[func]		marcin
+	Configured subnets are now indexed by subnet identifier and
+	prefix for faster subnet lookups in the configuration.
+	(Trac #5314, git 894aeb048b7281f947f87a5d6dc5112fac4a86fb)
+
+1285.	[func]		tomek
+	Several new commands implemented in lease_cmds library:
+	lease4-del, lease6-del, lease4-update, lease6-update,
+	lease4-wipe and lease6-wipe that allow deleting and updating
+	leases and also wipe all leases from a specific subnet.
+	(Trac #5280, #5281, 94ff2448c8cf6e3321f4d1b3666a2e2b736f6c50)
+
+1284.	[func]		tomek
+	A new library, lease_cmds, has been implemented. Its intended
+	purpose is to support commands for lease management. Currently
+	supported commands are: lease4-add, lease6-add, lease4-get,
+	lease6-get. Additional commands and documentation are planned.
+	(Trac #5272, #5279, git 785c2e521b198a03d26bde4a804638bfc19ce91b)
+
+1283.	[func]		fdupont
+	An 'always-send' parameter has been added to options
+	configuration.  It allows an option to be always sent, even if
+	a client didn't request it.
+	(Trac #5241, git cef2b630c720a442710efc0d1615b7c7bce01e54)
+
+1282.	[bug]		fdupont
+	Now all interface service sockets are closed before interface
+	re-detection. Note if the re-configuration fails they remain
+	closed.
+	(Trac #5333, git xxx)
+
+1281.	[build]		tmark
+	Configure script now correctly recognizes static boost_system library as
+	well as checks for the presence of static glibc static libraries when
+	--enable-satic-link is specified.
+	(Trac #5337, git 42548148cbeaaa285519e121f493d52607f1e8a0)
+
+1280.	[build]		waltsteverson
+	Missing header for PD-exclude DHCPv6 option is now installed.
+	(Github #51, git 36a8e1b8f687a6398af8a10f241e8d19e9de33d8)
+
+1279.	[build]		waltsteverson
+	Compilation fixes for Alpine Linux
+	(Github #50, git 824afa63354e045a5e4f6437246c329d359e04dd)
+
+1278.	[doc]		jsoref
+	Many spelling corrections.
+	(Github #52, git 1dcaef6f8e7901d628c8638fc2f8145ac0279586)
+
+1277.	[func]*		marcin
+	Added support to Command Manager to process commands using
+	callouts implemented within hooks libraries.
+	(Trac #5330, git 8041d177ed5587101ecb47a09820a7e67e42a066)
+
+1276.	[build]		tmark
+	The configure script now configures the build to require the Boost
+	system library (boost_system) by default.  The library must be
+	installed and you may need to specify "--with-boost-lib-dir=<path>".
+	Prior to this the default was to attempt to build Boost with headers
+	only.  Building with headers only may still be done, though it is
+	strongly discouraged, by specifying "--enable-boost-headers-only".
+	(Trac #5215, git b6f1ee0d1210e35631369fc697c76cc3cf2c4130)
+
+1275.	[func]		marcin
+	LibraryHandle object can now be used to register handlers
+	for the control commands in a hook library.
+	(Trac #5329, git 966cc24ae5593ebb08d6f02a11dab23463ebad7e)
+
+1274.	[func]		marcin
+	It is now possible to manage Control Agent with keactrl.
+	(Trac #5108, git 53ba9f8197a25abd2c52ee3f5e95bc4e4be0241f)
+
+1273.	[doc]		marcin
+	Documented in the User's Guide that the server terminates
+	when database connection is lost.
+	(Trac #5320, git 5c8b277e8041b53b27a87b32d162ab41ef8b43d7)
+
+1272.	[bug]		marcin
+	Fixed inefficient leases indexing in the memfile lease
+	manager causing increased CPU utilization during lease
+	searches.
+	(Trac #5328, git 23b490414f5575b252c8c42fbe93ad2c57d47953)
+
+1271.	[doc]		marcin
+	Documented how to setup secure connection to the Kea
+	control	channel.
+	(Trac #5304, git a920453bbcf9ffa7200eeddca6323faeff498f16)
+
+1270.	[bug]		tmark
+	Added a distribution rule to src/bin/d2/Makefile.am so
+	d2_parser.yy will now be included in the distribution source
+	tree. Also added entries for missing headers to asiolink/
+	Makefile.am.
+	(Trac #5325, git 199003d7aa9f8d4a7f8daa73f8259e951bc03217)
+
+1269.	[func]		marcin
+	Command manager can now handle large responses to control
+	commands. Prior to this change the size of the response
+	was limited to 64k. The server now also signals timeout
+	after 10s if the connection lasts too long.
+	(Trac #5318, git 8531a65521ea42f01f3bed444b054e92f7bd1a46)
+
+1268.	[func]		fdupont
+	Kea now re-detects network interfaces every time configuration is
+	changed. 're-detect' parameter added to restore old behavior, if
+	needed.
+	(Trac #3389, git b2ce84790c33d1580dcfa773d7fcfb65c27addc7)
+
+1267.	[bug]		fdupont
+	Unit-tests for libdhcp now ignore ENOPROTOPT when setting
+	SO_REUSEPORT to improve compatibility with older RedHat versions.
+	(Trac #5243, git a7b478e1d1f7f0b38055086fe9ac053e4fab2850)
+
+1266.	[func]		fdupont
+	It is now possible to define options in DHCPv4 pools.
+	(Trac #5288, git aa2839caab8d885e5bceca6f506162debd239b3f)
+
+1265.	[func]		fdupont
+	Extended classification relay6[nest] syntax to allows counting
+	relays from the DHCPv6 client side by using negative number,
+	e.g. relay6[-1] represents the first relay (closest to the
+	client).
+	(Trac #5287, git 7d0f7a8372dcf256fea8ac13330f0e3e7ed2e8ef)
+
+1264.	[func]		marcin
+	Kea's command manager has been re-implemented to use ASIO.
+	Simultaneous connections over the control channel are now
+	possible.
+	(Trac #5317, git 4139a2f41bb3736615bdfa278746962a16384d0d)
+
+1263.	[doc]		marcin
+	Added example configurations of the nginx and Apache2 HTTPS
+	servers running as reverse proxy for Kea RESTful API.
+	(Trac #5302, git 48113aba218603afac4d457075458d4988e4082b)
+	(Trac #5303, git b3113da16eb5c6fa323068f0a57dfa30f42893d2)
+
+1262.	[func]*		marcin
+	Renamed "dhcp4-server", "dhcp6-server" and "d2-server" parameters
+	of the Control Agent configuration to "dhcp4", "dhcp6" and "d2"
+	respectively.
+	(Trac #5190, git fc67885022115df76425c6901959cedee63a93b9)
+
+1261.	[bug]		marcin
+	Eliminated valgrind errors in libkea-http.
+	(Trac #5261, git 34addef4a654665c6022f0269d51970c72431ac2)
+
+1260.	[bug]		fdupont
+	Corrected logic in prefix delegation that was causing multiple
+	entries to be written to the lease file when renewing or rebinding
+	a prefix.
+	(Trac #5104, git b9ab6ebe7a491c062bc8b0b42afc53f4d6cee011)
+
+1259.	[func]		marcin
+	Implemented timeout for the control commands forwarded between
+	the Control Agent and Kea servers. The enhanced forwarding
+	mechanism uses asynchronous calls over the unix domain sockets.
+	It also detects the JSON structure boundaries when receiving it
+	over the stream sockets.
+	(Trac #5189, git e48d9399c215406f2dab1601d22d6c932b4af271)
+
+1258.	[bug]		fdupont
+	Fixed wrong python package path when kea-shell was configured
+	without a prefix.
+	(Trac #5214, git 44908c5fa56bfa7e1113078f43c458687a97388a)
+
+Kea 1.2.0 released on April 28, 2017
+
+1257.	[bug]		marcin
+	Improved logging in the hosts manager.
+	(Trac #5264, git 2fb9fd78e63f5d09810702847ad3e3b3020ea92b)
+
+1256.	[bug]		tomek
+	Control Agent now writes proper configuration when using
+	config-write command.
+	(Trac #5253, git a1b5da4db6ebfa9635bbe411ec363cdcc4fd1d28)
+
+1255.	[bug]		marcin
+	Fixed failing unit tests in libkea-http.
+	(Trac #5260, git 43394f76efb1634155c04b205dec7361fc21f4f9)
+
+1254.	[func]		tomek
+	Various improvements needed for upcoming host commands library:
+	host data source is now able to delete hosts, hosts can be exported
+	to JSON format, C++11 code for configure script moved to separate
+	file, several compilation warnings removed.
+	(Trac #5208, git 88555d8f23745f3d615448e906796920cc7f44d0)
+
+1253.	[func,doc]	tomek
+	Default configuration file has been overhauled significantly. It
+	now covers many additional options and features. Command channel
+	is now enabled by default. Thanks to Dan Mahoney for his review.
+	(Trac #5198, git 280de81cfe957ccab8a28074bdb0a4bc0e45104e)
+
+1252.	[bug]		tmark
+	kea-dhcp6 now correctly resets lease state and increments the
+	assigned statistic when it reissues an expired-reclaimed lease
+	to the lease's original client, in response to a REQUEST from
+	said client.
+	(Trac #5252, git 85bde7adbe6a78238bd5e17fecabfa918755f16c)
+
+1251.	[func]		tomek
+	New type of host identifier (flex-id) used in reservations has
+	by added to MySQL and PostgreSQL schemas.
+	(Trac #5195, git 37c26cc30b717019fbd6b7349279541edb351382)
+
+1250.	[bug]		fdupont
+	Do not unregister timers when running the config-test command.
+	(Trac #5186, git e891b06940e41b4cfaa324c2ace8fdd761ee6662)
+
+1249.	[bug]		tmark
+	The assigned lease statistics were not being probably adjusted
+	by either kea-dhcp4 or kea-dhcp6 when reclaimed expired leases
+	were reissued.
+	(Trac #5247, git 4e5193fb32b14325ccf5824614e58bcceb3e6388)
+
+1248.	[bug]		marcin
+	Improved socket connection handling code, corrected numerous
+	failing and crashing tests for libkea-asiolink, libkea-http
+	and kea-ctrl-agent on Debian, Fedora and Ubuntu.
+	(Trac #5217, git 4bcb45f0c88aba3d0f70ca48d9fff6f1d4616bc2)
+
+1247.	[bug]		marcin
+	Resolved issues with DHCPv4 host reservations by 'client-id'
+	when MySQL or PostgreSQL host database backend is in use.
+	Also, the 'client-id' is used together with other host
+	identifier types when 'host-reservation-identifiers' parameter
+	is not specified.
+	(Trac #5102, git 390d687d0f61635f5562d13860ff6362eee67853)
+
+1246.	[func,bug]	tomek
+	Restrictions in filename argument in config-write command have
+	been removed. It is now possible to use absolute paths.
+	DHCPv4, DHCPv6, D2 and Agent parsers did not handle flush,
+	maxsize or maxver parameters in logger configuration correctly.
+	This is now fixed.
+	(Trac #5187, git a30ffcc67cfb7370c586d3c85147792e27aab4c7)
+
+1245.	[func]		fdupont
+	DHCPv4 domain-search option can now be defined using
+	comma separated values.
+	(Trac #5087, git eca0b8c6425bc922587675100f100b1aae54aee2)
+
+1244.	[doc]		tomek
+	User's Guide section about Kea shell added.
+	(Trac #5171, git 3dc4908fe02e86c57ccd5ad2d2f8330655f438be)
+
+1243.	[func]		tomek
+	config-reload command implemented. It allows Kea DHCPv4 and DHCPv6
+	servers to reload its original configuration file. Also,
+	set-config command was renamed to config-set.
+	(Trac #5213, git b209c2b577a2f9da71cc918d7a551f8efdc1c4cb)
+
+1242.	[func]		fdupont
+	Integer fields in options can now be specified in either
+	decimal or hexadecimal format.
+	(Trac #4540, git 4cbf341f4169cf1e1eae0721644797a726d89702)
+
+1241.	[func]		fdupont
+	Support for tuple-based options added. DHCPv6 option
+	bootfile-param (code 60) can now be set in a more convenient
+	manner.
+	(Trac #4070, git 30102cacee95b91e6c4666f0c11f06232f19eeb9)
+
+1240.	[bug]		marcin
+	Corrected IOFetch unit test failures on Debian.
+	(Trac #5216, git a7c2946678c43aedfb2e3c37b9730a10067528f3)
+
+1239.	[func]		marcin
+	Implemented additional sanity checks when adding host
+	reservations into the configuration file.
+	(Trac #5207, git ea42c6f479918235ae4a67a60d08720e2664720c)
+
+Kea 1.2.0-beta released on April 7, 2017
+
+1238.	[build]		tmark,tomek
+	Library version numbers bumped for release.
+	(Trac #5201	git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
+
+1237.	[bug]		marcin
+	Fixed hanging Control Agent unit tests.
+	(Trac #5200, git 65daafd135965f9eb0bd4c3a22085d4bd3c6ffbe)
+
+1236.	[build]		zeitounator
+	Improvements in tools/tests_in_valgrind.sh script.
+	(Github #49, git 272e7babf9ebeab5f78850394d72c9431041e2e9)
+
+1235.	[func]		MrMarvin
+	kea-admin now supports -h (and --host) parameter that can specify
+	MySQL or PostgreSQL database locations other than the default
+	localhost.
+	(Github #14, git 4038157a3499ad90956c98a2172c57b173f2b985)
+
+1234.	[build]		fdupont
+	Improved installation procedure for kea-shell.
+	(Trac #5170, git 68a902fb723965ee6f5b7a8272224395917525cc)
+
+1233.	[doc]		marcin
+	Documented new component Kea Control Agent in the Administrator's
+	Manual and the Developer's Guide.
+	(Trac #5175, git abf7887ad65eb4b221a1fe61ea0c9773b4feaddb)
+
+1232.	[func]		tomek
+	host4_identifier and host6_identifier hook points have been added.
+	Premium: Flexible Identifier (flex-id) hook point has been developed.
+	It allows users to specify a custom expression that takes any
+	option, field, characteristic or property of the packet to be
+	used as identifier and then do reservations based on the evaluated
+	expression for each incoming packet.
+	(Trac #5132, git cd497526d5bff7ae55bb41c9264fb33943a0cf62)
+
+1231.	[func]		marcin
+	Control agent forwards commands to be handled by other Kea
+	servers.
+	(Trac #5078, git 19a50ed1ccafae19ef10d84cba73992cadf49753)
+
+1230.	[bug]		fdupont
+	kea-dhcp-ddns now correctly populates the original ID in the TSIG rdata
+	when doing signed updates.  Prior to this the value was set to zero
+	causing PowerDNS to reject then requests with a bad key error.
+	(Trac #5071, git cafa3d5c24f0112b0b9384a9c1083fe8a3eeb2bf)
+
+1229.	[func]		fdupont
+	A new command: config-test has been implemented in DHCPv4, DHCPv6
+	and control agent servers. It allows checking whether new
+	configuration looks correct.
+	(Trac #5150, git 5f6cf226e848baef8d9af64e16c1dbf617a0a798)
+
+1228.	[bug]		fdupont
+	Logging on syslog now uses correctly the given facility. If none
+	is given the default facility is local0, and with an unrecognized
+	value user (log4cplus default). The syslog openlog() ident
+	parameter is the program name.
+	(Trac #5053, git 532d9f0e459ab1450a83a5015a2dd54745794383)
+
+1227.	[func]		fdupont, tomek
+	Additional commands: version-get, build-report have been
+	implemented for DHCPv4, DHCPv6 and Control Agent
+	components. Control Agent also now supports shutdown command.
+	(Trac #102, git 9d2b8326fc032876d74c1768c61c630987c25cc5)
+
+1226.	[func]		fdupont
+	Command line option -t support added to libprocess and implemented
+	for kea-dhcp-ddns and kea-ctrl-agent. It allows configuration sanity
+	checking. Note that some parameters, such as ip-address, port, and
+	DNS server addresses for instance for kea-dhcp-ddns are not fully
+	checked as sockets are not opened or connections are not attempted.
+	(Trac #5152, git 2231d79ebebd3cdf432cd4a8ac32018d180e27b6)
+
+1225.	[func]		tomek
+	Two new commands: config-get (retrieves current configuration)
+	and config-write (writes current configuration to disk) have been
+	implemented.
+	(Trac #5151, git ffb26811736a2ae6f9b5556b9823aa284b7e0aec)
+
+1224.	[func]		fdupont
+	toElement(), a crucial functionality for upcoming get-config
+	and write-config command, has been implemented.
+	(Trac #5114, git df38c26f957c9ac329718ac9d70ffbcf7b95c4e9)
+
+1223.	[func]		tomek
+	Kea-shell, a management client able to connect to REST interface
+	provided by Control Agent, has been added. Control Agent now
+	uses bison parser, which provides better sanity checks, improved
+	comments and file inclusions.
+	(Trac #5137, git 816dc5ccfa374bd9942a49c7bac475f6d0523caa)
+
+1222.	[func]		fdupont
+	Obsolete parameter 'allow-client-update' has been removed
+	from DHCPv4 and DHCPv6 components.
+	(Trac #5145, git 01fde297a978e2bd832655ac7276e5aa3a7e8400)
+
+1221.	[func]		tomek
+	Control agent is now able to parse the input configuration and
+	store it in its configuration syntax structure. Upcoming tickets
+	will take advantage of that information.
+	(Trac #5134, git 828304f2f408888e4b096418e90e35ba524979d0)
+
+1220.	[func]		parisioa, fdupont, tomek
+	DHCPv4 and DHCPv6 parsers have updated to accept database port
+	parameter. The parameter for Cassandra is now called
+	"contact-points" (was "contact_points" previously).
+	(Trac #5061, git d12b6f4a6d80d6bc854f2a8a086e412dc37867bc)
+
+1219.   [func]		marcin
+	Control Agent uses libkea-http to process commands over
+	the RESTful interface.
+        (Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)
+
+1218.	[func]		tmark, tomek
+	Configuration parsing for D2 has been migrated to bison/flex
+	and the SimpleParser framework.  This includes changes to
+	libprocess which render the CPL agnostic to the underlying
+	parsing mechanisms.
+	(Trac #5110, git feb2cedc0936364a923ab78542a21114533dd0f5)
+
+1217.	[func]		marcin
+	Implemented libkea-http library.
+	(Trac #5077, git cd72284b5b221e620770883db7e166c4d3ba7eb6)
+	(Trac #5088, git 715d18f961801ffbd798a65b19459178c3a53857)
+	(Trac #5099, git 7e8df7993f295431e2cb6a13858f746649c4e18d)
+
+1216.	[func]		fdupont, tomek
+	Command line option -t implemented for DHCPv4 and DHCPv6.  It
+	allows configuration sanity checking. Note that not all parameters
+	are completely checked. In particular, service and control channel
+	sockets are not opened, and hook libraries are not loaded.
+	(Trac #3770, git 1d12582e270935ee7b72548d9c66753f4eea4ca4)
+
+1215.	[doc]		tomek
+	Developer's Guide updated to cover flex/bison parser.
+	(Trac #5112, git 44139d821c1f4e43dbff22d49101a0854e4f9f5b)
+
+1214.	[func]		tomek
+	Bison parser implemented for Control-agent. The code is able
+	to syntactically parse input configuration, but the output
+	is not used yet.
+	(Trac #5076, git d99048aa5b90efa7812a75cdae98a0913470f5a6)
+
+1213.	[bug]		fdupont
+	Option string values containing comma can now be specified
+	correctly by preceding comma with double backslashes (e.g.
+	"foo\\,bar").
+	(Trac #5105, git fa79ac2396aa94d7bac91bd12d3593ebaaa9386d)
+
+1212.	[doc]		andreipavelQ
+	Many spelling corrections.
+	(Github #47, git a6a7ca1ced8c63c1e11ef4c572f09272340afdd7)
+
+1211.	[func]		andreipavelQ
+	Updated PostgreSQL version reporting to be in line with
+	MySQL and Cassandra.
+	(Github #42, git 7ef4a190facadd66775b4a44c696d1c4215616cd)
+
+1210.	[doc]		andreipavelQ
+	Doxygen version updated to 1.8.11.
+	(Github #45, git ce72998382b62269823fa0dcbfa41dfa9c72b69e)
+
+1209.	[func]		tomek
+	Relay options are now printed in DHCPv6 when sufficiently detailed
+	debug logging is requested.
+	(Trac #5131, git 5bf58b21fcf07f2e2e97275efa1f76cde913b30a)
+
+1208.	[func]		tomek
+	Global DHCPv4 and DHCPv6 parsers have been migrated to the
+	SimpleParser framework. Several parameters (renew-timer,
+	rebind-timer, preferred-lifetime, valid-lifetime, match-client-id,
+	next-server, decline-probation-period, dhcp4o6-port,
+	echo-client-id) now have explicit default values.
+	(Trac #5019, git f3538dd031e6f29abcd516f425d72c8f929abbb0)
+
+1207.	[func]		fdupont
+	Client classes parser migrated to SimpleParser. The 'name'
+	parameter in 'client-classes' definitions is now mandatory.
+	(Trac #5098, git e93906e48a6e2b0ff78c5e37dca642646fe47d43)
+
+1206.	[func]		tomek
+	'hooks-libraries' parser migrated to SimpleParser. The code will
+	now refuse a configuration if a hook library fails to load.
+	(Trac #5031, #5041, git 1bbaf4cbcf6fda59bacdf526a6c762315fdd88a1)
+
+1205.	[func]		tomek
+	Parsers for interfaces configuration converted to SimpleParser.
+	Removed obsolete 'version' parameter in Dhcp6.
+	(Trac #5020, #5038, git 3d8e48c640e302670c04907468d11faafbe9fe7b)
+
+1204.   [func]         marcin
+	Added 'control_command_receive' hook point to Kea Command
+	Manager.
+	(Trac #5100, git d0c7cb29a7df3588c540afb4ca56de55f26142e0)
+
+1203.   [func]         marcin
+	Implemented TCPAcceptor class in libkea-asiolink. This class
+	provides means to listen and asynchronously accept new TCP
+	connections.
+	(Trac #5094, git 920ba90696ba9d8579a7db5e1efcf955d6654a96)
+
+1202.	[func]		tomek
+	Parsers for mac-sources, control-socket, and relay-info converted
+	to SimpleParser. It is no longer accepted to specify empty
+	mac-sources. Either specify actual values in mac-sources or
+	don't specify mac-sources at all.
+	(Trac #5032, git f1c9dee0936b48be28f890ffd428fbdeb87c12ea)
+
+1201.	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 now support the "set-config" command.
+	The command causes the server to replace its current configuration
+	with the configuration supplied as the command's argument.
+	(Trac #5046, git 4afbdcf89c9f83d944f774d05bd401d3f2768d10)
+
+1200.	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 now support the Command Channel "libreload"
+	command.  The command causes the server to unload and then load all
+	currently loaded hook libraries.
+	(Trac #3238, git d4d8665494e1847b34b66f8ef542851ea6f0213c)
+
+1199.	[func]		tomek, fdupont
+	Dhcp4 parser migrated to bison. This yields a number of user
+	visible changes:
+	- better comment handling (bash, C, C++ style comments)
+	- file includes now supported
+	- better syntax checking
+	- added advanced.json config example
+	- removed obsolete 'version' parameter
+	(Trac #5017, git 1cf853c595a100c86f9b2b3353f1b5964d902147)
+
+1198.   [func]         marcin
+	Created kea-ctrl-agent. This application currently doesn't
+	do anything. Future tickets will add REST API to allow for
+	managing Kea services.
+	(Trac #5075, git 1ec7586da5ae1474b52d5a395fb80ee37d6d568e)
+
+1197.	[doc]		tomek
+	Configuration examples now set lfc-interval to a default
+	value of one hour.
+	(Trac #5072, git cf4362196fa2b7892643d1e40b974bb450a3de7e)
+
 1196.	[func]		tomek, fdupont
 	Dhcp6 parser migrated to bison. This yields a number of user
 	visible changes:
@@ -85,6 +614,8 @@
 	on address and prefix pool levels.
 	(Trac #5022, git e3b2785c79aedbb0c8af7468d61f6d61dafd2282)
 
+Kea 1.1.0 released on September 30, 2016
+
 1180.	[doc]		stephen
 	Editing pass through the Kea guide.
 	(Trac #4484, git 63456fab1b978bd515198b9b9e604f293efd8217)
@@ -116,7 +647,7 @@
 	(Trac #5009, git d3109bb27786867fdc99954ba55367f0ad129e7a)
 
 1174.	[bug]		tmark
-	Modifed kea-dhcp6 to avoid requesting DNS updates when
+	Modified kea-dhcp6 to avoid requesting DNS updates when
 	existing leases are renewed without changes to the FQDN.
 	(Trac #5007, git 05ea3a5eb75c06cf9814c63a1a54261bf58a954b)
 
@@ -645,7 +1176,7 @@ Kea 1.0.0 released on December 29, 2015
 
 1079.	[bug]		jpopelka
 	Fixed compilation issue in MySQL host data source: the
-	dhcp_identifer_length is now unsigned long. This addresses
+	dhcp_identifier_length is now unsigned long. This addresses
 	a compilation problem on Fedora.
 	(Github #17, git 8548d1b589df98cc956b4d80d2cb8819ef576717)
 
@@ -696,7 +1227,7 @@ Kea 1.0.0 released on December 29, 2015
 
 1071.	[func]		tmark
 	Assigned unique log message IDs to log messages issued from
-	MySQL hosts storage operations, eliminating resuse of
+	MySQL hosts storage operations, eliminating reuse of
 	lease database message IDs.
 	(Trac #4216, git f0e37cd6d45537971a730c68187011dce41217cc)
 
@@ -1396,7 +1927,7 @@ Kea 0.9.2-beta released on June 30, 2015
 	(Trac #3070, git a6b6156aaa95ab74c69a537e90483f82e9fbe4a2)
 
 946.	[doc]		tmark
-	Added doucmentation for kea-admin "lease-dump" command to the
+	Added documentation for kea-admin "lease-dump" command to the
 	Kea Admininstrator's Guide and kea-admin man page.
 	(Trac #3803, git 54b59b7ef02f6428405794066ea779e9bd4c0b6e)
 
@@ -2103,7 +2634,7 @@ Kea 0.9 released on August 29, 2014
 	(Trac #3524, git 822a39ba33870f70787a1f666aed772e06d04d79)
 
 824.	[bug]		marcin
-	Kea deamons report configuration summary when the configuration is
+	Kea daemons report configuration summary when the configuration is
 	applied successfully.
 	(Trac #3477, git f39d208024f720f72c931016cfa50a54e80f8c61)
 
@@ -2333,7 +2864,7 @@ Kea 0.9beta1 released on August 13, 2014
 	as a result of receiving hints from the clients. Previously the
 	whole prefix (including bits beyond the prefix length) was used to
 	search existing leases in the lease database. If not found, the
-	new lease was crated for the prefix sent by the client. If another
+	new lease was created for the prefix sent by the client. If another
 	client sent the same prefix but with different non-significant bits
 	the prefix was allocated. This led to prefix collisions. Currently,
 	server ignores bits beyond the prefix length when searching for
@@ -3200,7 +3731,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 653.	[func]		tmark
 	Added initial implementation of D2QueueMgr to
 	b10-dhcp-ddns.  This class manages the receipt and
-	queueing of requests received by b10-dhcp-ddns from
+	queuing of requests received by b10-dhcp-ddns from
 	its clients (e.g. DHCP servers)
 	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
 
@@ -3682,7 +4213,7 @@ bind10-1.1.0beta1 released on April 4, 2013
 	(Trac #2710, git 16e8be506f32de668699e6954f5de60ca9d14ddf)
 
 588.	[bug]*		jreed
-	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCCEEDED
+	b10-xfrout: Log message id XFROUT_QUERY_QUOTA_EXCEEDED
 	changed to XFROUT_QUERY_QUOTA_EXCEEDED.
 	(git be41be890f1349ae4c870a887f7acd99ba1eaac5)
 

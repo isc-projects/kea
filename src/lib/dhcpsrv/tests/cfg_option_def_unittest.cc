@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -243,6 +244,61 @@ TEST(CfgOptionDefTest, addNegative) {
     // fails on the second attempt.
     ASSERT_NO_THROW(cfg.add(def, "isc"));
     EXPECT_THROW(cfg.add(def, "isc"), DuplicateOptionDefinition);
+}
+
+// This test verifies that the function that unparses configuration
+// works as expected.
+TEST(CfgOptionDefTest, unparse) {
+    CfgOptionDef cfg;
+
+    // Add some options.
+    cfg.add(OptionDefinitionPtr(new 
+        OptionDefinition("option-foo", 5, "uint16")), "isc");
+    cfg.add(OptionDefinitionPtr(new
+        OptionDefinition("option-bar", 5, "uint16", true)), "dns");
+    cfg.add(OptionDefinitionPtr(new
+        OptionDefinition("option-baz", 6, "uint16", "dns")), "isc");
+    OptionDefinitionPtr rec(new OptionDefinition("option-rec", 6, "record"));
+    rec->addRecordField("uint16");
+    rec->addRecordField("uint16");
+    cfg.add(rec, "dns");
+    
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"name\": \"option-bar\",\n"
+        "    \"code\": 5,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": true,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"dns\"\n"
+        "},{\n"
+        "    \"name\": \"option-rec\",\n"
+        "    \"code\": 6,\n"
+        "    \"type\": \"record\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"uint16, uint16\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"dns\"\n"
+        "},{\n"
+        "    \"name\": \"option-foo\",\n"
+        "    \"code\": 5,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"isc\"\n"
+        "},{\n"
+        "    \"name\": \"option-baz\",\n"
+        "    \"code\": 6,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"dns\",\n"
+        "    \"space\": \"isc\"\n"
+        "}]\n";
+    isc::test::runToElementTest<CfgOptionDef>(expected, cfg);
 }
 
 }

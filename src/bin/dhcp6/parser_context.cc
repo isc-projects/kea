@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ namespace isc {
 namespace dhcp {
 
 Parser6Context::Parser6Context()
-  : trace_scanning_(false), trace_parsing_(false)
+  : ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
 {
 }
 
@@ -24,14 +24,14 @@ Parser6Context::~Parser6Context()
 {
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseString(const std::string& str, ParserType parser_type)
 {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     FILE* f = fopen(filename.c_str(), "r");
     if (!f) {
@@ -41,7 +41,7 @@ Parser6Context::parseFile(const std::string& filename, ParserType parser_type) {
     return (parseCommon());
 }
 
-isc::data::ConstElementPtr
+isc::data::ElementPtr
 Parser6Context::parseCommon() {
     isc::dhcp::Dhcp6Parser parser(*this);
     // Uncomment this to get detailed parser logs.
@@ -131,22 +131,30 @@ Parser6Context::contextName()
         return ("lease-database");
     case HOSTS_DATABASE:
         return ("hosts-database");
+    case DATABASE_TYPE:
+        return ("database-type");
     case MAC_SOURCES:
         return ("mac-sources");
     case HOST_RESERVATION_IDENTIFIERS:
         return ("host-reservation-identifiers");
     case HOOKS_LIBRARIES:
-        return ("hooks-librairies");
+        return ("hooks-libraries");
     case SUBNET6:
         return ("subnet6");
+    case RESERVATION_MODE:
+        return ("reservation-mode");
     case OPTION_DEF:
         return ("option-def");
     case OPTION_DATA:
         return ("option-data");
     case CLIENT_CLASSES:
         return ("client-classes");
+    case EXPIRED_LEASES_PROCESSING:
+        return ("expired-leases-processing");
     case SERVER_ID:
         return ("server-id");
+    case DUID_TYPE:
+        return ("duid-type");
     case CONTROL_SOCKET:
         return ("control-socket");
     case POOLS:
@@ -163,6 +171,14 @@ Parser6Context::contextName()
         return ("loggers");
     case OUTPUT_OPTIONS:
         return ("output-options");
+    case DHCP_DDNS:
+        return ("dhcp-ddns");
+    case NCR_PROTOCOL:
+        return ("ncr-protocol");
+    case NCR_FORMAT:
+        return ("ncr-format");
+    case REPLACE_CLIENT_NAME:
+        return ("replace-client-name");
     default:
         return ("__unknown__");
     }

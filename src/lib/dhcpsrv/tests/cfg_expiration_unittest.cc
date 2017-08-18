@@ -1,23 +1,24 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcp/iface_mgr.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
-#include <util/stopwatch.h>
+#include <testutils/test_to_element.h>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <stdint.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
-using namespace isc::util;
 
 namespace {
 
@@ -113,6 +114,19 @@ TEST(CfgExpirationTest, defaults) {
               cfg.getUnwarnedReclaimCycles());
 }
 
+/// @brief Tests that unparse returns an expected value
+TEST(CfgExpirationTest, unparse) {
+    CfgExpiration cfg;
+    std::string defaults = "{\n"
+        "\"reclaim-timer-wait-time\": 10,\n"
+        "\"flush-reclaimed-timer-wait-time\": 25,\n"
+        "\"hold-reclaimed-time\": 3600,\n"
+        "\"max-reclaim-leases\": 100,\n"
+        "\"max-reclaim-time\": 250,\n"
+        "\"unwarned-reclaim-cycles\": 5 }";
+    isc::test::runToElementTest<CfgExpiration>(defaults, cfg);
+}
+
 // Test the {get,set}ReclaimTimerWaitTime.
 TEST(CfgExpirationTest, getReclaimTimerWaitTime) {
     testAccessModify<uint16_t>(CfgExpiration::LIMIT_RECLAIM_TIMER_WAIT_TIME,
@@ -163,14 +177,14 @@ TEST(CfgExpirationTest, getUnwarnedReclaimCycles) {
 /// but instead they record the number of calls to them and the parameters
 /// with which they were executed. This allows for checking if the
 /// @c CfgExpiration object calls the leases reclamation routine with the
-/// appropriate parameteres.
+/// appropriate parameters.
 class LeaseReclamationStub {
 public:
 
     /// @brief Collection of parameters with which the @c reclaimExpiredLeases
     /// method is called.
     ///
-    /// Examination of these values allows for assesment if the @c CfgExpiration
+    /// Examination of these values allows for assessment if the @c CfgExpiration
     /// calls the routine with the appropriate values.
     struct RecordedParams {
         /// @brief Maximum number of leases to be processed.
@@ -233,7 +247,7 @@ public:
     /// expired-reclaimed leases.
     ///
     /// @param secs Specifies the minimum amount of time, expressed in
-    /// seconds, that must elapse before the expired-reclaime lease is
+    /// seconds, that must elapse before the expired-reclaimed lease is
     /// deleted from the database.
     void
     deleteReclaimedLeases(const uint32_t secs) {
@@ -256,7 +270,7 @@ public:
     /// @brief Structure holding values of parameters with which the
     /// @c reclaimExpiredLeases was called.
     ///
-    /// These values are overriden on subsequent calls to this method.
+    /// These values are overridden on subsequent calls to this method.
     RecordedParams reclaim_params_;
 
     /// @brief Value of the parameter with which the @c deleteReclaimedLeases
@@ -283,7 +297,8 @@ public:
     /// of the class members, it also stops the @c TimerMgr worker thread
     /// and removes any registered timers.
     CfgExpirationTimersTest()
-        : timer_mgr_(TimerMgr::instance()),
+        : io_service_(new IOService()),
+          timer_mgr_(TimerMgr::instance()),
           stub_(new LeaseReclamationStub()),
           cfg_(true) {
         cleanupTimerMgr();
@@ -299,8 +314,8 @@ public:
 
     /// @brief Stop @c TimerMgr worker thread and remove the timers.
     void cleanupTimerMgr() const {
-        timer_mgr_->stopThread();
         timer_mgr_->unregisterTimers();
+        timer_mgr_->setIOService(io_service_);
     }
 
     /// @brief Runs timers for specified time.
@@ -310,12 +325,13 @@ public:
     ///
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const long timeout_ms) {
-        Stopwatch stopwatch;
-        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
-            // Block for up to one millisecond waiting for the timers'
-            // callbacks to be executed.
-            IfaceMgr::instancePtr()->receive6(0, 1000);
-        }
+        IntervalTimer timer(*io_service_);
+        timer.setup([this]() {
+                io_service_->stop();
+        }, timeout_ms, IntervalTimer::ONE_SHOT);
+
+        io_service_->run();
+        io_service_->get_io_service().reset();
     }
 
     /// @brief Setup timers according to the configuration and run them
@@ -328,11 +344,12 @@ public:
                          stub_.get());
         // Run timers.
         ASSERT_NO_THROW({
-            timer_mgr_->startThread();
             runTimersWithTimeout(timeout_ms);
-            timer_mgr_->stopThread();
         });
     }
+
+    /// @brief Pointer to the IO service used by the tests.
+    IOServicePtr io_service_;
 
     /// @brief Pointer to the @c TimerMgr.
     TimerMgrPtr timer_mgr_;
@@ -401,7 +418,7 @@ TEST_F(CfgExpirationTimersTest, noLeaseAffinity) {
     EXPECT_EQ(0, stub_->delete_calls_count_);
 }
 
-// This test verfies that lease reclamation may be disabled.
+// This test verifies that lease reclamation may be disabled.
 TEST_F(CfgExpirationTimersTest, noLeaseReclamation) {
     // Disable both timers.
     cfg_.setReclaimTimerWaitTime(0);
