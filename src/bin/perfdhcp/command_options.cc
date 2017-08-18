@@ -124,6 +124,7 @@ CommandOptions::reset() {
     mac_list_file_.clear();
     mac_list_.clear();
     num_request_.clear();
+    late_exit_delay_ = 0;
     period_ = 0;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
@@ -216,7 +217,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
+    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:m:"
                         "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -307,7 +308,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 max_pdrop_.push_back(drop_percent);
             } else {
                 num_drops = positiveInteger("value of max drops number:"
-                                            " -d<value> must be a positive integer");
+                                            " -D<value> must be a positive integer");
                 max_drop_.push_back(num_drops);
             }
             break;
@@ -366,6 +367,13 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             num_mac_list_files++;
             mac_list_file_ = std::string(optarg);
             loadMacs();
+            break;
+
+        case 'm':
+            // 'm' for moratorium
+            late_exit_delay_ = nonNegativeInteger("value of late exit delay: "
+                                                  "-m<value> must not be a "
+                                                  "negative integer");
             break;
 
         case 'n':
@@ -981,6 +989,7 @@ CommandOptions::usage() const {
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
+        "         [-m<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
@@ -1098,12 +1107,12 @@ CommandOptions::usage() const {
         "\n"
         "The remaining options are used only in conjunction with -r:\n"
         "\n"
-        "-D<max-drop>: Abort the test if more than <max-drop> requests have\n"
-        "    been dropped.  Use -D0 to abort if even a single request has been\n"
-        "    dropped.  If <max-drop> includes the suffix '%', it specifies a\n"
-        "    maximum percentage of requests that may be dropped before abort.\n"
-        "    In this case, testing of the threshold begins after 10 requests\n"
-        "    have been expected to be received.\n"
+        "-D<max-drop>: Abort the test immediately if max-drop requests have\n"
+        "    been dropped.  max-drop must be a positive integer. If max-drop\n"
+        "    includes the suffix '%', it specifies a maximum percentage of\n"
+        "    requests that may be dropped before abort. In this case, testing\n"
+        "    of the threshold begins after 10 requests have been expected to\n"
+        "    be received.\n"
         "-n<num-request>: Initiate <num-request> transactions.  No report is\n"
         "    generated until all transactions have been initiated/waited-for,\n"
         "    after which a report is generated and the program terminates.\n"
@@ -1133,6 +1142,5 @@ CommandOptions::version() const {
     std::cout << "VERSION: " << VERSION << std::endl;
 }
 
-
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
