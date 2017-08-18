@@ -61,6 +61,10 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Pair containing major and minor versions
+typedef std::pair<uint32_t, uint32_t> VersionPair;
+
+
 /// @brief Contains a single row of lease statistical data
 ///
 /// The contents of the row consist of a subnet ID, a lease
@@ -171,7 +175,7 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
-    virtual bool addLease(const isc::dhcp::Lease4Ptr& lease) = 0;
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
@@ -367,10 +371,13 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
+    /// @param addr Address of the lease to be deleted. This can be an IPv4
+    ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
@@ -507,7 +514,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
+    virtual VersionPair getVersion() const = 0;
 
     /// @brief Commit Transactions
     ///
@@ -520,9 +527,13 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
+
+    /// @todo: Add host management here
+    /// As host reservation is outside of scope for 2012, support for hosts
+    /// is currently postponed.
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_MGR_H

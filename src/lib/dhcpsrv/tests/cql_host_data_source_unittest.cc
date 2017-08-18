@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,18 +20,16 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
+
+namespace {
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
-using namespace std;
-
-namespace {
 
 class CqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
@@ -58,7 +56,11 @@ public:
 
     /// @brief Destroys the HDS and the schema.
     void destroyTest() {
-        hdsptr_->rollback();
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
         HostDataSourceFactory::destroy();
         destroyCqlSchema(false, true);
     }
@@ -66,7 +68,7 @@ public:
     /// @brief Constructor
     ///
     /// Deletes everything from the database and opens it.
-    CqlHostDataSourceTest(){
+    CqlHostDataSourceTest() {
         initializeTest();
     }
 
@@ -179,7 +181,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
     destroyCqlSchema(false, true);
 }
 
-/// @brief Check conversion functions
+/// @brief Check conversion methods
 ///
 /// The server works using cltt and valid_filetime.  In the database, the
 /// information is stored as expire_time and valid-lifetime, which are

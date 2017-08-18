@@ -129,11 +129,11 @@ public:
     /// @param host2 second host to compare
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
 
-    /// @ brief Used to sort a host collection by IPv4 subnet id.
+    /// @brief Used to sort a host collection by IPv4 subnet id.
     static bool compareHostsForSort4(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
-    /// @ brief Used to sort a host collection by IPv6 subnet id.
+    /// @brief Used to sort a host collection by IPv6 subnet id.
     static bool compareHostsForSort6(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
@@ -441,7 +441,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrieves them and checks that the hostnames are set properly.
+    /// retrives them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///
