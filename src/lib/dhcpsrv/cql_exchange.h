@@ -1,6 +1,7 @@
-// Copyright (C) 2016 Deutsche Telekom AG.
+// Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
-// Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
+// Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
+//          Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,45 +18,25 @@
 #ifndef CQL_EXCHANGE_H
 #define CQL_EXCHANGE_H
 
-#include <cassandra.h>
 #include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/sql_common.h>
-#include <exceptions/exceptions.h>
+
+#include <boost/any.hpp>  // for boost::any
 
 #include <string>
+#include <typeinfo>       // for std::type_info
+#include <unordered_map>  // for std::unordered_map
 #include <utility>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Binds a C++ object to a Cassandra statement's parameter. Used in all
-///     statements.
-typedef CassError (*CqlBindFunction)(CassStatement* statement,
-                                     size_t index,
-                                     void* value);
+/// @brief Host identifier converted to Cassandra data type
+typedef std::vector<cass_byte_t> CassBlob;
 
-/// @brief Converts a single Cassandra column value to a C++ object. Used in
-///     SELECT statements.
-typedef CassError (*CqlGetFunction)(const CassValue* value, void* data);
-
-/// @brief Pair containing major and minor versions
-typedef std::pair<uint32_t, uint32_t> VersionPair;
-
-/// @brief Wrapper over the bind and get functions that interface with Cassandra
-struct CqlFunctionData {
-    /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in
-    /// all
-    ///     statements.
-    CqlBindFunction cqlBindFunction_;
-    /// @brief Converts a single Cassandra column value to a C++ object. Used in
-    ///     SELECT statements.
-    CqlGetFunction cqlGetFunction_;
-};
-
-/// @brief Collection of bind and get functions, one pair for each
-///     parameter/column
-extern struct CqlFunctionData CqlFunctions[];
+/// @brief Forward declaration to @ref CqlExchange
+class CqlExchange;
 
 /// @brief Structure used to bind C++ input values to dynamic CQL parameters
 ///
@@ -65,68 +46,79 @@ extern struct CqlFunctionData CqlFunctions[];
 /// CQL statement execution. In other words, populating them with pointers that
 /// go out of scope before the statement is executed results in undefined
 /// behaviour.
-struct CqlDataArray {
-    /// @brief Constructor
-    CqlDataArray() {
-    }
-
-    /// @brief Copy constructor
-    CqlDataArray(const CqlDataArray& other) : values_(other.values_) {
-    }
-
-    /// @brief Destructor
-    virtual ~CqlDataArray() {
-    }
-
+class AnyArray : public std::vector<boost::any> {
+public:
     /// @brief Add a at the end of the vector.
-    void add(void* value) {
-        values_.push_back(value);
-    }
+    void add(const boost::any& value);
 
     /// @brief Remove the void pointer to the data value from a specified
     ///     position inside the vector.
-    void remove(int index) {
-        if (values_.size() <= index) {
-            isc_throw(BadValue, "Index " << index << " out of bounds: [0, "
-                                         << (values_.size() - 1) << "]");
-        }
-        values_.erase(values_.begin() + index);
-    }
+    void remove(const size_t& index);
+};
 
-    /// @brief Remove all data from the vector.
-    void clear() {
-        values_.clear();
-    }
+// @brief Representation of a Cassandra User Defined Type
+class Udt : public AnyArray {
+public:
+    /// @brief Paramterized constructor
+    Udt(const CqlConnection& connection, const std::string& name);
 
-    /// @brief Get the number of elements inside the vector.
-    size_t size() const {
-        return values_.size();
-    }
+    /// @brief Destructor
+    ~Udt();
 
-    /// @brief Check if the vector is empty.
-    bool empty() const {
-        return values_.empty();
-    }
+    /// @brief Frees the underlying container.
+    void freeUserType();
 
-    /// @brief Square brackets operator overload
-    ///
-    /// Retrieves void pointer at specified position.
-    void* operator[](int i) const {
-        return values_[i];
-    }
+    /// @brief Creates the underlying container.
+    void newUserType();
 
-    /// @brief Iterator pointing to the first element
-    std::vector<void*>::const_iterator begin() const {
-        return values_.begin();
-    }
+    /// @brief Connection to the Cassandra database
+    const CqlConnection& connection_;
 
-    /// @brief Iterator pointing to the past-the-end element
-    std::vector<void*>::const_iterator end() const {
-        return values_.end();
-    }
+    /// @brief Name of the UDT in the schema: CREATE TYPE ___ { ... }
+    const std::string name_;
 
-    /// @brief Vector of pointers to the data values
-    std::vector<void*> values_;
+    /// @brief Internal Cassandra driver object representing a Cassandra data
+    ///     type
+    const CassDataType* cass_data_type_;
+
+    /// @brief Internal Cassandra driver object representing a user defined type
+    CassUserType* cass_user_type_;
+};
+
+typedef AnyArray Collection;
+
+/// @brief Binds a C++ object to a Cassandra statement's parameter. Used in all
+///     statements.
+typedef CassError (*CqlBindFunction)(const boost::any& value,
+                                     const size_t& index,
+                                     CassStatement* statement);
+
+/// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
+typedef CassError (*CqlUdtSetFunction)(const boost::any& udt_member,
+                                       const size_t& position,
+                                       CassUserType* cass_user_type);
+
+/// @brief Sets an item in a collection. Used in INSERT & UPDATE statements.
+typedef CassError (*CqlCollectionAppendFunction)(const boost::any& value,
+                                                 CassCollection* collection);
+
+/// @brief Converts a single Cassandra column value to a C++ object. Used in
+///     SELECT statements.
+typedef CassError (*CqlGetFunction)(const boost::any& data,
+                                    const CassValue* value);
+
+/// @brief Wrapper over the bind and get functions that interface with Cassandra
+struct CqlFunction {
+    /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in
+    ///     all statements.
+    CqlBindFunction cqlBindFunction_;
+    /// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
+    CqlUdtSetFunction cqlUdtSetFunction_;
+    /// @brief Sets an item in a collection. Used in INSERT & UPDATE statements.
+    CqlCollectionAppendFunction cqlCollectionAppendFunction_;
+    /// @brief Converts a single Cassandra column value to a C++ object. Used in
+    ///     SELECT statements.
+    CqlGetFunction cqlGetFunction_;
 };
 
 /// @brief Cassandra Exchange
@@ -156,53 +148,52 @@ public:
 
     /// @brief Create BIND array to receive C++ data.
     ///
-    /// Used in executeRead() to retrieve from database
+    /// Used in executeSelect() to retrieve from database
     ///
     /// @param data array of bound objects representing data to be retrieved
-    /// @param statementIndex prepared statement to be executed; defaults to an
+    /// @param statement_tag prepared statement being executed; defaults to an
     ///     invalid index
-    virtual void createBindForReceive(CqlDataArray& data,
-                                      const int statementIndex = -1);
+    virtual void createBindForSelect(AnyArray& data,
+                                     StatementTag statement_tag = NULL) = 0;
 
-    /// @brief Executes select statements.
+    /// @brief Executes SELECT statements.
     ///
     /// @param connection connection used to communicate with the Cassandra
     ///     database
-    /// @param whereValues array of bound objects used to filter the results
-    /// @param statementIndex prepared statement being executed
+    /// @param where_values array of bound objects used to filter the results
+    /// @param statement_tag prepared statement being executed
     /// @param single true if a single row should be returned; by default,
     /// multiple rows are allowed
-    /// @param parameters Output parameters of a statement ( used in WHERE
-    ///     clause ); optional, needed only if parameters in the statement are
-    ///     in a different order than in the schema
     ///
-    /// @return collection of void* objects
+    /// @return collection of boost::any objects
     ///
     /// @throw DbOperationError
     /// @throw MultipleRecords
-    CqlDataArray executeRead(const CqlConnection& connection,
-                             const CqlDataArray& whereValues,
-                             const int statementIndex,
-                             const bool single = false,
-                             const std::vector<std::string>& parameters =
-                                 std::vector<std::string>());
+    AnyArray executeSelect(const CqlConnection& connection,
+                           const AnyArray& where_values,
+                           StatementTag statement_tag,
+                           const bool& single = false);
 
-    /// @brief Executes insert, update, delete or other statements.
+    /// @brief Executes INSERT, UPDATE or DELETE statements.
     ///
     /// @param connection connection used to communicate with the Cassandra
     ///     database
-    /// @param assignedValues array of bound objects to be used when inserting
+    /// @param assigned_values array of bound objects to be used when inserting
     ///     values
-    /// @param statementIndex prepared statement to be executed
-    void executeWrite(const CqlConnection& connection,
-                      const CqlDataArray& assignedValues,
-                      const int statementIndex);
+    /// @param statement_tag prepared statement being executed
+    ///     applied, could be different for commit than it is for rollback
+    void executeMutation(const CqlConnection& connection,
+                         const AnyArray& assigned_values,
+                         StatementTag statement_tag);
 
     /// @brief Check if CQL statement has been applied.
     ///
     /// @param future structure used to wait on statement executions
     /// @param row_count number of rows returned
     /// @param column_count number of columns queried
+    ///
+    /// On insert, a false [applied] means there is a duplicate entry with the
+    ///     same priumary key.
     ///
     /// @return true if statement has been succesfully applied, false otherwise
     bool hasStatementBeenApplied(CassFuture* future,
@@ -212,11 +203,11 @@ public:
     /// @brief Copy received data into the derived class' object.
     ///
     /// Copies information about the entity to be retrieved into a holistic
-    /// object. Called in @ref executeRead(). Not implemented for base class
+    /// object. Called in @ref executeSelect(). Not implemented for base class
     /// CqlExchange. To be implemented in derived classes.
     ///
     /// @return a pointer to the object retrieved.
-    virtual void* retrieve();
+    virtual boost::any retrieve() = 0;
 };
 
 /// @brief Exchange used to retrieve schema version from the keyspace.
@@ -232,92 +223,79 @@ public:
 
     /// @brief Create BIND array to receive C++ data.
     ///
-    /// Used in executeRead() to retrieve from database
+    /// Used in executeSelect() to retrieve from database
     ///
     /// @param data array of bound objects representing data to be retrieved
-    /// @param statementIndex prepared statement to be executed; defaults to an
+    /// @param statement_tag prepared statement being executed; defaults to an
     ///     invalid index
-    virtual void createBindForReceive(CqlDataArray& data,
-                                      const int statementIndex = -1);
+    virtual void
+    createBindForSelect(AnyArray& data,
+                        StatementTag statement_tag = NULL) override;
 
     /// @brief Standalone method used to retrieve schema version
     ///
     /// @param connection array of bound objects representing data to be
     /// retrieved
-    /// @param statementIndex prepared statement to be executed
     ///
     /// @return version of schema specified in the prepared statement in the
     /// @ref CqlConnection parameter
-    virtual VersionPair
-    retrieveVersion(const CqlConnection& connection, int statementIndex);
+    virtual VersionPair retrieveVersion(const CqlConnection& connection);
 
     /// @brief Copy received data into the <version,minor> pair.
     ///
     /// Copies information about the version to be retrieved into a pair. Called
-    /// in executeRead().
+    /// in executeSelect().
     ///
     /// @return a pointer to the object retrieved.
-    virtual void* retrieve();
+    virtual boost::any retrieve() override;
+
+    /// @brief Statement tags definitions
+    /// @{
+    static constexpr StatementTag GET_VERSION = "GET_VERSION";
+    /// @}
+
+    /// @brief Cassandra statements
+    static StatementMap tagged_statements_;
 
 private:
+    /// @brief Major version
     cass_int32_t version_;
+    /// @brief Minor version
     cass_int32_t minor_;
+    /// @brief Pair containing major and minor version
     VersionPair pair_;
 };
 
 /// @brief Common operations in Cassandra exchanges
 class CqlCommon {
 public:
-    /// @brief Returns type of data for specific parameter.
+    /// @brief Give values to every column of an INSERT or an UPDATE statement.
     ///
-    /// Returns type of a given parameter of a given statement.
+    /// Calls cqlBindFunction_() for every column with it's respective type.
     ///
-    /// @param stindex Index of statement being executed.
-    /// @param pindex Index of the parameter for a given statement.
-    /// @param exchange Exchange object to use
-    /// @param tagged_statements CqlTaggedStatement array to use
-    static ExchangeDataType
-    getDataType(const uint32_t stindex,
-                int pindex,
-                const SqlExchange& exchange,
-                const CqlTaggedStatement* tagged_statements);
-
-    /// @brief Binds data specified in data
-    ///
-    /// Calls one of cass_value_bind_([none|bool|int32|int64|string|bytes]).
-    /// It is used to bind C++ data types used by Kea into formats used by
-    /// Cassandra.
-    ///
-    /// @param statement Statement object representing the query
-    /// @param stindex Index of statement being executed
-    /// @param data array that has been created for the type of lease in
-    ///     question.
-    /// @param exchange Exchange object to use
-    /// @param tagged_statements CqlTaggedStatement array to use
-    static void bindData(CassStatement* statement,
-                         uint32_t stindex,
-                         const CqlDataArray& data,
-                         const SqlExchange& exchange,
-                         const CqlTaggedStatement* tagged_statements);
+    /// @param data array containing column values to be passed to the statement
+    ///     being executed
+    /// @param statement internal Cassandra object representing the statement
+    ///     being executed
+    static void bindData(const AnyArray& data, CassStatement* statement);
 
     /// @brief Retrieves data returned by Cassandra.
     ///
-    /// Calls one of cass_value_bind_([none|bool|int32|int64|string|bytes]).
-    /// Used to retrieve data returned by Cassandra into standard C++ types used
-    /// by Kea.
+    /// Calls cqlGetFunction_() for every column with it's respective type.
     ///
-    /// @param row row of data returned by CQL library
-    /// @param pindex Index of statement being executed
-    /// @param dindex data index (specifies which entry in size array is used)
-    /// @param exchange Exchange object to use
-    /// @param data array that has been created for the type of lease in
-    ///     question.
-    static void getData(const CassRow* row,
-                        int pindex,
-                        int dindex,
-                        const SqlExchange& exchange,
-                        CqlDataArray& data);
+    /// @param row internal Cassandra object containing data returned by
+    ///     Cassandra
+    /// @param data array containing objects to be populated with results
+    static void getData(const CassRow* row, AnyArray& data);
 };
+
+/// @brief Determine exchange type based on boost::any type.
+ExchangeDataType
+exchangeType(const boost::any& object);
+
+/// @brief Determine exchange type based on CassValueType.
+ExchangeDataType
+exchangeType(const CassValueType& type);
 
 }  // namespace dhcp
 }  // namespace isc
