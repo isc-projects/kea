@@ -471,7 +471,6 @@ be followed by a comma and another object definition.</para>
   specified as well:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
->>>>>>> isc-master
 </screen>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
