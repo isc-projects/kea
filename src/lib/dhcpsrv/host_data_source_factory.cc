@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "config.h"
+#include <config.h>
 
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
@@ -37,7 +37,6 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
-
 
 HostDataSourcePtr&
 HostDataSourceFactory::getHostDataSourcePtr() {
@@ -115,5 +114,5 @@ HostDataSourceFactory::instance() {
 }
 #endif
 
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc

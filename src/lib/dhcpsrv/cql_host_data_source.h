@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Deutsche Telekom AG.
+// Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -20,15 +20,13 @@
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cql_connection.h>
 
-#include <stdint.h>
-
 #include <string>
-#include <utility>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
 
-/// Forward declaration to the implementation of @ref CqlHostDataSource.
+/// @brief Forward declaration to the implementation of @ref CqlHostDataSource.
 class CqlHostDataSourceImpl;
 
 /// @brief Cassandra host data source
@@ -53,7 +51,7 @@ public:
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
-    /// @param parameters A data structure relating keywords and values
+    /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
@@ -68,8 +66,7 @@ public:
     /// Releases prepared CQL statements used by the backend.
     virtual ~CqlHostDataSource();
 
-    /// @brief Adds a new @ref Host to the Cassandra database along with it's
-    ///     reservations and options.
+    /// @brief Adds a new host to the collection.
     ///
     /// The implementations of this method should guard against duplicate
     /// reservations for the same @ref Host, where possible. For example, when
@@ -80,7 +77,7 @@ public:
     /// @ref DUID.
     ///
     /// @param host pointer to the new @ref Host being added.
-    virtual void add(const HostPtr& host);
+    virtual void add(const HostPtr& host) override;
 
     /// @brief Retrieves a single @ref Host connected to an IPv4 subnet.
     ///
@@ -100,14 +97,14 @@ public:
     /// @throw BadValue if both or neither of subnet_id and duid are specified
     virtual ConstHostPtr get4(const SubnetID& subnet_id,
                               const HWAddrPtr& hwaddr,
-                              const DuidPtr& duid = DuidPtr()) const;
+                              const DuidPtr& duid = DuidPtr()) const override;
 
     /// @brief Retrieves a @ref Host connected to an IPv4 subnet.
     ///
     /// @param subnet_id subnet identifier to filter by
     /// @param identifier_type identifier type to filter by
-    /// @param identifier_begin pointer to the beginning of a buffer containing a
-    ///     host identifier to filter by
+    /// @param identifier_begin pointer to the beginning of a buffer containing
+    ///     a host identifier to filter by
     /// @param identifier_len length of the host identifier buffer
     ///
     /// @return @ref Host object for which a reservation has been made using the
@@ -115,7 +112,7 @@ public:
     virtual ConstHostPtr get4(const SubnetID& subnet_id,
                               const Host::IdentifierType& identifier_type,
                               const uint8_t* identifier_begin,
-                              const size_t identifier_len) const;
+                              const size_t identifier_len) const override;
 
     /// @brief Retrieves a @ref Host connected to an IPv4 subnet.
     ///
@@ -130,8 +127,9 @@ public:
     /// @return Const @ref Host object
     ///
     /// @throw BadValue if address in not a valid IPv4address
-    virtual ConstHostPtr get4(const SubnetID& subnet_id,
-                              const asiolink::IOAddress& address) const;
+    virtual ConstHostPtr
+    get4(const SubnetID& subnet_id,
+         const asiolink::IOAddress& address) const override;
 
     /// @brief Retrieves a @ref Host connected to an IPv6 subnet.
     ///
@@ -148,16 +146,17 @@ public:
     /// @return @ref Host object using a specified @ref HWAddr or @ref DUID
     ///
     /// @throw BadValue if both or neither of subnet_id and duid are specified
-    virtual ConstHostPtr get6(const SubnetID& subnet_id,
-                              const DuidPtr& duid,
-                              const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id,
+         const DuidPtr& duid,
+         const HWAddrPtr& hwaddr = HWAddrPtr()) const override;
 
     /// @brief Returns a @ref Host connected to an IPv6 subnet.
     ///
     /// @param subnet_id subnet identifier to filter by
     /// @param identifier_type identifier type to filter by
-    /// @param identifier_begin pointer to the beginning of a buffer containing a
-    ///     host identifier to filter by
+    /// @param identifier_begin pointer to the beginning of a buffer containing
+    ///     a host identifier to filter by
     /// @param identifier_len length of the host identifier buffer
     ///
     /// @return Const @ref Host object for which reservation has been made using
@@ -165,7 +164,7 @@ public:
     virtual ConstHostPtr get6(const SubnetID& subnet_id,
                               const Host::IdentifierType& identifier_type,
                               const uint8_t* identifier_begin,
-                              const size_t identifier_len) const;
+                              const size_t identifier_len) const override;
 
     /// @brief Returns a @ref Host with the specified reservation prefix.
     ///
@@ -177,7 +176,7 @@ public:
     /// @throw MultipleRecords if two or more rows are returned from the
     ///     Cassandra database
     virtual ConstHostPtr get6(const asiolink::IOAddress& prefix,
-                              const uint8_t prefix_len) const;
+                              const uint8_t prefix_len) const override;
 
     /// @brief Returns a host connected to the IPv6 subnet and having
     /// a reservation for a specified IPv6 address or prefix.
@@ -186,8 +185,9 @@ public:
     /// @param address reserved IPv6 address/prefix.
     ///
     /// @return Const @c Host object using a specified IPv6 address/prefix.
-    virtual ConstHostPtr get6(const SubnetID& subnet_id,
-                              const asiolink::IOAddress& address) const;
+    virtual ConstHostPtr
+    get6(const SubnetID& subnet_id,
+         const asiolink::IOAddress& address) const override;
 
     /// @brief Return all @ref Host objects for the specified @ref HWAddr or
     /// @ref DUID.
@@ -211,8 +211,9 @@ public:
     /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
     ///
     /// @return collection of const @ref Host objects.
-    virtual ConstHostCollection getAll(const HWAddrPtr& hwaddr,
-                                       const DuidPtr& duid = DuidPtr()) const;
+    virtual ConstHostCollection
+    getAll(const HWAddrPtr& hwaddr,
+           const DuidPtr& duid = DuidPtr()) const override;
 
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
@@ -223,14 +224,14 @@ public:
     ///
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of a buffer containing
-    /// an identifier.
+    ///     an identifier.
     /// @param identifier_len Identifier length.
     ///
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
-           const size_t identifier_len) const;
+           const size_t identifier_len) const override;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -241,7 +242,55 @@ public:
     ///
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection
-    getAll4(const asiolink::IOAddress& address) const;
+    getAll4(const asiolink::IOAddress& address) const override;
+
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id,
+                     const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet-id4, identifier,
+    /// identifier-type)
+    ///
+    /// This method supports both v4 hosts only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    ///     an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet-id6, identifier,
+    /// identifier-type)
+    ///
+    /// This method supports both v6 hosts only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    ///     an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
 
     /// @brief Returns description of the backend.
     ///
@@ -258,7 +307,7 @@ public:
     /// @brief Return backend type
     ///
     /// @return backend type "cql"
-    virtual std::string getType() const;
+    virtual std::string getType() const override;
 
     /// @brief Retrieves schema version.
     ///
@@ -268,24 +317,24 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///
     /// Commits all pending database operations.
-    virtual void commit();
+    virtual void commit() override;
 
     /// @brief Rollback Transactions
     ///
     /// Rolls back all pending database operations.
-    virtual void rollback();
+    virtual void rollback() override;
 
 private:
     /// @brief Pointer to the implementation of the @ref CqlHostDataSource.
     CqlHostDataSourceImpl* impl_;
 };  // class CqlHostDataSource
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif  // CQL_HOST_DATA_SOURCE_H

@@ -86,6 +86,13 @@ public:
     /// @return Identifier in textual form acceptable by Host constructor
     std::vector<uint8_t> generateIdentifier(const bool new_identifier = true);
 
+    /// @brief Checks if the reservation is in the range of reservations.
+    ///
+    /// @param resrv Reservation to be searched for.
+    /// @param range Range of reservations returned by the @c Host object
+    /// in which the reservation will be searched
+    bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range);
+
     /// @brief Compares hardware addresses of the two hosts.
     ///
     /// This method compares two hardware address and uses gtest
@@ -122,11 +129,11 @@ public:
     /// @param host2 second host to compare
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
 
-    /// @ brief Used to sort a host collection by IPv4 subnet id.
+    /// @brief Used to sort a host collection by IPv4 subnet id.
     static bool compareHostsForSort4(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
-    /// @ brief Used to sort a host collection by IPv6 subnet id.
+    /// @brief Used to sort a host collection by IPv6 subnet id.
     static bool compareHostsForSort6(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
@@ -434,7 +441,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrieves them and checks that the hostnames are set properly.
+    /// retrives them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///

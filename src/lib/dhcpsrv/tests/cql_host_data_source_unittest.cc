@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,25 +20,21 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
+
+namespace {
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
-using namespace std;
-
-namespace {
 
 class CqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    CqlHostDataSourceTest() {
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -58,15 +54,31 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
+        try {
+            hdsptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        HostDataSourceFactory::destroy();
+        destroyCqlSchema(false, true);
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    CqlHostDataSourceTest() {
+        initializeTest();
+    }
+
     /// @brief Destructor
     ///
     /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
     /// close the database.  Then reopen it and delete everything created by the
     /// test.
     virtual ~CqlHostDataSourceTest() {
-        hdsptr_->rollback();
-        HostDataSourceFactory::destroy();
-        destroyCqlSchema(false, true);
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -169,7 +181,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
     destroyCqlSchema(false, true);
 }
 
-/// @brief Check conversion functions
+/// @brief Check conversion methods
 ///
 /// The server works using cltt and valid_filetime.  In the database, the
 /// information is stored as expire_time and valid-lifetime, which are
@@ -475,8 +487,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     CqlConnection connection(params);
     ASSERT_NO_THROW(connection.openDatabase());
 
-    // Drop every table so we make sure host_ipv6_reservation_options doesn't
-    // exist anymore
+    // Drop every table so we make sure host_reservations doesn't exist anymore.
     destroyCqlSchema(false, true);
 
     // Create a host with a reservation.

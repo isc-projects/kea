@@ -89,10 +89,6 @@ struct StatementTagHash {
     }
 };
 
-/// Define CQL schema version: 2.0
-const uint32_t CQL_SCHEMA_VERSION_MAJOR = 2;
-const uint32_t CQL_SCHEMA_VERSION_MINOR = 0;
-
 /// @brief Equality function for StatementMap keys
 struct StatementTagEqual {
     bool operator()(StatementTag const& lhs, StatementTag const& rhs) const {
