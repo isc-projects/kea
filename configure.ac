@@ -1488,11 +1488,11 @@ if test "x$enable_generate_docs" != xno ; then
   else
     AC_MSG_CHECKING([if $XSLTPROC works])
     # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
     fi
-    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
     fi

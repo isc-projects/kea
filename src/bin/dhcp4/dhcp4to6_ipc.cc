@@ -89,7 +89,7 @@ void Dhcp4to6Ipc::handler() {
         return;
     }
 
-    // Get the DHCPv4 message
+    // Get the DHCPv4 message.
     OptionPtr msg = msgs.begin()->second;
     if (!msg) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)

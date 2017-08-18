@@ -306,14 +306,16 @@ public:
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
-    bool clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+    bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief adds class class_name to the list of supported classes
     ///
     /// Also see explanation note in @ref white_list_.
     ///
     /// @param class_name client class to be supported by this subnet
-    void allowClientClass(const isc::dhcp::ClientClass& class_name);
+    void
+    allowClientClass(const isc::dhcp::ClientClass& class_name);
 
     /// @brief returns the client class white list
     ///
@@ -333,7 +335,8 @@ public:
     /// performance reasons.
     ///
     /// @return whether in-pool host reservations are allowed.
-    HRMode getHostReservationMode() const {
+    HRMode
+    getHostReservationMode() const {
         return (host_reservation_mode_);
     }
 
@@ -515,8 +518,8 @@ protected:
     ///
     /// See @ref HRMode type for details.
     HRMode host_reservation_mode_;
-
 private:
+
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
 };
