@@ -420,6 +420,12 @@ public:
         return (std::make_pair(MAJOR_VERSION, MINOR_VERSION));
     }
 
+    /// @brief Start Transaction
+    ///
+    /// Start transaction for database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    virtual bool startTransaction();
+
     /// @brief Commit Transactions
     ///
     /// Commits all pending database operations.  On databases that don't

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,14 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Database statement not applied
+class StatementNotApplied : public Exception {
+public:
+    StatementNotApplied(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
+};
 
 /// @brief Multiple lease records found where one expected
 class MultipleRecords : public Exception {
@@ -47,7 +55,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-};
-};
+}  // namespace isc
+}  // namespace dhcp
 
 #endif
