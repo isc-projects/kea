@@ -197,9 +197,6 @@ V6) is about to open a Cassandra lease database.  The parameters of
 the connection including database name and username needed to access it
 (but not the password if any) are logged.
 
-% DHCPSRV_CQL_COMMIT committing to Cassandra database.
-A commit call been issued on the server. For Cassandra, this is a no-op.
-
 % DHCPSRV_CQL_CONNECTION_COMMIT committing to Cassandra database on current connection.
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
@@ -231,9 +228,6 @@ The server has issued a rollback transaction call on an opened transaction.
 % DHCPSRV_CQL_TRANSACTION_MGR_TRANSACTION_NOT_FOUND failed to select a transaction.
 The server failed to select a transaction to operate on.
 
-% DHCPSRV_CQL_BEGIN_TRANSACTION begin transaction.
-The server has issued a begin transaction call.
-
 % DHCPSRV_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
 The server has issued a begin transaction call.
 
@@ -245,12 +239,6 @@ The server has issued a commit transaction call.
 
 % DHCPSRV_CQL_TRANSACTION_MGR_ROLLBACK_TRANSACTION rollback transaction action has been initiated.
 The server has issued a rollback transaction call.
-
-% DHCPSRV_CQL_DB opening Cassandra lease database: %1
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a Cassandra lease database.  The parameters of
-the connection including database name and username needed to access it
-(but not the password if any) are logged.
 
 % DHCPSRV_CQL_DELETE_ADDR deleting lease for address %1
 A debug message issued when the server is attempting to delete a lease from the
