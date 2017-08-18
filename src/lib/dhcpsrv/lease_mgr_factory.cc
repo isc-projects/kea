@@ -101,7 +101,7 @@ LeaseMgrFactory::destroy() {
     getLeaseMgrPtr().reset();
 }
 
-bool 
+bool
 LeaseMgrFactory::haveInstance() {
     return (getLeaseMgrPtr().get());
 }
