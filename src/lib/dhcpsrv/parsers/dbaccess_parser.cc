@@ -169,11 +169,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // 5. Save the database access string in the Configuration Manager.
     if (type_ == LEASE_DB) {
         cfg_db->setLeaseDbAccessString(getDbAccessString());
-
-    } else {
+    } else if (type_ == HOSTS_DB) {
         cfg_db->setHostDbAccessString(getDbAccessString());
     }
-
 }
 
 // Create the database access string
@@ -199,5 +197,5 @@ DbAccessParser::getDbAccessString() const {
     return (dbaccess);
 }
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

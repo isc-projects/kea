@@ -1,4 +1,4 @@
--- Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+-- Copyright (C) 2015-2017 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS lease4 (
     fqdn_rev boolean,
     hostname varchar,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease4 table
@@ -73,13 +73,13 @@ CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease6 (
     address varchar,
-    duid blob,
     valid_lifetime bigint,
     expire bigint,
     subnet_id int,
     pref_lifetime bigint,
-    lease_type int,
+    duid blob,
     iaid int,
+    lease_type int,
     prefix_len int,
     fqdn_fwd boolean,
     fqdn_rev boolean,
@@ -88,13 +88,13 @@ CREATE TABLE IF NOT EXISTS lease6 (
     hwtype int,
     hwaddr_source int,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease6 table
-CREATE INDEX IF NOT EXISTS lease6index1 ON lease6 (lease_type);
-CREATE INDEX IF NOT EXISTS lease6index2 ON lease6 (duid);
-CREATE INDEX IF NOT EXISTS lease6index3 ON lease6 (iaid);
+CREATE INDEX IF NOT EXISTS lease6index1 ON lease6 (duid);
+CREATE INDEX IF NOT EXISTS lease6index2 ON lease6 (iaid);
+CREATE INDEX IF NOT EXISTS lease6index3 ON lease6 (lease_type);
 CREATE INDEX IF NOT EXISTS lease6index4 ON lease6 (subnet_id);
 CREATE INDEX IF NOT EXISTS lease6index5 ON lease6 (expire);
 CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
@@ -110,7 +110,7 @@ CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 CREATE TABLE IF NOT EXISTS lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
-    PRIMARY KEY (lease_type)
+    PRIMARY KEY ((lease_type))
 );
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (1, 'IA_TA');   -- Temporary v6 addresses
@@ -128,7 +128,7 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
-    PRIMARY KEY (hwaddr_source)
+    PRIMARY KEY ((hwaddr_source))
 );
 
 -- Hardware address obtained from raw sockets
@@ -161,7 +161,7 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE
 CREATE TABLE IF NOT EXISTS lease_state (
     state int,
     name varchar,
-    PRIMARY KEY (state)
+    PRIMARY KEY ((state))
 );
 
 -- Insert currently defined state names.
@@ -179,12 +179,12 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 CREATE TABLE IF NOT EXISTS schema_version (
     version int,
     minor int,
-    PRIMARY KEY (version)
+    PRIMARY KEY ((version))
 );
 
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
 
--- This line concludes database initalization to version 1.0.
+-- This line concludes database initialization to version 1.0.
 
 -- This line starts database upgrade to version 2.0
 
@@ -192,7 +192,6 @@ INSERT INTO schema_version (version, minor) VALUES (1, 0);
 -- Table `host_reservations`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS host_reservations (
-    id bigint,
     host_identifier blob,
     host_identifier_type int,
     host_ipv4_subnet_id int,
@@ -201,10 +200,12 @@ CREATE TABLE IF NOT EXISTS host_reservations (
     hostname text,
     host_ipv4_client_classes text,
     host_ipv6_client_classes text,
+    -- reservation
     reserved_ipv6_prefix_address text,
     reserved_ipv6_prefix_length int,
     reserved_ipv6_prefix_address_type int,
     iaid int,
+    -- option
     option_universe int,
     option_code int,
     option_value blob,
@@ -213,8 +214,10 @@ CREATE TABLE IF NOT EXISTS host_reservations (
     option_is_persistent boolean,
     option_client_class text,
     option_subnet_id int,
-    PRIMARY KEY (id)
+    id bigint,
+    PRIMARY KEY ((id))
 );
+
 CREATE INDEX IF NOT EXISTS host_reservationsindex1 ON host_reservations (host_identifier);
 CREATE INDEX IF NOT EXISTS host_reservationsindex2 ON host_reservations (host_identifier_type);
 CREATE INDEX IF NOT EXISTS host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
@@ -223,7 +226,8 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ip
 CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
-DELETE FROM schema_version WHERE version=1;
+TRUNCATE SCHEMA_VERSION;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0
+
