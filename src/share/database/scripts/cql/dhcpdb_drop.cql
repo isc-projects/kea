@@ -1,4 +1,4 @@
--- Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+-- Copyright (C) 2015-2017 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
