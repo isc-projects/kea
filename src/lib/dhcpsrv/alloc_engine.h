@@ -1478,7 +1478,7 @@ private:
 /// @brief A pointer to the @c AllocEngine object.
 typedef boost::shared_ptr<AllocEngine> AllocEnginePtr;
 
-}  // namespace dhcp
-}  // namespace isc
+}; // namespace isc::dhcp
+}; // namespace isc
 
 #endif // ALLOC_ENGINE_H
