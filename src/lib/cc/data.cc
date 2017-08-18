@@ -342,7 +342,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
 // error on the rest)?
 std::string
 strFromStringstream(std::istream& in, const std::string& file,
-                    const int line, int& pos) throw (JSONError)
+                    const int line, int& pos)
 {
     std::stringstream ss;
     int c = in.get();
