@@ -11,6 +11,11 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
 
+#include <stdint.h>
+
+#include <utility>
+#include <string>
+
 namespace isc {
 namespace dhcp {
 
@@ -234,9 +239,13 @@ public:
     ///
     /// This method supports v4 hosts only.
     ///
-    /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
-    /// @return true if deletion was successful, false if the host was not there.
+    /// @param subnet_id subnet identfier
+    /// @param identifier_type type of host identifier (e.g. DUID, hardware
+    ///     address)
+    /// @param identifier_begin pointer to the beginning of a buffer containing
+    /// an identifier
+    /// @param identifier_len host identifier length
+    /// @return true if deletion was successful, false if the host was not there
     /// @throw various exceptions in case of errors
     virtual bool del4(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
@@ -246,9 +255,13 @@ public:
     ///
     /// This method supports v6 hosts only.
     ///
-    /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
-    /// @return true if deletion was successful, false if the host was not there.
+    /// @param subnet_id subnet identfier
+    /// @param identifier_type type of host identifier (e.g. DUID, hardware
+    ///     address)
+    /// @param identifier_begin pointer to the beginning of a buffer containing
+    /// an identifier
+    /// @param identifier_len host identifier length
+    /// @return true if deletion was successful, false if the host was not there
     /// @throw various exceptions in case of errors
     virtual bool del6(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
@@ -298,7 +311,6 @@ public:
     virtual void rollback();
 
 private:
-
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImpl* impl_;
 };
@@ -307,3 +319,4 @@ private:
 }
 
 #endif // MYSQL_HOST_DATA_SOURCE_H
+

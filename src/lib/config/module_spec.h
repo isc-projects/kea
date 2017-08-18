@@ -43,8 +43,7 @@ namespace isc { namespace config {
         /// \param check If false, the module specification in the file
         /// is not checked to be of the correct form.
         explicit ModuleSpec(isc::data::ConstElementPtr e,
-                            const bool check = true)
-            throw(ModuleSpecError);
+                            const bool check = true);
 
         /// Returns the commands part of the specification as an
         /// ElementPtr, returns an empty ElementPtr if there is none
@@ -72,11 +71,11 @@ namespace isc { namespace config {
 
         /// Returns the module name as specified by the specification
         const std::string getModuleName() const;
-        
+
         /// Returns the module description as specified by the specification
         /// returns an empty string if there is no description
         const std::string getModuleDescription() const;
-        
+
         // returns true if the given element conforms to this data
         // configuration specification
         /// Validates the given configuration data for this specification.
@@ -176,8 +175,7 @@ namespace isc { namespace config {
     /// \param check If true, the module specification in the file
     /// is checked to be of the correct form
     ModuleSpec
-    moduleSpecFromFile(const std::string& file_name, const bool check = true)
-        throw(isc::data::JSONError, ModuleSpecError);
+    moduleSpecFromFile(const std::string& file_name, const bool check = true);
 
     /// Creates a \c ModuleSpec instance from the given input
     /// stream that contains the contents of a .spec file.
@@ -188,12 +186,11 @@ namespace isc { namespace config {
     /// \param check If true, the module specification is checked
     /// to be of the correct form
     ModuleSpec
-    moduleSpecFromFile(std::ifstream& in, const bool check = true)
-                       throw(isc::data::JSONError, ModuleSpecError);
+    moduleSpecFromFile(std::ifstream& in, const bool check = true);
 } }
 
 #endif // _DATA_DEF_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
