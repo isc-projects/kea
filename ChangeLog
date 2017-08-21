@@ -1,3 +1,9 @@
+1289.	[bug]		marcin, tmark
+	Corrected handling of EAGAIN and EWOULDLBOCK errors in
+	UnixDomainSocket. This was causing intermittent command
+	channel write errors in kea-ctrl-agent on some Debian systems.
+	(Trac #5336, git db251cb66ad77ba28ab44281323ddeb23cf29506)
+
 1288.	[func]		marcin
 	Documented subnet_cmds library in the Kea User's Guide.  Also moved
 	several classes from dhcp<4/6> into lib/dhcpsrv to facilitate subnet
