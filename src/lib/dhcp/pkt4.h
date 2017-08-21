@@ -269,7 +269,7 @@ public:
     ///
     /// @param sname value to be set
     /// @param sname_len length of the sname buffer (up to MAX_SNAME_LEN)
-    void setSname(const uint8_t* sname, size_t sname_len = MAX_SNAME_LEN);
+    void setSname(const uint8_t* sname, size_t sname_len);
 
     /// @brief Returns file field
     ///
@@ -285,7 +285,7 @@ public:
     /// @param file value to be set
     /// @param file_len length of the file buffer (up to MAX_FILE_LEN)
     void
-    setFile(const uint8_t* file, size_t file_len = MAX_FILE_LEN);
+    setFile(const uint8_t* file, size_t file_len);
 
     /// @brief Sets hardware address.
     ///
