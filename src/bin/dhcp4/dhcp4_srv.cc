@@ -401,14 +401,16 @@ Dhcpv4Exchange::setReservedMessageFields() {
             resp_->setSiaddr(host->getNextServer());
         }
 
-        if (!host->getServerHostname().empty()) {
-            resp_->setSname(reinterpret_cast<
-                            const uint8_t*>(host->getServerHostname().c_str()));
+        std::string sname = host->getServerHostname();
+        if (!sname.empty()) {
+            resp_->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                            sname.size());
         }
 
-        if (!host->getBootFileName().empty()) {
-            resp_->setFile(reinterpret_cast<
-                           const uint8_t*>(host->getBootFileName().c_str()));
+        std::string bootfile = host->getBootFileName();
+        if (!bootfile.empty()) {
+            resp_->setFile(reinterpret_cast<const uint8_t*>(bootfile.c_str()),
+                           bootfile.size());
         }
     }
 }
