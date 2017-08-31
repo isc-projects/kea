@@ -352,7 +352,7 @@ public:
     template<typename SharedNetworkPtrType>
     void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
         shared_network = boost::dynamic_pointer_cast<
-            typename SharedNetworkPtrType::element_type>(shared_network_);
+            typename SharedNetworkPtrType::element_type>(shared_network_.lock());
     }
 
 private:
@@ -538,7 +538,8 @@ protected:
     /// See @ref HRMode type for details.
     HRMode host_reservation_mode_;
 
-    NetworkPtr shared_network_;
+    /// @brief Pointer to a shared network that subnet belongs to.
+    WeakNetworkPtr shared_network_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
