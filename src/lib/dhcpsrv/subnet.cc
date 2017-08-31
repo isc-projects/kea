@@ -354,16 +354,6 @@ Subnet::delPools(Lease::Type type) {
     getPoolsWritable(type).clear();
 }
 
-void
-Subnet::setIface(const std::string& iface_name) {
-    iface_ = iface_name;
-}
-
-std::string
-Subnet::getIface() const {
-    return (iface_);
-}
-
 bool
 Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
