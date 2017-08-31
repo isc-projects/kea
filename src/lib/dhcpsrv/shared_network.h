@@ -7,6 +7,7 @@
 #ifndef SHARED_NETWORK_H
 #define SHARED_NETWORK_H
 
+#include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/subnet.h>
@@ -245,7 +246,10 @@ protected:
         return (*subnet_it);
     }
 
-protected:
+    /// @brief Unparses shared network object.
+    ///
+    /// @return A pointer to unparsed shared network configuration.
+    virtual data::ElementPtr toElement() const;
 
     /// @brief Holds a name of a shared network.
     std::string name_;
@@ -321,6 +325,11 @@ public:
     /// find first or current subnet within shared network.
     Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
                              const Subnet4Ptr& current_subnet) const;
+
+    /// @brief Unparses shared network object.
+    ///
+    /// @return A pointer to unparsed shared network configuration.
+    virtual data::ElementPtr toElement() const;
 
 private:
 
@@ -401,6 +410,11 @@ public:
     /// find first or current subnet within shared network.
     Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
                              const Subnet6Ptr& current_subnet) const;
+
+    /// @brief Unparses shared network object.
+    ///
+    /// @return A pointer to unparsed shared network configuration.
+    virtual data::ElementPtr toElement() const;
 
 private:
 

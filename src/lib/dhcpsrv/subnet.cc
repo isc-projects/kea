@@ -55,13 +55,13 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& valid_lifetime,
                const isc::dhcp::Subnet::RelayInfo& relay,
                const SubnetID id)
-    :id_(id == 0 ? generateNextID() : id), prefix_(prefix), prefix_len_(len),
-     t1_(t1), t2_(t2), valid_(valid_lifetime),
-     last_allocated_ia_(lastAddrInPrefix(prefix, len)),
-     last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-     last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
-     host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption())
-      {
+    : Network(), id_(id == 0 ? generateNextID() : id), prefix_(prefix),
+      prefix_len_(len),
+      t1_(t1), t2_(t2), valid_(valid_lifetime),
+      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
+      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
+      last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
+      host_reservation_mode_(HR_ALL) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
@@ -465,8 +465,7 @@ void Subnet6::checkType(Lease::Type type) const {
 
 data::ElementPtr
 Subnet::toElement() const {
-    // Prepare the map
-    ElementPtr map = Element::createMap();
+    ElementPtr map = Network::toElement();
 
     // Set subnet id
     SubnetID id = getID();
@@ -480,12 +479,6 @@ Subnet::toElement() const {
 
     // Set subnet
     map->set("subnet", Element::create(toText()));
-
-    // Set interface
-    const std::string& iface = getIface();
-    if (!iface.empty()) {
-        map->set("interface", Element::create(iface));
-    }
 
     // Set renew-timer
     map->set("renew-timer",
@@ -527,10 +520,6 @@ Subnet::toElement() const {
     } else if (!cclasses.empty()) {
         map->set("client-class", Element::create(*cclasses.cbegin()));
     }
-
-    // Set options
-    ConstCfgOptionPtr opts = getCfgOption();
-    map->set("option-data", opts->toElement());
 
     return (map);
 }

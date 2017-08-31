@@ -13,8 +13,6 @@
 #include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/assignable_network.h>
-#include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
@@ -112,17 +110,6 @@ public:
     /// @brief Returns T2 (rebind timer), expressed in seconds
     Triplet<uint32_t> getT2() const {
         return (t2_);
-    }
-
-    /// @brief Returns pointer to the option data configuration for this subnet.
-    CfgOptionPtr getCfgOption() {
-        return (cfg_option_);
-    }
-
-    /// @brief Returns const pointer to the option data configuration for this
-    /// subnet.
-    ConstCfgOptionPtr getCfgOption() const {
-        return (cfg_option_);
     }
 
     /// @brief returns the last address that was tried from this pool
@@ -550,9 +537,6 @@ protected:
     ///
     /// See @ref HRMode type for details.
     HRMode host_reservation_mode_;
-
-    /// @brief Pointer to the option data configuration for this subnet.
-    CfgOptionPtr cfg_option_;
 
     NetworkPtr shared_network_;
 };
