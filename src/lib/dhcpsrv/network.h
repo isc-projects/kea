@@ -12,6 +12,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 namespace isc {
@@ -94,6 +95,9 @@ protected:
 
 /// @brief Pointer to the @ref Network object.
 typedef boost::shared_ptr<Network> NetworkPtr;
+
+/// @brief Weak pointer to the @ref Network object.
+typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
