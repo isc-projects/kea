@@ -13,6 +13,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -37,6 +38,29 @@ typedef boost::shared_ptr<SharedNetwork> SharedNetworkPtr;
 /// Shared networks provide similar interface like subnets, thus they both
 /// derive from the @ref Network class.
 class SharedNetwork : public AssignableNetwork {
+protected:
+
+    /// @brief Constructor.
+    ///
+    /// Sets name of the shared network.
+    explicit SharedNetwork(const std::string& name)
+        : name_(name) {
+    }
+
+public:
+
+    /// @brief Returns a name of the shared network.
+    std::string getName() const {
+        return (name_);
+    }
+
+    /// @brief Sets new name for the shared network.
+    ///
+    /// @param name New name for the shared network.
+    void setName(const std::string& name) {
+        name_ = name;
+    }
+
 protected:
 
     /// @brief Adds a subnet to a shared network.
@@ -221,6 +245,11 @@ protected:
         return (*subnet_it);
     }
 
+protected:
+
+    /// @brief Holds a name of a shared network.
+    std::string name_;
+
 };
 
 /// @brief Shared network holding IPv4 subnets.
@@ -229,6 +258,13 @@ protected:
 class SharedNetwork4 : public SharedNetwork,
                        public boost::enable_shared_from_this<SharedNetwork4> {
 public:
+
+    /// @brief Constructor.
+    ///
+    /// Sets name of the shared network.
+    explicit SharedNetwork4(const std::string& name)
+        : SharedNetwork(name) {
+    }
 
     /// @brief Returns shared pointer to this network.
     ///
@@ -302,6 +338,13 @@ typedef boost::shared_ptr<SharedNetwork4> SharedNetwork4Ptr;
 class SharedNetwork6 : public SharedNetwork,
                        public boost::enable_shared_from_this<SharedNetwork6> {
 public:
+
+    /// @brief Constructor.
+    ///
+    /// Sets name of the shared network.
+    explicit SharedNetwork6(const std::string& name)
+        : SharedNetwork(name) {
+    }
 
     /// @brief Returns shared pointer to this network.
     ///
