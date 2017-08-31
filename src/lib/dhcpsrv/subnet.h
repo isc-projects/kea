@@ -12,6 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
+#include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/lease.h>
@@ -24,12 +25,18 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
 
-class Subnet {
+class Subnet : public Network {
+
+    // Assignable network is our friend to allow it to call
+    // @ref Subnet::setSharedNetwork private function.
+    friend class AssignableNetwork;
+
 public:
 
     /// @brief Holds optional information about relay.
@@ -233,16 +240,6 @@ public:
     /// @param type type of the lease
     uint64_t getPoolCapacity(Lease::Type type) const;
 
-    /// @brief Sets name of the network interface for directly attached networks
-    ///
-    /// @param iface_name name of the interface
-    void setIface(const std::string& iface_name);
-
-    /// @brief Network interface name used to reach subnet (or "" for remote
-    /// subnets)
-    /// @return network interface name for directly attached subnets or ""
-    std::string getIface() const;
-
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
     ///
@@ -347,6 +344,41 @@ public:
     /// @param mode mode to be set
     void setHostReservationMode(HRMode mode) {
         host_reservation_mode_ = mode;
+    }
+
+    /// @brief Retrieves pointer to a shared network associated with a subnet.
+    ///
+    /// By implementing it as a template function we overcome a need to
+    /// include shared_network.h header file to specify return type explicitly.
+    /// The header can't be included because it would cause circular dependency
+    /// between subnet.h and shared_network.h.
+    ///
+    /// This method uses an argument to hold a return value to allow the compiler
+    /// to infer the return type without a need to call this function with an
+    /// explicit return type as template argument.
+    ///
+    /// @param [out] shared_network Pointer to the shared network where returned
+    /// value should be assigned.
+    ///
+    /// @tparam Type of the shared network, i.e. @ref SharedNetwork4 or a
+    /// @ref SharedNetwork6.
+    template<typename SharedNetworkPtrType>
+    void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
+        shared_network = boost::dynamic_pointer_cast<
+            typename SharedNetworkPtrType::element_type>(shared_network_);
+    }
+
+private:
+
+    /// @brief Assigns shared network to a subnet.
+    ///
+    /// This method replaces any shared network associated with a subnet with
+    /// a new shared network.
+    ///
+    /// @param shared_network Pointer to a new shared network to be associated
+    /// with the subnet.
+    void setSharedNetwork(const NetworkPtr& shared_network) {
+        shared_network_ = shared_network;
     }
 
 protected:
@@ -518,10 +550,11 @@ protected:
     ///
     /// See @ref HRMode type for details.
     HRMode host_reservation_mode_;
-private:
 
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
+
+    NetworkPtr shared_network_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
