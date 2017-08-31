@@ -1047,12 +1047,6 @@ Memfile_LeaseMgr::getDescription() const {
     return (std::string("In memory database with leases stored in a CSV file."));
 }
 
-bool Memfile_LeaseMgr::startTransaction() {
-  LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-            DHCPSRV_MEMFILE_BEGIN_TRANSACTION);
-  return true;
-}
-
 void
 Memfile_LeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_COMMIT);
