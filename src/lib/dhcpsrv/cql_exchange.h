@@ -139,7 +139,7 @@ public:
     /// @name Time conversion:
     /// @{
     static void convertToDatabaseTime(const time_t& cltt,
-                                      const cass_int64_t& valid_lifetime,
+                                      const uint32_t& valid_lifetime,
                                       cass_int64_t& expire);
     static void convertFromDatabaseTime(const cass_int64_t& expire,
                                         const cass_int64_t& valid_lifetime,

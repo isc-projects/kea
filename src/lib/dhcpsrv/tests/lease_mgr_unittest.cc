@@ -268,12 +268,6 @@ public:
         return (make_pair(uint32_t(0), uint32_t(0)));
     }
 
-    /// @brief Start Transaction
-    ///
-    /// Start transaction for database operations. On databases that don't
-    /// support transactions, this is a no-op.
-    virtual bool startTransaction() { return true; };
-
     /// @brief Commit transactions
     virtual void commit() {
     }
