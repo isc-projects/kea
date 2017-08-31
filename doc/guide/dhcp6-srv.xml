@@ -456,7 +456,7 @@ be followed by a comma and another object definition.</para>
 </screen>
   For Cassandra, multiple contact points can be provided:
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"contact_points": "<replaceable>remote-host-name[, ...]</replaceable>" </userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"contact-points": "<replaceable>remote-host-name[, ...]</replaceable>" </userinput>, ... }, ... }
 </screen>
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv6 server.  In this case, set the value to the empty string:
@@ -465,7 +465,7 @@ be followed by a comma and another object definition.</para>
 </screen>
   For Cassandra:
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"contact_points": ""</userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"contact-points": ""</userinput>, ... }, ... }
 </screen>
   Should the database use a port different than default, it may be
   specified as well:

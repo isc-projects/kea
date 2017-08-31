@@ -3204,7 +3204,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                    {\n"
 "                        \"always-send\": false,\n"
 "                        \"code\": 7,\n"
-"                        \"csv-format\": false,\n"
+"                        \"csv-format\": true,\n"
 "                        \"data\": \"01\",\n"
 "                        \"name\": \"preference\",\n"
 "                        \"space\": \"dhcp6\"\n"
