@@ -33,10 +33,6 @@ namespace dhcp {
 static constexpr size_t HOSTNAME_MAX_LEN = 255u;
 static constexpr size_t ADDRESS6_TEXT_MAX_LEN = 39u;
 
-static const CassBlob NULL_HWADDR({0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
-static const CassBlob NULL_CLIENTID({0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
-static const CassBlob NULL_PRIVACY_HASH({0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
-
 /// @brief Common CQL and Lease Data Methods
 ///
 /// The CqlLease4Exchange and CqlLease6Exchange classes provide the
@@ -343,7 +339,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         }
 
         // valid lifetime: bigint
-        valid_lifetime_ = static_cast<cass_int32_t>(lease_->valid_lft_);
+        valid_lifetime_ = static_cast<cass_int64_t>(lease_->valid_lft_);
 
         // expire: bigint
         // The lease structure holds the client last transmission time
@@ -442,7 +438,7 @@ CqlLease4Exchange::createBindForUpdate(
         }
 
         // valid lifetime: bigint
-        valid_lifetime_ = static_cast<cass_int32_t>(lease_->valid_lft_);
+        valid_lifetime_ = static_cast<cass_int64_t>(lease_->valid_lft_);
 
         // expire: bigint
         // The lease structure holds the client last transmission time
@@ -599,14 +595,6 @@ CqlLease4Exchange::retrieve() {
         HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
-
-        if (hwaddr->hwaddr_ == NULL_HWADDR) {
-            hwaddr->hwaddr_.clear();
-        }
-
-        if (client_id_ == NULL_CLIENTID) {
-            client_id_.clear();
-        }
 
         Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
                                     client_id_.size(), valid_lifetime_, 0, 0,
@@ -1202,7 +1190,7 @@ CqlLease6Exchange::createBindForDelete(
     // Set up the structures for the various components of the lease4
     // structure.
     try {
-        // address: int
+        // address: varchar
         // The address in the Lease structure is an IOAddress object.
         // Convert this to an integer for storage.
         address_ = address.toText();
@@ -1324,10 +1312,6 @@ CqlLease6Exchange::retrieve() {
         if (hwaddr_.size()) {
             hwaddr.reset(new HWAddr(hwaddr_, hwtype_));
             hwaddr->source_ = hwaddr_source_;
-        }
-
-        if (hwaddr && hwaddr->hwaddr_ == NULL_HWADDR) {
-            hwaddr.reset();
         }
 
         // Create the lease and set the cltt (after converting from the

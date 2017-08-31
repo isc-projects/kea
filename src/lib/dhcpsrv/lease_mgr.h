@@ -64,7 +64,6 @@ namespace dhcp {
 /// @brief Pair containing major and minor versions
 typedef std::pair<uint32_t, uint32_t> VersionPair;
 
-
 /// @brief Contains a single row of lease statistical data
 ///
 /// The contents of the row consist of a subnet ID, a lease

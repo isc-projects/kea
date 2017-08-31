@@ -704,11 +704,12 @@ CqlExchange::~CqlExchange() {
 
 void
 CqlExchange::convertToDatabaseTime(const time_t& cltt,
-                                   const cass_int64_t& valid_lifetime,
+                                   const uint32_t& valid_lifetime,
                                    cass_int64_t& expire) {
-    // Calculate expiry time. Store it in the 64-bit value so as we can
+    // Calculate expire time. Store it in the 64-bit value so as we can
     // detect overflows.
-    cass_int64_t expire_time = static_cast<cass_int64_t>(cltt) + valid_lifetime;
+    cass_int64_t expire_time = static_cast<cass_int64_t>(cltt) +
+            static_cast<cass_int64_t>(valid_lifetime);
 
     if (expire_time > DatabaseConnection::MAX_DB_TIME) {
         isc_throw(BadValue,
