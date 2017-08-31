@@ -20,13 +20,25 @@ using namespace isc::dhcp;
 
 namespace {
 
+// This test verifies that shared network can be given a name and that
+// this name can be retrieved.
+TEST(SharedNetwork4Test, getName) {
+    // Create shared network with an initial name "dog".
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    EXPECT_EQ("frog", network->getName());
+
+    // Override the name.
+    network->setName("dog");
+    EXPECT_EQ("dog", network->getName());
+}
+
 // This test verifies that an IPv4 subnet can be added to a shared network.
 // It also verifies that two subnets with the same ID can't be added to
 // a shared network and that a single subnet can't be added to two different
 // shared subnets.
 TEST(SharedNetwork4Test, addSubnet4) {
     // First, create a network.
-    SharedNetwork4Ptr network(new SharedNetwork4());
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
 
     // Try to add null pointer. It should throw.
     Subnet4Ptr subnet;
@@ -56,7 +68,7 @@ TEST(SharedNetwork4Test, addSubnet4) {
 
     // Create another network and try to add a subnet to it. It should fail
     // because the subnet is already associated with the first network.
-    SharedNetwork4Ptr network2(new SharedNetwork4());
+    SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
     ASSERT_THROW(network2->add(subnet), InvalidOperation);
 }
 
@@ -68,7 +80,7 @@ TEST(SharedNetwork4Test, delSubnet4) {
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
                                    SubnetID(2)));
 
-    SharedNetwork4Ptr network(new SharedNetwork4());
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
     ASSERT_NO_THROW(network->add(subnet1));
     ASSERT_NO_THROW(network->add(subnet2));
 
@@ -105,7 +117,7 @@ TEST(SharedNetwork4Test, delSubnet4) {
 // This test verifies that it is possible to iterate over the subnets
 // associated with a particular shared network.
 TEST(SharedNetwork4Test, getNextSubnet) {
-    SharedNetwork4Ptr network(new SharedNetwork4());
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
 
     // Create three subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
@@ -169,13 +181,25 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     }
 }
 
+// This test verifies that shared network can be given a name and that
+// this name can be retrieved.
+TEST(SharedNetwork6Test, getName) {
+    // Create shared network with an initial name "dog".
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    EXPECT_EQ("frog", network->getName());
+
+    // Override the name.
+    network->setName("dog");
+    EXPECT_EQ("dog", network->getName());
+}
+
 // This test verifies that an IPv6 subnet can be added to a shared network.
 // It also verifies that two subnets with the same ID can't be added to
 // a shared network and that a single subnet can't be added to two different
 // shared subnets.
 TEST(SharedNetwork6Test, addSubnet6) {
     // First, create a network.
-    SharedNetwork6Ptr network(new SharedNetwork6());
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
 
     // Try to add null pointer. It should throw.
     Subnet6Ptr subnet;
@@ -205,7 +229,7 @@ TEST(SharedNetwork6Test, addSubnet6) {
 
     // Create another network and try to add a subnet to it. It should fail
     // because the subnet is already associated with the first network.
-    SharedNetwork6Ptr network2(new SharedNetwork6());
+    SharedNetwork6Ptr network2(new SharedNetwork6("dog"));
     ASSERT_THROW(network2->add(subnet), InvalidOperation);
 }
 
@@ -217,7 +241,7 @@ TEST(SharedNetwork6Test, delSubnet6) {
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 16, 10, 20, 30, 40,
                                    SubnetID(2)));
 
-    SharedNetwork6Ptr network(new SharedNetwork6());
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
     ASSERT_NO_THROW(network->add(subnet1));
     ASSERT_NO_THROW(network->add(subnet2));
 
@@ -254,7 +278,7 @@ TEST(SharedNetwork6Test, delSubnet6) {
 // This test verifies that it is possible to iterate over the subnets
 // associated with a particular shared network.
 TEST(SharedNetwork6Test, getNextSubnet) {
-    SharedNetwork6Ptr network(new SharedNetwork6());
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
 
     // Create three subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
