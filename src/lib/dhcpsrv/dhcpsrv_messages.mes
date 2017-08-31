@@ -321,24 +321,6 @@ host from a CQL database by IPv4 criteria.
 An informational message logged when a DHCP server is about to retrieve one
 host from a CQL database by IPv6 criteria.
 
-% DHCPSRV_CQL_HOST_LOOKUP_BY_ID_4S Looking up primary key "id" filtering by host identifier.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_4S Looking up primary key "id" filtering by host IPv4 address.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_6S Looking up primary key "id" filtering by host IPv4 subnet ID.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_ID_6S Looking up primary key "id" filtering by host identifier type.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_4A Looking up primary key "id" filtering by host IPv4 address.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_4S_4A Looking up primary key "id" filtering by host IPv6 subnet ID.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_6S_6A Looking up primary key "id" filtering by reserved prefix address.
-
-% DHCPSRV_CQL_HOST_LOOKUP_BY_6A_6L Looking up primary key "id" filtering by reserved prefix length.
-
-% DHCPSRV_CQL_HOST_SYNC_RESERVATIONS Syncing reservations in database with kea.conf.
-
 % DHCPSRV_CQL_LEASE_EXCEPTION_THROWN Exception thrown during Cassandra operation: %1
 
 % DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET received bad DHCPv4o6 packet: %1
