@@ -4,12 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
 #include <exceptions/exceptions.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <vector>
@@ -181,6 +183,68 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     }
 }
 
+// This test verifies that unparsing shared network returns valid structure.
+TEST(SharedNetwork4Test, unparse) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+
+    // Set interface name.
+    network->setIface("eth1");
+
+    // Add several subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                   SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
+                                   SubnetID(2)));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    std::string expected = "{\n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"name\": \"frog\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"subnet4\": [\n"
+        "      {\n"
+        "        \"4o6-interface\": \"\",\n"
+        "        \"4o6-interface-id\": \"\",\n"
+        "        \"4o6-subnet\": \"\",\n"
+        "        \"id\": 1,\n"
+        "        \"match-client-id\": true,\n"
+        "        \"next-server\": \"0.0.0.0\",\n"
+        "        \"option-data\": [ ],\n"
+        "        \"pools\": [ ],\n"
+        "        \"rebind-timer\": 20,\n"
+        "        \"relay\": {\n"
+        "          \"ip-address\": \"0.0.0.0\"\n"
+        "        },\n"
+        "        \"renew-timer\": 10,\n"
+        "        \"reservation-mode\": \"all\",\n"
+        "        \"subnet\": \"10.0.0.0/8\",\n"
+        "        \"valid-lifetime\": 30\n"
+        "      },\n"
+        "      {\n"
+        "        \"4o6-interface\": \"\",\n"
+        "        \"4o6-interface-id\": \"\",\n"
+        "        \"4o6-subnet\": \"\",\n"
+        "        \"id\": 2,\n"
+        "        \"match-client-id\": true,\n"
+        "        \"next-server\": \"0.0.0.0\",\n"
+        "        \"option-data\": [ ],\n"
+        "        \"pools\": [ ],\n"
+        "        \"rebind-timer\": 20,\n"
+        "        \"relay\": {\n"
+        "          \"ip-address\": \"0.0.0.0\"\n"
+        "        },\n"
+        "        \"renew-timer\": 10,\n"
+        "        \"reservation-mode\": \"all\",\n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"valid-lifetime\": 30\n"
+        "      }\n"
+        "    ]\n"
+        "}\n";
+
+    test::runToElementTest<SharedNetwork4>(expected, *network);
+}
+
 // This test verifies that shared network can be given a name and that
 // this name can be retrieved.
 TEST(SharedNetwork6Test, getName) {
@@ -340,6 +404,62 @@ TEST(SharedNetwork6Test, getNextSubnet) {
             }
         }
     }
+}
+
+// This test verifies that unparsing shared network returns valid structure.
+TEST(SharedNetwork6Test, unparse) {
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    network->setIface("eth1");
+
+    // Add several subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
+                                   40, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 16, 10, 20, 30, 40,
+                                   SubnetID(2)));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    std::string expected = "{\n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"name\": \"frog\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"subnet6\": [\n"
+        "      {\n"
+        "        \"id\": 1,\n"
+        "        \"option-data\": [ ],\n"
+        "        \"pd-pools\": [ ],\n"
+        "        \"pools\": [ ],\n"
+        "        \"preferred-lifetime\": 30,\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"rebind-timer\": 20,\n"
+        "        \"relay\": {\n"
+        "          \"ip-address\": \"::\"\n"
+        "        },\n"
+        "        \"renew-timer\": 10,\n"
+        "        \"reservation-mode\": \"all\",\n"
+        "        \"subnet\": \"2001:db8:1::/64\",\n"
+        "        \"valid-lifetime\": 40\n"
+        "      },\n"
+        "      {\n"
+        "        \"id\": 2,\n"
+        "        \"option-data\": [ ],\n"
+        "        \"pd-pools\": [ ],\n"
+        "        \"pools\": [ ],\n"
+        "        \"preferred-lifetime\": 30,\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"rebind-timer\": 20,\n"
+        "        \"relay\": {\n"
+        "          \"ip-address\": \"::\"\n"
+        "        },\n"
+        "        \"renew-timer\": 10,\n"
+        "        \"reservation-mode\": \"all\",\n"
+        "        \"subnet\": \"3000::/16\",\n"
+        "        \"valid-lifetime\": 40\n"
+        "      }\n"
+        "    ]\n"
+        "}\n";
+
+    test::runToElementTest<SharedNetwork6>(expected, *network);
 }
 
 } // end of anonymous namespace

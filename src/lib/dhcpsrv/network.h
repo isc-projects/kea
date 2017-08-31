@@ -7,6 +7,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+#include <cc/cfg_to_element.h>
+#include <cc/data.h>
+#include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_4o6.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -30,8 +34,13 @@ namespace dhcp {
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network {
+class Network : public data::CfgToElement {
 public:
+
+    /// @brief Constructor.
+    Network()
+        : iface_name_(), cfg_option_(new CfgOption()) {
+    }
 
     /// @brief Virtual destructor.
     ///
@@ -58,11 +67,29 @@ public:
         return (iface_name_);
     };
 
+    /// @brief Returns pointer to the option data configuration for this subnet.
+    CfgOptionPtr getCfgOption() {
+        return (cfg_option_);
+    }
+
+    /// @brief Returns const pointer to the option data configuration for this
+    /// subnet.
+    ConstCfgOptionPtr getCfgOption() const {
+        return (cfg_option_);
+    }
+
+    /// @brief Unparses network object.
+    ///
+    /// @return A pointer to unparsed network configuration.
+    virtual data::ElementPtr toElement() const;
+
 protected:
 
     /// @brief Holds interface name for which this network is selected.
     std::string iface_name_;
 
+    /// @brief Pointer to the option data configuration for this subnet.
+    CfgOptionPtr cfg_option_;
 };
 
 /// @brief Pointer to the @ref Network object.

@@ -6,10 +6,23 @@
 
 #include <dhcpsrv/shared_network.h>
 
+using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace isc {
 namespace dhcp {
+
+ElementPtr
+SharedNetwork::toElement() const {
+    ElementPtr map = Network::toElement();
+
+    // Set shared network name.
+    if (!name_.empty()) {
+        map->set("name", Element::create(name_));
+    }
+
+    return (map);
+}
 
 NetworkPtr
 SharedNetwork4::sharedFromThis() {
@@ -38,6 +51,20 @@ SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
                                          current_subnet));
 }
 
+ElementPtr
+SharedNetwork4::toElement() const {
+    ElementPtr map = SharedNetwork::toElement();
+
+    ElementPtr subnet4 = Element::createList();
+    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
+        subnet4->add((*subnet)->toElement());
+    }
+
+    map->set("subnet4", subnet4);
+
+    return (map);
+}
+
 NetworkPtr
 SharedNetwork6::sharedFromThis() {
     return (shared_from_this());
@@ -63,6 +90,20 @@ SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
                               const Subnet6Ptr& current_subnet) const {
     return (SharedNetwork::getNextSubnet(subnets_, first_subnet,
                                          current_subnet));
+}
+
+ElementPtr
+SharedNetwork6::toElement() const {
+    ElementPtr map = SharedNetwork::toElement();
+
+    ElementPtr subnet6 = Element::createList();
+    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
+        subnet6->add((*subnet)->toElement());
+    }
+
+    map->set("subnet6", subnet6);
+
+    return (map);
 }
 
 } // end of namespace isc::dhcp

@@ -141,7 +141,7 @@ libkea_dhcpsrv_la_SOURCES += mysql_host_data_source.cc mysql_host_data_source.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
-libkea_dhcpsrv_la_SOURCES += network.h
+libkea_dhcpsrv_la_SOURCES += network.cc network.h
 
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
