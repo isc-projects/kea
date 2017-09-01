@@ -245,6 +245,32 @@ TEST(SharedNetwork4Test, unparse) {
     test::runToElementTest<SharedNetwork4>(expected, *network);
 }
 
+// This test verifies that when the shared network object is destroyed,
+// the subnets belonging to this shared network will not hold the pointer
+// to the destroyed network.
+TEST(SharedNetwork4Test, destructSharedNetwork) {
+    // Create a network and add a subnet to it.
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    Subnet4Ptr subnet(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                  SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // Get the pointer to the network from subnet.
+    SharedNetwork4Ptr subnet_to_network;
+    subnet->getSharedNetwork(subnet_to_network);
+    ASSERT_TRUE(subnet_to_network);
+
+    // Reset the pointer to not hold the reference to the shared network.
+    subnet_to_network.reset();
+
+    // Destroy the network object.
+    network.reset();
+
+    // The reference to the network from the subnet should be lost.
+    subnet->getSharedNetwork(subnet_to_network);
+    ASSERT_FALSE(subnet_to_network);
+}
+
 // This test verifies that shared network can be given a name and that
 // this name can be retrieved.
 TEST(SharedNetwork6Test, getName) {
@@ -461,5 +487,32 @@ TEST(SharedNetwork6Test, unparse) {
 
     test::runToElementTest<SharedNetwork6>(expected, *network);
 }
+
+// This test verifies that when the shared network object is destroyed,
+// the subnets belonging to this shared network will not hold the pointer
+// to the destroyed network.
+TEST(SharedNetwork6Test, destructSharedNetwork) {
+    // Create a network and add a subnet to it.
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
+                                  40, SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // Get the pointer to the network from subnet.
+    SharedNetwork6Ptr subnet_to_network;
+    subnet->getSharedNetwork(subnet_to_network);
+    ASSERT_TRUE(subnet_to_network);
+
+    // Reset the pointer to not hold the reference to the shared network.
+    subnet_to_network.reset();
+
+    // Destroy the network object.
+    network.reset();
+
+    // The reference to the network from the subnet should be lost.
+    subnet->getSharedNetwork(subnet_to_network);
+    ASSERT_FALSE(subnet_to_network);
+}
+
 
 } // end of anonymous namespace
