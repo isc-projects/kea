@@ -13,6 +13,11 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/random_access_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -256,6 +261,39 @@ protected:
 
 };
 
+/// @brief A tag for accessing random access index.
+struct SharedNetworkRandomAccessIndexTag { };
+
+/// @brief A tag for accessing index by shared network name.
+struct SharedNetworkNameIndexTag { };
+
+/// @brief Multi index container holding shared networks.
+///
+/// This is multi index container can hold pointers to @ref SharedNetwork4
+/// or @ref SharedNetwork6 objects. It provides indexes for shared network
+/// lookups using properties such as shared network's name.
+///
+/// @tparam SharedNetworkType Type of the shared network: @ref SharedNetwork4
+/// or @ref SharedNetwork6.
+template<typename SharedNetworkType>
+using SharedNetworkCollection = boost::multi_index_container<
+    // Multi index container holds pointers to the shared networks.
+    boost::shared_ptr<SharedNetworkType>,
+    boost::multi_index::indexed_by<
+        // First is the random access index allowing for accessing objects
+        // just like we'd do with vector.
+        boost::multi_index::random_access<
+            boost::multi_index::tag<SharedNetworkRandomAccessIndexTag>
+        >,
+        // Second index allows for access by shared network's name.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SharedNetworkNameIndexTag>,
+            boost::multi_index::const_mem_fun<SharedNetwork, std::string,
+                                              &SharedNetwork::getName>
+        >
+    >
+>;
+
 /// @brief Shared network holding IPv4 subnets.
 ///
 /// Specialization of the @ref SharedNetwork class for IPv4 subnets.
@@ -335,11 +373,13 @@ private:
 
     /// @brief Collection of IPv4 subnets within shared network.
     Subnet4Collection subnets_;
-
 };
 
 /// @brief Pointer to @ref SharedNetwork4 object.
 typedef boost::shared_ptr<SharedNetwork4> SharedNetwork4Ptr;
+
+/// @brief A collection of @ref SharedNetwork4 objects.
+typedef SharedNetworkCollection<SharedNetwork4> SharedNetwork4Collection;
 
 /// @brief Shared network holding IPv6 subnets.
 ///
@@ -424,6 +464,9 @@ private:
 
 /// @brief Pointer to @ref SharedNetwork6 object.
 typedef boost::shared_ptr<SharedNetwork6> SharedNetwork6Ptr;
+
+/// @brief A collection of @ref SharedNetwork6 objects.
+typedef SharedNetworkCollection<SharedNetwork6> SharedNetwork6Collection;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
