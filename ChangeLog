@@ -1,7 +1,7 @@
 1291.	[func]		fdupont
 	The configuration parser now checks for mandatory parameters that
 	are missing.
-	(Trac #5124, git xxx)
+	(Trac #5124, git af0f3d50a835f64a5f8a47c47ef464b119a49643)
 
 1290.	[bug]		marcin
 	Corrected a bug causing illegal memory access while
