@@ -119,6 +119,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp4Parser::make_SUB_POOL4(driver.loc_);
         case Parser4Context::PARSER_HOST_RESERVATION:
             return isc::dhcp::Dhcp4Parser::make_SUB_RESERVATION(driver.loc_);
+        case Parser4Context::PARSER_OPTION_DEFS:
+            return isc::dhcp::Dhcp4Parser::make_SUB_OPTION_DEFS(driver.loc_);
+        case Parser4Context::PARSER_OPTION_DEF:
+            return isc::dhcp::Dhcp4Parser::make_SUB_OPTION_DEF(driver.loc_);
         case Parser4Context::PARSER_OPTION_DATA:
             return isc::dhcp::Dhcp4Parser::make_SUB_OPTION_DATA(driver.loc_);
         case Parser4Context::PARSER_HOOKS_LIBRARY:

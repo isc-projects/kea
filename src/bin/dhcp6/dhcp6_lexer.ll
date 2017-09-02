@@ -121,6 +121,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp6Parser::make_SUB_PD_POOL(driver.loc_);
         case Parser6Context::PARSER_HOST_RESERVATION:
             return isc::dhcp::Dhcp6Parser::make_SUB_RESERVATION(driver.loc_);
+        case Parser6Context::PARSER_OPTION_DEFS:
+            return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DEFS(driver.loc_);
+        case Parser6Context::PARSER_OPTION_DEF:
+            return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DEF(driver.loc_);
         case Parser6Context::PARSER_OPTION_DATA:
             return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DATA(driver.loc_);
         case Parser6Context::PARSER_HOOKS_LIBRARY:

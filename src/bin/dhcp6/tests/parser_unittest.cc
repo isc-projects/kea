@@ -506,6 +506,13 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_DHCP6,
               "<string>:2.2-21: got unexpected keyword "
               "\"preferred_lifetime\" in Dhcp6 map.");
+
+    // missing parameter
+    testError("{ \"name\": \"foo\",\n"
+              "  \"code\": 123 }\n",
+              Parser6Context::PARSER_OPTION_DEF,
+              "missing parameter 'type' (<string>:1:1) "
+              "[option-def map between <string>:1:1 and <string>:2:15]");
 }
 
 // Check unicode escapes
