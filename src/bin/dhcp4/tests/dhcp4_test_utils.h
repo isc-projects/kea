@@ -536,11 +536,11 @@ parseDHCP4(const std::string& in, bool verbose = false)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseOPTION_DEF(const std::string& in, bool verbose = false)
+parseOPTION_DEFS(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser4Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEF));
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEFS));
     }
     catch (const std::exception& ex) {
         if (verbose) {

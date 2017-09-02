@@ -76,6 +76,9 @@ public:
         /// This will parse the input as host-reservation.
         PARSER_HOST_RESERVATION,
 
+        /// This will parse the input option definitions (for tests).
+        PARSER_OPTION_DEFS,
+
         /// This will parse the input as option definition.
         PARSER_OPTION_DEF,
 
@@ -178,6 +181,19 @@ public:
     /// @param loc location in bison format
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
+
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter expected to be present
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc ocation of the closing curly bracket
+    /// @throw Dhcp6ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
 
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {

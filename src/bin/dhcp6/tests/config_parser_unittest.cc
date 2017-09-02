@@ -1998,7 +1998,13 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
     int num_msgs = sizeof(config)/sizeof(char*);
     for (unsigned int i = 0; i < num_msgs; i++) {
         // Convert JSON string to Elements.
-        ASSERT_NO_THROW(json = parseDHCP6(config[i]));
+        // The 3 first configs should fail to parse.
+        if (i < 3) {
+            EXPECT_THROW(parseDHCP6(config[i]), Dhcp6ParseError);
+            json = parseJSON(config[i]);
+        } else {
+            ASSERT_NO_THROW(json = parseDHCP6(config[i]));
+        }
 
         // Configuration processing should fail without a throw.
         ASSERT_NO_THROW(x = configureDhcp6Server(srv_, json));
@@ -2024,7 +2030,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -2064,9 +2070,8 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
 
     // Let's apply empty configuration. This removes the option definitions
     // configuration and should result in removal of the option 100 from the
-    // libdhcp++.
-    config = "{ }";
-    json = parseOPTION_DEF(config);
+    // libdhcp++. Note DHCP6 or OPTION_DEFS parsers do not accept empty maps.
+    json.reset(new MapElement());
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
@@ -2089,7 +2094,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -2143,7 +2148,7 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the option definitions do not exist yet.
@@ -2211,7 +2216,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Make sure that the option definition does not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -2250,7 +2255,7 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -2291,7 +2296,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -2331,7 +2336,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2356,7 +2361,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2382,7 +2387,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2408,7 +2413,7 @@ TEST_F(Dhcp6ParserTest, optionIntegerTypes) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2434,7 +2439,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2463,7 +2468,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2489,7 +2494,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2519,7 +2524,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
         getCfgOptionDef()->get(DHCP6_OPTION_SPACE, 100);
@@ -2553,7 +2558,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp6\""
         "  } ]"
         "}";
-    json = parseOPTION_DEF(config);
+    json = parseOPTION_DEFS(config);
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
@@ -2575,7 +2580,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp6\""
         "  } ]"
         "}";
-    json = parseOPTION_DEF(config);
+    json = parseOPTION_DEFS(config);
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
