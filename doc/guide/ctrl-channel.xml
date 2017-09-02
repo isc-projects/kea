@@ -1,12 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
-]>
-
-  <chapter id="ctrl-channel">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="ctrl-channel">
     <title>Management API</title>
 
     <para>A classic approach to daemon configuration assumes that
@@ -29,8 +22,7 @@
 
     <para>The DHCPv4 and DHCPv6 servers receive commands over the
     unix domain sockets. The details how to configure these sockets,
-    see <xref linkend="dhcp4-ctrl-channel" /> and <xref
-    linkend="dhcp6-ctrl-channel" />. While it is possible control
+    see <xref linkend="dhcp4-ctrl-channel"/> and <xref linkend="dhcp6-ctrl-channel"/>. While it is possible control
     the servers directly using unix domain sockets it requires that
     the controlling client be running on the same machine as
     the server. In order to connect remotely SSH is usually used to
@@ -74,7 +66,7 @@
       </simpara>
     </note>
 
-    <section id="ctrl-channel-syntax">
+    <section xml:id="ctrl-channel-syntax">
     <title>Data Syntax</title>
     <para>Communication over the control channel is conducted using JSON
     structures. If configured, Kea will open a socket and listen
@@ -205,7 +197,7 @@
 
     </section>
 
-    <section id="ctrl-channel-client">
+    <section xml:id="ctrl-channel-client">
     <title>Using the Control Channel</title>
 
     <para>Kea development team is actively working on providing client applications
@@ -240,10 +232,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     </section>
 
-    <section id="commands-common">
+    <section xml:id="commands-common">
       <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
 
-      <section id="command-build-report">
+      <section xml:id="command-build-report">
         <title>build-report</title>
         <para>
           The <emphasis>build-report</emphasis> command returns
@@ -259,7 +251,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
       </section> <!-- end of command-build-report -->
 
-      <section id="command-config-get">
+      <section xml:id="command-config-get">
         <title>config-get</title>
 
         <para>The <emphasis>config-get</emphasis> command retrieves the current
@@ -286,7 +278,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </para>
       </section> <!-- end of command-config-get -->
 
-      <section id="command-config-reload">
+      <section xml:id="command-config-reload">
         <title>config-reload</title>
 
         <para>The <emphasis>config-reload</emphasis> command instructs
@@ -315,7 +307,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </section> <!-- end of command-config-reload -->
 
 
-      <section id="command-config-test">
+      <section xml:id="command-config-test">
         <title>config-test</title>
 
       <para>
@@ -333,7 +325,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 {
     "command": "config-test",
     "arguments":  {
-        "&#60;server&#62;": {
+        "&lt;server&gt;": {
         },
         "Logging": {
         }
@@ -341,7 +333,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 }
 </screen>
       <para>
-    where &#60;server&#62; is the configuration element name for a given server
+    where &lt;server&gt; is the configuration element name for a given server
     such as "Dhcp4" or "Dhcp6".  For example:
       </para>
 <screen>
@@ -365,12 +357,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     or
 
-    {"result": 1, "text": "unsupported parameter: BOGUS (&#60;string&#62;:16:26)" }
+    {"result": 1, "text": "unsupported parameter: BOGUS (&lt;string&gt;:16:26)" }
 </screen>
       </para>
     </section> <!-- end of command-config-test -->
 
-      <section id="command-config-write">
+      <section xml:id="command-config-write">
         <title>config-write</title>
 
         <para>The <emphasis>config-write</emphasis> command instructs Kea server
@@ -393,7 +385,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </para>
       </section> <!-- end of command-config-write -->
 
-      <section id="command-leases-reclaim">
+      <section xml:id="command-leases-reclaim">
         <title>leases-reclaim</title>
         <para>
           The <emphasis>leases-reclaim</emphasis> command instructs the server to
@@ -420,7 +412,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         about the processing of expired leases (leases reclamation).</para>
       </section>
 
-      <section id="command-libreload">
+      <section xml:id="command-libreload">
         <title>libreload</title>
 
         <para>
@@ -443,7 +435,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
        </para>
      </section> <!-- end of command-libreload -->
 
-      <section id="command-list-commands">
+      <section xml:id="command-list-commands">
       <title>list-commands</title>
 
       <para>
@@ -464,7 +456,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-list-commands -->
 
-    <section id="command-config-set">
+    <section xml:id="command-config-set">
       <title>config-set</title>
 
       <para>
@@ -480,7 +472,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 {
     "command": "config-set",
     "arguments":  {
-        "&#60;server&#62;": {
+        "&lt;server&gt;": {
         },
         "Logging": {
         }
@@ -488,7 +480,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 }
 </screen>
       <para>
-    where &#60;server&#62; is the configuration element name for a given server
+    where &lt;server&gt; is the configuration element name for a given server
     such as "Dhcp4" or "Dhcp6".  For example:
       </para>
 <screen>
@@ -518,12 +510,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     or
 
-    {"result": 1, "text": "unsupported parameter: BOGUS (&#60;string&#62;:16:26)" }
+    {"result": 1, "text": "unsupported parameter: BOGUS (&lt;string&gt;:16:26)" }
 </screen>
       </para>
     </section> <!-- end of command-config-set -->
 
-    <section id="command-shutdown">
+    <section xml:id="command-shutdown">
       <title>shutdown</title>
 
       <para>
@@ -543,7 +535,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-shutdown -->
 
-      <section id="command-version-get">
+      <section xml:id="command-version-get">
         <title>version-get</title>
         <para>
           The <emphasis>version-get</emphasis> command returns on the control
@@ -561,7 +553,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     </section> <!-- end of commands supported by both servers -->
 
-    <section id="agent-commands">
+    <section xml:id="agent-commands">
       <title>Commands Supported by Control Agent</title>
       <para>The following commands listed in <xref linkend="commands-common"/>
       are also supported by the Control Agent, i.e. when the

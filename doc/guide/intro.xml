@@ -1,12 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
-]>
-
-  <chapter id="intro">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="intro">
     <title>Introduction</title>
     <para>
       Kea is the next generation of DHCP software developed by ISC.
@@ -22,7 +15,7 @@
     </para>
 
     <para>
-      This guide covers Kea version &__VERSION__;.
+      This guide covers Kea version .
     </para>
 
     <section>
@@ -39,7 +32,7 @@
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
 
-    <section id="required-software">
+    <section xml:id="required-software">
       <title>Required Software at Run-time</title>
 
       <para>
@@ -57,9 +50,9 @@
             <simpara>
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
-        crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
+        crypto library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
         version 1.8 or later. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
+        OpenSSL crypto library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
         version 1.0.1 or later.
             </simpara>
         </listitem>
@@ -67,7 +60,7 @@
         <listitem>
             <simpara>
         Kea uses the log4cplus C++ logging library
-        (<ulink url="http://log4cplus.sourceforge.net/"/>).
+        (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://log4cplus.sourceforge.net/">http://log4cplus.sourceforge.net/</uri>).
         It requires log4cplus version 1.0.3 or later.
             </simpara>
         </listitem>
@@ -98,7 +91,7 @@
       </itemizedlist>
     </section>
 
-    <section id="kea_software">
+    <section xml:id="kea_software">
       <title>Kea Software</title>
       <para>
         Kea is modular.  Part of this modularity is
@@ -113,7 +106,7 @@
 
           <listitem>
             <simpara>
-              <command>keactrl</command> &mdash;
+              <command>keactrl</command> —
               Tool to start, stop, reconfigure, and report status
               for the Kea servers.
             </simpara>
@@ -121,7 +114,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp4</command> &mdash;
+              <command>kea-dhcp4</command> —
               The DHCPv4 server process.
               This process responds to DHCPv4 queries from clients.
             </simpara>
@@ -129,7 +122,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp6</command> &mdash;
+              <command>kea-dhcp6</command> —
               The DHCPv6 server process.
               This process responds to DHCPv6 queries from clients.
             </simpara>
@@ -137,7 +130,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp-ddns</command> &mdash;
+              <command>kea-dhcp-ddns</command> —
               The DHCP Dynamic DNS process.
               This process acts as an intermediary between the DHCP servers
               and DNS servers. It receives name update requests from the DHCP
@@ -147,7 +140,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-admin</command> &mdash;
+              <command>kea-admin</command> —
               A useful tool for database backend maintenance (creating a new
               database, checking versions, upgrading etc.)
             </simpara>
@@ -155,7 +148,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-lfc</command> &mdash;
+              <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
               While it can be run standalone, it is normally run as and when 
@@ -165,7 +158,7 @@
 
           <listitem>
             <simpara>
-              <command>perfdhcp</command> &mdash;
+              <command>perfdhcp</command> —
               A DHCP benchmarking tool which simulates multiple clients to
               test both DHCPv4 and DHCPv6 server performance.
             </simpara>

@@ -1,22 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-
-  <!-- Note: Please use the following terminology:
-       - daemon - one process (e.g. kea-dhcp4)
-       - component - one piece of code within a daemon (e.g. libdhcp or hooks)
-       - server - currently equal to daemon, but the difference will be more
-                  prominent once we add client or relay support
-       - logger - one instance of isc::log::Logger
-       - structure - an element in config file (e.g. "Dhcp4")
-
-       Do not use:
-       - module => daemon
-    -->
-
-<chapter id="logging">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="logging">
   <title>Logging</title>
 
   <section>
@@ -77,7 +60,7 @@
         severity or greater to standard output. There is also a small
         time window after Kea has been started, but has not yet read its
         configuration. Logging in this short period can be controlled
-        using environment variables. For details, see <xref linkend="logging-during-startup"></xref>.
+        using environment variables. For details, see <xref linkend="logging-during-startup"/>.
       </para>
 
       <para>
@@ -171,8 +154,8 @@
           that might match a particular logger, the specification with the
           more specific logger name takes precedence. For example, if there
           are entries for both <quote>kea-dhcp4</quote> and
-          <quote>kea-dhcp4.dhcpsrv</quote>, the DHCPv4 server &mdash; and all
-          libraries it uses that are not dhcpsrv &mdash; will log messages
+          <quote>kea-dhcp4.dhcpsrv</quote>, the DHCPv4 server — and all
+          libraries it uses that are not dhcpsrv — will log messages
           according to the configuration in the first entry
           (<quote>kea-dhcp4</quote>).
         </para>
@@ -631,7 +614,7 @@
             Only relevant when the destination is a file. This is maximum size
             in bytes that a log file may reach.  When the maximum size is
             reached, the file is renamed and a new file opened. For example,
-            a ".1" is appended to the name &mdash; if a ".1" file exists, it
+            a ".1" is appended to the name — if a ".1" file exists, it
             is renamed ".2", etc. This is referred to as rotation.
           </para>
           <para>
@@ -717,7 +700,7 @@
 
     </section>
 
-    <section id="logging-message-format">
+    <section xml:id="logging-message-format">
       <title>Logging Message Format</title>
       <para>
         Each message written  to the configured logging destinations comprises a
@@ -784,9 +767,9 @@
               <para>
                 The message identification.  Every message in Kea has a unique
                 identification, which can be used as an index into the
-                <ulink url="kea-messages.html"><citetitle>Kea Messages
-                Manual</citetitle></ulink>
-                (<ulink url="http://kea.isc.org/docs/kea-messages.html" />)
+                <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="kea-messages.html"><citetitle>Kea Messages
+                Manual</citetitle></link>
+                (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs/kea-messages.html">http://kea.isc.org/docs/kea-messages.html</uri>)
                 from which more information can be obtained.
               </para>
             </listitem>
@@ -808,7 +791,7 @@
       </para>
     </section>
 
-    <section id="logging-during-startup">
+    <section xml:id="logging-during-startup">
       <title>Logging During Kea Startup</title>
       <para>
         The logging configuration is specified in the configuration file.

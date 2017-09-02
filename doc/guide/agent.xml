@@ -1,13 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2017;" >
-]>
-
-<chapter id="kea-ctrl-agent">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-ctrl-agent">
   <title>Kea Control Agent</title>
 
-  <section id="agent-overview">
+  <section xml:id="agent-overview">
     <title>Overview</title>
     <para>Kea Control Agent (CA) is a daemon, first included in Kea 1.2, which
     exposes a RESTful control interface for managing Kea servers. The daemon
@@ -23,7 +18,7 @@
     libraries must implement callouts for 'control_command_receive' hook point.
     Details about creating new hook libraries and supported hook points can be
     found in
-    <ulink url="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</ulink>.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
     </para>
 
     <para>
@@ -54,7 +49,7 @@
     </para>
   </section>
 
-  <section id="agent-configuration">
+  <section xml:id="agent-configuration">
     <title>Configuration</title>
     <para>The following example demonstrates the basic CA configuration.</para>
     <para>
@@ -162,7 +157,7 @@
     </para>
   </section>
 
-  <section id="agent-secure-connection">
+  <section xml:id="agent-secure-connection">
     <title>Secure Connections</title>
     <para>
       Control Agent doesn't natively support secure HTTP connections like
@@ -269,7 +264,7 @@ http {
 
   </section>
 
-  <section id="agent-limitations">
+  <section xml:id="agent-limitations">
     <title>Control Agent Limitations</title>
     <para>
       Control Agent is a new component, first released in Kea 1.2. In
@@ -286,7 +281,7 @@ http {
     </para>
   </section>
 
-  <section id="agent-launch">
+  <section xml:id="agent-launch">
     <title>Starting Control Agent</title>
     <para>
       The CA is started by running its binary and specifying the configuration file
@@ -297,7 +292,7 @@ $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea.conf
     </para>
   </section>
 
-  <section id="agent-clients">
+  <section xml:id="agent-clients">
     <title>Connecting to the Control Agent</title>
     <para>For an example of tool that can take advantage of the
     RESTful API, see <xref linkend="kea-shell"/>.</para>
