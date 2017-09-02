@@ -1,3 +1,8 @@
+1291.	[func]		fdupont
+	The configuration parser now checks for mandatory parameters that
+	are missing.
+	(Trac #5124, git xxx)
+
 1290.	[bug]		marcin
 	Corrected a bug causing illegal memory access while
 	retrieving server hostname and boot file name fields from
@@ -18,10 +23,11 @@
 	(Trac #5315, git d259f330a1690b20eb368f6252f5da2cdb6187de)
 
 1287.	[bug]		tmark
-	Logger configuration now correctly uses maxsize and maxver parameters,
-	allowing log rotation to function properly.  Prior to this these values
-	were not being propagatedc downard, causing log rotation to always be
-	disabled.  The defaults for maxsize and maxver are 10Mb and 1 respectively.
+	Logger configuration now correctly uses maxsize and maxver
+	parameters, allowing log rotation to function properly.  Prior to
+	this these values were not being propagatedc downard, causing log
+	rotation to always be disabled.  The defaults for maxsize and
+	maxver are 10Mb and 1 respectively.
 	(Trac #5324, git 75f148458bdeeed27eb877cc2c3ce3069b152f38)
 
 1286.	[func]		marcin
@@ -56,9 +62,9 @@
 	(Trac #5333, git xxx)
 
 1281.	[build]		tmark
-	Configure script now correctly recognizes static boost_system library as
-	well as checks for the presence of static glibc static libraries when
-	--enable-satic-link is specified.
+	Configure script now correctly recognizes static boost_system
+	library as well as checks for the presence of static glibc static
+	libraries when --enable-satic-link is specified.
 	(Trac #5337, git 42548148cbeaaa285519e121f493d52607f1e8a0)
 
 1280.	[build]		waltsteverson
