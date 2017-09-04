@@ -84,7 +84,7 @@
     // explanation is user-context. This is a structure that you can define
     // in subnets and pools. It is parsed by Kea, but not used directly.
     // It is intended to keep anything you may want to put there - comments,
-    // extra designations, floor or depatment names etc. This structures
+    // extra designations, floor or department names etc. These structures
     // will be made available to Kea hooks.
     "subnet4": [
         {
