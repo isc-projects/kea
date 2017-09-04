@@ -542,6 +542,12 @@ Subnet::toElement() const {
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
+    // Add user-context, but only if  defined. Omit if it was not.
+    ConstElementPtr ctx = getContext();
+    if (ctx) {
+        map->set("user-context", ctx);
+    }
+
     return (map);
 }
 

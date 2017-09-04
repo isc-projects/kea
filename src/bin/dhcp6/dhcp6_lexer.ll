@@ -784,6 +784,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
     case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::SUBNET6:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
