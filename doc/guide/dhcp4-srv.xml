@@ -3915,7 +3915,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     </section>
 
       <section>
-        <title>User context in IPv4 pools</title>
+        <title>User contexts in IPv4</title>
         <para>
           Kea allows loading hook libraries that sometimes could benefit from
           additional parameters. If such a parameter is specific to the whole
@@ -3923,11 +3923,23 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
           However, sometimes there is a need to specify parameters that are
           different for each pool.
         </para>
+
+        <para>
+          User contexts can store arbitrary data as long as it is valid JSON
+          syntax. Some hook libraries may expect specific formatting, though.
+          Please consult specific hook library documentation for details.
+        </para>
+
+        <para>
+          User contexts can be specified on either subnet or pool level. One
+          other useful usage is the ability to store comments or descriptions.
+        </para>
+
         <para>
           Let's consider an imaginary case of devices that have color LED
           lights. Depending on their location, they should glow red, blue or
           green. It would be easy to write a hook library that would send
-          specific values as maybe vendor option. However, the server has to
+          specific values as maybe a vendor option. However, the server has to
           have some way to specify that value for each pool. This need is
           addressed by user contexts. In essence, any user data can specified
           in the user context as long as it is a valid JSON map. For example,
@@ -3939,8 +3951,22 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     "subnet4": [
         {
             "subnet": "192.0.2.0/24",
-            "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            <userinput>"user-context": { "colour": "red" }</userinput>
+            "pools": [ {
+                "pool": "192.0.2.10 - 192.0.2.20",
+                // This is pool specific user context
+                <userinput>"user-context": { "colour": "red" }</userinput>
+            } ],
+
+            // This is a subnet specific user context. You can put whatever type
+            // of information you want as long as it is a valid JSON.
+            <userinput>"user-context": {
+                "comment": "network on the second floor",
+                "last-modified": "2017-09-04 13:32",
+                "description": "you can put here anything you like",
+                "phones": [ "x1234", "x2345" ],
+                "devices-registered": 42,
+                "billing": false
+            }</userinput>
         },
         ...
     ],
@@ -3951,11 +3977,10 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         <para>
           It should be noted that Kea will not use that information, but will
           simply store and make it available to hook libraries. It is up to the
-        hook library to extract that information and make use of it.</para>
+          hook library to extract that information and make use of it.
+        </para>
         <para>
-          Currently only pools allow definition of user contexts, but this
-          concept is expected to be enhanced to other structures in the future.
-          For more background information, see <xref linkend="user-context"/>
+          For more background information, see <xref linkend="user-context"/>.
         </para>
     </section>
 

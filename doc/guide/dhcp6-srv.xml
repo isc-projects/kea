@@ -4071,7 +4071,7 @@ If not specified, the default value is:
     </section>
 
       <section>
-        <title>User context in IPv6 pools</title>
+        <title>User contexts in IPv6</title>
         <para>
           Kea allows loading hook libraries that sometimes could benefit from
           additional parameters. If such a parameter is specific to the whole
@@ -4079,6 +4079,18 @@ If not specified, the default value is:
           However, sometimes there is a need to specify parameters that are
           different for each pool.
         </para>
+
+        <para>
+          User contexts can store arbitrary data as long as it is valid JSON
+          syntax. Some hook libraries may expect specific formatting, though.
+          Please consult specific hook library documentation for details.
+        </para>
+
+        <para>
+          User contexts can be specified on either subnet or pool level. One
+          other useful usage is the ability to store comments or descriptions.
+        </para>
+
         <para>
           Let's consider an example where certain parameters are supposed
           to be delivered to clients in form of additional options,
@@ -4093,20 +4105,31 @@ If not specified, the default value is:
           parameters used by the hook library when it is loaded.
           An example configuration could look as follows:
           <screen>
-"Dhcp4": {
+"Dhcp6": {
     "subnet6": [ {
         "pd-pools": [
         {
             "prefix":  "2001:db8::",
             "prefix-len": 56,
             "delegated-len": 64,
+
+            // This is a pool specific context.
             <userinput>"user-context": {
                 "threshold-percent": 85,
                 "v4-network": "192.168.0.0/16",
                 "v4-overflow": "10.0.0.0/16"
             }</userinput>
         } ],
-        "subnet": "2001:db8::/32"
+        "subnet": "2001:db8::/32",
+
+        // This is a subnet specific context. You can put any type of
+        // information here as long as it is a valid JSON.
+        <userinput>"user-context": {
+            "comment": "Those v4-v6 migration technologies are tricky.",
+            "experimental": true,
+            "billing-department": 42,
+            "contact-points": [ "Alice", "Bob" ]
+        }</userinput>
     } ],
     ...
 }</screen>
@@ -4119,10 +4142,7 @@ If not specified, the default value is:
           and make use of it.
         </para>
         <para>
-          Currently only address and prefix pools allow definition of user
-          contexts, but this concept is expected to be enhanced to other
-          structures in the future. For more background information, see <xref
-          linkend="user-context"/>
+          For more background information, see <xref linkend="user-context"/>.
         </para>
     </section>
 

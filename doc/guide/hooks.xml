@@ -1969,9 +1969,17 @@ If the subnet exists the response will be similar to this:
       and makes it available for the hook libraries.
       </para>
       <para>
-        As of Kea 1.2, the only structures that allow user contexts are address
-        and prefix pools, but it is expected to extend other structures with the
-        user context capability.
+        Another use case for user contexts may be storing comments and other
+        information that will be retained by Kea. Regular comments are discarded
+        when configuration is loaded, but user contexts are retained. This is
+        useful if you want your comments to survive config-set, config-get
+        operations for example.
+      </para>
+      <para>
+        As of Kea 1.3, the structures that allow user contexts are pools of all
+        types (addresses and prefixes) and subnets. These are supported in both
+        DHCPv4 and DHCPv6. It is expected that other structures will be extended
+        in the future to provide the user context capability.
       </para>
     </section>
 
