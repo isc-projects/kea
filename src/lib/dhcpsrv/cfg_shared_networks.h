@@ -105,6 +105,13 @@ protected:
 
 /// @brief Represents configuration of IPv4 shared networks.
 class CfgSharedNetworks4 : public CfgSharedNetworks<SharedNetwork4Ptr> {
+public:
+
+    /// @brief Returns pointer to all configured shared networks.
+    const SharedNetwork4Collection* getAll() const {
+        return (&networks_);
+    }
+
 };
 
 /// @brief Pointer to the configuration of IPv4 shared networks.
@@ -112,6 +119,12 @@ typedef boost::shared_ptr<CfgSharedNetworks4> CfgSharedNetworks4Ptr;
 
 /// @brief Represents configuration of IPv6 shared networks.
 class CfgSharedNetworks6 : public CfgSharedNetworks<SharedNetwork6Ptr> {
+public:
+
+    /// @brief Returns pointer to all configured shared networks.
+    const SharedNetwork6Collection* getAll() const {
+        return (&networks_);
+    }
 };
 
 /// @brief Pointer to the configuration of IPv6 shared networks.

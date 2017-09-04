@@ -809,6 +809,28 @@ Subnets4ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
     return (cnt);
 }
 
+size_t
+Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
+                                data::ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet4ConfigParser parser;
+        Subnet4Ptr subnet = parser.parse(subnet_json);
+        if (subnet) {
+            try {
+                subnets.push_back(subnet);
+                ++cnt;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
+        }
+    }
+    return (cnt);
+}
+
+
 //**************************** Pool6Parser *********************************
 
 PoolPtr
@@ -1054,6 +1076,25 @@ Subnets6ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
         try {
             cfg->getCfgSubnets6()->add(subnet);
             cnt++;
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << subnet_json->getPosition() << ")");
+        }
+    }
+    return (cnt);
+}
+
+size_t
+Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
+                                ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet6ConfigParser parser;
+        Subnet6Ptr subnet = parser.parse(subnet_json);
+        try {
+            subnets.push_back(subnet);
+            ++cnt;
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << subnet_json->getPosition() << ")");
