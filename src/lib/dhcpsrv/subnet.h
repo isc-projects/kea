@@ -349,6 +349,17 @@ public:
         host_reservation_mode_ = mode;
     }
 
+    /// @brief Sets user context.
+    /// @param ctx user context to be stored.
+    void setContext(const data::ConstElementPtr& ctx) {
+        user_context_ = ctx;
+    }
+
+    /// @brief Returns const pointer to the user context.
+    data::ConstElementPtr getContext() const {
+        return (user_context_);
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -518,6 +529,9 @@ protected:
     ///
     /// See @ref HRMode type for details.
     HRMode host_reservation_mode_;
+
+    /// @brief Pointer to the user context (may be NULL)
+    data::ConstElementPtr user_context_;
 private:
 
     /// @brief Pointer to the option data configuration for this subnet.
