@@ -59,7 +59,6 @@
 // This entry marks options 110, 120 and 130 as RSOO-enabled.
    "relay-supplied-options": [ "110", "120", "130" ],
 
-
     // This defines a control socket. If defined, Kea will open a UNIX socket
     // and will listen for incoming commands. See section 15 of the Kea User's
     // Guide for list of supported commands.
@@ -79,11 +78,28 @@
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-// The following list defines subnets. Each subnet consists of at
-// least subnet and pool entries.
+  // The following list defines subnets. Each subnet consists of at
+  // least subnet and pool entries. Note the user-context being
+  // used throughout the definitions. This is something that is not
+  // being used by Kea, it's simply parsed and stored in appropriate
+  // structures. You can put anything you want in the user-context
+  // as long as it is a valid JSON.
   "subnet6": [
     {
-      "pools": [ { "pool": "2001:db8:1::/80" } ],
+        "pools": [
+            {
+                "pool": "2001:db8:1::/80",
+
+                // This is user context specified for this particular
+                // pool. You can use it to describe the pool in some way.
+                // Just keep in mind that the structure will not be used
+                // by Kea itself. It will be made available to hooks if
+                // they want to use it.
+                "user-context": { "department": "engineering" }
+            }],
+
+        // Here's the user-context for the whole subnet.
+        "user-context": { "comment": "Floor one, west wing" },
 
 // This defines PD (prefix delegation) pools. In this case
 // we have only one pool. That consists of /64 prefixes
@@ -95,7 +111,13 @@
           "prefix-len": 48,
           "delegated-len": 64,
           "excluded-prefix": "2001:db8:abcd:1234::",
-          "excluded-prefix-len": 62
+          "excluded-prefix-len": 62,
+
+          // Another user-context for this PD pool. Again, you can put anything
+          // you want in there as long as it's valid JSON.
+          "user-context": {
+              "purpose": "For CPE devices"
+          }
       }
       ],
       "subnet": "2001:db8:1::/64",
