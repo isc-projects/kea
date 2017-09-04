@@ -9,19 +9,41 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/shared_network.h>
 
 namespace isc {
 namespace dhcp {
 
-class SharedNetworkParser : public isc::data::SimpleParser {
+/// @brief Implements parser for IPv4 shared networks.
+class SharedNetwork4Parser {
 public:
 
-    virtual ~SharedNetworkParser();
-
-    virtual SharedNetworkPtr
+    /// @brief Parses shared configuration information for IPv4 shared network.
+    ///
+    /// @param shared_network_data Data element holding shared network
+    /// configuration to be parsed.
+    ///
+    /// @return Pointer to an object representing shared network.
+    /// @throw DhcpConfigError when shared network configuration is invalid.
+    SharedNetwork4Ptr
     parse(const data::ConstElementPtr& shared_network_data);
+};
 
+/// @brief Implements parser for IPv6 shared networks.
+class SharedNetwork6Parser {
+public:
+
+    /// @brief Parses shared configuration information for IPv6 shared network.
+    ///
+    /// @param shared_network_data Data element holding shared network
+    /// configuration to be parsed.
+    ///
+    /// @return Pointer to an object representing shared network.
+    /// @throw DhcpConfigError when shared network configuration is invalid.
+    SharedNetwork6Ptr
+    parse(const data::ConstElementPtr& shared_network_data);
 };
 
 } // enf of namespace isc::dhcp

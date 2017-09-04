@@ -672,6 +672,14 @@ public:
     /// @param subnets_list pointer to a list of IPv4 subnets
     /// @return number of subnets created
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet4 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet4Collection& subnets,
+                 data::ConstElementPtr subnets_list);
 };
 
 /// @brief Parser for IPv6 pool definitions.
@@ -849,6 +857,15 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet6 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet6Collection& subnets,
+                 data::ConstElementPtr subnets_list);
+
 };
 
 /// @brief Parser for  D2ClientConfig
