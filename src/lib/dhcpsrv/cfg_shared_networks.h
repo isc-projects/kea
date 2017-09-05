@@ -29,7 +29,7 @@ namespace dhcp {
 ///
 /// @tparam Type of the pointer to a shared network, i.e. @ref SharedNetwork4Ptr
 /// or @ref SharedNetwork6Ptr.
-template<typename SharedNetworkPtrType>
+template<typename SharedNetworkPtrType, typename SharedNetworkCollection>
 class CfgSharedNetworks : public data::CfgToElement {
 public:
 
@@ -99,12 +99,12 @@ public:
 protected:
 
     /// @brief Multi index container holding shared networks.
-    SharedNetworkCollection<typename SharedNetworkPtrType::element_type>
-    networks_;
+    SharedNetworkCollection networks_;
 };
 
 /// @brief Represents configuration of IPv4 shared networks.
-class CfgSharedNetworks4 : public CfgSharedNetworks<SharedNetwork4Ptr> {
+class CfgSharedNetworks4 : public CfgSharedNetworks<SharedNetwork4Ptr,
+                                                    SharedNetwork4Collection> {
 public:
 
     /// @brief Returns pointer to all configured shared networks.
@@ -118,7 +118,8 @@ public:
 typedef boost::shared_ptr<CfgSharedNetworks4> CfgSharedNetworks4Ptr;
 
 /// @brief Represents configuration of IPv6 shared networks.
-class CfgSharedNetworks6 : public CfgSharedNetworks<SharedNetwork6Ptr> {
+class CfgSharedNetworks6 : public CfgSharedNetworks<SharedNetwork6Ptr,
+                                                    SharedNetwork6Collection> {
 public:
 
     /// @brief Returns pointer to all configured shared networks.
