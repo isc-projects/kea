@@ -1,3 +1,9 @@
+1292.	[func]		tomek
+	User contexts are now supported for subnets. This adds a new
+	functionality, but also makes the existing documentation example
+	correct.
+	(Trac #5350, git 828ecb6dbdaaedd97d2af79dfa9b7f4845d3a049)
+
 1291.	[func]		fdupont
 	The configuration parser now checks for mandatory parameters that
 	are missing.
