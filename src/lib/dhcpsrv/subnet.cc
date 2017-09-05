@@ -162,8 +162,8 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    : Subnet(prefix, length, id), Network(),
-      siaddr_(IOAddress("0.0.0.0")), match_client_id_(true) {
+    : Subnet(prefix, length, id), Network4(),
+      siaddr_(IOAddress("0.0.0.0")) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
@@ -415,8 +415,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    :Subnet(prefix, length, id), Network(),
-     preferred_(preferred_lifetime), rapid_commit_(false) {
+    : Subnet(prefix, length, id), Network6() {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
@@ -427,6 +426,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     // Timers.
     setT1(t1);
     setT2(t2);
+    setPreferred(preferred_lifetime);
     setValid(valid_lifetime);
 }
 
@@ -457,12 +457,9 @@ data::ElementPtr
 Subnet4::toElement() const {
     // Prepare the map
     ElementPtr map = Subnet::toElement();
-    ElementPtr network_map = Network::toElement();
+    ElementPtr network_map = Network4::toElement();
 
     merge(map, network_map);
-
-    // Set match-client-id
-    map->set("match-client-id", Element::create(getMatchClientId()));
 
     // Set DHCP4o6
     const Cfg4o6& d4o6 = get4o6();
@@ -488,29 +485,9 @@ data::ElementPtr
 Subnet6::toElement() const {
     // Prepare the map
     ElementPtr map = Subnet::toElement();
-    ElementPtr network_map = Network::toElement();
+    ElementPtr network_map = Network6::toElement();
 
     merge(map, network_map);
-
-    // Set interface-id
-    const OptionPtr& ifaceid = getInterfaceId();
-    if (ifaceid) {
-        std::vector<uint8_t> bin = ifaceid->getData();
-        std::string ifid;
-        ifid.resize(bin.size());
-        if (!bin.empty()) {
-            std::memcpy(&ifid[0], &bin[0], bin.size());
-        }
-        map->set("interface-id", Element::create(ifid));
-    } 
-
-    // Set preferred-lifetime
-    map->set("preferred-lifetime",
-             Element::create(static_cast<long long>
-                             (getPreferred().get())));
-    // Set rapid-commit
-    bool rapid_commit = getRapidCommit();
-    map->set("rapid-commit", Element::create(rapid_commit));
 
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_NA);

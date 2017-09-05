@@ -102,5 +102,43 @@ Network::toElement() const {
     return (map);
 }
 
+ElementPtr
+Network4::toElement() const {
+    ElementPtr map = Network::toElement();
+
+    // Set match-client-id
+    map->set("match-client-id", Element::create(getMatchClientId()));
+
+    return (map);
+}
+
+ElementPtr
+Network6::toElement() const {
+    ElementPtr map = Network::toElement();
+
+    // Set preferred-lifetime
+    map->set("preferred-lifetime",
+             Element::create(static_cast<long long>
+                             (getPreferred().get())));
+
+    // Set interface-id
+    const OptionPtr& ifaceid = getInterfaceId();
+    if (ifaceid) {
+        std::vector<uint8_t> bin = ifaceid->getData();
+        std::string ifid;
+        ifid.resize(bin.size());
+        if (!bin.empty()) {
+            std::memcpy(&ifid[0], &bin[0], bin.size());
+        }
+        map->set("interface-id", Element::create(ifid));
+    }
+
+    // Set rapid-commit
+    bool rapid_commit = getRapidCommit();
+    map->set("rapid-commit", Element::create(rapid_commit));
+
+    return (map);
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

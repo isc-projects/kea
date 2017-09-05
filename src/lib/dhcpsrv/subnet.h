@@ -9,7 +9,6 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcp/option.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
@@ -359,7 +358,7 @@ typedef boost::shared_ptr<Subnet> SubnetPtr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
-class Subnet4 : public Subnet, public Network {
+class Subnet4 : public Subnet, public Network4 {
 public:
 
     /// @brief Constructor with all parameters
@@ -390,23 +389,6 @@ public:
     ///
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
-
-    /// @brief Sets the flag indicating if the client identifier should be
-    /// used to identify the client's lease.
-    ///
-    /// @param match If this value is true, the client identifiers are not
-    /// used for lease lookup.
-    void setMatchClientId(const bool match) {
-        match_client_id_ = match;
-    }
-
-    /// @brief Returns the flag indicating if the client identifiers should
-    /// be used to identify the client's lease.
-    ///
-    /// @return true if client identifiers should be used, false otherwise.
-    bool getMatchClientId() const {
-        return (match_client_id_);
-    }
 
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
@@ -448,10 +430,6 @@ private:
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
 
-    /// @brief Should server use client identifiers for client lease
-    /// lookup.
-    bool match_client_id_;
-
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;
 };
@@ -466,7 +444,7 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
-class Subnet6 : public Subnet, public Network {
+class Subnet6 : public Subnet, public Network6 {
 public:
 
     /// @brief Constructor with all parameters
@@ -488,42 +466,6 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
-    /// @brief Returns preferred lifetime (in seconds)
-    ///
-    /// @return a triplet with preferred lifetime
-    Triplet<uint32_t> getPreferred() const {
-        return (preferred_);
-    }
-
-    /// @brief sets interface-id option (if defined)
-    ///
-    /// @param ifaceid pointer to interface-id option
-    void setInterfaceId(const OptionPtr& ifaceid) {
-        interface_id_ = ifaceid;
-    }
-
-    /// @brief returns interface-id value (if specified)
-    /// @return interface-id option (if defined)
-    OptionPtr getInterfaceId() const {
-        return interface_id_;
-    }
-
-    /// @brief Enables or disables Rapid Commit option support for the subnet.
-    ///
-    /// @param rapid_commit A boolean value indicating that the Rapid Commit
-    /// option support is enabled (if true), or disabled (if false).
-    void setRapidCommit(const bool rapid_commit) {
-        rapid_commit_ = rapid_commit;
-    };
-
-    /// @brief Returns boolean value indicating that the Rapid Commit option
-    /// is supported or unsupported for the subnet.
-    ///
-    /// @return true if the Rapid Commit option is supported, false otherwise.
-    bool getRapidCommit() const {
-        return (rapid_commit_);
-    }
-
     /// @brief Unparse a subnet object.
     ///
     /// @return A pointer to unparsed subnet configuration.
@@ -544,19 +486,6 @@ private:
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const;
-
-    /// @brief specifies optional interface-id
-    OptionPtr interface_id_;
-
-    /// @brief a triplet with preferred lifetime (in seconds)
-    Triplet<uint32_t> preferred_;
-
-    /// @brief A flag indicating if Rapid Commit option is supported
-    /// for this subnet.
-    ///
-    /// It's default value is false, which indicates that the Rapid
-    /// Commit is disabled for the subnet.
-    bool rapid_commit_;
 
 };
 

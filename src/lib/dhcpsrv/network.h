@@ -11,6 +11,7 @@
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <dhcp/classify.h>
+#include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/triplet.h>
@@ -304,12 +305,117 @@ typedef boost::shared_ptr<Network> NetworkPtr;
 /// @brief Weak pointer to the @ref Network object.
 typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
+/// @brief Specialization of the @ref Network object for DHCPv4 case.
 class Network4 : public Network {
 public:
+
+    /// @brief Constructor.
+    Network4()
+        : Network(), match_client_id_(true) {
+    }
+
+    /// @brief Returns the flag indicating if the client identifiers should
+    /// be used to identify the client's lease.
+    ///
+    /// @return true if client identifiers should be used, false otherwise.
+    bool getMatchClientId() const {
+        return (match_client_id_);
+    }
+
+    /// @brief Sets the flag indicating if the client identifier should be
+    /// used to identify the client's lease.
+    ///
+    /// @param match If this value is true, the client identifiers are not
+    /// used for lease lookup.
+    void setMatchClientId(const bool match) {
+        match_client_id_ = match;
+    }
+
+    /// @brief Unparses network object.
+    ///
+    /// @return A pointer to unparsed network configuration.
+    virtual data::ElementPtr toElement() const;
+
+private:
+
+    /// @brief Should server use client identifiers for client lease
+    /// lookup.
+    bool match_client_id_;
 };
 
+/// @brief Specialization of the @ref Network object for DHCPv6 case.
 class Network6 : public Network {
 public:
+
+    /// @brief Constructor.
+    Network6()
+        : Network(), preferred_(0), interface_id_(), rapid_commit_(false) {
+        setRelayInfo(asiolink::IOAddress::IPV6_ZERO_ADDRESS());
+    }
+
+    /// @brief Returns preferred lifetime (in seconds)
+    ///
+    /// @return a triplet with preferred lifetime
+    Triplet<uint32_t> getPreferred() const {
+        return (preferred_);
+    }
+
+    /// @brief Sets new preferred lifetime for a network.
+    ///
+    /// @param valid New preferred lifetime in seconds.
+    void setPreferred(const Triplet<uint32_t>& preferred) {
+        preferred_ = preferred;
+    }
+
+    /// @brief Returns interface-id value (if specified)
+    ///
+    /// @return interface-id option (if defined)
+    OptionPtr getInterfaceId() const {
+        return (interface_id_);
+    }
+
+    /// @brief sets interface-id option (if defined)
+    ///
+    /// @param ifaceid pointer to interface-id option
+    void setInterfaceId(const OptionPtr& ifaceid) {
+        interface_id_ = ifaceid;
+    }
+
+    /// @brief Returns boolean value indicating that the Rapid Commit option
+    /// is supported or unsupported for the subnet.
+    ///
+    /// @return true if the Rapid Commit option is supported, false otherwise.
+    bool getRapidCommit() const {
+        return (rapid_commit_);
+    }
+
+    /// @brief Enables or disables Rapid Commit option support for the subnet.
+    ///
+    /// @param rapid_commit A boolean value indicating that the Rapid Commit
+    /// option support is enabled (if true), or disabled (if false).
+    void setRapidCommit(const bool rapid_commit) {
+        rapid_commit_ = rapid_commit;
+    };
+
+    /// @brief Unparses network object.
+    ///
+    /// @return A pointer to unparsed network configuration.
+    virtual data::ElementPtr toElement() const;
+
+private:
+
+    /// @brief a triplet with preferred lifetime (in seconds)
+    Triplet<uint32_t> preferred_;
+
+    /// @brief specifies optional interface-id
+    OptionPtr interface_id_;
+
+    /// @brief A flag indicating if Rapid Commit option is supported
+    /// for this network.
+    ///
+    /// It's default value is false, which indicates that the Rapid
+    /// Commit is disabled for the subnet.
+    bool rapid_commit_;
 };
 
 } // end of namespace isc::dhcp
