@@ -7,12 +7,16 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+#include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <dhcp/classify.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
+#include <dhcpsrv/triplet.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <cstdint>
 #include <string>
 
 namespace isc {
@@ -38,9 +42,52 @@ namespace dhcp {
 class Network : public data::CfgToElement {
 public:
 
+    /// @brief Holds optional information about relay.
+    ///
+    /// In some cases it is beneficial to have additional information about
+    /// a relay configured in the subnet. For now, the structure holds only
+    /// IP address, but there may potentially be additional parameters added
+    /// later, e.g. relay interface-id or relay-id.
+    struct RelayInfo {
+
+        /// @brief default and the only constructor
+        ///
+        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
+        RelayInfo(const isc::asiolink::IOAddress& addr);
+
+        /// @brief IP address of the relay
+        isc::asiolink::IOAddress addr_;
+    };
+
+    /// @brief Specifies allowed host reservation mode.
+    ///
+    typedef enum  {
+
+        /// None - host reservation is disabled. No reservation types
+        /// are allowed.
+        HR_DISABLED,
+
+        /// Only out-of-pool reservations is allowed. This mode
+        /// allows AllocEngine to skip reservation checks when
+        /// dealing with with addresses that are in pool.
+        HR_OUT_OF_POOL,
+
+        /// Both out-of-pool and in-pool reservations are allowed. This is the
+        /// most flexible mode, where sysadmin have biggest liberty. However,
+        /// there is a non-trivial performance penalty for it, as the
+        /// AllocEngine code has to check whether there are reservations, even
+        /// when dealing with reservations from within the dynamic pools.
+        HR_ALL
+    } HRMode;
+
+    /// Pointer to the RelayInfo structure
+    typedef boost::shared_ptr<Network::RelayInfo> RelayInfoPtr;
+
     /// @brief Constructor.
     Network()
-        : iface_name_(), cfg_option_(new CfgOption()) {
+        : iface_name_(), relay_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
+          white_list_(), t1_(0), t2_(0), valid_(0),
+          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
     }
 
     /// @brief Virtual destructor.
@@ -68,6 +115,133 @@ public:
         return (iface_name_);
     };
 
+    /// @brief Sets information about relay
+    ///
+    /// In some situations where there are shared subnets (i.e. two different
+    /// subnets are available on the same physical link), there is only one
+    /// relay that handles incoming requests from clients. In such a case,
+    /// the usual subnet selection criteria based on relay belonging to the
+    /// subnet being selected are no longer sufficient and we need to explicitly
+    /// specify a relay. One notable example of such uncommon, but valid
+    /// scenario is a cable network, where there is only one CMTS (one relay),
+    /// but there are 2 distinct subnets behind it: one for cable modems
+    /// and another one for CPEs and other user equipment behind modems.
+    /// From manageability perspective, it is essential that modems get addresses
+    /// from different subnet, so users won't tinker with their modems.
+    ///
+    /// Setting this parameter is not needed in most deployments.
+    /// This structure holds IP address only for now, but it is expected to
+    /// be extended in the future.
+    ///
+    /// @param relay structure that contains relay information
+    void setRelayInfo(const RelayInfo& relay) {
+        relay_ = relay;
+    }
+
+    /// @brief Returns const reference to relay information
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return const reference to the relay information
+    const RelayInfo& getRelayInfo() const {
+        return (relay_);
+    }
+
+    /// @brief Checks whether this network supports client that belongs to
+    /// specified classes.
+    ///
+    /// This method checks whether a client that belongs to given classes can
+    /// use this network. For example, if this class is reserved for client
+    /// class "foo" and the client belongs to classes "foo", "bar" and "baz",
+    /// it is supported. On the other hand, client belonging to classes
+    /// "foobar" and "zyxxy" is not supported.
+    ///
+    /// @todo: Currently the logic is simple: client is supported if it belongs
+    /// to any class mentioned in white_list_. We will eventually need a
+    /// way to specify more fancy logic (e.g. to meet all classes, not just
+    /// any)
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
+    /// @brief Adds class class_name to the list of supported classes
+    ///
+    /// Also see explanation note in @ref white_list_.
+    ///
+    /// @param class_name client class to be supported by this subnet
+    void allowClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief returns the client class white list
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return client classes @ref white_list_
+    const isc::dhcp::ClientClasses& getClientClasses() const {
+        return (white_list_);
+    }
+
+    /// @brief Return valid-lifetime for addresses in that prefix
+    Triplet<uint32_t> getValid() const {
+        return (valid_);
+    }
+
+    /// @brief Sets new valid lifetime for a network.
+    ///
+    /// @param valid New valid lifetime in seconds.
+    void setValid(const Triplet<uint32_t>& valid) {
+        valid_ = valid;
+    }
+
+    /// @brief Returns T1 (renew timer), expressed in seconds
+    Triplet<uint32_t> getT1() const {
+        return (t1_);
+    }
+
+    /// @brief Sets new renew timer for a network.
+    ///
+    /// @param t1 New renew timer value in seconds.
+    void setT1(const Triplet<uint32_t>& t1) {
+        t1_ = t1;
+    }
+
+    /// @brief Returns T2 (rebind timer), expressed in seconds
+    Triplet<uint32_t> getT2() const {
+        return (t2_);
+    }
+
+    /// @brief Sets new rebind timer for a network.
+    ///
+    /// @param t2 New rebind timer value in seconds.
+    void setT2(const Triplet<uint32_t>& t2) {
+        t2_ = t2;
+    }
+
+    /// @brief Specifies what type of Host Reservations are supported.
+    ///
+    /// Host reservations may be either in-pool (they reserve an address that
+    /// is in the dynamic pool) or out-of-pool (they reserve an address that is
+    /// not in the dynamic pool). HR may also be completely disabled for
+    /// performance reasons.
+    ///
+    /// @return whether in-pool host reservations are allowed.
+    HRMode
+    getHostReservationMode() const {
+        return (host_reservation_mode_);
+    }
+
+    /// @brief Sets host reservation mode.
+    ///
+    /// See @ref getHostReservationMode for details.
+    ///
+    /// @param mode mode to be set
+    void setHostReservationMode(HRMode mode) {
+        host_reservation_mode_ = mode;
+    }
+
     /// @brief Returns pointer to the option data configuration for this subnet.
     CfgOptionPtr getCfgOption() {
         return (cfg_option_);
@@ -88,6 +262,37 @@ protected:
 
     /// @brief Holds interface name for which this network is selected.
     std::string iface_name_;
+
+    /// @brief Relay information
+    ///
+    /// See @ref RelayInfo for detailed description.
+    RelayInfo relay_;
+
+    /// @brief Optional definition of a client class
+    ///
+    /// If defined, only clients belonging to that class will be allowed to use
+    /// this particular network. The default value for this is an empty list,
+    /// which means that any client is allowed, regardless of its class.
+    ///
+    /// @todo This is just a single list of allowed classes. We'll also need
+    /// to add a black-list (only classes on the list are rejected, the rest
+    /// are allowed). Implementing this will require more fancy parser logic,
+    /// so it may be a while until we support this.
+    ClientClasses white_list_;
+
+    /// @brief a Triplet (min/default/max) holding allowed renew timer values
+    Triplet<uint32_t> t1_;
+
+    /// @brief a Triplet (min/default/max) holding allowed rebind timer values
+    Triplet<uint32_t> t2_;
+
+    /// @brief a Triplet (min/default/max) holding allowed valid lifetime values
+    Triplet<uint32_t> valid_;
+
+    /// @brief Specifies host reservation mode
+    ///
+    /// See @ref HRMode type for details.
+    HRMode host_reservation_mode_;
 
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
