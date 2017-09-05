@@ -4082,8 +4082,10 @@ If not specified, the default value is:
 
         <para>
           User contexts can store arbitrary data as long as it is valid JSON
-          syntax. Some hook libraries may expect specific formatting, though.
-          Please consult specific hook library documentation for details.
+          syntax and its top level element is a map (i.e. the data must be
+          enclosed in curly brackets). Some hook libraries may expect specific
+          formatting, though.  Please consult specific hook library
+          documentation for details.
         </para>
 
         <para>
