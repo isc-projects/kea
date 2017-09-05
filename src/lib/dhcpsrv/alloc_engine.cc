@@ -18,6 +18,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/network.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -570,7 +571,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     }
 
     // Check which host reservation mode is supported in this subnet.
-    Subnet::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
+    Network::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
 
     Lease6Collection leases;
 
@@ -597,7 +598,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // it has been reserved for us we would have already allocated a lease.
 
             ConstHostPtr host;
-            if (hr_mode != Subnet::HR_DISABLED) {
+            if (hr_mode != Network::HR_DISABLED) {
                 host = HostMgr::instance().get6(ctx.subnet_->getID(), hint);
             }
 
@@ -633,7 +634,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             if (lease->expired()) {
 
                 ConstHostPtr host;
-                if (hr_mode != Subnet::HR_DISABLED) {
+                if (hr_mode != Network::HR_DISABLED) {
                     host = HostMgr::instance().get6(ctx.subnet_->getID(), hint);
                 }
 
@@ -677,7 +678,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         /// In-pool reservations: Check if this address is reserved for someone
         /// else. There is no need to check for whom it is reserved, because if
         /// it has been reserved for us we would have already allocated a lease.
-        if (hr_mode == Subnet::HR_ALL &&
+        if (hr_mode == Network::HR_ALL &&
             HostMgr::instance().get6(ctx.subnet_->getID(), candidate)) {
 
             // Don't allocate.
@@ -847,7 +848,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     // host reservation is disabled (so there are no reserved leases),
     // just return.
     if (existing_leases.empty() || !ctx.subnet_ ||
-        (ctx.subnet_->getHostReservationMode() == Subnet::HR_DISABLED) ) {
+        (ctx.subnet_->getHostReservationMode() == Network::HR_DISABLED) ) {
         return;
     }
 

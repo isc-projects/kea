@@ -28,7 +28,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public Network {
+class Subnet : public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -241,17 +241,9 @@ protected:
     ///
     /// @param prefix subnet prefix
     /// @param len prefix length for the subnet
-    /// @param t1 T1 (renewal-time) timer, expressed in seconds
-    /// @param t2 T2 (rebind-time) timer, expressed in seconds
-    /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
-    /// @param relay optional relay information (currently with address only)
     /// @param id arbitrary subnet id, value of 0 triggers autogeneration
     /// of subnet id
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
-           const Triplet<uint32_t>& t1,
-           const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime,
-           const isc::dhcp::Subnet::RelayInfo& relay,
            const SubnetID id);
 
     /// @brief virtual destructor
@@ -367,7 +359,7 @@ typedef boost::shared_ptr<Subnet> SubnetPtr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
-class Subnet4 : public Subnet {
+class Subnet4 : public Subnet, public Network {
 public:
 
     /// @brief Constructor with all parameters
@@ -474,7 +466,7 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
-class Subnet6 : public Subnet {
+class Subnet6 : public Subnet, public Network {
 public:
 
     /// @brief Constructor with all parameters
