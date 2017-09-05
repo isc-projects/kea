@@ -50,32 +50,17 @@ namespace dhcp {
 SubnetID Subnet::static_id_ = 1;
 
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
-               const Triplet<uint32_t>& t1,
-               const Triplet<uint32_t>& t2,
-               const Triplet<uint32_t>& valid_lifetime,
-               const isc::dhcp::Subnet::RelayInfo& relay,
                const SubnetID id)
-    : Network(), id_(id == 0 ? generateNextID() : id), prefix_(prefix),
+    : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
       prefix_len_(len),
       last_allocated_ia_(lastAddrInPrefix(prefix, len)),
       last_allocated_ta_(lastAddrInPrefix(prefix, len)),
       last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
-    // Relay info.
-    setRelayInfo(relay);
-    // Timers.
-    setT1(t1);
-    setT2(t2);
-    setValid(valid_lifetime);
-
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
-}
-
-Subnet::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
-    :addr_(addr) {
 }
 
 bool
@@ -177,12 +162,18 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    : Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("0.0.0.0")), id),
+    : Subnet(prefix, length, id), Network(),
       siaddr_(IOAddress("0.0.0.0")), match_client_id_(true) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
+    // Relay info.
+    setRelayInfo(IOAddress::IPV4_ZERO_ADDRESS());
+    // Timers.
+    setT1(t1);
+    setT2(t2);
+    setValid(valid_lifetime);
 }
 
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
@@ -424,12 +415,19 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    :Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
+    :Subnet(prefix, length, id), Network(),
      preferred_(preferred_lifetime), rapid_commit_(false) {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
     }
+
+    // Relay info.
+    setRelayInfo(RelayInfo(IOAddress::IPV6_ZERO_ADDRESS()));
+    // Timers.
+    setT1(t1);
+    setT2(t2);
+    setValid(valid_lifetime);
 }
 
 void Subnet6::checkType(Lease::Type type) const {
@@ -443,7 +441,7 @@ void Subnet6::checkType(Lease::Type type) const {
 
 data::ElementPtr
 Subnet::toElement() const {
-    ElementPtr map = Network::toElement();
+    ElementPtr map = Element::createMap();
 
     // Set subnet id
     SubnetID id = getID();
@@ -452,25 +450,6 @@ Subnet::toElement() const {
     // Set subnet
     map->set("subnet", Element::create(toText()));
 
-    // Set reservation mode
-    Subnet::HRMode hrmode = getHostReservationMode();
-    std::string mode;
-    switch (hrmode) {
-    case Subnet::HR_DISABLED:
-        mode = "disabled";
-        break;
-    case Subnet::HR_OUT_OF_POOL:
-        mode = "out-of-pool";
-        break;
-    case Subnet::HR_ALL:
-        mode = "all";
-        break;
-    default:
-        isc_throw(ToElementError,
-                  "invalid host reservation mode: " << hrmode);
-    }
-    map->set("reservation-mode", Element::create(mode));
-
     return (map);
 }
 
@@ -478,6 +457,9 @@ data::ElementPtr
 Subnet4::toElement() const {
     // Prepare the map
     ElementPtr map = Subnet::toElement();
+    ElementPtr network_map = Network::toElement();
+
+    merge(map, network_map);
 
     // Set match-client-id
     map->set("match-client-id", Element::create(getMatchClientId()));
@@ -506,6 +488,9 @@ data::ElementPtr
 Subnet6::toElement() const {
     // Prepare the map
     ElementPtr map = Subnet::toElement();
+    ElementPtr network_map = Network::toElement();
+
+    merge(map, network_map);
 
     // Set interface-id
     const OptionPtr& ifaceid = getInterfaceId();

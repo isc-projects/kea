@@ -317,7 +317,7 @@ RelayInfoParser::RelayInfoParser(const Option::Universe& family)
 };
 
 void
-RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
+RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& cfg,
                        ConstElementPtr relay_info) {
     // There is only one parameter which is mandatory
     IOAddress ip = getAddress(relay_info, "ip-address");
@@ -333,7 +333,7 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
 
     // Ok, we're done with parsing. Let's store the result in the structure
     // we were given as configuration storage.
-    *cfg = isc::dhcp::Subnet::RelayInfo(ip);
+    *cfg = isc::dhcp::Network::RelayInfo(ip);
 }
 
 //****************************** PoolParser ********************************
@@ -491,7 +491,7 @@ SubnetConfigParser::SubnetConfigParser(uint16_t family)
       address_family_(family),
       options_(new CfgOption()) {
     string addr = family == AF_INET ? "0.0.0.0" : "::";
-    relay_info_.reset(new isc::dhcp::Subnet::RelayInfo(IOAddress(addr)));
+    relay_info_.reset(new isc::dhcp::Network::RelayInfo(IOAddress(addr)));
 }
 
 SubnetPtr
@@ -521,15 +521,15 @@ SubnetConfigParser::parse(ConstElementPtr subnet) {
     return (subnet_);
 }
 
-Subnet::HRMode
+Network::HRMode
 SubnetConfigParser::hrModeFromText(const std::string& txt) {
     if ( (txt.compare("disabled") == 0) ||
          (txt.compare("off") == 0) )  {
-        return (Subnet::HR_DISABLED);
+        return (Network::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
-        return (Subnet::HR_OUT_OF_POOL);
+        return (Network::HR_OUT_OF_POOL);
     } else if (txt.compare("all") == 0) {
-        return (Subnet::HR_ALL);
+        return (Network::HR_ALL);
     } else {
         isc_throw(BadValue, "Can't convert '" << txt
                   << "' into any valid reservation-mode values");
@@ -585,47 +585,6 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
                       ex.what() << " (" << params->getPosition() << ")");
         }
     }
-
-    // Now configure parameters that are common for v4 and v6:
-
-    // Get interface name. If it is defined, then the subnet is available
-    // directly over specified network interface.
-    std::string iface = getString(params, "interface");
-    if (!iface.empty()) {
-        if (!IfaceMgr::instance().getIface(iface)) {
-            ConstElementPtr error = params->get("interface");
-            isc_throw(DhcpConfigError, "Specified network interface name " << iface
-                      << " for subnet " << subnet_->toText()
-                      << " is not present in the system ("
-                      << error->getPosition() << ")");
-        }
-
-        subnet_->setIface(iface);
-    }
-
-    // Let's set host reservation mode. If not specified, the default value of
-    // all will be used.
-    try {
-        std::string hr_mode = getString(params, "reservation-mode");
-        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
-    } catch (const BadValue& ex) { 
-       isc_throw(DhcpConfigError, "Failed to process specified value "
-                  " of reservation-mode parameter: " << ex.what()
-                  << "(" << getPosition("reservation-mode", params) << ")");
-    }
-
-    // Try setting up client class.
-    string client_class = getString(params, "client-class");
-    if (!client_class.empty()) {
-        subnet_->allowClientClass(client_class);
-    }
-
-    // Here globally defined options were merged to the subnet specific
-    // options but this is no longer the case (they have a different
-    // and not consecutive priority).
-
-    // Copy options to the subnet configuration.
-    options_->copyTo(*subnet_->getCfgOption());
 }
 
 //****************************** Subnet4ConfigParser *************************
@@ -739,6 +698,38 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                   << next_server << "(" << pos << ")");
     }
 
+    // Get interface name. If it is defined, then the subnet is available
+    // directly over specified network interface.
+    std::string iface = getString(params, "interface");
+    if (!iface.empty()) {
+        if (!IfaceMgr::instance().getIface(iface)) {
+            ConstElementPtr error = params->get("interface");
+            isc_throw(DhcpConfigError, "Specified network interface name " << iface
+                      << " for subnet " << subnet4->toText()
+                      << " is not present in the system ("
+                      << error->getPosition() << ")");
+        }
+
+        subnet4->setIface(iface);
+    }
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    try {
+        std::string hr_mode = getString(params, "reservation-mode");
+        subnet4->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << "(" << getPosition("reservation-mode", params) << ")");
+    }
+
+    // Try setting up client class.
+    string client_class = getString(params, "client-class");
+    if (!client_class.empty()) {
+        subnet4->allowClientClass(client_class);
+    }
+
     // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
     // it will have the default value of "".
     string iface4o6 = getString(params, "4o6-interface");
@@ -781,6 +772,13 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
+
+    // Here globally defined options were merged to the subnet specific
+    // options but this is no longer the case (they have a different
+    // and not consecutive priority).
+
+    // Copy options to the subnet configuration.
+    options_->copyTo(*subnet4->getCfgOption());
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1056,8 +1054,42 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet6->setInterfaceId(opt);
     }
 
+    // Get interface name. If it is defined, then the subnet is available
+    // directly over specified network interface.
+    if (!iface.empty()) {
+        if (!IfaceMgr::instance().getIface(iface)) {
+            ConstElementPtr error = params->get("interface");
+            isc_throw(DhcpConfigError, "Specified network interface name " << iface
+                      << " for subnet " << subnet6->toText()
+                      << " is not present in the system ("
+                      << error->getPosition() << ")");
+        }
+
+        subnet6->setIface(iface);
+    }
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    try {
+        std::string hr_mode = getString(params, "reservation-mode");
+        subnet6->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << "(" << getPosition("reservation-mode", params) << ")");
+    }
+
+    // Try setting up client class.
+    string client_class = getString(params, "client-class");
+    if (!client_class.empty()) {
+        subnet6->allowClientClass(client_class);
+    }
+
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
+
+    // Copy options to the subnet configuration.
+    options_->copyTo(*subnet6->getCfgOption());
 }
 
 //**************************** Subnet6ListConfigParser ********************

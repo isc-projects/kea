@@ -11,6 +11,10 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
+Network::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
+    :addr_(addr) {
+}
+
 bool
 Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
     if (white_list_.empty()) {
@@ -71,6 +75,25 @@ Network::toElement() const {
     map->set("valid-lifetime",
              Element::create(static_cast<long long>
                                  (getValid().get())));
+
+    // Set reservation mode
+    Network::HRMode hrmode = getHostReservationMode();
+    std::string mode;
+    switch (hrmode) {
+    case HR_DISABLED:
+        mode = "disabled";
+        break;
+    case HR_OUT_OF_POOL:
+        mode = "out-of-pool";
+        break;
+    case HR_ALL:
+        mode = "all";
+        break;
+    default:
+        isc_throw(ToElementError,
+                  "invalid host reservation mode: " << hrmode);
+    }
+    map->set("reservation-mode", Element::create(mode));
 
     // Set options
     ConstCfgOptionPtr opts = getCfgOption();

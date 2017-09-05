@@ -326,7 +326,7 @@ public:
     /// present (false)
     /// @param t2_present check that t2 must be present (true) or must not be
     /// present (false)
-    void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
+    void checkAddressParams(const Pkt4Ptr& rsp, const Subnet4Ptr subnet,
                             bool t1_present = false,
                             bool t2_present = false);
 

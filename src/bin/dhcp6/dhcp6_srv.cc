@@ -309,7 +309,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     // are stored in order of preference. The server will use them in that
     // order to search for host reservations.
     if (ctx.subnet_ &&
-        (ctx.subnet_->getHostReservationMode() != Subnet::HR_DISABLED)) {
+        (ctx.subnet_->getHostReservationMode() != Network::HR_DISABLED)) {
         const ConstCfgHostOperationsPtr cfg =
             CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
         BOOST_FOREACH(const Host::IdentifierType& id_type,
