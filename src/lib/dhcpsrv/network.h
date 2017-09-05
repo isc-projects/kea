@@ -99,6 +99,14 @@ typedef boost::shared_ptr<Network> NetworkPtr;
 /// @brief Weak pointer to the @ref Network object.
 typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
+class Network4 : public Network {
+public:
+};
+
+class Network6 : public Network {
+public:
+};
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 

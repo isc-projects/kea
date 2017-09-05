@@ -20,8 +20,11 @@ namespace dhcp {
 /// private method. Association of a network with a subnet must be always
 /// conducted using this class. This prevents unwanted replacements of
 /// shared networks within subnets.
-class AssignableNetwork : public Network {
+class AssignableNetwork {
 protected:
+
+    /// @brief Virtual destructor.
+    virtual ~AssignableNetwork() { }
 
     /// @brief Returns shared pointer to this object.
     ///
