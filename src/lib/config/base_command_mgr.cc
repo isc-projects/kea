@@ -18,7 +18,7 @@ namespace isc {
 namespace config {
 
 BaseCommandMgr::BaseCommandMgr() {
-    hook_index_command_processed_ = HooksManager::registerHook("command-processed");
+    hook_index_command_processed_ = HooksManager::registerHook("command_processed");
     registerCommand("list-commands", boost::bind(&BaseCommandMgr::listCommandsHandler,
                                                  this, _1, _2));
 }

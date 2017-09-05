@@ -465,13 +465,13 @@ TEST_F(CommandMgrTest, unixCreateTooLong) {
                  SocketError);
 }
 
-// This test verifies that a registered callout for the command-processed
+// This test verifies that a registered callout for the command_processed
 // hookpoint is invoked and passed the correct information.
 TEST_F(CommandMgrTest, commandProcessedHook) {
     // Register callout so as we can check that it is called before
     // processing the command by the manager.
     HooksManager::preCalloutsLibraryHandle().registerCallout(
-        "command-processed", command_processed_callout);
+        "command_processed", command_processed_callout);
 
     // Install local handler
     EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
@@ -494,7 +494,7 @@ TEST_F(CommandMgrTest, commandProcessedHook) {
     EXPECT_EQ("{ \"result\": 123, \"text\": \"test error message\" }",
               answer->str());
 
-    // Make sure invoked the command-processed callout
+    // Make sure invoked the command_processed callout
     EXPECT_EQ("command_processed_handler", callout_name_);
 
     // Verify the callout could extract all the context arguments
@@ -503,13 +503,13 @@ TEST_F(CommandMgrTest, commandProcessedHook) {
               processed_log_);
 }
 
-// This test verifies that a registered callout for the command-processed
+// This test verifies that a registered callout for the command_processed
 // hookpoint is invoked and can replace the command response content.
 TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
     // Register callout so as we can check that it is called before
     // processing the command by the manager.
     HooksManager::preCalloutsLibraryHandle().registerCallout(
-        "command-processed", command_processed_callout);
+        "command_processed", command_processed_callout);
 
     // Install local handler
     EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
@@ -532,7 +532,7 @@ TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
     EXPECT_EQ("{ \"result\": 777, \"text\": \"replaced response text\" }",
               answer->str());
 
-    // Make sure invoked the command-processed callout
+    // Make sure invoked the command_processed callout
     EXPECT_EQ("command_processed_handler", callout_name_);
 
     // Verify the callout could extract all the context arguments
