@@ -445,7 +445,7 @@ PoolParser::parse(PoolStoragePtr pools,
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
         }
-        pool->setUserContext(user_context);
+        pool->setContext(user_context);
     }
 
     // Parser pool specific options.
@@ -618,6 +618,16 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     string client_class = getString(params, "client-class");
     if (!client_class.empty()) {
         subnet_->allowClientClass(client_class);
+    }
+
+    // If there's user-context specified, store it.
+    ConstElementPtr user_context = params->get("user-context");
+    if (user_context) {
+        if (user_context->getType() != Element::map) {
+            isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                      << user_context->getPosition() << ")");
+        }
+        subnet_->setContext(user_context);
     }
 
     // Here globally defined options were merged to the subnet specific
@@ -890,7 +900,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
     }
 
     if (user_context_) {
-        pool_->setUserContext(user_context_);
+        pool_->setContext(user_context_);
     }
 
     // Add the local pool to the external storage ptr.

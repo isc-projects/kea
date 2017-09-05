@@ -894,6 +894,7 @@ subnet4_param: valid_lifetime
              | subnet_4o6_interface
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
+             | user_context
              | unknown_map_entry
              ;
 

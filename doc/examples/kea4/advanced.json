@@ -80,11 +80,22 @@
     "match-client-id": true,
 
     // The following list defines subnets. Each subnet consists of at
-    // least subnet and pool entries.
+    // least subnet and pool entries. One extra feature that requires some
+    // explanation is user-context. This is a structure that you can define
+    // in subnets and pools. It is parsed by Kea, but not used directly.
+    // It is intended to keep anything you may want to put there - comments,
+    // extra designations, floor or department names etc. These structures
+    // will be made available to Kea hooks.
     "subnet4": [
         {
-            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
-            "subnet": "192.0.2.0/24"
+            "pools": [ {
+                "pool":  "192.0.2.1 - 192.0.2.200",
+                "user-context": { "info": "what a large pool" }
+            } ],
+            "subnet": "192.0.2.0/24",
+            "user-context": {
+                "comment": "Our first subnet!"
+            }
         },
         {
             // This particular subnet has match-client-id value changed.
