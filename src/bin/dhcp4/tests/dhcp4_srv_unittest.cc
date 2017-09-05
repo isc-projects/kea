@@ -119,7 +119,22 @@ const char* CONFIGS[] = {
     "            \"always-send\": true"
     "        }"
     "    ]"
-    "}" };
+    "}",
+
+    // Configuration 3:
+    // - one subnet, with one pool
+    // - user-contexts defined in both subnet and pool
+    "{"
+        "    \"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\","
+        "                   \"user-context\": { \"value\": 42 } } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"user-context\": {"
+        "        \"secure\": false"
+        "    }"
+        " } ],"
+    "\"valid-lifetime\": 4000 }",
+};
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -2795,6 +2810,37 @@ TEST_F(Dhcpv4SrvTest, tooLongClientId) {
     EXPECT_NO_THROW(client.doDORA());
 }
 
+// Checks if user-contexts are parsed properly.
+TEST_F(Dhcpv4SrvTest, userContext) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This config has one subnet with user-context with one
+    // pool (also with context). Make sure the configuration could be accepted.
+    cout << CONFIGS[3] << endl;
+    EXPECT_NO_THROW(configure(CONFIGS[3]));
+
+    // Now make sure the data was not lost.
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Let's get the subnet and check its context.
+    Subnet4Ptr subnet1 = (*subnets)[0];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1->getContext());
+    EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());
+
+    // Ok, not get the sole pool in it and check its context, too.
+    PoolCollection pools = subnet1->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
+}
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.

@@ -905,6 +905,7 @@ subnet6_param: preferred_lifetime
              | reservations
              | reservation_mode
              | relay
+             | user_context
              | unknown_map_entry
              ;
 

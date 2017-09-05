@@ -1385,9 +1385,9 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 755,     ///< Last index in yytable_.
-      yynnts_ = 321,  ///< Number of nonterminal symbols.
-      yyfinal_ = 26, ///< Termination state number.
+      yylast_ = 757,     ///< Last index in yytable_.
+      yynnts_ = 318,  ///< Number of nonterminal symbols.
+      yyfinal_ = 24, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 146  ///< Number of tokens.
