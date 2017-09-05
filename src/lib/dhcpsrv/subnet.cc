@@ -57,11 +57,16 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const SubnetID id)
     : Network(), id_(id == 0 ? generateNextID() : id), prefix_(prefix),
       prefix_len_(len),
-      t1_(t1), t2_(t2), valid_(valid_lifetime),
       last_allocated_ia_(lastAddrInPrefix(prefix, len)),
       last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-      last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
-      host_reservation_mode_(HR_ALL) {
+      last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
+    // Relay info.
+    setRelayInfo(relay);
+    // Timers.
+    setT1(t1);
+    setT2(t2);
+    setValid(valid_lifetime);
+
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
@@ -79,33 +84,6 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
     return ((first <= addr) && (addr <= last));
-}
-
-void
-Subnet::setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay) {
-    relay_ = relay;
-}
-
-bool
-Subnet::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (white_list_.empty()) {
-        return (true); // There is no class defined for this subnet, so we do
-                       // support everyone.
-    }
-
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
-        }
-    }
-
-    return (false);
-}
-
-void
-Subnet::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_.insert(class_name);
 }
 
 isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
@@ -471,27 +449,8 @@ Subnet::toElement() const {
     SubnetID id = getID();
     map->set("id", Element::create(static_cast<long long>(id)));
 
-    // Set relay info
-    const Subnet::RelayInfo& relay_info = getRelayInfo();
-    ElementPtr relay = Element::createMap();
-    relay->set("ip-address", Element::create(relay_info.addr_.toText()));
-    map->set("relay", relay);
-
     // Set subnet
     map->set("subnet", Element::create(toText()));
-
-    // Set renew-timer
-    map->set("renew-timer",
-             Element::create(static_cast<long long>
-                                 (getT1().get())));
-    // Set rebind-timer
-    map->set("rebind-timer",
-             Element::create(static_cast<long long>
-                                 (getT2().get())));
-    // Set valid-lifetime
-    map->set("valid-lifetime",
-             Element::create(static_cast<long long>
-                                 (getValid().get())));
 
     // Set reservation mode
     Subnet::HRMode hrmode = getHostReservationMode();
@@ -511,15 +470,6 @@ Subnet::toElement() const {
                   "invalid host reservation mode: " << hrmode);
     }
     map->set("reservation-mode", Element::create(mode));
-
-    // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
-    }
 
     return (map);
 }
