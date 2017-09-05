@@ -241,7 +241,7 @@ SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
 
 ElementPtr
 SharedNetwork4::toElement() const {
-    ElementPtr map = Network::toElement();
+    ElementPtr map = Network4::toElement();
 
     // Set shared network name.
     if (!name_.empty()) {
@@ -290,7 +290,7 @@ SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
 
 ElementPtr
 SharedNetwork6::toElement() const {
-    ElementPtr map = Network::toElement();
+    ElementPtr map = Network6::toElement();
 
     // Set shared network name.
     if (!name_.empty()) {

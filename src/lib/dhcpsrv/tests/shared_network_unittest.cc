@@ -190,6 +190,11 @@ TEST(SharedNetwork4Test, unparse) {
     // Set interface name.
     network->setIface("eth1");
 
+    network->setT1(100);
+    network->setT2(150);
+    network->setValid(200);
+    network->setMatchClientId(false);
+
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
                                    SubnetID(1)));
@@ -200,8 +205,15 @@ TEST(SharedNetwork4Test, unparse) {
 
     std::string expected = "{\n"
         "    \"interface\": \"eth1\",\n"
+        "    \"match-client-id\": false,\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
+        "    \"rebind-timer\": 150,\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"0.0.0.0\"\n"
+        "    },\n"
+        "    \"renew-timer\": 100,\n"
+        "    \"reservation-mode\": \"all\","
         "    \"subnet4\": [\n"
         "      {\n"
         "        \"4o6-interface\": \"\",\n"
@@ -239,7 +251,8 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"subnet\": \"192.0.2.0/24\",\n"
         "        \"valid-lifetime\": 30\n"
         "      }\n"
-        "    ]\n"
+        "    ],\n"
+        "    \"valid-lifetime\": 200\n"
         "}\n";
 
     test::runToElementTest<SharedNetwork4>(expected, *network);
@@ -436,6 +449,11 @@ TEST(SharedNetwork6Test, getNextSubnet) {
 TEST(SharedNetwork6Test, unparse) {
     SharedNetwork6Ptr network(new SharedNetwork6("frog"));
     network->setIface("eth1");
+    network->setT1(100);
+    network->setT2(150);
+    network->setPreferred(200);
+    network->setValid(300);
+    network->setRapidCommit(true);
 
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
@@ -449,6 +467,14 @@ TEST(SharedNetwork6Test, unparse) {
         "    \"interface\": \"eth1\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
+        "    \"preferred-lifetime\": 200,\n"
+        "    \"rapid-commit\": true,\n"
+        "    \"rebind-timer\": 150,\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"::\"\n"
+        "    },\n"
+        "    \"renew-timer\": 100,\n"
+        "    \"reservation-mode\": \"all\","
         "    \"subnet6\": [\n"
         "      {\n"
         "        \"id\": 1,\n"
@@ -482,7 +508,8 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"subnet\": \"3000::/16\",\n"
         "        \"valid-lifetime\": 40\n"
         "      }\n"
-        "    ]\n"
+        "    ],\n"
+        "    \"valid-lifetime\": 300\n"
         "}\n";
 
     test::runToElementTest<SharedNetwork6>(expected, *network);
