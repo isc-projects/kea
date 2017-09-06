@@ -2173,41 +2173,101 @@ hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
 /// address, the function also checks if the lease belongs to the client, i.e.
 /// there is no conflict between the client identifiers.
 ///
-/// @param ctx Context holding data extracted from the client's message,
-/// including the HW address and client identifier.
+/// @param [out] ctx Context holding data extracted from the client's message,
+/// including the HW address and client identifier. The current subnet may be
+/// modified by this function if it belongs to a shared network.
 /// @param [out] client_lease A pointer to the lease returned by this function
 /// or null value if no has been lease found.
-void findClientLease(const AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
+void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-    // If client identifier has been supplied, use it to lookup the lease. This
-    // search will return no lease if the client doesn't have any lease in the
-    // database or if the client didn't use client identifier to allocate the
-    // existing lease (this include cases when the server was explicitly
-    // configured to ignore client identifier).
-    if (ctx.clientid_) {
-        client_lease = lease_mgr.getLease4(*ctx.clientid_, ctx.subnet_->getID());
-    }
 
-    // If no lease found using the client identifier, try the lookup using
-    // the HW address.
-    if (!client_lease && ctx.hwaddr_) {
+    Subnet4Ptr subnet = ctx.subnet_;
 
-        // There may be cases when there is a lease for the same MAC address
-        // (even within the same subnet). Such situation may occur for PXE
-        // boot clients using the same MAC address but different client
-        // identifiers.
-        Lease4Collection client_leases = lease_mgr.getLease4(*ctx.hwaddr_);
-        for (Lease4Collection::const_iterator client_lease_it = client_leases.begin();
-             client_lease_it != client_leases.end(); ++client_lease_it) {
-            Lease4Ptr existing_lease = *client_lease_it;
-            if ((existing_lease->subnet_id_ == ctx.subnet_->getID()) &&
-                existing_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
-                // Found the lease of this client, so return it.
-                client_lease = existing_lease;
-                break;
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+
+    while (subnet) {
+
+        // If client identifier has been supplied, use it to lookup the lease. This
+        // search will return no lease if the client doesn't have any lease in the
+        // database or if the client didn't use client identifier to allocate the
+        // existing lease (this include cases when the server was explicitly
+        // configured to ignore client identifier).
+        if (ctx.clientid_) {
+            client_lease = lease_mgr.getLease4(*ctx.clientid_, subnet->getID());
+        }
+
+        // If no lease found using the client identifier, try the lookup using
+        // the HW address.
+        if (!client_lease && ctx.hwaddr_) {
+
+            // There may be cases when there is a lease for the same MAC address
+            // (even within the same subnet). Such situation may occur for PXE
+            // boot clients using the same MAC address but different client
+            // identifiers.
+            Lease4Collection client_leases = lease_mgr.getLease4(*ctx.hwaddr_);
+            for (Lease4Collection::const_iterator client_lease_it = client_leases.begin();
+                 client_lease_it != client_leases.end(); ++client_lease_it) {
+                Lease4Ptr existing_lease = *client_lease_it;
+                if ((existing_lease->subnet_id_ == subnet->getID()) &&
+                    existing_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
+                    // Found the lease of this client, so return it.
+                    client_lease = existing_lease;
+                    break;
+                }
             }
         }
+
+        if (client_lease || !network) {
+            // We got the leases but the subnet they belong to may differ from
+            // the original subnet. Let's now stick to this subnet.
+            ctx.subnet_ = subnet;
+            subnet.reset();
+
+        } else {
+            subnet = network->getNextSubnet(ctx.subnet_, subnet);
+        }
     }
+}
+
+/// @brief Checks if the specified address belongs to one of the subnets
+/// within a shared network.
+///
+/// @todo Update this function to take client classification into account.
+///
+/// @param ctx Client context. Current subnet may be modified by this
+/// function when it belongs to a shared network.
+/// @param address IPv4 address to be checked.
+///
+/// @return true if address belongs to a pool in a selected subnet or in
+/// a pool within any of the subnets belonging to the current shared network.
+bool
+inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
+    SharedNetwork4Ptr network;
+    ctx.subnet_->getSharedNetwork(network);
+    if (!network) {
+        // If there is no shared network associated with this subnet, we
+        // simply check if the address is within the pool in this subnet.
+        return (ctx.subnet_->inPool(Lease::TYPE_V4, address));
+    }
+
+    // If the subnet belongs to a shared network we will be iterating
+    // over the subnets that belong to this shared network.
+    Subnet4Ptr current_subnet = ctx.subnet_;
+    while (current_subnet) {
+        if (current_subnet->inPool(Lease::TYPE_V4, address)) {
+            // We found a subnet that this address belongs to, so it
+            // seems that this subnet is the good candidate for allocation.
+            // Let's update the selected subnet.
+            ctx.subnet_ = current_subnet;
+            return (true);
+        }
+        // Address is not within pools in this subnet, so let's proceed
+        // to the next subnet.
+        current_subnet = network->getNextSubnet(ctx.subnet_, current_subnet);
+    }
+
+    return (false);
 }
 
 } // end of anonymous namespace
@@ -2337,8 +2397,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // new reservation for the address used by this client. The latter may
     // be due to the client using the reserved out-of-the pool address, for
     // which the reservation has just been removed.
-    if (!new_lease && client_lease &&
-        ctx.subnet_->inPool(Lease::TYPE_V4, client_lease->addr_) &&
+    if (!new_lease && client_lease && inAllowedPool(ctx, client_lease->addr_) &&
         !addressReserved(client_lease->addr_, ctx)) {
 
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -2356,7 +2415,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // reserved for another client, and must be in the range of the
     // dynamic pool.
     if (!new_lease && !ctx.requested_address_.isV4Zero() &&
-        ctx.subnet_->inPool(Lease::TYPE_V4, ctx.requested_address_) &&
+        inAllowedPool(ctx, ctx.requested_address_) &&
         !addressReserved(ctx.requested_address_, ctx)) {
 
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -2480,7 +2539,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // and it doesn't belong to the dynamic pool, do not allocate it.
         if ((!hasAddressReservation(ctx) ||
              (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
-            !ctx.subnet_->inPool(Lease4::TYPE_V4, ctx.requested_address_)) {
+            !inAllowedPool(ctx, ctx.requested_address_)) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL)
@@ -2882,32 +2941,56 @@ Lease4Ptr
 AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Lease4Ptr new_lease;
     AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
-    const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
-                                   ctx.subnet_->getPoolCapacity(Lease::TYPE_V4));
-    for (uint64_t i = 0; i < max_attempts; ++i) {
-        IOAddress candidate = allocator->pickAddress(ctx.subnet_, ctx.clientid_,
-                                                     ctx.requested_address_);
-        // If address is not reserved for another client, try to allocate it.
-        if (!addressReserved(candidate, ctx)) {
-            // The call below will return the non-NULL pointer if we
-            // successfully allocate this lease. This means that the
-            // address is not in use by another client.
-            new_lease = allocateOrReuseLease4(candidate, ctx);
-            if (new_lease) {
-                return (new_lease);
-            } else if (ctx.callout_handle_ &&
-                       (ctx.callout_handle_->getStatus() !=
-                        CalloutHandle::NEXT_STEP_CONTINUE)) {
-                // Don't retry when the callout status is not continue.
-                break;
+    Subnet4Ptr subnet = ctx.subnet_;
+    Subnet4Ptr original_subnet = subnet;
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    uint64_t total_attempts = 0;
+    while (subnet) {
+        const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
+                                       subnet->getPoolCapacity(Lease::TYPE_V4));
+        for (uint64_t i = 0; i < max_attempts; ++i) {
+            IOAddress candidate = allocator->pickAddress(subnet, ctx.clientid_,
+                                                         ctx.requested_address_);
+            // If address is not reserved for another client, try to allocate it.
+            if (!addressReserved(candidate, ctx)) {
+                // The call below will return the non-NULL pointer if we
+                // successfully allocate this lease. This means that the
+                // address is not in use by another client.
+                new_lease = allocateOrReuseLease4(candidate, ctx);
+                if (new_lease) {
+                    return (new_lease);
+                } else if (ctx.callout_handle_ &&
+                           (ctx.callout_handle_->getStatus() !=
+                            CalloutHandle::NEXT_STEP_CONTINUE)) {
+                    // Don't retry when the callout status is not continue.
+                    subnet.reset();
+                    break;
+                }
             }
+        }
+
+        total_attempts += max_attempts;
+
+        // If our current subnet belongs to a shared network, let's try other
+        // subnets in the same shared network.
+        if (network) {
+            subnet = network->getNextSubnet(original_subnet, subnet);
+            if (subnet) {
+                ctx.subnet_ = subnet;
+            }
+
+        } else {
+            // Subnet doesn't belong to a shared network so we have no more
+            // subnets/address pools to try. The client won't get the lease.
+            subnet.reset();
         }
     }
 
     // Unable to allocate an address, return an empty lease.
     LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL)
         .arg(ctx.query_->getLabel())
-        .arg(max_attempts);
+        .arg(total_attempts);
 
     return (new_lease);
 }
