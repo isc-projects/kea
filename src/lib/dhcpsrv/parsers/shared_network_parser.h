@@ -17,7 +17,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Implements parser for IPv4 shared networks.
-class SharedNetwork4Parser {
+class SharedNetwork4Parser : isc::data::SimpleParser {
 public:
 
     /// @brief Parses shared configuration information for IPv4 shared network.
@@ -32,7 +32,7 @@ public:
 };
 
 /// @brief Implements parser for IPv6 shared networks.
-class SharedNetwork6Parser {
+class SharedNetwork6Parser : isc::data::SimpleParser {
 public:
 
     /// @brief Parses shared configuration information for IPv6 shared network.
