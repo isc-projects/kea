@@ -14,6 +14,7 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_mac_source.h>
@@ -521,7 +522,7 @@ public:
     ///
     /// @param cfg configuration will be stored here
     /// @param relay_info JSON structure holding relay parameters to parse
-    void parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
+    void parse(const isc::dhcp::Network::RelayInfoPtr& cfg,
                isc::data::ConstElementPtr relay_info);
 
 private:
@@ -593,7 +594,7 @@ protected:
     /// @throw BadValue if the text cannot be converted.
     ///
     /// @return one of allowed HRMode values
-    static Subnet::HRMode hrModeFromText(const std::string& txt);
+    static Network::HRMode hrModeFromText(const std::string& txt);
 
 private:
 
@@ -616,7 +617,7 @@ protected:
     uint16_t address_family_;
 
     /// Pointer to relay information
-    isc::dhcp::Subnet::RelayInfoPtr relay_info_;
+    isc::dhcp::Network::RelayInfoPtr relay_info_;
 
     /// Pointer to the options configuration.
     CfgOptionPtr options_;
@@ -672,6 +673,14 @@ public:
     /// @param subnets_list pointer to a list of IPv4 subnets
     /// @return number of subnets created
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet4 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet4Collection& subnets,
+                 data::ConstElementPtr subnets_list);
 };
 
 /// @brief Parser for IPv6 pool definitions.
@@ -849,6 +858,15 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet6 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet6Collection& subnets,
+                 data::ConstElementPtr subnets_list);
+
 };
 
 /// @brief Parser for  D2ClientConfig

@@ -290,6 +290,15 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "shared-networks") {
+                /// @todo We need to create instance of SharedNetworks4ListParser
+                /// and parse the list of the shared networks into the
+                /// CfgSharedNetworks4 object. One additional step is then to
+                /// add subnets from the CfgSharedNetworks4 into CfgSubnets4
+                /// as well.
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port, echo-client-id are

@@ -4314,22 +4314,22 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     Subnet4Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("192.0.4.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_DISABLED, subnet->getHostReservationMode());
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 }
 
 /// Check that the decline-probation-period has a default value when not
