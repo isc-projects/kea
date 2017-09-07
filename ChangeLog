@@ -1,3 +1,9 @@
+1294.	[func]		marcin
+	Implemented data structures holding configuration of shared
+	networks. The new structures are unused until remaining tickets
+	for shared networks implementation are completed.
+	(Trac #5305, git 76dd46f7070c141cc89d772d69a897b67bd179a1)
+
 1293.	[func]		tomek
 	DHCP4_BUFFER_WAIT, DHCP4_BUFFER_WAIT_INTERRUPTED, DHCP6_BUFFER_WAIT,
 	and DHCP6_BUFFER_WAIT_INTERRUPTED logging messages are no longer emitted.
