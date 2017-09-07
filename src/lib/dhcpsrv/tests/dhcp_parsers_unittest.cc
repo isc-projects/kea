@@ -2272,7 +2272,7 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
     ElementPtr json = Element::fromJSON(config_str);
 
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("0.0.0.0")));
 
     RelayInfoParser parser(Option::V4);
 
@@ -2305,7 +2305,7 @@ TEST_F(ParseConfigTest, bogusRelayInfo4) {
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
+    Network::RelayInfoPtr result(new Network::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
 
     RelayInfoParser parser(Option::V4);
 
@@ -2330,7 +2330,7 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     ElementPtr json = Element::fromJSON(config_str);
 
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("::")));
 
     RelayInfoParser parser(Option::V6);
     // Subnet4 parser will pass :: to the RelayInfoParser
@@ -2362,7 +2362,7 @@ TEST_F(ParseConfigTest, bogusRelayInfo6) {
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
     // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("::")));
 
     RelayInfoParser parser(Option::V6);
 

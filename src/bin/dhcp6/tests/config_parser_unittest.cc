@@ -4697,22 +4697,22 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     Subnet6Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("2001:db8:3::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_DISABLED, subnet->getHostReservationMode());
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("2001:db8:4::1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that configuration can include

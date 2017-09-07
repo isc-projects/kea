@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <util/optional_value.h>
 #include <cstdint>
