@@ -401,7 +401,6 @@ void Dhcpv6Srv::run_one() {
         // because it is important that the select() returns control
         // frequently so as the IOService can be polled for ready handlers.
         uint32_t timeout = 1;
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
         query = receivePacket(timeout);
 
         // Log if packet has arrived. We can't log the detailed information
@@ -424,10 +423,13 @@ void Dhcpv6Srv::run_one() {
             // See processStatsReceived().
             StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
 
-        } else {
-            LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_INTERRUPTED)
-                .arg(timeout);
         }
+        // We used to log that the wait was interrupted, but this is no longer
+        // the case. Our wait time is 1s now, so the lack of query packet more
+        // likely means that nothing new appeared within a second, rather than
+        // we were interrupted. And we don't want to print a message every
+        // second.
+
 
     } catch (const SignalInterruptOnSelect) {
         // Packet reception interrupted because a signal has been received.
