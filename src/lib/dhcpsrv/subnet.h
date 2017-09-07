@@ -394,6 +394,20 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
     /// @brief Sets siaddr for the Subnet4
     ///
     /// Will be used for siaddr field (the next server) that typically is used
@@ -481,6 +495,20 @@ public:
             const Triplet<uint32_t>& preferred_lifetime,
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
+
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief Unparse a subnet object.
     ///

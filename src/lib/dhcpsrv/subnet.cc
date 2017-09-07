@@ -176,6 +176,17 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     setValid(valid_lifetime);
 }
 
+bool
+Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network4::clientSupported(client_classes));
+}
+
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
     if (!siaddr.isV4()) {
         isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
@@ -437,6 +448,17 @@ void Subnet6::checkType(Lease::Type type) const {
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
+}
+
+bool
+Subnet6::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network6::clientSupported(client_classes));
 }
 
 data::ElementPtr

@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/classify.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
@@ -179,6 +180,76 @@ TEST(CfgSubnets4Test, selectSubnetByIface) {
     EXPECT_EQ(subnet3, selected);
 }
 
+// This test verifies that it is possible to select subnet by interface
+// name specified on the shared network level.
+TEST(CfgSubnets4Test, selectSharedNetworkByIface) {
+    // The IfaceMgrTestConfig object initializes fake interfaces:
+    // eth0, eth1 and lo on the configuration manager. The CfgSubnets4
+    // object uses interface names to select the appropriate subnet.
+    IfaceMgrTestConfig config(true);
+
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("172.16.2.0"), 24, 1, 2, 3,
+                                   SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3,
+                                   SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.3.4.0"), 24, 1, 2, 3,
+                                   SubnetID(3)));
+    subnet2->setIface("lo");
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SharedNetwork4Ptr network(new SharedNetwork4("network_eth1"));
+    network->setIface("eth1");
+    ASSERT_NO_THROW(network->add(subnet1));
+    ASSERT_NO_THROW(network->add(subnet2));
+
+    // Make sure that initially the subnets don't exist.
+    SubnetSelector selector;
+    // Set an interface to a name that is not defined in the config.
+    // Subnet selection should fail.
+    selector.iface_name_ = "eth0";
+    ASSERT_FALSE(cfg.selectSubnet(selector));
+
+    // Now select an interface name that matches. Selection should succeed
+    // and return subnet3.
+    selector.iface_name_ = "eth1";
+    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ASSERT_TRUE(selected);
+    SharedNetwork4Ptr network_returned;
+    selected->getSharedNetwork(network_returned);
+    ASSERT_TRUE(network_returned);
+
+    const Subnet4Collection* subnets_eth1 = network_returned->getAllSubnets();
+    EXPECT_EQ(2, subnets_eth1->size());
+    ASSERT_TRUE(network_returned->getSubnet(SubnetID(1)));
+    ASSERT_TRUE(network_returned->getSubnet(SubnetID(2)));
+
+    // Make sure that it is still possible to select subnet2 which is
+    // outside of a shared network.
+    selector.iface_name_ = "lo";
+    selected = cfg.selectSubnet(selector);
+    ASSERT_TRUE(selected);
+    EXPECT_EQ(2, selected->getID());
+
+    // Try selecting by eth1 again, but this time set subnet specific
+    // interface name to eth0. Subnet selection should fail.
+    selector.iface_name_ = "eth1";
+    subnet1->setIface("eth0");
+    subnet3->setIface("eth0");
+    selected = cfg.selectSubnet(selector);
+    ASSERT_FALSE(selected);
+
+    // It should be possible to select by eth0, though.
+    selector.iface_name_ = "eth0";
+    selected = cfg.selectSubnet(selector);
+    ASSERT_TRUE(selected);
+}
+
 // This test verifies that when the classification information is specified for
 // subnets, the proper subnets are returned by the subnet configuration.
 TEST(CfgSubnets4Test, selectSubnetByClasses) {
@@ -253,6 +324,63 @@ TEST(CfgSubnets4Test, selectSubnetByClasses) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 }
 
+// This test verifies that shared network can be selected based on client
+// classification.
+TEST(CfgSubnets4Test, selectSharedNetworkByClasses) {
+    IfaceMgrTestConfig config(true);
+
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    // Add them to the configuration.
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Create first network and add first two subnets to it.
+    SharedNetwork4Ptr network1(new SharedNetwork4("network1"));
+    network1->setIface("eth1");
+    network1->allowClientClass("device-type1");
+    ASSERT_NO_THROW(network1->add(subnet1));
+    ASSERT_NO_THROW(network1->add(subnet2));
+
+    // Create second network and add last subnet there.
+    SharedNetwork4Ptr network2(new SharedNetwork4("network2"));
+    network2->setIface("eth1");
+    network2->allowClientClass("device-type2");
+    ASSERT_NO_THROW(network2->add(subnet3));
+
+    // Use interface name as a selector. This guarantees that subnet
+    // selection will be made based on the classification.
+    SubnetSelector selector;
+    selector.iface_name_ = "eth1";
+
+    // If the client has "device-type2" class, it is expected that the
+    // second network will be used. This network has only one subnet
+    // in it, i.e. subnet3.
+    ClientClasses client_classes;
+    client_classes.insert("device-type2");
+    selector.client_classes_ = client_classes;
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+
+    // Switch to device-type1 and expect that we're assigned a subnet from
+    // another shared network.
+    client_classes.clear();
+    client_classes.insert("device-type1");
+    selector.client_classes_ = client_classes;
+
+    Subnet4Ptr subnet = cfg.selectSubnet(selector);
+    ASSERT_TRUE(subnet);
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network1", network->getName());
+}
+
 // This test verifies the option selection can be used and is only
 // used when present.
 TEST(CfgSubnets4Test, selectSubnetByOptionSelect) {
@@ -318,6 +446,41 @@ TEST(CfgSubnets4Test, selectSubnetByRelayAddress) {
     // Now specify relay info
     subnet1->setRelayInfo(IOAddress("10.0.0.1"));
     subnet2->setRelayInfo(IOAddress("10.0.0.2"));
+    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+
+    // And try again. This time relay-info is there and should match.
+    selector.giaddr_ = IOAddress("10.0.0.1");
+    EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
+    selector.giaddr_ = IOAddress("10.0.0.2");
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    selector.giaddr_ = IOAddress("10.0.0.3");
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+}
+
+// This test verifies that the relay information specified on the shared
+// network level can be used to select a subnet.
+TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddress) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    // Add them to the configuration.
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SharedNetwork4Ptr network(new SharedNetwork4("network"));
+    network->add(subnet2);
+
+    SubnetSelector selector;
+
+    // Now specify relay info. Note that for the second subnet we specify
+    // relay info on the network level.
+    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
+    network->setRelayInfo(IOAddress("10.0.0.2"));
     subnet3->setRelayInfo(IOAddress("10.0.0.3"));
 
     // And try again. This time relay-info is there and should match.

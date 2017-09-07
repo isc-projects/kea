@@ -165,7 +165,7 @@ public:
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
-    bool
+    virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief Adds class class_name to the list of supported classes
