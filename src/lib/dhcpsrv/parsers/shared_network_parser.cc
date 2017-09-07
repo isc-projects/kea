@@ -24,47 +24,39 @@ namespace dhcp {
 SharedNetwork4Ptr
 SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork4Ptr shared_network;
-    std::string name;
     try {
-        // Shared network is a map.
-        const auto& element = shared_network_data->mapValue();
-
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork4 object.
-        const auto& name_it = element.find("name");
-        if (name_it == element.cend()) {
-            isc_throw(DhcpConfigError, "parameter \"name\" must be specified for"
-                      " a shared network");
+        std::string name = getString(shared_network_data, "name");
+        shared_network.reset(new SharedNetwork4(name));
 
+        // interface is an optional parameter
+        if (shared_network_data->contains("interface")) {
+            shared_network->setIface(getString(shared_network_data, "interface"));
         }
-        shared_network.reset(new SharedNetwork4(name_it->second->stringValue()));
 
-        // Iterate over all parameters within the map and assign them to the
-        // shared network.
-        for (auto param = element.cbegin(); param != element.cend(); ++param) {
-            if (param->first == "interface") {
-                shared_network->setIface(param->second->stringValue());
+        if (shared_network_data->contains("option-data")) {
+            auto json = shared_network_data->get("option-data");
+            // Create parser instance for option-data.
+            CfgOptionPtr cfg_option = shared_network->getCfgOption();
+            OptionDataListParser parser(AF_INET);
+            parser.parse(cfg_option, json);
+        }
 
-            } else if (param->first == "option-data") {
-                // Create parser instance for option-data.
-                CfgOptionPtr cfg_option = shared_network->getCfgOption();
-                OptionDataListParser parser(AF_INET);
-                parser.parse(cfg_option, param->second);
+        if (shared_network_data->contains("subnet4")) {
+            auto json = shared_network_data->get("subnet4");
 
-            } else if (param->first == "subnet4") {
-                // Create parser instance of subnet4.
-                Subnets4ListConfigParser parser;
-                Subnet4Collection subnets;
-                parser.parse(subnets, param->second);
+            // Create parser instance of subnet4.
+            Subnets4ListConfigParser parser;
+            Subnet4Collection subnets;
+            parser.parse(subnets, json);
 
-                // Add all returned subnets into shared network.
-                for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
-                     ++subnet) {
-                    shared_network->add(*subnet);
-                }
+            // Add all returned subnets into shared network.
+            for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
+                 ++subnet) {
+                shared_network->add(*subnet);
             }
         }
-
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
