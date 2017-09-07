@@ -546,6 +546,61 @@ TEST_F(AllocEngine4Test, discoverSharedNetwork) {
     EXPECT_EQ("192.0.2.17", lease2->addr_.toText());
 }
 
+// This test verifies that the server can offer an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet is exhausted.
+TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create two subnets, each with a single address pool. The first subnet
+    // has only one address in its address pool to make it easier to simulate
+    // address exhaustion.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2)));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.17"), IOAddress("192.0.2.17")));
+    Pool4Ptr pool2(new Pool4(IOAddress("10.1.2.5"), IOAddress("10.1.2.100")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork4Ptr network(new SharedNetwork4("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Try to offer address from subnet1. There is one address available
+    // so it should be offerred.
+    AllocEngine::ClientContext4
+        ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Apply restrictions on the subnet1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    subnet1->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the subnet1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should offer an address from subnet2 that belongs
+    // to the same shared network.
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the subnet1.
+    ctx.query_->addClass(ClientClass("cable-modem"));
+
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
+}
+
 // This test verifies that the server can allocate an address from a
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
@@ -619,6 +674,76 @@ TEST_F(AllocEngine4Test, reuqestSharedNetwork) {
     EXPECT_EQ("192.0.2.17", lease2->addr_.toText());
 }
 
+// This test verifies that the server can assign an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet is exhausted.
+TEST_F(AllocEngine4Test, requestSharedNetworkClassification) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create two subnets, each with a single address pool. The first subnet
+    // has only one address in its address pool to make it easier to simulate
+    // address exhaustion.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2)));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.17"), IOAddress("192.0.2.17")));
+    Pool4Ptr pool2(new Pool4(IOAddress("10.1.2.5"), IOAddress("10.1.2.100")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork4Ptr network(new SharedNetwork4("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Try to offer address from subnet1. There is one address available
+    // so it should be offerred.
+    AllocEngine::ClientContext4
+        ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Remove the lease so as we can start over.
+    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+    // Apply restrictions on the subnet1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    subnet1->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the subnet1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should assign an address from subnet2 that belongs
+    // to the same shared network.
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Remove the lease so as we can start over.
+    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the subnet1.
+    ctx.query_->addClass(ClientClass("cable-modem"));
+
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Let's now remove the client from the cable-modem class and try
+    // to renew the address. The engine should determine that the
+    // client doesn't have access to the subnet1 pools anymore and
+    // assign an address from unrestricted subnet.
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
+}
 
 // This test checks if an expired lease can be reused in DHCPDISCOVER (fake
 // allocation)
