@@ -29,6 +29,9 @@ TEST(CfgSharedNetworks4Test, getByName) {
     ASSERT_TRUE(returned_network1);
     SharedNetwork4Ptr returned_network2 = cfg.getByName("dog");
     ASSERT_TRUE(returned_network2);
+
+    // Check that non-existent name does not return bogus data.
+    EXPECT_FALSE(cfg.getByName("ant"));
 }
 
 // This test verifies that it is possible to delete a network.
@@ -53,6 +56,10 @@ TEST(CfgSharedNetworks4Test, deleteByName) {
     ASSERT_NO_THROW(cfg.del(network2->getName()));
     ASSERT_FALSE(cfg.getByName(network1->getName()));
     ASSERT_FALSE(cfg.getByName(network2->getName()));
+
+    // Check that attempting to delete the same subnet twice will fail.
+    ASSERT_THROW(cfg.del(network1->getName()), BadValue);
+    ASSERT_THROW(cfg.del(network2->getName()), BadValue);
 }
 
 // This test verifies that shared networks must have unique names.
