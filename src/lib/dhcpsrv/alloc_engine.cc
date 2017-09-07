@@ -2181,12 +2181,22 @@ hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
 void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
+    Subnet4Ptr original_subnet = ctx.subnet_;
     Subnet4Ptr subnet = ctx.subnet_;
 
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
     while (subnet) {
+
+        // Some of the subnets within a shared network may not be allowed
+        // for the client if classification restrictions have been applied.
+        if (!subnet->clientSupported(ctx.query_->getClasses())) {
+            if (network) {
+                subnet = network->getNextSubnet(original_subnet, subnet);
+            }
+            continue;
+        }
 
         // If client identifier has been supplied, use it to lookup the lease. This
         // search will return no lease if the client doesn't have any lease in the
@@ -2225,7 +2235,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
             subnet.reset();
 
         } else {
-            subnet = network->getNextSubnet(ctx.subnet_, subnet);
+            subnet = network->getNextSubnet(original_subnet, subnet);
         }
     }
 }
@@ -2245,26 +2255,31 @@ bool
 inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     SharedNetwork4Ptr network;
     ctx.subnet_->getSharedNetwork(network);
-    if (!network) {
-        // If there is no shared network associated with this subnet, we
-        // simply check if the address is within the pool in this subnet.
-        return (ctx.subnet_->inPool(Lease::TYPE_V4, address));
-    }
 
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet4Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
-        if (current_subnet->inPool(Lease::TYPE_V4, address)) {
-            // We found a subnet that this address belongs to, so it
-            // seems that this subnet is the good candidate for allocation.
-            // Let's update the selected subnet.
-            ctx.subnet_ = current_subnet;
-            return (true);
+
+        if (current_subnet->clientSupported(ctx.query_->getClasses())) {
+            if (current_subnet->inPool(Lease::TYPE_V4, address)) {
+                // We found a subnet that this address belongs to, so it
+                // seems that this subnet is the good candidate for allocation.
+                // Let's update the selected subnet.
+                ctx.subnet_ = current_subnet;
+                return (true);
+            }
         }
-        // Address is not within pools in this subnet, so let's proceed
-        // to the next subnet.
-        current_subnet = network->getNextSubnet(ctx.subnet_, current_subnet);
+
+        if (network) {
+            // Address is not within pools or client class not supported, so
+            // let's proceed to the next subnet.
+            current_subnet = network->getNextSubnet(ctx.subnet_, current_subnet);
+
+        } else {
+            // No shared network, so there are no more subnets to try.
+            current_subnet.reset();
+        }
     }
 
     return (false);
@@ -2947,6 +2962,16 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     subnet->getSharedNetwork(network);
     uint64_t total_attempts = 0;
     while (subnet) {
+
+        // Some of the subnets within a shared network may not be allowed
+        // for the client if classification restrictions have been applied.
+        if (!subnet->clientSupported(ctx.query_->getClasses())) {
+            if (network) {
+                subnet = network->getNextSubnet(original_subnet, subnet);
+            }
+            continue;
+        }
+
         const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
                                        subnet->getPoolCapacity(Lease::TYPE_V4));
         for (uint64_t i = 0; i < max_attempts; ++i) {
@@ -2976,6 +3001,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         // subnets in the same shared network.
         if (network) {
             subnet = network->getNextSubnet(original_subnet, subnet);
+
             if (subnet) {
                 ctx.subnet_ = subnet;
             }
