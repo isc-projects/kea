@@ -1,3 +1,8 @@
+1293.	[func]		tomek
+	DHCP4_BUFFER_WAIT, DHCP4_BUFFER_WAIT_INTERRUPTED, DHCP6_BUFFER_WAIT,
+	and DHCP6_BUFFER_WAIT_INTERRUPTED logging messages are no longer emitted.
+	(Trac #5345, git 779040fa399fb2da271569dc315294463e28f852)
+
 1292.	[func]		tomek
 	User contexts are now supported for subnets. This adds a new
 	functionality, but also makes the existing documentation example
