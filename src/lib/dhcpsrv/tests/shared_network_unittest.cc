@@ -287,7 +287,7 @@ TEST(SharedNetwork4Test, destructSharedNetwork) {
 // This test verifies that shared network can be given a name and that
 // this name can be retrieved.
 TEST(SharedNetwork6Test, getName) {
-    // Create shared network with an initial name "dog".
+    // Create shared network with an initial name "frog".
     SharedNetwork6Ptr network(new SharedNetwork6("frog"));
     EXPECT_EQ("frog", network->getName());
 
