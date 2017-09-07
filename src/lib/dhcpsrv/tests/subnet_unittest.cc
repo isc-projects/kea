@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -292,6 +293,13 @@ TEST(Subnet4Test, clientClasses) {
     three_classes.insert("bar");
     three_classes.insert("baz");
 
+    // This client belongs to foo, bar, baz and network classes.
+    isc::dhcp::ClientClasses four_classes;
+    four_classes.insert("foo");
+    four_classes.insert("bar");
+    four_classes.insert("baz");
+    four_classes.insert("network");
+
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
@@ -307,6 +315,20 @@ TEST(Subnet4Test, clientClasses) {
     EXPECT_FALSE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Add shared network which can only be selected when the client
+    // class is "network".
+    SharedNetwork4Ptr network(new SharedNetwork4("network"));
+    network->allowClientClass("network");
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // This time, if the client doesn't support network class,
+    // the subnets from the shared network can't be selected.
+    EXPECT_FALSE(subnet->clientSupported(bar_class));
+    EXPECT_FALSE(subnet->clientSupported(three_classes));
+
+    // If the classes include "network", the subnet is selected.
+    EXPECT_TRUE(subnet->clientSupported(four_classes));
 }
 
 // Tests whether Subnet4 object is able to store and process properly
@@ -743,6 +765,13 @@ TEST(Subnet6Test, clientClasses) {
     three_classes.insert("bar");
     three_classes.insert("baz");
 
+    // This client belongs to foo, bar, baz and network classes.
+    isc::dhcp::ClientClasses four_classes;
+    four_classes.insert("foo");
+    four_classes.insert("bar");
+    four_classes.insert("baz");
+    four_classes.insert("network");
+
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
@@ -758,6 +787,20 @@ TEST(Subnet6Test, clientClasses) {
     EXPECT_FALSE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Add shared network which can only be selected when the client
+    // class is "network".
+    SharedNetwork6Ptr network(new SharedNetwork6("network"));
+    network->allowClientClass("network");
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // This time, if the client doesn't support network class,
+    // the subnets from the shared network can't be selected.
+    EXPECT_FALSE(subnet->clientSupported(bar_class));
+    EXPECT_FALSE(subnet->clientSupported(three_classes));
+
+    // If the classes include "network", the subnet is selected.
+    EXPECT_TRUE(subnet->clientSupported(four_classes));
 }
 
 // Tests whether Subnet6 object is able to store and process properly
