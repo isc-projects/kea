@@ -2192,9 +2192,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         // Some of the subnets within a shared network may not be allowed
         // for the client if classification restrictions have been applied.
         if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            if (network) {
-                subnet = network->getNextSubnet(original_subnet, subnet);
-            }
+            subnet = subnet->getNextSubnet(original_subnet);
             continue;
         }
 
@@ -2235,7 +2233,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
             subnet.reset();
 
         } else {
-            subnet = network->getNextSubnet(original_subnet, subnet);
+            subnet = subnet->getNextSubnet(original_subnet);
         }
     }
 }
@@ -2271,15 +2269,7 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
             }
         }
 
-        if (network) {
-            // Address is not within pools or client class not supported, so
-            // let's proceed to the next subnet.
-            current_subnet = network->getNextSubnet(ctx.subnet_, current_subnet);
-
-        } else {
-            // No shared network, so there are no more subnets to try.
-            current_subnet.reset();
-        }
+        current_subnet = current_subnet->getNextSubnet(ctx.subnet_);
     }
 
     return (false);
@@ -2966,9 +2956,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         // Some of the subnets within a shared network may not be allowed
         // for the client if classification restrictions have been applied.
         if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            if (network) {
-                subnet = network->getNextSubnet(original_subnet, subnet);
-            }
+            subnet = subnet->getNextSubnet(original_subnet);
             continue;
         }
 
@@ -2993,23 +2981,16 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                     break;
                 }
             }
+            ++total_attempts;
         }
 
-        total_attempts += max_attempts;
-
-        // If our current subnet belongs to a shared network, let's try other
-        // subnets in the same shared network.
-        if (network) {
-            subnet = network->getNextSubnet(original_subnet, subnet);
+        // This pointer may be set to NULL if hooks set SKIP status.
+        if (subnet) {
+            subnet = subnet->getNextSubnet(original_subnet);
 
             if (subnet) {
                 ctx.subnet_ = subnet;
             }
-
-        } else {
-            // Subnet doesn't belong to a shared network so we have no more
-            // subnets/address pools to try. The client won't get the lease.
-            subnet.reset();
         }
     }
 
