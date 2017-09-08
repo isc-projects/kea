@@ -179,7 +179,9 @@ Parser6Context::contextName()
         return ("ncr-format");
     case REPLACE_CLIENT_NAME:
         return ("replace-client-name");
-    default:
+    case SHARED_NETWORK:
+        return ("shared-networks");
+     default:
         return ("__unknown__");
     }
 }

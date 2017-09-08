@@ -216,6 +216,9 @@ public:
         /// Used while parsing Dhcp4/Subnet4 structures.
         SUBNET4,
 
+        /// Used while parsing shared-networks structures.
+        SHARED_NETWORK,
+
         /// Used while parsing Dhcp4/Subnet4/reservation-mode.
         RESERVATION_MODE,
 

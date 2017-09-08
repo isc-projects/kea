@@ -1,0 +1,76 @@
+
+{
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": [ "eth0" ]
+        },
+
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+        },
+
+        "shared-networks": [
+        {
+            "interface": "eth1",
+            "match-client-id": false,
+            "name": "frog",
+            "option-data": [ ],
+            "rebind-timer": 150,
+            "relay": {
+                "ip-address": "0.0.0.0"
+            },
+            "renew-timer": 100,
+            "reservation-mode": "all",
+            "subnet4": [
+                {
+                    "4o6-interface": "",
+                    "4o6-interface-id": "",
+                    "4o6-subnet": "",
+                    "id": 1,
+                    "match-client-id": true,
+                    "next-server": "0.0.0.0",
+                    "option-data": [ ],
+                    "pools": [ ],
+                    "rebind-timer": 20,
+                    "relay": {
+                        "ip-address": "0.0.0.0"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "10.0.0.0/8",
+                    "valid-lifetime": 30
+                },
+                {
+                    "4o6-interface": "",
+                    "4o6-interface-id": "",
+                    "4o6-subnet": "",
+                    "id": 2,
+                    "match-client-id": true,
+                    "next-server": "0.0.0.0",
+                    "option-data": [ ],
+                    "pools": [ ],
+                    "rebind-timer": 20,
+                    "relay": {
+                        "ip-address": "0.0.0.0"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "192.0.2.0/24",
+                    "valid-lifetime": 30
+                }
+            ],
+            "valid-lifetime": 200
+        } ], // end of shared-networks
+
+        // This is regular subnet. It's not part of any shared-network.
+        "subnet4": [
+            {
+                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+                "subnet": "192.0.3.0/24",
+                "interface": "eth0"
+            }
+        ]
+        
+    } // end of Dhcp4
+}

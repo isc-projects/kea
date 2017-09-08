@@ -101,6 +101,8 @@ using namespace std;
   ENCAPSULATE "encapsulate"
   ARRAY "array"
 
+  SHARED_NETWORKS "shared-networks"
+
   POOLS "pools"
   POOL "pool"
   USER_CONTEXT "user-context"
@@ -404,6 +406,7 @@ global_param: valid_lifetime
             | rebind_timer
             | decline_probation_period
             | subnet4_list
+            | shared_networks
             | interfaces_config
             | lease_database
             | hosts_database
@@ -954,6 +957,50 @@ rapid_commit: RAPID_COMMIT COLON BOOLEAN {
     ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rapid-commit", rc);
 };
+
+// ---- shared-networks ---------------------
+
+shared_networks: SHARED_NETWORKS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("shared-networks", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.SHARED_NETWORK);
+} COLON LSQUARE_BRACKET shared_networks_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+shared_networks_list: shared_network
+                    | shared_networks_list COMMA shared_network
+                    ;
+
+shared_network: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} shared_network_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+}
+
+shared_network_params: shared_network_param
+                     | shared_network_params COMMA shared_network_param
+                     ;
+
+shared_network_param: name
+                    | subnet4_list
+                    | interface
+                    | renew_timer
+                    | rebind_timer
+                    | option_data_list
+                    | match_client_id
+                    | next_server
+                    | relay
+                    | reservation_mode
+                    | echo_client_id
+                    | client_classes
+                    | valid_lifetime
+                    | unknown_map_entry
+                    ;
 
 // ---- option-def --------------------------
 
