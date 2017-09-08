@@ -965,11 +965,17 @@ shared_networks: SHARED_NETWORKS {
     ctx.stack_.back()->set("shared-networks", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SHARED_NETWORK);
-} COLON LSQUARE_BRACKET shared_networks_list RSQUARE_BRACKET {
+} COLON LSQUARE_BRACKET shared_networks_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
 };
 
+// This allows 0 or more shared network definitions.
+shared_networks_content: %empty
+                       | shared_networks_list
+                       ;
+
+// This allows 1 or more shared network definitions.
 shared_networks_list: shared_network
                     | shared_networks_list COMMA shared_network
                     ;
