@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <algorithm>
 #include <sstream>
@@ -174,6 +175,17 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     setT1(t1);
     setT2(t2);
     setValid(valid_lifetime);
+}
+
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet4Ptr());
 }
 
 bool
@@ -448,6 +460,17 @@ void Subnet6::checkType(Lease::Type type) const {
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
+}
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet6Ptr());
 }
 
 bool

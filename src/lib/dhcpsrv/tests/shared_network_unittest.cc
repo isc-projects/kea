@@ -164,7 +164,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
         // Iterate over the subnets starting from the subnet with index i.
         for (auto j = 0; j < subnets.size(); ++j) {
             // Get next subnet (following the one currently in s).
-            s = networks[0]->getNextSubnet(subnets[i], s);
+            s = networks[0]->getNextSubnet(subnets[i], s->getID());
             // The last iteration should return empty pointer to indicate end of
             // the subnets within shared network. If we're not at last iteration
             // check that the subnet identifier of the returned subnet is valid.
@@ -426,7 +426,7 @@ TEST(SharedNetwork6Test, getNextSubnet) {
         // Iterate over the subnets starting from the subnet with index i.
         for (auto j = 0; j < subnets.size(); ++j) {
             // Get next subnet (following the one currently in s).
-            s = networks[0]->getNextSubnet(subnets[i], s);
+            s = networks[0]->getNextSubnet(subnets[i], s->getID());
             // The last iteration should return empty pointer to indicate end of
             // the subnets within shared network. If we're not at last iteration
             // check that the subnet identifier of the returned subnet is valid.
