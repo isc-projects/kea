@@ -252,6 +252,7 @@ TEST(ParserTest, file) {
                                "pgsql-reservations.json",
                                "reservations.json",
                                "several-subnets.json",
+                               "shared-network.json",
                                "single-subnet.json",
                                "with-ddns.json" };
 

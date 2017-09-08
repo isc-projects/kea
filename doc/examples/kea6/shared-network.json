@@ -1,0 +1,74 @@
+{
+    "Dhcp6": {
+// Kea is told to listen on ethX interface only.
+        "interfaces-config": {
+            "interfaces": [ "eth0" ]
+        },
+
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+        },
+
+        "subnet6": [
+            {
+                "pools": [ { "pool": "2001:db8:1::/80" } ],
+                "subnet": "2001:db8:1::/64",
+                "interface": "eth0"
+            }
+        ],
+
+        "shared-networks": [ 
+        {
+            "interface": "eth1",
+            "name": "frog",
+            "option-data": [ ],
+            "preferred-lifetime": 200,
+            "rapid-commit": true,
+            "rebind-timer": 150,
+            "relay": {
+                "ip-address": "::"
+            },
+            "renew-timer": 100,
+            "reservation-mode": "all",    "subnet6": [
+                {
+                    "id": 1,
+                    "option-data": [ ],
+                    "pd-pools": [ ],
+                    "pools": [ ],
+                    "preferred-lifetime": 30,
+                    "rapid-commit": false,
+                    "rebind-timer": 20,
+                    "relay": {
+                        "ip-address": "2001:db8:1::1"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "2001:db8:1::/64",
+                    "valid-lifetime": 40
+                },
+                {
+                    "id": 2,
+                    "option-data": [ ],
+                    "pd-pools": [ ],
+                    "pools": [ ],
+                    "preferred-lifetime": 30,
+                    "rapid-commit": false,
+                    "rebind-timer": 20,
+                    "relay": {
+                        "ip-address": "3000::1"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "3000::/16",
+                    "valid-lifetime": 40
+                }
+            ],
+            "valid-lifetime": 300
+        } ]
+    }
+}
