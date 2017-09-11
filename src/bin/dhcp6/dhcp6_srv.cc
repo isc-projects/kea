@@ -861,8 +861,8 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
     // Firstly, host specific options.
-    if (ctx.host_ && !ctx.host_->getCfgOption6()->empty()) {
-        co_list.push_back(ctx.host_->getCfgOption6());
+    if (ctx.currentHost() && !ctx.currentHost()->getCfgOption6()->empty()) {
+        co_list.push_back(ctx.currentHost()->getCfgOption6());
     }
 
     // Secondly, pool specific options. Pools are defined within a subnet, so
@@ -1250,8 +1250,8 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
         } else {
             // No FQDN so get the lease hostname from the host reservation if
             // there is one.
-            if (ctx.host_) {
-                ctx.hostname_ = ctx.host_->getHostname();
+            if (ctx.currentHost()) {
+                ctx.hostname_ = ctx.currentHost()->getHostname();
             }
 
             return;
@@ -1271,10 +1271,10 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
     // If there's a reservation and it has a hostname specified, use it!
-    if (ctx.host_ && !ctx.host_->getHostname().empty()) {
+    if (ctx.currentHost() && !ctx.currentHost()->getHostname().empty()) {
         // Add the qualifying suffix.
         // After #3765, this will only occur if the suffix is not empty.
-        fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.host_->getHostname(),
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.currentHost()->getHostname(),
                                                     true),
                                                     Option6ClientFqdn::FULL);
     } else {
@@ -3082,9 +3082,9 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
 void
 Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
                                     const AllocEngine::ClientContext6& ctx) {
-    if (ctx.host_ && pkt) {
+    if (ctx.currentHost() && pkt) {
         BOOST_FOREACH(const std::string& client_class,
-                      ctx.host_->getClientClasses6()) {
+                      ctx.currentHost()->getClientClasses6()) {
             pkt->addClass(client_class);
         }
     }

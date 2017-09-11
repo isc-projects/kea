@@ -601,6 +601,60 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
     EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
 }
 
+// Test that reservations within shared network take precedence over the
+// existing leases regardless in which subnet belonging to a shared network
+// reservations belong.
+TEST_F(AllocEngine4Test, discoverSharedNetworkReservations) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create two subnets, each with a single address pool. The first subnet
+    // has only one address in its address pool to make it easier to simulate
+    // address exhaustion.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2)));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.17"), IOAddress("192.0.2.17")));
+    Pool4Ptr pool2(new Pool4(IOAddress("10.1.2.5"), IOAddress("10.1.2.100")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork4Ptr network(new SharedNetwork4("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet2->getID(),
+                          SubnetID(0), IOAddress("10.2.3.23")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Start allocation from subnet1. The engine should determine that the
+    // client has reservations in subnet2 and should rather assign reserved
+    // addresses.
+    AllocEngine::ClientContext4
+        ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    AllocEngine::findReservation(ctx);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+
+    // Let's create a lease for the client to make sure the lease is not
+    // renewed but a reserved lease is offerred.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
+                                501, 502, 503, time(NULL), subnet1->getID()));
+    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
+    ctx.subnet_ = subnet1;
+    AllocEngine::findReservation(ctx);
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+}
+
 // This test verifies that the server can allocate an address from a
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
@@ -743,6 +797,63 @@ TEST_F(AllocEngine4Test, requestSharedNetworkClassification) {
     lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
+}
+
+// Test that reservations within shared network take precedence over the
+// existing leases regardless in which subnet belonging to a shared network
+// reservations belong (DHCPREQUEST case).
+TEST_F(AllocEngine4Test, requestSharedNetworkReservations) {
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+
+    // Create two subnets, each with a single address pool. The first subnet
+    // has only one address in its address pool to make it easier to simulate
+    // address exhaustion.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("10.1.2.0"), 24, 1, 2, 3, SubnetID(2)));
+    Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.17"), IOAddress("192.0.2.17")));
+    Pool4Ptr pool2(new Pool4(IOAddress("10.1.2.5"), IOAddress("10.1.2.100")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork4Ptr network(new SharedNetwork4("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet2->getID(),
+                          SubnetID(0), IOAddress("10.2.3.23")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Start allocation from subnet1. The engine should determine that the
+    // client has reservations in subnet2 and should rather assign reserved
+    // addresses.
+    AllocEngine::ClientContext4
+        ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", false);
+    AllocEngine::findReservation(ctx);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+
+    // Remove the lease for another test below.
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease->addr_));
+
+    // Let's create a lease for the client to make sure the lease is not
+    // renewed but a reserved lease is allocated again.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
+                                501, 502, 503, time(NULL), subnet1->getID()));
+    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
+    ctx.subnet_ = subnet1;
+    AllocEngine::findReservation(ctx);
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
 }
 
 // This test checks if an expired lease can be reused in DHCPDISCOVER (fake
@@ -1964,7 +2075,7 @@ TEST_F(AllocEngine4Test, findReservation) {
 
     // There is no reservation in the database so no host should be returned.
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_FALSE(ctx.host_);
+    EXPECT_FALSE(ctx.currentHost());
 
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
@@ -1975,21 +2086,21 @@ TEST_F(AllocEngine4Test, findReservation) {
 
     // This time the reservation should be returned.
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
-    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
     // Regardless of the host reservation mode, the host should be
     // always returned when findReservation() is called.
     subnet_->setHostReservationMode(Network::HR_DISABLED);
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
-    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
     // Check the third possible reservation mode.
     subnet_->setHostReservationMode(Network::HR_OUT_OF_POOL);
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
-    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
     // This time use the client identifier to search for the host.
     host.reset(new Host(&clientid_->getClientId()[0],
@@ -2000,14 +2111,14 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().commit();
 
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.host_);
-    EXPECT_EQ(ctx.host_->getIPv4Reservation(), host->getIPv4Reservation());
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
     // Remove the subnet. Subnet id is required to find host reservations, so
     // if it is set to NULL, no reservation should be returned
     ctx.subnet_.reset();
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_FALSE(ctx.host_);
+    EXPECT_FALSE(ctx.currentHost());
 
     // The same if there is a mismatch of the subnet id between the reservation
     // and the context.
@@ -2019,7 +2130,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     CfgMgr::instance().commit();
 
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_FALSE(ctx.host_);
+    EXPECT_FALSE(ctx.currentHost());
 }
 
 // This test checks if the simple IPv4 allocation can succeed and that

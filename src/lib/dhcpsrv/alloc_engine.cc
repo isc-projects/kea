@@ -309,21 +309,27 @@ template<typename ContextType>
 void
 AllocEngine::findReservationInternal(ContextType& ctx,
                                      const AllocEngine::HostGetFunc& host_get) {
-    ctx.host_.reset();
+    ctx.hosts_.clear();
+
+    auto subnet = ctx.subnet_;
 
     // We can only search for the reservation if a subnet has been selected.
-    if (ctx.subnet_) {
+    while (subnet) {
+
         // Iterate over configured identifiers in the order of preference
         // and try to use each of them to search for the reservations.
         BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
             // Attempt to find a host using a specified identifier.
-            ctx.host_ = host_get(ctx.subnet_->getID(), id_pair.first,
-                                 &id_pair.second[0], id_pair.second.size());
-            // If we found matching host, return.
-            if (ctx.host_) {
-                return;
+            ConstHostPtr host = host_get(subnet->getID(), id_pair.first,
+                                         &id_pair.second[0], id_pair.second.size());
+            // If we found matching host for this subnet.
+            if (host) {
+                ctx.hosts_[subnet->getID()] = host;
+                break;
             }
         }
+
+        subnet = subnet->getNextSubnet(ctx.subnet_);
     }
 }
 
@@ -334,7 +340,7 @@ AllocEngine::findReservationInternal(ContextType& ctx,
 
 AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), duid_(),
-      hwaddr_(), host_identifiers_(), host_(), fwd_dns_update_(false),
+      hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
       rev_dns_update_(false), hostname_(), callout_handle_(),
       ias_() {
 }
@@ -348,7 +354,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
                                             const Pkt6Ptr& query,
                                             const CalloutHandlePtr& callout_handle)
     : query_(query), fake_allocation_(fake_allocation), subnet_(subnet),
-      duid_(duid), hwaddr_(), host_identifiers_(), host_(),
+      duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
       hostname_(hostname), callout_handle_(callout_handle),
       allocated_resources_(), ias_() {
@@ -386,6 +392,16 @@ isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
             (allocated_resources_.count(std::make_pair(prefix, prefix_len))));
 }
 
+ConstHostPtr
+AllocEngine::ClientContext6::currentHost() const {
+    if (subnet_) {
+        auto host = hosts_.find(subnet_->getID());
+        if (host != hosts_.cend()) {
+            return (host->second);
+        }
+    }
+    return (ConstHostPtr());
+}
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
     findReservationInternal(ctx, boost::bind(&HostMgr::get6,
@@ -432,7 +448,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
-        if (leases.empty() && ctx.host_) {
+        if (leases.empty() && ctx.currentHost()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR)
@@ -456,7 +472,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // There is at least one lease for this client and there are no reservations.
         // We will return these leases for the client, but we may need to update
         // FQDN information.
-        } else if (!leases.empty() && !ctx.host_) {
+        } else if (!leases.empty() && !ctx.currentHost()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR)
@@ -475,7 +491,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // assign something new.
 
         // Case 3: There are leases and there are reservations.
-        } else if (!leases.empty() && ctx.host_) {
+        } else if (!leases.empty() && ctx.currentHost()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_ALLOC_LEASES_HR)
@@ -754,7 +770,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases) {
 
     // If there are no reservations or the reservation is v4, there's nothing to do.
-    if (!ctx.host_ || !ctx.host_->hasIPv6Reservation()) {
+    if (!ctx.currentHost() || !ctx.currentHost()->hasIPv6Reservation()) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_V6_ALLOC_NO_V6_HR)
             .arg(ctx.query_->getLabel());
@@ -770,8 +786,8 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // we already have a lease for a reserved address or prefix.
     BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
         if ((lease->valid_lft_ != 0)) {
-            if (ctx.host_->hasReservation(IPv6Resrv(type, lease->addr_,
-                                                    lease->prefixlen_))) {
+            if (ctx.currentHost()->hasReservation(IPv6Resrv(type, lease->addr_,
+                                                            lease->prefixlen_))) {
                 // We found existing lease for a reserved address or prefix.
                 // We'll simply extend the lifetime of the lease.
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -794,7 +810,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // over reservations specified and try to allocate one of them for the IA.
 
     // Get the IPv6 reservations of specified type.
-    const IPv6ResrvRange& reservs = ctx.host_->getIPv6Reservations(type);
+    const IPv6ResrvRange& reservs = ctx.currentHost()->getIPv6Reservations(type);
     BOOST_FOREACH(IPv6ResrvTuple type_lease_tuple, reservs) {
         // We do have a reservation for address or prefix.
         const IOAddress& addr = type_lease_tuple.second.getPrefix();
@@ -860,16 +876,16 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
         // If we have reservation we should check if the reservation is for
         // the candidate lease. If so, we simply accept the lease.
-        if (ctx.host_) {
+        if (ctx.currentHost()) {
             if (candidate->type_ == Lease6::TYPE_NA) {
-                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                                        candidate->addr_))) {
+                if (ctx.currentHost()->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                                                candidate->addr_))) {
                     continue;
                 }
             } else {
-                if (ctx.host_->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                                        candidate->addr_,
-                                                        candidate->prefixlen_))) {
+                if (ctx.currentHost()->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                                                candidate->addr_,
+                                                                candidate->prefixlen_))) {
                     continue;
                 }
             }
@@ -956,7 +972,8 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
                                       Lease6Collection& existing_leases) {
     // This method removes leases that are not reserved for this host.
     // It will keep at least one lease, though.
-    if (existing_leases.empty() || !ctx.host_ || !ctx.host_->hasIPv6Reservation()) {
+    if (existing_leases.empty() || !ctx.currentHost() ||
+        !ctx.currentHost()->hasIPv6Reservation()) {
         return;
     }
 
@@ -970,7 +987,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
         IPv6Resrv resv(ctx.currentIA().type_ == Lease::TYPE_NA ?
                        IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD,
                        (*lease)->addr_, (*lease)->prefixlen_);
-        if (!ctx.host_->hasReservation(resv)) {
+        if (!ctx.currentHost()->hasReservation(resv)) {
             // We have reservations, but not for this lease. Release it.
 
             // Remove this lease from LeaseMgr
@@ -1234,7 +1251,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             removeNonmatchingReservedLeases6(ctx, leases);
         }
 
-        if (ctx.host_) {
+        if (ctx.currentHost()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_RENEW_HR)
@@ -2154,13 +2171,31 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
 /// dynamic pool. The allocation engine uses this function to check if
 /// the reservation is made for the IPv4 address.
 ///
-/// @param ctx Client context holding the data extracted from the
+/// @param [out] ctx Client context holding the data extracted from the
 /// client's message.
 ///
 /// @return true if the context contains the reservation for the IPv4 address.
 bool
-hasAddressReservation(const AllocEngine::ClientContext4& ctx) {
-    return (ctx.host_ && !ctx.host_->getIPv4Reservation().isV4Zero());
+hasAddressReservation(AllocEngine::ClientContext4& ctx) {
+    if (ctx.hosts_.empty()) {
+        return (false);
+    }
+
+    Subnet4Ptr subnet = ctx.subnet_;
+    while (subnet) {
+        auto host = ctx.hosts_.find(subnet->getID());
+        if ((host != ctx.hosts_.end()) &&
+            !(host->second->getIPv4Reservation().isV4Zero())) {
+            ctx.subnet_ = subnet;
+            return (true);
+        }
+
+        // No address reservation found here, so let's try another subnet
+        // within the same shared network.
+        subnet = subnet->getNextSubnet(ctx.subnet_);
+    }
+
+    return (false);
 }
 
 /// @brief Finds existing lease in the database.
@@ -2285,7 +2320,7 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), host_(), conflicting_lease_(), query_(),
+      old_lease_(), hosts_(), conflicting_lease_(), query_(),
       host_identifiers_() {
 }
 
@@ -2301,13 +2336,24 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), host_(),
+      fake_allocation_(fake_allocation), old_lease_(), hosts_(),
       host_identifiers_() {
 
     // Initialize host identifiers.
     if (hwaddr) {
         addHostIdentifier(Host::IDENT_HWADDR, hwaddr->hwaddr_);
     }
+}
+
+ConstHostPtr
+AllocEngine::ClientContext4::currentHost() const {
+    if (subnet_) {
+        auto host = hosts_.find(subnet_->getID());
+        if (host != hosts_.cend()) {
+            return (host->second);
+        }
+    }
+    return (ConstHostPtr());
 }
 
 Lease4Ptr
@@ -2366,24 +2412,24 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_V4_DISCOVER_HR)
             .arg(ctx.query_->getLabel())
-            .arg(ctx.host_->getIPv4Reservation().toText());
+            .arg(ctx.currentHost()->getIPv4Reservation().toText());
 
         // If the client doesn't have a lease or the leased address is different
         // than the reserved one then let's try to allocate the reserved address.
         // Otherwise the address that the client has is the one for which it
         // has a reservation, so just renew it.
-        if (!client_lease || (client_lease->addr_ != ctx.host_->getIPv4Reservation())) {
+        if (!client_lease || (client_lease->addr_ != ctx.currentHost()->getIPv4Reservation())) {
             // The call below will return a pointer to the lease for the address
             // reserved to this client, if the lease is available, i.e. is not
             // currently assigned to any other client.
             // Note that we don't remove the existing client's lease at this point
             // because this is not a real allocation, we just offer what we can
             // allocate in the DHCPREQUEST time.
-            new_lease = allocateOrReuseLease4(ctx.host_->getIPv4Reservation(), ctx);
+            new_lease = allocateOrReuseLease4(ctx.currentHost()->getIPv4Reservation(), ctx);
             if (!new_lease) {
                 LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT)
                     .arg(ctx.query_->getLabel())
-                    .arg(ctx.host_->getIPv4Reservation().toText())
+                    .arg(ctx.currentHost()->getIPv4Reservation().toText())
                     .arg(ctx.conflicting_lease_ ? ctx.conflicting_lease_->toText() :
                          "(no lease info)");
             }
@@ -2489,7 +2535,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // allocation engine needs to find an appropriate address.
         // If there is a reservation for the client, let's try to
         // allocate the reserved address.
-        ctx.requested_address_ = ctx.host_->getIPv4Reservation();
+        ctx.requested_address_ = ctx.currentHost()->getIPv4Reservation();
 
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_V4_REQUEST_USE_HR)
@@ -2521,8 +2567,9 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // address because the reserved address is in use. We will have to
         // check if the address is in use.
         if (hasAddressReservation(ctx) &&
-            (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) {
-            existing = LeaseMgrFactory::instance().getLease4(ctx.host_->getIPv4Reservation());
+            (ctx.currentHost()->getIPv4Reservation() != ctx.requested_address_)) {
+            existing =
+                LeaseMgrFactory::instance().getLease4(ctx.currentHost()->getIPv4Reservation());
             // If the reserved address is not in use, i.e. the lease doesn't
             // exist or is expired, and the client is requesting a different
             // address, return NULL. The client should go back to the
@@ -2532,7 +2579,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                           ALLOC_ENGINE_V4_REQUEST_INVALID)
                     .arg(ctx.query_->getLabel())
-                    .arg(ctx.host_->getIPv4Reservation().toText())
+                    .arg(ctx.currentHost()->getIPv4Reservation().toText())
                     .arg(ctx.requested_address_.toText());
 
                 return (Lease4Ptr());
@@ -2543,7 +2590,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // address is reserved for the client. If the address is not reserved one
         // and it doesn't belong to the dynamic pool, do not allocate it.
         if ((!hasAddressReservation(ctx) ||
-             (ctx.host_->getIPv4Reservation() != ctx.requested_address_)) &&
+             (ctx.currentHost()->getIPv4Reservation() != ctx.requested_address_)) &&
             !inAllowedPool(ctx, ctx.requested_address_)) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
