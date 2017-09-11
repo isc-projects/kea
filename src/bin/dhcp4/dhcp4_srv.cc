@@ -384,9 +384,9 @@ Dhcpv4Exchange::setHostIdentifiers() {
 
 void
 Dhcpv4Exchange::setReservedClientClasses() {
-    if (context_->host_ && query_) {
+    if (context_->currentHost() && query_) {
         BOOST_FOREACH(const std::string& client_class,
-                      context_->host_->getClientClasses4()) {
+                      context_->currentHost()->getClientClasses4()) {
             query_->addClass(client_class);
         }
     }
@@ -394,7 +394,7 @@ Dhcpv4Exchange::setReservedClientClasses() {
 
 void
 Dhcpv4Exchange::setReservedMessageFields() {
-    ConstHostPtr host = context_->host_;
+    ConstHostPtr host = context_->currentHost();
     // Nothing to do if host reservations not specified for this client.
     if (host) {
         if (!host->getNextServer().isV4Zero()) {
@@ -1167,7 +1167,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     }
 
     // Firstly, host specific options.
-    const ConstHostPtr& host = ex.getContext()->host_;
+    const ConstHostPtr& host = ex.getContext()->currentHost();
     if (host && !host->getCfgOption4()->empty()) {
         co_list.push_back(host->getCfgOption4());
     }
@@ -1471,9 +1471,10 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_E,
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
-    if (ex.getContext()->host_ && !ex.getContext()->host_->getHostname().empty()) {
+    if (ex.getContext()->currentHost() &&
+        !ex.getContext()->currentHost()->getHostname().empty()) {
         D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-        fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->host_->getHostname(),
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->currentHost()->getHostname(),
                                                     true), Option4ClientFqdn::FULL);
 
     } else {
@@ -1519,7 +1520,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
 
     // Hostname reservations take precedence over any other configuration,
     // i.e. DDNS configuration.
-    if (ctx->host_ && !ctx->host_->getHostname().empty()) {
+    if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
         // In order to send a reserved hostname value we expect that at least
         // one of the following is the case: the client has sent us a hostname
         // option, or the client has sent Parameter Request List option with
@@ -1551,7 +1552,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // send back a hostname option, send this option with a reserved
         // name for this client.
         if (should_send_hostname) {
-            const std::string& hostname = d2_mgr.qualifyName(ctx->host_->getHostname(),
+            const std::string& hostname =
+                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
                                                              false);
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESERVED_HOSTNAME_ASSIGNED)
