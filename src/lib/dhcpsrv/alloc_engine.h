@@ -727,10 +727,13 @@ private:
     /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
     /// @param host_get Pointer to the @ref HostMgr functions to be used
     /// to retrieve reservation by subnet identifier and host identifier.
+    /// @param ipv6_only Boolean value indicating if only IPv6 reservations
+    /// should be retrieved.
     /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
     template<typename ContextType>
     static void findReservationInternal(ContextType& ctx,
-                                        const HostGetFunc& host_get);
+                                        const HostGetFunc& host_get,
+                                        const bool ipv6_only = false);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///

@@ -1977,6 +1977,316 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
 }
 
+// This test verifies that the client is offerred an address from an
+// alternative subnet within shared network when the address pool is
+// exhausted in the first address pool.
+TEST_F(AllocEngine6Test, solicitSharedNetworkOutOfAddresses) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::1")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
+                             IOAddress("2001:db8:2::FFFF")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork6Ptr network(new SharedNetwork6("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create a lease for a single address in the first address pool. The
+    // pool is now exhausted.
+    DuidPtr other_duid(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                               other_duid, other_iaid, 501, 502, 503, 504,
+                               subnet1->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet1, which address space
+    // is exhausted. We expect the allocation engine to find another subnet
+    // within the same shared network and offer an address from there.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    Lease6Ptr lease2;
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease2);
+    ASSERT_TRUE(subnet2->inRange(lease2->addr_));
+
+    // The client having a lease should be offerred this lease, even if
+    // the client starts allocation from the second subnet. The code should
+    // determine that the client has a lease in subnet1 and use this subnet
+    // instead.
+    AllocEngine::ClientContext6 ctx2(subnet2, other_duid, false, false, "",
+                                     true, query);
+    ctx2.currentIA().iaid_ = other_iaid;
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease2);
+    ASSERT_EQ("2001:db8:1::1", lease2->addr_.toText());
+
+    // Delete the lease in the first subnet.
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease->addr_));
+
+    // Now, try requesting this address by providing a hint. The engine
+    // should try to honor the hint even though we start from the subnet2.
+    ctx.subnet_ = subnet2;
+    ctx.currentIA().hints_.push_back(make_pair(IOAddress("2001:db8:1::1"), 128));
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease2);
+    ASSERT_TRUE(subnet1->inRange(lease2->addr_));
+}
+
+// This test verifies that the server can offer an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet is exhausted.
+TEST_F(AllocEngine6Test, solicitSharedNetworkClassification) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::1")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
+                             IOAddress("2001:db8:2::FFFF")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork6Ptr network(new SharedNetwork6("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Try to offer address from subnet1. There is an address available so
+    // it should be offerred.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet1->inRange(lease->addr_));
+
+    // Apply restrictions on the subnet1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    subnet1->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the subnet1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should offer an address from subnet2 that belongs
+    // to the same shared network.
+    AllocEngine::ClientContext6 ctx2(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.query_ = query;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet2->inRange(lease->addr_));
+
+    AllocEngine::ClientContext6 ctx3(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx3.currentIA().iaid_ = iaid_;
+    ctx3.query_ = query;
+
+    // Create host reservation in the first subnet for this client. The
+    // allocation engine should not assign reserved address to the client
+    // because client classification doesn't allow that.
+    subnet_ = subnet1;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128);
+    AllocEngine::findReservation(ctx3);
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet2->inRange(lease->addr_));
+
+    AllocEngine::ClientContext6 ctx4(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx4.currentIA().iaid_ = iaid_;
+    ctx4.query_ = query;
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the subnet1.
+    ctx4.query_->addClass(ClientClass("cable-modem"));
+
+    AllocEngine::findReservation(ctx4);
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx4)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+}
+
+// This test verifies that the client is offerred a reserved address
+// even if this address belongs to another subnet within the same
+// shared network.
+TEST_F(AllocEngine6Test, solicitSharedNetworkReservations) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::1")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
+                             IOAddress("2001:db8:2::FFFF")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork6Ptr network(new SharedNetwork6("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create reservation for the client in the second subnet.
+    subnet_ = subnet2;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
+
+    // Start allocation from subnet1. The engine should determine that the
+    // client has reservations in subnet2 and should rather assign reserved
+    // addresses.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Find reservations for this subnet/shared network.
+    AllocEngine::findReservation(ctx);
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_EQ("2001:db8:2::15", lease->addr_.toText());
+}
+
+// This test verifies that the client is allocated a reserved address
+// even if this address belongs to another subnet within the same
+// shared network.
+TEST_F(AllocEngine6Test, requestSharedNetworkReservations) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::1")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
+                             IOAddress("2001:db8:2::FFFF")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork6Ptr network(new SharedNetwork6("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create reservation for the client in the second subnet.
+    subnet_ = subnet2;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
+
+    // Start allocation from subnet1. The engine should determine that the
+    // client has reservations in subnet2 and should rather assign reserved
+    // addresses.
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Find reservations for this subnet/shared network.
+    AllocEngine::findReservation(ctx);
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_EQ("2001:db8:2::15", lease->addr_.toText());
+}
+
+// This test verifies that client is assigned an existing lease from a
+// shared network, regardless of the default subnet. It also verifies that
+// the client is assigned a reserved address from a shared network which
+// replaces existing lease within this shared network.
+TEST_F(AllocEngine6Test, requestSharedNetworkExistingLeases) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 56, 1, 2, 3, 4));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::1")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"),
+                             IOAddress("2001:db8:2::FFFF")));
+    subnet1->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Both subnets belong to the same network so they can be used
+    // interchangeably.
+    SharedNetwork6Ptr network(new SharedNetwork6("test_network"));
+    network->add(subnet1);
+    network->add(subnet2);
+
+    // Create a lease in subnet 2 for this client. The lease is in expired
+    // reclaimed state initially to allow for checking whether the lease
+    // gets renewed.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"),
+                               duid_, iaid_, 501, 502, 503, 504,
+                               subnet2->getID(), HWAddrPtr(), 128));
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet 1 initially, but the
+    // allocation engine should determine that there are existing leases
+    // in subnet 2 and renew those.
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Check that we have been allocated the existing lease.
+    Lease6Ptr lease2;
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease2);
+    EXPECT_EQ("2001:db8:2::1", lease2->addr_.toText());
+
+    // Statistics should be bumped when the lease is re-assigned.
+    EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet2->getID()));
+
+    // Another interesting case is when there is a reservation in a different
+    // subnet than the one from which the ease has been assigned.
+    subnet_ = subnet1;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128);
+
+    // The reserved lease should take precedence.
+    ctx.subnet_ = subnet1;
+    ctx.currentIA().iaid_ = iaid_;
+    AllocEngine::findReservation(ctx);
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease2);
+    EXPECT_EQ("2001:db8:1::1", lease2->addr_.toText());
+
+    // The previous lease should have been removed.
+    ASSERT_EQ(1, ctx.currentIA().old_leases_.size());
+    EXPECT_EQ("2001:db8:2::1", ctx.currentIA().old_leases_[0]->addr_.toText());
+}
+
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
