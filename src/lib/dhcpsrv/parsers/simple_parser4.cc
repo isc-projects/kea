@@ -133,6 +133,17 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
         cnt += setDefaults(mutable_cfg, IFACE4_DEFAULTS);
     }
 
+    // Set defaults for shared networks
+    ConstElementPtr shared = global->get("shared-networks");
+    if (shared) {
+        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+            ConstElementPtr subs = net->get("subnet4");
+            if (subs) {
+                cnt += setListDefaults(subs, SUBNET4_DEFAULTS);
+            }
+        }
+    }
+
     return (cnt);
 }
 
@@ -145,6 +156,30 @@ size_t SimpleParser4::deriveParameters(isc::data::ElementPtr global) {
         BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
                                               INHERIT_GLOBAL_TO_SUBNET4);
+        }
+    }
+
+    ConstElementPtr shared = global->get("shared-networks");
+    if (shared) {
+        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+
+            // This level derives global parameters to shared network
+            // level.
+
+            // First try to inherit the parameters from shared network,
+            // if defined there.
+            // Then try to inherit them from global.
+            cnt += SimpleParser::deriveParams(global, net,
+                                              INHERIT_GLOBAL_TO_SUBNET4);
+
+            // Now we need to go thrugh all the subnets in this net.
+            subnets = net->get("subnet4");
+            if (subnets) {
+                BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+                    cnt += SimpleParser::deriveParams(net, single_subnet,
+                                                      INHERIT_GLOBAL_TO_SUBNET4);
+                }
+            }
         }
     }
 

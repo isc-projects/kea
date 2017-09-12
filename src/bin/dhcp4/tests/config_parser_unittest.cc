@@ -181,6 +181,40 @@ public:
         EXPECT_EQ(expected_code, rcode_);
     }
 
+    /// @brief Convenience method for running configuration
+    ///
+    /// This method does not throw, but signals errors using gtest macros.
+    ///
+    /// @param config text to be parsed as JSON
+    /// @param expected_code expected code (see cc/command_interpreter.h)
+    /// @param exp_error expected text error (check skipped if empty)
+    void configure(std::string config, int expected_code,
+                   std::string exp_error = "") {
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP4(config, true));
+
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(status);
+
+        int rcode;
+        ConstElementPtr comment = parseAnswer(rcode, status);
+        EXPECT_EQ(expected_code, rcode);
+
+        string text;
+        ASSERT_NO_THROW(text = comment->stringValue());
+
+        if (expected_code != rcode) {
+            std::cout << "Reported status: " << text << std::endl;
+        }
+
+        if ((rcode != 0)) {
+            if (!exp_error.empty()) {
+                EXPECT_EQ(exp_error, text);
+            }
+        }
+    }
+
     ~Dhcp4ParserTest() {
         resetConfiguration();
 
@@ -570,6 +604,18 @@ public:
         return (ReturnType());
     }
 
+    void
+    checkSubnet(const Subnet4Collection& col, std::string subnet,
+                uint32_t t1, uint32_t t2, uint32_t valid) {
+        const auto& index = col.get<SubnetPrefixIndexTag>();
+        auto subnet_it = index.find(subnet);
+        ASSERT_NE(subnet_it, index.cend());
+        Subnet4Ptr s = *subnet_it;
+
+        EXPECT_EQ(t1, s->getT1());
+        EXPECT_EQ(t2, s->getT2());
+        EXPECT_EQ(valid, s->getValid());
+    }
 
     /// @brief This utility method attempts to configure using specified
     ///        config and then returns requested pool from requested subnet
@@ -1023,8 +1069,6 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
     /// CASE 2: Configure 4 subnets, then reconfigure and remove one
     /// from in between (not first, not last)
-
-    /// @todo: Uncomment subnet removal test as part of #3281.
     ASSERT_NO_THROW(json = parseDHCP4(config4));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -4929,21 +4973,10 @@ TEST_F(Dhcp4ParserTest, invalidPoolRange) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
-    string text;
-    ASSERT_NO_THROW(text = comment->stringValue());
-
-    EXPECT_EQ(1, rcode);
     string expected = "Failed to create pool defined by: "
         "192.0.2.1-19.2.0.200 (<string>:6:26)";
-    EXPECT_EQ(expected, text);
+
+    configure(config, CONTROL_RESULT_ERROR, expected);
 }
 
 // Test verifies the error message for an outside subnet pool range
@@ -4959,23 +4992,269 @@ TEST_F(Dhcp4ParserTest, outsideSubnetPool) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
-    string text;
-    ASSERT_NO_THROW(text = comment->stringValue());
-
-    EXPECT_EQ(1, rcode);
     string expected = "subnet configuration failed: "
         "a pool of type V4, with the following address range: "
         "192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
         "10.0.2.0/24 to which it is being added (<string>:5:14)";
-    EXPECT_EQ(expected, text);
+
+    configure(config, CONTROL_RESULT_ERROR, expected);
 }
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksEmpty) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+}
+
+// Test verifies that if a shared network is defined, it at least has to have
+// a name.
+TEST_F(Dhcp4ParserTest, sharedNetworksNoName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { } ]\n"
+        "} \n";
+
+    EXPECT_THROW(parseDHCP4(config, true), Dhcp4ParseError);
+}
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksEmptyName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR,
+              "Shared-network with subnets  is missing mandatory 'name' parameter");
+}
+
+// Test verifies that a degenerated shared-network (no subnets) is
+// accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksName) {
+    string config = "{\n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"foo\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+
+    EXPECT_EQ("foo", net->getName());
+
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(0, subs->size());
+}
+
+// Test verifies that a degenerated shared-network (just one subnet) is
+// accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet4\": [ { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ]\n"
+        "    } ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+    ASSERT_TRUE(cfg_net);
+
+    // There should be exactly one shared subnet.
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // It should have one subnet.
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets4);
+
+    subs = subnets4->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+}
+
+// Test verifies that a a proper shared-network (three subnets) is
+// accepted. It verifies several things:
+// - that more than one subnet can be added to shared subnets
+// - that each subnet being part of the shared subnets is also stored in
+//   global subnets collection
+// - that a subnet can inherit global values
+// - that subnet can override global parameters
+// - that overridden parameters only affect one subnet and not others
+TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"renew-timer\": 2,\n"
+        "        \"rebind-timer\": 22,\n"
+        "        \"valid-lifetime\": 222\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // There is expected one shared subnet.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+
+    EXPECT_EQ("foo", net->getName());
+
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(3, subs->size());
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets4);
+
+    subs = subnets4->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+}
+
+// This test checks if parameters are derived properly:
+// - global to shared network
+// - shared network to subnet
+TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4, \n"
+        "\"rebind-timer\": 2, \n"
+        "\"renew-timer\": 1, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"renew-timer\": 10,\n"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"renew-timer\": 100\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // There is expected one shared subnet.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the renew-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    checkSubnet(*subs, "192.0.1.0/24", 10, 2, 4);
+
+    // For the second subnet, the renew-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    checkSubnet(*subs, "192.0.2.0/24", 100, 2, 4);
+}
+
 
 }
