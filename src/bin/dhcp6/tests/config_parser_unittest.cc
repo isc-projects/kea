@@ -5481,7 +5481,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
     checkSubnet(*subs, "2001:db8::/48", 900, 1800, 3600, 7200);
 }
 
-// Test verifies that a a proper shared-network (three subnets) is
+// Test verifies that a proper shared-network (three subnets) is
 // accepted. It verifies several things:
 // - that more than one subnet can be added to shared subnets
 // - that each subnet being part of the shared subnets is also stored in
