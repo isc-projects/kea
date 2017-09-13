@@ -73,6 +73,21 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "interface-id",     Element::string,  "" },
 };
 
+/// @brief This table defines default values for each IPv6 subnet.
+const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
+    { "id",               Element::integer, "0" }, // 0 means autogenerate
+    { "client-class",     Element::string,  "" }
+};
+
+/// @brief This table defines default values for each IPv6 shared network.
+const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
+    { "interface",        Element::string, "" },
+    { "interface-id",     Element::string,  "" },
+    { "reservation-mode", Element::string, "all" },
+    { "rapid-commit",     Element::boolean, "false" } // rapid-commit disabled by default
+};
+
+
 /// @brief This table defines default values for interfaces for DHCPv6.
 const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
     { "re-detect", Element::boolean, "true" }
@@ -84,10 +99,18 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
 /// subnet (Dhcp6/subnet6/...) scope. If not defined in the subnet scope,
 /// the value is being inherited (derived) from the global scope. This
 /// array lists all of such parameters.
-const ParamsList SimpleParser6::INHERIT_GLOBAL_TO_SUBNET6 = {
-    "renew-timer",
-    "rebind-timer",
+///
+/// This list is also used for inheriting from global to shared networks
+/// and from shared networks to subnets within it.
+const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
+    "interface",
+    "interface-id",
     "preferred-lifetime",
+    "rapid-commit",
+    "rebind-timer",
+    "relay",
+    "renew-timer",
+    "reservation-mode",
     "valid-lifetime"
 };
 /// @}
@@ -135,9 +158,12 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
         BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+
+            cnt += setDefaults(net, SHARED_NETWORK6_DEFAULTS);
+
             ConstElementPtr subs = net->get("subnet6");
             if (subs) {
-                cnt += setListDefaults(subs, SUBNET6_DEFAULTS);
+                cnt += setListDefaults(subs, SHARED_SUBNET6_DEFAULTS);
             }
         }
     }
@@ -152,7 +178,7 @@ size_t SimpleParser6::deriveParameters(isc::data::ElementPtr global) {
     if (subnets) {
         BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
-                                              INHERIT_GLOBAL_TO_SUBNET6);
+                                              INHERIT_TO_SUBNET6);
         }
     }
 
@@ -166,14 +192,14 @@ size_t SimpleParser6::deriveParameters(isc::data::ElementPtr global) {
             // if defined there.
             // Then try to inherit them from global.
             cnt += SimpleParser::deriveParams(global, net,
-                                              INHERIT_GLOBAL_TO_SUBNET6);
+                                              INHERIT_TO_SUBNET6);
 
             // Now we need to go thrugh all the subnets in this net.
             subnets = net->get("subnet6");
             if (subnets) {
                 BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
                     cnt += SimpleParser::deriveParams(net, single_subnet,
-                                                      INHERIT_GLOBAL_TO_SUBNET6);
+                                                      INHERIT_TO_SUBNET6);
                 }
             }
         }

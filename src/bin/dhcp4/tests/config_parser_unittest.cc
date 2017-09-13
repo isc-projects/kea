@@ -611,17 +611,23 @@ public:
     /// @param t1 expected renew-timer value
     /// @param t2 expected rebind-timer value
     /// @param valid expected valid-lifetime value
-    void
+    /// @return the subnet that was examined
+    Subnet4Ptr
     checkSubnet(const Subnet4Collection& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t valid) {
         const auto& index = col.get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
-        ASSERT_NE(subnet_it, index.cend());
+        if (subnet_it == index.cend()) {
+            ADD_FAILURE() << "Unable to find expected subnet " << subnet;
+            return (Subnet4Ptr());
+        }
         Subnet4Ptr s = *subnet_it;
 
         EXPECT_EQ(t1, s->getT1());
         EXPECT_EQ(t2, s->getT2());
         EXPECT_EQ(valid, s->getValid());
+
+        return (s);
     }
 
     /// @brief This utility method attempts to configure using specified
@@ -5209,13 +5215,34 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
 // - shared network to subnet
 // Also, it tests that more than one shared network can be defined.
 TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    // This config is structured in a way that the first shared
+    // subnet have many parameters defined. The first subnet
+    // should inherit them. The second subnet overrides all
+    // values and those values should be used, not those from
+    // shared network scope.
     string config = "{\n"
-        "\"renew-timer\": 1, \n"
+        "\"renew-timer\": 1, \n" // global values here
         "\"rebind-timer\": 2, \n"
         "\"valid-lifetime\": 4, \n"
         "\"shared-networks\": [ {\n"
-        "    \"name\": \"foo\"\n,"
+        "    \"name\": \"foo\"\n," // shared network values here
+        "    \"interface\": \"eth0\",\n"
+        "    \"match-client-id\": false,\n"
+        "    \"next-server\": \"1.2.3.4\",\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"5.6.7.8\"\n"
+        "    },\n"
+        "    \"reservation-mode\": \"out-of-pool\",\n"
         "    \"renew-timer\": 10,\n"
+        "    \"rebind-timer\": 20,\n"
+        "    \"valid-lifetime\": 40,\n"
         "    \"subnet4\": [\n"
         "    { \n"
         "        \"subnet\": \"192.0.1.0/24\",\n"
@@ -5224,10 +5251,17 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    { \n"
         "        \"subnet\": \"192.0.2.0/24\",\n"
         "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
-        "        \"renew-timer\": 100\n"
+        "        \"renew-timer\": 100,\n"
+        "        \"rebind-timer\": 200,\n"
+        "        \"valid-lifetime\": 400,\n"
+        "        \"match-client-id\": true,\n"
+        "        \"next-server\": \"11.22.33.44\",\n"
+        "        \"relay\": {\n"
+        "            \"ip-address\": \"55.66.77.88\"\n"
+        "        },\n"
+        "        \"reservation-mode\": \"disabled\"\n"
         "    }\n"
         "    ]\n"
-
         " },\n"
         "{ // second shared-network starts here\n"
         "    \"name\": \"bar\",\n"
@@ -5265,13 +5299,28 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // derived from shared-network level. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet4 level.
-    checkSubnet(*subs, "192.0.1.0/24", 10, 2, 4);
+    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 10, 20, 40);
+    ASSERT_TRUE(s);
+
+    // These are values derived from shared network scope:
+    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ(false, s->getMatchClientId());
+    EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
+    EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet4 level.
-    checkSubnet(*subs, "192.0.2.0/24", 100, 2, 4);
+    s = checkSubnet(*subs, "192.0.2.0/24", 100, 200, 400);
+
+    // These are values derived from shared network scope:
+    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ(true, s->getMatchClientId());
+    EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
+    EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
     net = nets->at(1);
@@ -5282,9 +5331,13 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(1, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
-    checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
-
+    // All other parameters should have default values.
+    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
+    EXPECT_EQ("", s->getIface());
+    EXPECT_EQ(true, s->getMatchClientId());
+    EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
+    EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
-
 
 }

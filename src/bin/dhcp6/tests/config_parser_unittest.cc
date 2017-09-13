@@ -322,18 +322,24 @@ public:
     /// @param t2 expected rebind-timer value
     /// @param preferred expected preferred-lifetime value
     /// @param valid expected valid-lifetime value
-    void
+    /// @return the subnet that was examined
+    Subnet6Ptr
     checkSubnet(const Subnet6Collection& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t pref, uint32_t valid) {
         const auto& index = col.get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
-        ASSERT_NE(subnet_it, index.cend());
+        if (subnet_it == index.cend()) {
+            ADD_FAILURE() << "Unable to find expected subnet " << subnet;
+            return (Subnet6Ptr());
+        }
         Subnet6Ptr s = *subnet_it;
 
         EXPECT_EQ(t1, s->getT1());
         EXPECT_EQ(t2, s->getT2());
         EXPECT_EQ(pref, s->getPreferred());
         EXPECT_EQ(valid, s->getValid());
+
+        return (s);
     }
 
     /// @brief Returns an interface configuration used by the most of the
@@ -863,7 +869,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    
+
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -5558,6 +5564,21 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
 // - shared network to subnet
 // Also, it tests that more than one shared network can be defined.
 TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    // Build some expected interface-id values.
+    const string text1 = "oneone";
+    const string text2 = "twotwo";
+    OptionBuffer buffer1 = OptionBuffer(text1.begin(), text1.end());
+    OptionBuffer buffer2 = OptionBuffer(text2.begin(), text2.end());
+    Option iface_id1(Option::V6, D6O_INTERFACE_ID, buffer1);
+    Option iface_id2(Option::V6, D6O_INTERFACE_ID, buffer2);
+
     string config = "{\n"
         "\"renew-timer\": 1, \n"
         "\"rebind-timer\": 2, \n"
@@ -5566,6 +5587,15 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"renew-timer\": 10,\n"
+        "    \"rebind-timer\": 20, \n"
+        "    \"preferred-lifetime\": 30,\n"
+        "    \"valid-lifetime\": 40, \n"
+        "    \"interface-id\": \"oneone\",\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"1111::1\"\n"
+        "    },\n"
+        "    \"rapid-commit\": true,\n"
+        "    \"reservation-mode\": \"disabled\",\n"
         "    \"subnet6\": [\n"
         "    { \n"
         "        \"subnet\": \"2001:db1::/48\",\n"
@@ -5574,7 +5604,16 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "    { \n"
         "        \"subnet\": \"2001:db2::/48\",\n"
         "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
-        "        \"renew-timer\": 100\n"
+        "        \"renew-timer\": 100\n,"
+        "        \"rebind-timer\": 200, \n"
+        "        \"preferred-lifetime\": 300,\n"
+        "        \"relay\": {\n"
+        "            \"ip-address\": \"2222::2\"\n"
+        "        },\n"
+        "        \"valid-lifetime\": 400, \n"
+        "        \"interface-id\": \"twotwo\",\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"reservation-mode\": \"out-of-pool\"\n"
         "    }\n"
         "    ]\n"
         " },\n"
@@ -5613,13 +5652,24 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // derived from shared-network level. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    checkSubnet(*subs, "2001:db1::/48", 10, 2, 3, 4);
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 10, 20, 30, 40);
+    ASSERT_TRUE(s);
+    ASSERT_TRUE(s->getInterfaceId());
+    EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
+    EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
+    EXPECT_EQ(true, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    checkSubnet(*subs, "2001:db2::/48", 100, 2, 3, 4);
+    s = checkSubnet(*subs, "2001:db2::/48", 100, 200, 300, 400);
+    ASSERT_TRUE(s->getInterfaceId());
+    EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
+    EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
+    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
     net = nets->at(1);
@@ -5630,7 +5680,97 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(1, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
-    checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
+    s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
+    EXPECT_FALSE(s->getInterfaceId());
+    EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
+    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
+}
+
+// Since it is not allowed to define both interface-id and interface
+// for the same subnet, we need dedicated test that will check
+// interface separately.
+TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"interface\": \"eth0\",\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the renew-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
+    ASSERT_TRUE(s);
+    EXPECT_EQ("eth0", s->getIface());
+
+    // For the second subnet, the renew-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
+    EXPECT_EQ("eth0", s->getIface());
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
+    EXPECT_EQ("", s->getIface());
 }
 
 };

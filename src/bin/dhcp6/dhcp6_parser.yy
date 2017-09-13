@@ -982,6 +982,7 @@ shared_network_params: shared_network_param
 shared_network_param: name
                     | subnet6_list
                     | interface
+                    | interface_id
                     | renew_timer
                     | rebind_timer
                     | option_data_list
