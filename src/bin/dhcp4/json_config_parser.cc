@@ -89,7 +89,6 @@ public:
         cfg->setDhcp4o6Port(dhcp4o6_port);
     }
 
-
     /// @brief Copies subnets from shared networks to regular subnets container
     ///
     /// @param from pointer to shared networks container (copy from here)
@@ -155,6 +154,13 @@ public:
     void
     sharedNetworksSanityChecks(const SharedNetwork4Collection& networks,
                                ConstElementPtr json) {
+
+        /// @todo: in case of errors, use json to extract line numbers.
+        if (!json) {
+            // No json? That means that the shared-networks was never specified
+            // in the config.
+            return;
+        }
 
         // Used for names uniqueness checks.
         std::set<string> names;
@@ -315,6 +321,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             parser.parse(cfg_option_def, option_defs);
         }
 
+        // This parser is used in several places, so it should be available
+        // early.
         Dhcp4ConfigParser global_parser;
 
         // Make parsers grouping.
@@ -427,9 +435,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                 /// as well.
                 SharedNetworks4ListParser parser;
                 CfgSharedNetworks4Ptr cfg = srv_cfg->getCfgSharedNetworks4();
-
                 parser.parse(cfg, config_pair.second);
 
+                // We also need to put the subnets it contains into normal
+                // subnets list.
                 global_parser.copySubnets4(srv_cfg->getCfgSubnets4(), cfg);
                 continue;
             }
