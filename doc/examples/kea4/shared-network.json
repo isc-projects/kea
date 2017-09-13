@@ -11,7 +11,7 @@
         // As with any other configuration, you need to tell Kea the interface
         // names, so it would listen to incoming traffic.
         "interfaces-config": {
-            "interfaces": [ "eth0" ]
+            "interfaces": [ "ethX" ]
         },
 
         // You also need to tell where to store lease information.
@@ -21,9 +21,9 @@
             "lfc-interval": 3600
         },
 
-        // Here the shared networks definition starts. shared-networks can
+        // The shared networks definition starts here. shared-networks can
         // contain a list of shared networks. There are many parameters
-        // that can be specfied here, so this example may be overwhelming
+        // that can be specified here, so this example may be overwhelming
         // at first, but the only mandatory parameter for each shared
         // network is name. It must be unique. Typically, each shared
         // subnet also needs to have at least two subnets to be functional,
@@ -103,7 +103,7 @@
             "valid-lifetime": 200
         } ], // end of shared-networks
 
-        // It is likely that in your network you'll have a mix or regular,
+        // It is likely that in your network you'll have a mix of regular,
         // "plain" subnets and shared networks. It is perfectly valid to mix
         // them in the same config file.
         //
