@@ -604,6 +604,13 @@ public:
         return (ReturnType());
     }
 
+    /// @brief Checks if specified subnet is part of the collection
+    ///
+    /// @param col collection of subnets to be inspected
+    /// @param subnet text notation (e.g. 192.0.2.0/24)
+    /// @param t1 expected renew-timer value
+    /// @param t2 expected rebind-timer value
+    /// @param valid expected valid-lifetime value
     void
     checkSubnet(const Subnet4Collection& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t valid) {
@@ -5066,17 +5073,15 @@ TEST_F(Dhcp4ParserTest, sharedNetworksName) {
     // Now verify that the shared network was indeed configured.
     CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks4();
-
     ASSERT_TRUE(cfg_net);
     const SharedNetwork4Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
     ASSERT_EQ(1, nets->size());
-
     SharedNetwork4Ptr net = *(nets->begin());
     ASSERT_TRUE(net);
-
     EXPECT_EQ("foo", net->getName());
 
+    // Verify that there are no subnets in this shared-network
     const Subnet4Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(0, subs->size());

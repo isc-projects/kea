@@ -119,7 +119,6 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     }
 
     // Now set the defaults for defined subnets
-    // Now set the defaults for defined subnets
     ConstElementPtr subnets = global->get("subnet6");
     if (subnets) {
         cnt += setListDefaults(subnets, SUBNET6_DEFAULTS);
@@ -130,6 +129,17 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     if (ifaces_cfg) {
         ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(ifaces_cfg);
         cnt += setDefaults(mutable_cfg, IFACE6_DEFAULTS);
+    }
+
+    // Set defaults for shared networks
+    ConstElementPtr shared = global->get("shared-networks");
+    if (shared) {
+        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+            ConstElementPtr subs = net->get("subnet6");
+            if (subs) {
+                cnt += setListDefaults(subs, SUBNET6_DEFAULTS);
+            }
+        }
     }
 
     return (cnt);
@@ -143,6 +153,29 @@ size_t SimpleParser6::deriveParameters(isc::data::ElementPtr global) {
         BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
                                               INHERIT_GLOBAL_TO_SUBNET6);
+        }
+    }
+
+    // Deriving parameters for shared networks is a bit more involved.
+    // First, the shared-network level derives from global, and then
+    // subnets within derive from it.
+    ConstElementPtr shared = global->get("shared-networks");
+    if (shared) {
+        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+            // First try to inherit the parameters from shared network,
+            // if defined there.
+            // Then try to inherit them from global.
+            cnt += SimpleParser::deriveParams(global, net,
+                                              INHERIT_GLOBAL_TO_SUBNET6);
+
+            // Now we need to go thrugh all the subnets in this net.
+            subnets = net->get("subnet6");
+            if (subnets) {
+                BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+                    cnt += SimpleParser::deriveParams(net, single_subnet,
+                                                      INHERIT_GLOBAL_TO_SUBNET6);
+                }
+            }
         }
     }
 
