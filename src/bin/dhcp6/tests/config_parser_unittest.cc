@@ -5556,6 +5556,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
 // This test checks if parameters are derived properly:
 // - global to shared network
 // - shared network to subnet
+// Also, it tests that more than one shared network can be defined.
 TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     string config = "{\n"
         "\"renew-timer\": 1, \n"
@@ -5576,7 +5577,16 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "        \"renew-timer\": 100\n"
         "    }\n"
         "    ]\n"
-        " } ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
         "} \n";
 
     configure(config, CONTROL_RESULT_SUCCESS, "");
@@ -5585,13 +5595,14 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks6();
 
-    // There is expected one shared subnet.
+    // Two shared networks are expeced.
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(2, nets->size());
 
-    SharedNetwork6Ptr net = *(nets->begin());
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
     const Subnet6Collection * subs = net->getAllSubnets();
@@ -5609,6 +5620,17 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // from global scope to shared-network level and later again to
     // subnet6 level.
     checkSubnet(*subs, "2001:db2::/48", 100, 2, 3, 4);
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
 }
 
 };
