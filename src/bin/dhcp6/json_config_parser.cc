@@ -205,7 +205,7 @@ public:
 
     /// @brief Conducts global sanity checks
     ///
-    /// This method is very simply now, but more sanity checks are expected
+    /// This method is very simple now, but more sanity checks are expected
     /// in the future.
     ///
     /// @param cfg - the parsed structure

@@ -5134,7 +5134,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
     checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
 }
 
-// Test verifies that a a proper shared-network (three subnets) is
+// Test verifies that a proper shared-network (three subnets) is
 // accepted. It verifies several things:
 // - that more than one subnet can be added to shared subnets
 // - that each subnet being part of the shared subnets is also stored in
