@@ -72,7 +72,7 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(SrvConfigPtr cfg, ConstElementPtr global) {
+    void parse(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
@@ -96,7 +96,7 @@ public:
     /// @throw BadValue if any pointer is missing
     /// @throw DhcpConfigError if there are duplicates (or other subnet defects)
     void
-    copySubnets4(const CfgSubnets4Ptr dest, const CfgSharedNetworks4Ptr from) {
+    copySubnets4(const CfgSubnets4Ptr& dest, const CfgSharedNetworks4Ptr& from) {
 
         if (!dest || !from) {
             isc_throw(BadValue, "Unable to copy subnets: at least one pointer is null");
@@ -136,7 +136,7 @@ public:
     /// @param global global Dhcp4 scope
     /// @throw DhcpConfigError in case of issues found
     void
-    sanityChecks(SrvConfigPtr cfg, ConstElementPtr global) {
+    sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
         /// Shared network sanity checks
         const SharedNetwork4Collection* networks = cfg->getCfgSharedNetworks4()->getAll();

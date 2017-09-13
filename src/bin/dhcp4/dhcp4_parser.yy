@@ -1002,7 +1002,6 @@ shared_network_param: name
                     | next_server
                     | relay
                     | reservation_mode
-                    | echo_client_id
                     | client_classes
                     | valid_lifetime
                     | unknown_map_entry
