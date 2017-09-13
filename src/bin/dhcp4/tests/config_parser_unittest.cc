@@ -5207,11 +5207,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
 // This test checks if parameters are derived properly:
 // - global to shared network
 // - shared network to subnet
+// Also, it tests that more than one shared network can be defined.
 TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     string config = "{\n"
-        "\"valid-lifetime\": 4, \n"
-        "\"rebind-timer\": 2, \n"
         "\"renew-timer\": 1, \n"
+        "\"rebind-timer\": 2, \n"
+        "\"valid-lifetime\": 4, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"renew-timer\": 10,\n"
@@ -5226,6 +5227,17 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "        \"renew-timer\": 100\n"
         "    }\n"
         "    ]\n"
+
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+
         " } ]\n"
         "} \n";
 
@@ -5235,15 +5247,16 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks4();
 
-    // There is expected one shared subnet.
+    // Two shared networks are expected.
     ASSERT_TRUE(cfg_net);
     const SharedNetwork4Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(2, nets->size());
 
-    SharedNetwork4Ptr net = *(nets->begin());
+    SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
+    // The first shared network has two subnets.
     const Subnet4Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(2, subs->size());
@@ -5259,6 +5272,18 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // from global scope to shared-network level and later again to
     // subnet4 level.
     checkSubnet(*subs, "192.0.2.0/24", 100, 2, 4);
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
+
 }
 
 
