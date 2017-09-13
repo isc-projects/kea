@@ -16,9 +16,10 @@
 
         "subnet6": [
             {
-                "pools": [ { "pool": "2001:db8:1::/80" } ],
-                "subnet": "2001:db8:1::/64",
-                "interface": "eth0"
+                "pools": [ { "pool": "2001:db8:2::/80" } ],
+                "subnet": "2001:db8:2::/64",
+                "interface": "eth0",
+                "id": 100
             }
         ],
 
@@ -34,7 +35,8 @@
                 "ip-address": "::"
             },
             "renew-timer": 100,
-            "reservation-mode": "all",    "subnet6": [
+            "reservation-mode": "all",
+            "subnet6": [
                 {
                     "id": 1,
                     "option-data": [ ],
