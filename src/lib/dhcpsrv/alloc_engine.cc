@@ -329,7 +329,7 @@ AllocEngine::findReservationInternal(ContextType& ctx,
             }
         }
 
-        subnet = subnet->getNextSubnet(ctx.subnet_);
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 }
 
@@ -2192,7 +2192,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
-        subnet = subnet->getNextSubnet(ctx.subnet_);
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 
     return (false);
@@ -2224,13 +2224,6 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 
     while (subnet) {
 
-        // Some of the subnets within a shared network may not be allowed
-        // for the client if classification restrictions have been applied.
-        if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            subnet = subnet->getNextSubnet(original_subnet);
-            continue;
-        }
-
         // If client identifier has been supplied, use it to lookup the lease. This
         // search will return no lease if the client doesn't have any lease in the
         // database or if the client didn't use client identifier to allocate the
@@ -2256,20 +2249,17 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
                     existing_lease->belongsToClient(ctx.hwaddr_, ctx.clientid_)) {
                     // Found the lease of this client, so return it.
                     client_lease = existing_lease;
-                    break;
+                    // We got a lease but the subnet it belongs to may differ from
+                    // the original subnet. Let's now stick to this subnet.
+                    ctx.subnet_ = subnet;
+                    return;
                 }
             }
         }
 
-        if (client_lease || !network) {
-            // We got the leases but the subnet they belong to may differ from
-            // the original subnet. Let's now stick to this subnet.
-            ctx.subnet_ = subnet;
-            subnet.reset();
-
-        } else {
-            subnet = subnet->getNextSubnet(original_subnet);
-        }
+        // Haven't found any lease in this subnet, so let's try another subnet
+        // within the shared network.
+        subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
     }
 }
 
@@ -2294,17 +2284,16 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     Subnet4Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
 
-        if (current_subnet->clientSupported(ctx.query_->getClasses())) {
-            if (current_subnet->inPool(Lease::TYPE_V4, address)) {
-                // We found a subnet that this address belongs to, so it
-                // seems that this subnet is the good candidate for allocation.
-                // Let's update the selected subnet.
-                ctx.subnet_ = current_subnet;
-                return (true);
-            }
+        if (current_subnet->inPool(Lease::TYPE_V4, address)) {
+            // We found a subnet that this address belongs to, so it
+            // seems that this subnet is the good candidate for allocation.
+            // Let's update the selected subnet.
+            ctx.subnet_ = current_subnet;
+            return (true);
         }
 
-        current_subnet = current_subnet->getNextSubnet(ctx.subnet_);
+        current_subnet = current_subnet->getNextSubnet(ctx.subnet_,
+                                                       ctx.query_->getClasses());
     }
 
     return (false);
@@ -2364,6 +2353,16 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     ctx.old_lease_.reset();
 
     Lease4Ptr new_lease;
+
+    // Before we start allocation process, we need to make sure that the
+    // selected subnet is allowed for this client. If not, we'll try to
+    // use some other subnet within the shared network. If there are no
+    // subnets allowed for this client within the shared network, we
+    // can't allocate a lease.
+    Subnet4Ptr subnet = ctx.subnet_;
+    if (subnet && !subnet->clientSupported(ctx.query_->getClasses())) {
+        ctx.subnet_ = subnet->getNextSubnet(subnet, ctx.query_->getClasses());
+    }
 
     try {
         if (!ctx.subnet_) {
@@ -3000,13 +2999,6 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     uint64_t total_attempts = 0;
     while (subnet) {
 
-        // Some of the subnets within a shared network may not be allowed
-        // for the client if classification restrictions have been applied.
-        if (!subnet->clientSupported(ctx.query_->getClasses())) {
-            subnet = subnet->getNextSubnet(original_subnet);
-            continue;
-        }
-
         const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
                                        subnet->getPoolCapacity(Lease::TYPE_V4));
         for (uint64_t i = 0; i < max_attempts; ++i) {
@@ -3033,7 +3025,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
         // This pointer may be set to NULL if hooks set SKIP status.
         if (subnet) {
-            subnet = subnet->getNextSubnet(original_subnet);
+            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
 
             if (subnet) {
                 ctx.subnet_ = subnet;

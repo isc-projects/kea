@@ -416,6 +416,21 @@ public:
     /// shared network.
     Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet) const;
 
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
+
     /// @brief Checks whether this subnet and parent shared network supports
     /// the client that belongs to specified classes.
     ///
@@ -532,6 +547,21 @@ public:
     /// is the first subnet or if the current subnet doesn't belong to a
     /// shared network.
     Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet) const;
+
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
 
     /// @brief Checks whether this subnet and parent shared network supports
     /// the client that belongs to specified classes.

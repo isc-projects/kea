@@ -188,6 +188,34 @@ Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
     return (Subnet4Ptr());
 }
 
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet4Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
+    return (Subnet4Ptr());
+}
+
+
 bool
 Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
     NetworkPtr network;
@@ -470,6 +498,33 @@ Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
         return (network->getNextSubnet(first_subnet, getID()));
     }
 
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet6Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
     return (Subnet6Ptr());
 }
 

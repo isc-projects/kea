@@ -591,6 +591,21 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
     ASSERT_TRUE(lease);
     EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
 
+    // Create reservation for the client in subnet1. Because this subnet is
+    // not allowed for the client the client should still be offerred a
+    // lease from subnet2.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet1->getID(),
+                          SubnetID(0), IOAddress("192.0.2.17")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+    AllocEngine::findReservation(ctx);
+
+    ctx.subnet_ = subnet1;
+    lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2->inPool(Lease::TYPE_V4, lease->addr_));
+
     // Assign cable-modem class and try again. This time, we should
     // offer an address from the subnet1.
     ctx.query_->addClass(ClientClass("cable-modem"));
@@ -598,7 +613,7 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
     ctx.subnet_ = subnet1;
     lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet1->inPool(Lease::TYPE_V4, lease->addr_));
+    EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 }
 
 // Test that reservations within shared network take precedence over the
@@ -636,8 +651,8 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkReservations) {
     AllocEngine::ClientContext4
         ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
             false, false, "host.example.com.", true);
-    AllocEngine::findReservation(ctx);
     ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_EQ("10.2.3.23", lease->addr_.toText());
@@ -834,8 +849,8 @@ TEST_F(AllocEngine4Test, requestSharedNetworkReservations) {
     AllocEngine::ClientContext4
         ctx(subnet1, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
             false, false, "host.example.com.", false);
-    AllocEngine::findReservation(ctx);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
     EXPECT_EQ("10.2.3.23", lease->addr_.toText());
@@ -2070,6 +2085,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
     ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
     ctx.addHostIdentifier(Host::IDENT_DUID, clientid_->getDuid());
 
@@ -2227,8 +2243,8 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.123"), false, false,
                                     "", false);
-    AllocEngine::findReservation(ctx);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    AllocEngine::findReservation(ctx);
 
     Lease4Ptr allocated_lease = engine.allocateLease4(ctx);
 
