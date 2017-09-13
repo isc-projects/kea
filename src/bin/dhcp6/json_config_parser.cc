@@ -83,7 +83,7 @@ public:
     ///
     /// @param value pointer to the content of parsed values
     /// @param cfg server configuration (RSOO will be stored here)
-    void parse(SrvConfigPtr cfg, isc::data::ConstElementPtr value) {
+    void parse(const SrvConfigPtr& cfg, const isc::data::ConstElementPtr& value) {
         try {
             BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
                 std::string option_str = source_elem->stringValue();
@@ -153,7 +153,7 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(SrvConfigPtr srv_config, ConstElementPtr global) {
+    void parse(const SrvConfigPtr& srv_config, const ConstElementPtr& global) {
 
         // Set the probation period for decline handling.
         uint32_t probation_period =
@@ -172,7 +172,7 @@ public:
     /// @throw BadValue if any pointer is missing
     /// @throw DhcpConfigError if there are duplicates (or other subnet defects)
     void
-    copySubnets6(const CfgSubnets6Ptr dest, const CfgSharedNetworks6Ptr from) {
+    copySubnets6(const CfgSubnets6Ptr& dest, const CfgSharedNetworks6Ptr& from) {
 
         if (!dest || !from) {
             isc_throw(BadValue, "Unable to copy subnets: at least one pointer is null");
@@ -212,7 +212,7 @@ public:
     /// @param global global Dhcp4 scope
     /// @throw DhcpConfigError in case of issues found
     void
-    sanityChecks(SrvConfigPtr cfg, ConstElementPtr global) {
+    sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
         /// Shared network sanity checks
         const SharedNetwork6Collection* networks = cfg->getCfgSharedNetworks6()->getAll();
