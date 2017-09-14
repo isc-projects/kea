@@ -26,7 +26,7 @@
         // that can be specified here, so this example may be overwhelming
         // at first, but the only mandatory parameter for each shared
         // network is name. It must be unique. Typically, each shared
-        // subnet also needs to have at least two subnets to be functional,
+        // network also needs to have at least two subnets to be functional,
         // but if you really want to, you can define a degraded shared
         // network that has 1 or even 0 subnets. This may come in handy
         // when migrating between regular subnets and shared networks
@@ -51,7 +51,7 @@
             "option-data": [ ],
             "rebind-timer": 150,
 
-            // If all the traffic coming from that shared subnet is reachable
+            // If all the traffic coming from that shared network is reachable
             // via relay and that relay always use the same IP address, you
             // can specify that relay address here. Since this example shows
             // a shared network reachable directly, we put 0.0.0.0 here.
