@@ -38,7 +38,7 @@
         // that can be specified here, so this example may be overwhelming
         // at first, but the only mandatory parameter for each shared
         // network is name. It must be unique. Typically, each shared
-        // subnet also needs to have at least two subnets to be functional,
+        // network also needs to have at least two subnets to be functional,
         // but if you really want to, you can define a degraded shared
         // network that has 1 or even 0 subnets. This may come in handy
         // when migrating between regular subnets and shared networks
