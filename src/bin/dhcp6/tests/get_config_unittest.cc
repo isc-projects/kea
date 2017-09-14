@@ -11,12 +11,12 @@
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -65,7 +65,6 @@ namespace {
 ///@{
 /// @brief extracted configurations
 const char* EXTRACTED_CONFIGS[] = {
-/// put this after const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -1514,6 +1513,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 1
@@ -1565,6 +1565,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -1639,6 +1640,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -1779,6 +1781,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1024,\n"
@@ -1919,6 +1922,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2059,6 +2063,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2133,6 +2138,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2208,6 +2214,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2283,6 +2290,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2387,6 +2395,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2461,6 +2470,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2537,6 +2547,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2615,6 +2626,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2708,6 +2720,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -2794,6 +2807,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 15
@@ -2855,6 +2869,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 16
@@ -2925,6 +2940,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 17
@@ -2986,6 +3002,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 18
@@ -3047,6 +3064,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 19
@@ -3115,6 +3133,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3189,6 +3208,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3307,6 +3327,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3417,6 +3438,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 23
@@ -3521,6 +3543,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3595,6 +3618,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3709,6 +3733,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3851,6 +3876,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -3944,6 +3970,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -4018,6 +4045,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 29
@@ -4069,6 +4097,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 30
@@ -4120,6 +4149,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -4194,6 +4224,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"client-class\": \"alpha\",\n"
@@ -4337,6 +4368,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -4411,6 +4443,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 123,\n"
@@ -4614,6 +4647,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 234,\n"
@@ -4701,6 +4735,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 36
@@ -4752,6 +4787,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 37
@@ -4803,6 +4839,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -4943,6 +4980,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 39
@@ -4994,6 +5032,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 40
@@ -5045,6 +5084,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 41
@@ -5096,6 +5136,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 42
@@ -5147,6 +5188,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 43
@@ -5212,6 +5254,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5286,6 +5329,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5360,6 +5404,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5435,6 +5480,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5515,6 +5561,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5595,6 +5642,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5671,6 +5719,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -5748,6 +5797,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            \"time\": 0,\n"
 "            \"type\": \"LLT\"\n"
 "        },\n"
+"        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
@@ -6051,14 +6101,8 @@ TEST_P(Dhcp6GetConfigTest, run) {
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }
 
-#if 0
-// This test is temporarily disabled. The shared subnets structures have been
-// implemented (#5305), but the parsers are not there yet, so grammar will fail
-// when parseDHCP4 is called. That's comping up in #5357.
-
 /// Define the parameterized test loop
 INSTANTIATE_TEST_CASE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
                         ::testing::Range(static_cast<size_t>(0), max_config_counter));
-#endif
 
 };

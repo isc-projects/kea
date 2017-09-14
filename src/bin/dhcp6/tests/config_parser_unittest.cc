@@ -280,6 +280,68 @@ public:
         }
     }
 
+    /// @brief Convenience method for running configuration
+    ///
+    /// This method does not throw, but signals errors using gtest macros.
+    ///
+    /// @param config text to be parsed as JSON
+    /// @param expected_code expected code (see cc/command_interpreter.h)
+    /// @param exp_error expected text error (check skipped if empty)
+    void configure(std::string config, int expected_code,
+                   std::string exp_error = "") {
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP6(config, true));
+
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(status);
+
+        int rcode;
+        ConstElementPtr comment = parseAnswer(rcode, status);
+        EXPECT_EQ(expected_code, rcode);
+
+        string text;
+        ASSERT_NO_THROW(text = comment->stringValue());
+
+        if (expected_code != rcode) {
+            std::cout << "Reported status: " << text << std::endl;
+        }
+
+        if ((rcode != 0)) {
+            if (!exp_error.empty()) {
+                EXPECT_EQ(exp_error, text);
+            }
+        }
+    }
+
+    /// @brief Checks if specified subnet is part of the collection
+    ///
+    /// @param col collection of subnets to be inspected
+    /// @param subnet text notation (e.g. 192.0.2.0/24)
+    /// @param t1 expected renew-timer value
+    /// @param t2 expected rebind-timer value
+    /// @param preferred expected preferred-lifetime value
+    /// @param valid expected valid-lifetime value
+    /// @return the subnet that was examined
+    Subnet6Ptr
+    checkSubnet(const Subnet6Collection& col, std::string subnet,
+                uint32_t t1, uint32_t t2, uint32_t pref, uint32_t valid) {
+        const auto& index = col.get<SubnetPrefixIndexTag>();
+        auto subnet_it = index.find(subnet);
+        if (subnet_it == index.cend()) {
+            ADD_FAILURE() << "Unable to find expected subnet " << subnet;
+            return (Subnet6Ptr());
+        }
+        Subnet6Ptr s = *subnet_it;
+
+        EXPECT_EQ(t1, s->getT1());
+        EXPECT_EQ(t2, s->getT2());
+        EXPECT_EQ(pref, s->getPreferred());
+        EXPECT_EQ(valid, s->getValid());
+
+        return (s);
+    }
+
     /// @brief Returns an interface configuration used by the most of the
     /// unit tests.
     std::string genIfaceConfig() const {
@@ -807,7 +869,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    
+
 
     // returned value should be 0 (success)
     checkResult(status, 0);
@@ -5065,9 +5127,9 @@ TEST_F(Dhcp6ParserTest, invalidClientClassDictionary) {
         "       \"bogus\": \"bad\" \n"
         "   } \n"
         "], \n"
-        "\"subnet4\": [ {  \n"
-        "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ], \n"
-        "    \"subnet\": \"192.0.2.0/24\"  \n"
+        "\"subnet6\": [ {  \n"
+        "    \"pools\": [ { \"pool\":  \"2001:db8::1 - 2001:db8::ffff\" } ], \n"
+        "    \"subnet\": \"2001:db8::/64\"  \n"
         " } ] \n"
         "} \n";
 
@@ -5306,6 +5368,414 @@ TEST_F(Dhcp6ParserTest, outsideSubnetPool) {
         "2001:db8::-2001:db8::ffff does not match the prefix of a subnet: "
         "2001:dc8::/32 to which it is being added (<string>:6:14)";
     EXPECT_EQ(expected, text);
+}
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp6ParserTest, sharedNetworksEmpty) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ {  \n"
+        "    \"subnet\": \"2001:db8::/48\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+}
+
+// Test verifies that if a shared network is defined, it at least has to have
+// a name.
+TEST_F(Dhcp6ParserTest, sharedNetworksNoName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ {  \n"
+        "    \"subnet\": \"2001:db8::/48\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { } ]\n"
+        "} \n";
+
+    EXPECT_THROW(parseDHCP6(config, true), Dhcp6ParseError);
+}
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp6ParserTest, sharedNetworksEmptyName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ {  \n"
+        "    \"subnet\": \"2001:db8::/48\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR,
+              "Shared-network with subnets  is missing mandatory 'name' parameter");
+}
+
+// Test verifies that a degenerated shared-network (no subnets) is
+// accepted.
+TEST_F(Dhcp6ParserTest, sharedNetworksName) {
+    string config = "{\n"
+        "\"subnet6\": [ {  \n"
+        "    \"subnet\": \"2001:db8::/48\",\n"
+        "    \"pools\": [ { \"pool\": \"2001:db8::1 - 2001:db8::ffff\" } ]\n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"foo\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+    SharedNetwork6Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // Verify that there are no subnets in this shared-network
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(0, subs->size());
+}
+
+// Test verifies that a degenerated shared-network (just one subnet) is
+// accepted. Also tests that, unless explicitly specified, the subnet
+// gets default values.
+TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet6\": [ { \n"
+        "        \"subnet\": \"2001:db8::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db8::1 - 2001:db8::ffff\" } ]\n"
+        "    } ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+    ASSERT_TRUE(cfg_net);
+
+    // There should be exactly one shared subnet.
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork6Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // It should have one subnet. The subnet should have default values.
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+    checkSubnet(*subs, "2001:db8::/48", 900, 1800, 3600, 7200);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets6);
+
+    subs = subnets6->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "2001:db8::/48", 900, 1800, 3600, 7200);
+}
+
+// Test verifies that a proper shared-network (three subnets) is
+// accepted. It verifies several things:
+// - that more than one subnet can be added to shared subnets
+// - that each subnet being part of the shared subnets is also stored in
+//   global subnets collection
+// - that a subnet can inherit global values
+// - that subnet can override global parameters
+// - that overridden parameters only affect one subnet and not others
+TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
+    string config = "{\n"
+        "\"renew-timer\": 1000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"preferred-lifetime\": 3000, \n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"renew-timer\": 2,\n"
+        "        \"rebind-timer\": 22,\n"
+        "        \"preferred-lifetime\": 222,\n"
+        "        \"valid-lifetime\": 2222\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // There is expected one shared subnet.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork6Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+
+    EXPECT_EQ("foo", net->getName());
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(3, subs->size());
+    checkSubnet(*subs, "2001:db1::/48", 1000, 2000, 3000, 4000);
+    checkSubnet(*subs, "2001:db2::/48", 2, 22, 222, 2222);
+    checkSubnet(*subs, "2001:db3::/48", 1000, 2000, 3000, 4000);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets6);
+
+    subs = subnets6->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "2001:db1::/48", 1000, 2000, 3000, 4000);
+    checkSubnet(*subs, "2001:db2::/48", 2, 22, 222, 2222);
+    checkSubnet(*subs, "2001:db3::/48", 1000, 2000, 3000, 4000);
+}
+
+// This test checks if parameters are derived properly:
+// - global to shared network
+// - shared network to subnet
+// Also, it tests that more than one shared network can be defined.
+TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    // Build some expected interface-id values.
+    const string text1 = "oneone";
+    const string text2 = "twotwo";
+    OptionBuffer buffer1 = OptionBuffer(text1.begin(), text1.end());
+    OptionBuffer buffer2 = OptionBuffer(text2.begin(), text2.end());
+    Option iface_id1(Option::V6, D6O_INTERFACE_ID, buffer1);
+    Option iface_id2(Option::V6, D6O_INTERFACE_ID, buffer2);
+
+    string config = "{\n"
+        "\"renew-timer\": 1, \n"
+        "\"rebind-timer\": 2, \n"
+        "\"preferred-lifetime\": 3,\n"
+        "\"valid-lifetime\": 4, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"renew-timer\": 10,\n"
+        "    \"rebind-timer\": 20, \n"
+        "    \"preferred-lifetime\": 30,\n"
+        "    \"valid-lifetime\": 40, \n"
+        "    \"interface-id\": \"oneone\",\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"1111::1\"\n"
+        "    },\n"
+        "    \"rapid-commit\": true,\n"
+        "    \"reservation-mode\": \"disabled\",\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"renew-timer\": 100\n,"
+        "        \"rebind-timer\": 200, \n"
+        "        \"preferred-lifetime\": 300,\n"
+        "        \"relay\": {\n"
+        "            \"ip-address\": \"2222::2\"\n"
+        "        },\n"
+        "        \"valid-lifetime\": 400, \n"
+        "        \"interface-id\": \"twotwo\",\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"reservation-mode\": \"out-of-pool\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the renew-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 10, 20, 30, 40);
+    ASSERT_TRUE(s);
+    ASSERT_TRUE(s->getInterfaceId());
+    EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
+    EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
+    EXPECT_EQ(true, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
+
+    // For the second subnet, the renew-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    s = checkSubnet(*subs, "2001:db2::/48", 100, 200, 300, 400);
+    ASSERT_TRUE(s->getInterfaceId());
+    EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
+    EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
+    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
+    EXPECT_FALSE(s->getInterfaceId());
+    EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
+    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
+}
+
+// Since it is not allowed to define both interface-id and interface
+// for the same subnet, we need dedicated test that will check
+// interface separately.
+TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"interface\": \"eth0\",\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the renew-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
+    ASSERT_TRUE(s);
+    EXPECT_EQ("eth0", s->getIface());
+
+    // For the second subnet, the renew-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet6 level.
+    checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
+    EXPECT_EQ("eth0", s->getIface());
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
+    EXPECT_EQ("", s->getIface());
 }
 
 };

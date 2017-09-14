@@ -109,6 +109,7 @@ using namespace std;
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
   ALL "all"
+  SHARED_NETWORKS "shared-networks"
 
   MAC_SOURCES "mac-sources"
   RELAY_SUPPLIED_OPTIONS "relay-supplied-options"
@@ -417,6 +418,7 @@ global_param: preferred_lifetime
             | rebind_timer
             | decline_probation_period
             | subnet6_list
+            | shared_networks
             | interfaces_config
             | lease_database
             | hosts_database
@@ -962,6 +964,57 @@ rapid_commit: RAPID_COMMIT COLON BOOLEAN {
     ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rapid-commit", rc);
 };
+
+
+// ---- shared-networks ---------------------
+
+shared_networks: SHARED_NETWORKS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("shared-networks", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.SHARED_NETWORK);
+} COLON LSQUARE_BRACKET shared_networks_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// This allows 0 or more shared network definitions.
+shared_networks_content: %empty
+                    | shared_networks_list
+                    ;
+
+// This allows 1 or more shared network definitions.
+shared_networks_list: shared_network
+                    | shared_networks_list COMMA shared_network
+                    ;
+
+shared_network: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} shared_network_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+}
+
+shared_network_params: shared_network_param
+                     | shared_network_params COMMA shared_network_param
+                     ;
+
+shared_network_param: name
+                    | subnet6_list
+                    | interface
+                    | interface_id
+                    | renew_timer
+                    | rebind_timer
+                    | option_data_list
+                    | relay
+                    | reservation_mode
+                    | client_classes
+                    | preferred_lifetime
+                    | rapid_commit
+                    | valid_lifetime
+                    | unknown_map_entry
+                    ;
 
 // ---- option-def --------------------------
 
