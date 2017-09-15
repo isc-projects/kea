@@ -1009,7 +1009,7 @@ shared_network_param: name
                     | option_data_list
                     | relay
                     | reservation_mode
-                    | client_classes
+                    | client_class
                     | preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
