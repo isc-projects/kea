@@ -75,12 +75,12 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv6 subnet.
 const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
-    { "client-class",     Element::string,  "" }
+    { "id",               Element::integer, "0" } // 0 means autogenerate
 };
 
 /// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
+    { "client-class",     Element::string,  "" },
     { "interface",        Element::string, "" },
     { "interface-id",     Element::string,  "" },
     { "reservation-mode", Element::string, "all" },
