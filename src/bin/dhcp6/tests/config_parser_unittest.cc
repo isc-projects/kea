@@ -5778,4 +5778,88 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     EXPECT_EQ("", s->getIface());
 }
 
+// This test checks if client-class is derived properly.
+TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"client-class\": \"alpha\",\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    auto classes = net->getClientClasses();
+    EXPECT_TRUE(classes.contains("alpha"));
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the client-class should be inherited from
+    // shared-network level.
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
+    ASSERT_TRUE(s);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.contains("alpha"));
+
+    // For the second subnet, the values are overridden on subnet level.
+    // The value should not be inherited.
+    s = checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
+    ASSERT_TRUE(s);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
+    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+
+    // Ok, now check the second shared network. It doesn't have
+    // anything defined on shared-network or subnet level, so
+    // everything should have default values.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.empty());
+}
+
 };

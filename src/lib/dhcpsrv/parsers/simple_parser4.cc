@@ -91,7 +91,6 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
 /// Those are: interface and reservation-mode.
 const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
-    { "client-class",     Element::string,  "" },
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
@@ -99,6 +98,7 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv4 shared network.
 const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
+    { "client-class",     Element::string, "" },
     { "interface",        Element::string, "" },
     { "reservation-mode", Element::string, "all" }
 };
