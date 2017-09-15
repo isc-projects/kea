@@ -140,6 +140,28 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
+// This test verifies that it's possible to specify client-class
+// and match-client-id on shared-network level.
+TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    config_element->set("match-client-id", Element::create(false));
+    config_element->set("client-class", Element::create("alpha"));
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+    network = parser.parse(config_element);
+    ASSERT_TRUE(network);
+
+    const ClientClasses classes = network->getClientClasses();
+    ASSERT_EQ(1, classes.size());
+    EXPECT_TRUE(classes.contains("alpha"));
+
+    EXPECT_FALSE(network->getMatchClientId());
+}
+
 /// @brief Test fixture class for SharedNetwork6Parser class.
 class SharedNetwork6ParserTest : public ::testing::Test {
 public:
@@ -238,5 +260,23 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("2001:db8:1::cafe", addresses[0].toText());
 }
 
+// This test verifies that it's possible to specify client-class
+// on shared-network level.
+TEST_F(SharedNetwork6ParserTest, clientClass) {
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    config_element->set("client-class", Element::create("alpha"));
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+    network = parser.parse(config_element);
+    ASSERT_TRUE(network);
+
+    const ClientClasses classes = network->getClientClasses();
+    ASSERT_EQ(1, classes.size());
+    EXPECT_TRUE(classes.contains("alpha"));
+}
 
 } // end of anonymous namespace

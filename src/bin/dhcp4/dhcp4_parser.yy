@@ -1023,7 +1023,7 @@ shared_network_param: name
                     | next_server
                     | relay
                     | reservation_mode
-                    | client_classes
+                    | client_class
                     | valid_lifetime
                     | unknown_map_entry
                     ;

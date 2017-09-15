@@ -57,6 +57,19 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
                 shared_network->add(*subnet);
             }
         }
+
+        if (shared_network_data->contains("match-client-id")) {
+            shared_network->setMatchClientId(getBoolean(shared_network_data,
+                                                        "match-client-id"));
+        }
+
+        if (shared_network_data->contains("client-class")) {
+            std::string client_class = getString(shared_network_data, "client-class");
+            if (!client_class.empty()) {
+                shared_network->allowClientClass(client_class);
+            }
+        }
+
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
@@ -86,6 +99,13 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
             OptionDataListParser parser(AF_INET6);
             parser.parse(cfg_option, json);
+        }
+
+        if (shared_network_data->contains("client-class")) {
+            std::string client_class = getString(shared_network_data, "client-class");
+            if (!client_class.empty()) {
+                shared_network->allowClientClass(client_class);
+            }
         }
 
         if (shared_network_data->contains("subnet6")) {

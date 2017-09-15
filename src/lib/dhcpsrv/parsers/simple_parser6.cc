@@ -103,6 +103,7 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
 /// This list is also used for inheriting from global to shared networks
 /// and from shared networks to subnets within it.
 const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
+    "client-class",
     "interface",
     "interface-id",
     "preferred-lifetime",
