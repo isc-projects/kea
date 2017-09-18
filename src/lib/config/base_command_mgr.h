@@ -194,9 +194,6 @@ private:
     isc::data::ConstElementPtr
     listCommandsHandler(const std::string& name,
                         const isc::data::ConstElementPtr& params);
-
-    /// @brief Index of command-processed hook point
-    int hook_index_command_processed_;
 };
 
 } // end of namespace isc::config
