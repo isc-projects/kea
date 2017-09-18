@@ -29,6 +29,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
@@ -155,9 +156,6 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
-
-            // Assign classes.
-            setReservedClientClasses();
         }
     }
 
@@ -1177,6 +1175,13 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         co_list.push_back(subnet->getCfgOption());
     }
 
+    // Thirdly, shared network specific options.
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    if (network && !network->getCfgOption()->empty()) {
+        co_list.push_back(network->getCfgOption());
+    }
+
     // Each class in the incoming packet
     const ClientClasses& classes = ex.getQuery()->getClasses();
     for (ClientClasses::const_iterator cclass = classes.begin();
@@ -1741,12 +1746,23 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             .arg(hint.toText());
 
         Lease4Ptr lease;
-        if (client_id) {
-            lease = LeaseMgrFactory::instance().getLease4(*client_id, subnet->getID());
-        }
+        Subnet4Ptr original_subnet = subnet;
+        Subnet4Ptr s = original_subnet;
+        while (s) {
+            if (client_id) {
+                lease = LeaseMgrFactory::instance().getLease4(*client_id, s->getID());
+            }
 
-        if (!lease && hwaddr) {
-            lease = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
+            if (!lease && hwaddr) {
+                lease = LeaseMgrFactory::instance().getLease4(*hwaddr, s->getID());
+            }
+
+            if (lease ) {
+                break;
+
+            } else {
+                s = s->getNextSubnet(original_subnet, query->getClasses());
+            }
         }
 
         // Check the first error case: unknown client. We check this before
@@ -1820,6 +1836,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     Lease4Ptr lease = alloc_engine_->allocateLease4(*ctx);
 
+    // Subnet may be modified by the allocation engine, if the initial subnet
+    // belongs to a shared network.
+    subnet = ctx->subnet_;
+
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
@@ -1841,49 +1861,71 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             resp->setCiaddr(query->getCiaddr());
         }
 
-        // If there has been Client FQDN or Hostname option sent, but the
-        // hostname is empty, it means that server is responsible for
-        // generating the entire hostname for the client. The example of the
-        // client's name, generated from the IP address is: host-192-0-2-3.
-        if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
+        // We may need to update FQDN or hostname if the server is to generate
+        // new name from the allocated IP address or if the allocation engine
+        // has switched to a different subnet (from the same shared network)
+        // where the client has hostname reservations.
+        if (fqdn || opt_hostname) {
+            bool should_update = false;
 
-            // Note that if we have received the hostname option, rather than
-            // Client FQDN the trailing dot is not appended to the generated
-            // hostname because some clients don't handle the trailing dot in
-            // the hostname. Whether the trailing dot is appended or not is
-            // controlled by the second argument to the generateFqdn().
-            lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
-                .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
+            // If there is a reservation in the current subnet for a hostname,
+            // we need to use this reserved name.
+            if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
 
-            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
-                .arg(query->getLabel())
-                .arg(lease->hostname_);
+                lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
+                    .qualifyName(ctx->currentHost()->getHostname(),
+                                 static_cast<bool>(fqdn));
+                should_update = true;
 
-            // The operations below are rather safe, but we want to catch
-            // any potential exceptions (e.g. invalid lease database backend
-            // implementation) and log an error.
-            try {
-                if (!fake_allocation) {
-                    // The lease update should be safe, because the lease should
-                    // be already in the database. In most cases the exception
-                    // would be thrown if the lease was missing.
-                    LeaseMgrFactory::instance().updateLease4(lease);
-                }
+            // If there has been Client FQDN or Hostname option sent, but the
+            // hostname is empty, it means that server is responsible for
+            // generating the entire hostname for the client. The example of the
+            // client's name, generated from the IP address is: host-192-0-2-3.
+            } else if (lease->hostname_.empty()) {
 
-                // The name update in the option should be also safe,
-                // because the generated name is well formed.
-                if (fqdn) {
-                    fqdn->setDomainName(lease->hostname_,
-                                        Option4ClientFqdn::FULL);
-                } else if (opt_hostname) {
-                    opt_hostname->setValue(lease->hostname_);
-                }
+                // Note that if we have received the hostname option, rather than
+                // Client FQDN the trailing dot is not appended to the generated
+                // hostname because some clients don't handle the trailing dot in
+                // the hostname. Whether the trailing dot is appended or not is
+                // controlled by the second argument to the generateFqdn().
+                lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
+                    .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
 
-            } catch (const Exception& ex) {
-                LOG_ERROR(ddns4_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
                     .arg(query->getLabel())
-                    .arg(lease->hostname_)
-                    .arg(ex.what());
+                    .arg(lease->hostname_);
+
+                should_update = true;
+            }
+
+            if (should_update) {
+
+                // The operations below are rather safe, but we want to catch
+                // any potential exceptions (e.g. invalid lease database backend
+                // implementation) and log an error.
+                try {
+                    if (!fake_allocation) {
+                        // The lease update should be safe, because the lease should
+                        // be already in the database. In most cases the exception
+                        // would be thrown if the lease was missing.
+                        LeaseMgrFactory::instance().updateLease4(lease);
+                    }
+
+                    // The name update in the option should be also safe,
+                    // because the generated name is well formed.
+                    if (fqdn) {
+                        fqdn->setDomainName(lease->hostname_,
+                                            Option4ClientFqdn::FULL);
+                    } else if (opt_hostname) {
+                        opt_hostname->setValue(lease->hostname_);
+                    }
+
+                } catch (const Exception& ex) {
+                    LOG_ERROR(ddns4_logger, DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL)
+                        .arg(query->getLabel())
+                        .arg(lease->hostname_)
+                        .arg(ex.what());
+                }
             }
         }
 
@@ -2204,6 +2246,9 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         return (Pkt4Ptr());
     }
 
+    // Assign reserved classes.
+    ex.setReservedClientClasses();
+
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
         buildCfgOptionList(ex);
@@ -2255,6 +2300,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         // The ack is empty so return it *now*!
         return (Pkt4Ptr());
     }
+
+    // Assign reserved classes.
+    ex.setReservedClientClasses();
 
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
@@ -2539,6 +2587,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform));
 
     Pkt4Ptr ack = ex.getResponse();
+
+    ex.setReservedClientClasses();
 
     buildCfgOptionList(ex);
     appendRequestedOptions(ex);

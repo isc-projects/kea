@@ -123,6 +123,9 @@ public:
     /// server's response.
     void setReservedMessageFields();
 
+    /// @brief Assigns classes retrieved from host reservation database.
+    void setReservedClientClasses();
+
 private:
 
     /// @brief Copies default parameters from client's to server's message
@@ -154,9 +157,6 @@ private:
     /// The order of the set is determined by the configuration parameter,
     /// host-reservation-identifiers
     void setHostIdentifiers();
-
-    /// @brief Assigns classes retrieved from host reservation database.
-    void setReservedClientClasses();
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
