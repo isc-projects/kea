@@ -660,6 +660,58 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+
+// Configuration #13.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[93].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[93].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"client-class\": \"a-devices\","
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.63 - 192.0.2.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        },"
+    "        {"
+    "            \"name\": \"dog\","
+    "            \"interface\": \"eth1\","
+    "            \"client-class\": \"b-devices\","
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"10.0.0.0/26\","
+    "                    \"id\": 1000,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"10.0.0.63 - 10.0.0.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
@@ -1295,6 +1347,47 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
 
     // The lease should get rewnewed.
     EXPECT_EQ(resp2->getYiaddr().toText(), resp1->getYiaddr().toText());
+}
+
+// Shared network is selected based on the client class specified.
+TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
+   // Create client #1.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+
+    // Add option93 which would cause the client1 to be classified as "b-devices".
+    OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0002));
+    client1.addExtraOption(option93);
+
+    // Configure the server with two shared networks which can be accessed
+    // by clients belonging to "a-devices" and "b-devices" classes
+    // respectively.
+    configure(NETWORKS_CONFIG[13], *client1.getServer());
+
+    // Simply send DHCPDISCOVER to avoid allocating a lease.
+    ASSERT_NO_THROW(client1.doDiscover());
+    Pkt4Ptr resp1 = client1.getContext().response_;
+    ASSERT_TRUE(resp1);
+    ASSERT_EQ(DHCPOFFER, resp1->getType());
+    // The client should be offerred a lease from the second shared network.
+    EXPECT_EQ("10.0.0.63", resp1->getYiaddr().toText());
+
+    // Create another client which will belong to a different class.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+
+    // Add option93 which would cause the client1 to be classified as "a-devices".
+    option93.reset(new OptionUint16(Option::V4, 93, 0x0001));
+    client2.addExtraOption(option93);
+
+    // Send DHCPDISCOVER. There is no lease in the lease database so the
+    // client should be offerred a lease based on the client class selection.
+    ASSERT_NO_THROW(client2.doDiscover());
+    Pkt4Ptr resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, resp->getType());
+    // The client2 should be assigned a lease from the first shared network.
+    EXPECT_EQ("192.0.2.63", resp->getYiaddr().toText());
 }
 
 } // end of anonymous namespace
