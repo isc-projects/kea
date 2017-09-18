@@ -1,6 +1,14 @@
+1296.	[bug]		tmark
+	Altered the mysql backend logic to disable auto_reconnect and
+	set session value of wait_timeout to a very large values. This
+	avoids a segfault in MySQL client library caused by auto-reconnects
+	occuring when kea server's MySQL connection is idle for longer
+	than the global MySQL wait_timeout.
+	(Trac #5354, git 9881ef6d772f27de82c048e198ba0ff9e71b9351)
+
 1295.	[bug]		tomek
-        DHCPv4 and DHCPv6 servers are now able to parse shared networks.
-        A basic shared networks examples added.
+	DHCPv4 and DHCPv6 servers are now able to parse shared networks.
+	A basic shared networks examples added.
 	(Trac #5357, git 74b824cc80f8be66084308c0bf12c1a71f311915)
 
 1294.	[func]		marcin
