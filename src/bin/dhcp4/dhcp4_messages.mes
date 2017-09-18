@@ -66,12 +66,10 @@ renewing existing lease. The server is explicitly configured to not use
 client identifier to lookup existing leases for the client and will not
 record client identifier in the lease database. This mode of operation
 is useful when clients don't use stable client identifiers, e.g. multi
-stage booting. Note that the client identifier may be used for other
-operations than lease allocation, e.g. identifying host reservations
-for the client using client identifier. The first argument includes the
-client and transaction identification information. The second argument
-specifies the identifier of the subnet where the client is connected
-and for which this mode of operation is configured on the server.
+stage booting. The first argument includes the client and transaction
+identification information. The second argument specifies the identifier
+of the subnet where the client is connected and for which this mode of
+operation is configured on the server.
 
 % DHCP4_CLIENT_FQDN_DATA %1: Client sent FQDN option: %2
 This debug message includes the detailed information extracted from the
